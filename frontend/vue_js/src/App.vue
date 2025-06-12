@@ -40,6 +40,8 @@ const fetchUserInfo = async () => {
     const autoLogin = localStorage.getItem('autoLogin') === 'true'
     if (!autoLogin) {
       clearLoginState()
+    } else {
+      userStore.clearUser()
     }
   }
 }
