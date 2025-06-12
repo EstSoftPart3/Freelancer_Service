@@ -129,11 +129,12 @@
                 >
                 <input
                   type="text"
-                  class="form-control text-3 h-auto py-2"
+                  class="form-control text-3 h-auto py-2 readonly"
                   name="period"
                   placeholder="예: 2025-04 ~ 2025-10"
                   v-model="projectPeriodDisplay"
                   required=""
+                  readonly
                 />
               </div>
             </div>
@@ -152,11 +153,12 @@
                 >
                 <input
                   type="text"
-                  class="form-control text-3 h-auto py-2"
+                  class="form-control text-3 h-auto py-2 readonly"
                   name="period"
                   placeholder="예: 2025-04 ~ 2025-10"
                   v-model="recruitPeriodDisplay"
                   required=""
+                  readonly
                 />
               </div>
             </div>
@@ -888,5 +890,9 @@ const recruitPeriodDisplay = computed({
 .content {
   flex-grow: 1;
   max-width: calc(100% - 220px);
+}
+
+.readonly:hover {
+  cursor: default;
 }
 </style>
