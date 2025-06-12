@@ -50,10 +50,13 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 import BoardPostRegisterContent from './BoardPostRegisterContent.vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { ref, defineProps } from 'vue'
 import { api } from '@/axios'
 import { useBoardStore } from '@/fo/stores/boardStore'
 
+const props = defineProps({
+  onConfirm: { type: Function, required: true },
+})
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const boardStore = useBoardStore()
@@ -106,12 +109,14 @@ const registerFunc = async () => {
       const res = await api.$post(`/answer`, reqData)
       if (res.status == 'CREATED') {
         alertStore.show(res.message, 'success')
-        modalStore.closeModal()
+        props.onConfirm()
+        // modalStore.closeModal()
       } else {
         alertStore.show('답변 등록에 실패하였습니다.', 'danger')
       }
     }
   } catch (error) {
+    console.log('error', error)
     alertStore.show('답변 등록에 실패하였습니다.', 'danger')
   }
 }

@@ -322,7 +322,13 @@ const clickApplication = () => {
     alertStore.show('로그인 후 이용해주세요.', 'danger')
     return
   }
-  modalStore.openModal(AnswerRegisterModal, { size: 'modal-lg' })
+  modalStore.openModal(AnswerRegisterModal, {
+    size: 'modal-lg',
+    onConfirm: () => {
+      modalStore.closeModal()
+      props.getBoard()
+    },
+  })
 }
 
 // 신고 모달
