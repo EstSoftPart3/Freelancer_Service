@@ -1,14 +1,18 @@
 package com.example.demo.domain.mypage.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.common.AmazonS3.AmazonS3Service;
+import com.example.demo.common.AmazonS3.UploadedFileDTO;
+import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
-import com.example.demo.domain.mypage.mapper.MypageAddressMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
-import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
+import com.example.demo.domain.mypage.repository.ResumeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,9 +21,272 @@ import lombok.RequiredArgsConstructor;
 public class ResumeService {
 
 	private final ResumeMapper resumeMapper;
-	private final ResumeSkillMapper resumeSkillMapper;
+	private final ResumeRepository resumeRepository;
+	private final AmazonS3Service amazonS3Service;
+	// private final ResumeSkillMapper resumeSkillMapper;
 	// private final AddressRepository addressRepository;
-	private final MypageAddressMapper addressMapper;
+	// private final MypageAddressMapper addressMapper;
+
+	@Transactional
+	public int createResume(Long userSq, ResumeRequestDTO dto, List<MultipartFile> profileImages,
+			List<MultipartFile> attachments) {
+
+		UploadedFileDTO profileImageDTO = null;
+		if (profileImages != null && !profileImages.isEmpty()) {
+			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0)); // 프로필 이미지는 1개만 가정
+			dto.setProfileImage(convertToResumeFileDTO(profileImageDTO));
+		}
+
+		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
+		if (attachments != null) {
+			for (MultipartFile file : attachments) {
+				UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				attachmentFileDTOs.add(convertToResumeFileDTO(fileDTO));
+			}
+			dto.setAttachmentList(attachmentFileDTOs);
+		}
+
+		// 주소 저장
+		if (dto.getAddress() != null) {
+			resumeRepository.insertAddress(dto.getAddress());
+		}
+		// 이력서 저장
+		int result = resumeRepository.insertResume(userSq, dto);
+		Long resumeSq = dto.getResumeSq();
+
+		// 학력 저장
+		if (dto.getEducationList() != null) {
+			for (ResumeRequestDTO.EducationDTO edu : dto.getEducationList()) {
+				edu.setResumeSq(resumeSq);
+				resumeRepository.insertEducation(edu);
+			}
+		}
+
+		// 경력 저장
+		if (dto.getCareerList() != null) {
+			for (ResumeRequestDTO.CareerDTO career : dto.getCareerList()) {
+				career.setResumeSq(resumeSq);
+				resumeRepository.insertCareer(career);
+			}
+		}
+
+		// 프로젝트 이력 저장
+		if (dto.getProjectHistoryList() != null) {
+			for (ResumeRequestDTO.ProjectHistoryDTO ph : dto.getProjectHistoryList()) {
+				ph.setResumeSq(resumeSq);
+				resumeRepository.insertProjectHistory(ph);
+
+				if (ph.getSkillTagList() != null) {
+					for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : ph.getSkillTagList()) {
+						tag.setProjectHistorySq(ph.getProjectHistorySq());
+						resumeRepository.insertProjectHistorySkillTag(tag);
+					}
+				}
+			}
+		}
+
+		// 자격증 저장
+		if (dto.getCertificationList() != null) {
+			for (ResumeRequestDTO.CertificationDTO cert : dto.getCertificationList()) {
+				cert.setResumeSq(resumeSq);
+				resumeRepository.insertCertification(cert);
+			}
+		}
+
+		// 교육 이력 저장
+		if (dto.getTrainingHistoryList() != null) {
+			for (ResumeRequestDTO.TrainingHistoryDTO training : dto.getTrainingHistoryList()) {
+				training.setResumeSq(resumeSq);
+				resumeRepository.insertTrainingHistory(training);
+			}
+		}
+
+		// 보유 기술 태그 저장
+		if (dto.getSkillTagList() != null) {
+			for (ResumeRequestDTO.SkillTagDTO tag : dto.getSkillTagList()) {
+				tag.setResumeSq(resumeSq);
+				resumeRepository.insertResumeSkillTag(tag);
+			}
+		}
+
+		// 프로필 이미지 저장 + 매핑
+		if (dto.getProfileImage() != null) {
+			ResumeRequestDTO.ResumeFileDTO image = dto.getProfileImage();
+			resumeRepository.insertProfileImage(image);
+			resumeRepository.insertResumeProfileImageMapping(resumeSq, image.getFileSq());
+		}
+
+		// 첨부파일 저장 + 매핑
+		if (dto.getAttachmentList() != null) {
+			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
+				resumeRepository.insertAttachmentFile(file);
+				resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
+			}
+		}
+
+		return result;
+	}
+
+	@Transactional
+	public int updateResume(Long userSq, ResumeRequestDTO dto, List<MultipartFile> profileImages,
+			List<MultipartFile> attachments) {
+
+		// 기존 파일 S3 삭제
+		if (dto.getProfileImage() != null && dto.getProfileImage().getFileSaveNm() != null) {
+			amazonS3Service.deleteFile(dto.getProfileImage().getFileSaveNm());
+			resumeRepository.deleteResumeProfileImageMapping(dto.getProfileImage().getFileSq());
+			resumeRepository.deleteProfileImage(dto.getProfileImage().getFileSq());
+		}
+
+		if (dto.getAttachmentList() != null) {
+			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
+				if (file.getFileSaveNm() != null) {
+					amazonS3Service.deleteFile(file.getFileSaveNm());
+					resumeRepository.deleteResumeAttachmentMapping(file.getFileSq());
+					resumeRepository.deleteAttachmentFile(file.getFileSq());
+				}
+			}
+		}
+
+		int result = resumeRepository.updateResume(dto);
+		Long resumeSq = dto.getResumeSq();
+
+		// 주소 업데이트
+		if (dto.getAddress() != null) {
+			Long addressSq = resumeRepository.selectAddressSqByResumeSq(resumeSq);
+			dto.getAddress().setAddressSq(addressSq); // 주소 DTO에 addressSq 설정
+			resumeRepository.updateAddressByAddressSq(dto.getAddress());
+		}
+
+		// 학력: 기존 삭제 후 재등록
+		if (dto.getEducationList() != null) {
+			for (ResumeRequestDTO.EducationDTO edu : dto.getEducationList()) {
+				if (edu.getEducationSq() != null) {
+					resumeRepository.deleteEducation(edu.getEducationSq());
+				}
+			}
+			for (ResumeRequestDTO.EducationDTO edu : dto.getEducationList()) {
+				edu.setResumeSq(resumeSq);
+				resumeRepository.insertEducation(edu);
+			}
+		}
+
+		// 경력: 기존 삭제 후 재등록
+		if (dto.getCareerList() != null) {
+			for (ResumeRequestDTO.CareerDTO career : dto.getCareerList()) {
+				if (career.getCareerSq() != null) {
+					resumeRepository.deleteCareer(career.getCareerSq());
+				}
+			}
+			for (ResumeRequestDTO.CareerDTO career : dto.getCareerList()) {
+				career.setResumeSq(resumeSq);
+				resumeRepository.insertCareer(career);
+			}
+		}
+
+		// 프로젝트 이력: 기존 삭제 후 재등록
+		if (dto.getProjectHistoryList() != null) {
+			for (ResumeRequestDTO.ProjectHistoryDTO ph : dto.getProjectHistoryList()) {
+				if (ph.getProjectHistorySq() != null) {
+					if (ph.getSkillTagList() != null) {
+						for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : ph.getSkillTagList()) {
+							if (tag.getProjectHistorySkillSq() != null) {
+								resumeRepository.deleteProjectHistorySkillTag(tag.getProjectHistorySkillSq());
+							}
+						}
+					}
+					resumeRepository.deleteProjectHistory(ph.getProjectHistorySq());
+				}
+			}
+			for (ResumeRequestDTO.ProjectHistoryDTO ph : dto.getProjectHistoryList()) {
+				ph.setResumeSq(resumeSq);
+				resumeRepository.insertProjectHistory(ph);
+
+				if (ph.getSkillTagList() != null) {
+					for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : ph.getSkillTagList()) {
+						tag.setProjectHistorySq(ph.getProjectHistorySq());
+						resumeRepository.insertProjectHistorySkillTag(tag);
+					}
+				}
+			}
+		}
+
+		// 자격증: 기존 삭제 후 재등록
+		if (dto.getCertificationList() != null) {
+			for (ResumeRequestDTO.CertificationDTO cert : dto.getCertificationList()) {
+				if (cert.getCertificationSq() != null) {
+					resumeRepository.deleteCertification(cert.getCertificationSq());
+				}
+			}
+			for (ResumeRequestDTO.CertificationDTO cert : dto.getCertificationList()) {
+				cert.setResumeSq(resumeSq);
+				resumeRepository.insertCertification(cert);
+			}
+		}
+
+		// 교육 이력: 기존 삭제 후 재등록
+		if (dto.getTrainingHistoryList() != null) {
+			for (ResumeRequestDTO.TrainingHistoryDTO training : dto.getTrainingHistoryList()) {
+				if (training.getTrainingSq() != null) {
+					resumeRepository.deleteTrainingHistory(training.getTrainingSq());
+				}
+			}
+			for (ResumeRequestDTO.TrainingHistoryDTO training : dto.getTrainingHistoryList()) {
+				training.setResumeSq(resumeSq);
+				resumeRepository.insertTrainingHistory(training);
+			}
+		}
+
+		// 보유 기술 태그: 기존 삭제 후 재등록
+		if (dto.getSkillTagList() != null) {
+			for (ResumeRequestDTO.SkillTagDTO tag : dto.getSkillTagList()) {
+				if (tag.getSkillTagSq() != null) {
+					resumeRepository.deleteResumeSkillTag(tag.getSkillTagSq());
+				}
+			}
+			for (ResumeRequestDTO.SkillTagDTO tag : dto.getSkillTagList()) {
+				resumeRepository.insertResumeSkillTag(tag);
+			}
+		}
+
+		// 프로필 이미지 업데이트
+		if (dto.getProfileImage() != null) {
+
+			if (dto.getProfileImage().getFileSq() != null) {
+				resumeRepository.deleteResumeProfileImageMapping(dto.getProfileImage().getFileSq());
+				resumeRepository.deleteProfileImage(dto.getProfileImage().getFileSq());
+			}
+
+			resumeRepository.insertProfileImage(dto.getProfileImage());
+			resumeRepository.insertResumeAttachmentMapping(resumeSq, dto.getProfileImage().getFileSq());
+
+		}
+
+		// 첨부파일: 기존 삭제 후 재등록
+		if (dto.getAttachmentList() != null) {
+			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
+				if (file.getFileSq() != null) {
+					resumeRepository.deleteResumeAttachmentMapping(file.getFileSq());
+					resumeRepository.deleteAttachmentFile(file.getFileSq());
+				}
+			}
+			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
+				resumeRepository.insertAttachmentFile(file);
+				resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
+			}
+		}
+
+		return result;
+	}
+
+	private ResumeRequestDTO.ResumeFileDTO convertToResumeFileDTO(UploadedFileDTO uploadedFileDTO) {
+		ResumeRequestDTO.ResumeFileDTO dto = new ResumeRequestDTO.ResumeFileDTO();
+		dto.setFileOriginalNm(uploadedFileDTO.getOriginalName());
+		dto.setFileSaveNm(uploadedFileDTO.getSavedName());
+		dto.setFileTyp(uploadedFileDTO.getContentType());
+		dto.setFileSize(uploadedFileDTO.getSize());
+		return dto;
+	}
 
 	// 대표 이력서 설정
 	@Transactional
@@ -45,11 +312,11 @@ public class ResumeService {
 		resumeMapper.updateDeleteYn(resumeSq);
 	}
 
-	기술
-	@Transactional(readOnly = true)
-	public List<ResumeSkillDataResponse> getAllSkillTags() {
-	return resumeSkillMapper.findAllSkillTags();
-	}
+	// // 기술
+	// @Transactional(readOnly = true)
+	// public List<ResumeSkillDataResponse> getAllSkillTags() {
+	// return resumeSkillMapper.findAllSkillTags();
+	// }
 
 	// // 이력서에 보유 기술 추가 (여러 개)
 	// @Transactional

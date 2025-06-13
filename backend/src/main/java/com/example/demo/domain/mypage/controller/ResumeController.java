@@ -10,14 +10,20 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.mypage.dto.RepResumeSwitchRequest;
+import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.service.ResumeService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/mypage/resume")
@@ -26,6 +32,60 @@ import lombok.RequiredArgsConstructor;
 public class ResumeController {
 
 	private final ResumeService resumeService;
+
+	// // 이력서 생성 (등록)
+	// @PostMapping
+	// public ResponseEntity<?> createResume(
+	// @AuthenticationPrincipal Long userSq,
+	// @RequestPart ResumeRequestDTO dto,
+	// @RequestPart(required = false) List<MultipartFile> profileImages,
+	// @RequestPart(required = false) List<MultipartFile> attachments) {
+
+	// int result = resumeService.createResume(userSq, dto, profileImages,
+	// attachments);
+	// if (result > 0) {
+	// return ResponseEntity.status(HttpStatus.CREATED).body("Resume created
+	// successfully");
+	// } else {
+	// return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed
+	// to create resume");
+	// }
+	// }
+
+	// 이력서 생성 (등록)
+	@PostMapping
+	public ResponseEntity<?> createResume(
+			@RequestPart Long userSq,
+			@RequestPart ResumeRequestDTO dto,
+			@RequestPart(required = false) List<MultipartFile> profileImages,
+			@RequestPart(required = false) List<MultipartFile> attachments) {
+
+		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
+		if (result > 0) {
+			return ResponseEntity.status(HttpStatus.CREATED).body("Resume created successfully");
+		} else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create resume");
+		}
+	}
+
+	// 이력서 수정
+	@PutMapping("/{resumeSq}")
+	public ResponseEntity<?> updateResume(
+			@PathVariable Long resumeSq,
+			@AuthenticationPrincipal Long userSq,
+			@RequestPart ResumeRequestDTO dto,
+			@RequestPart(required = false) List<MultipartFile> profileImages,
+			@RequestPart(required = false) List<MultipartFile> attachments) {
+
+		dto.setResumeSq(resumeSq); // 경로 변수로 받은 이력서 번호 설정
+
+		int result = resumeService.updateResume(userSq, dto, profileImages, attachments);
+		if (result > 0) {
+			return ResponseEntity.ok("Resume updated successfully");
+		} else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update resume");
+		}
+	}
 
 	// 대표 이력서 설정
 	@PatchMapping("/representative/{resumeSq}")

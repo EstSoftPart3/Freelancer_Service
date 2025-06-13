@@ -1,76 +1,190 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.mypage.mapper.ResumeMapper">
 
-  
-  <select id="findResumeVoByUserSq" resultType="com.example.demo.domain.mypage.vo.ResumeVo">
-    SELECT
-      RESUME_SQ AS resumeSq,
-      RESUME_TTL as resumeTitle
-    FROM TBL_RESUME_M
-    WHERE USER_SQ = #{userSq}
-  </select>
-  
-   <select id="findResumeNmTtlBySq" resultType="com.example.demo.domain.project.vo.ResumeNmTtlVo">
-    SELECT
-      RESUME_NM AS resumeNM,
-      RESUME_TTL as resumeTtl
-    FROM TBL_RESUME_M
-    WHERE RESUME_SQ = #{resumeSq}
-  </select>
-  
-  <select id="findRepResumeNmTtlByUserSq" resultType="com.example.demo.domain.project.vo.ResumeSummaryVo">
-    SELECT
-      RESUME_SQ AS resumeSq,
-      RESUME_NM AS resumeNM,
-      RESUME_TTL as resumeTtl
-    FROM TBL_RESUME_M
-    WHERE USER_SQ = #{userSq} AND resume_is_representative_yn = 'Y'
-  </select>
-    
-  <select id="findResumesByUserSq" resultType="Long">
-    SELECT
-      RESUME_SQ
-    FROM TBL_RESUME_M
-    WHERE USER_SQ = #{userSq}
-  </select>
-  
-  <select id="findRepResumeByUserSq" resultType="Long">
-    SELECT
-      RESUME_SQ
-    FROM TBL_RESUME_M
-    WHERE USER_SQ = #{userSq} AND resume_is_representative_yn = 'Y'
-  </select>
-  
-  <select id="findLatestResumeSqByUserSq" resultType="Long">
-	  SELECT resume_sq
-	  FROM TBL_RESUME_M
-	  WHERE user_sq = #{userSq}
-	  ORDER BY resume_created_at_dtm DESC
-	  LIMIT 1
-  </select>
-  
-   <select id= "findLatestResumeBySq" resultType="com.example.demo.domain.project.vo.ResumeSummaryVo">
-    SELECT
-      RESUME_NM AS resumeNm,
-      null as resumeTtl,
-      null as resumeSq
-    FROM TBL_RESUME_M
-    WHERE RESUME_SQ = #{resumeSq}
-  </select>
-  
-    <!-- 이력서 등록 -->
-	<insert id="insertResume"
-	        parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest"
-	        useGeneratedKeys="true"
-	        keyProperty="resumeSq">
+
+  <!-- 주소 -->
+  <insert id="insertAddress"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"
+    useGeneratedKeys="true" keyProperty="addressSq"> INSERT INTO TBL_ADDRESS_S ( zonecode, address,
+    detail_address, sigungu, latitude, longitude, area_code_sq ) VALUES ( #{zonecode}, #{address},
+    #{detailAddress}, #{sigungu}, #{latitude}, #{longitude}, #{areaCodeSq} ) </insert>
+
+  <!-- resumeSq로 addressSq 조회 -->
+  <select id="selectAddressSqByResumeSq" parameterType="long" resultType="long"> SELECT address_sq
+    FROM TBL_RESUME_M WHERE resume_sq = #{resumeSq} </select>
+
+  <!-- addressSq 기준으로 주소 업데이트 -->
+  <update id="updateAddressByAddressSq"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"> UPDATE
+    TBL_ADDRESS_S SET zonecode = #{zonecode}, address = #{address}, detailAddress =
+    #{detailAddress}, sigungu = #{sigungu}, latitude = #{latitude}, longitude =
+    #{longitude},areaCodeSq = #{areaCodeSq}, WHERE address_sq = #{addressSq} </update>
+
+  <!-- 이력서 -->
+  <insert id="insertResume"
+    parameterType="map"
+    useGeneratedKeys="true"
+    keyProperty="dto.resumeSq"> INSERT INTO TBL_RESUME_M ( user_sq, address_sq, resume_ttl,
+    resume_nm, resume_birth_dt, resume_phone_num, resume_email, resume_greeting_txt,
+    resume_is_notification_yn, resume_is_representative_yn ) VALUES ( #{userSq},
+    #{dto.address.addressSq}, #{dto.resumeTtl}, #{dto.resumeNm}, #{dto.resumeBirthDt},
+    #{dto.resumePhoneNum}, #{dto.resumeEmail}, #{dto.resumeGreetingTxt},
+    #{dto.resumeIsNotificationYn}, #{dto.resumeIsRepresentativeYn} ) </insert>
+
+  <update id="updateResume" parameterType="map"> UPDATE TBL_RESUME_M SET address_sq =
+    #{dto.address.addressSq}, resume_ttl = #{dto.resumeTtl}, resume_nm = #{dto.resumeNm},
+    resume_birth_dt = #{dto.resumeBirthDt}, resume_phone_num = #{dto.resumePhoneNum}, resume_email =
+    #{dto.resumeEmail}, resume_greeting_txt = #{dto.resumeGreetingTxt}, resume_is_notification_yn =
+    #{dto.resumeIsNotificationYn}, resume_is_representative_yn = #{dto.resumeIsRepresentativeYn}
+    WHERE resume_sq = #{dto.resumeSq} </update>
+
+  <!-- 학력 -->
+  <insert id="insertEducation"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$EducationDTO"
+    useGeneratedKeys="true" keyProperty="educationSq"> INSERT INTO TBL_RESUME_EDUCATION_S (
+    resume_sq, education_school_nm, education_major_nm, education_admission_dt,
+    education_graduation_dt, education_status_cd ) VALUES ( #{resumeSq}, #{educationSchoolNm},
+    #{educationMajorNm}, #{educationAdmissionDt}, #{educationGraduationDt}, #{educationStatusCd} ) </insert>
+
+  <delete id="deleteEducation" parameterType="long"> DELETE FROM TBL_RESUME_EDUCATION_S WHERE
+    education_sq = #{educationSq} </delete>
+
+  <!-- 경력 -->
+  <insert id="insertCareer"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$CareerDTO"
+    useGeneratedKeys="true" keyProperty="careerSq"> INSERT INTO TBL_RESUME_CAREER_S ( resume_sq,
+    career_company_nm, career_department_nm, career_position_nm, career_start_dt, career_end_dt )
+    VALUES ( #{resumeSq}, #{careerCompanyNm}, #{careerDepartmentNm}, #{careerPositionNm},
+    #{careerStartDt}, #{careerEndDt} ) </insert>
+
+  <delete id="deleteCareer" parameterType="long"> DELETE FROM TBL_RESUME_CAREER_S WHERE career_sq =
+    #{careerSq} </delete>
+
+  <!-- 프로젝트 이력 -->
+  <insert id="insertProjectHistory"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$ProjectHistoryDTO"
+    useGeneratedKeys="true" keyProperty="projectHistorySq"> INSERT INTO TBL_RESUME_PROJECT_HISTORY_S
+    ( resume_sq, project_history_client, project_history_type_cd,
+    project_history_job_position_type_cd, project_history_task, project_history_start_dt,
+    project_history_end_dt ) VALUES ( #{resumeSq}, #{projectHistoryClient}, #{projectHistoryTypeCd},
+    #{projectHistoryJobPositionTypeCd}, #{projectHistoryTask}, #{projectHistoryStartDt},
+    #{projectHistoryEndDt} ) </insert>
+
+  <delete id="deleteProjectHistory" parameterType="long"> DELETE FROM TBL_RESUME_PROJECT_HISTORY_S
+    WHERE project_history_sq = #{projectHistorySq} </delete>
+
+  <!-- 프로젝트 이력 기술 태그 -->
+  <insert id="insertProjectHistorySkillTag"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$ProjectHistorySkillTagDTO"
+    useGeneratedKeys="true" keyProperty="projectHistorySkillSq"> INSERT INTO
+    TBL_RESUME_PROJECT_HISTORY_SKILL_TAG_S ( project_history_sq, skill_tag_sq, parent_skill_tag_sq,
+    skill_tag_lvl, skill_tag_nm ) VALUES ( #{projectHistorySq}, #{skillTagSq}, #{parentSkillTagSq},
+    #{skillTagLvl}, #{skillTagNm} ) </insert>
+
+  <delete id="deleteProjectHistorySkillTag" parameterType="long"> DELETE FROM
+    TBL_RESUME_PROJECT_HISTORY_SKILL_TAG_S WHERE project_history_skill_sq = #{projectHistorySkillSq} </delete>
+
+  <!-- 자격증 -->
+  <insert id="insertCertification"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$CertificationDTO"
+    useGeneratedKeys="true" keyProperty="certificationSq"> INSERT INTO TBL_RESUME_CERTIFICATION_S (
+    resume_sq, certification_nm, certification_issuer_nm ) VALUES ( #{resumeSq}, #{certificationNm},
+    #{certificationIssuerNm} ) </insert>
+
+  <delete id="deleteCertification" parameterType="long"> DELETE FROM TBL_RESUME_CERTIFICATION_S
+    WHERE certification_sq = #{certificationSq} </delete>
+
+  <!-- 교육 이력 -->
+  <insert id="insertTrainingHistory"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$TrainingHistoryDTO"
+    useGeneratedKeys="true" keyProperty="trainingSq"> INSERT INTO TBL_RESUME_TRAINING_HISTORY_S (
+    resume_sq, training_institution_nm, training_program_nm, training_start_dt, training_end_dt )
+    VALUES ( #{resumeSq}, #{trainingInstitutionNm}, #{trainingProgramNm}, #{trainingStartDt},
+    #{trainingEndDt} ) </insert>
+
+  <delete id="deleteTrainingHistory" parameterType="long"> DELETE FROM TBL_RESUME_TRAINING_HISTORY_S
+    WHERE training_sq = #{trainingSq} </delete>
+
+  <!-- 보유 기술 태그 -->
+  <insert id="insertResumeSkillTag"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$SkillTagDTO"
+    useGeneratedKeys="true" keyProperty="resumeSkillSq"> INSERT INTO TBL_RESUME_SKILL_TAG_S (
+    resume_sq, skill_tag_sq, parent_skill_tag_sq, skill_tag_lvl, skill_tag_nm ) VALUES (
+    #{resumeSq}, #{skillTagSq}, #{parentSkillTagSq}, #{skillTagLvl}, #{skillTagNm} ) </insert>
+
+  <delete id="deleteResumeSkillTag" parameterType="long"> DELETE FROM TBL_RESUME_SKILL_TAG_S WHERE
+    resume_skill_sq = #{resumeSkillSq} </delete>
+
+  <!-- 프로필 이미지 -->
+  <insert id="insertProfileImage"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$ResumeFileDTO"
+    useGeneratedKeys="true" keyProperty="fileSq"> INSERT INTO TBL_COMMON_FILE_S ( file_original_nm,
+    file_save_nm, file_typ, file_size ) VALUES ( #{fileOriginalNm}, #{fileSaveNm}, #{fileTyp},
+    #{fileSize} ) </insert>
+
+  <update id="deleteProfileImage" parameterType="long"> UPDATE TBL_COMMON_FILE_S SET
+    file_is_deleted_yn = 'Y' WHERE file_sq = #{fileSq} </update>
+
+  <insert id="insertResumeProfileImageMapping" parameterType="map"> INSERT INTO
+    TBL_RESUME_PROFILE_IMAGE_S (resume_sq, file_sq) VALUES (#{resumeSq}, #{fileSq}) </insert>
+
+  <delete id="deleteResumeProfileImageMapping" parameterType="long"> DELETE FROM
+    TBL_RESUME_PROFILE_IMAGE_S WHERE file_sq = #{fileSq} </delete>
+
+
+  <!-- 첨부파일 -->
+  <insert id="insertAttachmentFile"
+    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$ResumeFileDTO"
+    useGeneratedKeys="true" keyProperty="fileSq"> INSERT INTO TBL_COMMON_FILE_S ( file_original_nm,
+    file_save_nm, file_typ, file_size ) VALUES ( #{fileOriginalNm}, #{fileSaveNm}, #{fileTyp},
+    #{fileSize} ) </insert>
+
+  <update id="deleteAttachmentFile" parameterType="long"> UPDATE TBL_COMMON_FILE_S SET
+    file_is_deleted_yn = 'Y' WHERE file_sq = #{fileSq} </update>
+
+  <insert id="insertResumeAttachmentMapping" parameterType="map"> INSERT INTO
+    TBL_RESUME_ATTACHMENT_S (resume_sq, file_sq) VALUES (#{resumeSq}, #{fileSq}) </insert>
+
+  <delete id="deleteResumeAttachmentMapping" parameterType="long"> DELETE FROM
+    TBL_RESUME_ATTACHMENT_S WHERE file_sq = #{fileSq} </delete>
+
+
+  <select id="findResumeVoByUserSq" resultType="com.example.demo.domain.mypage.vo.ResumeVo"> SELECT
+    RESUME_SQ AS resumeSq, RESUME_TTL as resumeTitle FROM TBL_RESUME_M WHERE USER_SQ = #{userSq} </select>
+
+  <select id="findResumeNmTtlBySq" resultType="com.example.demo.domain.project.vo.ResumeNmTtlVo">
+    SELECT RESUME_NM AS resumeNM, RESUME_TTL as resumeTtl FROM TBL_RESUME_M WHERE RESUME_SQ =
+    #{resumeSq} </select>
+
+  <select id="findRepResumeNmTtlByUserSq"
+    resultType="com.example.demo.domain.project.vo.ResumeSummaryVo"> SELECT RESUME_SQ AS resumeSq,
+    RESUME_NM AS resumeNM, RESUME_TTL as resumeTtl FROM TBL_RESUME_M WHERE USER_SQ = #{userSq} AND
+    resume_is_representative_yn = 'Y' </select>
+
+  <select id="findResumesByUserSq" resultType="Long"> SELECT RESUME_SQ FROM TBL_RESUME_M WHERE
+    USER_SQ = #{userSq} </select>
+
+  <select id="findRepResumeByUserSq" resultType="Long"> SELECT RESUME_SQ FROM TBL_RESUME_M WHERE
+    USER_SQ = #{userSq} AND resume_is_representative_yn = 'Y' </select>
+
+  <select id="findLatestResumeSqByUserSq" resultType="Long"> SELECT resume_sq FROM TBL_RESUME_M
+    WHERE user_sq = #{userSq} ORDER BY resume_created_at_dtm DESC LIMIT 1 </select>
+
+  <select id="findLatestResumeBySq" resultType="com.example.demo.domain.project.vo.ResumeSummaryVo">
+    SELECT RESUME_NM AS resumeNm, null as resumeTtl, null as resumeSq FROM TBL_RESUME_M WHERE
+    RESUME_SQ = #{resumeSq} </select>
+
+  <!-- 이력서 등록 -->
+  <!-- <insert id="insertResume"
+  parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest"
+  useGeneratedKeys="true" keyProperty="resumeSq">
 	    INSERT INTO TBL_RESUME_M (
 	        user_sq,
 	        address_sq,
 	        resume_ttl,
-	      <!--resume_photo_url,-->
+	                                  resume_photo_url,
 	        resume_nm,
 	        resume_birth_dt,         
 	        resume_phone_num,         
@@ -84,7 +198,7 @@
 	        #{userSq},
 	        #{addressSq},
 	        #{resumeTtl},
-	     <!--#{resumePhotoUrl},-->  
+	                                 #{resumePhotoUrl},  
 	        #{resumeNm},
 	        #{resumeBirthDt},         
 	        #{resumePhoneNum},         
@@ -95,29 +209,19 @@
 	        #{resumeIsNotificationYn},
 	        NOW()
 	    )
-	</insert>
+  </insert> -->
 
-	<!-- 이력서 전체 조회 (userSq 기준) -->
-	<select id="selectAllResumes"
-          parameterType="long"
-          resultType="com.example.demo.domain.mypage.dto.response.ResumeListResponse">
-    SELECT
-      resume_sq AS resumeSq,
-      resume_ttl AS resumeTtl,
-      resume_nm AS resumeNm,
-      resume_email AS resumeEmail,
-      resume_greeting_txt AS resumeGreetingTxt,
-      resume_is_representative_yn AS resumeIsRepresentativeYn,
-      resume_created_at_dtm AS resumeCreatedAtDtm
-    FROM TBL_RESUME_M
-    WHERE user_sq = #{userSq}
-      AND resume_is_deleted_yn = 'N'
-    ORDER BY resume_sq DESC
-	</select>
+  <!-- 이력서 전체 조회 (userSq 기준) -->
+  <select id="selectAllResumes" parameterType="long"
+    resultType="com.example.demo.domain.mypage.dto.response.ResumeListResponse"> SELECT resume_sq AS
+    resumeSq, resume_ttl AS resumeTtl, resume_nm AS resumeNm, resume_email AS resumeEmail,
+    resume_greeting_txt AS resumeGreetingTxt, resume_is_representative_yn AS
+    resumeIsRepresentativeYn, resume_created_at_dtm AS resumeCreatedAtDtm FROM TBL_RESUME_M WHERE
+    user_sq = #{userSq} AND resume_is_deleted_yn = 'N' ORDER BY resume_sq DESC </select>
 
   <!-- 이력서 상세 조회 -->
-	<!-- <select id="selectResumeById" parameterType="long"
-          resultType="com.example.demo.domain.mypage.dto.response.ResumeRegisterResponse">
+  <!-- <select id="selectResumeById" parameterType="long"
+  resultType="com.example.demo.domain.mypage.dto.response.ResumeRegisterResponse">
         SELECT
 	    r.resume_sq AS resumeSq,
 	    r.user_sq AS userSq,
@@ -142,33 +246,23 @@
 	  LEFT JOIN TBL_ADDRESS_S a ON r.address_sq = a.address_sq
 	  WHERE r.resume_sq = #{resumeSq}
 	</select> -->
-	
-	<select id="findUserByResumeSq" 
-          resultType="Long">
-        SELECT user_sq
-	  FROM TBL_RESUME_M 
-	  WHERE resume_sq = #{resumeSq}
-	</select>
-	
-	
-	
+
+  <select id="findUserByResumeSq" resultType="Long"> SELECT user_sq FROM TBL_RESUME_M WHERE
+    resume_sq = #{resumeSq} </select>
 
 
-  <!--대표이력서 설정-->
-  <update id="updateAllRepresentativeN">
-    UPDATE TBL_RESUME_M
-    SET resume_is_representative_yn = 'N'
-    WHERE user_sq = #{userSq}
-  </update>
-	
-  <update id="updateRepresentativeY" parameterType="long">
-	UPDATE TBL_RESUME_M
-	SET resume_is_representative_yn = 'Y'
-	WHERE resume_sq = #{resumeSq}
-  </update>
+  <!--대표이력서
+  설정-->
+  <update id="updateAllRepresentativeN"> UPDATE TBL_RESUME_M SET resume_is_representative_yn = 'N'
+    WHERE user_sq = #{userSq} </update>
 
-	<!--이력서 수정-->
-  <!-- <update id="updateResume" parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest">
+  <update id="updateRepresentativeY" parameterType="long"> UPDATE TBL_RESUME_M SET
+    resume_is_representative_yn = 'Y' WHERE resume_sq = #{resumeSq} </update>
+
+  <!--이력서
+  수정-->
+  <!-- <update id="updateResume"
+  parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest">
   UPDATE TBL_RESUME_M
   SET
     resume_ttl = #{resumeTtl},
@@ -182,18 +276,21 @@
     resume_is_notification_yn = #{resumeIsNotificationYn}
   WHERE resume_sq = #{resumeSq}
   </update> -->
-	
-	
-	<!--이력서 삭제(softDelete)-->
-  <update id="updateDeleteYn" parameterType="long">
+
+
+  <!--이력서
+  삭제(softDelete)-->
+  <!-- <update id="updateDeleteYn" parameterType="long">
 	UPDATE TBL_RESUME_M
 	SET resume_is_deleted_yn = 'Y'
 	WHERE resume_sq = #{resumeSq}
-  </update>
-  
-  
-  <!--학력 추가-->
- <!-- <insert id="insertEducation" parameterType="com.example.demo.domain.mypage.dto.request.ResumeEducationRequest">
+  </update> -->
+
+
+  <!--학력
+  추가-->
+  <!-- <insert id="insertEducation"
+  parameterType="com.example.demo.domain.mypage.dto.request.ResumeEducationRequest">
 	  INSERT INTO TBL_RESUME_EDUCATION_S (
 	    resume_sq,
 	    education_school_nm,
@@ -210,7 +307,7 @@
 	    #{educationStatusCd}
 	  )
 </insert> -->
- 
+
   <!--학력전체조회-->
   <!-- <select id="selectEducationByResumeSq" parameterType="long"
   resultType="com.example.demo.domain.mypage.dto.response.ResumeEducationResponse">
@@ -226,18 +323,20 @@
 	  WHERE resume_sq = #{resumeSq}
   </select> -->
 
-<!-- 학력 전체 삭제 (이력서 PK 기준) -->
-<!-- <delete id="deleteEducationByResumeSq" parameterType="long">
+  <!-- 학력 전체 삭제 (이력서 PK 기준) -->
+  <!-- <delete id="deleteEducationByResumeSq" parameterType="long">
   DELETE FROM TBL_RESUME_EDUCATION_S WHERE resume_sq = #{resumeSq}
 </delete> -->
 
-<!-- 학력 단일 삭제 (학력 PK 기준) -->
-<delete id="deleteEducationByEducationSq" parameterType="long">
+  <!-- 학력 단일 삭제 (학력 PK 기준) -->
+  <!-- <delete id="deleteEducationByEducationSq" parameterType="long">
   DELETE FROM TBL_RESUME_EDUCATION_S WHERE education_sq = #{educationSq}
-</delete>
-  
-<!--학력 수정-->
-  <update id="updateEducation" parameterType="com.example.demo.domain.mypage.dto.response.ResumeEducationResponse">
+  </delete> -->
+
+  <!--학력
+  수정-->
+  <!-- <update id="updateEducation"
+  parameterType="com.example.demo.domain.mypage.dto.response.ResumeEducationResponse">
 	UPDATE TBL_RESUME_EDUCATION_S
 	 SET
 	 education_school_nm = #{educationSchoolNm},
@@ -246,10 +345,12 @@
     education_graduation_dt = #{educationGraduationDt},
     education_status_cd = #{educationStatusCd}
   WHERE education_sq = #{educationSq}
-  </update>
-  
-<!--경력 등록-->
-  <!-- <insert id="insertCareer" parameterType="com.example.demo.domain.mypage.dto.request.ResumeCareerRequest">
+  </update> -->
+
+  <!--경력
+  등록-->
+  <!-- <insert id="insertCareer"
+  parameterType="com.example.demo.domain.mypage.dto.request.ResumeCareerRequest">
     INSERT INTO TBL_RESUME_CAREER_S (
         resume_sq,
         career_company_nm,
@@ -267,9 +368,9 @@
     )
 </insert> -->
 
-<!--경력조회-->
-<!-- <select id="selectCareerByResumeSq" parameterType="long"
-        resultType="com.example.demo.domain.mypage.dto.response.ResumeCareerResponse">
+  <!--경력조회-->
+  <!-- <select id="selectCareerByResumeSq" parameterType="long"
+  resultType="com.example.demo.domain.mypage.dto.response.ResumeCareerResponse">
     SELECT
         career_sq AS careerSq,
         resume_sq AS resumeSq,
@@ -281,9 +382,10 @@
     FROM TBL_RESUME_CAREER_S
     WHERE resume_sq = #{resumeSq}
 </select> -->
- 
- <!--경력수정-->
-  <update id="updateCareer" parameterType="com.example.demo.domain.mypage.dto.response.ResumeCareerResponse">
+
+  <!--경력수정-->
+  <!-- <update id="updateCareer"
+  parameterType="com.example.demo.domain.mypage.dto.response.ResumeCareerResponse">
     UPDATE TBL_RESUME_CAREER_S
     SET
         career_company_nm = #{careerCompanyNm},
@@ -292,10 +394,11 @@
         career_start_dt = #{careerStartDt},
         career_end_dt = #{careerEndDt}
     WHERE career_sq = #{careerSq}
-  </update>
- 
- <!--경력 삭제-->
-<!-- <delete id="deleteCareerByResumeSq" parameterType="long">
+  </update> -->
+
+  <!--경력
+  삭제-->
+  <!-- <delete id="deleteCareerByResumeSq" parameterType="long">
     DELETE FROM TBL_RESUME_CAREER_S WHERE resume_sq = #{resumeSq}
 </delete> -->
 
