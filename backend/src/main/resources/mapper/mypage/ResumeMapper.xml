@@ -113,9 +113,12 @@
   <!-- 보유 기술 태그 -->
   <insert id="insertResumeSkillTag"
     parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$SkillTagDTO"
-    useGeneratedKeys="true" keyProperty="resumeSkillSq"> INSERT INTO TBL_RESUME_SKILL_TAG_S (
-    resume_sq, skill_tag_sq, parent_skill_tag_sq, skill_tag_lvl, skill_tag_nm ) VALUES (
-    #{resumeSq}, #{skillTagSq}, #{parentSkillTagSq}, #{skillTagLvl}, #{skillTagNm} ) </insert>
+    useGeneratedKeys="true"
+    keyProperty="resumeSkillSq"> INSERT INTO TBL_RESUME_SKILL_TAG_S ( resume_sq, skill_tag_sq,
+    parent_skill_tag_sq, skill_tag_lvl, skill_tag_nm ) SELECT #{resumeSq}, STC.skill_tag_sq,
+    STC.parent_skill_tag_sq, STC.skill_tag_lvl, STC.skill_tag_nm FROM TBL_SKILL_TAG_C STC WHERE
+    STC.skill_tag_sq = #{skillTagSq} </insert>
+
 
   <delete id="deleteResumeSkillTag" parameterType="long"> DELETE FROM TBL_RESUME_SKILL_TAG_S WHERE
     resume_skill_sq = #{resumeSkillSq} </delete>
