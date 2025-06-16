@@ -79,7 +79,7 @@ public class LoginController {
 
                 if (refreshToken == null) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(ApiResponse.of(HttpStatus.UNAUTHORIZED, "리프레시 토큰 없음", null));
+                                        .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "리프레시 토큰 없음"));
                 }
 
                 TokenDTO tokens = loginService.refreshToken(refreshToken);

@@ -24,11 +24,29 @@ const processQueue = (error, token = null) => {
   failedQueue = []
 }
 
+// **로그인 초기화 함수 (외부에서 주입받음)**
+let clearLoginState = () => {}
+
+// 외부에서 clearLoginState 함수를 설정하는 함수
+function setClearLoginState(fn) {
+  clearLoginState = fn
+}
+
 // 응답 인터셉터 설정
 apiInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // console.log('응답 성공:', response.status)
+    return response
+  },
   async (error) => {
+    // console.log('응답 에러:', error.response?.status)
     const originalRequest = error.config
+    // console.log('_retry:', originalRequest._retry)
+
+    // refresh-token 요청에 대해선 인터셉터 로직 skip
+    if (originalRequest.url === '/refresh-token') {
+      return Promise.reject(error)
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -43,13 +61,18 @@ apiInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
-        await apiInstance.post('/refresh-token') // refresh-token은 쿠키로 전송됨
+        // console.log('refresh-token 요청 보내기 전')
+        await apiInstance.post('/refresh-token')
+        // console.log('refresh-token 요청 성공')
         processQueue(null)
-        return apiInstance(originalRequest) // 원래 요청 재시도
+        return apiInstance(originalRequest)
       } catch (err) {
+        // console.log('refresh-token 요청 실패', err)
         processQueue(err)
+        clearLoginState()
         return Promise.reject(err)
       } finally {
+        // console.log('refresh-token 요청 finally')
         isRefreshing = false
       }
     }
@@ -107,4 +130,4 @@ const api = {
   },
 }
 
-export { api, baseUrl }
+export { api, baseUrl, setClearLoginState }

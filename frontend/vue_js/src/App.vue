@@ -18,6 +18,7 @@ import CommonModalContainer from './fo/components/common/CommonModalContainer.vu
 import CommonAlert from './fo/components/common/CommonAlert.vue'
 import { useUserStore } from './fo/stores/userStore'
 import { api } from '@/axios'
+import { setClearLoginState } from '@/axios'
 
 const userStore = useUserStore()
 
@@ -34,15 +35,10 @@ const fetchUserInfo = async () => {
       userTypeCd: data.userTypeCd,
     })
   } catch (error) {
-    console.error('자동 로그인 실패:', error)
+    // console.error('자동 로그인 실패:', error)
 
-    // 오토로그인이 아닌 경우에만 로그인 상태를 제거
-    const autoLogin = localStorage.getItem('autoLogin') === 'true'
-    if (!autoLogin) {
-      clearLoginState()
-    } else {
-      userStore.clearUser()
-    }
+    // 리프레시 토큰도 없을 경우까지 포함해서 처리
+    clearLoginState()
   }
 }
 
@@ -53,6 +49,15 @@ const clearLoginState = () => {
 
   userStore.clearUser()
 }
+
+function clearLoginStateFunc() {
+  localStorage.removeItem('userNm')
+  localStorage.removeItem('userTypeCd')
+  localStorage.removeItem('autoLogin')
+  userStore.clearUser() // store에 로그인 정보 초기화 메서드가 있어야 합니다.
+}
+
+setClearLoginState(clearLoginStateFunc)
 
 onMounted(() => {
   fetchUserInfo()
