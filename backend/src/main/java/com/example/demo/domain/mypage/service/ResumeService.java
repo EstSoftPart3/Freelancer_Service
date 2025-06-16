@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.AmazonS3Service;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
+import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.community.mapper.CmntTagMapper;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
@@ -310,6 +312,19 @@ public class ResumeService {
 	// 이력서 삭제
 	public void softDeleteResume(Long resumeSq) {
 		resumeMapper.updateDeleteYn(resumeSq);
+	}
+
+	// 전체 스킬 태그 리스트 조회
+	@Transactional
+	public List<CommonSkillTag> getAllSkillTags() {
+		List<CommonSkillTag> parentTags = resumeMapper.findParentSkillTags();
+		List<CommonSkillTag> childrenTags = resumeMapper.findAll(parentTags);
+		List<CommonSkillTag> allTags = new ArrayList<>();
+		allTags.addAll(parentTags);
+		allTags.addAll(childrenTags);
+
+		return allTags;
+
 	}
 
 	// // 기술

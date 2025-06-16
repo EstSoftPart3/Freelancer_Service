@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.vo.ResumeVo;
@@ -109,4 +110,9 @@ public interface ResumeMapper {
 	public ResumeNmTtlVo findResumeNmTtlBySq(@Param("resumeSq") Long resumeSq);
 
 	public Long findUserByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	// 전체 태그
+	List<CommonSkillTag> findParentSkillTags();
+
+	List<CommonSkillTag> findAll(@Param("skillTags") List<CommonSkillTag> skillTags);
 }

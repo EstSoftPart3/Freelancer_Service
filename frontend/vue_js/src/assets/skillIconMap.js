@@ -45,6 +45,29 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/eclipse/eclipse-original.svg',
   visualstudio:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/visualstudio/visualstudio-original.svg',
+
+  // Device (대체 아이콘 사용)
+  pc: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/monitor.svg',
+  노트북: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/laptop.svg',
+
+  // OS
+  windows:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg',
+  macos:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg',
+  linux:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg',
+
+  // DBMS
+  mysql:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
+  oracledb:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/oracle/oracle-original.svg',
+  mongodb:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
+  mariadb: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mariadb.svg',
+  redis:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg',
   default: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/code.svg',
 }
 

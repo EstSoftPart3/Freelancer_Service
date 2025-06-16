@@ -84,9 +84,14 @@
             <input type="month" v-model="endDate" />
           </div>
         </div>
-        <div class="date-input-group" style="margin-top: 20px;">
+        <div class="date-input-group" style="margin-top: 20px">
           <label>전공명 <span style="color: red">*</span></label>
-          <input type="text" v-model="majorName" placeholder="전공명을 입력하세요" required />
+          <input
+            type="text"
+            v-model="majorName"
+            placeholder="전공명을 입력하세요"
+            required
+          />
         </div>
       </div>
       <div class="modal-footer">
@@ -154,7 +159,7 @@ const fetchSchools = async () => {
         },
       },
     )
-    console.log('axios 요청 성공:', res)
+    // console.log('axios 요청 성공:', res)
     let content = res.data?.dataSearch?.content
     if (!content) {
       content = []

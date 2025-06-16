@@ -11,7 +11,7 @@
           <div class="form-group">
             <label class="modal-label">교육명</label>
             <input
-              v-model="form.program"
+              v-model="form.trainingProgramNm"
               type="text"
               class="form-control"
               placeholder="교육명"
@@ -20,7 +20,7 @@
           <div class="form-group">
             <label class="modal-label">교육 기관</label>
             <input
-              v-model="form.institution"
+              v-model="form.trainingInstitutionNm"
               type="text"
               class="form-control"
               placeholder="교육 기관"
@@ -30,20 +30,20 @@
         <div class="form-row">
           <div class="form-group position-group">
             <label class="modal-label">교육 기간</label>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px">
               <input
-                v-model="form.startDate"
+                v-model="form.trainingStartDt"
                 type="month"
                 class="form-control"
-                style="width: 48%;"
+                style="width: 48%"
                 placeholder="시작년월"
               />
-              <span style="align-self: center;">~</span>
+              <span style="align-self: center">~</span>
               <input
-                v-model="form.endDate"
+                v-model="form.trainingEndDt"
                 type="month"
                 class="form-control"
-                style="width: 48%;"
+                style="width: 48%"
                 placeholder="종료년월"
               />
             </div>
@@ -71,11 +71,11 @@ const props = defineProps({
 const modalStore = useModalStore()
 
 const form = ref({
-  program: '',
-  institution: '',
-  startDate: '', 
-  endDate: '', 
-  period: '',    
+  trainingProgramNm: '',
+  trainingInstitutionNm: '',
+  trainingStartDt: '',
+  trainingEndDt: '',
+  period: '',
 })
 
 const submit = () => {
@@ -85,7 +85,7 @@ const submit = () => {
     const [y, m] = date.split('-')
     return `${y}.${m}`
   }
-  form.value.period = `${format(form.value.startDate)} ~ ${format(form.value.endDate)}`
+  form.value.period = `${format(form.value.trainingStartDt)} ~ ${format(form.value.trainingEndDt)}`
   props.onComplete({ ...form.value }) // 부모에게 데이터 전달
   modalStore.closeModal()
 }

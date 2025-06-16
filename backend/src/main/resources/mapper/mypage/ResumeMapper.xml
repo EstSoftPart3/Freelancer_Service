@@ -182,6 +182,16 @@
     SELECT RESUME_NM AS resumeNm, null as resumeTtl, null as resumeSq FROM TBL_RESUME_M WHERE
     RESUME_SQ = #{resumeSq} </select>
 
+  <select id="findParentSkillTags"
+    resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM
+    TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool','Device','OS','DBMS') </select>
+
+  <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT
+    * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags" item="tag"
+      separator="," open="(" close=")"> #{tag.skillTagSq} </foreach>
+
+  </select>
+
   <!-- 이력서 등록 -->
   <!-- <insert id="insertResume"
   parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest"

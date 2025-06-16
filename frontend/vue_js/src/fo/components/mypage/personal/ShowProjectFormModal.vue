@@ -68,7 +68,11 @@
             <div class="form-group">
               <label class="modal-label">기종</label>
               <input
-                v-model="form.device"
+                :value="
+                  selectedSkills.device
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="기종 (예: PC)"
@@ -79,7 +83,11 @@
             <div class="form-group">
               <label class="modal-label">OS</label>
               <input
-                v-model="form.os"
+                :value="
+                  selectedSkills.os
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="OS (예: Linux)"
@@ -90,7 +98,11 @@
             <div class="form-group">
               <label class="modal-label">DBMS</label>
               <input
-                v-model="form.dbms"
+                :value="
+                  selectedSkills.dbms
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="DBMS (예: MySQL)"
@@ -103,7 +115,11 @@
             <div class="form-group">
               <label class="modal-label">언어</label>
               <input
-                v-model="form.languages"
+                :value="
+                  selectedSkills.language
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="언어 (쉼표로 구분, 예: Java, Python)"
@@ -114,7 +130,11 @@
             <div class="form-group">
               <label class="modal-label">TOOL</label>
               <input
-                v-model="form.tools"
+                :value="
+                  selectedSkills.tool
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="TOOL (쉼표로 구분, 예: Eclipse, VSCode)"
@@ -125,7 +145,11 @@
             <div class="form-group">
               <label class="modal-label">FW</label>
               <input
-                v-model="form.frameworks"
+                :value="
+                  selectedSkills.framework
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="FW (쉼표로 구분, 예: Spring Boot, Vue.js)"
@@ -157,104 +181,42 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue'
+import { computed, defineProps, reactive } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
-import SkillSelectModal from '@/fo/components/project/SkillSelectModal.vue'
-import axios from 'axios'
+import { useSkillStore } from '@/fo/stores/ProjectHistorySkillStore'
+import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal.vue'
 
 const props = defineProps({
   onComplete: Function,
 })
 
 const modalStore = useModalStore()
+const skillStore = useSkillStore()
 
-const form = ref({
+const form = reactive({
   name: '',
   period: '',
   client: '',
   workUnit: '',
   role: '',
-  // device: '',
-  // os: '',
-  // dbms: '',
-  // languages: '',
-  // tools: '',
-  // frameworks: '',
-  skills: [],
   etc: '',
 })
 
-const selectedSkills = ref([])
-const skillList = ref([])
-// const languageList = ref([])
-// const frameworkList = ref([])
-// const toolList = ref([])
-
-function parseArray(str) {
-  if (!str) return []
-  return str
-    .split(/[,\n;]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-}
-
-// const updateSelectedSkills = () => {
-//   const languages = parseArray(form.value.languages).map((name) => ({
-//     name,
-//     type: 'language',
-//   }))
-//   const tools = parseArray(form.value.tools).map((name) => ({
-//     name,
-//     type: 'tool',
-//   }))
-//   const frameworks = parseArray(form.value.frameworks).map((name) => ({
-//     name,
-//     type: 'framework',
-//   }))
-//   selectedSkills.value = [...languages, ...tools, ...frameworks]
-// }
+const selectedSkills = computed(() => skillStore.skills)
 
 const openSkillModal = () => {
-  modalStore.openModal(SkillSelectModal, {
-    skills: skillList.value,
-    onComplete: handleSkillConfirm,
-  })
+  modalStore.openModal(ProjectHistorySkillTagModal, {})
 }
-
-const handleSkillConfirm = (selected) => {
-  form.value.skills = selected
-}
-
-// const handleSkillConfirm = (selected) => {
-//   form.value.languages = selected
-//     .filter((s) => s.type === 'language')
-//     .map((s) => s.name)
-//     .join(', ')
-//   form.value.tools = selected
-//     .filter((s) => s.type === 'tool')
-//     .map((s) => s.name)
-//     .join(', ')
-//   form.value.frameworks = selected
-//     .filter((s) => s.type === 'framework')
-//     .map((s) => s.name)
-//     .join(', ')
-// }
 
 const submit = () => {
   const project = {
-    name: form.value.name,
+    projectHistoryTask: form.value.name,
     period: form.value.period,
-    client: form.value.client,
-    workUnit: form.value.workUnit,
-    role: form.value.role,
-    skills: selectedSkills.value,
-    // device: form.value.device,
-    // os: form.value.os,
-    // dbms: form.value.dbms,
-    // languages: parseArray(form.value.languages).map((name) => ({ name })),
-    // tools: parseArray(form.value.tools),
-    // frameworks: parseArray(form.value.frameworks).map((name) => ({ name })),
-    etc: parseArray(form.value.etc).map((name) => ({ name })),
+    projectHistoryClient: form.value.client,
+    projectHistoryTypeCd: form.value.workUnit,
+    projectHistoryJobPositionTypeCd: form.value.role,
+    skillTagList: selectedSkills.value,
+    // etc: parseArray(form.value.etc).map((name) => ({ name })),
   }
   props.onComplete(project)
   closeModal()
@@ -263,21 +225,6 @@ const submit = () => {
 const closeModal = () => {
   modalStore.closeModal()
 }
-
-onMounted(async () => {
-  try {
-    const res = await axios.get(
-      'http://localhost:8080/api/mypage/resume/skills',
-      console.log('기술 목록:', res.data),
-    )
-    skillList.value = res.data
-    // languageList.value = res.data.filter((skill) => skill.type === 'language')
-    // frameworkList.value = res.data.filter((skill) => skill.type === 'framework')
-    // toolList.value = res.data.filter((skill) => skill.type === 'tool')
-  } catch (e) {
-    console.error('[ 기술 목록 조회 실패]', e)
-  }
-})
 </script>
 
 <style scoped>

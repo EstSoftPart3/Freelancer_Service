@@ -29,7 +29,8 @@ import AffiliatedMembersPage from '../views/mypage/company/AffiliatedMembersPage
 import AffiliationApplicantListPage from '../views/mypage/company/AffiliationApplicantListPage.vue'
 import AffiliationProjectListPage from '../views/mypage/company/AffiliationProjectListPage.vue'
 
-import ResumeFormPage from '../views/mypage/personal/ResumeFormPage.vue'
+// import ResumeFormPage from '../views/mypage/personal/ResumeFormPage.vue'
+import ResumeFormPage from '../views/mypage/personal/ResumeFormPage_P.vue'
 import WithdrawPage from '../views/mypage/common/WithdrawPage.vue'
 import AffiliatedJobApplicationsPage from '../views/mypage/personal/AffiliatedJobApplicationsPage.vue'
 import AffiliatedScrapPage from '../views/mypage/personal/AffiliatedScrapPage.vue'

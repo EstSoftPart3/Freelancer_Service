@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.RepResumeSwitchRequest;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
@@ -33,34 +34,16 @@ public class ResumeController {
 
 	private final ResumeService resumeService;
 
-	// // 이력서 생성 (등록)
-	// @PostMapping
-	// public ResponseEntity<?> createResume(
-	// @AuthenticationPrincipal Long userSq,
-	// @RequestPart ResumeRequestDTO dto,
-	// @RequestPart(required = false) List<MultipartFile> profileImages,
-	// @RequestPart(required = false) List<MultipartFile> attachments) {
-
-	// int result = resumeService.createResume(userSq, dto, profileImages,
-	// attachments);
-	// if (result > 0) {
-	// return ResponseEntity.status(HttpStatus.CREATED).body("Resume created
-	// successfully");
-	// } else {
-	// return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed
-	// to create resume");
-	// }
-	// }
-
 	// 이력서 생성 (등록)
 	@PostMapping
 	public ResponseEntity<?> createResume(
-			@RequestPart Long userSq,
+			@AuthenticationPrincipal Long userSq,
 			@RequestPart ResumeRequestDTO dto,
 			@RequestPart(required = false) List<MultipartFile> profileImages,
 			@RequestPart(required = false) List<MultipartFile> attachments) {
 
-		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
+		int result = resumeService.createResume(userSq, dto, profileImages,
+				attachments);
 		if (result > 0) {
 			return ResponseEntity.status(HttpStatus.CREATED).body("Resume created successfully");
 		} else {
@@ -126,6 +109,11 @@ public class ResumeController {
 	public ResponseEntity<ApiResponse<String>> deleteResume(@PathVariable("resumeSq") Long resumeSq) {
 		resumeService.softDeleteResume(resumeSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 삭제 완료", "success"));
+	}
+
+	@GetMapping("/project-history/skill-tags")
+	public ResponseEntity<ApiResponse<List<CommonSkillTag>>> getAllSkills() {
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "기술 태그 리스트 조회 완료", resumeService.getAllSkillTags()));
 	}
 
 	// // 이력서 등록
