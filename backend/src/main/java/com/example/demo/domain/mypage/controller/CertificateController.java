@@ -17,26 +17,27 @@ public class CertificateController {
 		this.certificateService = certificateService;
 	}
 
-	@GetMapping("/certificates")
-	public Map<String, Object> getCertificates(
-		@RequestParam("keyword") String keyword,
-		@RequestParam("pageNo") int pageNo,
-		@RequestParam("numOfRows") int numOfRows
-	) {
-		List<ResumeCertificateRequest> items = certificateService.getCertificates(keyword, pageNo, numOfRows);
-		Map<String, Object> itemsMap = new HashMap<>();
-		itemsMap.put("item", items);
+	// @GetMapping("/certificates")
+	// public Map<String, Object> getCertificates(
+	// @RequestParam("keyword") String keyword,
+	// @RequestParam("pageNo") int pageNo,
+	// @RequestParam("numOfRows") int numOfRows
+	// ) {
+	// List<ResumeCertificateRequest> items =
+	// certificateService.getCertificates(keyword, pageNo, numOfRows);
+	// Map<String, Object> itemsMap = new HashMap<>();
+	// itemsMap.put("item", items);
 
-		Map<String, Object> body = new HashMap<>();
-		body.put("items", itemsMap);
-		body.put("totalCount", items.size());
+	// Map<String, Object> body = new HashMap<>();
+	// body.put("items", itemsMap);
+	// body.put("totalCount", items.size());
 
-		Map<String, Object> response = new HashMap<>();
-		response.put("body", body);
+	// Map<String, Object> response = new HashMap<>();
+	// response.put("body", body);
 
-		Map<String, Object> result = new HashMap<>();
-		result.put("response", response);
+	// Map<String, Object> result = new HashMap<>();
+	// result.put("response", response);
 
-		return result;
-	}
+	// return result;
+	// }
 }
