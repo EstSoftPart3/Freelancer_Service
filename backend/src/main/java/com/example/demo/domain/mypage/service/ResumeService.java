@@ -11,7 +11,9 @@ import com.example.demo.common.AmazonS3.AmazonS3Service;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.community.mapper.CmntTagMapper;
+import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
+import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.repository.ResumeRepository;
@@ -287,6 +289,14 @@ public class ResumeService {
 		dto.setFileSaveNm(uploadedFileDTO.getSavedName());
 		dto.setFileTyp(uploadedFileDTO.getContentType());
 		dto.setFileSize(uploadedFileDTO.getSize());
+		return dto;
+	}
+
+	// 프로젝트 업무단, 역할
+	public ProjectHistoryTypeCodeGroupResponseDTO getGroupedProjectHistoryTypeCodes() {
+		ProjectHistoryTypeCodeGroupResponseDTO dto = new ProjectHistoryTypeCodeGroupResponseDTO();
+		dto.setProjectRoleTypeList(resumeRepository.getRoleTypes());
+		dto.setProjectTaskTypeList(resumeRepository.getTaskTypes());
 		return dto;
 	}
 

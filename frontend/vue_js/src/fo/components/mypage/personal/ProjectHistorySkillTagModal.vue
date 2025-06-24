@@ -61,11 +61,18 @@
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
-import { useSkillStore } from '@/fo/stores/ProjectHistorySkillStore'
-import { ref, onMounted, watch } from 'vue'
+import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
+import { ref, onMounted, watch, defineProps } from 'vue'
 import skillIconMap from '@/assets/skillIconMap.js'
 
-const skillStore = useSkillStore()
+const props = defineProps({
+  projectId: {
+    type: [String, Number],
+    required: true,
+  },
+})
+
+const projectStore = useProjectStore()
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 
@@ -78,54 +85,48 @@ const getSkills = async () => {
     const res = await api.$get(`/mypage/resume/project-history/skill-tags`)
     if (res.status == 'OK') {
       skillList.value = [...res.output]
-
       groupedSkillTags.value = skillList.value
         .filter((tag) => tag.skillTagLvl === 1)
-        .map((parent) => {
-          const children = skillList.value.filter(
+        .map((parent) => ({
+          ...parent,
+          children: skillList.value.filter(
             (tag) => tag.parentSkillTagSq === parent.skillTagSq,
-          )
-          return {
-            ...parent,
-            children,
-          }
-        })
+          ),
+        }))
     }
-  } catch (error) {
+  } catch {
     alertStore.show('기술 태그 리스트를 불러올 수 없습니다.', 'danger')
   }
 }
 
 const toggleSkill = (skill) => {
-  const index = selectedSkills.value.findIndex(
+  const idx = selectedSkills.value.findIndex(
     (s) => s.skillTagSq === skill.skillTagSq,
   )
-
-  if (index === -1) {
+  if (idx === -1) {
     selectedSkills.value.push(skill)
   } else {
-    selectedSkills.value.splice(index, 1)
+    selectedSkills.value.splice(idx, 1)
   }
 }
+
+const isSelected = (skill) =>
+  selectedSkills.value.some((s) => s.skillTagSq === skill.skillTagSq)
 
 const getSkillIcon = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
   return skillIconMap[key] || skillIconMap.default
 }
 
-const isSelected = (skill) =>
-  selectedSkills.value.some((s) => s.skillTagSq === skill.skillTagSq)
-
 const syncSelectedSkillsWithStore = () => {
+  const projectSkills = projectStore.getSkills(props.projectId)
   const allSkills = []
-  for (const category in skillStore.skills) {
-    if (Array.isArray(skillStore.skills[category])) {
-      allSkills.push(...skillStore.skills[category])
+  for (const category in projectSkills) {
+    if (Array.isArray(projectSkills[category])) {
+      allSkills.push(...projectSkills[category])
     }
   }
-
-  // 깊은 복사하여 selectedSkills 초기화
-  selectedSkills.value = allSkills.map((skill) => ({ ...skill }))
+  selectedSkills.value = allSkills.map((s) => ({ ...s }))
 }
 
 const handleConfirm = () => {
@@ -139,33 +140,28 @@ const handleConfirm = () => {
   }
 
   selectedSkills.value.forEach((skill) => {
-    const parentGroup = groupedSkillTags.value.find(
-      (group) => group.skillTagSq === skill.parentSkillTagSq,
+    const parent = groupedSkillTags.value.find(
+      (g) => g.skillTagSq === skill.parentSkillTagSq,
     )
-    if (!parentGroup) return
+    if (!parent) return
 
-    const category = parentGroup.skillTagNm.toLowerCase()
+    const category = parent.skillTagNm.toLowerCase()
     if (category in grouped) {
       grouped[category].push(skill)
     }
   })
 
-  skillStore.setSkills(grouped)
+  projectStore.setSkills(props.projectId, grouped)
   closeModal()
 }
 
-const closeModal = () => {
-  modalStore.closeModal()
-}
+const closeModal = () => modalStore.closeModal()
 
 onMounted(async () => {
   await getSkills()
-  if (modalStore.isOpen) {
-    syncSelectedSkillsWithStore()
-  }
+  syncSelectedSkillsWithStore()
 })
 
-// 모달이 열릴 때 skillStore -> selectedSkills 동기화
 watch(
   () => modalStore.isOpen,
   async (isOpen) => {

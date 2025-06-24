@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.vo.ResumeVo;
@@ -115,4 +116,10 @@ public interface ResumeMapper {
 	List<CommonSkillTag> findParentSkillTags();
 
 	List<CommonSkillTag> findAll(@Param("skillTags") List<CommonSkillTag> skillTags);
+
+	// 프로젝트 업무단,역할 불러오기
+	List<ProjectHistoryTypeCodeDTO> selectProjectRoleTypeCodes();
+
+	List<ProjectHistoryTypeCodeDTO> selectProjectTaskTypeCodes();
+
 }

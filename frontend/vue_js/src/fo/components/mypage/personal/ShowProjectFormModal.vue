@@ -22,12 +22,21 @@
             </div>
             <div class="form-group">
               <label class="modal-label">참여기간</label>
-              <input
-                v-model="form.period"
-                type="text"
-                class="form-control"
-                placeholder="참여기간 (예: 2023.01 ~ 2023.12)"
-              />
+              <div class="d-flex gap-2">
+                <input
+                  v-model="form.startDate"
+                  type="date"
+                  class="form-control"
+                  placeholder="시작일"
+                />
+                <span class="align-self-center">~</span>
+                <input
+                  v-model="form.endDate"
+                  type="date"
+                  class="form-control"
+                  placeholder="종료일 (선택 안 해도 됨)"
+                />
+              </div>
             </div>
           </div>
           <div class="form-row">
@@ -42,21 +51,30 @@
             </div>
             <div class="form-group">
               <label class="modal-label">업무단</label>
-              <input
-                v-model="form.workUnit"
-                type="text"
-                class="form-control"
-                placeholder="업무단 (예: 대외계/내부)"
-              />
+              <select v-model="form.workUnit" class="form-control">
+                <option disabled value="">업무단 선택</option>
+                <option
+                  v-for="item in projectTaskTypeList"
+                  :key="item.commonCodeSq"
+                  :value="item.commonCodeSq"
+                >
+                  {{ item.commonCodeNm }}
+                </option>
+              </select>
             </div>
+
             <div class="form-group">
               <label class="modal-label">역할</label>
-              <input
-                v-model="form.role"
-                type="text"
-                class="form-control"
-                placeholder="역할 (예: 개발)"
-              />
+              <select v-model="form.role" class="form-control">
+                <option disabled value="">역할 선택</option>
+                <option
+                  v-for="item in projectRoleTypeList"
+                  :key="item.commonCodeSq"
+                  :value="item.commonCodeSq"
+                >
+                  {{ item.commonCodeNm }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -158,7 +176,7 @@
               />
             </div>
           </div>
-          <div class="form-row">
+          <!-- <div class="form-row">
             <div class="form-group">
               <label class="modal-label">기타</label>
               <input
@@ -168,10 +186,9 @@
                 placeholder="기타 (쉼표로 구분, 예: git, Docker)"
               />
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="btn btn-primary" @click="submit">저장하기</button>
         <button class="btn btn-light" @click="closeModal">닫기</button>
@@ -181,43 +198,66 @@
 </template>
 
 <script setup>
-import { computed, defineProps, reactive } from 'vue'
+import { computed, defineProps, onMounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
-import { useSkillStore } from '@/fo/stores/ProjectHistorySkillStore'
+import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal.vue'
+import { api } from '@/axios'
 
 const props = defineProps({
   onComplete: Function,
+  projectId: Number,
 })
 
 const modalStore = useModalStore()
-const skillStore = useSkillStore()
+const projectStore = useProjectStore()
 
-const form = reactive({
-  name: '',
-  period: '',
-  client: '',
-  workUnit: '',
-  role: '',
-  etc: '',
+// form과 skills를 store에서 가져옴 (양방향 바인딩용 computed)
+const form = computed({
+  get: () => projectStore.getForm(props.projectId),
+  set: (val) => projectStore.setForm(props.projectId, val),
 })
 
-const selectedSkills = computed(() => skillStore.skills)
+const selectedSkills = computed(() => projectStore.getSkills(props.projectId))
+
+const projectRoleTypeList = ref([])
+const projectTaskTypeList = ref([])
+
+const fetchTypeCodes = async () => {
+  const response = await api.$get('/mypage/resume/project-history/type-codes')
+  projectRoleTypeList.value = response.output.projectRoleTypeList
+  projectTaskTypeList.value = response.output.projectTaskTypeList
+  // console.log('projectRoleTypeList', projectRoleTypeList)
+  // console.log('projectTaskTypeList', projectTaskTypeList)
+}
 
 const openSkillModal = () => {
-  modalStore.openModal(ProjectHistorySkillTagModal, {})
+  modalStore.openModal(ProjectHistorySkillTagModal, {
+    projectId: props.projectId,
+  })
 }
 
 const submit = () => {
+  const selectedWorkUnit = projectTaskTypeList.value.find(
+    (item) => item.commonCodeSq === form.value.workUnit,
+  )
+
+  const selectedRole = projectRoleTypeList.value.find(
+    (item) => item.commonCodeSq === form.value.role,
+  )
+
   const project = {
     projectHistoryTask: form.value.name,
-    period: form.value.period,
+    projectHistoryStartDt: form.value.startDate || null,
+    projectHistoryEndDt: form.value.endDate || null,
     projectHistoryClient: form.value.client,
     projectHistoryTypeCd: form.value.workUnit,
+    projectHistoryTypeCdNm: selectedWorkUnit?.commonCodeNm || null, // 업무단 이름
     projectHistoryJobPositionTypeCd: form.value.role,
-    skillTagList: selectedSkills.value,
-    // etc: parseArray(form.value.etc).map((name) => ({ name })),
+    projectHistoryJobPositionTypeCdNm: selectedRole?.commonCodeNm || null, // 역할 이름
+    skillTags: selectedSkills.value,
   }
+
   props.onComplete(project)
   closeModal()
 }
@@ -225,6 +265,12 @@ const submit = () => {
 const closeModal = () => {
   modalStore.closeModal()
 }
+onMounted(() => {
+  if (!projectStore.hasForm(props.projectId)) {
+    projectStore.initForm(props.projectId)
+  }
+  fetchTypeCodes()
+})
 </script>
 
 <style scoped>

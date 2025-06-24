@@ -1,7 +1,10 @@
 package com.example.demo.domain.mypage.repository;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 
@@ -69,6 +72,14 @@ public class ResumeRepository {
 
     public int deleteProjectHistorySkillTag(Long projectHistorySkillSq) {
         return resumeMapper.deleteProjectHistorySkillTag(projectHistorySkillSq);
+    }
+
+    public List<ProjectHistoryTypeCodeDTO> getRoleTypes() {
+        return resumeMapper.selectProjectRoleTypeCodes();
+    }
+
+    public List<ProjectHistoryTypeCodeDTO> getTaskTypes() {
+        return resumeMapper.selectProjectTaskTypeCodes();
     }
 
     // 자격증

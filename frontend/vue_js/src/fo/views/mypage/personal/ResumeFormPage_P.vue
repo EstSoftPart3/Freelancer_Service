@@ -366,7 +366,15 @@
                       'me-2',
                     ]"
                   ></i>
-                  <span>{{ project.name }} ({{ project.period }})</span>
+                  <span>
+                    {{ project.projectHistoryTask }} ({{
+                      project.projectHistoryStartDt
+                    }}
+                    ~
+                    <template v-if="project.projectHistoryEndDt">
+                      {{ project.projectHistoryEndDt }}</template
+                    >)
+                  </span>
                 </div>
                 <span
                   class="text-grey small ms-2 position-absolute end-0 me-3"
@@ -380,93 +388,150 @@
                 <div class="bg-light rounded p-3 border">
                   <div class="row mb-2">
                     <div class="col-sm-4">
-                      <strong>고객사:</strong> {{ project.client }}
+                      <strong>고객사:</strong>
+                      {{ project.projectHistoryClient }}
                     </div>
                     <div class="col-sm-4">
-                      <strong>업무단:</strong> {{ project.workUnit }}
+                      <strong>업무단:</strong>
+                      {{ project.projectHistoryTypeCdNm }}
                     </div>
                     <div class="col-sm-4">
-                      <strong>역할:</strong> {{ project.role }}
-                    </div>
-                  </div>
-                  <div class="row mb-2">
-                    <div class="col-sm-4">
-                      <strong>기종:</strong> {{ project.device }}
-                    </div>
-                    <div class="col-sm-4">
-                      <strong>OS:</strong> {{ project.os }}
-                    </div>
-                    <div class="col-sm-4">
-                      <strong>DBMS:</strong> {{ project.dbms }}
+                      <strong>역할:</strong>
+                      {{ project.projectHistoryJobPositionTypeCdNm }}
                     </div>
                   </div>
                   <div class="row mb-2">
                     <div class="col-sm-12">
-                      <strong style="margin-right: 8px">언어:</strong>
-                      <button
-                        v-for="lang in project.languages"
-                        :key="lang.name"
-                        class="btn btn-rounded btn-3d btn-light btn-sm me-2"
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
-                        <img
-                          v-if="lang.icon"
-                          :src="lang.icon"
-                          :alt="lang.name"
-                          width="16"
-                          height="16"
-                        />
-                        {{ lang.name }}
-                      </button>
+                        <strong class="me-2">기종:</strong>
+                        <div
+                          v-for="skill in project.skillTags.device"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="row mb-2">
                     <div class="col-sm-12">
-                      <strong style="margin-right: 8px">TOOL:</strong>
-                      <button
-                        v-for="tool in project.tools"
-                        :key="tool"
-                        class="btn btn-rounded btn-3d btn-light btn-sm me-2"
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
-                        {{ tool }}
-                      </button>
+                        <strong class="me-2">OS:</strong>
+                        <div
+                          v-for="skill in project.skillTags.os"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="row mb-2">
                     <div class="col-sm-12">
-                      <strong style="margin-right: 8px">FW:</strong>
-                      <button
-                        v-for="fw in project.frameworks"
-                        :key="fw.name"
-                        class="btn btn-rounded btn-3d btn-light btn-sm me-2"
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
-                        <img
-                          v-if="fw.icon"
-                          :src="fw.icon"
-                          :alt="fw.name"
-                          width="16"
-                          height="16"
-                        />
-                        {{ fw.name }}
-                      </button>
+                        <strong class="me-2">DBMS:</strong>
+                        <div
+                          v-for="skill in project.skillTags.dbms"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="row mb-3">
                     <div class="col-sm-12">
-                      <strong style="margin-right: 8px">기타:</strong>
-                      <button
-                        v-for="etc in project.etc"
-                        :key="etc.name"
-                        class="btn btn-rounded btn-3d btn-light btn-sm me-2"
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
-                        <img
-                          v-if="etc.icon"
-                          :src="etc.icon"
-                          :alt="etc.name"
-                          width="16"
-                          height="16"
-                        />
-                        {{ etc.name }}
-                      </button>
+                        <strong class="me-2">언어:</strong>
+                        <div
+                          v-for="skill in project.skillTags.language"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-12">
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
+                      >
+                        <strong class="me-2">TOOL:</strong>
+                        <div
+                          v-for="skill in project.skillTags.tool"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-12">
+                      <div
+                        class="mb-2 d-flex align-items-center gap-2 flex-wrap"
+                      >
+                        <strong class="me-2">FW:</strong>
+                        <div
+                          v-for="skill in project.skillTags.framework"
+                          :key="skill.skillTagSq"
+                          class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
+                          style="padding-right: 24px"
+                        >
+                          <img
+                            v-if="generateIconUrl(skill.skillTagNm)"
+                            :src="generateIconUrl(skill.skillTagNm)"
+                            :alt="skill.skillTagNm"
+                            width="20"
+                            height="20"
+                          />
+                          <span>{{ skill.skillTagNm }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -613,9 +678,11 @@ import { reactive, ref, computed, watch } from 'vue'
 // import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
+const projectStore = useProjectStore()
 
 const resumeForm = reactive({
   resumeTtl: '',
@@ -647,7 +714,6 @@ const profileImages = ref([])
 const attachments = ref([])
 
 // 프로필 사진
-
 const profileImageUrl = computed(() =>
   profileImages.value.length && profileImages.value[0]
     ? URL.createObjectURL(profileImages.value[0])
@@ -805,8 +871,12 @@ const removeTraining = (index) => {
 
 // 프로젝트 입력 폼 표시 로직
 const showProjectForm = () => {
+  const index = resumeForm.projectHistoryList.length
+  projectStore.resetProject(index)
   modalStore.openModal(ShowProjectFormModal, {
+    projectId: index,
     onComplete: (project) => {
+      // skillTags 포함된 project가 넘어옴
       resumeForm.projectHistoryList.push(project)
     },
   })
@@ -814,6 +884,7 @@ const showProjectForm = () => {
 
 const removeProject = (index) => {
   resumeForm.projectHistoryList.splice(index, 1)
+  projectStore.resetProject(index)
 }
 
 // 프로젝트 토글
@@ -879,10 +950,17 @@ const generateIconUrl = (name) => {
     MongoDB: 'mongodb',
     MariaDB: 'mariadb',
     Redis: 'redis',
+    PC: 'monitor', // 추가
+    노트북: 'laptop', // 추가
   }
 
   const mapped = supportedIcons[name]
   if (!mapped) return null
+
+  // devicon이 아닌 lucide 아이콘 처리
+  if (name === 'PC' || name === '노트북') {
+    return `https://cdn.jsdelivr.net/npm/lucide-static/icons/${mapped}.svg`
+  }
 
   const fileName =
     name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
@@ -890,11 +968,35 @@ const generateIconUrl = (name) => {
   return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
 }
 
+// 프로젝트 스킬 리스트 api 구조화
+
+function flattenSkillTags(skillTags) {
+  if (!skillTags) return []
+  return Object.values(skillTags).flat()
+}
+
+function cleanProjectHistoryList(projectHistoryList) {
+  // skillTags에서 skillTagList로 변환 후 skillTags 제거
+  return projectHistoryList.map(({ skillTags, ...rest }) => ({
+    ...rest,
+    skillTagList: flattenSkillTags(skillTags),
+  }))
+}
+
 async function submitResume() {
+  const cleanedProjectHistoryList = cleanProjectHistoryList(
+    resumeForm.projectHistoryList,
+  )
+
+  // API 요청용 JSON
+  const apiJson = {
+    ...resumeForm,
+    projectHistoryList: cleanedProjectHistoryList,
+  }
   const formData = new FormData()
 
   // JSON을 Blob으로 감싸서 append (resumeRequest로 맞추기)
-  const jsonBlob = new Blob([JSON.stringify(resumeForm)], {
+  const jsonBlob = new Blob([JSON.stringify(apiJson)], {
     type: 'application/json',
   })
   formData.append('resumeRequest', jsonBlob)

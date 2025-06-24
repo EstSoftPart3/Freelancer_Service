@@ -192,6 +192,19 @@
 
   </select>
 
+  <!-- 프로젝트 업무단,역할 불러오기 -->
+  <!-- 역할 (1000) -->
+  <select id="selectProjectRoleTypeCodes"
+    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
+    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
+    parent_common_code_sq = 1000 AND common_code_is_active_yn = 'Y' </select>
+
+  <!-- 업무 (1100) -->
+  <select id="selectProjectTaskTypeCodes"
+    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
+    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
+    parent_common_code_sq = 1100 AND common_code_is_active_yn = 'Y' </select>
+
   <!-- 이력서 등록 -->
   <!-- <insert id="insertResume"
   parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest"
