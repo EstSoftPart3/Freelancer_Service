@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
+import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.vo.ResumeVo;
 import com.example.demo.domain.project.vo.ResumeNmTtlVo;
@@ -121,5 +122,14 @@ public interface ResumeMapper {
 	List<ProjectHistoryTypeCodeDTO> selectProjectRoleTypeCodes();
 
 	List<ProjectHistoryTypeCodeDTO> selectProjectTaskTypeCodes();
+
+	// 자격증 목록 조회 (페이징 + 검색)
+	List<CertificateResponseDTO> selectCertificatesByName(
+			@Param("searchNm") String searchNm,
+			@Param("size") int size,
+			@Param("offset") int offset);
+
+	// 자격증 총 개수 조회 (검색조건 포함)
+	int countCertificatesByName(@Param("searchNm") String searchNm);
 
 }

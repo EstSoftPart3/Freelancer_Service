@@ -13,6 +13,8 @@ import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.community.mapper.CmntTagMapper;
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
+import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
+import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
@@ -298,6 +300,17 @@ public class ResumeService {
 		dto.setProjectRoleTypeList(resumeRepository.getRoleTypes());
 		dto.setProjectTaskTypeList(resumeRepository.getTaskTypes());
 		return dto;
+	}
+
+	// 자격증
+	public CertificateListResponseDTO getCertificates(String searchNm, int page, int size) {
+		int offset = (page - 1) * size;
+		List<CertificateResponseDTO> certificates = resumeRepository.findCertificatesByName(searchNm, size, offset);
+		int totalCount = resumeRepository.countCertificatesByName(searchNm);
+
+		int totalPages = (int) Math.ceil((double) totalCount / size);
+
+		return new CertificateListResponseDTO(certificates, totalCount, totalPages, page);
 	}
 
 	// 대표 이력서 설정

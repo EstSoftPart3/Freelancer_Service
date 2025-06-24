@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
+import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -143,5 +144,15 @@ public class ResumeRepository {
 
     public int deleteResumeAttachmentMapping(Long fileSq) {
         return resumeMapper.deleteResumeAttachmentMapping(fileSq);
+    }
+
+    // 자격증
+
+    public List<CertificateResponseDTO> findCertificatesByName(String searchNm, int size, int offset) {
+        return resumeMapper.selectCertificatesByName(searchNm, size, offset);
+    }
+
+    public int countCertificatesByName(String searchNm) {
+        return resumeMapper.countCertificatesByName(searchNm);
     }
 }

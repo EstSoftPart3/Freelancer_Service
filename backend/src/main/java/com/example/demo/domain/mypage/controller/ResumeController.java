@@ -20,6 +20,7 @@ import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.RepResumeSwitchRequest;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
+import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.service.ResumeService;
@@ -123,6 +124,17 @@ public class ResumeController {
 	public ResponseEntity<ApiResponse<ProjectHistoryTypeCodeGroupResponseDTO>> getGroupedCodes() {
 		ProjectHistoryTypeCodeGroupResponseDTO result = resumeService.getGroupedProjectHistoryTypeCodes();
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "타입 코드 리스트 조회 완료", result));
+	}
+
+	// 자격증 불러오기
+	@GetMapping("/certificates")
+	public ResponseEntity<ApiResponse<CertificateListResponseDTO>> getCertificates(
+			@RequestParam(required = false) String searchNm,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "3") int size) {
+
+		CertificateListResponseDTO result = resumeService.getCertificates(searchNm, page, size);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "자격증 리스트 조회 완료", result));
 	}
 
 	// // 이력서 등록

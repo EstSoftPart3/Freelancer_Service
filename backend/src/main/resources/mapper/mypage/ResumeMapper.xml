@@ -205,6 +205,22 @@
     AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
     parent_common_code_sq = 1100 AND common_code_is_active_yn = 'Y' </select>
 
+  <!-- 자격증  -->
+
+  <select id="selectCertificatesByName"
+    resultType="com.example.demo.domain.mypage.dto.response.CertificateResponseDTO"> SELECT
+    certificate_cd, certificate_nm FROM TBL_CERTIFICATE_S <where>
+      <if test="searchNm != null and searchNm != ''"> AND certificate_nm LIKE CONCAT('%',
+    #{searchNm}, '%') </if>
+    </where> ORDER BY certificate_cd LIMIT #{size} OFFSET #{offset} </select>
+
+  <select id="countCertificatesByName" resultType="int"> SELECT COUNT(*) FROM TBL_CERTIFICATE_S <where>
+      <if test="searchNm != null and searchNm != ''"> AND certificate_nm LIKE CONCAT('%',
+    #{searchNm}, '%') </if>
+    </where>
+  </select>
+
+
   <!-- 이력서 등록 -->
   <!-- <insert id="insertResume"
   parameterType="com.example.demo.domain.mypage.dto.request.ResumeRegisterRequest"
