@@ -42,7 +42,7 @@
             <div style="display: flex; gap: 8px">
               <input
                 v-model="form.startDate"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="입사년월"
@@ -50,7 +50,7 @@
               <span style="align-self: center">~</span>
               <input
                 v-model="form.endDate"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="퇴사년월"
@@ -88,31 +88,23 @@ const form = ref({
   period: '',
 })
 
-function toYyyyMmDd(dateStr) {
-  if (!dateStr) return ''
-  if (/^\d{4}-\d{2}$/.test(dateStr)) return dateStr + '-01'
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
-  return ''
-}
-
 const submit = () => {
   // 화면 표시용 기간 (YYYY.MM ~ YYYY.MM)
-  const format = (date) => {
-    if (!date) return ''
-    const [y, m] = date.split('-')
-    return `${y}.${m}`
+  function formatDate(dateString) {
+    if (!dateString) return ''
+    return dateString.substring(0, 10).replace(/-/g, '.')
   }
   form.value.period = form.value.endDate
-    ? `${format(form.value.startDate)} ~ ${format(form.value.endDate)}`
-    : `${format(form.value.startDate)} ~`
+    ? `${formatDate(form.value.startDate)} ~ ${formatDate(form.value.endDate)}`
+    : `${formatDate(form.value.startDate)} ~`
 
   // 부모로 넘길 때는 YYYY-MM-dd로 넘기기
   props.onComplete({
     careerCompanyNm: form.value.company,
     careerDepartmentNm: form.value.department,
     careerPositionNm: form.value.position,
-    careerStartDt: toYyyyMmDd(form.value.startDate),
-    careerEndDt: toYyyyMmDd(form.value.endDate),
+    careerStartDt: form.value.startDate,
+    careerEndDt: form.value.endDate,
     period: form.value.period,
   })
   modalStore.closeModal()

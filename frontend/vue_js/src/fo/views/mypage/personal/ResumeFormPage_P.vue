@@ -227,12 +227,7 @@
                 >
                 <span>
                   (
-                  {{
-                    formatPeriod(
-                      education.educationAdmissionDt,
-                      education.educationGraduationDt,
-                    )
-                  }}
+                  {{ education.period }}
                   )
                 </span>
                 <span
@@ -268,7 +263,7 @@
                 {{ career.careerPositionNm }}
                 <span>
                   (
-                  {{ careerPeriod(career.careerStartDt, career.careerEndDt) }}
+                  {{ career.period }}
                   )
                 </span>
 
@@ -306,7 +301,7 @@
                 class="training-tag"
               >
                 {{ item.trainingProgramNm }} /
-                {{ item.trainingInstitutionNm }} / {{ item.period }}
+                {{ item.trainingInstitutionNm }} ( {{ item.period }} )
                 <span
                   class="text-grey ms-2"
                   style="cursor: pointer"
@@ -643,6 +638,8 @@
                 class="form-check-input"
                 type="checkbox"
                 id="agreeCheck"
+                :true-value="'Y'"
+                :false-value="'N'"
               />
               <label class="form-check-label" for="agreeCheck"
                 >알림 발신 여부</label
@@ -675,7 +672,7 @@ import ShowProjectFormModal from '@/fo/components/mypage/personal/ShowProjectFor
 import LicenseModal from '@/fo/components/mypage/personal/LicenseModal.vue'
 
 import { reactive, ref, computed, watch } from 'vue'
-// import { api } from '@/axios'
+import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
@@ -691,7 +688,7 @@ const resumeForm = reactive({
   resumePhoneNum: '',
   resumeEmail: '',
   resumeGreetingTxt: '',
-  resumeIsNotificationYn: 'Y',
+  resumeIsNotificationYn: 'N',
   resumeIsRepresentativeYn: 'N',
   address: {
     zonecode: '',
@@ -823,14 +820,6 @@ const showEducationForm = () => {
   })
 }
 
-//학력 날짜 변환
-function formatPeriod(admission, graduation) {
-  if (!admission) return ''
-  const start = admission.replace('-', '.')
-  if (!graduation) return `${start} ~ `
-  return `${start} ~ ${graduation.replace('-', '.')}`
-}
-
 const removeEducation = (index) => {
   resumeForm.educationList.splice(index, 1)
 }
@@ -842,14 +831,6 @@ const showCareerForm = () => {
       resumeForm.careerList.push(career)
     },
   })
-}
-
-//회사이력 날짜 변환
-function careerPeriod(start, end) {
-  if (!start) return ''
-  const startStr = start.replace('-', '.')
-  if (!end) return `${startStr} ~ `
-  return `${startStr} ~ ${end.replace('-', '.')}`
 }
 
 const removeCareer = (index) => {
@@ -1016,7 +997,7 @@ async function submitResume() {
   const jsonBlob = new Blob([JSON.stringify(apiJson)], {
     type: 'application/json',
   })
-  formData.append('resumeRequest', jsonBlob)
+  formData.append('dto', jsonBlob)
 
   // 파일 목록 추가
   profileImages.value.forEach((file) => {
@@ -1027,9 +1008,9 @@ async function submitResume() {
   })
 
   try {
-    // await api.$post('/mypage/resume', formData, {
-    //   headers: { 'Content-Type': 'multipart/form-data' },
-    // })
+    await api.$post('/mypage/resume', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     console.log('폼데이터 내용:')
     for (let [key, value] of formData.entries()) {
       if (value instanceof Blob) {

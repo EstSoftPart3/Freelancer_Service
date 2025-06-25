@@ -39,18 +39,20 @@ public class ResumeController {
 
 	// 이력서 생성 (등록)
 	@PostMapping
-	public ResponseEntity<?> createResume(
+	public ResponseEntity<ApiResponse<?>> createResume(
 			@AuthenticationPrincipal Long userSq,
 			@RequestPart ResumeRequestDTO dto,
 			@RequestPart(required = false) List<MultipartFile> profileImages,
 			@RequestPart(required = false) List<MultipartFile> attachments) {
 
-		int result = resumeService.createResume(userSq, dto, profileImages,
-				attachments);
+		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
+
 		if (result > 0) {
-			return ResponseEntity.status(HttpStatus.CREATED).body("Resume created successfully");
+			return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 등록 완료", "success"));
 		} else {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create resume");
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이력서 등록 실패", "fail"));
 		}
 	}
 

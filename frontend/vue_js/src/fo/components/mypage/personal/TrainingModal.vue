@@ -33,7 +33,7 @@
             <div style="display: flex; gap: 8px">
               <input
                 v-model="form.trainingStartDt"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="시작년월"
@@ -41,7 +41,7 @@
               <span style="align-self: center">~</span>
               <input
                 v-model="form.trainingEndDt"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="종료년월"
@@ -79,13 +79,12 @@ const form = ref({
 })
 
 const submit = () => {
-  // YYYY-MM -> YYYY.MM 포맷으로 변환
-  const format = (date) => {
-    if (!date) return ''
-    const [y, m] = date.split('-')
-    return `${y}.${m}`
+  function formatDate(dateString) {
+    if (!dateString) return ''
+    return dateString.substring(0, 10).replace(/-/g, '.')
   }
-  form.value.period = `${format(form.value.trainingStartDt)} ~ ${format(form.value.trainingEndDt)}`
+
+  form.value.period = `${formatDate(form.value.trainingStartDt)} ~ ${formatDate(form.value.trainingEndDt)}`
   props.onComplete({ ...form.value }) // 부모에게 데이터 전달
   modalStore.closeModal()
 }

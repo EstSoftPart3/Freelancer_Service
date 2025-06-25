@@ -77,11 +77,11 @@
         <div class="date-inputs">
           <div class="date-input-group">
             <label>입학년월 <span style="color: red">*</span></label>
-            <input type="month" v-model="startDate" />
+            <input type="date" v-model="startDate" />
           </div>
           <div class="date-input-group">
             <label>졸업년월</label>
-            <input type="month" v-model="endDate" />
+            <input type="date" v-model="endDate" />
           </div>
         </div>
         <div class="date-input-group" style="margin-top: 20px">
@@ -217,7 +217,7 @@ const backToSearch = () => {
 
 function formatDate(dateString) {
   if (!dateString) return ''
-  return dateString.substring(0, 7).replace('-', '.')
+  return dateString.substring(0, 10).replace(/-/g, '.')
 }
 
 const completeSelection = () => {
@@ -234,15 +234,12 @@ const completeSelection = () => {
     ? `${formatDate(startDate.value)} ~ ${formatDate(endDate.value)}`
     : `${formatDate(startDate.value)} ~`
 
-  const admissionDate = startDate.value + '-01'
-  const graduationDate = endDate.value ? endDate.value + '-01' : null
-
   props.onComplete &&
     props.onComplete({
       educationSchoolNm: selectedSchool.value.name,
       educationMajorNm: majorName.value,
-      educationAdmissionDt: admissionDate,
-      educationGraduationDt: graduationDate,
+      educationAdmissionDt: startDate.value,
+      educationGraduationDt: endDate.value,
       educationStatusCd: endDate.value ? 1201 : 1202, // 졸업년월 있으면 졸업(1201), 없으면 졸업예정(1202)
       period, // 화면표시용
     })

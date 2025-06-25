@@ -10,8 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.common.AmazonS3.AmazonS3Service;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.domain.community.entity.CommonSkillTag;
-import com.example.demo.domain.community.mapper.CmntTagMapper;
-import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
@@ -33,20 +31,27 @@ public class ResumeService {
 	// private final AddressRepository addressRepository;
 	// private final MypageAddressMapper addressMapper;
 
-	@Transactional
 	public int createResume(Long userSq, ResumeRequestDTO dto, List<MultipartFile> profileImages,
 			List<MultipartFile> attachments) {
 
+		// 프로필 이미지 업로드
 		UploadedFileDTO profileImageDTO = null;
 		if (profileImages != null && !profileImages.isEmpty()) {
-			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0)); // 프로필 이미지는 1개만 가정
+			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+			if (profileImageDTO == null) {
+				throw new IllegalArgumentException("프로필 이미지 업로드 실패");
+			}
 			dto.setProfileImage(convertToResumeFileDTO(profileImageDTO));
 		}
 
+		// 첨부파일 업로드
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
 		if (attachments != null) {
 			for (MultipartFile file : attachments) {
 				UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				if (fileDTO == null) {
+					throw new IllegalArgumentException("첨부파일 업로드 실패");
+				}
 				attachmentFileDTOs.add(convertToResumeFileDTO(fileDTO));
 			}
 			dto.setAttachmentList(attachmentFileDTOs);
@@ -54,17 +59,26 @@ public class ResumeService {
 
 		// 주소 저장
 		if (dto.getAddress() != null) {
-			resumeRepository.insertAddress(dto.getAddress());
+			int addressResult = resumeRepository.insertAddress(dto.getAddress());
+			if (addressResult <= 0) {
+				throw new IllegalArgumentException("주소 저장 실패");
+			}
 		}
+
 		// 이력서 저장
 		int result = resumeRepository.insertResume(userSq, dto);
+		if (result <= 0) {
+			throw new IllegalArgumentException("이력서 저장 실패");
+		}
 		Long resumeSq = dto.getResumeSq();
 
 		// 학력 저장
 		if (dto.getEducationList() != null) {
 			for (ResumeRequestDTO.EducationDTO edu : dto.getEducationList()) {
 				edu.setResumeSq(resumeSq);
-				resumeRepository.insertEducation(edu);
+				if (resumeRepository.insertEducation(edu) <= 0) {
+					throw new IllegalArgumentException("학력 저장 실패");
+				}
 			}
 		}
 
@@ -72,20 +86,26 @@ public class ResumeService {
 		if (dto.getCareerList() != null) {
 			for (ResumeRequestDTO.CareerDTO career : dto.getCareerList()) {
 				career.setResumeSq(resumeSq);
-				resumeRepository.insertCareer(career);
+				if (resumeRepository.insertCareer(career) <= 0) {
+					throw new IllegalArgumentException("경력 저장 실패");
+				}
 			}
 		}
 
-		// 프로젝트 이력 저장
+		// 프로젝트 이력 + 기술 태그 저장
 		if (dto.getProjectHistoryList() != null) {
 			for (ResumeRequestDTO.ProjectHistoryDTO ph : dto.getProjectHistoryList()) {
 				ph.setResumeSq(resumeSq);
-				resumeRepository.insertProjectHistory(ph);
+				if (resumeRepository.insertProjectHistory(ph) <= 0) {
+					throw new IllegalArgumentException("프로젝트 이력 저장 실패");
+				}
 
 				if (ph.getSkillTagList() != null) {
 					for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : ph.getSkillTagList()) {
 						tag.setProjectHistorySq(ph.getProjectHistorySq());
-						resumeRepository.insertProjectHistorySkillTag(tag);
+						if (resumeRepository.insertProjectHistorySkillTag(tag) <= 0) {
+							throw new IllegalArgumentException("프로젝트 기술 태그 저장 실패");
+						}
 					}
 				}
 			}
@@ -95,7 +115,9 @@ public class ResumeService {
 		if (dto.getCertificationList() != null) {
 			for (ResumeRequestDTO.CertificationDTO cert : dto.getCertificationList()) {
 				cert.setResumeSq(resumeSq);
-				resumeRepository.insertCertification(cert);
+				if (resumeRepository.insertCertification(cert) <= 0) {
+					throw new IllegalArgumentException("자격증 저장 실패");
+				}
 			}
 		}
 
@@ -103,30 +125,42 @@ public class ResumeService {
 		if (dto.getTrainingHistoryList() != null) {
 			for (ResumeRequestDTO.TrainingHistoryDTO training : dto.getTrainingHistoryList()) {
 				training.setResumeSq(resumeSq);
-				resumeRepository.insertTrainingHistory(training);
+				if (resumeRepository.insertTrainingHistory(training) <= 0) {
+					throw new IllegalArgumentException("교육 이력 저장 실패");
+				}
 			}
 		}
 
-		// 보유 기술 태그 저장
+		// 기술 태그 저장
 		if (dto.getSkillTagList() != null) {
 			for (ResumeRequestDTO.SkillTagDTO tag : dto.getSkillTagList()) {
 				tag.setResumeSq(resumeSq);
-				resumeRepository.insertResumeSkillTag(tag);
+				if (resumeRepository.insertResumeSkillTag(tag) <= 0) {
+					throw new IllegalArgumentException("기술 태그 저장 실패");
+				}
 			}
 		}
 
-		// 프로필 이미지 저장 + 매핑
+		// 프로필 이미지 저장 및 매핑
 		if (dto.getProfileImage() != null) {
 			ResumeRequestDTO.ResumeFileDTO image = dto.getProfileImage();
-			resumeRepository.insertProfileImage(image);
-			resumeRepository.insertResumeProfileImageMapping(resumeSq, image.getFileSq());
+			if (resumeRepository.insertProfileImage(image) <= 0) {
+				throw new IllegalArgumentException("프로필 이미지 저장 실패");
+			}
+			if (resumeRepository.insertResumeProfileImageMapping(resumeSq, image.getFileSq()) <= 0) {
+				throw new IllegalArgumentException("프로필 이미지 매핑 실패");
+			}
 		}
 
-		// 첨부파일 저장 + 매핑
+		// 첨부파일 저장 및 매핑
 		if (dto.getAttachmentList() != null) {
 			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
-				resumeRepository.insertAttachmentFile(file);
-				resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
+				if (resumeRepository.insertAttachmentFile(file) <= 0) {
+					throw new IllegalArgumentException("첨부파일 저장 실패");
+				}
+				if (resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq()) <= 0) {
+					throw new IllegalArgumentException("첨부파일 매핑 실패");
+				}
 			}
 		}
 
