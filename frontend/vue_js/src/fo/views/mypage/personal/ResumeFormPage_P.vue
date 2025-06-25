@@ -555,11 +555,10 @@
                 v-for="(certificate, index) in resumeForm.certificationList"
                 :key="index"
                 class="btn btn-rounded btn-3d btn-light mb-2 position-relative"
-                style="padding-right: 24px"
               >
-                {{ certificate.certificateName }}
+                {{ certificate.certificationNm }}
                 <span
-                  class="delete-icon"
+                  class="delete-icon text-grey ms-2"
                   title="삭제"
                   @click="removeCertificate(index)"
                   >×</span
@@ -673,6 +672,7 @@ import ResumeCompanyModal from '@/fo/components/mypage/personal/ResumeCompanyMod
 import TrainingModal from '@/fo/components/mypage/personal/TrainingModal.vue'
 import SkillTagModal from '@/fo/components/community/SkillTagModal.vue'
 import ShowProjectFormModal from '@/fo/components/mypage/personal/ShowProjectFormModal.vue'
+import LicenseModal from '@/fo/components/mypage/personal/LicenseModal.vue'
 
 import { reactive, ref, computed, watch } from 'vue'
 // import { api } from '@/axios'
@@ -916,6 +916,23 @@ watch(
   },
   { immediate: true },
 )
+
+// 자격증 입력 폼 표시 로직
+const showCertificateForm = () => {
+  modalStore.openModal(LicenseModal, {
+    selectedLicense: resumeForm.certificationList,
+    onLicenseSelected: (license) => {
+      resumeForm.certificationList.push({
+        certificationNm: license.name,
+        certificationCd: license.id,
+      })
+    },
+  })
+}
+
+const removeCertificate = (index) => {
+  resumeForm.certificationList.splice(index, 1)
+}
 
 // 기술 입력 폼 표시 로직
 const showSkillsForm = () => {

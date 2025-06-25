@@ -108,6 +108,7 @@ public class ResumeRequestDTO {
     public static class CertificationDTO {
         private Long certificationSq;
         private Long resumeSq;
+        private Long certificateCd;
         private String certificationNm;
         private String certificationIssuerNm;
     }

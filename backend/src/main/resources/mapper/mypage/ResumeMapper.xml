@@ -93,8 +93,8 @@
   <insert id="insertCertification"
     parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$CertificationDTO"
     useGeneratedKeys="true" keyProperty="certificationSq"> INSERT INTO TBL_RESUME_CERTIFICATION_S (
-    resume_sq, certification_nm, certification_issuer_nm ) VALUES ( #{resumeSq}, #{certificationNm},
-    #{certificationIssuerNm} ) </insert>
+    resume_sq, certification_nm, certification_issuer_nm, certificate_cd ) VALUES ( #{resumeSq},
+    #{certificationNm}, #{certificationIssuerNm} , #{certificateCd}) </insert>
 
   <delete id="deleteCertification" parameterType="long"> DELETE FROM TBL_RESUME_CERTIFICATION_S
     WHERE certification_sq = #{certificationSq} </delete>
