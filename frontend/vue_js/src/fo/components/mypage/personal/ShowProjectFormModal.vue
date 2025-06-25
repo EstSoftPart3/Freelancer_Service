@@ -201,6 +201,7 @@
 import { computed, defineProps, onMounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
 import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal.vue'
 import { api } from '@/axios'
 
@@ -211,6 +212,7 @@ const props = defineProps({
 
 const modalStore = useModalStore()
 const projectStore = useProjectStore()
+const alertStore = useAlertStore()
 
 // form과 skills를 store에서 가져옴 (양방향 바인딩용 computed)
 const form = computed({
@@ -238,6 +240,36 @@ const openSkillModal = () => {
 }
 
 const submit = () => {
+  if (!form.value.name) {
+    alertStore.show('프로젝트명을 입력해주세요.', 'danger')
+    return
+  }
+  if (!form.value.startDate) {
+    alertStore.show('프로젝트 근무 기간을 선택하세요.', 'danger')
+    return
+  }
+  if (!form.value.client) {
+    alertStore.show('고객사를 입력하세요.', 'danger')
+    return
+  }
+  if (!form.value.workUnit) {
+    alertStore.show('업무단을 선택하세요.', 'danger')
+    return
+  }
+  if (!form.value.role) {
+    alertStore.show('프로젝트 담당 역할을 선택하세요.', 'danger')
+    return
+  }
+  const totalSkillCount = Object.values(selectedSkills.value || {}).reduce(
+    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+    0,
+  )
+
+  if (totalSkillCount === 0) {
+    alertStore.show('개발환경을 선택하세요.', 'danger')
+    return
+  }
+
   const selectedWorkUnit = projectTaskTypeList.value.find(
     (item) => item.commonCodeSq === form.value.workUnit,
   )

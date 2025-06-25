@@ -64,11 +64,13 @@
 <script setup>
 import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
 
 const props = defineProps({
   onComplete: Function, // 부모에서 내려주는 콜백함수
 })
 const modalStore = useModalStore()
+const alertStore = useAlertStore()
 
 const form = ref({
   trainingProgramNm: '',
@@ -79,6 +81,18 @@ const form = ref({
 })
 
 const submit = () => {
+  if (!form.value.trainingProgramNm) {
+    alertStore.show('교육명을 입력해주세요.', 'danger')
+    return
+  }
+  if (!form.value.trainingInstitutionNm) {
+    alertStore.show('교육 기관을 입력하세요.', 'danger')
+    return
+  }
+  if (!form.value.trainingStartDt) {
+    alertStore.show('교육 기간을 선택하세요.', 'danger')
+    return
+  }
   function formatDate(dateString) {
     if (!dateString) return ''
     return dateString.substring(0, 10).replace(/-/g, '.')

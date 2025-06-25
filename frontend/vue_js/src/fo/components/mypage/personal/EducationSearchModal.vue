@@ -226,7 +226,7 @@ const completeSelection = () => {
     return
   }
   if (!majorName.value) {
-    alertStore.show('전공명을 입력하세요!', 'danger')
+    alertStore.show('전공명을 입력하세요.', 'danger')
     return
   }
 

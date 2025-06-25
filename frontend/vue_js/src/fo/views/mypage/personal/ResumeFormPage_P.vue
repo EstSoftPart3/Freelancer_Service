@@ -256,7 +256,8 @@
               <span
                 v-for="(career, idx) in resumeForm.careerList"
                 :key="career.careerCompanyNm + career.careerStartDt"
-                class="company-tag"
+                class="btn btn-rounded btn-3d btn-light mb-2 position-relative"
+                style="padding-right: 24px"
               >
                 {{ career.careerCompanyNm }}회사
                 {{ career.careerDepartmentNm }}부서
@@ -268,8 +269,8 @@
                 </span>
 
                 <span
-                  class="text-grey ms-2"
-                  style="cursor: pointer"
+                  class="text-grey ms-2 position-absolute end-0 me-2"
+                  style="top: 50%; transform: translateY(-50%)"
                   title="삭제"
                   @click="removeCareer(idx)"
                   >×</span
@@ -298,13 +299,14 @@
               <span
                 v-for="(item, idx) in resumeForm.trainingHistoryList"
                 :key="idx"
-                class="training-tag"
+                class="btn btn-rounded btn-3d btn-light mb-2 position-relative"
+                style="padding-right: 24px"
               >
                 {{ item.trainingProgramNm }} /
                 {{ item.trainingInstitutionNm }} ( {{ item.period }} )
                 <span
-                  class="text-grey ms-2"
-                  style="cursor: pointer"
+                  class="text-grey ms-2 position-absolute end-0 me-2"
+                  style="top: 50%; transform: translateY(-50%)"
                   title="삭제"
                   @click="removeTraining(idx)"
                   >×</span
@@ -676,10 +678,12 @@ import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
+import { useRouter } from 'vue-router'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const projectStore = useProjectStore()
+const router = useRouter()
 
 const resumeForm = reactive({
   resumeTtl: '',
@@ -982,6 +986,44 @@ function cleanProjectHistoryList(projectHistoryList) {
 }
 
 async function submitResume() {
+  if (!resumeForm.resumeTtl?.trim()) {
+    return alertStore.show('이력서 제목을 입력하세요.', 'danger')
+  }
+
+  if (!resumeForm.resumeNm?.trim()) {
+    return alertStore.show('이름을 입력하세요.', 'danger')
+  }
+
+  if (!resumeForm.resumeBirthDt) {
+    return alertStore.show('생년월일을 입력하세요.', 'danger')
+  }
+
+  if (!resumeForm.resumePhoneNum?.trim()) {
+    return alertStore.show('전화번호를 입력하세요.', 'danger')
+  } else if (!/^010-\d{4}-\d{4}$/.test(resumeForm.resumePhoneNum)) {
+    return alertStore.show(
+      '전화번호 형식이 올바르지 않습니다. 예: 010-1234-5678',
+      'danger',
+    )
+  }
+
+  if (!resumeForm.resumeEmail?.trim()) {
+    return alertStore.show('이메일을 입력하세요.', 'danger')
+  } else if (
+    !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(resumeForm.resumeEmail)
+  ) {
+    return alertStore.show('이메일 형식이 올바르지 않습니다.', 'danger')
+  }
+
+  if (!resumeForm.address.address?.trim()) {
+    return alertStore.show('주소를 입력하세요.', 'danger')
+  }
+
+  if (!resumeForm.resumeGreetingTxt?.trim()) {
+    return alertStore.show('자기소개를 입력하세요.', 'danger')
+  }
+
+  // 정리된 프로젝트 리스트
   const cleanedProjectHistoryList = cleanProjectHistoryList(
     resumeForm.projectHistoryList,
   )
@@ -991,15 +1033,13 @@ async function submitResume() {
     ...resumeForm,
     projectHistoryList: cleanedProjectHistoryList,
   }
-  const formData = new FormData()
 
-  // JSON을 Blob으로 감싸서 append (resumeRequest로 맞추기)
+  const formData = new FormData()
   const jsonBlob = new Blob([JSON.stringify(apiJson)], {
     type: 'application/json',
   })
   formData.append('dto', jsonBlob)
 
-  // 파일 목록 추가
   profileImages.value.forEach((file) => {
     formData.append('profileImages', file)
   })
@@ -1011,6 +1051,7 @@ async function submitResume() {
     await api.$post('/mypage/resume', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+
     console.log('폼데이터 내용:')
     for (let [key, value] of formData.entries()) {
       if (value instanceof Blob) {
@@ -1023,6 +1064,7 @@ async function submitResume() {
     }
 
     alertStore.show('이력서가 등록되었습니다.', 'success')
+    router.push('/mypage/resumeList')
   } catch (error) {
     console.error(error)
     alertStore.show('등록 중 오류가 발생했습니다.', 'danger')
