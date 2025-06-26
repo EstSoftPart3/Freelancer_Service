@@ -298,12 +298,11 @@
                       </button>
                     </div>
                   </div>
-                  <div class="row mb-3">
+                  <!-- <div class="row mb-3">
                     <div class="col-sm-12">
                       <strong style="margin-right: 8px">기타:</strong>
-                      <!-- 추후 예정 -->
                     </div>
-                  </div>
+                  </div> -->
                 </div>
               </div>
             </li>

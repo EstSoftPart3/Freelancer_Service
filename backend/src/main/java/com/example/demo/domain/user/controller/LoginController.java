@@ -59,6 +59,18 @@ public class LoginController {
                 if (request.isAutoLogin()) {
                         // 자동 로그인 선택 시 영속 쿠키 (예: 7일 유지)
                         refreshCookieBuilder.maxAge(Duration.ofDays(7));
+                        // 로그인 시 autoLogin 쿠키 추가 (HttpOnly 없이 프론트에서 확인 가능)
+                        ResponseCookie autoLoginCookie = ResponseCookie
+                                        .from("autoLogin", String.valueOf(request.isAutoLogin()))
+                                        .httpOnly(false) // 클라이언트에서 읽을 수 있어야 하므로 false
+                                        .secure(false)
+                                        .sameSite("Lax")
+                                        .path("/")
+                                        .maxAge(Duration.ofDays(7))
+                                        .build();
+
+                        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, autoLoginCookie.toString());
+
                 } else {
                         // 자동 로그인 미선택 시 세션 쿠키 (maxAge 미설정 = 세션 쿠키)
                         // maxAge 설정 안하면 브라우저 종료 시 삭제됨
@@ -75,11 +87,12 @@ public class LoginController {
         @PostMapping("/refresh-token")
         public ResponseEntity<ApiResponse<Map<String, Object>>> refreshToken(
                         @CookieValue(name = "refreshToken", required = false) String refreshToken,
+                        @CookieValue(name = "autoLogin", required = false) String autoLogin,
                         HttpServletResponse httpServletResponse) {
 
                 if (refreshToken == null) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(ApiResponse.of(HttpStatus.UNAUTHORIZED, "리프레시 토큰 없음", null));
+                                        .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "리프레시 토큰 없음"));
                 }
 
                 TokenDTO tokens = loginService.refreshToken(refreshToken);
@@ -93,16 +106,21 @@ public class LoginController {
                                 .maxAge(Duration.ofMinutes(30))
                                 .build();
 
-                ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
+                // 오토로그인 여부에 따라 리프레시 토큰 만료 설정 분기
+                ResponseCookie.ResponseCookieBuilder refreshTokenBuilder = ResponseCookie
+                                .from("refreshToken", tokens.getRefreshToken())
                                 .httpOnly(true)
                                 .secure(false)
                                 .sameSite("Lax")
-                                .path("/")
-                                .maxAge(Duration.ofDays(7))
-                                .build();
+                                .path("/");
+
+                if ("true".equals(autoLogin)) {
+                        refreshTokenBuilder.maxAge(Duration.ofDays(7));
+                }
+                // else: 세션 쿠키
 
                 httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
-                httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+                httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenBuilder.build().toString());
 
                 return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "토큰 갱신 성공", null));
         }

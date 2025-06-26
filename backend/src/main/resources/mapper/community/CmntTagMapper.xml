@@ -1,83 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.community.mapper.CmntTagMapper">
 
-    <select id="findParentSkillTags" resultType="com.example.demo.domain.community.entity.CommonSkillTag">
-        SELECT * FROM TBL_SKILL_TAG_C
-        WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool')
-	    
-    </select>
+    <select id="findParentSkillTags"
+        resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM
+        TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool') </select>
 
     <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag">
-        SELECT * FROM TBL_SKILL_TAG_C
-        WHERE parent_skill_tag_sq IN
-		<foreach collection="skillTags" item="tag" separator="," open="(" close=")">
-			#{tag.skillTagSq}
-		</foreach>
-	    
+        SELECT * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags"
+            item="tag" separator="," open="(" close=")"> #{tag.skillTagSq} </foreach>
+
     </select>
 
-    <select id="findNT" resultType="com.example.demo.domain.community.entity.NormalTag">
-        SELECT * FROM TBL_BOARD_NORMAL_TAG_S
-        
-        <if test="boardSq != null">
-        	WHERE board_sq = #{boardSq}
-	    </if>
-        <if test="answerSq != null">
-        	WHERE answer_sq = #{answerSq}
-	    </if>
-	    
+    <select id="findNT" resultType="com.example.demo.domain.community.entity.NormalTag"> SELECT *
+        FROM TBL_BOARD_NORMAL_TAG_S <if test="boardSq != null"> WHERE board_sq = #{boardSq} </if>
+        <if
+            test="answerSq != null"> WHERE answer_sq = #{answerSq} </if>
+
     </select>
 
     <insert id="insertNT" parameterType="List" useGeneratedKeys="true" keyProperty="normalTagSq">
-        INSERT INTO TBL_BOARD_NORMAL_TAG_S (board_sq, answer_sq, normal_tag_nm, normal_tag_type_cd) 
-        VALUES
-        <foreach collection="normalTags" item="tag" separator=",">
-        	(#{tag.boardSq}, #{tag.answerSq}, #{tag.normalTagNm}, #{tag.normalTagTypeCd})
-        </foreach> 
+        INSERT INTO TBL_BOARD_NORMAL_TAG_S (board_sq, answer_sq, normal_tag_nm, normal_tag_type_cd)
+        VALUES <foreach collection="normalTags" item="tag" separator=","> (#{tag.boardSq},
+        #{tag.answerSq}, #{tag.normalTagNm}, #{tag.normalTagTypeCd}) </foreach>
     </insert>
 
-    <delete id="deleteNT" parameterType="com.example.demo.domain.community.entity.SkillTag">
-        DELETE FROM TBL_BOARD_NORMAL_TAG_S
-        
-        <if test="boardSq != null">
-        	WHERE board_sq = #{boardSq}
-	    </if>
-        <if test="answerSq != null">
-        	WHERE answer_sq = #{answerSq}
-	    </if>
+    <delete id="deleteNT" parameterType="com.example.demo.domain.community.entity.SkillTag"> DELETE
+        FROM TBL_BOARD_NORMAL_TAG_S <if test="boardSq != null"> WHERE board_sq = #{boardSq} </if>
+        <if
+            test="answerSq != null"> WHERE answer_sq = #{answerSq} </if>
     </delete>
-    
-    <select id="findST" resultType="com.example.demo.domain.community.entity.SkillTag">
-        SELECT * FROM TBL_BOARD_SKILL_TAG_S
-        
-        <if test="boardSq != null">
-        	WHERE board_sq = #{boardSq}
-	    </if>
-        <if test="answerSq != null">
-        	WHERE answer_sq = #{answerSq}
-	    </if>
+
+    <select id="findST" resultType="com.example.demo.domain.community.entity.SkillTag"> SELECT *
+        FROM TBL_BOARD_SKILL_TAG_S <if test="boardSq != null"> WHERE board_sq = #{boardSq} </if>
+        <if
+            test="answerSq != null"> WHERE answer_sq = #{answerSq} </if>
     </select>
 
     <insert id="insertST" parameterType="List" useGeneratedKeys="true" keyProperty="skillTagSq">
-        INSERT INTO TBL_BOARD_SKILL_TAG_S (board_sq, answer_sq, skill_tag_sq, skill_tag_nm, skill_tag_type_cd) 
-        VALUES
-        <foreach collection="skillTags" item="tag" separator=",">
-        	(#{tag.boardSq}, #{tag.answerSq}, #{tag.skillTagSq}, #{tag.skillTagNm}, #{tag.skillTagTypeCd})
-        </foreach> 
+        INSERT INTO TBL_BOARD_SKILL_TAG_S (board_sq, answer_sq, skill_tag_sq, skill_tag_nm,
+        skill_tag_type_cd) VALUES <foreach collection="skillTags" item="tag" separator=",">
+        (#{tag.boardSq}, #{tag.answerSq}, #{tag.skillTagSq}, #{tag.skillTagNm},
+        #{tag.skillTagTypeCd}) </foreach>
     </insert>
 
-    <delete id="deleteST" parameterType="com.example.demo.domain.community.entity.SkillTag">
-        DELETE FROM TBL_BOARD_SKILL_TAG_S
-        
-        <if test="boardSq != null">
-        	WHERE board_sq = #{boardSq}
-	    </if>
-        <if test="answerSq != null">
-        	WHERE answer_sq = #{answerSq}
-	    </if>
+    <delete id="deleteST" parameterType="com.example.demo.domain.community.entity.SkillTag"> DELETE
+        FROM TBL_BOARD_SKILL_TAG_S <if test="boardSq != null"> WHERE board_sq = #{boardSq} </if>
+        <if
+            test="answerSq != null"> WHERE answer_sq = #{answerSq} </if>
     </delete>
 
 </mapper>

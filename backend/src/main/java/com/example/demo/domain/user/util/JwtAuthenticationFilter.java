@@ -40,12 +40,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/answer/*/increment-view",
             "/api/affiliation",
             "/api/affiliation/*/increment-view",
-             "/api/affiliation/address",
+            "/api/affiliation/address",
             "/api/projects/interviews",
             "/api/projects/forms",
             "/api/projects/*/districts",
             "/api/projects/filters",
-            "/api/projects/applications/interviews/*"
+            "/api/projects/applications/interviews/*",
+            "/api/mypage/resume"
 
     // 여기에 더 추가 가능
     );

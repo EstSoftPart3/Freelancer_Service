@@ -1,74 +1,85 @@
 package com.example.demo.domain.mypage.service;
 
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriComponents;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.*;
-
-import com.example.demo.domain.mypage.dto.request.ResumeCertificateRequest;
-
-import java.io.ByteArrayInputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import com.example.demo.domain.mypage.dto.CertificateDTO;
+import com.example.demo.domain.mypage.repository.CertificateRepository;
+
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CertificateService {
 
-	// 자격증 목록을 외부 API에서 조회해서 CertificateDto 리스트로 반환
-	public List<ResumeCertificateRequest> getCertificates(String keyword, int pageNo, int numOfRows) {
-		String serviceKey = URLEncoder.encode("hRsP0IUH8bq2xvGwRO4GLNgdBeQpm1dOycol0n3/bUrz4vGBquK43tVCzjAC3OZ+GnJSV5dYkAEna9IbK2Y9kw==", StandardCharsets.UTF_8);
-		String url = "http://openapi.q-net.or.kr/api/service/rest/InquiryInformationTradeNTQSVC/getList";
-		
-		UriComponents uri = UriComponentsBuilder.fromHttpUrl(url)
-				.queryParam("serviceKey", serviceKey)
-				.queryParam("jmNm", keyword)
-				.queryParam("pageNo", pageNo)
-				.queryParam("numOfRows", numOfRows)
-				.build(true);
+	private final CertificateRepository certificateRepository;
 
-		try {
-			RestTemplate restTemplate = new RestTemplate();
-			ResponseEntity<String> response = restTemplate.getForEntity(uri.toUri(), String.class);
+	public int saveOrUpdateCertificates(List<CertificateDTO> certificates) {
+		int count = 0;
+		for (CertificateDTO cert : certificates) {
+			CertificateDTO existing = certificateRepository.selectCertificateById(cert.getCertificateCd());
+			if (existing != null) {
+				certificateRepository.updateCertificate(cert);
+				System.out.println("업데이트 진행");
+			} else {
+				certificateRepository.insertCertificate(cert);
+				System.out.println("인서트 진행");
 
-			System.out.println("자격증 API 응답: " + response.getBody());
-			
-			// XML 문자열 파싱
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			Document doc = factory.newDocumentBuilder()
-	        .parse(new ByteArrayInputStream(response.getBody().getBytes(StandardCharsets.UTF_8)));
-
-	     // item 태그로 자격증 목록 추출
-	     NodeList itemList = doc.getElementsByTagName("item");
-	     List<ResumeCertificateRequest> certificates = new ArrayList<>();
-
-	     for (int i = 0; i < itemList.getLength(); i++) {
-	         Element item = (Element) itemList.item(i);
-	         ResumeCertificateRequest dto = new ResumeCertificateRequest();
-	         dto.setCertificationNm(getTagValue("jmNm", item));         // 자격증 이름
-	         dto.setCertificationIssuerNm(getTagValue("minClassNm", item)); // 발행 기관
-	         certificates.add(dto);
-	     }
-
-			return certificates;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("자격증 API 파싱 중 오류 발생");
+			}
+			count++;
 		}
+		return count;
 	}
 
-	// XML 태그 값 추출 유틸
+	public List<CertificateDTO> parseXmlAndMap(String xml) throws Exception {
+		List<CertificateDTO> list = new ArrayList<>();
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(new InputSource(new StringReader(xml)));
+		NodeList itemList = doc.getElementsByTagName("item");
+
+		for (int i = 0; i < itemList.getLength(); i++) {
+			Element item = (Element) itemList.item(i);
+
+			CertificateDTO dto = new CertificateDTO();
+			dto.setCertificateCd(parseLongSafe(getTagValue("jmcd", item)));
+			dto.setCertificateNm(getTagValue("jmfldnm", item));
+			dto.setMiddleObligationFieldCd(parseLongSafe(getTagValue("mdobligfldcd", item)));
+			dto.setMiddleObligationFieldNm(getTagValue("mdobligfldnm", item));
+			dto.setObligationFieldCd(parseLongSafe(getTagValue("obligfldcd", item)));
+			dto.setObligationFieldNm(getTagValue("obligfldnm", item));
+			dto.setQualificationGroupCd(getTagValue("qualgbcd", item));
+			dto.setQualificationGroupNm(getTagValue("qualgbnm", item));
+			dto.setSeriesCd(parseLongSafe(getTagValue("seriescd", item)));
+			dto.setSeriesNm(getTagValue("seriesnm", item));
+
+			list.add(dto);
+		}
+		return list;
+	}
+
 	private String getTagValue(String tag, Element element) {
 		NodeList nodeList = element.getElementsByTagName(tag);
-		if (nodeList.getLength() > 0) {
-			return nodeList.item(0).getTextContent();
-		}
-		return "";
+		if (nodeList.getLength() == 0)
+			return null;
+		String value = nodeList.item(0).getTextContent();
+		return (value != null) ? value.trim() : null;
 	}
+
+	private Long parseLongSafe(String value) {
+		if (value == null || value.trim().isEmpty())
+			return null;
+		return Long.parseLong(value.trim());
+	}
+
 }

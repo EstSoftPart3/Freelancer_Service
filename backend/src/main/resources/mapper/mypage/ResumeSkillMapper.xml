@@ -1,39 +1,26 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.mypage.mapper.ResumeSkillMapper">
-    
+
     <!-- 이력서 내 기술 태그 목록 조회 -->
-    <select id="findAllNmBySq" resultType="String">
-	    SELECT skill_tag_nm
-	    FROM TBL_RESUME_SKILL_TAG_S
-	    WHERE resume_sq = #{resumeSq}
-  	</select>
-    
+    <select id="findAllNmBySq" resultType="String"> SELECT skill_tag_nm FROM TBL_RESUME_SKILL_TAG_S
+        WHERE resume_sq = #{resumeSq} </select>
+
     <!-- 이전 프로젝트 등록기술 조회 -->
-     <select id="findSkillsByResumeProjectSq" parameterType="Long" resultType="String">
-    SELECT skill_tag_nm
-    FROM TBL_PROJECT_HISTORY_SKILL_S
-    WHERE resume_project_sq = #{resumeProjectSq}
-	</select>
-    
+    <select id="findSkillsByResumeProjectSq" parameterType="Long" resultType="String"> SELECT
+        skill_tag_nm FROM TBL_PROJECT_HISTORY_SKILL_S WHERE resume_project_sq = #{resumeProjectSq} </select>
+
     <!-- 스킬 전체조회 -->
-    <select id="findAllSkillTags" resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillDataResponse">
-    SELECT DISTINCT
-        skill_tag_sq AS skillTagSq,
-        skill_tag_nm AS skillTagNm,
-        parent_skill_tag_sq AS parentSkillTagSq,
-        skill_tag_lvl AS skillTagLvl
-    FROM TBL_RESUME_SKILL_TAG_S
-	</select>
-    
-    
-    
-     
-     
+    <select id="findAllSkillTags"
+        resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillDataResponse"> SELECT
+        DISTINCT skill_tag_sq AS skillTagSq, skill_tag_nm AS skillTagNm, parent_skill_tag_sq AS
+        parentSkillTagSq, skill_tag_lvl AS skillTagLvl FROM TBL_RESUME_SKILL_TAG_S </select>
+
+
     <!-- 대분류-소분류 트리 구조 조회 -->
-    <select id="findSkillInfoList" resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillPairResponse">
+    <!-- <select id="findSkillInfoList"
+    resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillPairResponse">
         SELECT
             p.skill_tag_nm AS parentSkillTagNm,
             c.skill_tag_nm AS childSkillTagNm
@@ -45,29 +32,28 @@
             c.skill_tag_lvl = 2
         ORDER BY
             p.skill_tag_nm, c.skill_tag_nm
-    </select>
-    
+    </select> -->
+
     <!-- 기술명으로 태그 정보 조회 -->
-    <select id="findSkillTagInfoByName" parameterType="String" resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillDataResponse">
+    <!-- <select id="findSkillTagInfoByName" parameterType="String"
+    resultType="com.example.demo.domain.mypage.dto.response.ResumeSkillDataResponse">
         SELECT
             skill_tag_sq AS skillTagSq,
             parent_skill_tag_sq AS parentSkillTagSq,
             skill_tag_nm AS skillTagNm
         FROM TBL_RESUME_SKILL_TAG_S
         WHERE skill_tag_nm = #{name}
-    </select>
+    </select> -->
 
     <!-- 특정 기술의 상위(대분류) skill_tag_sq 조회 -->
-    <select id="findParentSkillTagSq" parameterType="Long" resultType="Long">
+    <!-- <select id="findParentSkillTagSq" parameterType="Long" resultType="Long">
         SELECT parent_skill_tag_sq
         FROM TBL_RESUME_SKILL_TAG_S
         WHERE skill_tag_sq = #{skillTagSq}
-    </select>
+    </select> -->
 
     <!-- 이력서별 보유 기술 삭제 -->
-    <delete id="deleteSkillsByResumeSq">
-        DELETE FROM TBL_RESUME_SKILL_TAG_S
-        WHERE resume_sq = #{resumeSq}
-    </delete>
+    <delete id="deleteSkillsByResumeSq"> DELETE FROM TBL_RESUME_SKILL_TAG_S WHERE resume_sq =
+        #{resumeSq} </delete>
 
 </mapper>

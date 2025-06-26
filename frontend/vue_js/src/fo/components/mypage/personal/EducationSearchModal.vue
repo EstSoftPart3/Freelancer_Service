@@ -56,14 +56,16 @@
         </div>
         <div class="modal-pagination">
           <button :disabled="page === 1" @click="prevPage">&lt;</button>
+
           <button
-            v-for="p in totalPages"
+            v-for="p in pageGroup"
             :key="p"
             :class="{ active: page === p }"
             @click="goPage(p)"
           >
             {{ p }}
           </button>
+
           <button :disabled="page === totalPages" @click="nextPage">
             &gt;
           </button>
@@ -77,16 +79,21 @@
         <div class="date-inputs">
           <div class="date-input-group">
             <label>입학년월 <span style="color: red">*</span></label>
-            <input type="month" v-model="startDate" />
+            <input type="date" v-model="startDate" />
           </div>
           <div class="date-input-group">
             <label>졸업년월</label>
-            <input type="month" v-model="endDate" />
+            <input type="date" v-model="endDate" />
           </div>
         </div>
-        <div class="date-input-group" style="margin-top: 20px;">
+        <div class="date-input-group" style="margin-top: 20px">
           <label>전공명 <span style="color: red">*</span></label>
-          <input type="text" v-model="majorName" placeholder="전공명을 입력하세요" required />
+          <input
+            type="text"
+            v-model="majorName"
+            placeholder="전공명을 입력하세요"
+            required
+          />
         </div>
       </div>
       <div class="modal-footer">
@@ -111,7 +118,7 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { watch, computed, onMounted } from 'vue'
 import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import axios from 'axios'
@@ -121,19 +128,26 @@ const alertStore = useAlertStore()
 const props = defineProps(['onComplete'])
 const modalStore = useModalStore()
 
-const tab = ref('high')
+const tab = ref('high') // 'high' 또는 'univ'
 const search = ref('')
 const schools = ref([])
 const page = ref(1)
 const totalPages = ref(1)
-const perPage = 10
-const isDateSelection = ref(false)
+const perPage = '3'
 const selectedSchool = ref(null)
+const isDateSelection = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const majorName = ref('')
+const groupSize = 3
 
-let allContent = ref([])
+const currentGroup = computed(() => Math.ceil(page.value / groupSize))
+
+const pageGroup = computed(() => {
+  const start = (currentGroup.value - 1) * groupSize + 1
+  const end = Math.min(start + groupSize - 1, totalPages.value)
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+})
 
 const fetchSchools = async () => {
   const apiKey = '28c12cecb3e103d5b10acd6a0e76209f'
@@ -150,47 +164,39 @@ const fetchSchools = async () => {
           svcCode: 'SCHOOL',
           contentType: 'json',
           gubun,
+          thisPage: page.value,
+          perPage: perPage,
           searchSchulNm: keyword,
         },
       },
     )
-    console.log('axios 요청 성공:', res)
+
     let content = res.data?.dataSearch?.content
     if (!content) {
       content = []
     } else if (!Array.isArray(content)) {
       content = [content]
     }
-    allContent.value = content
-    page.value = 1
 
-    schools.value = allContent.value
-      .slice((page.value - 1) * perPage, page.value * perPage)
-      .map((item, idx) => ({
-        id: item.seq || idx,
-        name: item.schoolName,
-        address: item.adres || item.addr || '',
-        type: tab.value === 'high' ? '고등학교' : '대학교',
-      }))
-    totalPages.value = Math.max(1, Math.ceil(allContent.value.length / perPage))
-  } catch (error) {
-    console.error('학교 검색 오류:', error)
-    if (error.response) {
-      console.log('에러 응답:', error.response.data)
-    }
-    schools.value = []
-  }
-}
-
-watch(page, () => {
-  schools.value = allContent.value
-    .slice((page.value - 1) * perPage, page.value * perPage)
-    .map((item, idx) => ({
+    schools.value = content.map((item, idx) => ({
       id: item.seq || idx,
       name: item.schoolName,
       address: item.adres || item.addr || '',
       type: tab.value === 'high' ? '고등학교' : '대학교',
     }))
+
+    const totalCount = content.length > 0 ? parseInt(content[0].totalCount) : 0
+    console.log('res.data.dataSearch', res.data.dataSearch)
+    totalPages.value = Math.ceil(totalCount / perPage)
+  } catch (error) {
+    console.error('학교 검색 오류:', error)
+    schools.value = []
+  }
+}
+
+// 탭 또는 페이지 변경 시 새로 요청
+watch([tab, page], () => {
+  fetchSchools()
 })
 
 const selectSchool = (school) => {
@@ -212,7 +218,7 @@ const backToSearch = () => {
 
 function formatDate(dateString) {
   if (!dateString) return ''
-  return dateString.substring(0, 7).replace('-', '.')
+  return dateString.substring(0, 10).replace(/-/g, '.')
 }
 
 const completeSelection = () => {
@@ -221,7 +227,7 @@ const completeSelection = () => {
     return
   }
   if (!majorName.value) {
-    alertStore.show('전공명을 입력하세요!', 'danger')
+    alertStore.show('전공명을 입력하세요.', 'danger')
     return
   }
 
@@ -229,18 +235,16 @@ const completeSelection = () => {
     ? `${formatDate(startDate.value)} ~ ${formatDate(endDate.value)}`
     : `${formatDate(startDate.value)} ~`
 
-  const admissionDate = startDate.value + '-01'
-  const graduationDate = endDate.value ? endDate.value + '-01' : null
-
   props.onComplete &&
     props.onComplete({
       educationSchoolNm: selectedSchool.value.name,
       educationMajorNm: majorName.value,
-      educationAdmissionDt: admissionDate,
-      educationGraduationDt: graduationDate,
-      educationStatusCd: endDate.value ? 1201 : 1202, // 졸업년월 있으면 졸업(1201), 없으면 졸업예정(1202)
-      period, // 화면표시용
+      educationAdmissionDt: startDate.value,
+      educationGraduationDt: endDate.value,
+      educationStatusCd: endDate.value ? 1201 : 1202, // 졸업 or 졸업예정
+      period,
     })
+
   close()
 }
 
@@ -258,11 +262,14 @@ const goPage = (p) => {
 const onTabChange = (newTab) => {
   tab.value = newTab
   search.value = ''
-  schools.value = []
-  allContent.value = []
   page.value = 1
   totalPages.value = 1
+  fetchSchools()
 }
+
+onMounted(() => {
+  fetchSchools()
+})
 </script>
 
 <style scoped>
@@ -386,7 +393,7 @@ const onTabChange = (newTab) => {
   stroke: #fff;
 }
 .modal-list {
-  max-height: 230px;
+  max-height: 280px;
   overflow-y: auto;
   padding: 0 30px;
 }

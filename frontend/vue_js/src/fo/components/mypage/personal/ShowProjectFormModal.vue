@@ -22,12 +22,21 @@
             </div>
             <div class="form-group">
               <label class="modal-label">참여기간</label>
-              <input
-                v-model="form.period"
-                type="text"
-                class="form-control"
-                placeholder="참여기간 (예: 2023.01 ~ 2023.12)"
-              />
+              <div class="d-flex gap-2">
+                <input
+                  v-model="form.startDate"
+                  type="date"
+                  class="form-control"
+                  placeholder="시작일"
+                />
+                <span class="align-self-center">~</span>
+                <input
+                  v-model="form.endDate"
+                  type="date"
+                  class="form-control"
+                  placeholder="종료일 (선택 안 해도 됨)"
+                />
+              </div>
             </div>
           </div>
           <div class="form-row">
@@ -42,21 +51,30 @@
             </div>
             <div class="form-group">
               <label class="modal-label">업무단</label>
-              <input
-                v-model="form.workUnit"
-                type="text"
-                class="form-control"
-                placeholder="업무단 (예: 대외계/내부)"
-              />
+              <select v-model="form.workUnit" class="form-control">
+                <option disabled value="">업무단 선택</option>
+                <option
+                  v-for="item in projectTaskTypeList"
+                  :key="item.commonCodeSq"
+                  :value="item.commonCodeSq"
+                >
+                  {{ item.commonCodeNm }}
+                </option>
+              </select>
             </div>
+
             <div class="form-group">
               <label class="modal-label">역할</label>
-              <input
-                v-model="form.role"
-                type="text"
-                class="form-control"
-                placeholder="역할 (예: 개발)"
-              />
+              <select v-model="form.role" class="form-control">
+                <option disabled value="">역할 선택</option>
+                <option
+                  v-for="item in projectRoleTypeList"
+                  :key="item.commonCodeSq"
+                  :value="item.commonCodeSq"
+                >
+                  {{ item.commonCodeNm }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -68,7 +86,11 @@
             <div class="form-group">
               <label class="modal-label">기종</label>
               <input
-                v-model="form.device"
+                :value="
+                  selectedSkills.device
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="기종 (예: PC)"
@@ -79,7 +101,11 @@
             <div class="form-group">
               <label class="modal-label">OS</label>
               <input
-                v-model="form.os"
+                :value="
+                  selectedSkills.os
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="OS (예: Linux)"
@@ -90,7 +116,11 @@
             <div class="form-group">
               <label class="modal-label">DBMS</label>
               <input
-                v-model="form.dbms"
+                :value="
+                  selectedSkills.dbms
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="DBMS (예: MySQL)"
@@ -103,7 +133,11 @@
             <div class="form-group">
               <label class="modal-label">언어</label>
               <input
-                v-model="form.languages"
+                :value="
+                  selectedSkills.language
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="언어 (쉼표로 구분, 예: Java, Python)"
@@ -114,7 +148,11 @@
             <div class="form-group">
               <label class="modal-label">TOOL</label>
               <input
-                v-model="form.tools"
+                :value="
+                  selectedSkills.tool
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="TOOL (쉼표로 구분, 예: Eclipse, VSCode)"
@@ -125,7 +163,11 @@
             <div class="form-group">
               <label class="modal-label">FW</label>
               <input
-                v-model="form.frameworks"
+                :value="
+                  selectedSkills.framework
+                    ?.map((skill) => skill.skillTagNm)
+                    .join(', ') || ''
+                "
                 type="text"
                 class="form-control"
                 placeholder="FW (쉼표로 구분, 예: Spring Boot, Vue.js)"
@@ -134,7 +176,7 @@
               />
             </div>
           </div>
-          <div class="form-row">
+          <!-- <div class="form-row">
             <div class="form-group">
               <label class="modal-label">기타</label>
               <input
@@ -144,10 +186,9 @@
                 placeholder="기타 (쉼표로 구분, 예: git, Docker)"
               />
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="btn btn-primary" @click="submit">저장하기</button>
         <button class="btn btn-light" @click="closeModal">닫기</button>
@@ -157,105 +198,98 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue'
+import { computed, defineProps, onMounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
-import SkillSelectModal from '@/fo/components/project/SkillSelectModal.vue'
-import axios from 'axios'
+import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
+import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal.vue'
+import { api } from '@/axios'
 
 const props = defineProps({
   onComplete: Function,
+  projectId: Number,
 })
 
 const modalStore = useModalStore()
+const projectStore = useProjectStore()
+const alertStore = useAlertStore()
 
-const form = ref({
-  name: '',
-  period: '',
-  client: '',
-  workUnit: '',
-  role: '',
-  // device: '',
-  // os: '',
-  // dbms: '',
-  // languages: '',
-  // tools: '',
-  // frameworks: '',
-  skills: [],
-  etc: '',
+// form과 skills를 store에서 가져옴 (양방향 바인딩용 computed)
+const form = computed({
+  get: () => projectStore.getForm(props.projectId),
+  set: (val) => projectStore.setForm(props.projectId, val),
 })
 
-const selectedSkills = ref([])
-const skillList = ref([])
-// const languageList = ref([])
-// const frameworkList = ref([])
-// const toolList = ref([])
+const selectedSkills = computed(() => projectStore.getSkills(props.projectId))
 
-function parseArray(str) {
-  if (!str) return []
-  return str
-    .split(/[,\n;]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
+const projectRoleTypeList = ref([])
+const projectTaskTypeList = ref([])
+
+const fetchTypeCodes = async () => {
+  const response = await api.$get('/mypage/resume/project-history/type-codes')
+  projectRoleTypeList.value = response.output.projectRoleTypeList
+  projectTaskTypeList.value = response.output.projectTaskTypeList
+  // console.log('projectRoleTypeList', projectRoleTypeList)
+  // console.log('projectTaskTypeList', projectTaskTypeList)
 }
 
-// const updateSelectedSkills = () => {
-//   const languages = parseArray(form.value.languages).map((name) => ({
-//     name,
-//     type: 'language',
-//   }))
-//   const tools = parseArray(form.value.tools).map((name) => ({
-//     name,
-//     type: 'tool',
-//   }))
-//   const frameworks = parseArray(form.value.frameworks).map((name) => ({
-//     name,
-//     type: 'framework',
-//   }))
-//   selectedSkills.value = [...languages, ...tools, ...frameworks]
-// }
-
 const openSkillModal = () => {
-  modalStore.openModal(SkillSelectModal, {
-    skills: skillList.value,
-    onComplete: handleSkillConfirm,
+  modalStore.openModal(ProjectHistorySkillTagModal, {
+    projectId: props.projectId,
   })
 }
 
-const handleSkillConfirm = (selected) => {
-  form.value.skills = selected
-}
-
-// const handleSkillConfirm = (selected) => {
-//   form.value.languages = selected
-//     .filter((s) => s.type === 'language')
-//     .map((s) => s.name)
-//     .join(', ')
-//   form.value.tools = selected
-//     .filter((s) => s.type === 'tool')
-//     .map((s) => s.name)
-//     .join(', ')
-//   form.value.frameworks = selected
-//     .filter((s) => s.type === 'framework')
-//     .map((s) => s.name)
-//     .join(', ')
-// }
-
 const submit = () => {
-  const project = {
-    name: form.value.name,
-    period: form.value.period,
-    client: form.value.client,
-    workUnit: form.value.workUnit,
-    role: form.value.role,
-    skills: selectedSkills.value,
-    // device: form.value.device,
-    // os: form.value.os,
-    // dbms: form.value.dbms,
-    // languages: parseArray(form.value.languages).map((name) => ({ name })),
-    // tools: parseArray(form.value.tools),
-    // frameworks: parseArray(form.value.frameworks).map((name) => ({ name })),
-    etc: parseArray(form.value.etc).map((name) => ({ name })),
+  if (!form.value.name) {
+    alertStore.show('프로젝트명을 입력해주세요.', 'danger')
+    return
   }
+  if (!form.value.startDate) {
+    alertStore.show('프로젝트 근무 기간을 선택하세요.', 'danger')
+    return
+  }
+  if (!form.value.client) {
+    alertStore.show('고객사를 입력하세요.', 'danger')
+    return
+  }
+  if (!form.value.workUnit) {
+    alertStore.show('업무단을 선택하세요.', 'danger')
+    return
+  }
+  if (!form.value.role) {
+    alertStore.show('프로젝트 담당 역할을 선택하세요.', 'danger')
+    return
+  }
+  const totalSkillCount = Object.values(selectedSkills.value || {}).reduce(
+    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+    0,
+  )
+
+  if (totalSkillCount === 0) {
+    alertStore.show('개발환경을 선택하세요.', 'danger')
+    return
+  }
+
+  const selectedWorkUnit = projectTaskTypeList.value.find(
+    (item) => item.commonCodeSq === form.value.workUnit,
+  )
+
+  const selectedRole = projectRoleTypeList.value.find(
+    (item) => item.commonCodeSq === form.value.role,
+  )
+
+  const project = {
+    projectHistoryTask: form.value.name,
+    projectHistoryStartDt: form.value.startDate || null,
+    projectHistoryEndDt: form.value.endDate || null,
+    projectHistoryClient: form.value.client,
+    projectHistoryTypeCd: form.value.workUnit,
+    projectHistoryTypeCdNm: selectedWorkUnit?.commonCodeNm || null, // 업무단 이름
+    projectHistoryJobPositionTypeCd: form.value.role,
+    projectHistoryJobPositionTypeCdNm: selectedRole?.commonCodeNm || null, // 역할 이름
+    skillTags: selectedSkills.value,
+  }
+
   props.onComplete(project)
   closeModal()
 }
@@ -263,20 +297,11 @@ const submit = () => {
 const closeModal = () => {
   modalStore.closeModal()
 }
-
-onMounted(async () => {
-  try {
-    const res = await axios.get(
-      'http://localhost:8080/api/mypage/resume/skills',
-      console.log('기술 목록:', res.data),
-    )
-    skillList.value = res.data
-    // languageList.value = res.data.filter((skill) => skill.type === 'language')
-    // frameworkList.value = res.data.filter((skill) => skill.type === 'framework')
-    // toolList.value = res.data.filter((skill) => skill.type === 'tool')
-  } catch (e) {
-    console.error('[ 기술 목록 조회 실패]', e)
+onMounted(() => {
+  if (!projectStore.hasForm(props.projectId)) {
+    projectStore.initForm(props.projectId)
   }
+  fetchTypeCodes()
 })
 </script>
 

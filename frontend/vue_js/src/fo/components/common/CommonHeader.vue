@@ -364,7 +364,7 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  console.log('currentPath', currentPath.value)
+  // console.log('currentPath', currentPath.value)
 })
 
 onBeforeUnmount(() => {

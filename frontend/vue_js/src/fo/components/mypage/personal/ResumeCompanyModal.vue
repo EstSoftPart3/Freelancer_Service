@@ -42,7 +42,7 @@
             <div style="display: flex; gap: 8px">
               <input
                 v-model="form.startDate"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="입사년월"
@@ -50,7 +50,7 @@
               <span style="align-self: center">~</span>
               <input
                 v-model="form.endDate"
-                type="month"
+                type="date"
                 class="form-control"
                 style="width: 48%"
                 placeholder="퇴사년월"
@@ -73,11 +73,13 @@
 <script setup>
 import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
 
 const props = defineProps({
   onComplete: Function, // 부모에서 내려주는 콜백함수
 })
 const modalStore = useModalStore()
+const alertStore = useAlertStore()
 
 const form = ref({
   company: '',
@@ -88,31 +90,41 @@ const form = ref({
   period: '',
 })
 
-function toYyyyMmDd(dateStr) {
-  if (!dateStr) return '';
-  if (/^\d{4}-\d{2}$/.test(dateStr)) return dateStr + '-01';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  return '';
-}
-
 const submit = () => {
- 
-
-  // 화면 표시용 기간 (YYYY.MM ~ YYYY.MM)
-  const format = (date) => {
-    if (!date) return ''
-    const [y, m] = date.split('-')
-    return `${y}.${m}`
+  if (!form.value.company) {
+    alertStore.show('회사명을 입력해주세요.', 'danger')
+    return
   }
-  form.value.period = `${format(form.value.startDate)} ~ ${format(form.value.endDate)}`
+  if (!form.value.department) {
+    alertStore.show('부서를 입력하세요.', 'danger')
+    return
+  }
+
+  if (!form.value.position) {
+    alertStore.show('직급을 입력하세요.', 'danger')
+    return
+  }
+
+  if (!form.value.startDate) {
+    alertStore.show('근무 기간을 선택하세요.', 'danger')
+    return
+  }
+  // 화면 표시용 기간 (YYYY.MM ~ YYYY.MM)
+  function formatDate(dateString) {
+    if (!dateString) return ''
+    return dateString.substring(0, 10).replace(/-/g, '.')
+  }
+  form.value.period = form.value.endDate
+    ? `${formatDate(form.value.startDate)} ~ ${formatDate(form.value.endDate)}`
+    : `${formatDate(form.value.startDate)} ~`
 
   // 부모로 넘길 때는 YYYY-MM-dd로 넘기기
   props.onComplete({
-    company: form.value.company,
-    department: form.value.department,
-    position: form.value.position,
-    startDate: toYyyyMmDd(form.value.startDate),
-    endDate: toYyyyMmDd(form.value.endDate),
+    careerCompanyNm: form.value.company,
+    careerDepartmentNm: form.value.department,
+    careerPositionNm: form.value.position,
+    careerStartDt: form.value.startDate,
+    careerEndDt: form.value.endDate,
     period: form.value.period,
   })
   modalStore.closeModal()

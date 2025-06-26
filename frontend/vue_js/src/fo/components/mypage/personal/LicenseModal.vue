@@ -9,10 +9,10 @@
       <div class="modal-search">
         <input
           v-model="search"
-          @keyup.enter="fetchLicenses"
+          @keyup.enter="searchAndResetPage"
           placeholder="자격증을 입력하세요."
         />
-        <button class="modal-search-btn" @click="fetchLicenses">
+        <button class="modal-search-btn" @click="searchAndResetPage">
           <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
             <circle cx="8" cy="8" r="7" stroke="#fff" stroke-width="2" />
             <path
@@ -33,10 +33,7 @@
             class="modal-item"
             @click="selectLicense(license)"
           >
-            <div class="license-name">{{ license.name }}</div>
-            <div class="license-meta">
-              {{ license.level }} | {{ license.org }}
-            </div>
+            <a class="license-name">{{ license.name }}</a>
           </div>
         </div>
         <div v-else class="modal-empty">검색 결과가 없습니다.</div>
@@ -45,7 +42,7 @@
       <div class="modal-pagination">
         <button :disabled="page === 1" @click="prevPage">&lt;</button>
         <button
-          v-for="p in totalPages"
+          v-for="p in pageGroup"
           :key="p"
           :class="{ active: page === p }"
           @click="goPage(p)"
@@ -63,50 +60,81 @@
 </template>
 
 <script setup>
-import { ref, watch, defineEmits } from 'vue'
+import { ref, watch, defineProps, onMounted, computed } from 'vue'
 import { api } from '@/axios'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
 
-const emit = defineEmits(['license-selected'])
+const props = defineProps({
+  onLicenseSelected: Function,
+  selectedLicense: {
+    type: Array,
+    default: () => [],
+  },
+})
 const modalStore = useModalStore()
+const alertStroe = useAlertStore()
 
 const search = ref('')
 const licenses = ref([])
 const page = ref(1)
 const totalPages = ref(1)
 
+// ✅ 페이지 그룹 관련 설정
+const groupSize = 3
+const currentGroup = computed(() => Math.ceil(page.value / groupSize))
+const pageGroup = computed(() => {
+  const start = (currentGroup.value - 1) * groupSize + 1
+  const end = Math.min(start + groupSize - 1, totalPages.value)
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+})
+
 const fetchLicenses = async () => {
   try {
-    const res = await api.$get('/certificates', {
+    const res = await api.$get('/mypage/resume/certificates', {
       params: {
-        keyword: search.value,
-        pageNo: page.value,
-        numOfRows: 10,
+        searchNm: search.value,
+        page: page.value,
+        size: 5,
       },
     })
 
-    const items = res.data.response.body.items?.item || []
-    licenses.value = items.map((item, index) => ({
-      id: item.licensecode || index,
-      name: item.jmfldnm,
-      level: item.seriesnm,
-      org: item.minClassnm,
+    const items = res.output.certificates || []
+    licenses.value = items.map((item) => ({
+      id: item.certificateCd,
+      name: item.certificateNm,
     }))
 
-    totalPages.value = Math.ceil((res.data.response.body.totalCount || 1) / 10)
+    totalPages.value = res.output.totalPages || 1
   } catch (e) {
     console.error('자격증 API 호출 실패', e)
   }
 }
 
-// 페이지 변경 시 자동 호출
 watch(page, () => {
   fetchLicenses()
 })
 
 const selectLicense = (license) => {
-  emit('license-selected', license)
+  const selectedList = props.selectedLicense || []
+  // console.log('selectedList', selectedList)
+
+  const isDuplicate = selectedList.some(
+    (item) => item.certificationCd === license.id,
+  )
+
+  if (isDuplicate) {
+    alertStroe.show('이미 선택된 자격증입니다.', 'danger')
+    return
+  }
+
+  props.onLicenseSelected(license)
   close()
+}
+
+const searchAndResetPage = () => {
+  page.value = 1
+  fetchLicenses()
 }
 
 const close = () => {
@@ -125,6 +153,10 @@ const nextPage = () => {
 const goPage = (p) => {
   page.value = p
 }
+
+onMounted(() => {
+  fetchLicenses()
+})
 </script>
 
 <style scoped>
@@ -173,7 +205,7 @@ const goPage = (p) => {
   transition: color 0.2s;
 }
 .modal-close:hover {
-  color: #007bff;
+  color: var(--primary);
 }
 .modal-search {
   display: flex;
@@ -192,29 +224,29 @@ const goPage = (p) => {
   box-sizing: border-box;
 }
 .modal-search-btn {
-  background: #007bff;
+  background: var(--primary);
   color: #fff;
   border-radius: 0 4px 4px 0;
-  width: 42px;
+  width: 34px;
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 1px solid #007bff;
+  border: 1px solid var(--primary);
   border-left: none;
   transition: background 0.2s;
   font-size: 18px;
   box-sizing: border-box;
 }
 .modal-search-btn:hover {
-  background: #0056b3;
+  background: var(--primary);
 }
-.modal-search-btn svg {
+dal-search-btn svg {
   display: block;
 }
 .modal-list {
-  max-height: 180px;
+  /* max-height: 180px; */
   overflow-y: auto;
   padding: 0 20px;
 }
@@ -229,6 +261,11 @@ const goPage = (p) => {
   color: #222;
   font-size: 15px;
   margin-bottom: 2px;
+}
+.license-name:hover {
+  color: var(--primary--100);
+  cursor: pointer;
+  text-decoration: none;
 }
 .license-meta {
   color: #888;
@@ -248,20 +285,20 @@ const goPage = (p) => {
 }
 .modal-pagination button {
   background: #fff;
-  border: 1px solid #007bff;
+  border: 1px solid #f5f5f5;
   border-radius: 4px;
-  padding: 2px 9px;
-  font-size: 15px;
+  padding: 6px 14px;
+  font-size: 16px;
   cursor: pointer;
-  color: #007bff;
+  color: var(--primary);
   transition:
     background 0.2s,
     color 0.2s;
 }
-.modal-pagination button.active,
-.modal-pagination button:focus {
-  background: #007bff;
+.modal-pagination button.active {
+  background: var(--primary);
   color: #fff;
+  border-color: var(--primary);
 }
 .modal-pagination button:disabled {
   background: #fff;
@@ -286,8 +323,8 @@ const goPage = (p) => {
   transition: all 0.2s;
 }
 .modal-footer-close:hover {
-  background: #007bff;
+  background: var(--primary);
   color: #fff;
-  border-color: #007bff;
+  border-color: var(--primary);
 }
 </style>

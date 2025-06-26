@@ -11,7 +11,7 @@
           <div class="form-group">
             <label class="modal-label">교육명</label>
             <input
-              v-model="form.program"
+              v-model="form.trainingProgramNm"
               type="text"
               class="form-control"
               placeholder="교육명"
@@ -20,7 +20,7 @@
           <div class="form-group">
             <label class="modal-label">교육 기관</label>
             <input
-              v-model="form.institution"
+              v-model="form.trainingInstitutionNm"
               type="text"
               class="form-control"
               placeholder="교육 기관"
@@ -30,20 +30,20 @@
         <div class="form-row">
           <div class="form-group position-group">
             <label class="modal-label">교육 기간</label>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px">
               <input
-                v-model="form.startDate"
-                type="month"
+                v-model="form.trainingStartDt"
+                type="date"
                 class="form-control"
-                style="width: 48%;"
+                style="width: 48%"
                 placeholder="시작년월"
               />
-              <span style="align-self: center;">~</span>
+              <span style="align-self: center">~</span>
               <input
-                v-model="form.endDate"
-                type="month"
+                v-model="form.trainingEndDt"
+                type="date"
                 class="form-control"
-                style="width: 48%;"
+                style="width: 48%"
                 placeholder="종료년월"
               />
             </div>
@@ -64,28 +64,41 @@
 <script setup>
 import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useAlertStore } from '@/fo/stores/alertStore'
 
 const props = defineProps({
   onComplete: Function, // 부모에서 내려주는 콜백함수
 })
 const modalStore = useModalStore()
+const alertStore = useAlertStore()
 
 const form = ref({
-  program: '',
-  institution: '',
-  startDate: '', 
-  endDate: '', 
-  period: '',    
+  trainingProgramNm: '',
+  trainingInstitutionNm: '',
+  trainingStartDt: '',
+  trainingEndDt: '',
+  period: '',
 })
 
 const submit = () => {
-  // YYYY-MM -> YYYY.MM 포맷으로 변환
-  const format = (date) => {
-    if (!date) return ''
-    const [y, m] = date.split('-')
-    return `${y}.${m}`
+  if (!form.value.trainingProgramNm) {
+    alertStore.show('교육명을 입력해주세요.', 'danger')
+    return
   }
-  form.value.period = `${format(form.value.startDate)} ~ ${format(form.value.endDate)}`
+  if (!form.value.trainingInstitutionNm) {
+    alertStore.show('교육 기관을 입력하세요.', 'danger')
+    return
+  }
+  if (!form.value.trainingStartDt) {
+    alertStore.show('교육 기간을 선택하세요.', 'danger')
+    return
+  }
+  function formatDate(dateString) {
+    if (!dateString) return ''
+    return dateString.substring(0, 10).replace(/-/g, '.')
+  }
+
+  form.value.period = `${formatDate(form.value.trainingStartDt)} ~ ${formatDate(form.value.trainingEndDt)}`
   props.onComplete({ ...form.value }) // 부모에게 데이터 전달
   modalStore.closeModal()
 }
