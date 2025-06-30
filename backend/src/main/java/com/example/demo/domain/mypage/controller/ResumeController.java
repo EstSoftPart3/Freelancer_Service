@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -109,19 +110,45 @@ public class ResumeController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 인원 대표 이력서 설정 완료", "success"));
 	}
 
-	// 이력서 조회
 	@GetMapping("/list")
-	public ResponseEntity<ApiResponse<List<ResumeListResponse>>> getAllResumes(@AuthenticationPrincipal Long userSq) {
-		List<ResumeListResponse> resumes = resumeService.getAllResumes(userSq);
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.", resumes));
+	public ResponseEntity<ApiResponse<Map<String, Object>>> getResumeList(
+			@RequestParam Long currentPage,
+			@RequestParam Long size,
+			@AuthenticationPrincipal Long userSq) {
+
+		List<ResumeListResponse> fullList = resumeService.getAllResumes(userSq);
+
+		int totalCount = fullList.size();
+		int offset = (int) ((currentPage - 1) * size);
+		int toIndex = Math.min(offset + size.intValue(), totalCount);
+		List<ResumeListResponse> pagedList = fullList.subList(offset, toIndex);
+
+		// 응답 본문 구성
+		Map<String, Object> output = Map.of(
+				"output", pagedList,
+				"totalCount", totalCount);
+
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "이력서 목록 조회 완료", output));
 	}
 
-	@GetMapping("/list/{memberSq}")
-	public ResponseEntity<ApiResponse<List<ResumeListResponse>>> getAllResumes(@AuthenticationPrincipal Long userSq,
-			@PathVariable("memberSq") Long memberSq) {
-		List<ResumeListResponse> resumes = resumeService.getAllResumes(memberSq);
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.", resumes));
-	}
+	// // 이력서 조회
+	// @GetMapping("/list")
+	// public ResponseEntity<ApiResponse<List<ResumeListResponse>>>
+	// getAllResumes(@AuthenticationPrincipal Long userSq) {
+	// List<ResumeListResponse> resumes = resumeService.getAllResumes(userSq);
+	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료",
+	// resumes));
+	// }
+
+	// @GetMapping("/list/{memberSq}")
+	// public ResponseEntity<ApiResponse<List<ResumeListResponse>>>
+	// getAllResumes(@AuthenticationPrincipal Long userSq,
+	// @PathVariable("memberSq") Long memberSq) {
+	// List<ResumeListResponse> resumes = resumeService.getAllResumes(memberSq);
+	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.",
+	// resumes));
+	// }
 
 	// 이력서 삭제
 	@PatchMapping("/{resumeSq}/delete")
@@ -153,4 +180,13 @@ public class ResumeController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "자격증 리스트 조회 완료", result));
 	}
 
+	// 이력서 복사하기
+	@PostMapping("/{resumeSq}/copy")
+	public ResponseEntity<ApiResponse<Long>> copyResume(
+			@PathVariable Long resumeSq,
+			@AuthenticationPrincipal Long userSq) {
+		Long copiedResumeSq = resumeService.copyResume(userSq, resumeSq);
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "이력서 복사 완료", copiedResumeSq));
+	}
 }

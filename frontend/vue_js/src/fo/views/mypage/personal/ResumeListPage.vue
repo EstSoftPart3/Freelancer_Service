@@ -146,11 +146,11 @@ const getResume = async () => {
     `/mypage/resume/list?currentPage=${currentPage.value}&size=${size}`,
   )
   console.log('이력서 목록 응답:', res)
-  if (Array.isArray(res.output)) {
-    console.log(res.output)
-    resumeList.value = res.output
-    if (res.totalCount) {
-      totalPages.value = Math.ceil(res.totalCount / size)
+  if (Array.isArray(res.output.output)) {
+    console.log(res.output.output)
+    resumeList.value = res.output.output
+    if (res.output.totalCount) {
+      totalPages.value = Math.ceil(res.output.totalCount / size)
     }
   } else {
     console.error('이력서 목록을 불러올 수 없습니다.', res)
@@ -165,23 +165,23 @@ watch(currentPage, () => {
   getResume()
 })
 
-// function removeResume(resumeSq) {
-//   if (!confirm('정말 삭제하시겠습니까?')) return
-//   api
-//     .$patch(`/mypage/resume/${resumeSq}/delete`)
-//     .then(() => {
-//       getResume()
-//     })
-//     .catch((err) => {
-//       alertStore.show(
-//         '삭제 실패: ' + (err?.response?.data?.message || err.message),
-//         'danger',
-//       )
-//     })
-//     .finally(() => {
-//       isDeleting.value = false
-//     })
-// }
+// 복사 기능
+async function copyResume(resumeSq) {
+  try {
+    await api.$post(`/mypage/resume/${resumeSq}/copy`)
+    alertStore.show('이력서 복사가 완료되었습니다.', 'success')
+    getResume() // 복사 후 목록 갱신
+  } catch (e) {
+    console.error('이력서 복사 실패:', e)
+    alertStore.error('이력서 복사에 실패했습니다.')
+  }
+}
+
+function registerResume() {
+  router.push('/mypage/resumeform').then(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  })
+}
 
 const removeResume = (resumeSq) => {
   modalStore.openModal(CommonConfirmModal, {
@@ -250,14 +250,5 @@ function openResumeDetail(resumeSq) {
 //수정하기
 function editResume(resumeSq) {
   router.push({ name: 'ResumeFormEdit', params: { resumeSq } })
-}
-
-// 복사 기능
-function copyResume(/*id*/) {}
-
-function registerResume() {
-  router.push('/mypage/resumeform').then(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' })
-  })
 }
 </script>

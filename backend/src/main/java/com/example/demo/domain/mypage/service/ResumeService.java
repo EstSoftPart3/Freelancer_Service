@@ -1,5 +1,7 @@
 package com.example.demo.domain.mypage.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -656,5 +658,90 @@ public class ResumeService {
 
 	public List<ParentSkillTagDTO> getParentSkillTags() {
 		return resumeRepository.getParentSkillTags();
+	}
+
+	// 복사하기
+	@Transactional
+	public Long copyResume(Long userSq, Long originResumeSq) {
+		// 원본 이력서 조회
+		ResumeRequestDTO originDto = resumeRepository.findByResumeSq(originResumeSq);
+		if (originDto == null)
+			throw new IllegalArgumentException("복사할 이력서를 찾을 수 없습니다.");
+
+		// 1. 주소 복사
+		ResumeRequestDTO.AddressDTO address = resumeRepository
+				.findAddressByAddressSq(originDto.getAddress().getAddressSq());
+		resumeRepository.insertAddress(address); // addressSq가 자동으로 세팅됨
+
+		// 2. 이력서 기본정보 복사 (제목 후처리)
+		String suffix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+		originDto.setResumeTtl("[복사본_" + suffix + "] " + originDto.getResumeTtl());
+		originDto.setResumeSq(null);
+		originDto.setAddress(address);
+
+		resumeRepository.insertResume(userSq, originDto);
+		Long newResumeSq = originDto.getResumeSq();
+
+		// 3. 학력 복사
+		List<ResumeRequestDTO.EducationDTO> educations = resumeRepository.findEducationList(originResumeSq);
+		for (ResumeRequestDTO.EducationDTO edu : educations) {
+			edu.setEducationSq(null);
+			edu.setResumeSq(newResumeSq);
+			resumeRepository.insertEducation(edu);
+		}
+
+		// 4. 경력 복사
+		List<ResumeRequestDTO.CareerDTO> careers = resumeRepository.findCareerList(originResumeSq);
+		for (ResumeRequestDTO.CareerDTO career : careers) {
+			career.setCareerSq(null);
+			career.setResumeSq(newResumeSq);
+			resumeRepository.insertCareer(career);
+		}
+
+		// 5. 프로젝트 + 기술태그 복사
+		List<ResumeRequestDTO.ProjectHistoryDTO> projects = resumeRepository.findProjectHistoryList(originResumeSq);
+		for (ResumeRequestDTO.ProjectHistoryDTO project : projects) {
+			Long oldProjectSq = project.getProjectHistorySq();
+			project.setProjectHistorySq(null);
+			project.setResumeSq(newResumeSq);
+			resumeRepository.insertProjectHistory(project);
+
+			Long newProjectSq = project.getProjectHistorySq();
+			List<ResumeRequestDTO.ProjectHistorySkillTagDTO> tags = resumeRepository
+					.findProjectHistorySkillTagList(oldProjectSq);
+			for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : tags) {
+				tag.setProjectHistorySkillSq(null);
+				tag.setProjectHistorySq(newProjectSq);
+				resumeRepository.insertProjectHistorySkillTag(tag);
+			}
+		}
+
+		// 6. 자격증 복사
+		List<ResumeRequestDTO.CertificationDTO> certs = resumeRepository.findCertificationList(originResumeSq);
+		for (ResumeRequestDTO.CertificationDTO cert : certs) {
+			cert.setCertificationSq(null);
+			cert.setResumeSq(newResumeSq);
+			resumeRepository.insertCertification(cert);
+		}
+
+		// 7. 교육 복사
+		List<ResumeRequestDTO.TrainingHistoryDTO> trainings = resumeRepository.findTrainingHistoryList(originResumeSq);
+		for (ResumeRequestDTO.TrainingHistoryDTO training : trainings) {
+			training.setTrainingSq(null);
+			training.setResumeSq(newResumeSq);
+			resumeRepository.insertTrainingHistory(training);
+		}
+
+		// 8. 보유 기술 태그 복사
+		List<ResumeRequestDTO.SkillTagDTO> skillTags = resumeRepository.findSkillTagList(originResumeSq);
+		for (ResumeRequestDTO.SkillTagDTO tag : skillTags) {
+			tag.setResumeSkillSq(null);
+			tag.setResumeSq(newResumeSq);
+			resumeRepository.insertResumeSkillTag(tag);
+		}
+
+		// 9. 프로필 이미지 및 첨부파일은 복사하지 않음 (선택적 처리)
+
+		return newResumeSq;
 	}
 }
