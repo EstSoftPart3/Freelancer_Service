@@ -227,7 +227,12 @@
                 >
                 <span>
                   (
-                  {{ education.period }}
+                  {{ education.educationAdmissionDt }} ~
+                  {{
+                    education.educationGraduationDt
+                      ? education.educationGraduationDt
+                      : ''
+                  }}
                   )
                 </span>
                 <span
@@ -264,7 +269,8 @@
                 {{ career.careerPositionNm }}
                 <span>
                   (
-                  {{ career.period }}
+                  {{ career.careerStartDt }} ~
+                  {{ career.careerEndDt ? career.careerEndDt : '' }}
                   )
                 </span>
 
@@ -303,7 +309,8 @@
                 style="padding-right: 24px"
               >
                 {{ item.trainingProgramNm }} /
-                {{ item.trainingInstitutionNm }} ( {{ item.period }} )
+                {{ item.trainingInstitutionNm }} ( {{ item.trainingStartDt }} ~
+                {{ item.trainingEndDt ? item.trainingEndDt : '' }})
                 <span
                   class="text-grey ms-2 position-absolute end-0 me-2"
                   style="top: 50%; transform: translateY(-50%)"
@@ -398,13 +405,14 @@
                     </div>
                   </div>
                   <div class="row mb-2">
+                    <!-- Device -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">기종:</strong>
                         <div
-                          v-for="skill in project.skillTags.device"
+                          v-for="skill in getSkillList(project, 'device')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -420,13 +428,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- OS -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">OS:</strong>
                         <div
-                          v-for="skill in project.skillTags.os"
+                          v-for="skill in getSkillList(project, 'os')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -442,13 +452,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- DBMS -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">DBMS:</strong>
                         <div
-                          v-for="skill in project.skillTags.dbms"
+                          v-for="skill in getSkillList(project, 'dbms')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -464,13 +476,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Language -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">언어:</strong>
                         <div
-                          v-for="skill in project.skillTags.language"
+                          v-for="skill in getSkillList(project, 'language')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -486,13 +500,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Tool -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">TOOL:</strong>
                         <div
-                          v-for="skill in project.skillTags.tool"
+                          v-for="skill in getSkillList(project, 'tool')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -508,13 +524,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Framework -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">FW:</strong>
                         <div
-                          v-for="skill in project.skillTags.framework"
+                          v-for="skill in getSkillList(project, 'framework')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -673,17 +691,19 @@ import SkillTagModal from '@/fo/components/community/SkillTagModal.vue'
 import ShowProjectFormModal from '@/fo/components/mypage/personal/ShowProjectFormModal.vue'
 import LicenseModal from '@/fo/components/mypage/personal/LicenseModal.vue'
 
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const projectStore = useProjectStore()
 const router = useRouter()
+const route = useRoute()
 
 const resumeForm = reactive({
   resumeTtl: '',
@@ -710,6 +730,8 @@ const resumeForm = reactive({
   trainingHistoryList: [],
   skillTagList: [],
 })
+
+const resumeId = route.params.resumeSq
 
 const profileImages = ref([])
 const attachments = ref([])
@@ -984,6 +1006,54 @@ function cleanProjectHistoryList(projectHistoryList) {
     skillTagList: flattenSkillTags(skillTags),
   }))
 }
+function getSkillList(project, category) {
+  return project.skillTags?.[category] || []
+}
+
+function convertSkillTagListToGrouped(skillTagList, parentTags) {
+  // 1. 미리 모든 카테고리를 소문자 키로 초기화
+  const grouped = {}
+  parentTags.forEach((tag) => {
+    grouped[tag.skillTagNm.toLowerCase()] = []
+  })
+
+  // 2. 각 skill을 부모 태그 기준으로 분류
+  skillTagList.forEach((skill) => {
+    const parent = parentTags.find(
+      (p) => p.skillTagSq === skill.parentSkillTagSq,
+    )
+    if (!parent) return
+    const key = parent.skillTagNm.toLowerCase()
+    if (key in grouped) {
+      grouped[key].push(skill)
+    }
+  })
+
+  return grouped
+}
+
+onMounted(async () => {
+  if (resumeId) {
+    const data = await api.$get(`/mypage/resume/${resumeId}`)
+
+    // 1. 이력서 기본값 세팅
+    Object.assign(resumeForm, data.output)
+
+    // 2. 상위 태그 불러오기
+    const parentTags = await api.$get(
+      '/mypage/resume/project-history/parent-skill',
+    )
+
+    // 3. 각 프로젝트의 skillTagList → skillTags로 가공
+    resumeForm.projectHistoryList.forEach((project) => {
+      project.skillTags = convertSkillTagListToGrouped(
+        project.skillTagList,
+        parentTags.output,
+      )
+    })
+    console.log('resumeForm', resumeForm)
+  }
+})
 
 async function submitResume() {
   if (!resumeForm.resumeTtl?.trim()) {
@@ -1048,9 +1118,15 @@ async function submitResume() {
   })
 
   try {
-    await api.$post('/mypage/resume', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    if (resumeId) {
+      await api.$put(`/mypage/resume/${resumeId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } else {
+      await api.$post('/mypage/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
 
     console.log('폼데이터 내용:')
     for (let [key, value] of formData.entries()) {
