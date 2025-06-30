@@ -1,117 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.company.mapper.CompanyMapper">
 
-    <select id="findCompanyNmByCompanySq" parameterType="Long" resultType="String">
-        SELECT company_nm
-        FROM TBL_COMPANY_S
-        WHERE company_sq = #{companySq}
-    </select>
-    
-    <select id="findCompanySqByUserSq" parameterType="Long" resultType="Long">
-        SELECT company_sq
-        FROM TBL_COMPANY_S
-        WHERE user_sq = #{userSq}
-    </select>
-    
-    <select id="findUserNmByCompanySq" parameterType="Long" resultType="Long">
-        SELECT user_sq
-        FROM TBL_COMPANY_MEMBER_R
-        WHERE company_sq = #{companySq}
-    </select>
-    
-    <select id="findUserSqByCompanySq" parameterType="Long" resultType="Long">
-        SELECT user_sq
-        FROM TBL_COMPANY_S
-        WHERE company_sq = #{companySq}
-    </select>
-    
-    <select id="countUsersBySearch" resultType="Long">
-    	SELECT COUNT(DISTINCT cm.user_sq)
-    	FROM TBL_COMPANY_MEMBER_R cm
-    	JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq
-    	JOIN TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq
-    	WHERE cm.company_sq = #{companySq}
-    	<if test="request.keyword != null and request.searchType == 'skill'">
-	      AND rs.skill_tag_nm LIKE CONCAT('%', #{request.keyword}, '%')
-	    </if>
-	    <if test="request.keyword != null and request.searchType == 'name'">
-	      AND r.resume_nm LIKE CONCAT('%', #{request.keyword}, '%')
-	    </if>
-	    <if test="request.keyword != null and request.searchType == null">
-		  AND (
-		    r.resume_nm LIKE CONCAT('%', #{request.keyword}, '%')
-		    OR rs.skill_tag_nm LIKE CONCAT('%', #{request.keyword}, '%')
-		  )
-		</if>
-    	
-    </select>
-    
-    <select id="findUserSqsByCompanySqAndSearch" resultType="Long">
-	    SELECT DISTINCT cm.user_sq
-	    FROM TBL_COMPANY_MEMBER_R cm
-	    JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq
-	    JOIN TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq
-	    WHERE cm.company_sq = #{companySq}
-	    <if test="request.keyword != null and request.searchType == 'skill'">
-	      AND rs.skill_tag_nm LIKE CONCAT('%', #{request.keyword}, '%')
-	    </if>
-	    <if test="request.keyword != null and request.searchType == 'name'">
-	      AND r.resume_nm LIKE CONCAT('%', #{request.keyword}, '%')
-	    </if>
-	    <if test="request.keyword != null and request.searchType == null">
-		  AND (
-		    r.resume_nm LIKE CONCAT('%', #{request.keyword}, '%')
-		    OR rs.skill_tag_nm LIKE CONCAT('%', #{request.keyword}, '%')
-		  )
-		</if>
-	    <if test="request.size != null and request.offset != null">
-	      LIMIT #{request.size} OFFSET #{request.offset}
-	    </if>
-	</select>
-    
-    <select id="findBizNumByUserSq" parameterType="Long" resultType="String">
-        SELECT company_biz_num
-        FROM TBL_COMPANY_S
-        WHERE user_sq = #{userSq}
-    </select>
-    
-    <select id="findBizNumByCompanySq" parameterType="Long" resultType="String">
-        SELECT company_biz_num
-        FROM TBL_COMPANY_S
-        WHERE company_sq = #{companySq}
-    </select>
-    
-    <select id="findCompanyJoinDt" parameterType="Long" resultType="java.time.LocalDate">
-        SELECT company_member_join_dt
-        FROM TBL_COMPANY_MEMBER_R
-        WHERE user_sq = #{userSq}
-    </select>
-    
-    <select id="findCompanyLeaveDt" parameterType="Long" resultType="java.time.LocalDate">
-        SELECT company_member_leave_dt
-        FROM TBL_COMPANY_MEMBER_R
-        WHERE user_sq = #{userSq}
-    </select>
-    
-    <select id="findCompanyMemberStatus" resultType="Long">
-        SELECT company_member_status_cd
-        FROM TBL_COMPANY_MEMBER_R
-        WHERE user_sq = #{userSq}
-    </select>
-    
-    
-    
-    <update id="updateMemberStatus">
-	    UPDATE TBL_COMPANY_MEMBER_R
-	    SET company_member_status_cd = #{memberStatusCd}, company_member_leave_dt = NOW()
-	    WHERE user_sq = #{userSq}
-	</update>
-    
-    
-    
-    
+  <select id="findCompanyNmByCompanySq" parameterType="Long" resultType="String"> SELECT company_nm
+    FROM TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
+
+  <select id="findCompanySqByUserSq" parameterType="Long" resultType="Long"> SELECT company_sq FROM
+    TBL_COMPANY_S WHERE user_sq = #{userSq} </select>
+
+  <select id="findUserNmByCompanySq" parameterType="Long" resultType="Long"> SELECT user_sq FROM
+    TBL_COMPANY_MEMBER_R WHERE company_sq = #{companySq} </select>
+
+  <select id="findUserSqByCompanySq" parameterType="Long" resultType="Long"> SELECT user_sq FROM
+    TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
+
+  <select id="countUsersBySearch" resultType="Long"> SELECT COUNT(DISTINCT cm.user_sq) FROM
+    TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
+    TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq} <if
+      test="request.keyword != null and request.searchType == 'skill'"> AND rs.skill_tag_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') </if>
+  <if
+      test="request.keyword != null and request.searchType == 'name'"> AND r.resume_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') </if>
+  <if
+      test="request.keyword != null and request.searchType == null"> AND ( r.resume_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') OR (rs.skill_tag_nm IS NOT NULL AND rs.skill_tag_nm LIKE
+    CONCAT('%', #{request.keyword}, '%')) ) </if>
+  </select>
+
+
+  <select id="findUserSqsByCompanySqAndSearch" resultType="Long"> SELECT DISTINCT cm.user_sq FROM
+    TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
+    TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq} <if
+      test="request.keyword != null and request.searchType == 'skill'"> AND rs.skill_tag_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') </if>
+  <if
+      test="request.keyword != null and request.searchType == 'name'"> AND r.resume_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') </if>
+  <if
+      test="request.keyword != null and request.searchType == null"> AND ( r.resume_nm LIKE
+    CONCAT('%', #{request.keyword}, '%') OR (rs.skill_tag_nm IS NOT NULL AND rs.skill_tag_nm LIKE
+    CONCAT('%', #{request.keyword}, '%')) ) </if>
+  <if
+      test="request.size != null and request.offset != null"> LIMIT #{request.size} OFFSET
+    #{request.offset} </if>
+  </select>
+
+
+  <select id="findBizNumByUserSq" parameterType="Long" resultType="String"> SELECT company_biz_num
+    FROM TBL_COMPANY_S WHERE user_sq = #{userSq} </select>
+
+  <select id="findBizNumByCompanySq" parameterType="Long" resultType="String"> SELECT
+    company_biz_num FROM TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
+
+  <select id="findCompanyJoinDt" parameterType="Long" resultType="java.time.LocalDate"> SELECT
+    company_member_join_dt FROM TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} </select>
+
+  <select id="findCompanyLeaveDt" parameterType="Long" resultType="java.time.LocalDate"> SELECT
+    company_member_leave_dt FROM TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} </select>
+
+  <select id="findCompanyMemberStatus" resultType="Long"> SELECT company_member_status_cd FROM
+    TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} </select>
+
+
+  <update id="updateMemberStatus"> UPDATE TBL_COMPANY_MEMBER_R SET company_member_status_cd =
+    #{memberStatusCd}, company_member_leave_dt = NOW() WHERE user_sq = #{userSq} </update>
+
+
 </mapper>

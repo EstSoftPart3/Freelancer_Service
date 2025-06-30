@@ -65,9 +65,13 @@ ew
                   style="font-size: 14px; cursor: pointer"
                   >{{ member.userNm }} /</a
                 >
-                <a href="#" class="text-4 m-0" style="font-size: 14px">{{
-                  member.resumeTtl
-                }}</a>
+                <a
+                  href="#"
+                  class="text-4 m-0"
+                  style="font-size: 14px"
+                  @click.prevent="openResumeDetail(member.resumeSq)"
+                  >{{ member.resumeTtl }}</a
+                >
               </div>
               <span
                 v-if="member.leavedYn === 401"
@@ -167,11 +171,12 @@ import { api } from '@/axios.js'
 import { useModalStore } from '../../../stores/modalStore.js'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import ResumeSelectModal from '@/fo/components/mypage/common/ResumeSelectModal.vue'
+import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.vue'
 
 const searchType = ref('all')
 const searchText = ref('')
 const currentPage = ref('1')
-const totalPages = ref('')
+const totalPages = ref('1')
 const pageSize = ref(5)
 
 const modalStore = useModalStore()
@@ -200,9 +205,10 @@ const fetchAffiliationMemberList = async () => {
     })
 
     const output = response.output
+    console.log('output', output)
     members.value = output.members
     currentPage.value = output.page
-    totalPages.value = output.totalPages
+    totalPages.value = Math.max(1, output.totalPages)
   } catch (e) {
     console.log(e)
   }
@@ -213,6 +219,17 @@ const openResumeSelectModal = (memberSq) => {
     size: 'modal-lg',
     userSq: memberSq,
     role: 'COMPANY',
+  })
+}
+function openResumeDetail(resumeSq) {
+  console.log('resumeSq', resumeSq)
+  modalStore.openModal(ResumeDetailModal, {
+    title: '이력서 상세보기',
+    size: 'modal-lg',
+    resumeSq: resumeSq,
+    onConfirm: () => {
+      modalStore.closeModal()
+    },
   })
 }
 
