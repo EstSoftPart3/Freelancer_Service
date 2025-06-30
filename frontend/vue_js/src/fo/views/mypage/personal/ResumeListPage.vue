@@ -173,7 +173,7 @@ async function copyResume(resumeSq) {
     getResume() // 복사 후 목록 갱신
   } catch (e) {
     console.error('이력서 복사 실패:', e)
-    alertStore.error('이력서 복사에 실패했습니다.')
+    alertStore.show('이력서 복사에 실패했습니다.', 'danger')
   }
 }
 
