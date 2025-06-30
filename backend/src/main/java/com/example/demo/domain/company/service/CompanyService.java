@@ -25,6 +25,7 @@ import com.example.demo.domain.project.vo.ResumeSummaryVo;
 import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -33,42 +34,41 @@ public class CompanyService {
 	private final CompanyMapper companyMapper;
 	private final CommonCodeMapper commonCodeMapper;
 
-	
 	private final ResumeMapper resumeMapper;
 	private final ResumeCareerMapper resumeCareerMapper;
 	private final ResumeSkillMapper resumeSkillMapper;
-	
-	
+
 	public Long fetchCompanySq(Long userSq) {
 		return companyMapper.findCompanySqByUserSq(userSq);
 	}
-	
+
 	public Long fetchCompanySq(Long userSq, Long userTypeCd) {
-		if (userTypeCd.equals(commonCodeMapper.findCommonCodeSqByEngName("COMPANY", ParentCodeEnum.MEMBER_TYPE.getCode()))) {
-		    return companyMapper.findCompanySqByUserSq(userSq);
+		if (userTypeCd
+				.equals(commonCodeMapper.findCommonCodeSqByEngName("COMPANY", ParentCodeEnum.MEMBER_TYPE.getCode()))) {
+			return companyMapper.findCompanySqByUserSq(userSq);
 		} else {
-		    throw new RuntimeException("접근 권한이 없습니다.");
+			throw new RuntimeException("접근 권한이 없습니다.");
 		}
 	}
-	
+
 	public Long fetchUserSq(Long companySq) {
 		return companyMapper.findUserSqByCompanySq(companySq);
 	}
-	
+
 	public String fetchCompanyBizNumByUser(Long userSq) {
 		return companyMapper.findBizNumByUserSq(userSq);
 	}
-	
+
 	public String fetchCompanyBizNumByCompany(Long companySq) {
 		return companyMapper.findBizNumByCompanySq(companySq);
 	}
-	
+
+	@Transactional
 	public CompanyMemberResponse fetchMemberList(JwtAuthenticationToken token, CompanyMemberSearchRequest request) {
 		Long companySq = fetchCompanySq(token.getUserSq(), token.getUserTypeCd());
-		
+
 		Long totalCount = companyMapper.countUsersBySearch(companySq, request);
 
-		
 		List<Long> companyUserSqs = companyMapper.findUserSqsByCompanySqAndSearch(companySq, request);
 		List<CompanyMemberVo> responses = new ArrayList<>();
 
@@ -76,53 +76,57 @@ public class CompanyService {
 				sq -> {
 					ResumeSummaryVo resumeSummaryVo;
 					Long repResumeSq = resumeMapper.findRepResumeByUserSq(sq);
-					if(repResumeSq == null) {
+					if (repResumeSq == null) {
 						repResumeSq = resumeMapper.findLatestResumeSqByUserSq(sq);
 						resumeSummaryVo = resumeMapper.findLatestResumeBySq(repResumeSq);
 
-						}else {
+					} else {
 
 						resumeSummaryVo = resumeMapper.findRepResumeNmTtlByUserSq(sq);
 
-					}	
+					}
 					List<Long> resumeSqs = resumeMapper.findResumesByUserSq(sq);
-					
-				
+
 					LocalDate joinDt = companyMapper.findCompanyJoinDt(sq);
 					LocalDate leaveDt = companyMapper.findCompanyLeaveDt(sq);
-					
-					Integer careerYr = calculateTotalCareer(resumeSqs);
-					
-					List<String> skillTags = resumeSkillMapper.findAllNmBySq(repResumeSq);
-					
-					Long leavedYn = companyMapper.findCompanyMemberStatus(sq);
-					
-					responses.add(CompanyMemberVo.from(sq, resumeSummaryVo, joinDt, leaveDt, skillTags, careerYr, leavedYn));
-					
-				}
-		);
-		int page = (request.getOffset() / request.getSize()) + 1;
-	    int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
 
-	    return new CompanyMemberResponse(page, request.getSize(), totalCount, totalPages, responses);
+					Integer careerYr = calculateTotalCareer(resumeSqs);
+
+					List<String> skillTags = resumeSkillMapper.findAllNmBySq(repResumeSq);
+
+					Long leavedYn = companyMapper.findCompanyMemberStatus(sq);
+
+					responses.add(
+							CompanyMemberVo.from(sq, resumeSummaryVo, joinDt, leaveDt, skillTags, careerYr, leavedYn));
+
+				});
+		int page = (request.getOffset() / request.getSize()) + 1;
+		int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
+
+		return new CompanyMemberResponse(page, request.getSize(), totalCount, totalPages, responses);
 	}
-	
+
 	public void updateMemberStatus(Long companySq, CompanyStatusRequest request) {
-		Long memberStatusCd = commonCodeMapper.findCommonCodeSqByName(request.getNewStatus(), ParentCodeEnum.EMPLOYMENT.getCode());
+		Long memberStatusCd = commonCodeMapper.findCommonCodeSqByName(request.getNewStatus(),
+				ParentCodeEnum.EMPLOYMENT.getCode());
 		companyMapper.updateMemberStatus(request.getUserSq(), memberStatusCd);
 	}
-	
+
 	public Integer calculateTotalCareer(List<Long> resumeSqs) {
 		AtomicInteger totalCareer = new AtomicInteger(0);
-		
-		
-		
-		resumeSqs.forEach(
-				sq -> {
-					totalCareer.addAndGet(resumeCareerMapper.calculateCareerByResSq(sq));
-				}
-		);
-		
+
+		resumeSqs.forEach(sq -> {
+			Integer career = resumeCareerMapper.calculateCareerByResSq(sq);
+
+			// if (career == null) {
+			// System.out.println("🚨 null 반환된 resumeSq: " + sq);
+			// } else {
+			// System.out.println("✅ resumeSq " + sq + " 의 경력연차: " + career);
+			// }
+
+			totalCareer.addAndGet(career != null ? career : 0);
+		});
+
 		return totalCareer.get();
 	}
 }
