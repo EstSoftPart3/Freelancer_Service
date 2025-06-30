@@ -667,6 +667,9 @@ public class ResumeService {
 		ResumeRequestDTO originDto = resumeRepository.findByResumeSq(originResumeSq);
 		if (originDto == null)
 			throw new IllegalArgumentException("복사할 이력서를 찾을 수 없습니다.");
+		else {
+			originDto.setResumeIsRepresentativeYn("N");
+		}
 
 		// 1. 주소 복사
 		ResumeRequestDTO.AddressDTO address = resumeRepository
