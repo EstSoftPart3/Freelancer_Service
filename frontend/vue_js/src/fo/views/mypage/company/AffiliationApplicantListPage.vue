@@ -47,19 +47,16 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="col pt-2 mt-1">
-        <hr class="my-4" />
-      </div>
-    </div>
-
     <div class="row" v-if="applicants.length > 0">
       <div class="col">
-        <ul class="simple-post-list m-0 position-relative">
+        <ul class="simple-post-list m-0 my-2 position-relative">
           <li
-            v-for="applicant in applicants"
+            v-for="(applicant, index) in applicants"
             :key="applicant.applicationSq"
-            style="border-bottom: 1px rgb(230, 230, 230) solid"
+            :style="{
+              borderTop: index === 0 ? '1px solid rgb(230, 230, 230)' : '',
+              borderBottom: '1px solid rgb(230, 230, 230)',
+            }"
           >
             <div class="post-info position-relative">
               <!-- 이름 + 합격/불합격 버튼 -->
@@ -76,34 +73,41 @@
                   </button>
                 </div>
                 <div class="d-flex gap-2">
+                  <!-- 합격 상태일 때 -->
                   <button
+                    v-if="applicant.statusCd === 502"
                     type="button"
-                    :class="[
-                      'btn',
-                      'btn-outline',
-                      'btn-primary',
-                      'btn-sm',
-                      { 'btn-light': applicant.statusCd !== 502 },
-                    ]"
-                    v-if="applicant.statusCd !== 503"
-                    @click="handlePassClick(applicant, 502)"
+                    class="btn btn-outline btn-primary btn-sm btn-light"
                   >
                     합격
                   </button>
+
+                  <!-- 불합격 상태일 때 -->
                   <button
+                    v-else-if="applicant.statusCd === 503"
                     type="button"
-                    :class="[
-                      'btn',
-                      'btn-outline',
-                      'btn-primary',
-                      'btn-sm',
-                      { 'btn-light': applicant.statusCd !== 503 },
-                    ]"
-                    v-if="applicant.statusCd !== 502"
-                    @click="handlePassClick(applicant, 503)"
+                    class="btn btn-outline btn-primary btn-sm btn-light"
                   >
                     불합격
                   </button>
+
+                  <!-- 아직 처리되지 않은 경우 -->
+                  <template v-else>
+                    <button
+                      type="button"
+                      class="btn btn-outline btn-primary btn-sm"
+                      @click="handlePassClick(applicant, 502)"
+                    >
+                      합격
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline btn-primary btn-sm"
+                      @click="handlePassClick(applicant, 503)"
+                    >
+                      불합격
+                    </button>
+                  </template>
                 </div>
               </div>
               <!-- 경력/열람일자 -->
@@ -284,6 +288,7 @@ const openDetailModal = (applicationSq) => {
 
 const handleOpenApplicant = async (applicationSq) => {
   await api.$put(`/mypage/applications/read/${applicationSq}`) // 이력서 열람으로 업데이트
+  getApplicants()
   // [추가] 이력서 모달 오픈
   openDetailModal(applicationSq)
 }

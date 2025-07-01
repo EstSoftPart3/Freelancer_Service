@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.ApplicationMapper">
+
+
+	<!-- 지원자 기존 소속 여부 확인 -->
+	<select id="existsCompanyAffiliation" parameterType="long" resultType="boolean"> SELECT EXISTS(
+		SELECT 1 FROM TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} AND company_member_status_cd !=
+		401 ) </select>
+
+	<!-- TBL_COMPANY_APPLICATION_H에서 지원자 정보 가져오기 -->
+	<select id="findApplicationDetail" parameterType="long"
+		resultType="com.example.demo.domain.mypage.dto.ApplicationPassDTO"> SELECT company_sq AS
+		companySq, user_sq AS userSq, company_application_status_cd AS companyApplicationStatusCd
+		FROM TBL_COMPANY_APPLICATION_H WHERE company_application_sq = #{applicationSq} </select>
+
+	<!-- 소속 등록 (입사 처리) -->
+	<insert id="insertCompanyMember"
+		parameterType="com.example.demo.domain.mypage.dto.ApplicationPassDTO"> INSERT INTO
+		TBL_COMPANY_MEMBER_R ( company_sq, user_sq, company_member_join_dt, company_member_status_cd
+		) VALUES ( #{companySq}, #{userSq}, CURRENT_DATE, 401 ) </insert>
+
+</mapper>
