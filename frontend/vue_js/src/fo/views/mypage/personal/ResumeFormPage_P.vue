@@ -45,7 +45,7 @@
                   v-if="profileImageUrl"
                   href="#"
                   class="photo-delete-btn"
-                  @click.prevent="profileImages = []"
+                  @click.prevent="deleteProfileImage()"
                   style="
                     position: absolute;
                     top: 5px;
@@ -621,7 +621,7 @@
           </div>
 
           <!-- 첨부파일 -->
-          <div class="form-group mb-3">
+          <!-- <div class="form-group mb-3">
             <label
               for="attachmentInput"
               class="form-label mb-1 text-2"
@@ -634,6 +634,58 @@
               @change="onAttachmentChange"
               multiple
               class="form-control"
+            />
+          </div> -->
+          <div class="form-group mb-3">
+            <label class="form-label mb-1 text-2" style="font-weight: bold">
+              첨부파일
+              <a
+                href="#"
+                class="text-grey text-decoration-none small ms-2"
+                @click.prevent="fileInputRef?.click()"
+              >
+                + 추가하기
+              </a>
+            </label>
+
+            <div class="mb-2 d-flex gap-2 flex-wrap">
+              <div
+                v-for="(file, index) in allAttachmentFiles"
+                :key="file.fileOriginalNm + '-' + index"
+                class="btn btn-rounded btn-light d-flex align-items-center gap-2 mb-2 btn-3d position-relative"
+                style="padding-right: 24px; max-width: 100%"
+              >
+                <a
+                  :href="file.url"
+                  :download="file.fileOriginalNm"
+                  class="text-truncate text-primary text-decoration-underline"
+                  style="max-width: 200px"
+                  :title="file.fileOriginalNm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ file.fileOriginalNm }}
+                </a>
+                <a
+                  href="#"
+                  class="position-absolute end-0 me-2 text-grey text-decoration-none"
+                  style="top: 50%; transform: translateY(-50%)"
+                  title="삭제"
+                  @click.prevent="removeUnifiedAttachment(index)"
+                >
+                  ×
+                </a>
+              </div>
+            </div>
+
+            <!-- 숨겨진 파일 input -->
+            <input
+              type="file"
+              ref="fileInputRef"
+              class="d-none"
+              multiple
+              @change="onAttachmentChange"
+              accept="*"
             />
           </div>
 
@@ -737,10 +789,23 @@ const profileImages = ref([])
 const attachments = ref([])
 
 // 프로필 사진
-const profileImageUrl = computed(() =>
-  profileImages.value.length && profileImages.value[0]
-    ? URL.createObjectURL(profileImages.value[0])
-    : '',
+const profileImageUrl = computed(
+  () => {
+    if (resumeForm.profileImage && resumeForm.profileImage.url) {
+      return resumeForm.profileImage.url
+    } else {
+      return profileImages.value.length && profileImages.value[0]
+        ? URL.createObjectURL(profileImages.value[0])
+        : ''
+    }
+  },
+
+  // {
+  //   console.log('profileImages.value[0]', profileImages.value[0])
+  //   return profileImages.value.length && profileImages.value[0]
+  //     ? URL.createObjectURL(profileImages.value[0])
+  //     : ''
+  // },
 )
 
 function onProfileImageChange(event) {
@@ -757,6 +822,11 @@ function onProfileImageChange(event) {
     return
   }
   profileImages.value = file ? [file] : []
+}
+
+function deleteProfileImage() {
+  resumeForm.profileImage = null
+  profileImages.value = []
 }
 
 // 전화번호
@@ -810,31 +880,99 @@ function openPostcode() {
 }
 
 // 첨부파일
+// function onAttachmentChange(event) {
+//   const files = Array.from(event.target.files)
+//   const maxSize = 10 * 1024 * 1024 // 10MB
+
+//   const validFiles = []
+//   let hasInvalid = false
+
+//   for (const file of files) {
+//     if (file.size > maxSize) {
+//       alertStore.show(
+//         `"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`,
+//         'danger',
+//       )
+//       hasInvalid = true
+//     } else {
+//       validFiles.push(file)
+//     }
+//   }
+
+//   attachments.value = validFiles
+
+//   // 크기 초과 파일이 있으면 input을 초기화 (사용자가 다시 선택하도록)
+//   if (hasInvalid) {
+//     event.target.value = ''
+//   }
+// }
+// 서버에서 불러온 기존 첨부파일 리스트 (등록 시엔 빈 배열로 초기화)
+const existingAttachments = ref([])
+
+function setExistingAttachments(data) {
+  existingAttachments.value = data
+}
+
+const fileInputRef = ref(null)
+const maxSize = 10 * 1024 * 1024 // 10MB
+
+// 기존 파일 + 새 파일 통합 리스트 계산
+const allAttachmentFiles = computed(() => {
+  return [
+    ...existingAttachments.value.map((f) => ({
+      fileOriginalNm: f.fileOriginalNm,
+      url: f.url,
+      isExisting: true,
+    })),
+    ...attachments.value.map((f) => ({
+      fileOriginalNm: f.name,
+      url: URL.createObjectURL(f),
+      isExisting: false,
+    })),
+  ]
+})
+
+// 첨부파일 삭제 (기존/신규 구분하여 제거)
+function removeUnifiedAttachment(index) {
+  const file = allAttachmentFiles.value[index]
+  if (file.isExisting) {
+    const i = existingAttachments.value.findIndex(
+      (f) => f.fileOriginalNm === file.fileOriginalNm,
+    )
+    if (i !== -1) existingAttachments.value.splice(i, 1)
+  } else {
+    const i = attachments.value.findIndex((f) => f.name === file.fileOriginalNm)
+    if (i !== -1) attachments.value.splice(i, 1)
+  }
+}
+
+// 첨부파일 선택 시 유효성 검사 및 추가
 function onAttachmentChange(event) {
   const files = Array.from(event.target.files)
-  const maxSize = 10 * 1024 * 1024 // 10MB
-
-  const validFiles = []
   let hasInvalid = false
+  const validFiles = []
 
   for (const file of files) {
     if (file.size > maxSize) {
-      alertStore.show(
-        `"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`,
-        'danger',
-      )
+      alert(`"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`)
       hasInvalid = true
     } else {
       validFiles.push(file)
     }
   }
 
-  attachments.value = validFiles
+  // 중복 파일명 방지
+  const existingNames = attachments.value.map((f) => f.name)
+  validFiles.forEach((file) => {
+    if (!existingNames.includes(file.name)) {
+      attachments.value.push(file)
+    }
+  })
 
-  // 크기 초과 파일이 있으면 input을 초기화 (사용자가 다시 선택하도록)
   if (hasInvalid) {
     event.target.value = ''
   }
+  console.log('resumeForm.attachments', resumeForm.attachments)
 }
 
 // 학력 입력 폼 표시 로직
@@ -1051,6 +1189,8 @@ onMounted(async () => {
         parentTags.output,
       )
     })
+
+    setExistingAttachments(resumeForm.attachmentList)
     console.log('resumeForm', resumeForm)
   }
 })

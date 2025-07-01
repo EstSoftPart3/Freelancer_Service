@@ -5,10 +5,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.example.demo.common.AmazonS3.AmazonS3Service;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.domain.community.entity.CommonSkillTag;
@@ -36,6 +38,10 @@ public class ResumeService {
 	// private final ResumeSkillMapper resumeSkillMapper;
 	// private final AddressRepository addressRepository;
 	// private final MypageAddressMapper addressMapper;
+	private final AmazonS3 amazonS3;
+
+	@Value("${cloud.aws.s3.bucket}")
+	private String bucket;
 
 	public int createResume(Long userSq, ResumeRequestDTO dto, List<MultipartFile> profileImages,
 			List<MultipartFile> attachments) {
@@ -468,6 +474,16 @@ public class ResumeService {
 			}
 		}
 
+		// 프로필 이미지 업로드
+		UploadedFileDTO profileImageDTO = null;
+		if (profileImages != null && !profileImages.isEmpty()) {
+			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+			if (profileImageDTO == null) {
+				throw new IllegalArgumentException("프로필 이미지 업로드 실패");
+			}
+			dto.setProfileImage(convertToResumeFileDTO(profileImageDTO));
+		}
+
 		// --- 프로필 이미지 처리 ---
 		ResumeRequestDTO.ResumeFileDTO dbProfileImage = resumeRepository
 				.selectProfileImageForUpdateByResumeSq(resumeSq);
@@ -492,6 +508,18 @@ public class ResumeService {
 			resumeRepository.insertResumeAttachmentMapping(resumeSq, dto.getProfileImage().getFileSq());
 		}
 
+		// 첨부파일 업로드
+		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
+		if (attachments != null) {
+			for (MultipartFile file : attachments) {
+				UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				if (fileDTO == null) {
+					throw new IllegalArgumentException("첨부파일 업로드 실패");
+				}
+				attachmentFileDTOs.add(convertToResumeFileDTO(fileDTO));
+			}
+			dto.setAttachmentList(attachmentFileDTOs);
+		}
 		// --- 첨부파일 처리 ---
 		List<ResumeRequestDTO.ResumeFileDTO> dbAttachmentList = resumeRepository
 				.selectAttachmentListForUpdateByResumeSq(resumeSq);
@@ -499,24 +527,15 @@ public class ResumeService {
 		// 1) DB에 있는데 dto에 없는 첨부파일 삭제 + 논리삭제 처리
 		if (dbAttachmentList != null) {
 			for (ResumeRequestDTO.ResumeFileDTO dbFile : dbAttachmentList) {
-				boolean existsInDto = false;
-				if (dto.getAttachmentList() != null) {
-					for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
-						if (dbFile.getFileSq() != null && dbFile.getFileSq().equals(file.getFileSq())) {
-							existsInDto = true;
-							break;
-						}
-					}
-				}
-				if (!existsInDto) {
-					resumeRepository.deleteResumeAttachmentMapping(dbFile.getFileSq());
-					resumeRepository.deleteAttachmentFile(dbFile.getFileSq());
-				}
+				resumeRepository.deleteResumeAttachmentMapping(dbFile.getFileSq());
+				resumeRepository.deleteAttachmentFile(dbFile.getFileSq());
 			}
 		}
 
 		// 2) DTO에 있는 첨부파일 삽입 및 매핑
-		if (dto.getAttachmentList() != null) {
+		if (dto.getAttachmentList() != null)
+
+		{
 			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
 				resumeRepository.insertAttachmentFile(file);
 				resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
@@ -645,12 +664,22 @@ public class ResumeService {
 		List<ResumeRequestDTO.SkillTagDTO> skillTagList = resumeRepository.findSkillTagList(resumeSq);
 		resume.setSkillTagList(skillTagList);
 
-		// 프로필 이미지
+		// 프로필 이미지 조회 및 URL 세팅
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(resumeSq);
+		if (profileImage != null) {
+			String s3Url = amazonS3.getUrl(bucket, profileImage.getFileSaveNm()).toString();
+			profileImage.setUrl(s3Url);
+		}
 		resume.setProfileImage(profileImage);
 
-		// 첨부파일 리스트
+		// 첨부파일 리스트 조회 및 각각 URL 세팅
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository.findAttachmentList(resumeSq);
+		if (attachmentList != null && !attachmentList.isEmpty()) {
+			attachmentList.forEach(file -> {
+				String s3Url = amazonS3.getUrl(bucket, file.getFileSaveNm()).toString();
+				file.setUrl(s3Url);
+			});
+		}
 		resume.setAttachmentList(attachmentList);
 
 		return resume;
