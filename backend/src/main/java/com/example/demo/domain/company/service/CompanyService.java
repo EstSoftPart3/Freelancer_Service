@@ -90,7 +90,7 @@ public class CompanyService {
 					LocalDate joinDt = companyMapper.findCompanyJoinDt(sq);
 					LocalDate leaveDt = companyMapper.findCompanyLeaveDt(sq);
 
-					Integer careerYr = calculateTotalCareer(resumeSqs);
+					Integer careerYr = calculateTotalCareer(repResumeSq);
 
 					List<String> skillTags = resumeSkillMapper.findAllNmBySq(repResumeSq);
 
@@ -112,20 +112,18 @@ public class CompanyService {
 		companyMapper.updateMemberStatus(request.getUserSq(), memberStatusCd);
 	}
 
-	public Integer calculateTotalCareer(List<Long> resumeSqs) {
+	public Integer calculateTotalCareer(Long repResumeSq) {
 		AtomicInteger totalCareer = new AtomicInteger(0);
 
-		resumeSqs.forEach(sq -> {
-			Integer career = resumeCareerMapper.calculateCareerByResSq(sq);
+		Integer career = resumeCareerMapper.calculateCareerByResSq(repResumeSq);
 
-			// if (career == null) {
-			// System.out.println("🚨 null 반환된 resumeSq: " + sq);
-			// } else {
-			// System.out.println("✅ resumeSq " + sq + " 의 경력연차: " + career);
-			// }
+		if (career == null) {
+			System.out.println("🚨 null 반환된 resumeSq: " + repResumeSq);
+		} else {
+			System.out.println("✅ resumeSq " + repResumeSq + " 의 경력연차: " + career);
+		}
 
-			totalCareer.addAndGet(career != null ? career : 0);
-		});
+		totalCareer.addAndGet(career != null ? career : 0);
 
 		return totalCareer.get();
 	}
