@@ -1,126 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 
 <mapper namespace="com.example.demo.domain.project.mapper.ProjectApplicationMapper">
-	
-	<select id="findInterviewTimeBySq" resultType="java.time.LocalDateTime">
-	    SELECT interview_available_dtm
-	    FROM TBL_PROJECT_INTERVIEW_TIME_SLOT_S
-	    WHERE interview_sq = #{interviewSq}
+
+	<select id="findInterviewTimeBySq" resultType="java.time.LocalDateTime"> SELECT
+		interview_available_dtm FROM TBL_PROJECT_INTERVIEW_TIME_SLOT_S WHERE interview_sq =
+		#{interviewSq} </select>
+
+	<select id="findApplicationSummariesByUserSqWithFilter"
+		resultType="com.example.demo.domain.project.vo.ApplicationSummary"> SELECT
+		a.project_application_sq AS applicationSq, p.project_sq AS projectSq, p.project_ttl AS
+		projectTitle, c.company_nm AS companyTitle, a.project_application_created_at_dtm AS
+		appliedDt, a.selected_interview_dtm AS interviewDt, r.resume_sq AS resumeSq, r.resume_ttl AS
+		resumeTitle, p.project_candidate_cnt AS applicantCnt, a.read_application_dtm AS
+		readApplicationDt, cc.common_code_nm AS applicantType, CASE WHEN p.project_recruit_end_dt
+		&lt; CURDATE() THEN TRUE ELSE FALSE END AS isRecruitEnded FROM TBL_RESUME_M r JOIN
+		TBL_PROJECT_APPLICATION_H a ON r.resume_sq = a.resume_sq JOIN TBL_PROJECT_M p ON
+		a.project_sq = p.project_sq JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq JOIN
+		TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq WHERE r.user_sq
+		= #{userSq} <if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType != null and searchType != 'all'">
+					<choose>
+						<when test="searchType == 'title'"> AND p.project_ttl LIKE CONCAT('%',
+		#{keyword}, '%') </when>
+						<when test="searchType == 'company'"> AND c.company_nm LIKE CONCAT('%',
+		#{keyword}, '%') </when>
+					</choose>
+				</when>
+				<otherwise>
+					<!-- searchType이 all이면서 keyword가 있을 경우 제목 또는 회사명 모두 검색 --> AND (p.project_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm
+		LIKE CONCAT('%', #{keyword}, '%')) </otherwise>
+			</choose>
+		</if>
+
+  <if
+			test="readType != null and readType != 'all'">
+			<choose>
+				<when test="readType == 'read'"> AND a.read_application_dtm IS NOT NULL </when>
+				<when test="readType == 'unread'"> AND a.read_application_dtm IS NULL </when>
+			</choose>
+		</if>
+		ORDER BY a.project_application_created_at_dtm DESC LIMIT #{size} OFFSET #{offset} </select>
+
+	<select id="countApplicationSummariesByUserSqWithFilter" resultType="int"> SELECT COUNT(*) FROM
+		TBL_RESUME_M r JOIN TBL_PROJECT_APPLICATION_H a ON r.resume_sq = a.resume_sq JOIN
+		TBL_PROJECT_M p ON a.project_sq = p.project_sq JOIN TBL_COMPANY_S c ON p.company_sq =
+		c.company_sq WHERE r.user_sq = #{userSq} <if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType != null and searchType != 'all'">
+					<choose>
+						<when test="searchType == 'title'"> AND p.project_ttl LIKE CONCAT('%',
+		#{keyword}, '%') </when>
+						<when test="searchType == 'company'"> AND c.company_nm LIKE CONCAT('%',
+		#{keyword}, '%') </when>
+					</choose>
+				</when>
+				<otherwise> AND (p.project_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm
+		LIKE CONCAT('%', #{keyword}, '%')) </otherwise>
+			</choose>
+		</if>
+
+  <if
+			test="readType != null and readType != 'all'">
+			<choose>
+				<when test="readType == 'read'"> AND a.read_application_dtm IS NOT NULL </when>
+				<when test="readType == 'unread'"> AND a.read_application_dtm IS NULL </when>
+			</choose>
+		</if>
 	</select>
-	
-	<select id="findApplicationSummariesByUserSq"
-        resultType="com.example.demo.domain.project.vo.ApplicationSummary">
-	  SELECT
-	  	a.project_application_sq	AS applicationSq,
-	  	p.project_sq               AS projectSq,
-	    p.project_ttl               AS projectTitle,
-	    c.company_nm                AS companyTitle,
-	    a.project_application_created_at_dtm AS appliedDt,
-	    a.selected_interview_dtm AS interviewDt,
-	    r.resume_sq                 AS resumeSq,
-	    r.resume_ttl                AS resumeTitle,
-	    p.project_candidate_cnt     AS applicantCnt,
-	    a.read_application_dtm      AS readApplicationDt,
-	    cc.common_code_nm           AS applicantType,
-		CASE
-		  WHEN p.project_recruit_end_dt &lt; CURDATE() THEN TRUE
-		  ELSE FALSE
-		END AS isRecruitEnded
-	  FROM TBL_RESUME_M r
-	  JOIN TBL_PROJECT_APPLICATION_H a ON r.resume_sq = a.resume_sq
-	  JOIN TBL_PROJECT_M p ON a.project_sq = p.project_sq
-	  JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
-	  JOIN TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq
-	  WHERE r.user_sq = #{userSq}
-	  ORDER BY a.project_application_created_at_dtm DESC
-	</select>
-	
-	<select id="findProjectBySq" resultType="Long">
-	    SELECT project_sq
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_application_sq = #{appSq}
-	</select>
-	
-	<select id="findByProAndUser" resultType="Long">
-	    SELECT pa.project_application_sq
-	    FROM TBL_PROJECT_APPLICATION_H pa
-	    JOIN TBL_RESUME_M m on pa.resume_sq = m.resume_sq 
-	    WHERE pa.project_sq = #{projectSq} AND m.user_sq = #{userSq}
-	</select>
-	
-	<select id="findByProAndCom" resultType="Long">
-	    SELECT project_application_sq
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_sq = #{projectSq} and company_sq = #{companySq}
-	</select>
-	
-	<select id="findResumeBySq" resultType="Long">
-	    SELECT resume_sq
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_application_sq = #{appSq}
-	</select>
-	
-	<select id="findMmTypStrBySq" resultType="String">
-	    SELECT 
-	    CASE project_application_member_type_cd
-	        WHEN 301 THEN '개인'
-	        WHEN 302 THEN '기업'
-	        ELSE 'UNKNOWN'
-	    END
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_application_sq = #{applicationSq}
-	</select>
-	
-	<select id="findCompanyBySq" resultType="Long">
-	    SELECT company_sq
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_application_sq = #{appSq}
-	</select>
-	
-	<select id="findAllSqByProjectSq" resultType="Long">
-	    SELECT project_application_sq
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_sq = #{projectSq}
-	</select>
-	
-	<select id="findStatusVoByAppSq" resultType="com.example.demo.domain.project.vo.ApplicationStatusVo">
-	    SELECT read_application_dtm AS readResumeDt, 
-	    project_application_created_at_dtm AS appDt, 
-	    selected_interview_dtm AS interviewDt,
-	    CASE project_application_status_cd
-	        WHEN 801 THEN '지원중'
-	        WHEN 802 THEN '불합격'
-	        WHEN 803 THEN '합격'
-	        WHEN 804 THEN '인터뷰요청중'
-	        WHEN 805 THEN '인터뷰확정'
-	        WHEN 806 THEN '지원취소'
-	        ELSE 'UNKNOWN'
-	      END AS appStatus
-	    FROM TBL_PROJECT_APPLICATION_H
-	    WHERE project_application_sq = #{appSq}
-	</select>
-	
-	
-	<update id="updateApplicationStatus" >
-		UPDATE TBL_PROJECT_APPLICATION_H
-		SET project_application_status_cd = #{newStatusCd}
-		WHERE project_application_sq = #{applicationSq}
-	</update>
-	
-	<update id="updateInterviewTimeSelected" >
-		UPDATE TBL_PROJECT_INTERVIEW_TIME_SLOT_S
-		SET interview_is_selected_yn = 'Y'
-		WHERE interview_sq = #{interviewSq}
-	</update>
-	
-	<update id="updateApplicationInterviewTimeAndStatus" >
-		UPDATE TBL_PROJECT_APPLICATION_H
-		SET selected_interview_dtm = #{interviewTime}, project_application_status_cd = 805
-		WHERE project_application_sq = #{applicationSq}
-	</update>
+
+	<select id="countApplicationsByReadStatus" resultType="map"> SELECT 'all' AS type, COUNT(*) AS
+		cnt FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq WHERE
+		r.user_sq = #{userSq} UNION ALL SELECT 'read' AS type, COUNT(*) FROM
+		TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq WHERE r.user_sq
+		= #{userSq} AND a.read_application_dtm IS NOT NULL UNION ALL SELECT 'unread' AS type,
+		COUNT(*) FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
+		WHERE r.user_sq = #{userSq} AND a.read_application_dtm IS NULL </select>
+
+
+	<select id="findProjectBySq" resultType="Long"> SELECT project_sq FROM TBL_PROJECT_APPLICATION_H
+		WHERE project_application_sq = #{appSq} </select>
+
+	<select id="findByProAndUser" resultType="Long"> SELECT pa.project_application_sq FROM
+		TBL_PROJECT_APPLICATION_H pa JOIN TBL_RESUME_M m on pa.resume_sq = m.resume_sq WHERE
+		pa.project_sq = #{projectSq} AND m.user_sq = #{userSq} </select>
+
+	<select id="findByProAndCom" resultType="Long"> SELECT project_application_sq FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} and company_sq = #{companySq} </select>
+
+	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H
+		WHERE project_application_sq = #{appSq} </select>
+
+	<select id="findMmTypStrBySq" resultType="String"> SELECT CASE
+		project_application_member_type_cd WHEN 301 THEN '개인' WHEN 302 THEN '기업' ELSE 'UNKNOWN' END
+		FROM TBL_PROJECT_APPLICATION_H WHERE project_application_sq = #{applicationSq} </select>
+
+	<select id="findCompanyBySq" resultType="Long"> SELECT company_sq FROM TBL_PROJECT_APPLICATION_H
+		WHERE project_application_sq = #{appSq} </select>
+
+	<select id="findAllSqByProjectSq" resultType="Long"> SELECT project_application_sq FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} </select>
+
+	<select id="findStatusVoByAppSq"
+		resultType="com.example.demo.domain.project.vo.ApplicationStatusVo"> SELECT
+		read_application_dtm AS readResumeDt, project_application_created_at_dtm AS appDt,
+		selected_interview_dtm AS interviewDt, CASE project_application_status_cd WHEN 801 THEN
+		'지원중' WHEN 802 THEN '불합격' WHEN 803 THEN '합격' WHEN 804 THEN '인터뷰요청중' WHEN 805 THEN '인터뷰확정'
+		WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS appStatus FROM TBL_PROJECT_APPLICATION_H WHERE
+		project_application_sq = #{appSq} </select>
+
+
+	<update id="updateApplicationStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
+		project_application_status_cd = #{newStatusCd} WHERE project_application_sq =
+		#{applicationSq} </update>
+
+	<update id="updateInterviewTimeSelected"> UPDATE TBL_PROJECT_INTERVIEW_TIME_SLOT_S SET
+		interview_is_selected_yn = 'Y' WHERE interview_sq = #{interviewSq} </update>
+
+	<update id="updateApplicationInterviewTimeAndStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
+		selected_interview_dtm = #{interviewTime}, project_application_status_cd = 805 WHERE
+		project_application_sq = #{applicationSq} </update>
 
 </mapper>
