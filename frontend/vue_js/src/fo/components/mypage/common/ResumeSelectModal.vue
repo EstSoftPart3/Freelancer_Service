@@ -106,6 +106,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  onConfirm: {
+    type: Function,
+    required: false,
+  },
 })
 
 const emit = defineEmits(['confirm'])
@@ -215,7 +219,10 @@ const confirm = async () => {
           withCredentials: true,
         },
       )
-      emit('confirm', selectedResume.value)
+      if (props.onConfirm) {
+        console.log('onConfirm fired') // ✅ 실제 호출 여부 확인
+        props.onConfirm()
+      }
       modalStore.closeModal()
     } catch (error) {
       console.error(error)

@@ -65,9 +65,13 @@ ew
                   style="font-size: 14px; cursor: pointer"
                   >{{ member.userNm }} /</a
                 >
-                <a href="#" class="text-4 m-0" style="font-size: 14px">{{
-                  member.resumeTtl
-                }}</a>
+                <a
+                  href="#"
+                  class="text-4 m-0"
+                  style="font-size: 14px"
+                  @click.prevent="openResumeDetail(member.resumeSq)"
+                  >{{ member.resumeTtl }}</a
+                >
               </div>
               <span
                 v-if="member.leavedYn === 401"
@@ -107,7 +111,7 @@ ew
                     class="btn d-flex align-items-center gap-2 border-0"
                     style="padding: 2px 6px"
                   >
-                    <img :src="skill.icon" width="16" />
+                    <img :src="getSkillIcon(skill)" width="16" />
                     {{ skill }}
                   </div>
                 </div>
@@ -167,11 +171,13 @@ import { api } from '@/axios.js'
 import { useModalStore } from '../../../stores/modalStore.js'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import ResumeSelectModal from '@/fo/components/mypage/common/ResumeSelectModal.vue'
+import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.vue'
+import iconMap from '@/assets/skillIconMap.js'
 
 const searchType = ref('all')
 const searchText = ref('')
 const currentPage = ref('1')
-const totalPages = ref('')
+const totalPages = ref('1')
 const pageSize = ref(5)
 
 const modalStore = useModalStore()
@@ -181,6 +187,11 @@ onMounted(() => {
 })
 
 const members = ref([])
+
+const getSkillIcon = (name) => {
+  const key = name.toLowerCase().replace(/[\s.]+/g, '') // 공백/점 제거
+  return iconMap[key] || iconMap.default
+}
 
 const search = () => {
   currentPage.value = 1
@@ -200,9 +211,10 @@ const fetchAffiliationMemberList = async () => {
     })
 
     const output = response.output
+    console.log('output', output)
     members.value = output.members
     currentPage.value = output.page
-    totalPages.value = output.totalPages
+    totalPages.value = Math.max(1, output.totalPages)
   } catch (e) {
     console.log(e)
   }
@@ -213,6 +225,21 @@ const openResumeSelectModal = (memberSq) => {
     size: 'modal-lg',
     userSq: memberSq,
     role: 'COMPANY',
+    onConfirm: () => {
+      fetchAffiliationMemberList()
+    },
+  })
+}
+
+function openResumeDetail(resumeSq) {
+  console.log('resumeSq', resumeSq)
+  modalStore.openModal(ResumeDetailModal, {
+    title: '이력서 상세보기',
+    size: 'modal-lg',
+    resumeSq: resumeSq,
+    onConfirm: () => {
+      modalStore.closeModal()
+    },
   })
 }
 
