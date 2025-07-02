@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -482,33 +485,45 @@ public class ResumeService {
 				throw new IllegalArgumentException("프로필 이미지 업로드 실패");
 			}
 			dto.setProfileImage(convertToResumeFileDTO(profileImageDTO));
-		}
+			ResumeRequestDTO.ResumeFileDTO dbProfileImage = resumeRepository
+					.selectProfileImageForUpdateByResumeSq(resumeSq);
 
-		// --- 프로필 이미지 처리 ---
-		ResumeRequestDTO.ResumeFileDTO dbProfileImage = resumeRepository
-				.selectProfileImageForUpdateByResumeSq(resumeSq);
-
-		// 1) 기존 DB에 있는데 dto에 없는 프로필 이미지 삭제 + 논리삭제 처리
-		if (dbProfileImage != null) {
-			boolean existsInDto = dto.getProfileImage() != null
-					&& dto.getProfileImage().getFileSq() != null
-					&& dto.getProfileImage().getFileSq().equals(dbProfileImage.getFileSq());
-
-			if (!existsInDto) {
+			System.out.println("dbProfileImage" + dbProfileImage);
+			// DB와 아마존S3 파일 삭제
+			if (dbProfileImage != null) {
 				// 매핑 삭제
 				resumeRepository.deleteResumeProfileImageMapping(dbProfileImage.getFileSq());
 				// 실제 파일 삭제 (필요 시 물리적 삭제 또는 S3 삭제)
 				resumeRepository.deleteProfileImage(dbProfileImage.getFileSq());
+				amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+			}
+			// DTO에 있는 프로필 이미지가 있으면 삽입 및 매핑
+			if (dto.getProfileImage() != null) {
+				resumeRepository.insertProfileImage(dto.getProfileImage());
+				resumeRepository.insertResumeProfileImageMapping(resumeSq, dto.getProfileImage().getFileSq());
 			}
 		}
 
-		// 2) DTO에 있는 프로필 이미지가 있으면 삽입 및 매핑
-		if (dto.getProfileImage() != null) {
-			resumeRepository.insertProfileImage(dto.getProfileImage());
-			resumeRepository.insertResumeAttachmentMapping(resumeSq, dto.getProfileImage().getFileSq());
+		// 1. DB 기준 기존 첨부파일 목록 조회
+		List<ResumeRequestDTO.ResumeFileDTO> dbAttachmentList = resumeRepository
+				.selectAttachmentListForUpdateByResumeSq(resumeSq);
+
+		// 2. 프론트에서 넘어온 유지할 파일 리스트 fileSq 추출
+		Set<Long> retainedFileSqs = dto.getAttachmentList().stream()
+				.map(ResumeRequestDTO.ResumeFileDTO::getFileSq)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+
+		// 3. 기존 첨부파일 중 유지되지 않는 파일 삭제
+		for (ResumeRequestDTO.ResumeFileDTO dbFile : dbAttachmentList) {
+			if (!retainedFileSqs.contains(dbFile.getFileSq())) {
+				resumeRepository.deleteResumeAttachmentMapping(dbFile.getFileSq());
+				resumeRepository.deleteAttachmentFile(dbFile.getFileSq());
+				amazonS3Service.deleteFile(dbFile.getFileSaveNm());
+			}
 		}
 
-		// 첨부파일 업로드
+		// 4. 새 첨부파일 업로드 처리
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
 		if (attachments != null) {
 			for (MultipartFile file : attachments) {
@@ -518,28 +533,14 @@ public class ResumeService {
 				}
 				attachmentFileDTOs.add(convertToResumeFileDTO(fileDTO));
 			}
-			dto.setAttachmentList(attachmentFileDTOs);
-		}
-		// --- 첨부파일 처리 ---
-		List<ResumeRequestDTO.ResumeFileDTO> dbAttachmentList = resumeRepository
-				.selectAttachmentListForUpdateByResumeSq(resumeSq);
-
-		// 1) DB에 있는데 dto에 없는 첨부파일 삭제 + 논리삭제 처리
-		if (dbAttachmentList != null) {
-			for (ResumeRequestDTO.ResumeFileDTO dbFile : dbAttachmentList) {
-				resumeRepository.deleteResumeAttachmentMapping(dbFile.getFileSq());
-				resumeRepository.deleteAttachmentFile(dbFile.getFileSq());
-			}
+			// 업로드한 파일들을 dto에 추가
+			dto.getAttachmentList().addAll(attachmentFileDTOs);
 		}
 
-		// 2) DTO에 있는 첨부파일 삽입 및 매핑
-		if (dto.getAttachmentList() != null)
-
-		{
-			for (ResumeRequestDTO.ResumeFileDTO file : dto.getAttachmentList()) {
-				resumeRepository.insertAttachmentFile(file);
-				resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
-			}
+		// 5. 신규 업로드된 파일만 insert 및 매핑
+		for (ResumeRequestDTO.ResumeFileDTO file : attachmentFileDTOs) {
+			resumeRepository.insertAttachmentFile(file);
+			resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
 		}
 
 		return result;
