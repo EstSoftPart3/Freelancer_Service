@@ -1,91 +1,78 @@
 <template>
-  <div
-    id="defaultModal"
-    tabindex="-1"
-    aria-labelledby="defaultModalLabel"
-    aria-hidden="true"
-  >
-    <div
-      class="modal-dialog modal modal-dialog-centered"
-      style="margin: 0 auto; max-width: 600px"
-    >
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="schoolSearchModalLabel">이력서 선택</h4>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-hidden="true"
-            @click="close"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <div>
-            <ul class="simple-post-list m-0">
-              <li
-                class="d-flex align-items-center gap-2"
-                v-for="resume in resumes"
-                :key="resume.resumeSq"
-              >
-                <div class="post-info align-items-center gap-2">
-                  <a href="#" @click="openResumeDetailModal(resume)">
-                    {{ resume.resumeTtl }}
-                  </a>
-                  <span
-                    v-if="resume.resumeIsRepresentativeYn == 'Y'"
-                    class="badge bg-primary ms-2 align-middle"
-                    style="font-size: 12px; padding: 3px 6px"
-                    >대표 이력서</span
-                  >
-                  <div class="post-meta">
-                    <span class="text-dark text-uppercase font-weight-semibold"
-                      >등록일자</span
-                    >
-                    | {{ formatTime(resume.resumeCreatedAtDtm) }}
-                  </div>
-                </div>
-                <div class="ms-auto">
-                  <button
-                    v-if="
-                      selectedResume &&
-                      selectedResume.resumeSq === resume.resumeSq
-                    "
-                    class="btn btn-primary btn-sm"
-                    disabled
-                  >
-                    선택됨
-                  </button>
-                  <button
-                    v-else
-                    class="btn btn-primary btn-outline btn-sm"
-                    @click="selectResume(resume)"
-                  >
-                    선택하기
-                  </button>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <!-- 페이지네이션  -->
-          <CommonPagination
-            :currentPage="currentPage"
-            :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
-          />
-        </div>
-        <div class="modal-footer">
-          <button
-            @click="close"
-            type="button"
-            class="btn btn-light"
-            data-bs-dismiss="modal"
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title" id="schoolSearchModalLabel">이력서 선택</h4>
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="modal"
+        aria-hidden="true"
+        @click="close"
+      ></button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <ul class="simple-post-list m-0">
+          <li
+            class="d-flex align-items-center gap-2"
+            v-for="resume in resumes"
+            :key="resume.resumeSq"
           >
-            닫기
-          </button>
-        </div>
+            <div class="post-info align-items-center gap-2">
+              <a href="#" @click="openResumeDetailModal(resume)">
+                {{ resume.resumeTtl }}
+              </a>
+              <span
+                v-if="resume.resumeIsRepresentativeYn == 'Y'"
+                class="badge bg-primary ms-2 align-middle"
+                style="font-size: 12px; padding: 3px 6px"
+                >대표 이력서</span
+              >
+              <div class="post-meta">
+                <span class="text-dark text-uppercase font-weight-semibold"
+                  >등록일자</span
+                >
+                | {{ formatTime(resume.resumeCreatedAtDtm) }}
+              </div>
+            </div>
+            <div class="ms-auto">
+              <button
+                v-if="
+                  selectedResume && selectedResume.resumeSq === resume.resumeSq
+                "
+                class="btn btn-primary btn-sm"
+                disabled
+              >
+                선택됨
+              </button>
+              <button
+                v-else
+                class="btn btn-primary btn-outline btn-sm"
+                @click="selectResume(resume)"
+              >
+                선택하기
+              </button>
+            </div>
+          </li>
+        </ul>
       </div>
+
+      <!-- 페이지네이션  -->
+      <CommonPagination
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        @update:currentPage="currentPage = $event"
+      />
+    </div>
+    <div class="modal-footer">
+      <button
+        @click="close"
+        type="button"
+        class="btn btn-light"
+        data-bs-dismiss="modal"
+      >
+        닫기
+      </button>
     </div>
   </div>
 </template>
@@ -114,7 +101,7 @@ const resumes = ref([])
 
 const getResumes = async () => {
   try {
-    const res = await api.$get('/mypage/resume/list')
+    const res = await api.$get('/mypage/resume/select-list')
     if (Array.isArray(res.output)) {
       resumes.value = res.output
     }

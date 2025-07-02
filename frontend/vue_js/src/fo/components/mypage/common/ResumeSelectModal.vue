@@ -1,84 +1,70 @@
 <template>
-  <div
-    id="defaultModal"
-    tabindex="-1"
-    aria-labelledby="defaultModalLabel"
-    aria-hidden="true"
-  >
-    <div
-      class="modal-dialog modal modal-dialog-centered"
-      style="margin: 0 auto; max-width: 600px"
-    >
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">이력서 선택</h4>
-          <button
-            type="button"
-            class="btn-close"
-            @click="close"
-            aria-hidden="true"
-          ></button>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title">이력서 선택</h4>
+      <button
+        type="button"
+        class="btn-close"
+        @click="close"
+        aria-hidden="true"
+      ></button>
+    </div>
 
-        <div class="modal-body">
-          <ul class="simple-post-list m-0">
-            <li
-              class="d-flex align-items-center gap-2"
-              v-for="resume in resumes"
-              :key="resume.resumeSq"
+    <div class="modal-body">
+      <ul class="simple-post-list m-0">
+        <li
+          class="d-flex align-items-center gap-2"
+          v-for="resume in resumes"
+          :key="resume.resumeSq"
+        >
+          <div class="post-info align-items-center gap-2">
+            <a href="#" @click="openResumeDetailModal(resume)">
+              {{ resume.resumeTtl }}
+            </a>
+            <span
+              v-if="resume.resumeIsRepresentativeYn === 'Y'"
+              class="badge bg-primary ms-2 align-middle"
+              style="font-size: 12px; padding: 3px 6px"
             >
-              <div class="post-info align-items-center gap-2">
-                <a href="#" @click="openResumeDetailModal(resume)">
-                  {{ resume.resumeTtl }}
-                </a>
-                <span
-                  v-if="resume.resumeIsRepresentativeYn === 'Y'"
-                  class="badge bg-primary ms-2 align-middle"
-                  style="font-size: 12px; padding: 3px 6px"
-                >
-                  대표 이력서
-                </span>
-                <div class="post-meta">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >등록일자</span
-                  >
-                  | {{ formatTime(resume.resumeCreatedAtDtm) }}
-                </div>
-              </div>
+              대표 이력서
+            </span>
+            <div class="post-meta">
+              <span class="text-dark text-uppercase font-weight-semibold"
+                >등록일자</span
+              >
+              | {{ formatTime(resume.resumeCreatedAtDtm) }}
+            </div>
+          </div>
 
-              <div class="ms-auto">
-                <button
-                  v-if="
-                    selectedResume.some((r) => r.resumeSq === resume.resumeSq)
-                  "
-                  class="btn btn-primary btn-sm"
-                  disabled
-                >
-                  선택됨
-                </button>
-                <button
-                  v-else
-                  class="btn btn-outline-primary btn-sm"
-                  @click="selectResume(resume)"
-                >
-                  선택하기
-                </button>
-              </div>
-            </li>
-          </ul>
+          <div class="ms-auto">
+            <button
+              v-if="selectedResume.some((r) => r.resumeSq === resume.resumeSq)"
+              class="btn btn-primary btn-sm"
+              disabled
+            >
+              선택됨
+            </button>
+            <button
+              v-else
+              class="btn btn-outline-primary btn-sm"
+              @click="selectResume(resume)"
+            >
+              선택하기
+            </button>
+          </div>
+        </li>
+      </ul>
 
-          <CommonPagination
-            :currentPage="currentPage"
-            :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
-          />
-        </div>
+      <CommonPagination
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        @update:currentPage="currentPage = $event"
+      />
+    </div>
 
-        <div class="modal-footer">
-          <button @click="confirm" class="btn btn-primary">선택 완료</button>
-          <button @click="close" class="btn btn-light">닫기</button>
-        </div>
-      </div>
+    <div class="modal-footer">
+      <button @click="confirm" class="btn btn-primary">선택 완료</button>
+      <button @click="close" class="btn btn-light">닫기</button>
     </div>
   </div>
 </template>
@@ -129,7 +115,7 @@ const close = () => {
 const getResumes = async () => {
   if (props.role === 'PERSONAL') {
     try {
-      const res = await api.$get('/mypage/resume/list')
+      const res = await api.$get('/mypage/resume/select-list')
       console.log('이력서 목록 응답:', res)
       if (Array.isArray(res.output)) {
         console.log(res.output)
