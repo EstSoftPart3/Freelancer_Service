@@ -20,7 +20,7 @@ public class ResumeDetailController {
 
     private final ResumeDetailService resumeDetailService;
 
-    @GetMapping("/resume/{resumeSq}")
+    @GetMapping("/resume-detail/{resumeSq}")
     public ResponseEntity<ApiResponse<ResumeDetailResponseDTO>> getResumeDetail(
             @PathVariable(name = "resumeSq") Long resumeSq) {
         ResumeDetailResponseDTO response = resumeDetailService.getResumeDetail(resumeSq);

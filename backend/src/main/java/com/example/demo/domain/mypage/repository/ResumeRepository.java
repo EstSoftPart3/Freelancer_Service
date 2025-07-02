@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
@@ -35,8 +36,8 @@ public class ResumeRepository {
         return resumeMapper.insertResume(userSq, resumeRequestDTO);
     }
 
-    public int updateResume(ResumeRequestDTO resumeRequestDTO) {
-        return resumeMapper.updateResume(resumeRequestDTO);
+    public int updateResume(Long userSq, ResumeRequestDTO resumeRequestDTO) {
+        return resumeMapper.updateResume(userSq, resumeRequestDTO);
     }
 
     // 학력
@@ -154,5 +155,91 @@ public class ResumeRepository {
 
     public int countCertificatesByName(String searchNm) {
         return resumeMapper.countCertificatesByName(searchNm);
+    }
+
+    // 수정용 불러오기
+    public ResumeRequestDTO findByResumeSq(Long resumeSq) {
+        return resumeMapper.selectResumeByResumeSq(resumeSq);
+    }
+
+    public ResumeRequestDTO.AddressDTO findAddressByAddressSq(Long addressSq) {
+        return resumeMapper.selectAddressByAddressSq(addressSq);
+    }
+
+    public List<ResumeRequestDTO.EducationDTO> findEducationList(Long resumeSq) {
+        return resumeMapper.selectEducationListByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.CareerDTO> findCareerList(Long resumeSq) {
+        return resumeMapper.selectCareerListByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ProjectHistoryDTO> findProjectHistoryList(Long resumeSq) {
+        return resumeMapper.selectProjectHistoryListByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ProjectHistorySkillTagDTO> findProjectHistorySkillTagList(Long projectHistorySq) {
+        return resumeMapper.selectProjectHistorySkillTagListByProjectHistorySq(projectHistorySq);
+    }
+
+    public List<ResumeRequestDTO.CertificationDTO> findCertificationList(Long resumeSq) {
+        return resumeMapper.selectCertificationListByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.TrainingHistoryDTO> findTrainingHistoryList(Long resumeSq) {
+        return resumeMapper.selectTrainingHistoryListByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.SkillTagDTO> findSkillTagList(Long resumeSq) {
+        return resumeMapper.selectSkillTagListByResumeSq(resumeSq);
+    }
+
+    public ResumeRequestDTO.ResumeFileDTO findProfileImage(Long resumeSq) {
+        return resumeMapper.selectProfileImageByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ResumeFileDTO> findAttachmentList(Long resumeSq) {
+        return resumeMapper.selectAttachmentListByResumeSq(resumeSq);
+    }
+
+    public List<ParentSkillTagDTO> getParentSkillTags() {
+        return resumeMapper.selectParentSkillTags();
+    }
+
+    public List<ResumeRequestDTO.EducationDTO> selectEducationListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectEducationListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.CareerDTO> selectCareerListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectCareerListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ProjectHistoryDTO> selectProjectHistoryListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectProjectHistoryListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ProjectHistorySkillTagDTO> selectProjectHistorySkillTagListForUpdateByProjectHistorySq(
+            Long projectHistorySq) {
+        return resumeMapper.selectProjectHistorySkillTagListForUpdateByProjectHistorySq(projectHistorySq);
+    }
+
+    public List<ResumeRequestDTO.CertificationDTO> selectCertificationListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectCertificationListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.TrainingHistoryDTO> selectTrainingHistoryListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectTrainingHistoryListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.SkillTagDTO> selectResumeSkillTagListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectResumeSkillTagListForUpdateByResumeSq(resumeSq);
+    }
+
+    public List<ResumeRequestDTO.ResumeFileDTO> selectAttachmentListForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectAttachmentListForUpdateByResumeSq(resumeSq);
+    }
+
+    public ResumeRequestDTO.ResumeFileDTO selectProfileImageForUpdateByResumeSq(Long resumeSq) {
+        return resumeMapper.selectProfileImageForUpdateByResumeSq(resumeSq);
     }
 }

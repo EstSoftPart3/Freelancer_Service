@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateResponseDTO;
@@ -28,7 +29,7 @@ public interface ResumeMapper {
 	// 이력서 (userSq를 별도 전달)
 	int insertResume(@Param("userSq") Long userSq, @Param("dto") ResumeRequestDTO resumeRequestDTO);
 
-	int updateResume(ResumeRequestDTO resumeRequestDTO);
+	int updateResume(@Param("userSq") Long userSq, @Param("dto") ResumeRequestDTO resumeRequestDTO);
 
 	// 학력
 	int insertEducation(ResumeRequestDTO.EducationDTO educationDTO);
@@ -85,6 +86,34 @@ public interface ResumeMapper {
 
 	int deleteResumeAttachmentMapping(@Param("fileSq") Long fileSq);
 
+	// 1. 학력 조회 (업데이트용)
+	List<ResumeRequestDTO.EducationDTO> selectEducationListForUpdateByResumeSq(Long resumeSq);
+
+	// 2. 경력 조회 (업데이트용)
+	List<ResumeRequestDTO.CareerDTO> selectCareerListForUpdateByResumeSq(Long resumeSq);
+
+	// 3. 프로젝트 이력 조회 (업데이트용)
+	List<ResumeRequestDTO.ProjectHistoryDTO> selectProjectHistoryListForUpdateByResumeSq(Long resumeSq);
+
+	// 4. 프로젝트 기술 태그 조회 (업데이트용)
+	List<ResumeRequestDTO.ProjectHistorySkillTagDTO> selectProjectHistorySkillTagListForUpdateByProjectHistorySq(
+			Long projectHistorySq);
+
+	// 5. 자격증 조회 (업데이트용)
+	List<ResumeRequestDTO.CertificationDTO> selectCertificationListForUpdateByResumeSq(Long resumeSq);
+
+	// 6. 교육 이력 조회 (업데이트용)
+	List<ResumeRequestDTO.TrainingHistoryDTO> selectTrainingHistoryListForUpdateByResumeSq(Long resumeSq);
+
+	// 7. 보유 기술 태그 조회 (업데이트용)
+	List<ResumeRequestDTO.SkillTagDTO> selectResumeSkillTagListForUpdateByResumeSq(Long resumeSq);
+
+	// 8. 첨부파일 조회 (업데이트용)
+	List<ResumeRequestDTO.ResumeFileDTO> selectAttachmentListForUpdateByResumeSq(Long resumeSq);
+
+	// 9. 프로필 이미지 조회 (업데이트용)
+	ResumeRequestDTO.ResumeFileDTO selectProfileImageForUpdateByResumeSq(Long resumeSq);
+
 	// 기타 조회 및 업데이트 메서드들 (생략 가능)
 
 	public ResumeSummaryVo findLatestResumeBySq(Long resumeSq);
@@ -132,4 +161,30 @@ public interface ResumeMapper {
 	// 자격증 총 개수 조회 (검색조건 포함)
 	int countCertificatesByName(@Param("searchNm") String searchNm);
 
+	// 수정용 불러오기
+
+	ResumeRequestDTO selectResumeByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	ResumeRequestDTO.AddressDTO selectAddressByAddressSq(@Param("addressSq") Long addressSq);
+
+	List<ResumeRequestDTO.EducationDTO> selectEducationListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.CareerDTO> selectCareerListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.ProjectHistoryDTO> selectProjectHistoryListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.ProjectHistorySkillTagDTO> selectProjectHistorySkillTagListByProjectHistorySq(
+			@Param("projectHistorySq") Long projectHistorySq);
+
+	List<ResumeRequestDTO.CertificationDTO> selectCertificationListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.TrainingHistoryDTO> selectTrainingHistoryListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.SkillTagDTO> selectSkillTagListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	ResumeRequestDTO.ResumeFileDTO selectProfileImageByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ResumeRequestDTO.ResumeFileDTO> selectAttachmentListByResumeSq(@Param("resumeSq") Long resumeSq);
+
+	List<ParentSkillTagDTO> selectParentSkillTags();
 }

@@ -134,6 +134,7 @@ public class ResumeRequestDTO {
         private String fileSaveNm;
         private String fileTyp;
         private Long fileSize;
+        private String url;
     }
 
     @Getter

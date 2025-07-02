@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.community.entity.CommonSkillTag;
-import com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO;
+import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.RepResumeSwitchRequest;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
@@ -26,8 +29,6 @@ import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.service.ResumeService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/mypage/resume")
@@ -58,7 +59,7 @@ public class ResumeController {
 
 	// 이력서 수정
 	@PutMapping("/{resumeSq}")
-	public ResponseEntity<?> updateResume(
+	public ResponseEntity<ApiResponse<String>> updateResume(
 			@PathVariable Long resumeSq,
 			@AuthenticationPrincipal Long userSq,
 			@RequestPart ResumeRequestDTO dto,
@@ -69,10 +70,24 @@ public class ResumeController {
 
 		int result = resumeService.updateResume(userSq, dto, profileImages, attachments);
 		if (result > 0) {
-			return ResponseEntity.ok("Resume updated successfully");
+			return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 수정 완료", "success"));
 		} else {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update resume");
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이력서 수정 실패", "fail"));
 		}
+	}
+
+	// 수정용 이력서 상세 조회
+	@GetMapping("/{resumeSq}")
+	public ResponseEntity<ApiResponse<ResumeRequestDTO>> getResumeDetail(@PathVariable Long resumeSq) {
+		ResumeRequestDTO resume = resumeService.getResumeDetail(resumeSq);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회 완료", resume));
+	}
+
+	@GetMapping("/project-history/parent-skill")
+	public ResponseEntity<ApiResponse<List<ParentSkillTagDTO>>> getParentSkillTags() {
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "부모 스킬 태그 조회 완료", resumeService.getParentSkillTags()));
 	}
 
 	// 대표 이력서 설정
@@ -95,19 +110,45 @@ public class ResumeController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 인원 대표 이력서 설정 완료", "success"));
 	}
 
-	// 이력서 조회
 	@GetMapping("/list")
-	public ResponseEntity<ApiResponse<List<ResumeListResponse>>> getAllResumes(@AuthenticationPrincipal Long userSq) {
-		List<ResumeListResponse> resumes = resumeService.getAllResumes(userSq);
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.", resumes));
+	public ResponseEntity<ApiResponse<Map<String, Object>>> getResumeList(
+			@RequestParam Long currentPage,
+			@RequestParam Long size,
+			@AuthenticationPrincipal Long userSq) {
+
+		List<ResumeListResponse> fullList = resumeService.getAllResumes(userSq);
+
+		int totalCount = fullList.size();
+		int offset = (int) ((currentPage - 1) * size);
+		int toIndex = Math.min(offset + size.intValue(), totalCount);
+		List<ResumeListResponse> pagedList = fullList.subList(offset, toIndex);
+
+		// 응답 본문 구성
+		Map<String, Object> output = Map.of(
+				"output", pagedList,
+				"totalCount", totalCount);
+
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "이력서 목록 조회 완료", output));
 	}
 
-	@GetMapping("/list/{memberSq}")
-	public ResponseEntity<ApiResponse<List<ResumeListResponse>>> getAllResumes(@AuthenticationPrincipal Long userSq,
-			@PathVariable("memberSq") Long memberSq) {
-		List<ResumeListResponse> resumes = resumeService.getAllResumes(memberSq);
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.", resumes));
-	}
+	// // 이력서 조회
+	// @GetMapping("/list")
+	// public ResponseEntity<ApiResponse<List<ResumeListResponse>>>
+	// getAllResumes(@AuthenticationPrincipal Long userSq) {
+	// List<ResumeListResponse> resumes = resumeService.getAllResumes(userSq);
+	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료",
+	// resumes));
+	// }
+
+	// @GetMapping("/list/{memberSq}")
+	// public ResponseEntity<ApiResponse<List<ResumeListResponse>>>
+	// getAllResumes(@AuthenticationPrincipal Long userSq,
+	// @PathVariable("memberSq") Long memberSq) {
+	// List<ResumeListResponse> resumes = resumeService.getAllResumes(memberSq);
+	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.",
+	// resumes));
+	// }
 
 	// 이력서 삭제
 	@PatchMapping("/{resumeSq}/delete")
@@ -139,67 +180,13 @@ public class ResumeController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "자격증 리스트 조회 완료", result));
 	}
 
-	// // 이력서 등록
-	// @PostMapping("/new")
-	// public ResponseEntity<ApiResponse<ResumeRegisterResponse>> registerResume(
-	// @AuthenticationPrincipal Long userSq, @RequestBody ResumeRegisterRequest
-	// request) {
-	// System.out.println("userSq = " + userSq);
-
-	// if (userSq == null) {
-	// return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-	// .body(ApiResponse.of(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", null));
-	// }
-
-	// request.setUserSq(userSq);
-	// System.out.println("📥 받은 이력서 등록 요청:" + request);
-	// System.out.println("✅ DTO 내부 userSq = " + request.getUserSq());
-
-	// try {
-	// ResumeRegisterResponse response = resumeService.registerResume(request);
-	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 등록 성공",
-	// response));
-	// } catch (IllegalArgumentException e) {
-	// return ResponseEntity
-	// .status(HttpStatus.BAD_REQUEST)
-	// .body(ApiResponse.of(HttpStatus.BAD_REQUEST, e.getMessage(), null));
-	// } catch (Exception e) {
-	// return ResponseEntity
-	// .status(HttpStatus.INTERNAL_SERVER_ERROR)
-	// .body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.",
-	// null));
-	// }
-	// }
-
-	// //이력서 상세조회
-	// @GetMapping("/detail/{resumeSq}")
-	// public ResponseEntity<ApiResponse<ResumeRegisterResponse>>
-	// getResumeById(@PathVariable("resumeSq") Long resumeSq) {
-	// ResumeRegisterResponse resume = resumeService.getResumeById(resumeSq);
-	// if (resume == null) {
-	// return ResponseEntity.status(HttpStatus.NOT_FOUND)
-	// .body(ApiResponse.of(HttpStatus.NOT_FOUND, "이력서가 없습니다.", null));
-	// }
-	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 상세 조회가 완료되었습니다.",
-	// resume));
-	// }
-
-	// // 이력서 수정
-	// @PutMapping("/update/{resumeSq}")
-	// public ResponseEntity<ApiResponse<String>> updateResume(
-	// @PathVariable("resumeSq") Long resumeSq,
-	// @RequestBody ResumeRegisterRequest request) {
-	// request.setResumeSq(resumeSq);
-	// resumeService.updateResume(request);
-	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 수정 완료",
-	// "success"));
-	// }
-
-	// //이력서 기술 태그
-	// @GetMapping("/skills")
-	// public ResponseEntity<ApiResponse<List<ResumeSkillDataResponse>>>
-	// getAllSkillTags() {
-	// List<ResumeSkillDataResponse> skills = resumeService.getAllSkillTags();
-	// return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, " ", skills));
-	// }
+	// 이력서 복사하기
+	@PostMapping("/{resumeSq}/copy")
+	public ResponseEntity<ApiResponse<Long>> copyResume(
+			@PathVariable Long resumeSq,
+			@AuthenticationPrincipal Long userSq) {
+		Long copiedResumeSq = resumeService.copyResume(userSq, resumeSq);
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "이력서 복사 완료", copiedResumeSq));
+	}
 }

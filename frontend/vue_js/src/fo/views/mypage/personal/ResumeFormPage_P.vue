@@ -45,7 +45,7 @@
                   v-if="profileImageUrl"
                   href="#"
                   class="photo-delete-btn"
-                  @click.prevent="profileImages = []"
+                  @click.prevent="deleteProfileImage()"
                   style="
                     position: absolute;
                     top: 5px;
@@ -227,7 +227,12 @@
                 >
                 <span>
                   (
-                  {{ education.period }}
+                  {{ education.educationAdmissionDt }} ~
+                  {{
+                    education.educationGraduationDt
+                      ? education.educationGraduationDt
+                      : ''
+                  }}
                   )
                 </span>
                 <span
@@ -264,7 +269,8 @@
                 {{ career.careerPositionNm }}
                 <span>
                   (
-                  {{ career.period }}
+                  {{ career.careerStartDt }} ~
+                  {{ career.careerEndDt ? career.careerEndDt : '' }}
                   )
                 </span>
 
@@ -303,7 +309,8 @@
                 style="padding-right: 24px"
               >
                 {{ item.trainingProgramNm }} /
-                {{ item.trainingInstitutionNm }} ( {{ item.period }} )
+                {{ item.trainingInstitutionNm }} ( {{ item.trainingStartDt }} ~
+                {{ item.trainingEndDt ? item.trainingEndDt : '' }})
                 <span
                   class="text-grey ms-2 position-absolute end-0 me-2"
                   style="top: 50%; transform: translateY(-50%)"
@@ -398,13 +405,14 @@
                     </div>
                   </div>
                   <div class="row mb-2">
+                    <!-- Device -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">기종:</strong>
                         <div
-                          v-for="skill in project.skillTags.device"
+                          v-for="skill in getSkillList(project, 'device')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -420,13 +428,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- OS -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">OS:</strong>
                         <div
-                          v-for="skill in project.skillTags.os"
+                          v-for="skill in getSkillList(project, 'os')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -442,13 +452,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- DBMS -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">DBMS:</strong>
                         <div
-                          v-for="skill in project.skillTags.dbms"
+                          v-for="skill in getSkillList(project, 'dbms')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -464,13 +476,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Language -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">언어:</strong>
                         <div
-                          v-for="skill in project.skillTags.language"
+                          v-for="skill in getSkillList(project, 'language')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -486,13 +500,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Tool -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">TOOL:</strong>
                         <div
-                          v-for="skill in project.skillTags.tool"
+                          v-for="skill in getSkillList(project, 'tool')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -508,13 +524,15 @@
                         </div>
                       </div>
                     </div>
+
+                    <!-- Framework -->
                     <div class="col-sm-12">
                       <div
                         class="mb-2 d-flex align-items-center gap-2 flex-wrap"
                       >
                         <strong class="me-2">FW:</strong>
                         <div
-                          v-for="skill in project.skillTags.framework"
+                          v-for="skill in getSkillList(project, 'framework')"
                           :key="skill.skillTagSq"
                           class="btn btn-rounded btn-light d-flex align-items-center gap-2 btn-3d position-relative mb-2 align-self-center"
                           style="padding-right: 24px"
@@ -603,7 +621,7 @@
           </div>
 
           <!-- 첨부파일 -->
-          <div class="form-group mb-3">
+          <!-- <div class="form-group mb-3">
             <label
               for="attachmentInput"
               class="form-label mb-1 text-2"
@@ -616,6 +634,58 @@
               @change="onAttachmentChange"
               multiple
               class="form-control"
+            />
+          </div> -->
+          <div class="form-group mb-3">
+            <label class="form-label mb-1 text-2" style="font-weight: bold">
+              첨부파일
+              <a
+                href="#"
+                class="text-grey text-decoration-none small ms-2"
+                @click.prevent="fileInputRef?.click()"
+              >
+                + 추가하기
+              </a>
+            </label>
+
+            <div class="mb-2 d-flex gap-2 flex-wrap">
+              <div
+                v-for="(file, index) in allAttachmentFiles"
+                :key="file.fileOriginalNm + '-' + index"
+                class="btn btn-rounded btn-light d-flex align-items-center gap-2 mb-2 btn-3d position-relative"
+                style="padding-right: 24px; max-width: 100%"
+              >
+                <a
+                  :href="file.url"
+                  :download="file.fileOriginalNm"
+                  class="text-truncate text-primary text-decoration-underline"
+                  style="max-width: 200px"
+                  :title="file.fileOriginalNm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ file.fileOriginalNm }}
+                </a>
+                <a
+                  href="#"
+                  class="position-absolute end-0 me-2 text-grey text-decoration-none"
+                  style="top: 50%; transform: translateY(-50%)"
+                  title="삭제"
+                  @click.prevent="removeUnifiedAttachment(index)"
+                >
+                  ×
+                </a>
+              </div>
+            </div>
+
+            <!-- 숨겨진 파일 input -->
+            <input
+              type="file"
+              ref="fileInputRef"
+              class="d-none"
+              multiple
+              @change="onAttachmentChange"
+              accept="*"
             />
           </div>
 
@@ -673,17 +743,19 @@ import SkillTagModal from '@/fo/components/community/SkillTagModal.vue'
 import ShowProjectFormModal from '@/fo/components/mypage/personal/ShowProjectFormModal.vue'
 import LicenseModal from '@/fo/components/mypage/personal/LicenseModal.vue'
 
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const projectStore = useProjectStore()
 const router = useRouter()
+const route = useRoute()
 
 const resumeForm = reactive({
   resumeTtl: '',
@@ -711,14 +783,29 @@ const resumeForm = reactive({
   skillTagList: [],
 })
 
+const resumeId = route.params.resumeSq
+
 const profileImages = ref([])
 const attachments = ref([])
 
 // 프로필 사진
-const profileImageUrl = computed(() =>
-  profileImages.value.length && profileImages.value[0]
-    ? URL.createObjectURL(profileImages.value[0])
-    : '',
+const profileImageUrl = computed(
+  () => {
+    if (resumeForm.profileImage && resumeForm.profileImage.url) {
+      return resumeForm.profileImage.url
+    } else {
+      return profileImages.value.length && profileImages.value[0]
+        ? URL.createObjectURL(profileImages.value[0])
+        : ''
+    }
+  },
+
+  // {
+  //   console.log('profileImages.value[0]', profileImages.value[0])
+  //   return profileImages.value.length && profileImages.value[0]
+  //     ? URL.createObjectURL(profileImages.value[0])
+  //     : ''
+  // },
 )
 
 function onProfileImageChange(event) {
@@ -735,6 +822,11 @@ function onProfileImageChange(event) {
     return
   }
   profileImages.value = file ? [file] : []
+}
+
+function deleteProfileImage() {
+  resumeForm.profileImage = null
+  profileImages.value = []
 }
 
 // 전화번호
@@ -788,31 +880,99 @@ function openPostcode() {
 }
 
 // 첨부파일
+// function onAttachmentChange(event) {
+//   const files = Array.from(event.target.files)
+//   const maxSize = 10 * 1024 * 1024 // 10MB
+
+//   const validFiles = []
+//   let hasInvalid = false
+
+//   for (const file of files) {
+//     if (file.size > maxSize) {
+//       alertStore.show(
+//         `"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`,
+//         'danger',
+//       )
+//       hasInvalid = true
+//     } else {
+//       validFiles.push(file)
+//     }
+//   }
+
+//   attachments.value = validFiles
+
+//   // 크기 초과 파일이 있으면 input을 초기화 (사용자가 다시 선택하도록)
+//   if (hasInvalid) {
+//     event.target.value = ''
+//   }
+// }
+// 서버에서 불러온 기존 첨부파일 리스트 (등록 시엔 빈 배열로 초기화)
+const existingAttachments = ref([])
+
+function setExistingAttachments(data) {
+  existingAttachments.value = data
+}
+
+const fileInputRef = ref(null)
+const maxSize = 10 * 1024 * 1024 // 10MB
+
+// 기존 파일 + 새 파일 통합 리스트 계산
+const allAttachmentFiles = computed(() => {
+  return [
+    ...existingAttachments.value.map((f) => ({
+      fileOriginalNm: f.fileOriginalNm,
+      url: f.url,
+      isExisting: true,
+    })),
+    ...attachments.value.map((f) => ({
+      fileOriginalNm: f.name,
+      url: URL.createObjectURL(f),
+      isExisting: false,
+    })),
+  ]
+})
+
+// 첨부파일 삭제 (기존/신규 구분하여 제거)
+function removeUnifiedAttachment(index) {
+  const file = allAttachmentFiles.value[index]
+  if (file.isExisting) {
+    const i = existingAttachments.value.findIndex(
+      (f) => f.fileOriginalNm === file.fileOriginalNm,
+    )
+    if (i !== -1) existingAttachments.value.splice(i, 1)
+  } else {
+    const i = attachments.value.findIndex((f) => f.name === file.fileOriginalNm)
+    if (i !== -1) attachments.value.splice(i, 1)
+  }
+}
+
+// 첨부파일 선택 시 유효성 검사 및 추가
 function onAttachmentChange(event) {
   const files = Array.from(event.target.files)
-  const maxSize = 10 * 1024 * 1024 // 10MB
-
-  const validFiles = []
   let hasInvalid = false
+  const validFiles = []
 
   for (const file of files) {
     if (file.size > maxSize) {
-      alertStore.show(
-        `"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`,
-        'danger',
-      )
+      alert(`"${file.name}" 파일은 10MB를 초과하여 첨부할 수 없습니다.`)
       hasInvalid = true
     } else {
       validFiles.push(file)
     }
   }
 
-  attachments.value = validFiles
+  // 중복 파일명 방지
+  const existingNames = attachments.value.map((f) => f.name)
+  validFiles.forEach((file) => {
+    if (!existingNames.includes(file.name)) {
+      attachments.value.push(file)
+    }
+  })
 
-  // 크기 초과 파일이 있으면 input을 초기화 (사용자가 다시 선택하도록)
   if (hasInvalid) {
     event.target.value = ''
   }
+  console.log('resumeForm.attachments', resumeForm.attachments)
 }
 
 // 학력 입력 폼 표시 로직
@@ -984,6 +1144,56 @@ function cleanProjectHistoryList(projectHistoryList) {
     skillTagList: flattenSkillTags(skillTags),
   }))
 }
+function getSkillList(project, category) {
+  return project.skillTags?.[category] || []
+}
+
+function convertSkillTagListToGrouped(skillTagList, parentTags) {
+  // 1. 미리 모든 카테고리를 소문자 키로 초기화
+  const grouped = {}
+  parentTags.forEach((tag) => {
+    grouped[tag.skillTagNm.toLowerCase()] = []
+  })
+
+  // 2. 각 skill을 부모 태그 기준으로 분류
+  skillTagList.forEach((skill) => {
+    const parent = parentTags.find(
+      (p) => p.skillTagSq === skill.parentSkillTagSq,
+    )
+    if (!parent) return
+    const key = parent.skillTagNm.toLowerCase()
+    if (key in grouped) {
+      grouped[key].push(skill)
+    }
+  })
+
+  return grouped
+}
+
+onMounted(async () => {
+  if (resumeId) {
+    const data = await api.$get(`/mypage/resume/${resumeId}`)
+
+    // 1. 이력서 기본값 세팅
+    Object.assign(resumeForm, data.output)
+
+    // 2. 상위 태그 불러오기
+    const parentTags = await api.$get(
+      '/mypage/resume/project-history/parent-skill',
+    )
+
+    // 3. 각 프로젝트의 skillTagList → skillTags로 가공
+    resumeForm.projectHistoryList.forEach((project) => {
+      project.skillTags = convertSkillTagListToGrouped(
+        project.skillTagList,
+        parentTags.output,
+      )
+    })
+
+    setExistingAttachments(resumeForm.attachmentList)
+    console.log('resumeForm', resumeForm)
+  }
+})
 
 async function submitResume() {
   if (!resumeForm.resumeTtl?.trim()) {
@@ -1048,9 +1258,15 @@ async function submitResume() {
   })
 
   try {
-    await api.$post('/mypage/resume', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    if (resumeId) {
+      await api.$put(`/mypage/resume/${resumeId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } else {
+      await api.$post('/mypage/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
 
     console.log('폼데이터 내용:')
     for (let [key, value] of formData.entries()) {

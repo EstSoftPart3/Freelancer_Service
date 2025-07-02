@@ -431,7 +431,7 @@ watchEffect(async () => {
   console.log('props.resumeSq', props.resumeSq)
   if (!props.resumeSq) return
   try {
-    const res = await api.$get(`/mypage/resume/${props.resumeSq}`)
+    const res = await api.$get(`/mypage/resume-detail/${props.resumeSq}`)
     res.output.projectList = res.output.projectList.map((project) => ({
       ...project,
       isExpanded: true,
