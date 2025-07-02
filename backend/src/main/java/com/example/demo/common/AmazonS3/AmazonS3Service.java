@@ -89,4 +89,14 @@ public class AmazonS3Service {
         amazonS3.deleteObject(new DeleteObjectRequest(bucket, fileName));
         System.out.println(bucket);
     }
+
+    public String copyFile(String sourceKey, String destKey) {
+        try {
+            amazonS3.copyObject(bucket, sourceKey, bucket, destKey);
+            return amazonS3.getUrl(bucket, destKey).toString();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 복사에 실패했습니다.", e);
+        }
+    }
+
 }

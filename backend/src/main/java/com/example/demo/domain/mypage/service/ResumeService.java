@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -772,8 +773,43 @@ public class ResumeService {
 			tag.setResumeSq(newResumeSq);
 			resumeRepository.insertResumeSkillTag(tag);
 		}
+		// 9. 프로필 이미지 및 첨부파일 복사
 
-		// 9. 프로필 이미지 및 첨부파일은 복사하지 않음 (선택적 처리)
+		// 9-1. 프로필 이미지 복사
+		ResumeRequestDTO.ResumeFileDTO originProfileImage = resumeRepository.findProfileImage(originResumeSq);
+		if (originProfileImage != null) {
+			String originKey = originProfileImage.getFileSaveNm();
+			String newKey = UUID.randomUUID().toString() + originKey.substring(originKey.lastIndexOf('.'));
+			String newUrl = amazonS3Service.copyFile(originKey, newKey);
+
+			UploadedFileDTO copiedImageDTO = new UploadedFileDTO();
+			copiedImageDTO.setOriginalName(originProfileImage.getFileOriginalNm());
+			copiedImageDTO.setSavedName(newKey);
+			copiedImageDTO.setContentType(originProfileImage.getFileTyp());
+			copiedImageDTO.setSize(originProfileImage.getFileSize());
+
+			ResumeRequestDTO.ResumeFileDTO newProfileImage = convertToResumeFileDTO(copiedImageDTO);
+			resumeRepository.insertProfileImage(newProfileImage);
+			resumeRepository.insertResumeProfileImageMapping(newResumeSq, newProfileImage.getFileSq());
+		}
+
+		// 9-2. 첨부파일 복사
+		List<ResumeRequestDTO.ResumeFileDTO> originFiles = resumeRepository.findAttachmentList(originResumeSq);
+		for (ResumeRequestDTO.ResumeFileDTO originFile : originFiles) {
+			String originKey = originFile.getFileSaveNm();
+			String newKey = UUID.randomUUID().toString() + originKey.substring(originKey.lastIndexOf('.'));
+			String newUrl = amazonS3Service.copyFile(originKey, newKey);
+
+			UploadedFileDTO copiedFileDTO = new UploadedFileDTO();
+			copiedFileDTO.setOriginalName(originFile.getFileOriginalNm());
+			copiedFileDTO.setSavedName(newKey);
+			copiedFileDTO.setContentType(originFile.getFileTyp());
+			copiedFileDTO.setSize(originFile.getFileSize());
+
+			ResumeRequestDTO.ResumeFileDTO newAttachment = convertToResumeFileDTO(copiedFileDTO);
+			resumeRepository.insertAttachmentFile(newAttachment);
+			resumeRepository.insertResumeAttachmentMapping(newResumeSq, newAttachment.getFileSq());
+		}
 
 		return newResumeSq;
 	}
