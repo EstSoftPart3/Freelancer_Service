@@ -490,13 +490,24 @@ public class ResumeService {
 					.selectProfileImageForUpdateByResumeSq(resumeSq);
 
 			System.out.println("dbProfileImage" + dbProfileImage);
-			// DB와 아마존S3 파일 삭제
+			// DB와 아마존S3 파일 삭제 전 사용중인지 확인
 			if (dbProfileImage != null) {
-				// 매핑 삭제
-				resumeRepository.deleteResumeProfileImageMapping(dbProfileImage.getFileSq());
-				// 실제 파일 삭제 (필요 시 물리적 삭제 또는 S3 삭제)
-				resumeRepository.deleteProfileImage(dbProfileImage.getFileSq());
-				amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+				Long fileSq = dbProfileImage.getFileSq();
+
+				// 다른 이력서에서 사용중인지 확인 (프로필 이미지)
+				int profileCount = resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
+
+				if (profileCount == 0) {
+					// 매핑 삭제
+					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+					// 실제 파일 논리 삭제
+					resumeRepository.deleteProfileImage(fileSq);
+					// S3 원본 삭제
+					amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+				} else {
+					// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+				}
 			}
 			// DTO에 있는 프로필 이미지가 있으면 삽입 및 매핑
 			if (dto.getProfileImage() != null) {
@@ -518,9 +529,21 @@ public class ResumeService {
 		// 3. 기존 첨부파일 중 유지되지 않는 파일 삭제
 		for (ResumeRequestDTO.ResumeFileDTO dbFile : dbAttachmentList) {
 			if (!retainedFileSqs.contains(dbFile.getFileSq())) {
-				resumeRepository.deleteResumeAttachmentMapping(dbFile.getFileSq());
-				resumeRepository.deleteAttachmentFile(dbFile.getFileSq());
-				amazonS3Service.deleteFile(dbFile.getFileSaveNm());
+				Long fileSq = dbFile.getFileSq();
+
+				int attachmentCount = resumeRepository.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
+
+				if (attachmentCount == 0) {
+					// 매핑 삭제
+					resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+					// 실제 파일 논리 삭제
+					resumeRepository.deleteAttachmentFile(fileSq);
+					// S3 원본 삭제
+					amazonS3Service.deleteFile(dbFile.getFileSaveNm());
+				} else {
+					// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+					resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+				}
 			}
 		}
 
@@ -545,6 +568,7 @@ public class ResumeService {
 		}
 
 		return result;
+
 	}
 
 	private ResumeRequestDTO.ResumeFileDTO convertToResumeFileDTO(UploadedFileDTO uploadedFileDTO) {
@@ -594,9 +618,53 @@ public class ResumeService {
 		return resumeMapper.selectAllResumes(userSq);
 	}
 
-	// 이력서 삭제
+	@Transactional
 	public void softDeleteResume(Long resumeSq) {
+		// 1. 이력서 삭제 처리 (논리삭제)
 		resumeMapper.updateDeleteYn(resumeSq);
+
+		// 2. 해당 이력서 프로필 이미지 조회
+		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.selectProfileImageForUpdateByResumeSq(resumeSq);
+		if (profileImage != null) {
+			Long fileSq = profileImage.getFileSq();
+
+			// 다른 이력서에서 사용중인지 확인 (프로필 이미지)
+			int profileCount = resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
+
+			if (profileCount == 0) {
+				// 매핑 삭제
+				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+				// 실제 파일 논리 삭제
+				resumeRepository.deleteProfileImage(fileSq);
+				// S3 원본 삭제
+				amazonS3Service.deleteFile(profileImage.getFileSaveNm());
+			} else {
+				// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+			}
+		}
+
+		// 3. 해당 이력서 첨부파일 목록 조회
+		List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository
+				.selectAttachmentListForUpdateByResumeSq(resumeSq);
+		for (ResumeRequestDTO.ResumeFileDTO attachment : attachmentList) {
+			Long fileSq = attachment.getFileSq();
+
+			// 다른 이력서에서 사용중인지 확인 (첨부파일)
+			int attachmentCount = resumeRepository.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
+
+			if (attachmentCount == 0) {
+				// 매핑 삭제
+				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+				// 실제 파일 논리 삭제
+				resumeRepository.deleteAttachmentFile(fileSq);
+				// S3 원본 삭제
+				amazonS3Service.deleteFile(attachment.getFileSaveNm());
+			} else {
+				// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+			}
+		}
 	}
 
 	// 전체 스킬 태그 리스트 조회
@@ -693,124 +761,92 @@ public class ResumeService {
 
 	// 복사하기
 	@Transactional
-	public Long copyResume(Long userSq, Long originResumeSq) {
-		// 원본 이력서 조회
+	public Long copyResume(Long userSq, Long originResumeSq, boolean withFiles) {
+		// 0. 원본 이력서 조회
 		ResumeRequestDTO originDto = resumeRepository.findByResumeSq(originResumeSq);
 		if (originDto == null)
 			throw new IllegalArgumentException("복사할 이력서를 찾을 수 없습니다.");
-		else {
-			originDto.setResumeIsRepresentativeYn("N");
-		}
+		originDto.setResumeIsRepresentativeYn("N");
 
 		// 1. 주소 복사
 		ResumeRequestDTO.AddressDTO address = resumeRepository
 				.findAddressByAddressSq(originDto.getAddress().getAddressSq());
-		resumeRepository.insertAddress(address); // addressSq가 자동으로 세팅됨
+		resumeRepository.insertAddress(address);
 
-		// 2. 이력서 기본정보 복사 (제목 후처리)
+		// 2. 기본정보 복사 (제목 후처리)
 		String suffix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 		originDto.setResumeTtl("[복사본_" + suffix + "] " + originDto.getResumeTtl());
 		originDto.setResumeSq(null);
 		originDto.setAddress(address);
-
 		resumeRepository.insertResume(userSq, originDto);
 		Long newResumeSq = originDto.getResumeSq();
 
-		// 3. 학력 복사
-		List<ResumeRequestDTO.EducationDTO> educations = resumeRepository.findEducationList(originResumeSq);
-		for (ResumeRequestDTO.EducationDTO edu : educations) {
+		// 3. 학력
+		for (ResumeRequestDTO.EducationDTO edu : resumeRepository.findEducationList(originResumeSq)) {
 			edu.setEducationSq(null);
 			edu.setResumeSq(newResumeSq);
 			resumeRepository.insertEducation(edu);
 		}
 
-		// 4. 경력 복사
-		List<ResumeRequestDTO.CareerDTO> careers = resumeRepository.findCareerList(originResumeSq);
-		for (ResumeRequestDTO.CareerDTO career : careers) {
+		// 4. 경력
+		for (ResumeRequestDTO.CareerDTO career : resumeRepository.findCareerList(originResumeSq)) {
 			career.setCareerSq(null);
 			career.setResumeSq(newResumeSq);
 			resumeRepository.insertCareer(career);
 		}
 
-		// 5. 프로젝트 + 기술태그 복사
-		List<ResumeRequestDTO.ProjectHistoryDTO> projects = resumeRepository.findProjectHistoryList(originResumeSq);
-		for (ResumeRequestDTO.ProjectHistoryDTO project : projects) {
+		// 5. 프로젝트 + 기술태그
+		for (ResumeRequestDTO.ProjectHistoryDTO project : resumeRepository.findProjectHistoryList(originResumeSq)) {
 			Long oldProjectSq = project.getProjectHistorySq();
 			project.setProjectHistorySq(null);
 			project.setResumeSq(newResumeSq);
 			resumeRepository.insertProjectHistory(project);
 
 			Long newProjectSq = project.getProjectHistorySq();
-			List<ResumeRequestDTO.ProjectHistorySkillTagDTO> tags = resumeRepository
-					.findProjectHistorySkillTagList(oldProjectSq);
-			for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : tags) {
+			for (ResumeRequestDTO.ProjectHistorySkillTagDTO tag : resumeRepository
+					.findProjectHistorySkillTagList(oldProjectSq)) {
 				tag.setProjectHistorySkillSq(null);
 				tag.setProjectHistorySq(newProjectSq);
 				resumeRepository.insertProjectHistorySkillTag(tag);
 			}
 		}
 
-		// 6. 자격증 복사
-		List<ResumeRequestDTO.CertificationDTO> certs = resumeRepository.findCertificationList(originResumeSq);
-		for (ResumeRequestDTO.CertificationDTO cert : certs) {
+		// 6. 자격증
+		for (ResumeRequestDTO.CertificationDTO cert : resumeRepository.findCertificationList(originResumeSq)) {
 			cert.setCertificationSq(null);
 			cert.setResumeSq(newResumeSq);
 			resumeRepository.insertCertification(cert);
 		}
 
-		// 7. 교육 복사
-		List<ResumeRequestDTO.TrainingHistoryDTO> trainings = resumeRepository.findTrainingHistoryList(originResumeSq);
-		for (ResumeRequestDTO.TrainingHistoryDTO training : trainings) {
+		// 7. 교육
+		for (ResumeRequestDTO.TrainingHistoryDTO training : resumeRepository.findTrainingHistoryList(originResumeSq)) {
 			training.setTrainingSq(null);
 			training.setResumeSq(newResumeSq);
 			resumeRepository.insertTrainingHistory(training);
 		}
 
-		// 8. 보유 기술 태그 복사
-		List<ResumeRequestDTO.SkillTagDTO> skillTags = resumeRepository.findSkillTagList(originResumeSq);
-		for (ResumeRequestDTO.SkillTagDTO tag : skillTags) {
+		// 8. 보유 기술 태그
+		for (ResumeRequestDTO.SkillTagDTO tag : resumeRepository.findSkillTagList(originResumeSq)) {
 			tag.setResumeSkillSq(null);
 			tag.setResumeSq(newResumeSq);
 			resumeRepository.insertResumeSkillTag(tag);
 		}
-		// 9. 프로필 이미지 및 첨부파일 복사
 
-		// 9-1. 프로필 이미지 복사
-		ResumeRequestDTO.ResumeFileDTO originProfileImage = resumeRepository.findProfileImage(originResumeSq);
-		if (originProfileImage != null) {
-			String originKey = originProfileImage.getFileSaveNm();
-			String newKey = UUID.randomUUID().toString() + originKey.substring(originKey.lastIndexOf('.'));
-			String newUrl = amazonS3Service.copyFile(originKey, newKey);
+		// 9. 파일 매핑만 (withFiles=true일 경우)
+		if (withFiles) {
+			// 9-1. 프로필 이미지 매핑만
+			ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(originResumeSq);
+			if (profileImage != null) {
+				resumeRepository.insertResumeProfileImageMapping(newResumeSq, profileImage.getFileSq());
+			}
 
-			UploadedFileDTO copiedImageDTO = new UploadedFileDTO();
-			copiedImageDTO.setOriginalName(originProfileImage.getFileOriginalNm());
-			copiedImageDTO.setSavedName(newKey);
-			copiedImageDTO.setContentType(originProfileImage.getFileTyp());
-			copiedImageDTO.setSize(originProfileImage.getFileSize());
-
-			ResumeRequestDTO.ResumeFileDTO newProfileImage = convertToResumeFileDTO(copiedImageDTO);
-			resumeRepository.insertProfileImage(newProfileImage);
-			resumeRepository.insertResumeProfileImageMapping(newResumeSq, newProfileImage.getFileSq());
-		}
-
-		// 9-2. 첨부파일 복사
-		List<ResumeRequestDTO.ResumeFileDTO> originFiles = resumeRepository.findAttachmentList(originResumeSq);
-		for (ResumeRequestDTO.ResumeFileDTO originFile : originFiles) {
-			String originKey = originFile.getFileSaveNm();
-			String newKey = UUID.randomUUID().toString() + originKey.substring(originKey.lastIndexOf('.'));
-			String newUrl = amazonS3Service.copyFile(originKey, newKey);
-
-			UploadedFileDTO copiedFileDTO = new UploadedFileDTO();
-			copiedFileDTO.setOriginalName(originFile.getFileOriginalNm());
-			copiedFileDTO.setSavedName(newKey);
-			copiedFileDTO.setContentType(originFile.getFileTyp());
-			copiedFileDTO.setSize(originFile.getFileSize());
-
-			ResumeRequestDTO.ResumeFileDTO newAttachment = convertToResumeFileDTO(copiedFileDTO);
-			resumeRepository.insertAttachmentFile(newAttachment);
-			resumeRepository.insertResumeAttachmentMapping(newResumeSq, newAttachment.getFileSq());
+			// 9-2. 첨부파일 매핑만
+			for (ResumeRequestDTO.ResumeFileDTO file : resumeRepository.findAttachmentList(originResumeSq)) {
+				resumeRepository.insertResumeAttachmentMapping(newResumeSq, file.getFileSq());
+			}
 		}
 
 		return newResumeSq;
 	}
+
 }

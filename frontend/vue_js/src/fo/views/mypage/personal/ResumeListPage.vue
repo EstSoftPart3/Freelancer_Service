@@ -165,16 +165,41 @@ watch(currentPage, () => {
   getResume()
 })
 
-// 복사 기능
 async function copyResume(resumeSq) {
-  try {
-    await api.$post(`/mypage/resume/${resumeSq}/copy`)
-    alertStore.show('이력서 복사가 완료되었습니다.', 'success')
-    getResume() // 복사 후 목록 갱신
-  } catch (e) {
-    console.error('이력서 복사 실패:', e)
-    alertStore.show('이력서 복사에 실패했습니다.', 'danger')
-  }
+  modalStore.openModal(CommonConfirmModal, {
+    title: '이력서 복사',
+    message: '프로필 이미지와 첨부파일도 같이 복사하시겠습니까?',
+    confirmText: '예',
+    cancelText: '아니오',
+    onConfirm: async () => {
+      try {
+        await api.$post(`/mypage/resume/${resumeSq}/copy`, {
+          withFiles: true,
+        })
+        alertStore.show('이력서 복사(파일 포함)가 완료되었습니다.', 'success')
+        getResume()
+      } catch (e) {
+        console.error('이력서 복사 실패:', e)
+        alertStore.show('이력서 복사에 실패했습니다.', 'danger')
+      } finally {
+        modalStore.closeModal()
+      }
+    },
+    onCancel: async () => {
+      try {
+        await api.$post(`/mypage/resume/${resumeSq}/copy`, {
+          withFiles: false,
+        })
+        alertStore.show('이력서 복사(파일 제외)가 완료되었습니다.', 'success')
+        getResume()
+      } catch (e) {
+        console.error('이력서 복사 실패:', e)
+        alertStore.show('이력서 복사에 실패했습니다.', 'danger')
+      } finally {
+        modalStore.closeModal()
+      }
+    },
+  })
 }
 
 function registerResume() {
