@@ -27,4 +27,15 @@ public interface ProjectScrapMapper {
 
     int deleteByUserAndProject(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
 
+    List<Long> findScrappedProjectSqsByUserSqWithPaging(
+            @Param("userSq") Long userSq,
+            @Param("searchType") String searchType,
+            @Param("searchKeyword") String searchKeyword,
+            @Param("offset") int offset,
+            @Param("limit") int limit);
+
+    int countScrappedProjectsByUserSq(
+            @Param("userSq") Long userSq,
+            @Param("searchType") String searchType,
+            @Param("searchKeyword") String searchKeyword);
 }

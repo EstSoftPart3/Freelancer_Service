@@ -16,8 +16,15 @@ import lombok.RequiredArgsConstructor;
 public class ProjectScrapRepository {
     private final ProjectScrapMapper mapper;
 
-    public List<Long> findScrappedProjects(Long userSq) {
-        return mapper.findScrappedProjectSqsByUserSq(userSq);
+    // 페이징+검색 조건 반영 리스트 조회
+    public List<Long> findScrappedProjects(Long userSq, String searchType, String searchKeyword, int offset,
+            int limit) {
+        return mapper.findScrappedProjectSqsByUserSqWithPaging(userSq, searchType, searchKeyword, offset, limit);
+    }
+
+    // 조건에 맞는 총 개수 조회
+    public int countScrappedProjects(Long userSq, String searchType, String searchKeyword) {
+        return mapper.countScrappedProjectsByUserSq(userSq, searchType, searchKeyword);
     }
 
     public ProjectDTO findBasic(Long projectSq) {
@@ -45,6 +52,6 @@ public class ProjectScrapRepository {
     }
 
     public int deleteByUserAndProject(Long userSq, Long projectSq) {
-    return mapper.deleteByUserAndProject(userSq, projectSq);
-}
+        return mapper.deleteByUserAndProject(userSq, projectSq);
+    }
 }
