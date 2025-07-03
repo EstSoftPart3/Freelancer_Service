@@ -478,6 +478,32 @@ public class ResumeService {
 			}
 		}
 
+		// 프로필 이미지 삭제 요청 여부 확인
+		if ((profileImages == null || profileImages.isEmpty()) && dto.getProfileImage() == null) {
+			// 기존 프로필 이미지 정보 조회
+			ResumeRequestDTO.ResumeFileDTO dbProfileImage = resumeRepository
+					.selectProfileImageForUpdateByResumeSq(resumeSq);
+
+			if (dbProfileImage != null) {
+				Long fileSq = dbProfileImage.getFileSq();
+
+				// 다른 이력서에서 해당 이미지 사용 중인지 확인
+				int profileCount = resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
+
+				if (profileCount == 0) {
+					// 매핑 삭제
+					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+					// 실제 파일 논리 삭제
+					resumeRepository.deleteProfileImage(fileSq);
+					// S3 원본 삭제
+					amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+				} else {
+					// 다른 곳에서 사용 중이라면 매핑만 삭제
+					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+				}
+			}
+		}
+
 		// 프로필 이미지 업로드
 		UploadedFileDTO profileImageDTO = null;
 		if (profileImages != null && !profileImages.isEmpty()) {
