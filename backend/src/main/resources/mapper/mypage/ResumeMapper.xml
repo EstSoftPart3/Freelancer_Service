@@ -136,8 +136,15 @@
   <insert id="insertResumeProfileImageMapping" parameterType="map"> INSERT INTO
     TBL_RESUME_PROFILE_IMAGE_S (resume_sq, file_sq) VALUES (#{resumeSq}, #{fileSq}) </insert>
 
-  <delete id="deleteResumeProfileImageMapping" parameterType="long"> DELETE FROM
-    TBL_RESUME_PROFILE_IMAGE_S WHERE file_sq = #{fileSq} </delete>
+  <delete id="deleteResumeProfileImageMapping" parameterType="map"> DELETE FROM
+    TBL_RESUME_PROFILE_IMAGE_S WHERE resume_sq = #{resumeSq} AND file_sq = #{fileSq} </delete>
+
+  <select id="countFileUsageInProfileImage" resultType="int" parameterType="long"> SELECT COUNT(*)
+    FROM TBL_RESUME_PROFILE_IMAGE_S WHERE file_sq = #{fileSq} </select>
+
+  <select id="countFileUsageInProfileImageExceptResume" parameterType="map" resultType="int"> SELECT
+    COUNT(*) FROM TBL_RESUME_PROFILE_IMAGE_S pi JOIN TBL_COMMON_FILE_S f ON pi.file_sq = f.file_sq
+    WHERE f.file_sq = #{fileSq} AND pi.resume_sq != #{resumeSq} AND f.file_is_deleted_yn = 'N' </select>
 
 
   <!-- 첨부파일 -->
@@ -153,9 +160,15 @@
   <insert id="insertResumeAttachmentMapping" parameterType="map"> INSERT INTO
     TBL_RESUME_ATTACHMENT_S (resume_sq, file_sq) VALUES (#{resumeSq}, #{fileSq}) </insert>
 
-  <delete id="deleteResumeAttachmentMapping" parameterType="long"> DELETE FROM
-    TBL_RESUME_ATTACHMENT_S WHERE file_sq = #{fileSq} </delete>
+  <delete id="deleteResumeAttachmentMapping" parameterType="map"> DELETE FROM
+    TBL_RESUME_ATTACHMENT_S WHERE resume_sq = #{resumeSq} AND file_sq = #{fileSq} </delete>
 
+  <select id="countFileUsageInAttachment" resultType="int" parameterType="long"> SELECT COUNT(*)
+    FROM TBL_RESUME_ATTACHMENT_S WHERE file_sq = #{fileSq} </select>
+
+  <select id="countFileUsageInAttachmentExceptResume" parameterType="map" resultType="int"> SELECT
+    COUNT(*) FROM TBL_RESUME_ATTACHMENT_S ra JOIN TBL_COMMON_FILE_S f ON ra.file_sq = f.file_sq
+    WHERE f.file_sq = #{fileSq} AND ra.resume_sq != #{resumeSq} AND f.file_is_deleted_yn = 'N' </select>
 
   <select id="findResumeVoByUserSq" resultType="com.example.demo.domain.mypage.vo.ResumeVo"> SELECT
     RESUME_SQ AS resumeSq, RESUME_TTL as resumeTitle FROM TBL_RESUME_M WHERE USER_SQ = #{userSq} </select>

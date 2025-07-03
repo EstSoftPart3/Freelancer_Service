@@ -74,7 +74,12 @@ public interface ResumeMapper {
 	// 이력서 - 프로필 이미지 매핑
 	int insertResumeProfileImageMapping(@Param("resumeSq") Long resumeSq, @Param("fileSq") Long fileSq);
 
-	int deleteResumeProfileImageMapping(@Param("fileSq") Long fileSq);
+	int deleteResumeProfileImageMapping(@Param("resumeSq") Long resumeSq, @Param("fileSq") Long fileSq);
+
+	// 프로필 이미지 사용 개수 조회
+	int countFileUsageInProfileImage(Long fileSq);
+
+	int countFileUsageInProfileImageExceptResume(@Param("fileSq") Long fileSq, @Param("resumeSq") Long resumeSq);
 
 	// 첨부파일 (파일)
 	int insertAttachmentFile(ResumeRequestDTO.ResumeFileDTO attachmentFileDTO);
@@ -84,7 +89,12 @@ public interface ResumeMapper {
 	// 이력서-첨부파일 매핑
 	int insertResumeAttachmentMapping(@Param("resumeSq") Long resumeSq, @Param("fileSq") Long fileSq);
 
-	int deleteResumeAttachmentMapping(@Param("fileSq") Long fileSq);
+	int deleteResumeAttachmentMapping(@Param("resumeSq") Long resumeSq, @Param("fileSq") Long fileSq);
+
+	// 첨부파일 사용 개수 조회
+	int countFileUsageInAttachment(Long fileSq);
+
+	int countFileUsageInAttachmentExceptResume(@Param("fileSq") Long fileSq, @Param("resumeSq") Long resumeSq);
 
 	// 1. 학력 조회 (업데이트용)
 	List<ResumeRequestDTO.EducationDTO> selectEducationListForUpdateByResumeSq(Long resumeSq);

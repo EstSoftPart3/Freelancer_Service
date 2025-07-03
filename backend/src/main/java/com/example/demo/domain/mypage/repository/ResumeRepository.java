@@ -125,8 +125,16 @@ public class ResumeRepository {
         return resumeMapper.insertResumeProfileImageMapping(resumeSq, fileSq);
     }
 
-    public int deleteResumeProfileImageMapping(Long fileSq) {
-        return resumeMapper.deleteResumeProfileImageMapping(fileSq);
+    public int deleteResumeProfileImageMapping(Long resumeSq, Long fileSq) {
+        return resumeMapper.deleteResumeProfileImageMapping(resumeSq, fileSq);
+    }
+
+    public int countFileUsageInProfileImage(Long fileSq) {
+        return resumeMapper.countFileUsageInProfileImage(fileSq);
+    }
+
+    public int countFileUsageInProfileImageExceptResume(Long fileSq, Long resumeSq) {
+        return resumeMapper.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
     }
 
     // 첨부파일 (파일)
@@ -143,8 +151,16 @@ public class ResumeRepository {
         return resumeMapper.insertResumeAttachmentMapping(resumeSq, fileSq);
     }
 
-    public int deleteResumeAttachmentMapping(Long fileSq) {
-        return resumeMapper.deleteResumeAttachmentMapping(fileSq);
+    public int deleteResumeAttachmentMapping(Long resumeSq, Long fileSq) {
+        return resumeMapper.deleteResumeAttachmentMapping(resumeSq, fileSq);
+    }
+
+    public int countFileUsageInAttachment(Long fileSq) {
+        return resumeMapper.countFileUsageInAttachment(fileSq);
+    }
+
+    public int countFileUsageInAttachmentExceptResume(Long fileSq, Long resumeSq) {
+        return resumeMapper.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
     }
 
     // 자격증

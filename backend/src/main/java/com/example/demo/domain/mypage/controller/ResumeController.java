@@ -22,6 +22,7 @@ import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.RepResumeSwitchRequest;
+import com.example.demo.domain.mypage.dto.request.CopyResumeRequest;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupResponseDTO;
@@ -182,8 +183,12 @@ public class ResumeController {
 	@PostMapping("/{resumeSq}/copy")
 	public ResponseEntity<ApiResponse<Long>> copyResume(
 			@PathVariable Long resumeSq,
-			@AuthenticationPrincipal Long userSq) {
-		Long copiedResumeSq = resumeService.copyResume(userSq, resumeSq);
+			@AuthenticationPrincipal Long userSq,
+			@RequestBody CopyResumeRequest request) {
+
+		boolean withFiles = request != null && request.isWithFiles();
+		Long copiedResumeSq = resumeService.copyResume(userSq, resumeSq, withFiles);
+
 		return ResponseEntity.ok(
 				ApiResponse.of(HttpStatus.OK, "이력서 복사 완료", copiedResumeSq));
 	}
