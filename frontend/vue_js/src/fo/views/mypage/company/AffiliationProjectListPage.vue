@@ -15,14 +15,15 @@
         <button
           v-for="filter in filters"
           :key="filter.type"
-          class="btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6"
+          class="btn btn-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 fs-6"
           :class="{ active: currentFilter === filter.type }"
           @click="setFilter(filter.type)"
+          style="white-space: nowrap"
         >
           {{ filter.label }}
-          <span class="badge bg-white text-primary fw-bold px-2 py-1">{{
-            filter.count
-          }}</span>
+          <span class="badge bg-white text-primary fw-bold px-2 py-1">
+            {{ filter.count === null ? 0 : filter.count }}</span
+          >
         </button>
       </div>
 
@@ -305,7 +306,7 @@ const fetchCompanyProjectList = async () => {
     fetchStatusCounts()
 
     projects.value = response.output.projects
-    totalPages.value = response.output.totalPages
+    totalPages.value = Math.max(1, response.output.totalPages) // 최소 1 보장
   } catch (e) {
     console.error('❌ 프로젝트 목록 불러오기 실패', e)
   }
@@ -402,23 +403,11 @@ function resetModal(component, props = {}) {
   modalStore.openModal(component, props)
 }
 
-const openUserApplyModal = async (projectSq) => {
-  const data = await api.$get(`/projects/applications/${projectSq}`, {
-    withCredentials: true,
-  })
-
-  const allApplicants = data.output
-
-  const personalApplicants =
-    allApplicants.find((g) => g.applicantType === '개인')?.response || []
-  const corporateApplicants =
-    allApplicants.find((g) => g.applicantType === '기업')?.response || []
-
+const openUserApplyModal = (projectSq) => {
   const openPersonalModal = () => {
     resetModal(PersonalApplyStatusModal, {
       size: 'modal-xl',
-      applicants: personalApplicants,
-      projectSq, // 넘김
+      projectSq,
       onToggle: openCorporateModal,
     })
   }
@@ -426,8 +415,7 @@ const openUserApplyModal = async (projectSq) => {
   const openCorporateModal = () => {
     resetModal(CompanyApplyStatusModal, {
       size: 'modal-xl',
-      applicants: corporateApplicants,
-      projectSq, // 넘김
+      projectSq,
       onToggle: openPersonalModal,
     })
   }

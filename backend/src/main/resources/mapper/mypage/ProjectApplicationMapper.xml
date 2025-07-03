@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-
 <mapper namespace="com.example.demo.domain.project.mapper.ProjectApplicationMapper">
 
 	<select id="findInterviewTimeBySq" resultType="java.time.LocalDateTime"> SELECT
@@ -29,13 +28,11 @@
 		#{keyword}, '%') </when>
 					</choose>
 				</when>
-				<otherwise>
-					<!-- searchType이 all이면서 keyword가 있을 경우 제목 또는 회사명 모두 검색 --> AND (p.project_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm
+				<otherwise> AND (p.project_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm
 		LIKE CONCAT('%', #{keyword}, '%')) </otherwise>
 			</choose>
 		</if>
-
-  <if
+    <if
 			test="readType != null and readType != 'all'">
 			<choose>
 				<when test="readType == 'read'"> AND a.read_application_dtm IS NOT NULL </when>
@@ -61,8 +58,7 @@
 		LIKE CONCAT('%', #{keyword}, '%')) </otherwise>
 			</choose>
 		</if>
-
-  <if
+    <if
 			test="readType != null and readType != 'all'">
 			<choose>
 				<when test="readType == 'read'"> AND a.read_application_dtm IS NOT NULL </when>
@@ -78,7 +74,6 @@
 		= #{userSq} AND a.read_application_dtm IS NOT NULL UNION ALL SELECT 'unread' AS type,
 		COUNT(*) FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
 		WHERE r.user_sq = #{userSq} AND a.read_application_dtm IS NULL </select>
-
 
 	<select id="findProjectBySq" resultType="Long"> SELECT project_sq FROM TBL_PROJECT_APPLICATION_H
 		WHERE project_application_sq = #{appSq} </select>
@@ -111,7 +106,6 @@
 		WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS appStatus FROM TBL_PROJECT_APPLICATION_H WHERE
 		project_application_sq = #{appSq} </select>
 
-
 	<update id="updateApplicationStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
 		project_application_status_cd = #{newStatusCd} WHERE project_application_sq =
 		#{applicationSq} </update>
@@ -122,5 +116,40 @@
 	<update id="updateApplicationInterviewTimeAndStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
 		selected_interview_dtm = #{interviewTime}, project_application_status_cd = 805 WHERE
 		project_application_sq = #{applicationSq} </update>
+
+	<select id="findApplicationGroupsByProjectSq"
+		resultType="com.example.demo.domain.project.dto.ApplicationGroupInfo"> SELECT
+		COALESCE(company_sq, -1) AS groupCompanySq, COUNT(*) AS applicantCount FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} <if
+			test="status != null and status != ''"> AND project_application_status_cd = #{status} </if>
+		GROUP BY COALESCE(company_sq, -1) ORDER BY MAX(project_application_created_at_dtm) DESC
+		LIMIT #{size} OFFSET #{offset} </select>
+
+	<select id="countApplicationGroupsByProjectSq" resultType="int"> SELECT COUNT(*) FROM ( SELECT 1
+		FROM TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} <if
+			test="status != null and status != ''"> AND project_application_status_cd = #{status} </if>
+		GROUP BY COALESCE(company_sq, -1) ) AS grouped </select>
+
+	<select id="findApplicationsByProjectSqAndGroupCompanies"
+		resultType="com.example.demo.domain.project.dto.response.ApplicationStatusResponse"> SELECT
+		a.project_application_sq AS applicationSq, r.resume_sq AS resumeSq, r.resume_nm AS resumeNm,
+		r.resume_ttl AS resumeTtl, c.company_nm AS companyNm, a.project_application_status_cd AS
+		statusCd, a.project_application_member_type_cd AS memberTypeCd,
+		a.project_application_created_at_dtm AS createdAt, CASE a.project_application_status_cd WHEN
+		801 THEN '지원중' WHEN 802 THEN '불합격' WHEN 803 THEN '합격' WHEN 804 THEN '인터뷰요청중' WHEN 805 THEN
+		'인터뷰확정' WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS appStatus, GROUP_CONCAT(DISTINCT
+		st.skill_tag_nm) AS skillNames FROM TBL_PROJECT_APPLICATION_H a LEFT JOIN TBL_COMPANY_S c ON
+		a.company_sq = c.company_sq JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq LEFT JOIN
+		TBL_RESUME_PROJECT_HISTORY_S ph ON r.resume_sq = ph.resume_sq LEFT JOIN
+		TBL_RESUME_PROJECT_HISTORY_SKILL_TAG_S rst ON ph.project_history_sq = rst.project_history_sq
+		LEFT JOIN TBL_SKILL_TAG_C st ON rst.skill_tag_sq = st.skill_tag_sq WHERE a.project_sq =
+		#{projectSq} AND COALESCE(a.company_sq, -1) IN <foreach collection="groupCompanySqs"
+			item="item" open="(" separator="," close=")"> #{item} </foreach>
+		<if
+			test="status != null and status != ''"> AND a.project_application_status_cd = #{status} </if>
+		GROUP BY a.project_application_sq, r.resume_sq, r.resume_nm, r.resume_ttl, c.company_nm,
+		a.project_application_status_cd, a.project_application_member_type_cd,
+		a.project_application_created_at_dtm ORDER BY a.company_sq,
+		a.project_application_created_at_dtm DESC </select>
 
 </mapper>

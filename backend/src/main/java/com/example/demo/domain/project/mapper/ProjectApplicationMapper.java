@@ -7,6 +7,8 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.project.dto.ApplicationGroupInfo;
+import com.example.demo.domain.project.dto.response.ApplicationStatusResponse;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
 import com.example.demo.domain.project.vo.ApplicationSummary;
 
@@ -57,5 +59,17 @@ public interface ProjectApplicationMapper {
 	public void updateApplicationInterviewTimeAndStatus(
 			@Param("applicationSq") Long applicationSq,
 			@Param("interviewTime") LocalDateTime interviewTime);
+
+	List<ApplicationGroupInfo> findApplicationGroupsByProjectSq(@Param("projectSq") Long projectSq,
+			@Param("status") String status,
+			@Param("size") int size,
+			@Param("offset") int offset);
+
+	int countApplicationGroupsByProjectSq(@Param("projectSq") Long projectSq,
+			@Param("status") String status);
+
+	List<ApplicationStatusResponse> findApplicationsByProjectSqAndGroupCompanies(@Param("projectSq") Long projectSq,
+			@Param("groupCompanySqs") List<Long> groupCompanySqs,
+			@Param("status") String status);
 
 }

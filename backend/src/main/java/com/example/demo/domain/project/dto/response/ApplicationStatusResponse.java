@@ -17,13 +17,15 @@ import lombok.NoArgsConstructor;
 public class ApplicationStatusResponse {
 	private Long applicationSq;
 	private ResumeNmTtlVo nameTitleVo;
-	private int careerYear; 
+	private int careerYear;
 	private List<String> skillNames;
 	private ApplicationStatusVo appStatusVo;
 	private String memberType;
 	private String companyNm;
-	
-	public static ApplicationStatusResponse personal(Long appSq, ResumeNmTtlVo resumeNmTtlVo, int careerYear, List<String> skills,
+	private Long companySq; // 🔹 추가된 필드: 기업 SQ
+
+	public static ApplicationStatusResponse personal(Long appSq, ResumeNmTtlVo resumeNmTtlVo, int careerYear,
+			List<String> skills,
 			ApplicationStatusVo statusVo, String memberType) {
 		return ApplicationStatusResponse.builder()
 				.applicationSq(appSq)
@@ -32,11 +34,13 @@ public class ApplicationStatusResponse {
 				.skillNames(skills)
 				.appStatusVo(statusVo)
 				.memberType(memberType)
+				.companySq(null) // 개인은 null
 				.build();
 	}
-	
-	public static ApplicationStatusResponse company(Long appSq, ResumeNmTtlVo resumeNmTtlVo, int careerYear, List<String> skills,
-			ApplicationStatusVo statusVo, String memberType, String companyNm) {
+
+	public static ApplicationStatusResponse company(Long appSq, ResumeNmTtlVo resumeNmTtlVo, int careerYear,
+			List<String> skills,
+			ApplicationStatusVo statusVo, String memberType, String companyNm, Long companySq) {
 		return ApplicationStatusResponse.builder()
 				.applicationSq(appSq)
 				.nameTitleVo(resumeNmTtlVo)
@@ -45,6 +49,7 @@ public class ApplicationStatusResponse {
 				.appStatusVo(statusVo)
 				.memberType(memberType)
 				.companyNm(companyNm)
+				.companySq(companySq)
 				.build();
 	}
 }
