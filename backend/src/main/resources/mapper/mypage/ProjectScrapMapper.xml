@@ -34,4 +34,40 @@
     <delete id="deleteByUserAndProject" parameterType="map"> DELETE FROM TBL_SCRAP_S WHERE user_sq =
         #{userSq} AND project_sq = #{projectSq} AND scrap_type_cd = 601 </delete>
 
+    <!-- 페이징 + 검색조건 반영 프로젝트 스크랩 조회 -->
+    <select id="findScrappedProjectSqsByUserSqWithPaging" resultType="long"> SELECT s.project_sq
+        FROM TBL_SCRAP_S s JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq =
+        #{userSq} AND s.scrap_type_cd = 601 <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == '전체'"> AND ( LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE c.company_sq =
+        p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%', LOWER(#{searchKeyword}), '%') ) ) </when>
+                <when test="searchType == '제목'"> AND LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') </when>
+                <when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+        c.company_sq = p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') ) </when>
+            </choose>
+        </if> ORDER BY
+        p.project_created_at_dtm DESC LIMIT #{limit} OFFSET #{offset} </select>
+
+
+    <!-- 검색조건에 맞는 총 개수 조회 -->
+    <select id="countScrappedProjectsByUserSq" resultType="int"> SELECT COUNT(*) FROM TBL_SCRAP_S s
+        JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq = #{userSq} AND
+        s.scrap_type_cd = 601 <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == '전체'"> AND ( LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE c.company_sq =
+        p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%', LOWER(#{searchKeyword}), '%') ) ) </when>
+                <when test="searchType == '제목'"> AND LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') </when>
+                <when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+        c.company_sq = p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') ) </when>
+            </choose>
+        </if>
+    </select>
+
+
 </mapper>

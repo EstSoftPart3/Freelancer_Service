@@ -13,7 +13,6 @@
       <div class="col-md-12 d-flex justify-content-end gap-2">
         <select v-model="searchType" class="form-select form-select-sm w-auto">
           <option value="전체">전체</option>
-          <option value="제목 + 회사명">제목 + 회사명</option>
           <option value="제목">제목</option>
           <option value="회사명">회사명</option>
         </select>
@@ -41,7 +40,7 @@
       <div class="col">
         <ul class="simple-post-list m-0 position-relative">
           <li
-            v-for="item in pagedScraps"
+            v-for="item in scraps"
             :key="item.projectSq"
             style="border-bottom: 1px rgb(230, 230, 230) solid"
           >
@@ -51,36 +50,42 @@
                 class="d-flex justify-content-between align-items-center gap-2"
               >
                 <div class="d-flex gap-2">
-                  <a href="#" class="text-6 m-0">{{ item.projectTtl }} /</a>
-                  <a href="#" class="text-5 m-0">{{
-                    item.company.companyNm
-                  }}</a>
+                  <a
+                    href="#"
+                    class="text-6 m-0"
+                    @click.prevent="goToProjectDetail(item.projectSq)"
+                  >
+                    {{ item.projectTtl }} /
+                    <span style="font-size: 1.25rem">{{
+                      item.company.companyNm
+                    }}</span>
+                  </a>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                   <span
                     :class="[
                       'btn',
-                      item.dday <= 0 ? 'btn-primary' : 'btn-light',
+                      item.dday >= 0 ? 'btn-primary' : 'btn-light',
                       'btn-sm',
                     ]"
                   >
-                    <template v-if="item.dday <= 0">채용중</template>
+                    <template v-if="item.dday >= 0">채용중</template>
                     <template v-else>채용 마감</template>
 
                     <span
-                      v-if="item.dday !== null && item.dday <= 0"
+                      v-if="item.dday !== null && item.dday >= 0"
                       class="badge bg-white text-primary fw-bold px-2 py-1 ms-1"
                     >
-                      D{{ item.dday }}
+                      D-{{ item.dday }}
                     </span>
                   </span>
 
-                  <a
-                    href="#"
+                  <button
                     class="btn btn-outline btn-primary btn-sm"
-                    @click.prevent="removeScrap(item.projectSq)"
-                    >삭제</a
+                    @click="removeScrap(item.projectSq)"
                   >
+                    삭제
+                  </button>
                 </div>
               </div>
 
@@ -146,6 +151,9 @@
               </div>
             </div>
           </li>
+          <li v-if="scraps.length === 0" class="text-center py-5 text-muted">
+            검색 결과가 없습니다.
+          </li>
         </ul>
 
         <!-- 페이징 -->
@@ -189,18 +197,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/fo/stores/userStore'
 
 const alertStore = useAlertStore()
+const router = useRouter()
+const userStore = useUserStore()
 
 const scraps = ref([])
 const searchType = ref('전체')
 const searchKeyword = ref('')
-const searchTrigger = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 4
+const itemsPerPage = 5
+const totalPages = ref(1)
 
 // 날짜 포맷 함수 (yyyy.MM.dd)
 function formatDate(dateStr) {
@@ -212,54 +224,39 @@ function formatDate(dateStr) {
   return `${yyyy}.${mm}.${dd}`
 }
 
+function goToProjectDetail(projectSq) {
+  if (userStore.userType === 'PERSONAL') {
+    router.push({ name: 'UserProjectSpec', params: { project_sq: projectSq } })
+  } else if (userStore.userType === 'COMPANY') {
+    router.push({
+      name: 'CompanyProjectSpec',
+      params: { project_sq: projectSq },
+    })
+  }
+}
+
 // API 호출
 async function fetchScraps() {
   try {
-    const res = await api.$get('/mypage/projectScrap')
-    scraps.value = res.output || []
-  } catch (error) {
-    console.error('프로젝트 스크랩 조회 실패:', error)
+    const params = {
+      searchType: searchType.value,
+      searchKeyword: searchKeyword.value,
+      page: currentPage.value,
+      size: itemsPerPage,
+    }
+    const res = await api.$get('/mypage/projectScrap', { params })
+    const output = res.output
+    scraps.value = output.content || []
+    totalPages.value = Math.ceil((output.totalCount || 0) / itemsPerPage) || 1
+  } catch (e) {
+    console.error('프로젝트 스크랩 조회 실패:', e)
   }
 }
 onMounted(fetchScraps)
 
-const filteredScraps = computed(() => {
-  if (!searchTrigger.value.trim()) return scraps.value
-
-  const keyword = searchTrigger.value.toLowerCase()
-
-  if (searchType.value === '전체' || searchType.value === '제목 + 회사명') {
-    return scraps.value.filter(
-      (item) =>
-        item.projectTtl.toLowerCase().includes(keyword) ||
-        item.company.companyNm.toLowerCase().includes(keyword),
-    )
-  }
-  if (searchType.value === '제목') {
-    return scraps.value.filter((item) =>
-      item.projectTtl.toLowerCase().includes(keyword),
-    )
-  }
-  if (searchType.value === '회사명') {
-    return scraps.value.filter((item) =>
-      item.company.companyNm.toLowerCase().includes(keyword),
-    )
-  }
-  return scraps.value
-})
-
-const totalPages = computed(() =>
-  Math.ceil(filteredScraps.value.length / itemsPerPage),
-)
-
-const pagedScraps = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredScraps.value.slice(start, start + itemsPerPage)
-})
-
 function handleSearch() {
-  searchTrigger.value = searchKeyword.value
   currentPage.value = 1
+  fetchScraps()
 }
 
 async function removeScrap(projectSq) {
@@ -267,7 +264,10 @@ async function removeScrap(projectSq) {
     const response = await api.$delete(`/mypage/projectScrap/${projectSq}`)
 
     if (response.status === 'OK') {
-      scraps.value = scraps.value.filter((item) => item.projectSq !== projectSq)
+      if (scraps.value.length === 1 && currentPage.value > 1) {
+        currentPage.value -= 1
+      }
+      await fetchScraps()
       alertStore.show('스크랩이 삭제되었습니다.', 'success')
     } else {
       alertStore.show('스크랩 삭제에 실패했습니다.', 'danger')
@@ -281,6 +281,9 @@ async function removeScrap(projectSq) {
 function changePage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  fetchScraps().then(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
 }
 
 const generateIconUrl = (name) => {

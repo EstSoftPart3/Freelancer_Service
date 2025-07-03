@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
@@ -23,9 +24,14 @@ public class ProjectScrapController {
     private final ProjectScrapService service;
 
     @GetMapping("/projectScrap")
-    public ApiResponse<List<ProjectScrapResponseDTO>> getScrapList(@AuthenticationPrincipal Long userSq) {
-        List<ProjectScrapResponseDTO> response = service.getScrappedProjects(userSq);
-        if (response.isEmpty()) {
+    public ApiResponse<ProjectScrapResponseDTO> getScrapList(
+            @AuthenticationPrincipal Long userSq,
+            @RequestParam(required = false, defaultValue = "전체") String searchType,
+            @RequestParam(required = false, defaultValue = "") String searchKeyword,
+            @RequestParam(required = false, defaultValue = "1") int page,
+            @RequestParam(required = false, defaultValue = "4") int size) {
+        ProjectScrapResponseDTO response = service.getScrappedProjects(userSq, searchType, searchKeyword, page, size);
+        if (response.getContent().isEmpty()) {
             return ApiResponse.error(HttpStatus.NOT_FOUND, "스크랩한 프로젝트가 없습니다.");
         } else {
             return ApiResponse.of(HttpStatus.OK, "스크랩한 프로젝트 조회 완료", response);
