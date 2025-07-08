@@ -1,22 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.mypage.mapper.ResumeCareerMapper">
 
-  
-  	<select id="calculateCareerByResSq" resultType="Integer">
-	  SELECT
-	    SUM(
-	      FLOOR(
-	        TIMESTAMPDIFF(MONTH, career_start_dt, IFNULL(career_end_dt, CURDATE())) / 12
-	      )
-	    ) AS total_years
-	  FROM TBL_RESUME_CAREER_S
-	  WHERE resume_sq = #{resumeSq}
-	</select>
 
-  
-  
+	<select id="calculateCareerByResSq" resultType="Integer"> SELECT COALESCE(SUM( FLOOR(
+		TIMESTAMPDIFF(MONTH, career_start_dt, IFNULL(career_end_dt, CURDATE())) / 12 ) ), 0) AS
+		total_years FROM TBL_RESUME_CAREER_S WHERE resume_sq = #{resumeSq} </select>
+
 
 </mapper>

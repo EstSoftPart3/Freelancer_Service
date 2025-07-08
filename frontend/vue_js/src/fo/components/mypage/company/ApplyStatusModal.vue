@@ -31,7 +31,7 @@
             <button
               v-for="filter in filters"
               :key="filter.type"
-              class="btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
+              class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
               :class="{ active: currentFilter === filter.type }"
               @click="setFilter(filter.type)"
             >

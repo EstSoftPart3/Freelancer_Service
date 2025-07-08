@@ -31,7 +31,7 @@
             <button
               v-for="filter in filters"
               :key="filter.type"
-              class="btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
+              class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
               :class="{ active: currentFilter === filter.type }"
               @click="setFilter(filter.type)"
             >
@@ -112,12 +112,18 @@
                     class="d-flex justify-content-between align-items-center gap-2"
                   >
                     <div class="d-flex gap-2">
-                      <a href="#" class="text-6 m-0"
-                        >{{ applicant.nameTitleVo.resumeNm }} /</a
+                      <a
+                        @click="openResumeDetailModal"
+                        href="#"
+                        class="d-flex gap-1 align-items-center text-decoration-none"
                       >
-                      <a @click="openResumeDetailModal" class="text-5 m-0">{{
-                        applicant.nameTitleVo.resumeTtl
-                      }}</a>
+                        <span class="text-6 m-0"
+                          >{{ applicant.nameTitleVo.resumeNm }} /</span
+                        >
+                        <span class="text-5 m-0">{{
+                          applicant.nameTitleVo.resumeTtl
+                        }}</span>
+                      </a>
                     </div>
                     <div class="d-flex gap-2">
                       <template
@@ -519,7 +525,9 @@ const openStatusFailureModal = (applicationSq) => {
 
 const openResumeDetailModal = () => {
   modalStore.openModal(ResumeDetailModal, {
-    size: 'modal-xl',
+    title: '이력서 상세보기',
+    size: 'modal-lg',
+    // resumeSq: resume.resumeSq,
   })
 }
 
