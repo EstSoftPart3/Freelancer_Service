@@ -15,7 +15,7 @@
         <button
           v-for="filter in filters"
           :key="filter.type"
-          class="btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6"
+          class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6"
           :class="{ active: currentFilter === filter.type }"
           @click="setFilter(filter.type)"
         >
@@ -251,14 +251,26 @@ const currentFilter = ref('all')
 const currnetStatusCnt = ref([])
 
 const filters = computed(() => [
-  { type: 'all', label: '전체', count: currnetStatusCnt.value.allCount },
+  {
+    type: 'all',
+    label: '전체',
+    count: currnetStatusCnt.value.allCount ?? 0,
+  },
   {
     type: 'recruiting',
     label: '채용중',
-    count: currnetStatusCnt.value.recruiting,
+    count: currnetStatusCnt.value.recruiting ?? 0,
   },
-  { type: 'closed', label: '지원 마감', count: currnetStatusCnt.value.closed },
-  { type: 'scheduled', label: '예정', count: currnetStatusCnt.value.scheduled },
+  {
+    type: 'closed',
+    label: '지원 마감',
+    count: currnetStatusCnt.value.closed ?? 0,
+  },
+  {
+    type: 'scheduled',
+    label: '예정',
+    count: currnetStatusCnt.value.scheduled ?? 0,
+  },
 ])
 
 onMounted(async () => {
@@ -305,7 +317,13 @@ const fetchCompanyProjectList = async () => {
     fetchStatusCounts()
 
     projects.value = response.output.projects
-    totalPages.value = response.output.totalPages
+
+    const pages = response.output.totalPages
+    totalPages.value = pages > 0 ? pages : 1
+
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = 1
+    }
   } catch (e) {
     console.error('❌ 프로젝트 목록 불러오기 실패', e)
   }
