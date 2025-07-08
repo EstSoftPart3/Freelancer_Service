@@ -22,7 +22,6 @@ import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
 import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
-import com.example.demo.domain.project.dto.response.PagedResponse;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
 
@@ -57,16 +56,12 @@ public class ProjectApplicationController {
 	}
 
 	@GetMapping("/{projectSq}")
-	public ResponseEntity<ApiResponse<PagedResponse<ApplicationStatusList>>> getProjectApplicationsByCompanies(
-			@PathVariable("projectSq") Long projectSq,
-			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(required = false) String status // 상태 필터: optional
-	) {
-		PagedResponse<ApplicationStatusList> response = projectApplicationService
-				.fetchApplicationsGroupedByCompany(projectSq, page, size, status);
+	public ResponseEntity<ApiResponse<List<ApplicationStatusList>>> getProjectApplicationsByCompanies(
+			Authentication authentication,
+			@PathVariable("projectSq") Long projectSq) {
 
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 공고 지원자 목록 반환 성공", response));
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 공고 지원자 목록 반환 성공",
+				projectApplicationService.fetchProjectApplicationsByProject(projectSq)));
 	}
 
 	@PatchMapping("/{applicationSq}")

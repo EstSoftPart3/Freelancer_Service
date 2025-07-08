@@ -31,7 +31,7 @@
             <button
               v-for="filter in filters"
               :key="filter.type"
-              class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
+              class="btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
               :class="{ active: currentFilter === filter.type }"
               @click="setFilter(filter.type)"
             >
@@ -57,7 +57,6 @@
               type="text"
               class="form-control form-control-sm w-auto"
               placeholder="검색어 입력"
-              @keyup.enter="search"
             />
             <button class="btn btn-primary btn-sm" @click="search">검색</button>
           </div>
@@ -304,7 +303,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, watch, onMounted } from 'vue'
+import { ref, defineProps, computed } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
@@ -315,73 +314,25 @@ import { api } from '@/axios.js'
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
-
 const props = defineProps({
-  projectSq: {
-    type: Number,
-    required: true,
-  },
+  applicants: Array,
+  projectSq: Number,
   onToggle: Function,
 })
 
-// 상태 변수
-const localApplicants = ref([])
+// 필터 상태
 const currentFilter = ref('all')
 const searchType = ref('all')
 const searchText = ref('')
+const applicantType = ref('personal')
 const currentPage = ref(1)
 const pageSize = ref(5)
-const totalPages = ref(1)
+const totalPages = computed(() =>
+  Math.ceil(filteredApplicants.value.length / pageSize.value),
+)
 
-const isLoading = ref(false)
+const localApplicants = ref([...props.applicants])
 
-// 지원자 목록 조회 함수
-const fetchApplicants = async () => {
-  if (!props.projectSq) return
-
-  isLoading.value = true
-  try {
-    const res = await api.$get(`/projects/applications/${props.projectSq}`, {
-      params: {
-        page: currentPage.value - 1, // 0-based offset
-        size: pageSize.value,
-        status: currentFilter.value === 'all' ? null : currentFilter.value,
-        searchType: searchType.value === 'all' ? null : searchType.value,
-        keyword: searchText.value || null,
-      },
-      withCredentials: true,
-    })
-    // res.output 예상: { content: [...], totalPages: n, totalElements: m }
-    localApplicants.value = res.output.content || []
-    totalPages.value = res.output.totalPages || 1
-  } catch (e) {
-    console.error('지원자 목록 조회 실패', e)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 필터 변경 시
-const setFilter = (type) => {
-  currentFilter.value = type
-  currentPage.value = 1
-  fetchApplicants()
-}
-
-// 검색 실행
-const search = () => {
-  currentPage.value = 1
-  fetchApplicants()
-}
-
-// 페이지 변경
-const changePage = (page) => {
-  if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
-  fetchApplicants()
-}
-
-// 지원 상태 로컬 업데이트
 const updateStatusLocally = (applicationSq, newStatus) => {
   const target = localApplicants.value.find(
     (app) => app.applicationSq === applicationSq,
@@ -391,49 +342,136 @@ const updateStatusLocally = (applicationSq, newStatus) => {
   }
 }
 
-// 상태 변경 API 호출
-const updateStatus = async (applicationSq, status) => {
-  try {
-    await api.$patch(
-      `/projects/applications/${applicationSq}`,
-      { status },
-      { withCredentials: true },
-    )
-    updateStatusLocally(applicationSq, status)
-    alertStore.show(`상태가 '${status}'(으)로 변경되었습니다.`)
-  } catch (e) {
-    console.error('지원 상태 변경 실패', e)
-    alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
-  }
-}
+const filteredApplicants = computed(() => {
+  return localApplicants.value.filter((applicant) => {
+    const status = applicant.appStatusVo?.appStatus
+    console.log
+    const keyword = searchText.value.toLowerCase()
 
-// 불합격 처리 모달 열기
-const openStatusFailureModal = (applicationSq) => {
-  modalStore.openModal(CommonConfirmModal, {
-    message: '해당 지원자를 불합격 처리하겠습니까?',
-    onConfirm: async () => {
-      try {
-        await updateStatus(applicationSq, '불합격')
-        modalStore.closeModal()
-      } catch (e) {
-        alertStore.show('불합격 처리 중 오류가 발생했습니다.', 'danger')
+    const matchesFilter = (() => {
+      switch (currentFilter.value) {
+        case 'passed':
+          return status === '합격'
+        case 'in_progress':
+          return status === '지원중'
+        case 'interview_confirmed':
+          return status === '인터뷰확정'
+        case 'interview_requested':
+          return status === '인터뷰요청중'
+        case 'rejected':
+          return ['불합격', '지원취소'].includes(status)
+        default:
+          return true
       }
-    },
+    })()
+
+    const matchesSearch = (() => {
+      if (!keyword) return true
+      switch (searchType.value) {
+        case 'name':
+          return applicant.nameTitleVo?.resumeNm
+            ?.toLowerCase()
+            .includes(keyword)
+        case 'skills':
+          return applicant.skillNames?.some((s) =>
+            s.toLowerCase().includes(keyword),
+          )
+        case 'all':
+        default:
+          return (
+            applicant.nameTitleVo?.resumeNm?.toLowerCase().includes(keyword) ||
+            applicant.skillNames?.some((s) => s.toLowerCase().includes(keyword))
+          )
+      }
+    })()
+
+    return matchesFilter && matchesSearch
   })
-}
+})
+
+const paginatedApplicants = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredApplicants.value.slice(start, end)
+})
+
+const filterCounts = computed(() => {
+  const counts = {
+    all: filteredApplicants.value.length,
+    passed: 0,
+    in_progress: 0,
+    interview_confirmed: 0,
+    interview_requested: 0,
+    rejected: 0,
+  }
+
+  filteredApplicants.value.forEach((a) => {
+    const status = a.appStatusVo?.appStatus
+    if (status === '지원중') counts.in_progress++
+    else if (status === '합격') counts.passed++
+    else if (status === '인터뷰확정') counts.interview_confirmed++
+    else if (status === '인터뷰요청중') counts.interview_requested++
+    else if (['불합격', '지원취소'].includes(status)) counts.rejected++
+  })
+  return counts
+})
+
+const filters = computed(() => [
+  { type: 'all', label: '전체', count: filterCounts.value.all },
+  {
+    type: 'passed',
+    label: '합격',
+    count: filterCounts.value.passed,
+  },
+  {
+    type: 'in_progress',
+    label: '지원중',
+    count: filterCounts.value.in_progress,
+  },
+  {
+    type: 'interview_confirmed',
+    label: '인터뷰확정',
+    count: filterCounts.value.interview_confirmed,
+  },
+  {
+    type: 'interview_requested',
+    label: '인터뷰요청중',
+    count: filterCounts.value.interview_requested,
+  },
+  {
+    type: 'rejected',
+    label: '불합격 / 취소',
+    count: filterCounts.value.rejected,
+  },
+])
 
 const toggleToCorporate = () => {
   props.onToggle?.()
 }
 
-// 이력서 상세 모달 열기
-const openResumeDetailModal = () => {
-  modalStore.openModal(ResumeDetailModal, {
-    size: 'modal-xl',
-  })
+// 필터 변경
+const setFilter = (type) => {
+  currentFilter.value = type
+  // TODO: 필터링 로직 구현
 }
 
-// 날짜 포맷 함수
+// 검색
+const search = () => {
+  // TODO: 검색 로직 구현
+  console.log('검색:', searchType.value, searchText.value)
+}
+
+// 페이지 변경
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+// 모달 닫기
+const closeModal = () => {
+  modalStore.closeModal()
+}
+
 function formatDate(dateString) {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -445,7 +483,46 @@ function formatDate(dateString) {
   return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 
-// 아이콘 URL 생성 함수
+const updateStatus = async (applicationSq, status) => {
+  try {
+    const response = await api.$patch(
+      `/projects/applications/${applicationSq}`,
+      {
+        withCredentials: true,
+        status,
+      },
+    )
+    console.log(`✅ ${applicationSq} 지원 상태 변경 성공`, response)
+
+    updateStatusLocally(applicationSq, status)
+  } catch (e) {
+    console.error('❌ 지원 상태 변경 실패', e)
+  }
+}
+
+const openStatusFailureModal = (applicationSq) => {
+  console.log(localApplicants.value)
+  modalStore.openModal(CommonConfirmModal, {
+    message: '해당 지원자를 불합격 처리하겠습니까?',
+    onConfirm: async () => {
+      try {
+        await updateStatus(applicationSq, '불합격')
+        alertStore.show('불합격 처리가 정상적으로 이루어졌습니다.')
+        modalStore.closeModal()
+      } catch (error) {
+        console.error('상태 변경 실패:', error)
+        alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
+      }
+    },
+  })
+}
+
+const openResumeDetailModal = () => {
+  modalStore.openModal(ResumeDetailModal, {
+    size: 'modal-xl',
+  })
+}
+
 const generateIconUrl = (name) => {
   const exceptionList = [
     '전자정부 프레임워크',
@@ -463,11 +540,6 @@ const generateIconUrl = (name) => {
 
   return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
 }
-
-// 초기 호출 및 감시
-onMounted(fetchApplicants)
-
-watch([currentFilter, searchType, searchText, currentPage], fetchApplicants)
 </script>
 
 <style scoped>
