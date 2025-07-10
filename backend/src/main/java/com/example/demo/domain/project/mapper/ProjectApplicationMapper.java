@@ -40,8 +40,6 @@ public interface ProjectApplicationMapper {
 
 	public Long findByProAndCom(@Param("projectSq") Long projectSq, @Param("companySq") Long companySq);
 
-	public ApplicationStatusVo findStatusVoByAppSq(Long applicationSq);
-
 	public List<Long> findAllSqByProjectSq(Long projectSq);
 
 	public String findMmTypStrBySq(Long applicationSq);
@@ -57,21 +55,49 @@ public interface ProjectApplicationMapper {
 			@Param("applicationSq") Long applicationSq,
 			@Param("interviewTime") LocalDateTime interviewTime);
 
-	List<PersonalApplicantDTO> findPersonalApplicantsByProjectSq(@Param("projectSq") Long projectSq,
+	// 개인 지원자 조회
+	List<PersonalApplicantDTO> findPersonalApplicantsByProjectSq(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword,
 			@Param("size") int size,
 			@Param("offset") int offset);
 
-	int countPersonalApplicantsByProjectSq(@Param("projectSq") Long projectSq);
+	int countPersonalApplicantsByProjectSq(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
 
-	List<String> findDistinctCompanyNamesByProject(@Param("projectSq") Long projectSq,
+	// 기업명 리스트 조회 (페이징)
+	List<String> findDistinctCompanyNamesByProject(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword,
 			@Param("size") int size,
 			@Param("offset") int offset);
 
-	List<PersonalApplicantDTO> findApplicantsByProjectAndCompany(@Param("projectSq") Long projectSq,
-			@Param("companyNm") String companyNm);
+	// 특정 회사별 지원자 리스트 조회
+	List<PersonalApplicantDTO> findApplicantsByProjectAndCompany(
+			@Param("projectSq") Long projectSq,
+			@Param("companyNm") String companyNm,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
 
-	int countDistinctCompaniesByProject(@Param("projectSq") Long projectSq);
+	// 기업명 전체 개수 조회
+	int countDistinctCompaniesByProject(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
 
+	// 지원서에서 resumeSq 조회 (개인/기업 공통)
 	Long findResumeBySq(@Param("applicationSq") Long applicationSq);
+
+	// 지원 상태 조회
+	ApplicationStatusVo findStatusVoByAppSq(@Param("applicationSq") Long applicationSq);
 
 }

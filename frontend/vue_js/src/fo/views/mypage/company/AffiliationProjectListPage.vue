@@ -420,37 +420,25 @@ function resetModal(component, props = {}) {
   modalStore.openModal(component, props)
 }
 
-const openUserApplyModal = async (projectSq) => {
-  const data = await api.$get(`/projects/applications/${projectSq}`, {
-    withCredentials: true,
-  })
-
-  const allApplicants = data.output
-
-  const personalApplicants =
-    allApplicants.find((g) => g.applicantType === '개인')?.response || []
-  const corporateApplicants =
-    allApplicants.find((g) => g.applicantType === '기업')?.response || []
-
-  const openPersonalModal = () => {
+const openUserApplyModal = (projectSq) => {
+  // 더 이상 API 호출하지 않음. 모달 컴포넌트 내에서 호출하도록 변경
+  const openPersonalModal = (projSq) => {
     resetModal(PersonalApplyStatusModal, {
       size: 'modal-xl',
-      applicants: personalApplicants,
-      projectSq, // 넘김
+      projectSq: projSq,
       onToggle: openCorporateModal,
     })
   }
 
-  const openCorporateModal = () => {
+  const openCorporateModal = (projSq) => {
     resetModal(CompanyApplyStatusModal, {
       size: 'modal-xl',
-      applicants: corporateApplicants,
-      projectSq, // 넘김
+      projectSq: projSq,
       onToggle: openPersonalModal,
     })
   }
 
-  openPersonalModal()
+  openPersonalModal(projectSq)
 }
 </script>
 

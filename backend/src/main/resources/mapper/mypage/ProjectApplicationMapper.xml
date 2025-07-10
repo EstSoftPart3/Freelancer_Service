@@ -107,7 +107,7 @@
 		selected_interview_dtm AS interviewDt, CASE project_application_status_cd WHEN 801 THEN
 		'지원중' WHEN 802 THEN '불합격' WHEN 803 THEN '합격' WHEN 804 THEN '인터뷰요청중' WHEN 805 THEN '인터뷰확정'
 		WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS appStatus FROM TBL_PROJECT_APPLICATION_H WHERE
-		project_application_sq = #{appSq} </select>
+		project_application_sq = #{applicationSq} </select>
 
 
 	<update id="updateApplicationStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
@@ -122,7 +122,7 @@
 		project_application_sq = #{applicationSq} </update>
 
 
-	<!-- 개인 지원자 조회 -->
+	<!-- 개인 지원자 목록 조회 -->
 	<select id="findPersonalApplicantsByProjectSq"
 		resultType="com.example.demo.domain.project.dto.PersonalApplicantDTO"> SELECT
 		a.project_application_sq AS applicationSq, r.resume_nm AS resumeNm, r.resume_ttl AS
@@ -134,38 +134,169 @@
 		TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq LEFT JOIN
 		TBL_COMPANY_S c ON a.company_sq = c.company_sq JOIN TBL_COMMON_CODE_C cc ON
 		a.project_application_status_cd = cc.common_code_sq WHERE a.project_sq = #{projectSq} AND
-		a.project_application_member_type_cd = 301 ORDER BY a.project_application_created_at_dtm
-		DESC LIMIT #{size} OFFSET #{offset} </select>
+		a.project_application_member_type_cd = 301 <if
+			test="filter != null and filter != '' and filter != 'all'">
+			<choose>
+				<when test="filter == 'passed'">AND cc.common_code_nm = '합격'</when>
+				<when test="filter == 'in_progress'">AND cc.common_code_nm = '지원중'</when>
+				<when test="filter == 'interview_confirmed'">AND cc.common_code_nm = '인터뷰확정'</when>
+				<when test="filter == 'interview_requested'">AND cc.common_code_nm = '인터뷰요청중'</when>
+				<when test="filter == 'rejected'">AND cc.common_code_nm IN ('불합격', '지원취소')</when>
+			</choose>
+		</if>
 
+    <if
+			test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') </when>
+				<when test="searchType == 'skills'"> AND EXISTS ( SELECT 1 FROM
+		TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq = s.skill_tag_sq WHERE
+		st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%', LOWER(#{keyword}),
+		'%') ) </when>
+				<otherwise> AND ( LOWER(r.resume_nm) LIKE CONCAT('%', LOWER(#{keyword}), '%') OR
+		EXISTS ( SELECT 1 FROM TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq =
+		s.skill_tag_sq WHERE st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') ) ) </otherwise>
+			</choose>
+		</if> ORDER BY
+		a.project_application_created_at_dtm DESC LIMIT #{size} OFFSET #{offset} </select>
+
+	<!-- 개인 지원자 수 조회 -->
 	<select id="countPersonalApplicantsByProjectSq" resultType="int"> SELECT COUNT(*) FROM
-		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND
-		project_application_member_type_cd = 301 </select>
-
-	<!-- distinct 기업명 리스트 (페이징) -->
-	<select id="findDistinctCompanyNamesByProject" resultType="String" parameterType="map"> SELECT
-		DISTINCT c.company_nm FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_COMPANY_S c ON a.company_sq
-		= c.company_sq WHERE a.project_sq = #{projectSq} ORDER BY c.company_nm LIMIT #{size} OFFSET
-		#{offset} </select>
-
-	<!-- 기업별 지원자 리스트 -->
-	<select id="findApplicantsByProjectAndCompany"
-		resultType="com.example.demo.domain.project.dto.PersonalApplicantDTO" parameterType="map">
-		SELECT a.project_application_sq AS applicationSq, r.resume_nm AS resumeNmTtlVo_resumeNm,
-		r.resume_ttl AS resumeNmTtlVo_resumeTtl, (SELECT IFNULL(SUM(FLOOR(TIMESTAMPDIFF(MONTH,
-		c.career_start_dt, IFNULL(c.career_end_dt, CURDATE())) / 12)), 0) FROM TBL_RESUME_CAREER_S c
-		WHERE c.resume_sq = r.resume_sq) AS careerYear, a.read_application_dtm AS
-		appStatusVo_readResumeDt, a.project_application_created_at_dtm AS appStatusVo_appDt,
-		a.selected_interview_dtm AS appStatusVo_interviewDt, CASE a.project_application_status_cd
-		WHEN 801 THEN '지원중' WHEN 802 THEN '불합격' WHEN 803 THEN '합격' WHEN 804 THEN '인터뷰요청중' WHEN 805
-		THEN '인터뷰확정' WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS appStatusVo_appStatus FROM
 		TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq JOIN
-		TBL_COMPANY_S c ON a.company_sq = c.company_sq WHERE a.project_sq = #{projectSq} AND
-		c.company_nm = #{companyNm} ORDER BY a.project_application_created_at_dtm DESC </select>
+		TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq WHERE
+		a.project_sq = #{projectSq} AND a.project_application_member_type_cd = 301 <if
+			test="filter != null and filter != '' and filter != 'all'">
+			<choose>
+				<when test="filter == 'passed'">AND cc.common_code_nm = '합격'</when>
+				<when test="filter == 'in_progress'">AND cc.common_code_nm = '지원중'</when>
+				<when test="filter == 'interview_confirmed'">AND cc.common_code_nm = '인터뷰확정'</when>
+				<when test="filter == 'interview_requested'">AND cc.common_code_nm = '인터뷰요청중'</when>
+				<when test="filter == 'rejected'">AND cc.common_code_nm IN ('불합격', '지원취소')</when>
+			</choose>
+		</if>
+    <if
+			test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') </when>
+				<when test="searchType == 'skills'"> AND EXISTS ( SELECT 1 FROM
+		TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq = s.skill_tag_sq WHERE
+		st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%', LOWER(#{keyword}),
+		'%') ) </when>
+				<otherwise> AND ( LOWER(r.resume_nm) LIKE CONCAT('%', LOWER(#{keyword}), '%') OR
+		EXISTS ( SELECT 1 FROM TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq =
+		s.skill_tag_sq WHERE st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') ) ) </otherwise>
+			</choose>
+		</if>
+	</select>
 
-	<!-- 전체 distinct 기업 수 -->
-	<select id="countDistinctCompaniesByProject" resultType="int" parameterType="long"> SELECT
-		COUNT(DISTINCT company_sq) FROM TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} </select>
+	<!-- 기업명 리스트 조회 -->
+	<select id="findDistinctCompanyNamesByProject"
+		resultType="String" parameterType="map"> SELECT DISTINCT c.company_nm FROM
+		TBL_PROJECT_APPLICATION_H a JOIN TBL_COMPANY_S c ON a.company_sq = c.company_sq JOIN
+		TBL_RESUME_M r ON a.resume_sq = r.resume_sq JOIN TBL_COMMON_CODE_C cc ON
+		a.project_application_status_cd = cc.common_code_sq WHERE a.project_sq = #{projectSq} <if
+			test="filter != null and filter != '' and filter != 'all'">
+			<choose>
+				<when test="filter == 'passed'">AND cc.common_code_nm = '합격'</when>
+				<when test="filter == 'in_progress'">AND cc.common_code_nm = '지원중'</when>
+				<when test="filter == 'interview_confirmed'">AND cc.common_code_nm = '인터뷰확정'</when>
+				<when test="filter == 'interview_requested'">AND cc.common_code_nm = '인터뷰요청중'</when>
+				<when test="filter == 'rejected'">AND cc.common_code_nm IN ('불합격', '지원취소')</when>
+			</choose>
+		</if>
+    <if
+			test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') </when>
+				<when test="searchType == 'skills'"> AND EXISTS ( SELECT 1 FROM
+		TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq = s.skill_tag_sq WHERE
+		st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%', LOWER(#{keyword}),
+		'%') ) </when>
+				<otherwise> AND ( LOWER(r.resume_nm) LIKE CONCAT('%', LOWER(#{keyword}), '%') OR
+		EXISTS ( SELECT 1 FROM TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq =
+		s.skill_tag_sq WHERE st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') ) ) </otherwise>
+			</choose>
+		</if> ORDER BY
+		c.company_nm LIMIT #{size} OFFSET #{offset} </select>
 
+	<!-- 회사별 지원자 목록 조회 -->
+	<select id="findApplicantsByProjectAndCompany"
+		resultType="com.example.demo.domain.project.dto.PersonalApplicantDTO"
+		parameterType="map"> SELECT a.project_application_sq AS applicationSq, r.resume_nm AS
+		resumeNmTtlVo_resumeNm, r.resume_ttl AS resumeNmTtlVo_resumeTtl, (SELECT
+		IFNULL(SUM(FLOOR(TIMESTAMPDIFF(MONTH, c.career_start_dt, IFNULL(c.career_end_dt, CURDATE()))
+		/ 12)), 0) FROM TBL_RESUME_CAREER_S c WHERE c.resume_sq = r.resume_sq) AS careerYear,
+		a.read_application_dtm AS appStatusVo_readResumeDt, a.project_application_created_at_dtm AS
+		appStatusVo_appDt, a.selected_interview_dtm AS appStatusVo_interviewDt, CASE
+		a.project_application_status_cd WHEN 801 THEN '지원중' WHEN 802 THEN '불합격' WHEN 803 THEN '합격'
+		WHEN 804 THEN '인터뷰요청중' WHEN 805 THEN '인터뷰확정' WHEN 806 THEN '지원취소' ELSE 'UNKNOWN' END AS
+		appStatusVo_appStatus FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq =
+		r.resume_sq JOIN TBL_COMPANY_S c ON a.company_sq = c.company_sq WHERE a.project_sq =
+		#{projectSq} AND c.company_nm = #{companyNm} <if
+			test="filter != null and filter != '' and filter != 'all'">
+			<choose>
+				<when test="filter == 'passed'">AND a.project_application_status_cd = 803</when>
+				<when test="filter == 'in_progress'">AND a.project_application_status_cd = 801</when>
+				<when test="filter == 'interview_confirmed'">AND a.project_application_status_cd =
+		805</when>
+				<when test="filter == 'interview_requested'">AND a.project_application_status_cd =
+		804</when>
+				<when test="filter == 'rejected'">AND a.project_application_status_cd IN (802, 806)</when>
+			</choose>
+		</if>
+    <if
+			test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') </when>
+				<when test="searchType == 'skills'"> AND EXISTS ( SELECT 1 FROM
+		TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq = s.skill_tag_sq WHERE
+		st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%', LOWER(#{keyword}),
+		'%') ) </when>
+				<otherwise> AND ( LOWER(r.resume_nm) LIKE CONCAT('%', LOWER(#{keyword}), '%') OR
+		EXISTS ( SELECT 1 FROM TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq =
+		s.skill_tag_sq WHERE st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') ) ) </otherwise>
+			</choose>
+		</if> ORDER BY
+		a.project_application_created_at_dtm DESC </select>
+
+	<!-- 기업명 총 개수 조회 -->
+	<select id="countDistinctCompaniesByProject" resultType="int" parameterType="map"> SELECT
+		COUNT(DISTINCT company_sq) FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_COMPANY_S c ON
+		a.company_sq = c.company_sq JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq JOIN
+		TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq WHERE
+		a.project_sq = #{projectSq} <if test="filter != null and filter != '' and filter != 'all'">
+			<choose>
+				<when test="filter == 'passed'">AND cc.common_code_nm = '합격'</when>
+				<when test="filter == 'in_progress'">AND cc.common_code_nm = '지원중'</when>
+				<when test="filter == 'interview_confirmed'">AND cc.common_code_nm = '인터뷰확정'</when>
+				<when test="filter == 'interview_requested'">AND cc.common_code_nm = '인터뷰요청중'</when>
+				<when test="filter == 'rejected'">AND cc.common_code_nm IN ('불합격', '지원취소')</when>
+			</choose>
+		</if>
+    <if
+			test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') </when>
+				<when test="searchType == 'skills'"> AND EXISTS ( SELECT 1 FROM
+		TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq = s.skill_tag_sq WHERE
+		st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%', LOWER(#{keyword}),
+		'%') ) </when>
+				<otherwise> AND ( LOWER(r.resume_nm) LIKE CONCAT('%', LOWER(#{keyword}), '%') OR
+		EXISTS ( SELECT 1 FROM TBL_RESUME_SKILL_TAG_S st JOIN TBL_SKILL_TAG_C s ON st.skill_tag_sq =
+		s.skill_tag_sq WHERE st.resume_sq = r.resume_sq AND LOWER(s.skill_tag_nm) LIKE CONCAT('%',
+		LOWER(#{keyword}), '%') ) ) </otherwise>
+			</choose>
+		</if>
+	</select>
 
 	<!-- 지원서에서 resumeSq 조회 (개인 지원자 기술 태그 조회용) -->
 	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H

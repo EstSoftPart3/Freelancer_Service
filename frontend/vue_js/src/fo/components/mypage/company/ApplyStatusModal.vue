@@ -94,14 +94,14 @@
         <div class="row">
           <div class="col">
             <div
-              v-if="groupedPaginatedApplicants.length === 0"
+              v-if="paginatedGroups.length === 0"
               class="text-muted py-3"
               style="font-size: 14px"
             >
               지원한 기업 지원자가 없습니다.
             </div>
             <div
-              v-for="(company, index) in groupedPaginatedApplicants"
+              v-for="(company, index) in paginatedGroups"
               :key="index"
               class="row mb-3"
             >
@@ -117,7 +117,7 @@
                   style="font-size: 1.5rem; border-color: black"
                 >
                   <div>
-                    <strong>{{ company.name }}</strong>
+                    <strong>{{ company.companyNm }}</strong>
                   </div>
                   <i class="fas fa-chevron-down"></i>
                 </button>
@@ -141,18 +141,25 @@
                         >
                           <div class="d-flex gap-2">
                             <a href="#" class="text-6 m-0"
-                              >{{ applicant.nameTitleVo.resumeNm }} /</a
+                              >{{
+                                applicant.resumeNmTtlVo?.resumeNm || '-'
+                              }}
+                              /</a
                             >
                             <a
-                              @click="openResumeDetailModal()"
+                              @click="
+                                openResumeDetailModal(applicant.applicationSq)
+                              "
                               href="#"
                               class="text-5 m-0"
-                              >{{ applicant.nameTitleVo.resumeTtl }}</a
+                              >{{
+                                applicant.resumeNmTtlVo?.resumeTtl || '-'
+                              }}</a
                             >
                           </div>
                           <div class="d-flex gap-2">
                             <template
-                              v-if="applicant.appStatusVo.appStatus === '합격'"
+                              v-if="applicant.appStatusVo?.appStatus === '합격'"
                             >
                               <span
                                 @click.prevent="
@@ -160,26 +167,27 @@
                                     applicant.applicationSq,
                                   )
                                 "
-                                href="#"
                                 class="btn btn-outline btn-primary btn-sm"
-                                >인터뷰 요청</span
                               >
+                                인터뷰 요청
+                              </span>
                             </template>
                             <template
                               v-else-if="
-                                applicant.appStatusVo.appStatus === '불합격'
+                                applicant.appStatusVo?.appStatus === '불합격'
                               "
                             >
                               <span
                                 class="btn btn-primary btn-sm"
                                 @click="handleReject(applicant)"
-                                >불합격</span
                               >
+                                불합격
+                              </span>
                             </template>
 
                             <template
                               v-if="
-                                applicant.appStatusVo.appStatus === '지원중'
+                                applicant.appStatusVo?.appStatus === '지원중'
                               "
                             >
                               <span
@@ -207,7 +215,7 @@
                             </template>
                             <template
                               v-else-if="
-                                applicant.appStatusVo.appStatus ===
+                                applicant.appStatusVo?.appStatus ===
                                 '인터뷰요청중'
                               "
                             >
@@ -217,7 +225,8 @@
                             </template>
                             <template
                               v-else-if="
-                                applicant.appStatusVo.appStatus === '인터뷰확정'
+                                applicant.appStatusVo?.appStatus ===
+                                '인터뷰확정'
                               "
                             >
                               <div
@@ -235,7 +244,7 @@
                                 >
                                   {{
                                     formatDate(
-                                      applicant.appStatusVo.interviewDt,
+                                      applicant.appStatusVo?.interviewDt,
                                     )
                                   }}
                                 </div>
@@ -248,7 +257,7 @@
                             </template>
                             <template
                               v-else-if="
-                                applicant.appStatusVo.appStatus === '지원취소'
+                                applicant.appStatusVo?.appStatus === '지원취소'
                               "
                             >
                               <span class="btn btn-light btn-sm"
@@ -267,7 +276,7 @@
                               class="text-dark text-uppercase font-weight-semibold"
                               >경력</span
                             >
-                            | {{ applicant.careerYear }}년차
+                            | {{ applicant.careerYear || '-' }}년차
                           </div>
                           <div class="post-meta text-4">
                             <span
@@ -275,7 +284,9 @@
                               >열람일자</span
                             >
                             |
-                            {{ applicant.appStatusVo.readResumeDt || '미열람' }}
+                            {{
+                              applicant.appStatusVo?.readResumeDt || '미열람'
+                            }}
                           </div>
                         </div>
 
@@ -291,7 +302,7 @@
                             >
                             |
                             <div
-                              v-for="skill in applicant.skillNames"
+                              v-for="skill in applicant.skillNames || []"
                               :key="skill"
                               class="btn d-flex align-items-center gap-2 border-0"
                             >
@@ -310,7 +321,7 @@
                               style="font-size: 16.8px"
                               >지원일자</span
                             >
-                            | {{ applicant.appStatusVo.appDt }}
+                            | {{ applicant.appStatusVo?.appDt || '-' }}
                           </div>
                         </div>
                       </div>
@@ -369,7 +380,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed } from 'vue'
+import { ref, defineProps, computed, onMounted, watch } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
@@ -382,104 +393,127 @@ import { api } from '@/axios.js'
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 
-// 필터 상태
-const currentFilter = ref('all')
-const searchType = ref('all')
-const searchText = ref('')
-const applicantType = ref('company')
-const currentPage = ref(1)
-const pageSize = ref(5)
-const totalPages = computed(() =>
-  Math.ceil(filteredApplicants.value.length / pageSize.value),
-)
-
-const selectedInterviewTimes = ref([])
-
-const paginatedApplicants = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredApplicants.value.slice(start, end)
-})
-
-const groupedPaginatedApplicants = computed(() => {
-  const grouped = {}
-  paginatedApplicants.value.forEach((applicant) => {
-    const name = applicant.companyNm || '미정'
-    if (!grouped[name]) {
-      grouped[name] = []
-    }
-    grouped[name].push(applicant)
-  })
-  return Object.entries(grouped).map(([name, applicants]) => ({
-    name,
-    applicants,
-  }))
-})
 const props = defineProps({
-  applicants: Array,
   projectSq: Number,
   onToggle: Function,
 })
 
-const localApplicants = ref([...props.applicants])
+// 상태 변수
+const applicantType = ref('company')
+const currentPage = ref(1)
+const pageSize = ref(5)
+const totalPages = ref(1)
+const currentFilter = ref('all')
+const searchType = ref('all')
+const searchText = ref('')
+const selectedInterviewTimes = ref([])
 
-const updateStatusLocally = (applicationSq, newStatus) => {
-  const target = localApplicants.value.find(
-    (app) => app.applicationSq === applicationSq,
-  )
-  if (target && target.appStatusVo) {
-    target.appStatusVo.appStatus = newStatus
+const localApplicants = ref([]) // 회사별 지원자 그룹 [{ companyNm, applicants: [...] }, ...]
+
+// API 호출
+const fetchCorporateApplicants = async () => {
+  try {
+    const res = await api.$get(
+      `/projects/applications/${props.projectSq}/corporate/grouped`,
+      {
+        withCredentials: true,
+        params: { page: currentPage.value, size: pageSize.value },
+      },
+    )
+    console.log('res.totalPages', res.totalPages)
+    localApplicants.value = res.response || []
+    totalPages.value = res.totalPages || 1
+    console.log(typeof totalPages.value, totalPages.value)
+  } catch (error) {
+    console.error('기업 지원자 목록 불러오기 실패', error)
+    localApplicants.value = []
+    totalPages.value = 1
   }
 }
 
-const filteredApplicants = computed(() => {
-  return localApplicants.value.filter((applicant) => {
-    const status = applicant.appStatusVo?.appStatus
-    const keyword = searchText.value.toLowerCase()
-
-    const matchesFilter = (() => {
-      switch (currentFilter.value) {
-        case 'passed':
-          return status === '합격'
-        case 'in_progress':
-          return status === '지원중'
-        case 'interview_confirmed':
-          return status === '인터뷰확정'
-        case 'interview_requested':
-          return status === '인터뷰요청중'
-        case 'rejected':
-          return ['불합격', '지원취소'].includes(status)
-        default:
-          return true
-      }
-    })()
-
-    const matchesSearch = (() => {
-      if (!keyword) return true
-      switch (searchType.value) {
-        case 'name':
-          return applicant.nameTitleVo?.resumeNm
-            ?.toLowerCase()
-            .includes(keyword)
-        case 'skills':
-          return applicant.skillNames?.some((s) =>
-            s.toLowerCase().includes(keyword),
-          )
-        case 'all':
-        default:
-          return (
-            applicant.nameTitleVo?.resumeNm?.toLowerCase().includes(keyword) ||
-            applicant.skillNames?.some((s) => s.toLowerCase().includes(keyword))
-          )
-      }
-    })()
-
-    return matchesFilter && matchesSearch
-  })
+onMounted(() => {
+  fetchCorporateApplicants()
 })
+
+watch(currentPage, () => {
+  fetchCorporateApplicants()
+})
+
+// 필터 및 검색
+const filteredGroups = computed(() => {
+  // 회사별 그룹에서 각 회사 지원자 필터링 적용
+  const keyword = searchText.value.toLowerCase()
+
+  const matchesFilter = (status) => {
+    switch (currentFilter.value) {
+      case 'passed':
+        return status === '합격'
+      case 'in_progress':
+        return status === '지원중'
+      case 'interview_confirmed':
+        return status === '인터뷰확정'
+      case 'interview_requested':
+        return status === '인터뷰요청중'
+      case 'rejected':
+        return ['불합격', '지원취소'].includes(status)
+      default:
+        return true
+    }
+  }
+
+  const matchesSearch = (applicant) => {
+    if (!keyword) return true
+    switch (searchType.value) {
+      case 'name':
+        return applicant.resumeNmTtlVo?.resumeNm
+          ?.toLowerCase()
+          .includes(keyword)
+      case 'skills':
+        return applicant.skillNames?.some((s) =>
+          s.toLowerCase().includes(keyword),
+        )
+      case 'all':
+      default:
+        return (
+          applicant.resumeNmTtlVo?.resumeNm?.toLowerCase().includes(keyword) ||
+          applicant.skillNames?.some((s) => s.toLowerCase().includes(keyword))
+        )
+    }
+  }
+
+  return localApplicants.value
+    .map(({ companyNm, applicants }) => {
+      const filteredApplicants = applicants.filter((applicant) => {
+        const status = applicant.appStatusVo?.appStatus
+        return matchesFilter(status) && matchesSearch(applicant)
+      })
+      return { companyNm, applicants: filteredApplicants }
+    })
+    .filter((group) => group.applicants.length > 0)
+})
+
+// 페이징: 회사 단위 페이지네이션 적용
+const paginatedGroups = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredGroups.value.slice(start, end)
+})
+
+// 총 페이지 수 재계산 (필터 적용 후)
+watch(
+  filteredGroups,
+  (newGroups) => {
+    totalPages.value = Math.ceil(newGroups.length / pageSize.value) || 1
+    if (currentPage.value > totalPages.value)
+      currentPage.value = totalPages.value
+  },
+  { immediate: true },
+)
+
+// 필터별 카운트 계산 (전체 지원자 대상, 필터별 적용 전)
 const filterCounts = computed(() => {
   const counts = {
-    all: filteredApplicants.value.length,
+    all: 0,
     passed: 0,
     in_progress: 0,
     interview_confirmed: 0,
@@ -487,24 +521,24 @@ const filterCounts = computed(() => {
     rejected: 0,
   }
 
-  filteredApplicants.value.forEach((a) => {
-    const status = a.appStatusVo?.appStatus
-    if (status === '지원중') counts.in_progress++
-    else if (status === '합격') counts.passed++
-    else if (status === '인터뷰확정') counts.interview_confirmed++
-    else if (status === '인터뷰요청중') counts.interview_requested++
-    else if (['불합격', '지원취소'].includes(status)) counts.rejected++
+  localApplicants.value.forEach(({ applicants }) => {
+    applicants.forEach((a) => {
+      counts.all++
+      const status = a.appStatusVo?.appStatus
+      if (status === '지원중') counts.in_progress++
+      else if (status === '합격') counts.passed++
+      else if (status === '인터뷰확정') counts.interview_confirmed++
+      else if (status === '인터뷰요청중') counts.interview_requested++
+      else if (['불합격', '지원취소'].includes(status)) counts.rejected++
+    })
   })
+
   return counts
 })
 
 const filters = computed(() => [
   { type: 'all', label: '전체', count: filterCounts.value.all },
-  {
-    type: 'passed',
-    label: '합격',
-    count: filterCounts.value.passed,
-  },
+  { type: 'passed', label: '합격', count: filterCounts.value.passed },
   {
     type: 'in_progress',
     label: '지원중',
@@ -527,48 +561,52 @@ const filters = computed(() => [
   },
 ])
 
+// UI 제어
 const toggleToPersonal = () => {
   props.onToggle?.()
 }
 
-const fetchAvailableInterviewTimes = async (applicationSq) => {
-  try {
-    const response = await api.$get(
-      `/projects/applications/interviews/${props.projectSq}`,
-      { withCredentials: true },
-    )
+const setFilter = (type) => {
+  currentFilter.value = type
+  currentPage.value = 1
+}
 
-    selectedInterviewTimes.value = response.output
-    openInterviewTimeModal(applicationSq)
-    console.log(response.output)
-  } catch (e) {
-    console.error('❌ 인터뷰 시간 조회 실패:', e)
+const search = () => {
+  currentPage.value = 1
+  fetchCorporateApplicants()
+}
+
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+const closeModal = () => {
+  modalStore.closeModal()
+}
+
+// 기타 기능
+const updateStatusLocally = (applicationSq, newStatus) => {
+  const target = localApplicants.value.find(
+    (app) => app.applicationSq === applicationSq,
+  )
+  if (target && target.appStatusVo) {
+    target.appStatusVo.appStatus = newStatus
   }
 }
 
-const openInterviewTimeModal = (applicationSq) => {
-  modalStore.openModal(InterviewTimeModal, {
-    interviewTimes: selectedInterviewTimes.value,
-    applicationSq, // 전달
-  })
-}
-
-const openResumeDetailModal = () => {
-  modalStore.openModal(ResumeDetailModal, {})
-}
 const updateStatus = async (applicationSq, status) => {
   try {
-    const response = await api.$patch(
+    await api.$patch(
       `/projects/applications/${applicationSq}`,
-      {
-        withCredentials: true,
-        status,
-      },
+      { status },
+      { withCredentials: true },
     )
-    console.log(`✅ ${applicationSq} 지원 상태 변경 성공`, response)
     updateStatusLocally(applicationSq, status)
+    alertStore.show('상태가 정상적으로 변경되었습니다.')
   } catch (e) {
-    console.error('❌ 지원 상태 변경 실패', e)
+    console.error('지원 상태 변경 실패', e)
+    alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
   }
 }
 
@@ -576,51 +614,51 @@ const openStatusFailureModal = (applicationSq) => {
   modalStore.openModal(CommonConfirmModal, {
     message: '해당 지원자를 불합격 처리하겠습니까?',
     onConfirm: async () => {
-      try {
-        console.log('삭제 확정됨')
-        updateStatus(applicationSq, '불합격')
-        alertStore.show('불합격 처리가 정상적으로 이루어졌습니다.')
-        modalStore.closeModal()
-      } catch (error) {
-        console.error('삭제 실패:', error)
-        alertStore.show('삭제 중 오류가 발생했습니다.', 'danger')
-      }
+      await updateStatus(applicationSq, '불합격')
+      modalStore.closeModal()
     },
   })
 }
 
-// 필터 변경
-const setFilter = (type) => {
-  currentFilter.value = type
-  // TODO: 필터링 로직 구현
+const fetchAvailableInterviewTimes = async (applicationSq) => {
+  try {
+    const res = await api.$get(
+      `/projects/applications/interviews/${props.projectSq}`,
+      {
+        withCredentials: true,
+      },
+    )
+    selectedInterviewTimes.value = res.output
+    openInterviewTimeModal(applicationSq)
+  } catch (e) {
+    console.error('인터뷰 시간 조회 실패:', e)
+  }
 }
 
-// 검색
-const search = () => {
-  // TODO: 검색 로직 구현
-  console.log('검색:', searchType.value, searchText.value)
+const openInterviewTimeModal = (applicationSq) => {
+  modalStore.openModal(InterviewTimeModal, {
+    interviewTimes: selectedInterviewTimes.value,
+    applicationSq,
+  })
 }
 
-// 페이지 변경
-const changePage = (page) => {
-  if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
+const openResumeDetailModal = (resumeSq) => {
+  modalStore.openModal(ResumeDetailModal, {
+    title: '이력서 상세보기',
+    size: 'modal-lg',
+    resumeSq,
+  })
 }
 
-// 모달 닫기
-const closeModal = () => {
-  modalStore.closeModal()
-}
-
-function formatDate(dateString) {
+const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}`
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date
+    .getHours()
+    .toString()
+    .padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
 const generateIconUrl = (name) => {
@@ -632,12 +670,10 @@ const generateIconUrl = (name) => {
     'Sublime Text',
   ]
   if (exceptionList.includes(name)) return null
-
   const processed = name
     .toLowerCase()
     .replace('#', 'sharp')
     .replace('++', 'plusplus')
-
   return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
 }
 </script>

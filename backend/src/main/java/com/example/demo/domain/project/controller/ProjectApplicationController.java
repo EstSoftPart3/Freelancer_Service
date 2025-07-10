@@ -57,23 +57,29 @@ public class ProjectApplicationController {
 				ApiResponse.of(HttpStatus.OK, "인터뷰 가능 시간 조회 성공", projectService.fetchProjectAvailableTimes(projectSq)));
 	}
 
-	// 개인 지원자 목록 조회 (페이징)
 	@GetMapping("/{projectSq}/personal")
 	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
 			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "5") int size) {
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "all") String filter,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword) {
 
-		return projectApplicationService.getPersonalApplicants(projectSq, page, size);
+		return projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword);
 	}
 
-	// 기업 지원자 목록 조회 (페이징)
 	@GetMapping("/{projectSq}/corporate/grouped")
 	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
 			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "5") int size) {
-		return projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size);
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "all") String filter,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword) {
+
+		return projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size, filter, searchType,
+				keyword);
 	}
 
 	@PatchMapping("/{applicationSq}")

@@ -125,10 +125,12 @@ public class ProjectApplicationService {
 				.collect(Collectors.toList());
 	}
 
-	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(Long projectSq, int page, int size) {
+	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
+			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
+
 		int offset = (page - 1) * size;
-		List<PersonalApplicantDTO> applicants = applicationMapper.findPersonalApplicantsByProjectSq(projectSq, size,
-				offset);
+		List<PersonalApplicantDTO> applicants = applicationMapper.findPersonalApplicantsByProjectSq(
+				projectSq, filter, searchType, keyword, size, offset);
 
 		for (PersonalApplicantDTO applicant : applicants) {
 			Long appSq = applicant.getApplicationSq();
@@ -146,7 +148,7 @@ public class ProjectApplicationService {
 			applicant.setMemberType("개인");
 		}
 
-		int totalCount = applicationMapper.countPersonalApplicantsByProjectSq(projectSq);
+		int totalCount = applicationMapper.countPersonalApplicantsByProjectSq(projectSq, filter, searchType, keyword);
 		int totalPages = (int) Math.ceil((double) totalCount / size);
 
 		PagedApplicantResponseDTO<PersonalApplicantDTO> responseDTO = new PagedApplicantResponseDTO<>();
@@ -158,20 +160,22 @@ public class ProjectApplicationService {
 		return responseDTO;
 	}
 
-	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(Long projectSq, int page,
-			int size) {
+	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
+			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
+
 		int offset = (page - 1) * size;
-		List<String> companyNames = applicationMapper.findDistinctCompanyNamesByProject(projectSq, size, offset);
+		List<String> companyNames = applicationMapper.findDistinctCompanyNamesByProject(projectSq, filter, searchType,
+				keyword, size, offset);
 
 		List<CorporateApplicantGroupDTO> corporateGroups = new ArrayList<>();
 
 		for (String companyNm : companyNames) {
-			List<PersonalApplicantDTO> applicants = applicationMapper.findApplicantsByProjectAndCompany(projectSq,
-					companyNm);
+			List<PersonalApplicantDTO> applicants = applicationMapper.findApplicantsByProjectAndCompany(
+					projectSq, companyNm, filter, searchType, keyword);
 
 			for (PersonalApplicantDTO applicant : applicants) {
 				Long appSq = applicant.getApplicationSq();
-				Long resumeSq = applicationMapper.findResumeBySq(applicant.getApplicationSq());
+				Long resumeSq = applicationMapper.findResumeBySq(appSq);
 				List<String> skillNames = resumeSkillMapper.findAllNmBySq(resumeSq);
 				ApplicationStatusVo appStatusVo = applicationMapper.findStatusVoByAppSq(appSq);
 				ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
@@ -189,7 +193,8 @@ public class ProjectApplicationService {
 			corporateGroups.add(group);
 		}
 
-		int totalCompanyCount = applicationMapper.countDistinctCompaniesByProject(projectSq);
+		int totalCompanyCount = applicationMapper.countDistinctCompaniesByProject(projectSq, filter, searchType,
+				keyword);
 		int totalPages = (int) Math.ceil((double) totalCompanyCount / size);
 
 		PagedApplicantResponseDTO<CorporateApplicantGroupDTO> responseDTO = new PagedApplicantResponseDTO<>();
@@ -200,4 +205,5 @@ public class ProjectApplicationService {
 
 		return responseDTO;
 	}
+
 }
