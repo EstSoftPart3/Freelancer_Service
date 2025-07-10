@@ -17,11 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.project.dto.CorporateApplicantDTO;
+import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
 import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
+import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
 
@@ -55,13 +58,24 @@ public class ProjectApplicationController {
 				ApiResponse.of(HttpStatus.OK, "인터뷰 가능 시간 조회 성공", projectService.fetchProjectAvailableTimes(projectSq)));
 	}
 
-	@GetMapping("/{projectSq}")
-	public ResponseEntity<ApiResponse<List<ApplicationStatusList>>> getProjectApplicationsByCompanies(
-			Authentication authentication,
-			@PathVariable("projectSq") Long projectSq) {
+	// 개인 지원자 목록 조회 (페이징)
+	@GetMapping("/{projectSq}/personal")
+	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
+			@PathVariable Long projectSq,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "5") int size) {
 
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 공고 지원자 목록 반환 성공",
-				projectApplicationService.fetchProjectApplicationsByProject(projectSq)));
+		return projectApplicationService.getPersonalApplicants(projectSq, page, size);
+	}
+
+	// 기업 지원자 목록 조회 (페이징)
+	@GetMapping("/{projectSq}/corporate")
+	public PagedApplicantResponseDTO<CorporateApplicantDTO> getCorporateApplicants(
+			@PathVariable Long projectSq,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "5") int size) {
+
+		return projectApplicationService.getCorporateApplicants(projectSq, page, size);
 	}
 
 	@PatchMapping("/{applicationSq}")

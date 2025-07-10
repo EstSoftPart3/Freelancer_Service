@@ -90,8 +90,6 @@
 	<select id="findByProAndCom" resultType="Long"> SELECT project_application_sq FROM
 		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} and company_sq = #{companySq} </select>
 
-	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H
-		WHERE project_application_sq = #{appSq} </select>
 
 	<select id="findMmTypStrBySq" resultType="String"> SELECT CASE
 		project_application_member_type_cd WHEN 301 THEN '개인' WHEN 302 THEN '기업' ELSE 'UNKNOWN' END
@@ -122,5 +120,45 @@
 	<update id="updateApplicationInterviewTimeAndStatus"> UPDATE TBL_PROJECT_APPLICATION_H SET
 		selected_interview_dtm = #{interviewTime}, project_application_status_cd = 805 WHERE
 		project_application_sq = #{applicationSq} </update>
+
+
+	<!-- 개인 지원자 조회 -->
+	<select id="findPersonalApplicantsByProjectSq"
+		resultType="com.example.demo.domain.project.dto.PersonalApplicantDTO"> SELECT
+		a.project_application_sq AS applicationSq, r.resume_nm AS resumeNm, r.resume_ttl AS
+		resumeTtl, (SELECT IFNULL(SUM(TIMESTAMPDIFF(YEAR, c.career_start_dt, IFNULL(c.career_end_dt,
+		CURDATE()))),0) FROM TBL_RESUME_CAREER_S c WHERE c.resume_sq = r.resume_sq) AS careerYear,
+		a.project_application_member_type_cd AS memberTypeCd, c.company_nm AS companyNm,
+		a.read_application_dtm AS readResumeDt, a.project_application_created_at_dtm AS appDt,
+		a.selected_interview_dtm AS interviewDt, cc.common_code_nm AS appStatus FROM
+		TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq LEFT JOIN
+		TBL_COMPANY_S c ON a.company_sq = c.company_sq JOIN TBL_COMMON_CODE_C cc ON
+		a.project_application_status_cd = cc.common_code_sq WHERE a.project_sq = #{projectSq} AND
+		a.project_application_member_type_cd = 301 ORDER BY a.project_application_created_at_dtm
+		DESC LIMIT #{size} OFFSET #{offset} </select>
+
+	<select id="countPersonalApplicantsByProjectSq" resultType="int"> SELECT COUNT(*) FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND
+		project_application_member_type_cd = 301 </select>
+
+	<!-- 기업 지원자 조회 -->
+	<select id="findCorporateApplicantsByProjectSq"
+		resultType="com.example.demo.domain.project.dto.CorporateApplicantDTO"> SELECT
+		a.project_application_sq AS applicationSq, c.company_nm AS companyNm,
+		a.project_application_member_type_cd AS memberTypeCd, a.project_application_created_at_dtm
+		AS appDt, a.read_application_dtm AS readResumeDt, a.selected_interview_dtm AS interviewDt,
+		cc.common_code_nm AS appStatus FROM TBL_PROJECT_APPLICATION_H a LEFT JOIN TBL_COMPANY_S c ON
+		a.company_sq = c.company_sq JOIN TBL_COMMON_CODE_C cc ON a.project_application_status_cd =
+		cc.common_code_sq WHERE a.project_sq = #{projectSq} AND a.project_application_member_type_cd
+		= 302 ORDER BY a.project_application_created_at_dtm DESC LIMIT #{size} OFFSET #{offset} </select>
+
+	<select id="countCorporateApplicantsByProjectSq" resultType="int"> SELECT COUNT(*) FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND
+		project_application_member_type_cd = 302 </select>
+
+	<!-- 지원서에서 resumeSq 조회 (개인 지원자 기술 태그 조회용) -->
+	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H
+		WHERE project_application_sq = #{applicationSq} </select>
+
 
 </mapper>
