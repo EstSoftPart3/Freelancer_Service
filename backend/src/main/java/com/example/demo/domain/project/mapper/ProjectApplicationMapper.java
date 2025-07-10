@@ -7,7 +7,6 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.example.demo.domain.project.dto.CorporateApplicantDTO;
 import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
 import com.example.demo.domain.project.vo.ApplicationSummary;
@@ -64,11 +63,14 @@ public interface ProjectApplicationMapper {
 
 	int countPersonalApplicantsByProjectSq(@Param("projectSq") Long projectSq);
 
-	List<CorporateApplicantDTO> findCorporateApplicantsByProjectSq(@Param("projectSq") Long projectSq,
+	List<String> findDistinctCompanyNamesByProject(@Param("projectSq") Long projectSq,
 			@Param("size") int size,
 			@Param("offset") int offset);
 
-	int countCorporateApplicantsByProjectSq(@Param("projectSq") Long projectSq);
+	List<PersonalApplicantDTO> findApplicantsByProjectAndCompany(@Param("projectSq") Long projectSq,
+			@Param("companyNm") String companyNm);
+
+	int countDistinctCompaniesByProject(@Param("projectSq") Long projectSq);
 
 	Long findResumeBySq(@Param("applicationSq") Long applicationSq);
 

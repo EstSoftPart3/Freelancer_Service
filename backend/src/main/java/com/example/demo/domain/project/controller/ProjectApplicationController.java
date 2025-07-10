@@ -17,12 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
-import com.example.demo.domain.project.dto.CorporateApplicantDTO;
+import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
 import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
-import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
@@ -69,13 +68,12 @@ public class ProjectApplicationController {
 	}
 
 	// 기업 지원자 목록 조회 (페이징)
-	@GetMapping("/{projectSq}/corporate")
-	public PagedApplicantResponseDTO<CorporateApplicantDTO> getCorporateApplicants(
+	@GetMapping("/{projectSq}/corporate/grouped")
+	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
 			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "5") int size) {
-
-		return projectApplicationService.getCorporateApplicants(projectSq, page, size);
+		return projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size);
 	}
 
 	@PatchMapping("/{applicationSq}")

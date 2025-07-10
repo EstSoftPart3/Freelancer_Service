@@ -15,7 +15,7 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
-import com.example.demo.domain.project.dto.CorporateApplicantDTO;
+import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
 import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
@@ -131,9 +131,18 @@ public class ProjectApplicationService {
 				offset);
 
 		for (PersonalApplicantDTO applicant : applicants) {
-			Long resumeSq = applicationMapper.findResumeBySq(applicant.getApplicationSq());
+			Long appSq = applicant.getApplicationSq();
+
+			Long resumeSq = applicationMapper.findResumeBySq(appSq);
 			List<String> skillNames = resumeSkillMapper.findAllNmBySq(resumeSq);
 			applicant.setSkillNames(skillNames);
+
+			ApplicationStatusVo appStatusVo = applicationMapper.findStatusVoByAppSq(appSq);
+			applicant.setAppStatusVo(appStatusVo);
+
+			ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
+			applicant.setResumeNmTtlVo(resumeNmTtlVo);
+
 			applicant.setMemberType("개인");
 		}
 
@@ -149,25 +158,46 @@ public class ProjectApplicationService {
 		return responseDTO;
 	}
 
-	public PagedApplicantResponseDTO<CorporateApplicantDTO> getCorporateApplicants(Long projectSq, int page, int size) {
+	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(Long projectSq, int page,
+			int size) {
 		int offset = (page - 1) * size;
-		List<CorporateApplicantDTO> applicants = applicationMapper.findCorporateApplicantsByProjectSq(projectSq, size,
-				offset);
+		List<String> companyNames = applicationMapper.findDistinctCompanyNamesByProject(projectSq, size, offset);
 
-		for (CorporateApplicantDTO applicant : applicants) {
-			applicant.setMemberType("기업");
+		List<CorporateApplicantGroupDTO> corporateGroups = new ArrayList<>();
+
+		for (String companyNm : companyNames) {
+			List<PersonalApplicantDTO> applicants = applicationMapper.findApplicantsByProjectAndCompany(projectSq,
+					companyNm);
+
+			for (PersonalApplicantDTO applicant : applicants) {
+				Long appSq = applicant.getApplicationSq();
+				Long resumeSq = applicationMapper.findResumeBySq(applicant.getApplicationSq());
+				List<String> skillNames = resumeSkillMapper.findAllNmBySq(resumeSq);
+				ApplicationStatusVo appStatusVo = applicationMapper.findStatusVoByAppSq(appSq);
+				ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
+				applicant.setSkillNames(skillNames);
+				applicant.setAppStatusVo(appStatusVo);
+				applicant.setResumeNmTtlVo(resumeNmTtlVo);
+				applicant.setMemberType("기업");
+				applicant.setCompanyNm(companyNm);
+			}
+
+			CorporateApplicantGroupDTO group = new CorporateApplicantGroupDTO();
+			group.setCompanyNm(companyNm);
+			group.setApplicants(applicants);
+
+			corporateGroups.add(group);
 		}
 
-		int totalCount = applicationMapper.countCorporateApplicantsByProjectSq(projectSq);
-		int totalPages = (int) Math.ceil((double) totalCount / size);
+		int totalCompanyCount = applicationMapper.countDistinctCompaniesByProject(projectSq);
+		int totalPages = (int) Math.ceil((double) totalCompanyCount / size);
 
-		PagedApplicantResponseDTO<CorporateApplicantDTO> responseDTO = new PagedApplicantResponseDTO<>();
+		PagedApplicantResponseDTO<CorporateApplicantGroupDTO> responseDTO = new PagedApplicantResponseDTO<>();
 		responseDTO.setApplicantType("기업");
 		responseDTO.setCurrentPage(page);
 		responseDTO.setTotalPages(totalPages);
-		responseDTO.setResponse(applicants);
+		responseDTO.setResponse(corporateGroups);
 
 		return responseDTO;
 	}
-
 }
