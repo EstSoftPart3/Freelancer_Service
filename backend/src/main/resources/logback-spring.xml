@@ -11,10 +11,7 @@
 
     <!-- 원하는 로그 레벨 설정 -->
     <logger name="com.p6spy" level="DEBUG" />
-    <!-- <logger name="org.mybatis" level="DEBUG" /> -->
     <logger name="org.springframework.transaction" level="DEBUG" />
-    <!-- <logger name="org.springframework.jdbc.datasource" level="DEBUG" /> -->
-    <!-- <logger name="org.hibernate.SQL" level="DEBUG" /> -->
     <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
     <logger name="com.example.demo.DemoApplication" level="DEBUG" />
 
