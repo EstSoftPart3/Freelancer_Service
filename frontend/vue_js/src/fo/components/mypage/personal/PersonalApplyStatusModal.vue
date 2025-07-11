@@ -114,7 +114,11 @@
                     <div class="d-flex gap-2">
                       <a
                         @click.prevent="
-                          () => openResumeDetailModal(applicant.resumeSq)
+                          () =>
+                            openResumeDetailModal(
+                              applicant.resumeSq,
+                              applicant.applicationSq,
+                            )
                         "
                         href="#"
                         class="d-flex gap-1 align-items-center text-decoration-none"
@@ -469,11 +473,13 @@ const openStatusFailureModal = (applicationSq) => {
   })
 }
 
-const openResumeDetailModal = (resumeSq) => {
+const openResumeDetailModal = (resumeSq, applicationSq) => {
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',
     resumeSq: resumeSq,
+    applicationSq: applicationSq,
+    projectSq: props.projectSq,
     isFromApplicationList: true,
   })
 }

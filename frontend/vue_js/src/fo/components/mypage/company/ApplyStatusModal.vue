@@ -140,20 +140,24 @@
                           class="d-flex justify-content-between align-items-center gap-2"
                         >
                           <div class="d-flex gap-2">
-                            <a href="#" class="text-6 m-0"
-                              >{{
-                                applicant.resumeNmTtlVo.resumeNm || '-'
-                              }}
-                              /</a
-                            >
                             <a
-                              @click="
-                                openResumeDetailModal(applicant.applicationSq)
+                              @click.prevent="
+                                () =>
+                                  openResumeDetailModal(
+                                    applicant.resumeSq,
+                                    applicant.applicationSq,
+                                  )
                               "
                               href="#"
-                              class="text-5 m-0"
-                              >{{ applicant.resumeNmTtlVo.resumeTtl || '-' }}</a
+                              class="d-flex gap-1 align-items-center text-decoration-none"
                             >
+                              <span class="text-6 m-0"
+                                >{{ applicant.resumeNmTtlVo.resumeNm }} /</span
+                              >
+                              <span class="text-5 m-0">{{
+                                applicant.resumeNmTtlVo.resumeTtl
+                              }}</span>
+                            </a>
                           </div>
                           <div class="d-flex gap-2">
                             <template
@@ -555,11 +559,13 @@ const openInterviewTimeModal = (applicationSq, interviewTimes) => {
 }
 
 // 이력서 상세 모달 오픈
-const openResumeDetailModal = (resumeSq) => {
+const openResumeDetailModal = (resumeSq, applicationSq) => {
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',
     resumeSq: resumeSq,
+    applicationSq: applicationSq,
+    projectSq: props.projectSq,
     isFromApplicationList: true,
   })
 }

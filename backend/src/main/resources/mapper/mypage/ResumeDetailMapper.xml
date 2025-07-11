@@ -87,4 +87,10 @@
     f.file_save_nm FROM TBL_RESUME_PROFILE_IMAGE_S rpi JOIN TBL_COMMON_FILE_S f ON rpi.file_sq =
     f.file_sq WHERE rpi.resume_sq = #{resumeSq} AND f.file_is_deleted_yn = 'N' ORDER BY
     rpi.profile_image_sq DESC LIMIT 1 </select>
+
+  <update id="updateReadApplicationDtmIfNull" parameterType="map"> UPDATE TBL_PROJECT_APPLICATION_H
+    SET read_application_dtm = NOW() WHERE resume_sq = #{resumeSq} AND project_sq = #{projectSq} AND
+    project_application_sq = #{applicationSq} AND read_application_dtm IS NULL </update>
+
+
 </mapper>

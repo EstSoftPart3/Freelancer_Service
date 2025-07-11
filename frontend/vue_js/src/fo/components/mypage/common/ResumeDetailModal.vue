@@ -375,6 +375,10 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  applicationSq: {
+    type: Number,
+    required: true,
+  },
   isFromApplicationList: {
     type: Boolean,
     default: false,
@@ -442,6 +446,7 @@ watchEffect(async () => {
       ? await api.$post('/mypage/resume-detail-view', {
           resumeSq: props.resumeSq,
           projectSq: props.projectSq,
+          applicationSq: props.applicationSq,
         }) // 열람 처리 포함 API
       : await api.$get(`/mypage/resume-detail/${props.resumeSq}`) // 단순 조회 API
 

@@ -39,8 +39,6 @@ public interface ResumeDetailMapper {
 
     String selectResumePhotoSaveName(Long resumeSq);
 
-    void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long companySq);
-
-    Long findCompanySqByUserSq(Long userSq);
+    void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq);
 
 }

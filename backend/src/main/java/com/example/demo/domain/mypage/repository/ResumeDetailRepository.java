@@ -69,11 +69,8 @@ public class ResumeDetailRepository {
         return mapper.selectResumePhotoSaveName(resumeSq);
     }
 
-    public void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long companySq) {
-        mapper.updateReadApplicationDtmIfNull(resumeSq, projectSq, companySq);
+    public void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq) {
+        mapper.updateReadApplicationDtmIfNull(resumeSq, projectSq, applicationSq);
     }
 
-    public Long findCompanySqByUserSq(Long userSq) {
-        return mapper.findCompanySqByUserSq(userSq);
-    }
 }

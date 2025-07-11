@@ -8,4 +8,5 @@ import lombok.Setter;
 public class ResumeDetailViewRequestDTO {
     private Long resumeSq;
     private Long projectSq;
+    private Long applicationSq;
 }
