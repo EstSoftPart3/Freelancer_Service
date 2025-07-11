@@ -16,4 +16,5 @@ public class PersonalApplicantDTO {
     private ApplicationStatusVo appStatusVo;
     private String memberType;
     private String companyNm;
+    private Long resumeSq;
 }

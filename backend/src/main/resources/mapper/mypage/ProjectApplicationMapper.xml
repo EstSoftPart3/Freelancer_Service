@@ -269,7 +269,7 @@
 
 	<!-- 기업명 총 개수 조회 -->
 	<select id="countDistinctCompaniesByProject" resultType="int" parameterType="map"> SELECT
-		COUNT(DISTINCT company_sq) FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_COMPANY_S c ON
+		COUNT(DISTINCT a.company_sq) FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_COMPANY_S c ON
 		a.company_sq = c.company_sq JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq JOIN
 		TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq WHERE
 		a.project_sq = #{projectSq} <if test="filter != null and filter != '' and filter != 'all'">
@@ -281,7 +281,7 @@
 				<when test="filter == 'rejected'">AND cc.common_code_nm IN ('불합격', '지원취소')</when>
 			</choose>
 		</if>
-    <if
+  <if
 			test="keyword != null and keyword != ''">
 			<choose>
 				<when test="searchType == 'name'"> AND LOWER(r.resume_nm) LIKE CONCAT('%',

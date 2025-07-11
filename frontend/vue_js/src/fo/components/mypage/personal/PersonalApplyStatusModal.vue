@@ -33,7 +33,7 @@
               :key="filter.type"
               class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
               :class="{ active: currentFilter === filter.type }"
-              @click="setFilter(filter.type)"
+              @click="() => setFilter(filter.type)"
             >
               {{ filter.label }}
               <span class="badge bg-white text-primary fw-bold px-2 py-1">{{
@@ -76,7 +76,7 @@
                 type="button"
                 class="btn btn-primary btn-outline"
                 :class="{ active: applicantType === 'company' }"
-                @click="toggleToCorporate()"
+                @click="toggleToCorporate"
               >
                 기업
               </button>
@@ -94,7 +94,7 @@
         <div class="row">
           <div class="col">
             <div
-              v-if="paginatedApplicants.length === 0"
+              v-if="localApplicants.length === 0"
               class="text-muted py-3"
               style="font-size: 14px"
             >
@@ -102,7 +102,7 @@
             </div>
             <ul class="simple-post-list m-0 position-relative">
               <li
-                v-for="applicant in paginatedApplicants"
+                v-for="applicant in localApplicants"
                 :key="applicant.applicationSq"
                 style="border-bottom: 1px rgb(230, 230, 230) solid"
               >
@@ -113,15 +113,17 @@
                   >
                     <div class="d-flex gap-2">
                       <a
-                        @click="openResumeDetailModal"
+                        @click.prevent="
+                          () => openResumeDetailModal(applicant.resumeSq)
+                        "
                         href="#"
                         class="d-flex gap-1 align-items-center text-decoration-none"
                       >
                         <span class="text-6 m-0"
-                          >{{ applicant.nameTitleVo.resumeNm }} /</span
+                          >{{ applicant.resumeNmTtlVo.resumeNm }} /</span
                         >
                         <span class="text-5 m-0">{{
-                          applicant.nameTitleVo.resumeTtl
+                          applicant.resumeNmTtlVo.resumeTtl
                         }}</span>
                       </a>
                     </div>
@@ -131,11 +133,11 @@
                       >
                         <span
                           @click.prevent="
-                            updateStatus(
-                              applicant.applicationSq,
-
-                              '인터뷰요청중',
-                            )
+                            () =>
+                              updateStatus(
+                                applicant.applicationSq,
+                                '인터뷰요청중',
+                              )
                           "
                           class="btn btn-outline btn-primary btn-sm"
                         >
@@ -144,7 +146,8 @@
 
                         <span
                           @click.prevent="
-                            openStatusFailureModal(applicant.applicationSq)
+                            () =>
+                              openStatusFailureModal(applicant.applicationSq)
                           "
                           class="btn btn-outline btn-primary btn-sm"
                         >
@@ -267,7 +270,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(currentPage - 1)"
+                    @click.prevent="() => changePage(currentPage - 1)"
                   >
                     <i class="fas fa-angle-left"></i>
                   </a>
@@ -281,7 +284,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(page)"
+                    @click.prevent="() => changePage(page)"
                     >{{ page }}</a
                   >
                 </li>
@@ -289,7 +292,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(currentPage + 1)"
+                    @click.prevent="() => changePage(currentPage + 1)"
                   >
                     <i class="fas fa-angle-right"></i>
                   </a>
@@ -309,7 +312,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed } from 'vue'
+import { ref, defineProps, computed, onMounted, watch } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
@@ -320,98 +323,62 @@ import { api } from '@/axios.js'
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
+
 const props = defineProps({
-  applicants: Array,
   projectSq: Number,
   onToggle: Function,
 })
 
-// 필터 상태
 const currentFilter = ref('all')
 const searchType = ref('all')
 const searchText = ref('')
 const applicantType = ref('personal')
 const currentPage = ref(1)
 const pageSize = ref(5)
-const totalPages = computed(() =>
-  Math.ceil(filteredApplicants.value.length / pageSize.value),
-)
+const totalPages = ref(1)
 
-const localApplicants = ref([...props.applicants])
+const localApplicants = ref([])
 
-const updateStatusLocally = (applicationSq, newStatus) => {
-  const target = localApplicants.value.find(
-    (app) => app.applicationSq === applicationSq,
-  )
-  if (target && target.appStatusVo) {
-    target.appStatusVo.appStatus = newStatus
+const fetchPersonalApplicants = async () => {
+  try {
+    const res = await api.$get(
+      `/projects/applications/${props.projectSq}/personal`,
+      {
+        withCredentials: true,
+        params: {
+          page: currentPage.value,
+          size: pageSize.value,
+          filter: currentFilter.value,
+          searchType: searchType.value,
+          keyword: searchText.value,
+        },
+      },
+    )
+    localApplicants.value = res.response || []
+    totalPages.value = res.totalPages || 1
+  } catch (error) {
+    console.error('개인 지원자 목록 불러오기 실패', error)
+    localApplicants.value = []
+    totalPages.value = 1
   }
 }
 
-const filteredApplicants = computed(() => {
-  return localApplicants.value.filter((applicant) => {
-    const status = applicant.appStatusVo?.appStatus
-    console.log
-    const keyword = searchText.value.toLowerCase()
-
-    const matchesFilter = (() => {
-      switch (currentFilter.value) {
-        case 'passed':
-          return status === '합격'
-        case 'in_progress':
-          return status === '지원중'
-        case 'interview_confirmed':
-          return status === '인터뷰확정'
-        case 'interview_requested':
-          return status === '인터뷰요청중'
-        case 'rejected':
-          return ['불합격', '지원취소'].includes(status)
-        default:
-          return true
-      }
-    })()
-
-    const matchesSearch = (() => {
-      if (!keyword) return true
-      switch (searchType.value) {
-        case 'name':
-          return applicant.nameTitleVo?.resumeNm
-            ?.toLowerCase()
-            .includes(keyword)
-        case 'skills':
-          return applicant.skillNames?.some((s) =>
-            s.toLowerCase().includes(keyword),
-          )
-        case 'all':
-        default:
-          return (
-            applicant.nameTitleVo?.resumeNm?.toLowerCase().includes(keyword) ||
-            applicant.skillNames?.some((s) => s.toLowerCase().includes(keyword))
-          )
-      }
-    })()
-
-    return matchesFilter && matchesSearch
-  })
-})
-
-const paginatedApplicants = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredApplicants.value.slice(start, end)
+onMounted(fetchPersonalApplicants)
+watch([currentPage, currentFilter, searchType, searchText], () => {
+  fetchPersonalApplicants()
 })
 
 const filterCounts = computed(() => {
   const counts = {
-    all: filteredApplicants.value.length,
+    all: 0,
     passed: 0,
     in_progress: 0,
     interview_confirmed: 0,
     interview_requested: 0,
     rejected: 0,
   }
-
-  filteredApplicants.value.forEach((a) => {
+  localApplicants.value.forEach((a) => {
+    counts.all++
     const status = a.appStatusVo?.appStatus
     if (status === '지원중') counts.in_progress++
     else if (status === '합격') counts.passed++
@@ -424,11 +391,7 @@ const filterCounts = computed(() => {
 
 const filters = computed(() => [
   { type: 'all', label: '전체', count: filterCounts.value.all },
-  {
-    type: 'passed',
-    label: '합격',
-    count: filterCounts.value.passed,
-  },
+  { type: 'passed', label: '합격', count: filterCounts.value.passed },
   {
     type: 'in_progress',
     label: '지원중',
@@ -450,103 +413,97 @@ const filters = computed(() => [
     count: filterCounts.value.rejected,
   },
 ])
-
 const toggleToCorporate = () => {
-  props.onToggle?.()
+  props.onToggle?.(props.projectSq) // projectSq 넘겨주기
 }
 
-// 필터 변경
 const setFilter = (type) => {
   currentFilter.value = type
-  // TODO: 필터링 로직 구현
+  currentPage.value = 1
 }
 
-// 검색
 const search = () => {
-  // TODO: 검색 로직 구현
-  console.log('검색:', searchType.value, searchText.value)
+  currentPage.value = 1
 }
 
-// 페이지 변경
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
 }
 
-// 모달 닫기
 const closeModal = () => {
   modalStore.closeModal()
 }
 
-function formatDate(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}`
+const updateStatusLocally = (applicationSq, newStatus) => {
+  const target = localApplicants.value.find(
+    (app) => app.applicationSq === applicationSq,
+  )
+  if (target && target.appStatusVo) {
+    target.appStatusVo.appStatus = newStatus
+  }
 }
 
 const updateStatus = async (applicationSq, status) => {
   try {
-    const response = await api.$patch(
+    await api.$patch(
       `/projects/applications/${applicationSq}`,
-      {
-        withCredentials: true,
-        status,
-      },
+      { status },
+      { withCredentials: true },
     )
-    console.log(`✅ ${applicationSq} 지원 상태 변경 성공`, response)
-
     updateStatusLocally(applicationSq, status)
+    alertStore.show('상태가 정상적으로 변경되었습니다.')
   } catch (e) {
-    console.error('❌ 지원 상태 변경 실패', e)
+    console.error('지원 상태 변경 실패', e)
+    alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
   }
 }
 
 const openStatusFailureModal = (applicationSq) => {
-  console.log(localApplicants.value)
   modalStore.openModal(CommonConfirmModal, {
     message: '해당 지원자를 불합격 처리하겠습니까?',
     onConfirm: async () => {
-      try {
-        await updateStatus(applicationSq, '불합격')
-        alertStore.show('불합격 처리가 정상적으로 이루어졌습니다.')
-        modalStore.closeModal()
-      } catch (error) {
-        console.error('상태 변경 실패:', error)
-        alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
-      }
+      await updateStatus(applicationSq, '불합격')
+      modalStore.closeModal()
     },
   })
 }
 
-const openResumeDetailModal = () => {
+const openResumeDetailModal = (resumeSq) => {
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',
-    // resumeSq: resume.resumeSq,
+    resumeSq,
   })
 }
 
 const generateIconUrl = (name) => {
-  const exceptionList = [
-    '전자정부 프레임워크',
-    'myBatis',
-    'Notepad++',
-    'PyCharm',
-    'Sublime Text',
-  ]
-  if (exceptionList.includes(name)) return null
+  const supportedIcons = {
+    Java: 'java',
+    Python: 'python',
+    'Spring Boot': 'spring',
+    Django: 'django',
+    React: 'react',
+    'Vue.js': 'vuejs',
+    Docker: 'docker',
+    Git: 'git',
+    Windows: 'windows8',
+    MacOS: 'apple',
+    Linux: 'linux',
+    MySQL: 'mysql',
+    OracleDB: 'oracle',
+    MongoDB: 'mongodb',
+    MariaDB: 'mariadb',
+    Redis: 'redis',
+  }
 
-  const processed = name
-    .toLowerCase()
-    .replace('#', 'sharp')
-    .replace('++', 'plusplus')
+  const mapped = supportedIcons[name]
+  if (!mapped) return null
 
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+  const fileName =
+    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
+
+  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
 }
 </script>
 

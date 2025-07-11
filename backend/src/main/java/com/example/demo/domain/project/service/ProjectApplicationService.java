@@ -146,6 +146,7 @@ public class ProjectApplicationService {
 			applicant.setResumeNmTtlVo(resumeNmTtlVo);
 
 			applicant.setMemberType("개인");
+			applicant.setResumeSq(resumeSq);
 		}
 
 		int totalCount = applicationMapper.countPersonalApplicantsByProjectSq(projectSq, filter, searchType, keyword);
@@ -184,6 +185,7 @@ public class ProjectApplicationService {
 				applicant.setResumeNmTtlVo(resumeNmTtlVo);
 				applicant.setMemberType("기업");
 				applicant.setCompanyNm(companyNm);
+				applicant.setResumeSq(resumeSq);
 			}
 
 			CorporateApplicantGroupDTO group = new CorporateApplicantGroupDTO();

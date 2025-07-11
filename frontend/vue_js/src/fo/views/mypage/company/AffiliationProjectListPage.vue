@@ -369,21 +369,32 @@ const getPostStatus = (post) => {
 }
 
 const generateIconUrl = (name) => {
-  const exceptionList = [
-    '전자정부 프레임워크',
-    'myBatis',
-    'Notepad++',
-    'PyCharm',
-    'Sublime Text',
-  ]
-  if (exceptionList.includes(name)) return null
+  const supportedIcons = {
+    Java: 'java',
+    Python: 'python',
+    'Spring Boot': 'spring',
+    Django: 'django',
+    React: 'react',
+    'Vue.js': 'vuejs',
+    Docker: 'docker',
+    Git: 'git',
+    Windows: 'windows8',
+    MacOS: 'apple',
+    Linux: 'linux',
+    MySQL: 'mysql',
+    OracleDB: 'oracle',
+    MongoDB: 'mongodb',
+    MariaDB: 'mariadb',
+    Redis: 'redis',
+  }
 
-  const processed = name
-    .toLowerCase()
-    .replace('#', 'sharp')
-    .replace('++', 'plusplus')
+  const mapped = supportedIcons[name]
+  if (!mapped) return null
 
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+  const fileName =
+    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
+
+  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
 }
 
 // 검색 상태
