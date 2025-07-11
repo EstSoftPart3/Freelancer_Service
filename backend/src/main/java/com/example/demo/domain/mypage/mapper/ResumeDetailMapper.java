@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.mypage.dto.request.ResumeDetailViewRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO;
 
 @Mapper
@@ -37,5 +38,7 @@ public interface ResumeDetailMapper {
     List<Map<String, Object>> selectGroupedSkillTagsByProjectHistorySq(Long projectHistorySq);
 
     String selectResumePhotoSaveName(Long resumeSq);
+
+    void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq);
 
 }

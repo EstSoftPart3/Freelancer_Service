@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.domain.mypage.dto.request.ResumeDetailViewRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO;
 import com.example.demo.domain.mypage.mapper.ResumeDetailMapper;
 
@@ -66,6 +67,10 @@ public class ResumeDetailRepository {
 
     public String getResumePhotoSaveName(Long resumeSq) {
         return mapper.selectResumePhotoSaveName(resumeSq);
+    }
+
+    public void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq) {
+        mapper.updateReadApplicationDtmIfNull(resumeSq, projectSq, applicationSq);
     }
 
 }

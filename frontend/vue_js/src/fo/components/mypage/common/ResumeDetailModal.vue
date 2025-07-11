@@ -371,6 +371,18 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  projectSq: {
+    type: Number,
+    required: true,
+  },
+  applicationSq: {
+    type: Number,
+    required: true,
+  },
+  isFromApplicationList: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const modalStore = useModalStore()
@@ -427,11 +439,17 @@ const closeModal = () => {
 
 // 이력서 상세조회
 watchEffect(async () => {
-  console.log(props)
-  console.log('props.resumeSq', props.resumeSq)
   if (!props.resumeSq) return
+
   try {
-    const res = await api.$get(`/mypage/resume-detail/${props.resumeSq}`)
+    const res = props.isFromApplicationList
+      ? await api.$post('/mypage/resume-detail-view', {
+          resumeSq: props.resumeSq,
+          projectSq: props.projectSq,
+          applicationSq: props.applicationSq,
+        }) // 열람 처리 포함 API
+      : await api.$get(`/mypage/resume-detail/${props.resumeSq}`) // 단순 조회 API
+
     res.output.projectList = res.output.projectList.map((project) => ({
       ...project,
       isExpanded: true,

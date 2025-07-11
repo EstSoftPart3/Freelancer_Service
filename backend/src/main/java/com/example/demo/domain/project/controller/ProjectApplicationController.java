@@ -17,12 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
+import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
-import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
-import com.example.demo.domain.project.dto.response.PagedResponse;
+import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
 
@@ -56,17 +57,29 @@ public class ProjectApplicationController {
 				ApiResponse.of(HttpStatus.OK, "인터뷰 가능 시간 조회 성공", projectService.fetchProjectAvailableTimes(projectSq)));
 	}
 
-	@GetMapping("/{projectSq}")
-	public ResponseEntity<ApiResponse<PagedResponse<ApplicationStatusList>>> getProjectApplicationsByCompanies(
-			@PathVariable("projectSq") Long projectSq,
+	@GetMapping("/{projectSq}/personal")
+	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
+			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(required = false) String status // 상태 필터: optional
-	) {
-		PagedResponse<ApplicationStatusList> response = projectApplicationService
-				.fetchApplicationsGroupedByCompany(projectSq, page, size, status);
+			@RequestParam(defaultValue = "all") String filter,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword) {
 
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 공고 지원자 목록 반환 성공", response));
+		return projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword);
+	}
+
+	@GetMapping("/{projectSq}/corporate/grouped")
+	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
+			@PathVariable Long projectSq,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "all") String filter,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword) {
+
+		return projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size, filter, searchType,
+				keyword);
 	}
 
 	@PatchMapping("/{applicationSq}")

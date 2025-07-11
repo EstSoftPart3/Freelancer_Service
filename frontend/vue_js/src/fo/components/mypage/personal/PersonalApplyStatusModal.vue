@@ -33,7 +33,7 @@
               :key="filter.type"
               class="btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm"
               :class="{ active: currentFilter === filter.type }"
-              @click="setFilter(filter.type)"
+              @click="() => setFilter(filter.type)"
             >
               {{ filter.label }}
               <span class="badge bg-white text-primary fw-bold px-2 py-1">{{
@@ -57,7 +57,6 @@
               type="text"
               class="form-control form-control-sm w-auto"
               placeholder="검색어 입력"
-              @keyup.enter="search"
             />
             <button class="btn btn-primary btn-sm" @click="search">검색</button>
           </div>
@@ -77,7 +76,7 @@
                 type="button"
                 class="btn btn-primary btn-outline"
                 :class="{ active: applicantType === 'company' }"
-                @click="toggleToCorporate()"
+                @click="toggleToCorporate"
               >
                 기업
               </button>
@@ -95,7 +94,7 @@
         <div class="row">
           <div class="col">
             <div
-              v-if="paginatedApplicants.length === 0"
+              v-if="localApplicants.length === 0"
               class="text-muted py-3"
               style="font-size: 14px"
             >
@@ -103,7 +102,7 @@
             </div>
             <ul class="simple-post-list m-0 position-relative">
               <li
-                v-for="applicant in paginatedApplicants"
+                v-for="applicant in localApplicants"
                 :key="applicant.applicationSq"
                 style="border-bottom: 1px rgb(230, 230, 230) solid"
               >
@@ -113,12 +112,24 @@
                     class="d-flex justify-content-between align-items-center gap-2"
                   >
                     <div class="d-flex gap-2">
-                      <a href="#" class="text-6 m-0"
-                        >{{ applicant.nameTitleVo.resumeNm }} /</a
+                      <a
+                        @click.prevent="
+                          () =>
+                            openResumeDetailModal(
+                              applicant.resumeSq,
+                              applicant.applicationSq,
+                            )
+                        "
+                        href="#"
+                        class="d-flex gap-1 align-items-center text-decoration-none"
                       >
-                      <a @click="openResumeDetailModal" class="text-5 m-0">{{
-                        applicant.nameTitleVo.resumeTtl
-                      }}</a>
+                        <span class="text-6 m-0"
+                          >{{ applicant.resumeNmTtlVo.resumeNm }} /</span
+                        >
+                        <span class="text-5 m-0">{{
+                          applicant.resumeNmTtlVo.resumeTtl
+                        }}</span>
+                      </a>
                     </div>
                     <div class="d-flex gap-2">
                       <template
@@ -126,11 +137,11 @@
                       >
                         <span
                           @click.prevent="
-                            updateStatus(
-                              applicant.applicationSq,
-
-                              '인터뷰요청중',
-                            )
+                            () =>
+                              updateStatus(
+                                applicant.applicationSq,
+                                '인터뷰요청중',
+                              )
                           "
                           class="btn btn-outline btn-primary btn-sm"
                         >
@@ -139,7 +150,8 @@
 
                         <span
                           @click.prevent="
-                            openStatusFailureModal(applicant.applicationSq)
+                            () =>
+                              openStatusFailureModal(applicant.applicationSq)
                           "
                           class="btn btn-outline btn-primary btn-sm"
                         >
@@ -262,7 +274,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(currentPage - 1)"
+                    @click.prevent="() => changePage(currentPage - 1)"
                   >
                     <i class="fas fa-angle-left"></i>
                   </a>
@@ -276,7 +288,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(page)"
+                    @click.prevent="() => changePage(page)"
                     >{{ page }}</a
                   >
                 </li>
@@ -284,7 +296,7 @@
                   <a
                     class="page-link"
                     href="#"
-                    @click.prevent="changePage(currentPage + 1)"
+                    @click.prevent="() => changePage(currentPage + 1)"
                   >
                     <i class="fas fa-angle-right"></i>
                   </a>
@@ -304,7 +316,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, watch, onMounted } from 'vue'
+import { ref, defineProps, computed, onMounted, watch } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
@@ -317,71 +329,116 @@ const modalStore = useModalStore()
 const alertStore = useAlertStore()
 
 const props = defineProps({
-  projectSq: {
-    type: Number,
-    required: true,
-  },
+  projectSq: Number,
   onToggle: Function,
 })
 
-// 상태 변수
-const localApplicants = ref([])
 const currentFilter = ref('all')
 const searchType = ref('all')
 const searchText = ref('')
+const applicantType = ref('personal')
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = ref(1)
 
-const isLoading = ref(false)
+const localApplicants = ref([])
 
-// 지원자 목록 조회 함수
-const fetchApplicants = async () => {
-  if (!props.projectSq) return
-
-  isLoading.value = true
+const fetchPersonalApplicants = async () => {
   try {
-    const res = await api.$get(`/projects/applications/${props.projectSq}`, {
-      params: {
-        page: currentPage.value - 1, // 0-based offset
-        size: pageSize.value,
-        status: currentFilter.value === 'all' ? null : currentFilter.value,
-        searchType: searchType.value === 'all' ? null : searchType.value,
-        keyword: searchText.value || null,
+    const res = await api.$get(
+      `/projects/applications/${props.projectSq}/personal`,
+      {
+        withCredentials: true,
+        params: {
+          page: currentPage.value,
+          size: pageSize.value,
+          filter: currentFilter.value,
+          searchType: searchType.value,
+          keyword: searchText.value,
+        },
       },
-      withCredentials: true,
-    })
-    // res.output 예상: { content: [...], totalPages: n, totalElements: m }
-    localApplicants.value = res.output.content || []
-    totalPages.value = res.output.totalPages || 1
-  } catch (e) {
-    console.error('지원자 목록 조회 실패', e)
-  } finally {
-    isLoading.value = false
+    )
+    localApplicants.value = res.response || []
+    totalPages.value = res.totalPages || 1
+  } catch (error) {
+    console.error('개인 지원자 목록 불러오기 실패', error)
+    localApplicants.value = []
+    totalPages.value = 1
   }
 }
 
-// 필터 변경 시
+onMounted(fetchPersonalApplicants)
+watch([currentPage, currentFilter, searchType, searchText], () => {
+  fetchPersonalApplicants()
+})
+
+const filterCounts = computed(() => {
+  const counts = {
+    all: 0,
+    passed: 0,
+    in_progress: 0,
+    interview_confirmed: 0,
+    interview_requested: 0,
+    rejected: 0,
+  }
+  localApplicants.value.forEach((a) => {
+    counts.all++
+    const status = a.appStatusVo?.appStatus
+    if (status === '지원중') counts.in_progress++
+    else if (status === '합격') counts.passed++
+    else if (status === '인터뷰확정') counts.interview_confirmed++
+    else if (status === '인터뷰요청중') counts.interview_requested++
+    else if (['불합격', '지원취소'].includes(status)) counts.rejected++
+  })
+  return counts
+})
+
+const filters = computed(() => [
+  { type: 'all', label: '전체', count: filterCounts.value.all },
+  { type: 'passed', label: '합격', count: filterCounts.value.passed },
+  {
+    type: 'in_progress',
+    label: '지원중',
+    count: filterCounts.value.in_progress,
+  },
+  {
+    type: 'interview_confirmed',
+    label: '인터뷰확정',
+    count: filterCounts.value.interview_confirmed,
+  },
+  {
+    type: 'interview_requested',
+    label: '인터뷰요청중',
+    count: filterCounts.value.interview_requested,
+  },
+  {
+    type: 'rejected',
+    label: '불합격 / 취소',
+    count: filterCounts.value.rejected,
+  },
+])
+const toggleToCorporate = () => {
+  props.onToggle?.(props.projectSq) // projectSq 넘겨주기
+}
+
 const setFilter = (type) => {
   currentFilter.value = type
   currentPage.value = 1
-  fetchApplicants()
 }
 
-// 검색 실행
 const search = () => {
   currentPage.value = 1
-  fetchApplicants()
 }
 
-// 페이지 변경
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
-  fetchApplicants()
 }
 
-// 지원 상태 로컬 업데이트
+const closeModal = () => {
+  modalStore.closeModal()
+}
+
 const updateStatusLocally = (applicationSq, newStatus) => {
   const target = localApplicants.value.find(
     (app) => app.applicationSq === applicationSq,
@@ -391,7 +448,6 @@ const updateStatusLocally = (applicationSq, newStatus) => {
   }
 }
 
-// 상태 변경 API 호출
 const updateStatus = async (applicationSq, status) => {
   try {
     await api.$patch(
@@ -400,74 +456,62 @@ const updateStatus = async (applicationSq, status) => {
       { withCredentials: true },
     )
     updateStatusLocally(applicationSq, status)
-    alertStore.show(`상태가 '${status}'(으)로 변경되었습니다.`)
+    alertStore.show('상태가 정상적으로 변경되었습니다.')
   } catch (e) {
     console.error('지원 상태 변경 실패', e)
     alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger')
   }
 }
 
-// 불합격 처리 모달 열기
 const openStatusFailureModal = (applicationSq) => {
   modalStore.openModal(CommonConfirmModal, {
     message: '해당 지원자를 불합격 처리하겠습니까?',
     onConfirm: async () => {
-      try {
-        await updateStatus(applicationSq, '불합격')
-        modalStore.closeModal()
-      } catch (e) {
-        alertStore.show('불합격 처리 중 오류가 발생했습니다.', 'danger')
-      }
+      await updateStatus(applicationSq, '불합격')
+      modalStore.closeModal()
     },
   })
 }
 
-const toggleToCorporate = () => {
-  props.onToggle?.()
-}
-
-// 이력서 상세 모달 열기
-const openResumeDetailModal = () => {
+const openResumeDetailModal = (resumeSq, applicationSq) => {
   modalStore.openModal(ResumeDetailModal, {
-    size: 'modal-xl',
+    title: '이력서 상세보기',
+    size: 'modal-lg',
+    resumeSq: resumeSq,
+    applicationSq: applicationSq,
+    projectSq: props.projectSq,
+    isFromApplicationList: true,
   })
 }
 
-// 날짜 포맷 함수
-function formatDate(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}`
-}
-
-// 아이콘 URL 생성 함수
 const generateIconUrl = (name) => {
-  const exceptionList = [
-    '전자정부 프레임워크',
-    'myBatis',
-    'Notepad++',
-    'PyCharm',
-    'Sublime Text',
-  ]
-  if (exceptionList.includes(name)) return null
+  const supportedIcons = {
+    Java: 'java',
+    Python: 'python',
+    'Spring Boot': 'spring',
+    Django: 'django',
+    React: 'react',
+    'Vue.js': 'vuejs',
+    Docker: 'docker',
+    Git: 'git',
+    Windows: 'windows8',
+    MacOS: 'apple',
+    Linux: 'linux',
+    MySQL: 'mysql',
+    OracleDB: 'oracle',
+    MongoDB: 'mongodb',
+    MariaDB: 'mariadb',
+    Redis: 'redis',
+  }
 
-  const processed = name
-    .toLowerCase()
-    .replace('#', 'sharp')
-    .replace('++', 'plusplus')
+  const mapped = supportedIcons[name]
+  if (!mapped) return null
 
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+  const fileName =
+    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
+
+  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
 }
-
-// 초기 호출 및 감시
-onMounted(fetchApplicants)
-
-watch([currentFilter, searchType, searchText, currentPage], fetchApplicants)
 </script>
 
 <style scoped>

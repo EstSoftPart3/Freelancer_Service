@@ -15,12 +15,13 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
-import com.example.demo.domain.project.dto.ApplicationGroupInfo;
+import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
+import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.ApplicationStatusResponse;
-import com.example.demo.domain.project.dto.response.PagedResponse;
+import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
@@ -83,116 +84,128 @@ public class ProjectApplicationService {
 				applicationMapper.findInterviewTimeBySq(interviewTimeSq));
 	}
 
-	// public List<ApplicationStatusList> fetchProjectApplicationsByProject(Long
-	// projectSq) {
-	// List<Long> applicationSqs =
-	// applicationMapper.findAllSqByProjectSq(projectSq);
-	// List<ApplicationStatusResponse> responses = new ArrayList<>();
-	// applicationSqs.forEach(
-	// s -> {
-	// Long resumeSq = applicationMapper.findResumeBySq(s);
-	// Long appCompanySq = applicationMapper.findCompanyBySq(s);
-	// String memberType = applicationMapper.findMmTypStrBySq(s);
-	// ApplicationStatusVo applicationStatusVo =
-	// applicationMapper.findStatusVoByAppSq(s);
-	// List<String> skills = resumeSkillMapper.findAllNmBySq(resumeSq);
-	// ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
-	// int careerYear = resumeCareerMapper.calculateCareerByResSq(resumeSq);
-	// if (memberType.equals("기업")) {
-	// String companyNm = companyMapper.findCompanyNmByCompanySq(appCompanySq);
-	// responses.add(ApplicationStatusResponse.company(s, resumeNmTtlVo, careerYear,
-	// skills,
-	// applicationStatusVo, memberType, companyNm));
-	// } else {
-	// responses.add(ApplicationStatusResponse.personal(s, resumeNmTtlVo,
-	// careerYear, skills,
-	// applicationStatusVo, memberType));
-	// }
-	// });
+	public List<ApplicationStatusList> fetchProjectApplicationsByProject(Long projectSq) {
+		List<Long> applicationSqs = applicationMapper.findAllSqByProjectSq(projectSq);
+		List<ApplicationStatusResponse> responses = new ArrayList<>();
+		applicationSqs.forEach(
+				s -> {
+					Long resumeSq = applicationMapper.findResumeBySq(s);
+					Long appCompanySq = applicationMapper.findCompanyBySq(s);
+					String memberType = applicationMapper.findMmTypStrBySq(s);
+					ApplicationStatusVo applicationStatusVo = applicationMapper.findStatusVoByAppSq(s);
+					List<String> skills = resumeSkillMapper.findAllNmBySq(resumeSq);
+					ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
+					int careerYear = resumeCareerMapper.calculateCareerByResSq(resumeSq);
+					if (memberType.equals("기업")) {
+						String companyNm = companyMapper.findCompanyNmByCompanySq(appCompanySq);
+						responses.add(ApplicationStatusResponse.company(s, resumeNmTtlVo, careerYear, skills,
+								applicationStatusVo, memberType, companyNm));
+					} else {
+						responses.add(ApplicationStatusResponse.personal(s, resumeNmTtlVo, careerYear, skills,
+								applicationStatusVo, memberType));
+					}
+				});
 
-	// return groupByMemberType(responses);
+		return groupByMemberType(responses);
 
-	// }
+	}
 
-	// public List<ApplicationStatusList>
-	// groupByMemberType(List<ApplicationStatusResponse> responses) {
-	// return responses.stream()
-	// .collect(Collectors.groupingBy(
-	// ApplicationStatusResponse::getMemberType))
-	// .entrySet()
-	// .stream()
-	// .map(entry -> {
-	// ApplicationStatusList grouped = new ApplicationStatusList();
-	// grouped.setApplicantType(entry.getKey());
-	// grouped.setResponse(entry.getValue());
-	// return grouped;
-	// })
-	// .collect(Collectors.toList());
-	// }
-
-	public PagedResponse<ApplicationStatusList> fetchApplicationsGroupedByCompany(Long projectSq, int page, int size,
-			String status) {
-		int offset = (page - 1) * size;
-
-		// 1. 그룹 리스트 및 총 개수 조회
-		List<ApplicationGroupInfo> groups = applicationMapper.findApplicationGroupsByProjectSq(projectSq, status, size,
-				offset);
-		int totalGroups = applicationMapper.countApplicationGroupsByProjectSq(projectSq, status);
-
-		if (groups.isEmpty()) {
-			return new PagedResponse<>(List.of(), page, 0, 0);
-		}
-
-		// 2. 그룹 키(기업번호) 리스트 생성
-		List<Long> groupCompanySqs = groups.stream()
-				.map(ApplicationGroupInfo::getGroupCompanySq)
-				.collect(Collectors.toList());
-
-		// 3. 그룹별 지원자 전체 조회
-		List<ApplicationStatusResponse> rawApplications = applicationMapper
-				.findApplicationsByProjectSqAndGroupCompanies(projectSq, groupCompanySqs, status);
-
-		// 4. 보강
-		List<ApplicationStatusResponse> enrichedApps = rawApplications.stream().map(app -> {
-			Long appSq = app.getApplicationSq();
-			Long resumeSq = applicationMapper.findResumeBySq(appSq);
-			ResumeNmTtlVo vo = resumeMapper.findResumeNmTtlBySq(resumeSq);
-			int career = resumeCareerMapper.calculateCareerByResSq(resumeSq);
-			List<String> skills = resumeSkillMapper.findAllNmBySq(resumeSq);
-			ApplicationStatusVo statusVo = applicationMapper.findStatusVoByAppSq(appSq);
-			String memberType = applicationMapper.findMmTypStrBySq(appSq);
-			String companyNm = app.getCompanySq() != null ? companyMapper.findCompanyNmByCompanySq(app.getCompanySq())
-					: null;
-
-			return ApplicationStatusResponse.builder()
-					.applicationSq(appSq)
-					.nameTitleVo(vo)
-					.careerYear(career)
-					.skillNames(skills)
-					.appStatusVo(statusVo)
-					.memberType(memberType)
-					.companyNm(companyNm)
-					.companySq(app.getCompanySq())
-					.build();
-		}).collect(Collectors.toList());
-
-		// 5. 지원자들을 기업 단위로 그룹핑
-		Map<Long, List<ApplicationStatusResponse>> groupedMap = enrichedApps.stream()
-				.collect(Collectors.groupingBy(app -> app.getCompanySq() == null ? -1L : app.getCompanySq()));
-
-		List<ApplicationStatusList> resultList = groupedMap.entrySet().stream()
+	public List<ApplicationStatusList> groupByMemberType(List<ApplicationStatusResponse> responses) {
+		return responses.stream()
+				.collect(Collectors.groupingBy(
+						ApplicationStatusResponse::getMemberType))
+				.entrySet()
+				.stream()
 				.map(entry -> {
-					ApplicationStatusList list = new ApplicationStatusList();
-					list.setApplicantType(entry.getKey() == -1L ? "개인" : "기업");
-					list.setResponse(entry.getValue());
-					return list;
+					ApplicationStatusList grouped = new ApplicationStatusList();
+					grouped.setApplicantType(entry.getKey());
+					grouped.setResponse(entry.getValue());
+					return grouped;
 				})
 				.collect(Collectors.toList());
+	}
 
-		// 6. 전체 페이지 계산
-		int totalPages = (int) Math.ceil((double) totalGroups / size);
+	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
+			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
 
-		return new PagedResponse<>(resultList, page, totalPages, totalGroups);
+		int offset = (page - 1) * size;
+		List<PersonalApplicantDTO> applicants = applicationMapper.findPersonalApplicantsByProjectSq(
+				projectSq, filter, searchType, keyword, size, offset);
+
+		for (PersonalApplicantDTO applicant : applicants) {
+			Long appSq = applicant.getApplicationSq();
+
+			Long resumeSq = applicationMapper.findResumeBySq(appSq);
+			List<String> skillNames = resumeSkillMapper.findAllNmBySq(resumeSq);
+			applicant.setSkillNames(skillNames);
+
+			ApplicationStatusVo appStatusVo = applicationMapper.findStatusVoByAppSq(appSq);
+			applicant.setAppStatusVo(appStatusVo);
+
+			ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
+			applicant.setResumeNmTtlVo(resumeNmTtlVo);
+
+			applicant.setMemberType("개인");
+			applicant.setResumeSq(resumeSq);
+		}
+
+		int totalCount = applicationMapper.countPersonalApplicantsByProjectSq(projectSq, filter, searchType, keyword);
+		int totalPages = (int) Math.ceil((double) totalCount / size);
+
+		PagedApplicantResponseDTO<PersonalApplicantDTO> responseDTO = new PagedApplicantResponseDTO<>();
+		responseDTO.setApplicantType("개인");
+		responseDTO.setCurrentPage(page);
+		responseDTO.setTotalPages(totalPages);
+		responseDTO.setResponse(applicants);
+
+		return responseDTO;
+	}
+
+	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
+			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
+
+		int offset = (page - 1) * size;
+		List<String> companyNames = applicationMapper.findDistinctCompanyNamesByProject(projectSq, filter, searchType,
+				keyword, size, offset);
+
+		List<CorporateApplicantGroupDTO> corporateGroups = new ArrayList<>();
+
+		for (String companyNm : companyNames) {
+			List<PersonalApplicantDTO> applicants = applicationMapper.findApplicantsByProjectAndCompany(
+					projectSq, companyNm, filter, searchType, keyword);
+
+			for (PersonalApplicantDTO applicant : applicants) {
+				Long appSq = applicant.getApplicationSq();
+				Long resumeSq = applicationMapper.findResumeBySq(appSq);
+				List<String> skillNames = resumeSkillMapper.findAllNmBySq(resumeSq);
+				ApplicationStatusVo appStatusVo = applicationMapper.findStatusVoByAppSq(appSq);
+				ResumeNmTtlVo resumeNmTtlVo = resumeMapper.findResumeNmTtlBySq(resumeSq);
+				applicant.setSkillNames(skillNames);
+				applicant.setAppStatusVo(appStatusVo);
+				applicant.setResumeNmTtlVo(resumeNmTtlVo);
+				applicant.setMemberType("기업");
+				applicant.setCompanyNm(companyNm);
+				applicant.setResumeSq(resumeSq);
+			}
+
+			CorporateApplicantGroupDTO group = new CorporateApplicantGroupDTO();
+			group.setCompanyNm(companyNm);
+			group.setApplicants(applicants);
+
+			corporateGroups.add(group);
+		}
+
+		int totalCompanyCount = applicationMapper.countDistinctCompaniesByProject(projectSq, filter, searchType,
+				keyword);
+		int totalPages = (int) Math.ceil((double) totalCompanyCount / size);
+
+		PagedApplicantResponseDTO<CorporateApplicantGroupDTO> responseDTO = new PagedApplicantResponseDTO<>();
+		responseDTO.setApplicantType("기업");
+		responseDTO.setCurrentPage(page);
+		responseDTO.setTotalPages(totalPages);
+		responseDTO.setResponse(corporateGroups);
+
+		return responseDTO;
 	}
 
 }

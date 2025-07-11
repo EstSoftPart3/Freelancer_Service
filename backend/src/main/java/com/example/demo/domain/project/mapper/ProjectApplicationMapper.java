@@ -7,8 +7,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.example.demo.domain.project.dto.ApplicationGroupInfo;
-import com.example.demo.domain.project.dto.response.ApplicationStatusResponse;
+import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
 import com.example.demo.domain.project.vo.ApplicationSummary;
 
@@ -35,15 +34,11 @@ public interface ProjectApplicationMapper {
 
 	public Long findProjectBySq(Long appSq);
 
-	public Long findResumeBySq(Long appSq);
-
 	public Long findCompanyBySq(Long appSq);
 
 	public Long findByProAndUser(@Param("projectSq") Long projectSq, @Param("userSq") Long userSq);
 
 	public Long findByProAndCom(@Param("projectSq") Long projectSq, @Param("companySq") Long companySq);
-
-	public ApplicationStatusVo findStatusVoByAppSq(Long applicationSq);
 
 	public List<Long> findAllSqByProjectSq(Long projectSq);
 
@@ -60,16 +55,49 @@ public interface ProjectApplicationMapper {
 			@Param("applicationSq") Long applicationSq,
 			@Param("interviewTime") LocalDateTime interviewTime);
 
-	List<ApplicationGroupInfo> findApplicationGroupsByProjectSq(@Param("projectSq") Long projectSq,
-			@Param("status") String status,
+	// 개인 지원자 조회
+	List<PersonalApplicantDTO> findPersonalApplicantsByProjectSq(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword,
 			@Param("size") int size,
 			@Param("offset") int offset);
 
-	int countApplicationGroupsByProjectSq(@Param("projectSq") Long projectSq,
-			@Param("status") String status);
+	int countPersonalApplicantsByProjectSq(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
 
-	List<ApplicationStatusResponse> findApplicationsByProjectSqAndGroupCompanies(@Param("projectSq") Long projectSq,
-			@Param("groupCompanySqs") List<Long> groupCompanySqs,
-			@Param("status") String status);
+	// 기업명 리스트 조회 (페이징)
+	List<String> findDistinctCompanyNamesByProject(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword,
+			@Param("size") int size,
+			@Param("offset") int offset);
+
+	// 특정 회사별 지원자 리스트 조회
+	List<PersonalApplicantDTO> findApplicantsByProjectAndCompany(
+			@Param("projectSq") Long projectSq,
+			@Param("companyNm") String companyNm,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
+
+	// 기업명 전체 개수 조회
+	int countDistinctCompaniesByProject(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
+
+	// 지원서에서 resumeSq 조회 (개인/기업 공통)
+	Long findResumeBySq(@Param("applicationSq") Long applicationSq);
+
+	// 지원 상태 조회
+	ApplicationStatusVo findStatusVoByAppSq(@Param("applicationSq") Long applicationSq);
 
 }
