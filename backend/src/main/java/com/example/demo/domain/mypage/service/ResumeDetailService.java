@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.example.demo.domain.mypage.dto.request.ResumeDetailViewRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO;
 import com.example.demo.domain.mypage.repository.ResumeDetailRepository;
 
@@ -118,4 +119,17 @@ public class ResumeDetailService {
         return resume;
     }
 
+    public ResumeDetailResponseDTO getResumeDetailAndMarkViewed(Long userSq, ResumeDetailViewRequestDTO dto) {
+        // 로그인 유저(userSq)를 통해 companySq 조회
+        Long companySq = repository.findCompanySqByUserSq(userSq);
+        if (companySq == null) {
+            throw new RuntimeException("기업 정보가 존재하지 않습니다.");
+        }
+
+        // 열람일자 업데이트
+        repository.updateReadApplicationDtmIfNull(dto.getResumeSq(), dto.getProjectSq(), companySq);
+
+        // 이력서 상세 조회
+        return getResumeDetail(dto.getResumeSq());
+    }
 }

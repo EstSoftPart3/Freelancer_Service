@@ -302,5 +302,4 @@
 	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H
 		WHERE project_application_sq = #{applicationSq} </select>
 
-
 </mapper>

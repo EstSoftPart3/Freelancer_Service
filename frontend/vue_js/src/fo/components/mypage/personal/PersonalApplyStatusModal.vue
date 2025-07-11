@@ -473,7 +473,8 @@ const openResumeDetailModal = (resumeSq) => {
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',
-    resumeSq,
+    resumeSq: resumeSq,
+    isFromApplicationList: true,
   })
 }
 
