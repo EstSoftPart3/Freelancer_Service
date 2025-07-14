@@ -155,7 +155,8 @@
                 v-if="
                   (project.userRole === 'PERSONAL' ||
                     project.userRole === 'COMPANY_EXTERNAL') &&
-                  project.isApplied === 0
+                  project.isApplied === 0 &&
+                  !isRecruitmentEnded
                 "
                 @click="applyCheck"
                 href="#"
@@ -163,8 +164,9 @@
               >
                 지원하기
               </a>
+
               <span
-                v-if="
+                v-else-if="
                   (project.userRole === 'PERSONAL' ||
                     project.userRole === 'COMPANY_EXTERNAL') &&
                   project.isApplied === 1
@@ -173,6 +175,14 @@
               >
                 지원 완료
               </span>
+
+              <span
+                v-else-if="isRecruitmentEnded"
+                class="btn btn-lg btn-rounded btn-light disabled"
+              >
+                지원 마감
+              </span>
+
               <a
                 v-if="
                   project.userRole === 'PERSONAL' ||
@@ -221,7 +231,7 @@ import UserResumeModal from '@/fo/components/mypage/common/ResumeSelectModal.vue
 import { useModalStore } from '../../stores/modalStore.js'
 import { useAlertStore } from '../../stores/alertStore.js'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/axios.js'
 
@@ -276,6 +286,15 @@ const applyCheck = () => {
     })
   }
 }
+
+const isRecruitmentEnded = computed(() => {
+  if (!project.value.projectRecruitEndDt) return false
+
+  const endDate = new Date(project.value.projectRecruitEndDt + 'T23:59:59')
+  const now = new Date()
+
+  return endDate < now
+})
 
 const clickScrap = async () => {
   try {
