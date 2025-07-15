@@ -147,7 +147,7 @@
                         class="btn d-flex align-items-center gap-2 border-0"
                         style="padding: 2px 6px"
                       >
-                        <img :src="skill.icon" width="16" />
+                        <img :src="getSkillIcon(skill)" width="16" />
                         {{ skill }}
                       </div>
                     </div>
@@ -264,13 +264,13 @@ import { useAlertStore } from '../../stores/alertStore'
 import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.vue'
 import ResumeSelectModal from '@/fo/components/mypage/common/ResumeSelectModal.vue'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 import { api } from '@/axios.js'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
-const router = useRouter()
 const route = useRoute()
 
 const projectSq = route.params.project_sq
@@ -343,7 +343,7 @@ const confirmApplication = async (selectedResumes, projectSq) => {
         alertStore.show(res.message || '프로젝트 지원에 성공했습니다.')
         modalStore.closeModal()
         close()
-        router.push({ name: 'ProjectListPage' }) // 삭제 후 이동 (예시)
+        // router.push({ name: 'ProjectListPage' }) // 삭제 후 이동 (예시)
       } catch (error) {
         console.error('지원 실패:', error)
         alertStore.show('지원 중 오류가 발생했습니다.', 'danger')
@@ -352,15 +352,28 @@ const confirmApplication = async (selectedResumes, projectSq) => {
   })
 }
 
-const toggleSelection = (memberId, name, resumeSq) => {
+const toggleSelection = async (memberId, name, resumeSq) => {
   const index = selectedResumes.value.findIndex((r) => r.userSq === memberId)
 
   if (index === -1) {
-    selectedResumes.value.push({ userSq: memberId, name, resumeSq })
+    // 지원 여부 API 호출
+    try {
+      const res = await api.$get(`/projects/applications/${projectSq}/check`, {
+        params: { userSq: memberId },
+      })
+      if (res.output) {
+        alertStore.show('이미 지원한 이력 있는 사용자입니다.', 'danger')
+      } else {
+        selectedResumes.value.push({ userSq: memberId, name, resumeSq })
+      }
+    } catch (e) {
+      alertStore.show('지원 여부 확인 중 오류가 발생했습니다.', 'danger')
+    }
   } else {
     selectedResumes.value.splice(index, 1)
   }
 }
+
 const isSelected = (memberId) => {
   return selectedResumes.value.some((r) => r.userSq === memberId)
 }
@@ -384,6 +397,11 @@ const fetchAffiliationMemberList = async () => {
   } catch (e) {
     console.log(e)
   }
+}
+
+const getSkillIcon = (name) => {
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 
 onMounted(() => {

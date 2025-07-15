@@ -100,4 +100,6 @@ public interface ProjectApplicationMapper {
 	// 지원 상태 조회
 	ApplicationStatusVo findStatusVoByAppSq(@Param("applicationSq") Long applicationSq);
 
+	Boolean hasAppliedProject(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
+
 }

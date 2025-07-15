@@ -208,4 +208,8 @@ public class ProjectApplicationService {
 		return responseDTO;
 	}
 
+	public boolean checkIfUserApplied(Long userSq, Long projectSq) {
+		return applicationMapper.hasAppliedProject(userSq, projectSq);
+	}
+
 }

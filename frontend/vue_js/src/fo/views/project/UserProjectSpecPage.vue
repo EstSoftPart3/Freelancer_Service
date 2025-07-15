@@ -155,7 +155,8 @@
                 v-if="
                   (project.userRole === 'PERSONAL' ||
                     project.userRole === 'COMPANY_EXTERNAL') &&
-                  project.isApplied === 0
+                  project.isApplied === 0 &&
+                  !isRecruitmentEnded
                 "
                 @click="applyCheck"
                 href="#"
@@ -163,8 +164,9 @@
               >
                 지원하기
               </a>
+
               <span
-                v-if="
+                v-else-if="
                   (project.userRole === 'PERSONAL' ||
                     project.userRole === 'COMPANY_EXTERNAL') &&
                   project.isApplied === 1
@@ -173,6 +175,14 @@
               >
                 지원 완료
               </span>
+
+              <span
+                v-else-if="isRecruitmentEnded"
+                class="btn btn-lg btn-rounded btn-light disabled"
+              >
+                지원 마감
+              </span>
+
               <a
                 v-if="
                   project.userRole === 'PERSONAL' ||
@@ -221,7 +231,7 @@ import UserResumeModal from '@/fo/components/mypage/common/ResumeSelectModal.vue
 import { useModalStore } from '../../stores/modalStore.js'
 import { useAlertStore } from '../../stores/alertStore.js'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/axios.js'
 
@@ -235,7 +245,7 @@ const scrapCount = ref('')
 
 const project = ref([])
 
-onMounted(async () => {
+const fetchProjectDetail = async () => {
   try {
     // 스크롤 막기
     document.body.style.overflow = 'hidden'
@@ -249,15 +259,16 @@ onMounted(async () => {
     scrapCount.value = project.value.projectScrapCnt
   } catch (e) {
     console.error('❌ [catch 블록 진입]', e)
-
     console.error('프로젝트 상세 정보 불러오기 실패', e)
 
-    // message fallback 처리
-    let message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.'
-
+    const message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.'
     alertStore.show(message, 'danger')
     router.push({ name: 'ProjectListPage' })
   }
+}
+
+onMounted(() => {
+  fetchProjectDetail()
 })
 
 onBeforeUnmount(() => {
@@ -273,9 +284,21 @@ const applyCheck = () => {
       size: 'modal-lg',
       projectSq: projectSq,
       role: 'PERSONAL',
+      onConfirm: () => {
+        fetchProjectDetail() // 지원 후 프로젝트 데이터 다시 불러오기
+      },
     })
   }
 }
+
+const isRecruitmentEnded = computed(() => {
+  if (!project.value.projectRecruitEndDt) return false
+
+  const endDate = new Date(project.value.projectRecruitEndDt + 'T23:59:59')
+  const now = new Date()
+
+  return endDate < now
+})
 
 const clickScrap = async () => {
   try {

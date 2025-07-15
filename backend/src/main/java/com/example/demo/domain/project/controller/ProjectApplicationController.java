@@ -26,6 +26,7 @@ import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
+import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
 
@@ -103,6 +104,17 @@ public class ProjectApplicationController {
 			@RequestBody ProjectApplyRequest applyRequest, @AuthenticationPrincipal Long userSq) {
 		projectService.createProjectApplication(projectSq, applyRequest, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 지원 성공", null));
+	}
+
+	@GetMapping("/{projectSq}/check")
+	public ResponseEntity<ApiResponse<Boolean>> checkIfApplied(
+			@PathVariable Long projectSq,
+			@RequestParam("userSq") Long userSq) {
+
+		boolean hasApplied = projectApplicationService.checkIfUserApplied(userSq, projectSq);
+
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "지원 여부 확인 성공", hasApplied));
 	}
 
 }

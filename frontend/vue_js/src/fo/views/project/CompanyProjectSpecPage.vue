@@ -151,8 +151,10 @@
             <div class="d-flex justify-content-center align-items-center gap-3">
               <a
                 v-if="
-                  project.userRole === 'COMPANY_EXTERNAL' &&
-                  project.isApplied === 0
+                  (project.userRole === 'PERSONAL' ||
+                    project.userRole === 'COMPANY_EXTERNAL') &&
+                  project.isApplied === 0 &&
+                  !isRecruitmentEnded
                 "
                 @click="openMemberModal"
                 href="#"
@@ -160,14 +162,23 @@
               >
                 지원하기
               </a>
+
               <span
-                v-if="
-                  project.userRole === 'COMPANY_EXTERNAL' &&
+                v-else-if="
+                  (project.userRole === 'PERSONAL' ||
+                    project.userRole === 'COMPANY_EXTERNAL') &&
                   project.isApplied === 1
                 "
                 class="btn btn-lg btn-rounded btn-primary btn-lg"
               >
                 지원 완료
+              </span>
+
+              <span
+                v-else-if="isRecruitmentEnded"
+                class="btn btn-lg btn-rounded btn-light disabled"
+              >
+                지원 마감
               </span>
               <a
                 v-if="project.userRole === 'COMPANY_EXTERNAL'"
@@ -216,7 +227,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import AffiliationMemberModal from '@/fo/components/company/AffiliationMemberModal.vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { useModalStore } from '../../stores/modalStore.js'
@@ -266,6 +277,15 @@ onMounted(async () => {
     alertStore.show(message, 'danger')
     router.push({ name: 'ProjectListPage' })
   }
+})
+
+const isRecruitmentEnded = computed(() => {
+  if (!project.value.projectRecruitEndDt) return false
+
+  const endDate = new Date(project.value.projectRecruitEndDt + 'T23:59:59')
+  const now = new Date()
+
+  return endDate < now
 })
 
 function getAccessTokenFromCookie() {
