@@ -313,4 +313,10 @@
 	<select id="findResumeBySq" resultType="Long"> SELECT resume_sq FROM TBL_PROJECT_APPLICATION_H
 		WHERE project_application_sq = #{applicationSq} </select>
 
+	<select id="hasAppliedProject" parameterType="map" resultType="boolean"> SELECT EXISTS ( SELECT
+		1 FROM TBL_PROJECT_APPLICATION_H a WHERE a.project_sq = #{projectSq} AND a.resume_sq IN (
+		SELECT resume_sq FROM TBL_RESUME_M WHERE user_sq = #{userSq} AND resume_is_deleted_yn = 'N'
+		) AND (a.project_application_status_cd IS NULL OR a.project_application_status_cd != 806) ) </select>
+
+
 </mapper>
