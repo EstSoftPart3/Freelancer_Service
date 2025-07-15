@@ -115,6 +115,7 @@ import { useAlertStore } from '../../stores/alertStore.js'
 import { useUserStore } from '../../stores/userStore.js'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter.js'
 import { api } from '@/axios.js'
+import iconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -125,21 +126,8 @@ const goToProjectSpec = (project) => {
 }
 
 const generateIconUrl = (name) => {
-  const exceptionList = [
-    '전자정부 프레임워크',
-    'myBatis',
-    'Notepad++',
-    'PyCharm',
-    'Sublime Text',
-  ]
-  if (exceptionList.includes(name)) return null
-
-  const processed = name
-    .toLowerCase()
-    .replace('#', 'sharp')
-    .replace('++', 'plusplus')
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return iconMap[key] || iconMap.default
 }
 
 const props = defineProps({
