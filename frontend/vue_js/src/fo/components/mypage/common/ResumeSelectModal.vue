@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, defineEmits, reactive } from 'vue'
+import { ref, onMounted, defineProps, reactive } from 'vue'
 import { useModalStore } from '../../../stores/modalStore'
 import { useAlertStore } from '../../../stores/alertStore'
 import { api } from '@/axios.js'
@@ -97,8 +97,6 @@ const props = defineProps({
     required: false,
   },
 })
-
-const emit = defineEmits(['confirm'])
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
@@ -188,7 +186,12 @@ const confirm = async () => {
       })
 
       alertStore.show('프로젝트 지원에 성공하였습니다.')
-      emit('confirm', selectedResume.value)
+
+      // ✅ 콜백 실행
+      if (props.onConfirm) {
+        props.onConfirm()
+      }
+
       modalStore.closeModal()
     } catch (error) {
       console.error(error)
@@ -205,10 +208,12 @@ const confirm = async () => {
           withCredentials: true,
         },
       )
+
+      // ✅ 콜백 실행
       if (props.onConfirm) {
-        console.log('onConfirm fired') // ✅ 실제 호출 여부 확인
         props.onConfirm()
       }
+
       modalStore.closeModal()
     } catch (error) {
       console.error(error)

@@ -245,7 +245,7 @@ const scrapCount = ref('')
 
 const project = ref([])
 
-onMounted(async () => {
+const fetchProjectDetail = async () => {
   try {
     // 스크롤 막기
     document.body.style.overflow = 'hidden'
@@ -259,15 +259,16 @@ onMounted(async () => {
     scrapCount.value = project.value.projectScrapCnt
   } catch (e) {
     console.error('❌ [catch 블록 진입]', e)
-
     console.error('프로젝트 상세 정보 불러오기 실패', e)
 
-    // message fallback 처리
-    let message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.'
-
+    const message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.'
     alertStore.show(message, 'danger')
     router.push({ name: 'ProjectListPage' })
   }
+}
+
+onMounted(() => {
+  fetchProjectDetail()
 })
 
 onBeforeUnmount(() => {
@@ -283,6 +284,9 @@ const applyCheck = () => {
       size: 'modal-lg',
       projectSq: projectSq,
       role: 'PERSONAL',
+      onConfirm: () => {
+        fetchProjectDetail() // 지원 후 프로젝트 데이터 다시 불러오기
+      },
     })
   }
 }
