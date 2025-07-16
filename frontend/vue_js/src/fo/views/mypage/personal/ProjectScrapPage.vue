@@ -202,6 +202,7 @@ import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/fo/stores/userStore'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
 const router = useRouter()
@@ -287,32 +288,8 @@ function changePage(page) {
 }
 
 const generateIconUrl = (name) => {
-  const supportedIcons = {
-    Java: 'java',
-    Python: 'python',
-    'Spring Boot': 'spring',
-    Django: 'django',
-    React: 'react',
-    'Vue.js': 'vuejs',
-    Docker: 'docker',
-    Git: 'git',
-    Windows: 'windows8',
-    MacOS: 'apple',
-    Linux: 'linux',
-    MySQL: 'mysql',
-    OracleDB: 'oracle',
-    MongoDB: 'mongodb',
-    MariaDB: 'mariadb',
-    Redis: 'redis',
-  }
-
-  const mapped = supportedIcons[name]
-  if (!mapped) return null
-
-  const fileName =
-    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 </script>
 

@@ -234,6 +234,7 @@ import { useModalStore } from '../../stores/modalStore.js'
 import { useAlertStore } from '../../stores/alertStore.js'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import { useRouter, useRoute } from 'vue-router'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 import { api } from '@/axios.js'
 const router = useRouter()
@@ -334,30 +335,9 @@ const deleteProject = () => {
   })
 }
 
-const getSkillIconUrl = (skill) => {
-  const skillMap = {
-    Java: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
-    Python:
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
-    Django:
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/django/django-plain.svg',
-    'Spring Boot':
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg',
-    React:
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
-    'Vue.js':
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg',
-    Git: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',
-    Docker:
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg',
-    IntelliJ:
-      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/intellij/intellij-original.svg',
-  }
-
-  return (
-    skillMap[skill] ||
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/code/code-original.svg'
-  )
+const getSkillIconUrl = (name) => {
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 
 const clickScrap = async () => {

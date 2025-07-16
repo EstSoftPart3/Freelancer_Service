@@ -750,6 +750,7 @@ import { useModalStore } from '@/fo/stores/modalStore'
 import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
@@ -789,24 +790,15 @@ const profileImages = ref([])
 const attachments = ref([])
 
 // 프로필 사진
-const profileImageUrl = computed(
-  () => {
-    if (resumeForm.profileImage && resumeForm.profileImage.url) {
-      return resumeForm.profileImage.url
-    } else {
-      return profileImages.value.length && profileImages.value[0]
-        ? URL.createObjectURL(profileImages.value[0])
-        : ''
-    }
-  },
-
-  // {
-  //   console.log('profileImages.value[0]', profileImages.value[0])
-  //   return profileImages.value.length && profileImages.value[0]
-  //     ? URL.createObjectURL(profileImages.value[0])
-  //     : ''
-  // },
-)
+const profileImageUrl = computed(() => {
+  if (resumeForm.profileImage && resumeForm.profileImage.url) {
+    return resumeForm.profileImage.url
+  } else {
+    return profileImages.value.length && profileImages.value[0]
+      ? URL.createObjectURL(profileImages.value[0])
+      : ''
+  }
+})
 
 function onProfileImageChange(event) {
   const maxSize = 10 * 1024 * 1024 // 10MB
@@ -1095,39 +1087,8 @@ const removeSkill = (index) => {
 }
 
 const generateIconUrl = (name) => {
-  const supportedIcons = {
-    Java: 'java',
-    Python: 'python',
-    'Spring Boot': 'spring',
-    Django: 'django',
-    React: 'react',
-    'Vue.js': 'vuejs',
-    Docker: 'docker',
-    Git: 'git',
-    Windows: 'windows8',
-    MacOS: 'apple',
-    Linux: 'linux',
-    MySQL: 'mysql',
-    OracleDB: 'oracle',
-    MongoDB: 'mongodb',
-    MariaDB: 'mariadb',
-    Redis: 'redis',
-    PC: 'monitor', // 추가
-    노트북: 'laptop', // 추가
-  }
-
-  const mapped = supportedIcons[name]
-  if (!mapped) return null
-
-  // devicon이 아닌 lucide 아이콘 처리
-  if (name === 'PC' || name === '노트북') {
-    return `https://cdn.jsdelivr.net/npm/lucide-static/icons/${mapped}.svg`
-  }
-
-  const fileName =
-    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 
 // 프로젝트 스킬 리스트 api 구조화

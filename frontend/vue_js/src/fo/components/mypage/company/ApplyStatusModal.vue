@@ -388,6 +388,7 @@ import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.v
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 
 import { api } from '@/axios.js'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
@@ -584,32 +585,8 @@ const formatDate = (dateString) => {
 
 // 기술 아이콘 URL 생성
 const generateIconUrl = (name) => {
-  const supportedIcons = {
-    Java: 'java',
-    Python: 'python',
-    'Spring Boot': 'spring',
-    Django: 'django',
-    React: 'react',
-    'Vue.js': 'vuejs',
-    Docker: 'docker',
-    Git: 'git',
-    Windows: 'windows8',
-    MacOS: 'apple',
-    Linux: 'linux',
-    MySQL: 'mysql',
-    OracleDB: 'oracle',
-    MongoDB: 'mongodb',
-    MariaDB: 'mariadb',
-    Redis: 'redis',
-  }
-
-  const mapped = supportedIcons[name]
-  if (!mapped) return null
-
-  const fileName =
-    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 </script>
 

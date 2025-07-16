@@ -53,6 +53,7 @@
 <script setup>
 import { ref, defineEmits, defineProps, computed, onMounted } from 'vue'
 import { useModalStore } from '../../stores/modalStore.js'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const emit = defineEmits(['confirm', 'remove'])
 const props = defineProps({
@@ -93,21 +94,8 @@ const toggleSkill = (skillName) => {
 }
 
 const generateIconUrl = (name) => {
-  const exceptionList = [
-    '전자정부 프레임워크',
-    'myBatis',
-    'Notepad++',
-    'PyCharm',
-    'Sublime Text',
-  ]
-  if (exceptionList.includes(name)) return null
-
-  const processed = name
-    .toLowerCase()
-    .replace('#', 'sharp')
-    .replace('++', 'plusplus')
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 
 const isSelected = (skillName) =>

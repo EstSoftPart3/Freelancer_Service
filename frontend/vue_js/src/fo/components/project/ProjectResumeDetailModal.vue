@@ -370,6 +370,7 @@
 import { ref, watchEffect, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { api } from '@/axios'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const props = defineProps({
   resumeSq: {
@@ -465,32 +466,9 @@ const handleSelect = async () => {
 }
 
 const generateIconUrl = (name) => {
-  const supportedIcons = {
-    Java: 'java',
-    Python: 'python',
-    'Spring Boot': 'spring',
-    Django: 'django',
-    React: 'react',
-    'Vue.js': 'vuejs',
-    Docker: 'docker',
-    Git: 'git',
-    Windows: 'windows8',
-    MacOS: 'apple',
-    Linux: 'linux',
-    MySQL: 'mysql',
-    OracleDB: 'oracle',
-    MongoDB: 'mongodb',
-    MariaDB: 'mariadb',
-    Redis: 'redis',
-  }
-
-  const mapped = supportedIcons[name]
-  if (!mapped) return null
-
-  const fileName =
-    name === 'Django' ? `${mapped}-plain.svg` : `${mapped}-original.svg`
-
-  return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${mapped}/${fileName}`
+  if (!name) return null
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
 }
 </script>
 

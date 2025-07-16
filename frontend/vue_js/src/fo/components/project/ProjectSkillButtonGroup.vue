@@ -27,6 +27,7 @@
 </template>
 
 <script>
+import skillIconMap from '@/assets/skillIconMap.js'
 export default {
   props: {
     selectedSkills: {
@@ -40,21 +41,8 @@ export default {
       this.$emit('remove', name)
     },
     generateIconUrl(name) {
-      const exceptionList = [
-        '전자정부 프레임워크',
-        'myBatis',
-        'Notepad++',
-        'PyCharm',
-        'Sublime Text',
-      ]
-      if (exceptionList.includes(name)) return null
-
-      const processed = name
-        .toLowerCase()
-        .replace('#', 'sharp')
-        .replace('++', 'plusplus')
-
-      return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${processed}/${processed}-original.svg`
+      const key = name.toLowerCase().replace(/[\s.]+/g, '')
+      return skillIconMap[key] || skillIconMap.default
     },
   },
 }

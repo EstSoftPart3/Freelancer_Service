@@ -115,7 +115,7 @@ import { useAlertStore } from '../../stores/alertStore.js'
 import { useUserStore } from '../../stores/userStore.js'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter.js'
 import { api } from '@/axios.js'
-import iconMap from '@/assets/skillIconMap.js'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -127,7 +127,7 @@ const goToProjectSpec = (project) => {
 
 const generateIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
-  return iconMap[key] || iconMap.default
+  return skillIconMap[key] || skillIconMap.default
 }
 
 const props = defineProps({
