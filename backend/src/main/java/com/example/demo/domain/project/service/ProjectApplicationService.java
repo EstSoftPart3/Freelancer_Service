@@ -67,6 +67,40 @@ public class ProjectApplicationService {
 		return result;
 	}
 
+	@Transactional
+	public Map<String, Object> fetchCorporateProjectApplicationsWithCount(Long userSq, int offset, int size,
+			String searchType, String keyword, String readType) {
+		Long companySq = companyMapper.findCompanySqByUserSq(userSq);
+
+		Map<String, Object> params = new HashMap<>();
+		params.put("companySq", companySq);
+		params.put("offset", offset);
+		params.put("size", size);
+		params.put("searchType", searchType);
+		params.put("keyword", keyword);
+		params.put("readType", readType);
+
+		List<Map<String, Object>> list = applicationMapper.findCorporateApplications(params);
+		int totalCount = applicationMapper.countCorporateApplications(params);
+
+		// 읽음/안읽음/전체 카운트
+		List<Map<String, Object>> countsList = applicationMapper.countCorporateApplicationsByReadStatus(companySq);
+		Map<String, Integer> countsMap = new HashMap<>();
+		countsMap.put("all", 0);
+		countsMap.put("read", 0);
+		countsMap.put("unread", 0);
+		for (Map<String, Object> m : countsList) {
+			countsMap.put((String) m.get("type"), ((Number) m.get("cnt")).intValue());
+		}
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("applications", list);
+		result.put("totalCount", totalCount);
+		result.put("counts", countsMap);
+
+		return result;
+	}
+
 	public void updateApplicantResult(ApplicationStatusRequest request, Long applicationSq) {
 		Long statusCd = commonCodeMapper.findCommonCodeSqByName(request.getStatus(),
 				ParentCodeEnum.PRO_APPLICATION.getCode());

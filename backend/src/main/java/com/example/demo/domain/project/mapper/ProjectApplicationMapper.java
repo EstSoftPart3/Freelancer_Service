@@ -102,4 +102,10 @@ public interface ProjectApplicationMapper {
 
 	Boolean hasAppliedProject(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
 
+	List<Map<String, Object>> findCorporateApplications(Map<String, Object> params);
+
+	int countCorporateApplications(Map<String, Object> params);
+
+	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
+
 }

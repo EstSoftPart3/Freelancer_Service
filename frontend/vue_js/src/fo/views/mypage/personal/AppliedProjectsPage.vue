@@ -79,9 +79,8 @@
                     @click.prevent="goToProjectSpec(item)"
                     href="#"
                     class="text-6 m-0"
-                    >{{ item.projectTitle }} /</a
+                    >{{ item.projectTitle }} / {{ item.companyTitle }}</a
                   >
-                  <span class="text-5 m-0">{{ item.companyTitle }}</span>
                 </div>
 
                 <!-- 오른쪽: 상태 버튼들 -->
@@ -178,10 +177,15 @@
                   >
                   |
                   <span
-                    @click="openResumeDetailModal"
+                    @click="openResumeDetailModal(item.resumeSq)"
                     class="text-muted resume-hover"
                   >
-                    {{ item.resumeTitle }}
+                    <template v-if="userType === 'COMPANY'">
+                      {{ item.applicantName }} / {{ item.resumeTitle }}
+                    </template>
+                    <template v-else>
+                      {{ item.resumeTitle }}
+                    </template>
                   </span>
                 </div>
                 <div class="post-meta text-4">
@@ -287,7 +291,13 @@ onMounted(() => {
 // 리스트 호출
 const fetchApplicationList = async () => {
   try {
-    const response = await api.$get(`/projects/applications`, {
+    // 💡 userType에 따라 API 엔드포인트 분기 처리
+    const endpoint =
+      userType === 'COMPANY'
+        ? `/projects/applications/corporate` // 기업용: 지원자 목록
+        : `/projects/applications` // 개인용: 지원 현황
+
+    const response = await api.$get(endpoint, {
       withCredentials: true,
       params: {
         offset: (currentPage.value - 1) * itemsPerPage,
@@ -421,8 +431,9 @@ const openInterviewTimeModal = (applicationSq) => {
 }
 
 // 이력서 상세 보기
-const openResumeDetailModal = () => {
+const openResumeDetailModal = (resumeSq) => {
   modalStore.openModal(ResumeDetailModal, {
+    resumeSq: resumeSq,
     size: 'modal-xl',
   })
 }

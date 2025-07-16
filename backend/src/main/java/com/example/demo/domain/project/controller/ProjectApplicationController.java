@@ -26,7 +26,6 @@ import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
-import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +48,20 @@ public class ProjectApplicationController {
 		Map<String, Object> data = projectApplicationService.fetchProjectApplicationsWithCount(userSq, offset, size,
 				searchType, keyword, readType);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 지원 조회 성공", data));
+	}
+
+	@GetMapping("/corporate")
+	public ResponseEntity<ApiResponse<Map<String, Object>>> getCorporateApplicationList(
+			@AuthenticationPrincipal Long userSq,
+			@RequestParam(defaultValue = "0") int offset,
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword,
+			@RequestParam(defaultValue = "all") String readType) {
+		Map<String, Object> data = projectApplicationService.fetchCorporateProjectApplicationsWithCount(userSq, offset,
+				size,
+				searchType, keyword, readType);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "기업별 프로젝트 지원 조회 성공", data));
 	}
 
 	@GetMapping("/interviews/{projectSq}")
