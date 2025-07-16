@@ -111,51 +111,59 @@
                 </div>
               </div>
               <!-- 경력/열람일자 -->
-              <div
-                class="d-flex justify-content-between align-items-center mt-2"
-              >
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >경력</span
-                  >
-                  | {{ convertCareer(applicant.career) }}
+              <div class="row mt-2">
+                <div class="col-md-8">
+                  <div class="post-meta text-4">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >경력</span
+                    >
+                    | {{ convertCareer(applicant.career) }}
+                  </div>
                 </div>
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >열람일자</span
-                  >
-                  |
-                  {{
-                    applicant.readAt ? convertDate(applicant.readAt) : '미열람'
-                  }}
+                <div class="col-md-4 text-end">
+                  <div class="post-meta text-4">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >열람일자</span
+                    >
+                    |
+                    {{
+                      applicant.readAt
+                        ? convertDate(applicant.readAt)
+                        : '미열람'
+                    }}
+                  </div>
                 </div>
               </div>
               <!-- 사용 기술/지원일자 -->
               <div
-                class="d-flex justify-content-between align-items-center mt-2"
+                class="row mt-2 align-items-start"
                 style="font-size: 16.8px !important"
               >
-                <div class="d-flex align-items-center gap-2">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >사용 기술</span
-                  >
-                  |
-                  <div
-                    v-for="skill in applicant.skills"
-                    :key="skill.skillTagNm"
-                    class="btn d-flex align-items-center gap-2 border-0"
-                  >
-                    <img :src="getSkillIcon(skill.skillTagNm)" width="20" />
-                    {{ skill.skillTagNm }}
+                <div class="col-md-8">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >사용 기술</span
+                    >
+                    |
+                    <div
+                      v-for="skill in applicant.skills"
+                      :key="skill.skillTagNm"
+                      class="btn d-flex align-items-center gap-2 border-0 p-0"
+                    >
+                      <img :src="getSkillIcon(skill.skillTagNm)" width="20" />
+                      {{ skill.skillTagNm }}
+                    </div>
                   </div>
                 </div>
-                <div class="post-meta" style="font-size: 16.8px">
-                  <span
-                    class="text-dark text-uppercase font-weight-semibold"
-                    style="font-size: 16.8px"
-                    >지원일자</span
-                  >
-                  | {{ convertDate(applicant.createdAt) }}
+                <div class="col-md-4 text-end">
+                  <div class="post-meta" style="font-size: 16.8px">
+                    <span
+                      class="text-dark text-uppercase font-weight-semibold"
+                      style="font-size: 16.8px"
+                      >지원일자</span
+                    >
+                    | {{ convertDate(applicant.createdAt) }}
+                  </div>
                 </div>
               </div>
             </div>
