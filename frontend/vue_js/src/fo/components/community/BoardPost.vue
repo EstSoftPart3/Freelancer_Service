@@ -111,7 +111,7 @@
         v-for="skill_tag in boardInfo.skillTags"
         :key="skill_tag"
         href="#"
-        class="btn btn-rounded btn-primary me-2"
+        class="btn btn-rounded btn-primary me-2 my-2"
         ><img
           :src="getSkillIcon(skill_tag.skillTagNm)"
           :alt="skill_tag.skillTagNm"
@@ -122,7 +122,7 @@
         v-for="normal_tag in boardInfo.normalTags"
         :key="normal_tag"
         href="#"
-        class="btn btn-rounded btn-light me-2"
+        class="btn btn-rounded btn-light me-2 my-2"
         >{{ normal_tag }}</a
       >
     </div>
