@@ -1,10 +1,10 @@
 <template>
   <PasswordCheck v-if="!isConfirmed" @confirmed="isConfirmed = true">
-    <h2 class="font-weight-normal text-7 mb-0">회원 탈퇴</h2>
+    <h4 class="mb-3" style="font-size: 24px">회원 탈퇴</h4>
   </PasswordCheck>
   <div v-else>
     <div class="overflow-hidden mb-3">
-      <h2 class="font-weight-normal text-7 mb-0">회원 탈퇴</h2>
+      <h4 class="mb-3" style="font-size: 24px">회원 탈퇴</h4>
     </div>
 
     <form

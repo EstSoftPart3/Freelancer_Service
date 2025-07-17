@@ -1,10 +1,8 @@
 <template>
-  <div class="container py-5 mt-3">
+  <div>
     <div class="row">
       <div class="col">
-        <h1 class="font-weight-normal text-10 mb-20">
-          <strong>프로젝트 지원 현황</strong>
-        </h1>
+        <h4 class="mb-3" style="font-size: 24px">프로젝트 지원 현황</h4>
       </div>
     </div>
 
@@ -49,7 +47,7 @@
 
     <div class="row">
       <div class="col pt-2 mt-1">
-        <hr class="my-4" />
+        <hr class="my-2" />
       </div>
     </div>
 
@@ -78,7 +76,7 @@
                   <a
                     @click.prevent="goToProjectSpec(item)"
                     href="#"
-                    class="text-6 m-0"
+                    class="text-5 m-0"
                     >{{ item.projectTitle }} / {{ item.companyTitle }}</a
                   >
                 </div>

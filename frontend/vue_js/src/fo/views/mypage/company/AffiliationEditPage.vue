@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="overflow-hidden mb-3">
-      <h2 class="font-weight-normal text-7 mb-0">소속 정보 수정</h2>
+      <h4 class="mb-3" style="font-size: 24px">소속 정보 수정</h4>
     </div>
 
     <!-- 프로필 이미지 (사람 아이콘으로 대체) -->

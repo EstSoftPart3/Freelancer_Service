@@ -1,11 +1,9 @@
 <template>
-  <div class="container py-5 mt-3">
+  <div>
     <!-- 페이지 제목 -->
     <div class="row">
       <div class="col">
-        <h1 class="font-weight-normal text-10 mb-20">
-          <strong>소속 공고 지원자 현황</strong>
-        </h1>
+        <h4 class="mb-3" style="font-size: 24px">소속 공고 지원자 현황</h4>
       </div>
     </div>
 
@@ -66,7 +64,7 @@
                 <div class="d-flex gap-2">
                   <button
                     type="button"
-                    class="text-6 m-0 text-primary"
+                    class="text-5 m-0 text-primary"
                     @click="handleOpenApplicant(applicant.applicationSq)"
                   >
                     {{ applicant.userNm }}

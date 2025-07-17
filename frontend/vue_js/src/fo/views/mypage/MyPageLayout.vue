@@ -127,10 +127,10 @@ const headerInfo = computed(() => {
     case 'AffiliatedMembers':
       return {
         title: '기업',
-        strongText: '소속 인력 관리',
+        strongText: '소속 인원 목록',
         breadcrumbs: [
           { text: '마이페이지', link: '/mypage' },
-          { text: '소속 인력 관리' },
+          { text: '소속 인원 목록' },
         ],
       }
     case 'AffiliationApplicantList':

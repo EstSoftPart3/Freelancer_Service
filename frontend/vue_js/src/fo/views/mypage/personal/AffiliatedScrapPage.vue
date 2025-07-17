@@ -2,9 +2,7 @@
   <div>
     <div class="row">
       <div class="col">
-        <h1 class="font-weight-normal text-10 mb-20">
-          <strong>소속 스크랩 내역</strong>
-        </h1>
+        <h4 class="mb-3" style="font-size: 24px">소속 스크랩 내역</h4>
       </div>
     </div>
     <!-- 🔽 필터 UI 추가 영역 -->
@@ -35,7 +33,7 @@
     <!-- 🔼 필터 UI 끝 -->
     <div class="row">
       <div class="col pt-2 mt-1">
-        <hr class="my-4" />
+        <hr class="my-2" />
       </div>
     </div>
     <div class="row">

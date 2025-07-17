@@ -1,11 +1,11 @@
 <template>
   <section>
     <PasswordCheck v-if="!isConfirmed" @confirmed="isConfirmed = true">
-      <h2 class="font-weight-normal text-7 mb-0">회원 정보 수정</h2>
+      <h4 class="mb-3" style="font-size: 24px">회원 정보 수정</h4>
     </PasswordCheck>
     <div v-else>
       <div class="overflow-hidden mb-3">
-        <h2 class="font-weight-normal text-7 mb-0">회원 정보 수정</h2>
+        <h4 class="mb-3" style="font-size: 24px">회원 정보 수정</h4>
       </div>
 
       <!-- 프로필 이미지 (기업 아이콘으로 대체) -->

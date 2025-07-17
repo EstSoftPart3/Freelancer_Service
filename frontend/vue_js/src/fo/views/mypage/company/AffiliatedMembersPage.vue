@@ -1,6 +1,11 @@
 ew
 <template>
   <div>
+    <div class="row">
+      <div class="col">
+        <h4 class="mb-3" style="font-size: 24px">소속 인원 목록</h4>
+      </div>
+    </div>
     <!-- 🔽 필터/검색 UI -->
     <div class="row align-items-center mt-3 mb-2">
       <div class="col-md-12 d-flex justify-content-end gap-2">
@@ -32,7 +37,7 @@ ew
 
     <div class="row">
       <div class="col pt-2 mt-1">
-        <hr class="my-4" />
+        <hr class="my-2" />
       </div>
     </div>
 

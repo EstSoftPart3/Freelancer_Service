@@ -2,14 +2,12 @@
   <div>
     <div class="row">
       <div class="col">
-        <h1 class="font-weight-normal text-10 mb-0">
-          <strong>이력서 목록</strong>
-        </h1>
+        <h4 class="mb-3" style="font-size: 24px">이력서 목록</h4>
       </div>
     </div>
     <div class="row">
       <div class="col pt-2 mt-1">
-        <hr class="my-4" />
+        <hr class="my-2" />
       </div>
     </div>
     <div class="row">
@@ -18,7 +16,7 @@
           <li
             v-for="resume in resumeList"
             :key="resume.resumeSq"
-            class="position-relative"
+            style="border-bottom: 1px rgb(230, 230, 230) solid"
           >
             <!-- X(닫기) 버튼 -->
             <button
@@ -46,7 +44,7 @@
               <div class="d-flex align-items-center gap-2">
                 <a
                   href="#"
-                  class="text-6 m-0"
+                  class="text-5 m-0"
                   @click.prevent="openResumeDetail(resume.resumeSq)"
                 >
                   {{ resume.resumeTtl }}
