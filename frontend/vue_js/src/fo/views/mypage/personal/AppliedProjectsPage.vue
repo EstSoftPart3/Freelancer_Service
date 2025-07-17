@@ -177,7 +177,7 @@
                   >
                   |
                   <span
-                    @click="openResumeDetailModal(item.resumeSq)"
+                    @click="openResumeDetailModal(item)"
                     class="text-muted resume-hover"
                   >
                     <template v-if="userType === 'COMPANY'">
@@ -431,9 +431,12 @@ const openInterviewTimeModal = (applicationSq) => {
 }
 
 // 이력서 상세 보기
-const openResumeDetailModal = (resumeSq) => {
+const openResumeDetailModal = (item) => {
   modalStore.openModal(ResumeDetailModal, {
-    resumeSq: resumeSq,
+    resumeSq: item.resumeSq,
+    projectSq: item.projectSq,
+    applicationSq: item.applicationSq,
+    isFromApplicationList: true,
     size: 'modal-xl',
   })
 }
