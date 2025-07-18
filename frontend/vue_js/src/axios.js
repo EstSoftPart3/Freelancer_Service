@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // const baseUrl = 'http://localhost:8080/api'
-const baseUrl = import.meta.env.VITE_API_BASE_URL
+const baseUrl = process.env.VUE_APP_API_BASE_URL
 
 // axios 인스턴스 생성
 const apiInstance = axios.create({
