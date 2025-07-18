@@ -118,16 +118,19 @@ public class ProjectService {
 		Long totalCount = projectMapper.countProjectsBySearch(request);
 		List<ProjectSummary> responses = new ArrayList<>();
 
-		Long userSq = token.getUserSq();
+		Long userSq = (token != null) ? token.getUserSq() : null;
 
 		projects.forEach(
 				p -> {
 					String address = fetchAddressString(p.getAddressSq());
 					String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
 
-					String hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
-							? "Y"
-							: "N";
+					String hasScrapped = "N";
+					if (userSq != null) {
+						hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
+								? "Y"
+								: "N";
+					}
 
 					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped));
 				});
@@ -189,8 +192,6 @@ public class ProjectService {
 	public ProjectDetailResponse fetchProject(Long projectSq, JwtAuthenticationToken token) {
 		projectMapper.updateViewCnt(projectSq);
 		Project p = projectMapper.findBySq(projectSq);
-		Long userSq = token.getUserSq();
-		Long userTypeCd = token.getUserTypeCd();
 
 		if (p.getProjectIsDeletedYn().equals("Y")) {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
@@ -201,18 +202,25 @@ public class ProjectService {
 				projectMapper.findPreferSkillsByProjectSq(projectSq));
 		String projectAddress = fetchAddressString(p.getAddressSq());
 
-		Long scrapSq = scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, projectSq);
-		int hasScrapped = (scrapSq != null) ? 1 : 0;
-		int hasApplied;
+		int hasScrapped = 0;
+		int hasApplied = 0;
+		UserRole userRole = UserRole.PERSONAL; // 기본값 설정
 
-		if (userTypeCd.equals(302)) {
-			Long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
-			hasApplied = projectApplicationMapper.findByProAndCom(projectSq, companySq) != null ? 1 : 0;
-		} else {
-			hasApplied = projectApplicationMapper.findByProAndUser(projectSq, userSq) != null ? 1 : 0;
+		if (token != null) {
+			Long userSq = token.getUserSq();
+			Long userTypeCd = token.getUserTypeCd();
+
+			Long scrapSq = scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, projectSq);
+			hasScrapped = (scrapSq != null) ? 1 : 0;
+
+			if (userTypeCd.equals(302)) {
+				Long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
+				hasApplied = projectApplicationMapper.findByProAndCom(projectSq, companySq) != null ? 1 : 0;
+			} else {
+				hasApplied = projectApplicationMapper.findByProAndUser(projectSq, userSq) != null ? 1 : 0;
+			}
+			userRole = findUserRole(token, p);
 		}
-
-		UserRole userRole = findUserRole(token, p);
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
 				hasApplied, userRole);
