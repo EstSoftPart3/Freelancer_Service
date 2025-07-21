@@ -8,7 +8,7 @@ const apiInstance = axios.create({
   baseURL: baseUrl,
   withCredentials: true, // 쿠키 전송을 위해 필요
   headers: {
-    'ngrok-skip-browser-warning': 'any',
+    'ngrok-skip-browser-warning': '65455',
   }, // ngrok 무료버전으로 해당 페이지 스킵을 위한 설정
 })
 
