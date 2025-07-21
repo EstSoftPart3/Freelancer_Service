@@ -122,7 +122,7 @@
                   >
                   | {{ post.applicantCnt }}
                   <a
-                    @click="openUserApplyModal(post.projectSq)"
+                    @click="openUserApplyModal(post.projectSq, post.projectTtl)"
                     href="#"
                     class="btn btn-outline btn-primary btn-sm"
                     >지원현황 바로가기</a
@@ -406,25 +406,27 @@ function resetModal(component, props = {}) {
   modalStore.openModal(component, props)
 }
 
-const openUserApplyModal = (projectSq) => {
+const openUserApplyModal = (projectSq, projectTtl) => {
   // 더 이상 API 호출하지 않음. 모달 컴포넌트 내에서 호출하도록 변경
-  const openPersonalModal = (projSq) => {
+  const openPersonalModal = (projSq, projTtl) => {
     resetModal(PersonalApplyStatusModal, {
       size: 'modal-xl',
       projectSq: projSq,
-      onToggle: openCorporateModal,
+      projectTitle: projTtl,
+      onToggle: (pSq) => openCorporateModal(pSq, projTtl),
     })
   }
 
-  const openCorporateModal = (projSq) => {
+  const openCorporateModal = (projSq, projTtl) => {
     resetModal(CompanyApplyStatusModal, {
       size: 'modal-xl',
       projectSq: projSq,
-      onToggle: openPersonalModal,
+      projectTitle: projTtl,
+      onToggle: (pSq) => openPersonalModal(pSq, projTtl),
     })
   }
 
-  openPersonalModal(projectSq)
+  openPersonalModal(projectSq, projectTtl)
 }
 </script>
 
