@@ -26,6 +26,9 @@ export const useUserStore = defineStore('user', {
 
       localStorage.removeItem('userNm')
       localStorage.removeItem('userType')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('autoLogin')
     },
   },
 })

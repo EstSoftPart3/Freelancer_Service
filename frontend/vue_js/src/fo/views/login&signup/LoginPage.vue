@@ -198,7 +198,14 @@ const login = async () => {
   // console.log('payload', payload)
 
   try {
-    await api.$post('/login', payload)
+    const response = await api.$post('/login', payload)
+    const token = response.output.token
+    if (token && token.accessToken && token.refreshToken) {
+      localStorage.setItem('accessToken', token.accessToken)
+      localStorage.setItem('refreshToken', token.refreshToken)
+    } else {
+      throw new Error('토큰 정보가 응답에 포함되지 않았습니다.')
+    }
 
     await fetchUserInfo()
 

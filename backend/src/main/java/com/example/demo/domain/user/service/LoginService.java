@@ -48,7 +48,9 @@ public class LoginService {
         userRepository.updateRefreshToken(user.getUserSq(), refreshToken);
 
         TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
-        LoginResponseDTO loginResponseDTO = new LoginResponseDTO(user.getUserNm(), user.getUserTypeCd());
+        LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+        loginResponseDTO.setUserNm(user.getUserNm());
+        loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 
         return new LoginResultDTO(tokenDTO, loginResponseDTO);
     }

@@ -1,16 +1,29 @@
 import axios from 'axios'
 
-// const baseUrl = 'http://localhost:8080/api'
-const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
+const baseUrl = 'http://localhost:8080/api'
+// const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
 
 // axios 인스턴스 생성
 const apiInstance = axios.create({
   baseURL: baseUrl,
-  withCredentials: true, // 쿠키 전송을 위해 필요
   headers: {
     'ngrok-skip-browser-warning': '65455',
   }, // ngrok 무료버전으로 해당 페이지 스킵을 위한 설정
 })
+
+// 요청 인터셉터 설정
+apiInstance.interceptors.request.use(
+  (config) => {
+    const accessToken = localStorage.getItem('accessToken')
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
 
 // 토큰 재발급 시도 중 여부 플래그
 let isRefreshing = false
@@ -65,9 +78,28 @@ apiInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
+        const refreshToken = localStorage.getItem('refreshToken')
+        if (!refreshToken) {
+          throw new Error('No refresh token available.')
+        }
+
         // console.log('refresh-token 요청 보내기 전')
-        await apiInstance.post('/refresh-token')
+        const response = await apiInstance.post(
+          '/refresh-token',
+          {},
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          },
+        )
         // console.log('refresh-token 요청 성공')
+
+        const newAccessToken = response.data.data.accessToken
+        const newRefreshToken = response.data.data.refreshToken
+        localStorage.setItem('accessToken', newAccessToken)
+        localStorage.setItem('refreshToken', newRefreshToken)
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+
         processQueue(null)
         return apiInstance(originalRequest)
       } catch (err) {
