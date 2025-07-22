@@ -53,7 +53,7 @@ public class SecurityConfigDev {
                 "http://localhost:3000",
                 "https://e4f5e44bf928.ngrok-free.app",
                 "https://test-eight-tau-87.vercel.app/"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
