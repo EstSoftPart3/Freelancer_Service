@@ -1,6 +1,5 @@
 package com.example.demo.domain.project.vo;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-
 @Getter
 @Builder
 @AllArgsConstructor
@@ -20,28 +18,30 @@ public class ProjectSummary {
 	private Long projectSq;
 	private String projectTtl;
 	private String companyNm;
+	private String companyImageUrl;
 	private String address;
 	private String descrption;
 	private String preferContent;
 	private String imageUrl;
 	private String requiredEduLvl;
 	private String devGradeNm;
-	
+
 	private Integer viewCnt;
 	private Integer applicantCnt;
-	
+
 	private LocalDate projectCreatedDt;
 	private LocalDate recruitStartDt;
 	private LocalDate recruitEndDt;
-	
+
 	private String recruitStatus;
-	
+
 	private Long salary;
 	private List<String> reqSkills;
-	
+
 	private String hasScrapped;
-	
-	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status, String hasScrapped) {
+
+	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
+			String hasScrapped, String companyImageUrl) {
 		return ProjectSummary.builder()
 				.projectSq(project.getProjectSq())
 				.address(address)
@@ -53,6 +53,7 @@ public class ProjectSummary {
 				.applicantCnt(project.getProjectCandidateCnt())
 				.salary(project.getProjectSalary())
 				.companyNm(util.convertCompanySqToName(project.getCompanySq()))
+				.companyImageUrl(companyImageUrl)
 				.projectCreatedDt(project.getProjectCreatedAtDtm().toLocalDate())
 				.recruitStartDt(project.getProjectRecruitStartDt())
 				.recruitEndDt(project.getProjectRecruitEndDt())

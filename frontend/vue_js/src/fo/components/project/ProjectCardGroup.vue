@@ -34,6 +34,10 @@
             style="cursor: pointer"
           >
             <img
+              :src="
+                project.companyImageUrl ||
+                'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
+              "
               alt="프로젝트 이미지"
               class="rounded-circle"
               style="width: 70px; height: 70px; object-fit: cover"
@@ -74,7 +78,7 @@
 
             <div class="d-flex justify-content-between align-items-center mb-2">
               <p class="mb-2 text-muted fs-6">
-                <i class="bi bi-buildings"></i> {{ project.company }}
+                <i class="bi bi-buildings"></i> {{ project.companyNm }}
               </p>
             </div>
 

@@ -132,7 +132,8 @@ public class ProjectService {
 								: "N";
 					}
 
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped));
+					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
 				});
 
 		int page = (request.getOffset() / request.getSize()) + 1;
@@ -166,7 +167,8 @@ public class ProjectService {
 					String hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
 							? "Y"
 							: "N";
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped));
+					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
 				});
 
 		int page = (request.getOffset() / request.getSize()) + 1;

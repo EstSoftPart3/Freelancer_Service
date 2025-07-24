@@ -27,12 +27,19 @@ import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
 public class CompanyService {
 	private final CompanyMapper companyMapper;
 	private final CommonCodeMapper commonCodeMapper;
+
+	@Value("${cloud.aws.s3.bucket}")
+	private String bucket;
+
+	@Value("${cloud.aws.region.static}")
+	private String region;
 
 	private final ResumeMapper resumeMapper;
 	private final ResumeCareerMapper resumeCareerMapper;
@@ -61,6 +68,14 @@ public class CompanyService {
 
 	public String fetchCompanyBizNumByCompany(Long companySq) {
 		return companyMapper.findBizNumByCompanySq(companySq);
+	}
+
+	public String fetchCompanyImageUrl(Long companySq) {
+		String fileName = companyMapper.findCompanyImageUrlBySq(companySq);
+		if (fileName == null) {
+			return null;
+		}
+		return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + fileName;
 	}
 
 	@Transactional
