@@ -23,19 +23,35 @@
             <div class="form-group">
               <label class="modal-label">참여기간</label>
               <div class="d-flex gap-2">
-                <input
-                  v-model="form.startDate"
-                  type="date"
-                  class="form-control"
-                  placeholder="시작일"
-                />
+                <div class="datepicker-wrapper flex-grow-1">
+                  <Datepicker
+                    :key="datepickerKey1"
+                    v-model="form.startDate"
+                    :locale="ko"
+                    :inputFormat="inputFormat"
+                    placeholder="시작일"
+                    class="form-control"
+                    teleport="body"
+                    dayPickerHeadingFormat="yyyy년 LLLL"
+                    @update:modelValue="datepickerKey1++"
+                  />
+                  <i class="fas fa-calendar datepicker-icon"></i>
+                </div>
                 <span class="align-self-center">~</span>
-                <input
-                  v-model="form.endDate"
-                  type="date"
-                  class="form-control"
-                  placeholder="종료일 (선택 안 해도 됨)"
-                />
+                <div class="datepicker-wrapper flex-grow-1">
+                  <Datepicker
+                    :key="datepickerKey2"
+                    v-model="form.endDate"
+                    :locale="ko"
+                    :inputFormat="inputFormat"
+                    placeholder="종료일"
+                    class="form-control"
+                    teleport="body"
+                    dayPickerHeadingFormat="yyyy년 LLLL"
+                    @update:modelValue="datepickerKey2++"
+                  />
+                  <i class="fas fa-calendar datepicker-icon"></i>
+                </div>
               </div>
             </div>
           </div>
@@ -86,11 +102,7 @@
             <div class="form-group">
               <label class="modal-label">기종</label>
               <input
-                :value="
-                  selectedSkills.device
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="deviceText"
                 type="text"
                 class="form-control"
                 placeholder="기종 (예: PC)"
@@ -101,11 +113,7 @@
             <div class="form-group">
               <label class="modal-label">OS</label>
               <input
-                :value="
-                  selectedSkills.os
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="osText"
                 type="text"
                 class="form-control"
                 placeholder="OS (예: Linux)"
@@ -116,11 +124,7 @@
             <div class="form-group">
               <label class="modal-label">DBMS</label>
               <input
-                :value="
-                  selectedSkills.dbms
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="dbmsText"
                 type="text"
                 class="form-control"
                 placeholder="DBMS (예: MySQL)"
@@ -133,11 +137,7 @@
             <div class="form-group">
               <label class="modal-label">언어</label>
               <input
-                :value="
-                  selectedSkills.language
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="languageText"
                 type="text"
                 class="form-control"
                 placeholder="언어 (쉼표로 구분, 예: Java, Python)"
@@ -148,11 +148,7 @@
             <div class="form-group">
               <label class="modal-label">TOOL</label>
               <input
-                :value="
-                  selectedSkills.tool
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="toolText"
                 type="text"
                 class="form-control"
                 placeholder="TOOL (쉼표로 구분, 예: Eclipse, VSCode)"
@@ -163,11 +159,7 @@
             <div class="form-group">
               <label class="modal-label">FW</label>
               <input
-                :value="
-                  selectedSkills.framework
-                    ?.map((skill) => skill.skillTagNm)
-                    .join(', ') || ''
-                "
+                :value="frameworkText"
                 type="text"
                 class="form-control"
                 placeholder="FW (쉼표로 구분, 예: Spring Boot, Vue.js)"
@@ -204,6 +196,8 @@ import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal.vue'
 import { api } from '@/axios'
+import Datepicker from 'vue3-datepicker'
+import { ko } from 'date-fns/locale'
 
 const props = defineProps({
   onComplete: Function,
@@ -214,6 +208,10 @@ const modalStore = useModalStore()
 const projectStore = useProjectStore()
 const alertStore = useAlertStore()
 
+const inputFormat = ref('yyyy-MM-dd')
+const datepickerKey1 = ref(0)
+const datepickerKey2 = ref(0)
+
 // form과 skills를 store에서 가져옴 (양방향 바인딩용 computed)
 const form = computed({
   get: () => projectStore.getForm(props.projectId),
@@ -221,6 +219,49 @@ const form = computed({
 })
 
 const selectedSkills = computed(() => projectStore.getSkills(props.projectId))
+
+const deviceText = computed(
+  () =>
+    (selectedSkills.value.device &&
+      selectedSkills.value.device
+        .map((skill) => skill.skillTagNm)
+        .join(', ')) ||
+    '',
+)
+const osText = computed(
+  () =>
+    (selectedSkills.value.os &&
+      selectedSkills.value.os.map((skill) => skill.skillTagNm).join(', ')) ||
+    '',
+)
+const dbmsText = computed(
+  () =>
+    (selectedSkills.value.dbms &&
+      selectedSkills.value.dbms.map((skill) => skill.skillTagNm).join(', ')) ||
+    '',
+)
+const languageText = computed(
+  () =>
+    (selectedSkills.value.language &&
+      selectedSkills.value.language
+        .map((skill) => skill.skillTagNm)
+        .join(', ')) ||
+    '',
+)
+const toolText = computed(
+  () =>
+    (selectedSkills.value.tool &&
+      selectedSkills.value.tool.map((skill) => skill.skillTagNm).join(', ')) ||
+    '',
+)
+const frameworkText = computed(
+  () =>
+    (selectedSkills.value.framework &&
+      selectedSkills.value.framework
+        .map((skill) => skill.skillTagNm)
+        .join(', ')) ||
+    '',
+)
 
 const projectRoleTypeList = ref([])
 const projectTaskTypeList = ref([])
@@ -324,8 +365,8 @@ onMounted(() => {
   max-width: 95vw;
   background: #fff;
   padding: 28px 20px 16px 20px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: visible;
+  overflow-y: visible;
   box-sizing: border-box;
   border-radius: 8px;
 }
@@ -393,5 +434,29 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 10px;
+}
+
+.datepicker-wrapper {
+  position: relative;
+  --vdp-hover-bg-color: #007bff;
+  --vdp-selected-bg-color: #007bff;
+  --vdp-hover-color: #ffffff;
+  --vdp-selected-color: #ffffff;
+}
+
+.datepicker-wrapper :deep(.form-control) {
+  padding-right: 3rem; /* 아이콘 공간 확보 */
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 </style>

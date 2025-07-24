@@ -121,13 +121,22 @@
                     style="font-weight: bold"
                     >생년월일</label
                   >
-                  <input
-                    v-model="resumeForm.resumeBirthDt"
-                    type="date"
-                    class="form-control text-3 h-auto py-2"
-                    style="border: none"
-                    required
-                  />
+                  <div class="datepicker-wrapper">
+                    <Datepicker
+                      :key="datepickerKey"
+                      v-model="resumeForm.resumeBirthDt"
+                      :locale="ko"
+                      :inputFormat="inputFormat"
+                      placeholder="생년월일 선택"
+                      class="form-control text-3 h-auto py-2"
+                      style="border: none"
+                      required
+                      dayPickerHeadingFormat="yyyy년 LLLL"
+                      teleport="body"
+                      @update:modelValue="datepickerKey++"
+                    />
+                    <i class="fas fa-calendar datepicker-icon"></i>
+                  </div>
                 </div>
 
                 <!-- 전화번호 -->
@@ -257,7 +266,7 @@
                 >+ 추가하기</a
               >
             </label>
-            <div class="mb-2">
+            <div class="mb-2 d-flex gap-2 flex-wrap">
               <span
                 v-for="(career, idx) in resumeForm.careerList"
                 :key="career.careerCompanyNm + career.careerStartDt"
@@ -301,7 +310,7 @@
               <!-- 필요 시 정렬, 필터 버튼 등 위치 -->
             </div>
 
-            <div class="mb-2">
+            <div class="mb-2 d-flex gap-2 flex-wrap">
               <span
                 v-for="(item, idx) in resumeForm.trainingHistoryList"
                 :key="idx"
@@ -642,7 +651,7 @@
               <a
                 href="#"
                 class="text-grey text-decoration-none small ms-2"
-                @click.prevent="fileInputRef?.click()"
+                @click.prevent="fileInputRef && fileInputRef.click()"
               >
                 + 추가하기
               </a>
@@ -751,12 +760,16 @@ import { useProjectStore } from '@/fo/stores/ProjectHistoryStore'
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
 import skillIconMap from '@/assets/skillIconMap.js'
+import Datepicker from 'vue3-datepicker'
+import { ko } from 'date-fns/locale'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const projectStore = useProjectStore()
 const router = useRouter()
 const route = useRoute()
+const inputFormat = ref('yyyy-MM-dd')
+const datepickerKey = ref(0)
 
 const resumeForm = reactive({
   resumeTtl: '',
@@ -1106,7 +1119,7 @@ function cleanProjectHistoryList(projectHistoryList) {
   }))
 }
 function getSkillList(project, category) {
-  return project.skillTags?.[category] || []
+  return (project.skillTags && project.skillTags[category]) || []
 }
 
 function convertSkillTagListToGrouped(skillTagList, parentTags) {
@@ -1157,11 +1170,11 @@ onMounted(async () => {
 })
 
 async function submitResume() {
-  if (!resumeForm.resumeTtl?.trim()) {
+  if (!resumeForm.resumeTtl || !resumeForm.resumeTtl.trim()) {
     return alertStore.show('이력서 제목을 입력하세요.', 'danger')
   }
 
-  if (!resumeForm.resumeNm?.trim()) {
+  if (!resumeForm.resumeNm || !resumeForm.resumeNm.trim()) {
     return alertStore.show('이름을 입력하세요.', 'danger')
   }
 
@@ -1169,7 +1182,7 @@ async function submitResume() {
     return alertStore.show('생년월일을 입력하세요.', 'danger')
   }
 
-  if (!resumeForm.resumePhoneNum?.trim()) {
+  if (!resumeForm.resumePhoneNum || !resumeForm.resumePhoneNum.trim()) {
     return alertStore.show('전화번호를 입력하세요.', 'danger')
   } else if (!/^010-\d{4}-\d{4}$/.test(resumeForm.resumePhoneNum)) {
     return alertStore.show(
@@ -1178,7 +1191,7 @@ async function submitResume() {
     )
   }
 
-  if (!resumeForm.resumeEmail?.trim()) {
+  if (!resumeForm.resumeEmail || !resumeForm.resumeEmail.trim()) {
     return alertStore.show('이메일을 입력하세요.', 'danger')
   } else if (
     !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(resumeForm.resumeEmail)
@@ -1186,11 +1199,11 @@ async function submitResume() {
     return alertStore.show('이메일 형식이 올바르지 않습니다.', 'danger')
   }
 
-  if (!resumeForm.address.address?.trim()) {
+  if (!resumeForm.address.address || !resumeForm.address.address.trim()) {
     return alertStore.show('주소를 입력하세요.', 'danger')
   }
 
-  if (!resumeForm.resumeGreetingTxt?.trim()) {
+  if (!resumeForm.resumeGreetingTxt || !resumeForm.resumeGreetingTxt.trim()) {
     return alertStore.show('자기소개를 입력하세요.', 'danger')
   }
 
@@ -1281,5 +1294,26 @@ async function submitResume() {
   font-size: 0.97em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
+}
+
+.datepicker-wrapper {
+  position: relative;
+  --vdp-hover-bg-color: #007bff;
+  --vdp-selected-bg-color: #007bff;
+  --vdp-hover-color: #ffffff;
+  --vdp-selected-color: #ffffff;
+}
+
+.datepicker-wrapper :deep(.form-control) {
+  padding-right: 3rem; /* 아이콘 공간 확보 */
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 </style>

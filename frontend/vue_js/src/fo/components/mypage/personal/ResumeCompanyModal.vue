@@ -40,21 +40,35 @@
           <div class="form-group period-group">
             <label class="modal-label">근무 기간</label>
             <div style="display: flex; gap: 8px">
-              <input
-                v-model="form.startDate"
-                type="date"
-                class="form-control"
-                style="width: 48%"
-                placeholder="입사년월"
-              />
+              <div class="datepicker-wrapper flex-grow-1">
+                <Datepicker
+                  :key="datepickerKey1"
+                  v-model="form.startDate"
+                  :locale="ko"
+                  :inputFormat="inputFormat"
+                  placeholder="입사년월"
+                  class="form-control"
+                  teleport="body"
+                  dayPickerHeadingFormat="yyyy년 LLLL"
+                  @update:modelValue="datepickerKey1++"
+                />
+                <i class="fas fa-calendar datepicker-icon"></i>
+              </div>
               <span style="align-self: center">~</span>
-              <input
-                v-model="form.endDate"
-                type="date"
-                class="form-control"
-                style="width: 48%"
-                placeholder="퇴사년월"
-              />
+              <div class="datepicker-wrapper flex-grow-1">
+                <Datepicker
+                  :key="datepickerKey2"
+                  v-model="form.endDate"
+                  :locale="ko"
+                  :inputFormat="inputFormat"
+                  placeholder="퇴사년월"
+                  class="form-control"
+                  teleport="body"
+                  dayPickerHeadingFormat="yyyy년 LLLL"
+                  @update:modelValue="datepickerKey2++"
+                />
+                <i class="fas fa-calendar datepicker-icon"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -74,12 +88,18 @@
 import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import Datepicker from 'vue3-datepicker'
+import { ko } from 'date-fns/locale'
 
 const props = defineProps({
   onComplete: Function, // 부모에서 내려주는 콜백함수
 })
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
+
+const inputFormat = ref('yyyy-MM-dd')
+const datepickerKey1 = ref(0)
+const datepickerKey2 = ref(0)
 
 const form = ref({
   company: '',
@@ -150,8 +170,8 @@ const submit = () => {
   max-width: 95vw;
   background: #fff;
   padding: 28px 20px 16px 20px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: visible;
+  overflow-y: visible;
   box-sizing: border-box;
   border-radius: 8px;
 }
@@ -216,5 +236,29 @@ const submit = () => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 20px;
+}
+
+.datepicker-wrapper {
+  position: relative;
+  --vdp-hover-bg-color: #007bff;
+  --vdp-selected-bg-color: #007bff;
+  --vdp-hover-color: #ffffff;
+  --vdp-selected-color: #ffffff;
+}
+
+.datepicker-wrapper :deep(.form-control) {
+  padding-right: 3rem; /* 아이콘 공간 확보 */
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 </style>

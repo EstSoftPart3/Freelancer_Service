@@ -94,15 +94,19 @@
             style="color: #007bff"
           ></i>
         </label>
-        <input
-          type="date"
-          v-model="form.dob"
-          class="form-control form-control-lg"
-          :max="today"
-          @keydown.prevent
-          @input="validateDob"
-          title="키보드 입력은 불가합니다. 달력에서 선택해주세요."
-        />
+        <div class="datepicker-wrapper">
+          <Datepicker
+            v-model="form.dob"
+            :locale="ko"
+            :inputFormat="inputFormat"
+            dayPickerHeadingFormat="yyyy년 LLLL"
+            @update:model-value="validateDob"
+            placeholder="생년월일을 선택하세요"
+            class="form-control form-control-lg"
+            :upper-limit="new Date()"
+          />
+          <i class="fas fa-calendar datepicker-icon"></i>
+        </div>
         <div v-if="dobError" class="invalid-feedback">{{ dobError }}</div>
       </div>
 
@@ -308,7 +312,9 @@
   </form>
 </template>
 <script setup>
-import { reactive, ref, computed, onMounted, defineEmits, watch } from 'vue'
+import { reactive, ref, onMounted, defineEmits, watch } from 'vue'
+import Datepicker from 'vue3-datepicker'
+import { ko } from 'date-fns/locale'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { personalAgreementText } from '@/assets/terms'
 import TermsAgreementModal from '@/fo/components/login&signup/TermsAgreementModal.vue'
@@ -317,6 +323,7 @@ import { api } from '@/axios'
 import { debounce } from 'lodash'
 
 const emit = defineEmits(['submit'])
+const inputFormat = ref('yyyy-MM-dd')
 
 const validateAll = async () => {
   await validateIdCore(form.id)
@@ -544,14 +551,6 @@ const validateName = () => {
   }
 }
 
-const today = computed(() => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-})
-
 // 생년월일 유효성 검사
 const validateDob = () => {
   dobError.value = ''
@@ -745,5 +744,26 @@ select.form-control-lg {
 .invalid-feedback {
   color: #007bff;
   display: block;
+}
+
+.datepicker-wrapper {
+  position: relative;
+  --vdp-hover-bg-color: #007bff;
+  --vdp-selected-bg-color: #007bff;
+  --vdp-hover-color: #ffffff;
+  --vdp-selected-color: #ffffff;
+}
+
+.datepicker-wrapper :deep(.form-control) {
+  padding-right: 3rem; /* 아이콘 공간 확보 */
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 </style>
