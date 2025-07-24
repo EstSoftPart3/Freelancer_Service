@@ -93,18 +93,18 @@
                   >
                     <div class="d-block h-100 w-100 position-relative">
                       <img
-                        v-if="afltn.profileImg"
-                        :src="`${afltn.profileImg}`"
+                        :src="
+                          afltn.profileImg ||
+                          'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
+                        "
+                        @error="
+                          $event.target.src =
+                            'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
+                        "
                         class="img-fluid img-thumbnail img-thumbnail-no-borders rounded-0 h-100 w-100"
                         style="object-fit: cover"
                         alt="기업 이미지"
                       />
-                      <div
-                        v-else
-                        class="h-100 w-100 bg-color-grey text-primary text-center d-flex justify-content-center align-items-center"
-                      >
-                        이미지가 없습니다
-                      </div>
                       <!-- 조회수 뱃지 -->
                       <div
                         class="position-absolute top-0 end-0 m-2 px-2 py-1 text-white rounded d-flex align-items-center gap-1"
