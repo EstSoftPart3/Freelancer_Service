@@ -79,11 +79,37 @@
         <div class="date-inputs">
           <div class="date-input-group">
             <label>입학년월 <span style="color: red">*</span></label>
-            <input type="date" v-model="startDate" />
+            <div class="datepicker-wrapper">
+              <Datepicker
+                :key="datepickerKey1"
+                v-model="startDate"
+                :locale="ko"
+                :inputFormat="inputFormat"
+                placeholder="입학년월 선택"
+                class="form-control"
+                teleport="body"
+                dayPickerHeadingFormat="yyyy년 LLLL"
+                @update:modelValue="datepickerKey1++"
+              />
+              <i class="fas fa-calendar datepicker-icon"></i>
+            </div>
           </div>
           <div class="date-input-group">
             <label>졸업년월</label>
-            <input type="date" v-model="endDate" />
+            <div class="datepicker-wrapper">
+              <Datepicker
+                :key="datepickerKey2"
+                v-model="endDate"
+                :locale="ko"
+                :inputFormat="inputFormat"
+                placeholder="졸업년월 선택"
+                class="form-control"
+                teleport="body"
+                dayPickerHeadingFormat="yyyy년 LLLL"
+                @update:modelValue="datepickerKey2++"
+              />
+              <i class="fas fa-calendar datepicker-icon"></i>
+            </div>
           </div>
         </div>
         <div class="date-input-group" style="margin-top: 20px">
@@ -123,11 +149,14 @@ import { ref, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import axios from 'axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import Datepicker from 'vue3-datepicker'
+import { ko } from 'date-fns/locale'
 
 const alertStore = useAlertStore()
 const props = defineProps(['onComplete'])
 const modalStore = useModalStore()
 
+const inputFormat = ref('yyyy-MM-dd')
 const tab = ref('high') // 'high' 또는 'univ'
 const search = ref('')
 const schools = ref([])
@@ -140,6 +169,8 @@ const startDate = ref('')
 const endDate = ref('')
 const majorName = ref('')
 const groupSize = 3
+const datepickerKey1 = ref(0)
+const datepickerKey2 = ref(0)
 
 const currentGroup = computed(() => Math.ceil(page.value / groupSize))
 
@@ -530,6 +561,30 @@ onMounted(() => {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+}
+
+.datepicker-wrapper {
+  position: relative;
+  --vdp-hover-bg-color: #007bff;
+  --vdp-selected-bg-color: #007bff;
+  --vdp-hover-color: #ffffff;
+  --vdp-selected-color: #ffffff;
+}
+
+.datepicker-wrapper :deep(.form-control) {
+  padding-right: 3rem; /* 아이콘 공간 확보 */
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 
 .modal-footer-back {

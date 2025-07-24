@@ -19,7 +19,7 @@
         <div class="row">
           <div class="col">
             <h1 class="font-weight-normal text-10 mb-20">
-              <strong>프로젝트 Title</strong>
+              <strong>{{ projectTitle }}</strong>
             </h1>
           </div>
         </div>
@@ -395,6 +395,7 @@ const alertStore = useAlertStore()
 
 const props = defineProps({
   projectSq: Number,
+  projectTitle: String,
   onToggle: Function,
 })
 
@@ -504,7 +505,7 @@ const changePage = (page) => {
 
 // 개인 지원자 목록 토글
 const toggleToPersonal = () => {
-  props.onToggle?.(props.projectSq) // projectSq 넘겨주기
+  props.onToggle?.(props.projectSq, props.projectTitle)
 }
 
 // 모달 닫기

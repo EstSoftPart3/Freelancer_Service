@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// const baseUrl = 'http://localhost:8080/api'
-const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
+const baseUrl = '/api'
+// const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
 
 // axios 인스턴스 생성
 const apiInstance = axios.create({
@@ -146,9 +146,9 @@ const api = {
       throw err
     }
   },
-  async $patch(url, data) {
+  async $patch(url, data, config) {
     try {
-      const response = await apiInstance.patch(url, data)
+      const response = await apiInstance.patch(url, data, config)
       return response.data
     } catch (err) {
       console.error(err)

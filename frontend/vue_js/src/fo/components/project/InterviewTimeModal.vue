@@ -141,8 +141,12 @@ props.interviewTimes.forEach(({ date, times }) => {
   selectedTimes.value[date] = [...times]
 })
 
-const leftMonth = ref({ month: 4, year: 2025 })
-const rightMonth = ref({ month: 5, year: 2025 })
+const today = new Date()
+const leftMonth = ref({ month: today.getMonth(), year: today.getFullYear() })
+const rightMonth = ref({
+  month: today.getMonth() === 11 ? 0 : today.getMonth() + 1,
+  year: today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear(),
+})
 
 console.log(selectedTimes.value)
 
