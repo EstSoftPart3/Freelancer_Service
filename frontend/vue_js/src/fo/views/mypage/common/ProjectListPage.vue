@@ -35,17 +35,18 @@ import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 
 import { ref, watch, onMounted } from 'vue'
-
 import { api } from '@/axios.js'
+import qs from 'qs'
+
 const filters = ref({
-  addressCodeSq: null,
-  projectDeveloperGradeCd: null,
-  educationCd: null,
-  jobRoleCd: null,
-  sortBy: '',
+  addressCodeSq: [],
+  projectDeveloperGradeCd: [],
+  educationCd: [],
+  jobRoleCd: [],
+  sortBy: 'project_start_dt',
   sortOrder: 'desc',
   searchKeyword: '',
-  searchType: '제목',
+  searchType: '전체',
   size: 5,
   page: 1,
 })
@@ -56,6 +57,7 @@ const projects = ref([])
 
 onMounted(async () => {
   fetchProjects()
+  console.log('fetchProjects')
 })
 
 watch(currentPage, (newPage) => {
@@ -66,7 +68,8 @@ watch(currentPage, (newPage) => {
 const fetchProjects = async () => {
   try {
     const params = { ...filters.value }
-    const response = await api.$get('/projects', { params })
+    const queryString = qs.stringify(params, { arrayFormat: 'repeat' })
+    const response = await api.$get(`/projects?${queryString}`)
     projects.value = response.output.projects
 
     const totalCount = response.output.totalCount ?? 0
