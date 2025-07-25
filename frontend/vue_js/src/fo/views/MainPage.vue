@@ -20,5 +20,12 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  margin: 0 100px;
+}
+
+@media (max-width: 768px) {
+  .hello {
+    margin: 0 30px;
+  }
 }
 </style>
