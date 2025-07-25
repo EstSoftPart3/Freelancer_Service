@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../stores/userStore'
+import { useAlertStore } from '../stores/alertStore'
 
 import MainPage from '../views/MainPage.vue'
 import TestPage from '../views/TestPage.vue'
@@ -244,6 +245,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
+  const alertStore = useAlertStore()
 
   const publicPages = [
     'Login',
@@ -277,6 +279,7 @@ router.beforeEach((to, from, next) => {
 
   // 로그인 안 된 상태에서 로그인 필요 페이지 접근 시 로그인 페이지로 리다이렉트
   if (!userStore.isLoggedIn && authRequiredPages.includes(to.name)) {
+    alertStore.show('로그인이 필요한 서비스입니다.', 'danger')
     return next({ name: 'Login' })
   }
 
@@ -285,6 +288,7 @@ router.beforeEach((to, from, next) => {
     (userStore.getUserType === 'PERSONAL' || userStore.getUserType === '') &&
     companyRolePages.includes(to.name)
   ) {
+    alertStore.show('기업 회원만 접근 가능합니다.', 'danger')
     return next({ name: 'Main' })
   }
 
@@ -293,7 +297,17 @@ router.beforeEach((to, from, next) => {
     (userStore.getUserType === 'COMPANY' || userStore.getUserType === '') &&
     userRolePages.includes(to.name)
   ) {
+    alertStore.show('개인 회원만 접근 가능합니다.', 'danger')
     return next({ name: 'Main' })
+  }
+
+  // 비로그인 유저가 권한 필요한 페이지 접근 시
+  if (
+    !userStore.isLoggedIn &&
+    (userRolePages.includes(to.name) || companyRolePages.includes(to.name))
+  ) {
+    alertStore.show('로그인이 필요한 서비스입니다.', 'danger')
+    return next({ name: 'Login' })
   }
 
   next()

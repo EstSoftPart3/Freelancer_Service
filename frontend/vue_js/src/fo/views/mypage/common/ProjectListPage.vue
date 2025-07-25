@@ -11,7 +11,10 @@
         <button class="btn btn-rounded btn-primary me-2" @click="fetchProjects">
           검색
         </button>
-        <a href="/mypage/projectPostPage" class="btn btn-rounded btn-light"
+        <a
+          v-if="userStore.userTypeCd === 'COMPANY'"
+          href="/mypage/projectPostPage"
+          class="btn btn-rounded btn-light"
           >등록하기</a
         >
       </div>
@@ -33,10 +36,13 @@
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
+import { useUserStore } from '@/fo/stores/userStore'
 
 import { ref, watch, onMounted } from 'vue'
 import { api } from '@/axios.js'
 import qs from 'qs'
+
+const userStore = useUserStore()
 
 const filters = ref({
   addressCodeSq: [],
