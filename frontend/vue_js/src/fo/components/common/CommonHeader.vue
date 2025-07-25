@@ -1,6 +1,7 @@
 <template>
   <header
     id="header"
+    ref="headerRef"
     class="header-effect-shrink header-spacing"
     data-plugin-options='{"stickyEnabled": true}'
   >
@@ -13,8 +14,8 @@
     <!-- 로그인 상태 -->
     <div v-if="isLoggedIn" class="header-body border-0">
       <div class="header-container container">
-        <div class="header-row">
-          <div class="header-left d-flex align-items-center order-0 order-lg-0">
+        <div class="header-row justify-content-between">
+          <div class="header-left d-flex align-items-center">
             <router-link
               to="/"
               class="text-primary fs-3 text-decoration-none home"
@@ -23,111 +24,112 @@
               Service
             </router-link>
           </div>
-          <div
-            class="header-nav header-nav-line header-nav-top-line header-nav-top-line-with-border order-2 order-lg-1"
-          >
+          <div class="d-flex align-items-center">
             <div
-              class="header-nav-main header-nav-main-square header-nav-main-effect-2 header-nav-main-sub-effect-1"
+              class="header-nav header-nav-line header-nav-top-line header-nav-top-line-with-border order-2 order-lg-1"
             >
-              <nav class="collapse">
-                <ul class="nav nav-pills" id="mainNav">
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isAffiliationActive,
-                        'current-page-active': true,
-                      }"
-                      to="/affiliation"
-                    >
-                      소속
-                      <i class="fas fa-chevron-down"></i
-                    ></router-link>
-                  </li>
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isProjectActive,
-                        'current-page-active': true,
-                      }"
-                      to="/projectListPage"
-                    >
-                      프로젝트
-                      <i class="fas fa-chevron-down"></i
-                    ></router-link>
-                  </li>
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isCommunityActive,
-                        'current-page-active': true,
-                      }"
-                      to="/board"
-                    >
-                      커뮤니티
-                      <i class="fas fa-chevron-down"></i
-                    ></router-link>
-                    <ul class="dropdown-menu">
-                      <li>
-                        <router-link class="dropdown-item" to="/board"
-                          >일반 게시판
-                        </router-link>
-                      </li>
-                      <li>
-                        <router-link class="dropdown-item" to="/qna"
-                          >Q&A 게시판
-                        </router-link>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </nav>
+              <div
+                class="header-nav-main header-nav-main-square header-nav-main-effect-2 header-nav-main-sub-effect-1"
+              >
+                <nav class="collapse">
+                  <ul class="nav nav-pills" id="mainNav">
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isAffiliationActive,
+                          'current-page-active': true,
+                        }"
+                        to="/affiliation"
+                      >
+                        소속
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/projectListPage"
+                      >
+                        프로젝트
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isCommunityActive,
+                          'current-page-active': true,
+                        }"
+                        to="/board"
+                      >
+                        커뮤니티
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                      <ul class="dropdown-menu">
+                        <li>
+                          <router-link class="dropdown-item" to="/board"
+                            >일반 게시판
+                          </router-link>
+                        </li>
+                        <li>
+                          <router-link class="dropdown-item" to="/qna"
+                            >Q&A 게시판
+                          </router-link>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              <button
+                class="btn header-btn-collapse-nav"
+                data-bs-toggle="collapse"
+                data-bs-target=".header-nav-main nav"
+              >
+                <i class="fas fa-bars"></i>
+              </button>
             </div>
-            <button
-              class="btn header-btn-collapse-nav"
-              data-bs-toggle="collapse"
-              data-bs-target=".header-nav-main nav"
-            >
-              <i class="fas fa-bars"></i>
-            </button>
-          </div>
-          <div
-            class="header-nav-features header-nav-features-no-border header-nav-features-lg-show-border order-1 order-lg-2"
-          >
             <div
-              class="header-nav-feature d-inline-flex gap-2 align-items-center"
+              class="header-nav-features header-nav-features-no-border header-nav-features-lg-show-border order-1 order-lg-2"
             >
-              <!-- 알림 드롭다운 -->
-              <div class="dropdown">
-                <a
-                  href="#"
-                  role="button"
-                  class="btn btn-light d-flex justify-content-center align-items-center position-relative dropdown-toggle no-caret"
-                  id="notificationDropdown"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                  style="width: 36px; height: 36px; border-radius: 50%"
-                >
-                  <i class="bi bi-bell fs-5"></i>
-
-                  <!-- 알림 배지 -->
-                  <span
-                    class="position-absolute border border-light rounded-circle"
-                    style="
-                      top: -1px;
-                      right: -1px;
-                      width: 10px;
-                      height: 10px;
-                      background-color: var(--bs-primary);
-                      opacity: 0.85;
-                    "
+              <div
+                class="header-nav-feature d-inline-flex gap-2 align-items-center"
+              >
+                <!-- 알림 드롭다운 -->
+                <div class="dropdown">
+                  <a
+                    href="#"
+                    role="button"
+                    class="btn btn-light d-flex justify-content-center align-items-center position-relative dropdown-toggle no-caret"
+                    id="notificationDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    style="width: 36px; height: 36px; border-radius: 50%"
                   >
-                  </span>
-                </a>
+                    <i class="bi bi-bell fs-5"></i>
 
-                <!-- <div
+                    <!-- 알림 배지 -->
+                    <span
+                      class="position-absolute border border-light rounded-circle"
+                      style="
+                        top: -1px;
+                        right: -1px;
+                        width: 10px;
+                        height: 10px;
+                        background-color: var(--bs-primary);
+                        opacity: 0.85;
+                      "
+                    >
+                    </span>
+                  </a>
+
+                  <!-- <div
                   class="dropdown-menu dropdown-menu-end p-2 shadow"
                   aria-labelledby="notificationDropdown"
                   style="min-width: 250px; max-height: 300px; overflow-y: auto"
@@ -149,52 +151,53 @@
                     >전체 보기</a
                   >
                 </div> -->
-                <div
-                  class="dropdown-menu dropdown-menu-end p-2 shadow"
-                  aria-labelledby="notificationDropdown"
-                  style="min-width: 250px"
-                >
-                  <div class="dropdown-item small text-muted">
-                    🔧 준비 중입니다.
+                  <div
+                    class="dropdown-menu dropdown-menu-end p-2 shadow"
+                    aria-labelledby="notificationDropdown"
+                    style="min-width: 250px"
+                  >
+                    <div class="dropdown-item small text-muted">
+                      🔧 준비 중입니다.
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- 유저 아이콘 + 이름 (버튼 정렬) -->
-              <!-- 유저 아이콘 + 이름 (드롭다운) -->
-              <div class="dropdown">
-                <a
-                  href="#"
-                  role="button"
-                  class="btn btn-light d-flex align-items-center gap-2 px-3 py-1 dropdown-toggle"
-                  style="height: 36px; border-radius: 50px"
-                  id="userDropdown"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  <i class="bi bi-person-circle fs-5"></i>
-                  <span>{{ userStore.userNm }}</span>
-                </a>
+                <!-- 유저 아이콘 + 이름 (버튼 정렬) -->
+                <!-- 유저 아이콘 + 이름 (드롭다운) -->
+                <div class="dropdown">
+                  <a
+                    href="#"
+                    role="button"
+                    class="btn btn-light d-flex align-items-center gap-2 px-3 py-1 dropdown-toggle"
+                    style="height: 36px; border-radius: 50px"
+                    id="userDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span>{{ userStore.userNm }}</span>
+                  </a>
 
-                <ul
-                  class="dropdown-menu dropdown-menu-end mt-2"
-                  aria-labelledby="userDropdown"
-                  style="min-width: 150px"
-                >
-                  <li>
-                    <router-link class="dropdown-item" to="/mypage"
-                      >마이페이지</router-link
-                    >
-                  </li>
-                  <li>
-                    <hr class="dropdown-divider" />
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="logout"
-                      >로그아웃</a
-                    >
-                  </li>
-                </ul>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end mt-2"
+                    aria-labelledby="userDropdown"
+                    style="min-width: 150px"
+                  >
+                    <li>
+                      <router-link class="dropdown-item" to="/mypage"
+                        >마이페이지</router-link
+                      >
+                    </li>
+                    <li>
+                      <hr class="dropdown-divider" />
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#" @click.prevent="logout"
+                        >로그아웃</a
+                      >
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -204,8 +207,8 @@
     <!-- 비로그인 상태 -->
     <div v-else class="header-body border-0">
       <div class="header-container container">
-        <div class="header-row">
-          <div class="header-left d-flex align-items-center order-0 order-lg-0">
+        <div class="header-row justify-content-between">
+          <div class="header-left d-flex align-items-center">
             <router-link
               to="/"
               class="text-primary fs-3 text-decoration-none home"
@@ -215,86 +218,88 @@
             </router-link>
           </div>
 
-          <!-- 네비게이션 메뉴 -->
-          <div
-            class="header-nav header-nav-line header-nav-top-line header-nav-top-line-with-border order-2 order-lg-1"
-          >
+          <div class="d-flex align-items-center">
+            <!-- 네비게이션 메뉴 -->
             <div
-              class="header-nav-main header-nav-main-square header-nav-main-effect-2 header-nav-main-sub-effect-1"
+              class="header-nav header-nav-line header-nav-top-line header-nav-top-line-with-border order-2 order-lg-1"
             >
-              <nav class="collapse">
-                <ul class="nav nav-pills" id="mainNav">
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isAffiliationActive,
-                        'current-page-active': true,
-                      }"
-                      to="/affiliation"
-                    >
-                      소속
-                      <i class="fas fa-chevron-down"></i>
-                    </router-link>
-                  </li>
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isProjectActive,
-                        'current-page-active': true,
-                      }"
-                      to="/projectListPage"
-                    >
-                      프로젝트
-                      <i class="fas fa-chevron-down"></i>
-                    </router-link>
-                  </li>
-                  <li class="dropdown">
-                    <router-link
-                      class="dropdown-item dropdown-toggle"
-                      :class="{
-                        active: isCommunityActive,
-                        'current-page-active': true,
-                      }"
-                      to="/board"
-                    >
-                      커뮤니티
-                      <i class="fas fa-chevron-down"></i>
-                    </router-link>
-                    <ul class="dropdown-menu">
-                      <li>
-                        <router-link class="dropdown-item" to="/board"
-                          >일반 게시판</router-link
-                        >
-                      </li>
-                      <li>
-                        <router-link class="dropdown-item" to="/qna"
-                          >Q&A 게시판</router-link
-                        >
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-            <button
-              class="btn header-btn-collapse-nav"
-              data-bs-toggle="collapse"
-              data-bs-target=".header-nav-main nav"
-            >
-              <i class="fas fa-bars"></i>
-            </button>
-          </div>
-
-          <!-- 로그인 링크 -->
-          <div
-            class="header-nav-features header-nav-features-no-border header-nav-features-lg-show-border order-1 order-lg-2"
-          >
-            <div class="header-nav-feature d-inline-flex">
-              <router-link to="/login" class="text-muted text-decoration-none"
-                >로그인</router-link
+              <div
+                class="header-nav-main header-nav-main-square header-nav-main-effect-2 header-nav-main-sub-effect-1"
               >
+                <nav class="collapse">
+                  <ul class="nav nav-pills" id="mainNav">
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isAffiliationActive,
+                          'current-page-active': true,
+                        }"
+                        to="/affiliation"
+                      >
+                        소속
+                        <i class="fas fa-chevron-down"></i>
+                      </router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/projectListPage"
+                      >
+                        프로젝트
+                        <i class="fas fa-chevron-down"></i>
+                      </router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isCommunityActive,
+                          'current-page-active': true,
+                        }"
+                        to="/board"
+                      >
+                        커뮤니티
+                        <i class="fas fa-chevron-down"></i>
+                      </router-link>
+                      <ul class="dropdown-menu">
+                        <li>
+                          <router-link class="dropdown-item" to="/board"
+                            >일반 게시판</router-link
+                          >
+                        </li>
+                        <li>
+                          <router-link class="dropdown-item" to="/qna"
+                            >Q&A 게시판</router-link
+                          >
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              <button
+                class="btn header-btn-collapse-nav"
+                data-bs-toggle="collapse"
+                data-bs-target=".header-nav-main nav"
+              >
+                <i class="fas fa-bars"></i>
+              </button>
+            </div>
+
+            <!-- 로그인 링크 -->
+            <div
+              class="header-nav-features header-nav-features-no-border header-nav-features-lg-show-border order-1 order-lg-2"
+            >
+              <div class="header-nav-feature d-inline-flex">
+                <router-link to="/login" class="text-muted text-decoration-none"
+                  >로그인</router-link
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -304,7 +309,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import router from '@/fo/router'
@@ -315,6 +320,23 @@ const alertStore = useAlertStore()
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const route = useRoute()
+const headerRef = ref(null)
+
+const closeMenu = () => {
+  // For both logged-in and logged-out states, find the button and nav
+  const collapseButton = document.querySelector('.header-btn-collapse-nav')
+  const navCollapse = document.querySelector('.header-nav-main nav.collapse')
+
+  if (navCollapse && collapseButton && navCollapse.classList.contains('show')) {
+    collapseButton.click()
+  }
+}
+
+const handleClickOutside = (event) => {
+  if (headerRef.value && !headerRef.value.contains(event.target)) {
+    closeMenu()
+  }
+}
 
 // 현재 경로
 const currentPath = computed(() => route.path)
@@ -353,22 +375,23 @@ const logout = async () => {
   router.push('/')
 }
 
-const handleScroll = () => {
-  const header = document.querySelector('.header-body')
-  if (window.scrollY > 50) {
-    header.classList.add('shrink')
-  } else {
-    header.classList.remove('shrink')
-  }
-}
-
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
+  document.addEventListener('mousedown', handleClickOutside)
+
+  // Add click listeners to nav links to close the menu
+  const navs = document.querySelectorAll('.header-nav-main nav.collapse')
+  navs.forEach((nav) => {
+    nav.addEventListener('click', (event) => {
+      if (event.target.closest('a.dropdown-item')) {
+        closeMenu()
+      }
+    })
+  })
   // console.log('currentPath', currentPath.value)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('mousedown', handleClickOutside)
 })
 </script>
 
@@ -386,13 +409,10 @@ onBeforeUnmount(() => {
   width: 100%;
   background: white;
   height: 100px; /* 초기 높이 설정 */
-  transition:
-    height 0.3s ease,
-    box-shadow 0.3s ease; /* transition을 height와 box-shadow에만 적용 */
+  transition: box-shadow 0.3s ease; /* transition을 box-shadow에만 적용 */
 }
 
 .header-body.shrink {
-  height: 70px; /* 스크롤 시 헤더 크기 줄어듬 */
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 스크롤 시 그림자 효과 */
 }
 
