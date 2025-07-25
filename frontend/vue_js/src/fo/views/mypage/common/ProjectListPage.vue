@@ -87,9 +87,7 @@ const fetchProjects = async () => {
 
 const updateFilters = (updated) => {
   filters.value = { ...filters.value, ...updated }
-  console.log(filters)
   currentPage.value = 1 // 필터 바꾸면 1페이지부터
-  fetchProjects()
 }
 </script>
 <style lang=""></style>
