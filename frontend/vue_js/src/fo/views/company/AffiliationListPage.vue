@@ -10,7 +10,55 @@
       <div
         class="row align-items-center justify-content-between py-3 border-bottom mb-3"
       >
-        <div class="col-md-6">
+        <!-- 왼쪽: 정렬, 지역 필터 -->
+        <div class="col-md-auto">
+          <div class="d-flex">
+            <select
+              class="form-select w-auto me-2"
+              v-model="sortType"
+              @change="getAfltnList"
+            >
+              <option selected value="latest">최신순</option>
+              <option value="oldest">오래된순</option>
+              <option value="view">조회순</option>
+              <option value="scrap">스크랩순</option>
+              <option value="applicant">지원자순</option>
+            </select>
+            <!-- 부모 선택 -->
+            <select
+              v-model="selectedParent"
+              @change="onParentChange"
+              class="form-select w-auto me-2"
+            >
+              <option selected value="all">시/도 선택</option>
+              <option
+                v-for="parent in addressCdList"
+                :key="parent.areaCodeSq"
+                :value="parent.areaCodeSq"
+              >
+                {{ removeAllTxt(parent.areaSigungu) }}
+              </option>
+            </select>
+
+            <!-- 자식 선택 -->
+            <select
+              v-model="addressCd"
+              @change="changeFilter"
+              class="form-select w-auto"
+            >
+              <option :value="selectedParent">전체</option>
+              <option
+                v-for="address in childrenAddressCdList.children"
+                :key="address.areaCodeSq"
+                :value="address.areaCodeSq"
+              >
+                {{ address.areaSigungu }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <!-- 오른쪽: 검색 -->
+        <div class="col-md-auto mt-3 mt-md-0">
           <form class="d-flex" @submit.prevent="changeFilter">
             <select v-model="searchType" class="form-select w-auto me-2">
               <option selected value="all">전체</option>
@@ -27,50 +75,6 @@
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
-        </div>
-        <div class="col text-end">
-          <!-- 부모 선택 -->
-          <select
-            v-model="selectedParent"
-            @change="onParentChange"
-            class="form-select w-auto d-inline-block"
-          >
-            <option selected value="all">시/도 선택</option>
-            <option
-              v-for="parent in addressCdList"
-              :key="parent.areaCodeSq"
-              :value="parent.areaCodeSq"
-            >
-              {{ removeAllTxt(parent.areaSigungu) }}
-            </option>
-          </select>
-
-          <!-- 자식 선택 -->
-          <select
-            v-model="addressCd"
-            @change="changeFilter"
-            class="form-select w-auto d-inline-block"
-          >
-            <option :value="selectedParent">전체</option>
-            <option
-              v-for="address in childrenAddressCdList.children"
-              :key="address.areaCodeSq"
-              :value="address.areaCodeSq"
-            >
-              {{ address.areaSigungu }}
-            </option>
-          </select>
-          <select
-            class="form-select w-auto d-inline-block"
-            v-model="sortType"
-            @change="getAfltnList"
-          >
-            <option selected value="latest">최신순</option>
-            <option value="oldest">오래된순</option>
-            <option value="view">조회순</option>
-            <option value="scrap">스크랩순</option>
-            <option value="applicant">지원자순</option>
-          </select>
         </div>
       </div>
       <div class="row">
