@@ -8,7 +8,7 @@
       <!-- Region Dropdown -->
       <div class="dropdown">
         <button
-          class="btn btn-outline-primary dropdown-toggle"
+          class="btn btn-outline btn-primary dropdown-toggle"
           type="button"
           data-bs-toggle="dropdown"
         >
