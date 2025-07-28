@@ -10,8 +10,35 @@
       <div
         class="row align-items-center justify-content-between py-3 border-bottom mb-3"
       >
-        <div class="col-md-6">
-          <form class="d-flex" @submit.prevent="changeFilter">
+        <div class="col-md-6 mb-3 mb-md-0">
+          <select
+            class="form-select w-auto d-inline-block me-2"
+            v-model="sortType"
+            @change="getBoardList"
+          >
+            <option selected value="latest">최신순</option>
+            <option value="oldest">오래된순</option>
+            <option value="view">조회순</option>
+            <option value="comment">댓글순</option>
+            <option value="recommend">추천순</option>
+          </select>
+          <select
+            v-model="boardAdoptStatusCd"
+            @change="changeFilter"
+            class="form-select w-auto d-inline-block"
+          >
+            <option selected value="all">상태</option>
+            <option value="1501">진행중</option>
+            <option value="1502">채택완료</option>
+            <option value="1503">자체해결</option>
+            <option value="1504">미해결</option>
+          </select>
+        </div>
+        <div class="col-md-6 text-end">
+          <form
+            class="d-flex justify-content-md-end"
+            @submit.prevent="changeFilter"
+          >
             <select v-model="searchType" class="form-select w-auto me-2">
               <option selected value="all">전체</option>
               <option value="title">제목</option>
@@ -26,30 +53,6 @@
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
-        </div>
-        <div class="col text-end">
-          <select
-            v-model="boardAdoptStatusCd"
-            @change="changeFilter"
-            class="form-select w-auto d-inline-block me-2"
-          >
-            <option selected value="all">상태</option>
-            <option value="1501">진행중</option>
-            <option value="1502">채택완료</option>
-            <option value="1503">자체해결</option>
-            <option value="1504">미해결</option>
-          </select>
-          <select
-            class="form-select w-auto d-inline-block"
-            v-model="sortType"
-            @change="getBoardList"
-          >
-            <option selected value="latest">최신순</option>
-            <option value="oldest">오래된순</option>
-            <option value="view">조회순</option>
-            <option value="comment">댓글순</option>
-            <option value="recommend">추천순</option>
-          </select>
         </div>
       </div>
       <!-- 게시판 리스트 -->

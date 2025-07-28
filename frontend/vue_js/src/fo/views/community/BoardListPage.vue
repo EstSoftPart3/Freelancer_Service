@@ -10,8 +10,24 @@
       <div
         class="row align-items-center justify-content-between py-3 border-bottom mb-3"
       >
-        <div class="col-md-6">
-          <form class="d-flex" @submit.prevent="getBoardList">
+        <div class="col-md-6 mb-3 mb-md-0">
+          <select
+            class="form-select w-auto d-inline-block"
+            v-model="sortType"
+            @change="getBoardList"
+          >
+            <option selected value="latest">최신순</option>
+            <option value="oldest">오래된순</option>
+            <option value="view">조회순</option>
+            <option value="comment">댓글순</option>
+            <option value="recommend">추천순</option>
+          </select>
+        </div>
+        <div class="col-md-6 text-end">
+          <form
+            class="d-flex justify-content-md-end"
+            @submit.prevent="getBoardList"
+          >
             <select v-model="searchType" class="form-select w-auto me-2">
               <option selected value="all">전체</option>
               <option value="title">제목</option>
@@ -26,19 +42,6 @@
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
-        </div>
-        <div class="col-md-6 text-end">
-          <select
-            class="form-select w-auto d-inline-block"
-            v-model="sortType"
-            @change="getBoardList"
-          >
-            <option selected value="latest">최신순</option>
-            <option value="oldest">오래된순</option>
-            <option value="view">조회순</option>
-            <option value="comment">댓글순</option>
-            <option value="recommend">추천순</option>
-          </select>
         </div>
       </div>
       <!-- 게시판 리스트 -->
