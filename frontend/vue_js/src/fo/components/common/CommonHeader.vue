@@ -59,18 +59,23 @@
                         <i class="fas fa-chevron-down"></i
                       ></router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
+                    <li
+                      class="dropdown"
+                      :class="{ open: isCommunityDropdownOpen }"
+                    >
+                      <a
+                        href="#"
                         class="dropdown-item dropdown-toggle"
                         :class="{
                           active: isCommunityActive,
                           'current-page-active': true,
                         }"
-                        to="/board"
+                        @click.prevent="toggleCommunityDropdown"
+                        data-community-toggle
                       >
                         커뮤니티
                         <i class="fas fa-chevron-down"></i
-                      ></router-link>
+                      ></a>
                       <ul class="dropdown-menu">
                         <li>
                           <router-link class="dropdown-item" to="/board"
@@ -254,18 +259,23 @@
                         <i class="fas fa-chevron-down"></i>
                       </router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
+                    <li
+                      class="dropdown"
+                      :class="{ open: isCommunityDropdownOpen }"
+                    >
+                      <a
+                        href="#"
                         class="dropdown-item dropdown-toggle"
                         :class="{
                           active: isCommunityActive,
                           'current-page-active': true,
                         }"
-                        to="/board"
+                        @click.prevent="toggleCommunityDropdown"
+                        data-community-toggle
                       >
                         커뮤니티
                         <i class="fas fa-chevron-down"></i>
-                      </router-link>
+                      </a>
                       <ul class="dropdown-menu">
                         <li>
                           <router-link class="dropdown-item" to="/board"
@@ -352,6 +362,13 @@ const isCommunityActive = computed(() =>
   ['/board', '/qna'].some((path) => currentPath.value.startsWith(path)),
 )
 
+// Mobile dropdown state
+const isCommunityDropdownOpen = ref(false)
+
+const toggleCommunityDropdown = () => {
+  isCommunityDropdownOpen.value = !isCommunityDropdownOpen.value
+}
+
 const logout = async () => {
   await api.$post('/logout', {}) // 서버 로그아웃 API 호출
 
@@ -382,8 +399,12 @@ onMounted(() => {
   const navs = document.querySelectorAll('.header-nav-main nav.collapse')
   navs.forEach((nav) => {
     nav.addEventListener('click', (event) => {
-      if (event.target.closest('a.dropdown-item')) {
+      const targetLink = event.target.closest('a')
+
+      // Close menu if a link is clicked, unless it's the community dropdown toggle
+      if (targetLink && !targetLink.hasAttribute('data-community-toggle')) {
         closeMenu()
+        isCommunityDropdownOpen.value = false // also close dropdown
       }
     })
   })
@@ -419,5 +440,36 @@ onBeforeUnmount(() => {
 /* dropdown-toggle 클래스의 화살표 제거 */
 #notificationDropdown::after {
   display: none !important;
+}
+
+/* Mobile Menu Dropdown Styles */
+@media (max-width: 991px) {
+  .header-nav-main nav .dropdown .dropdown-menu {
+    display: none;
+    /* position: static; */ /* Caused layout issues */
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding-left: 15px;
+  }
+
+  .header-nav-main nav .dropdown.open > .dropdown-menu {
+    display: block;
+  }
+
+  .header-nav-main nav .dropdown .dropdown-toggle::after {
+    content: '\f078'; /* FontAwesome down arrow */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    transition: transform 0.2s ease;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .header-nav-main nav .dropdown.open > .dropdown-toggle::after {
+    transform: translateY(-50%) rotate(180deg);
+  }
 }
 </style>
