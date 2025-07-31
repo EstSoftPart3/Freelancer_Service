@@ -19,6 +19,7 @@
             <router-link
               to="/"
               class="text-primary fs-3 text-decoration-none home"
+              @click="closeMenu"
             >
               Freelancer<br />
               Service
@@ -107,7 +108,7 @@
                 class="header-nav-feature d-inline-flex gap-2 align-items-center"
               >
                 <!-- 알림 드롭다운 -->
-                <div class="dropdown">
+                <div class="dropdown" ref="notificationDropdownRef">
                   <a
                     href="#"
                     role="button"
@@ -169,7 +170,7 @@
 
                 <!-- 유저 아이콘 + 이름 (버튼 정렬) -->
                 <!-- 유저 아이콘 + 이름 (드롭다운) -->
-                <div class="dropdown">
+                <div class="dropdown" ref="userDropdownRef">
                   <a
                     href="#"
                     role="button"
@@ -217,6 +218,7 @@
             <router-link
               to="/"
               class="text-primary fs-3 text-decoration-none home"
+              @click="closeMenu"
             >
               Freelancer<br />
               Service
@@ -331,14 +333,16 @@ const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const route = useRoute()
 const headerRef = ref(null)
+const notificationDropdownRef = ref(null)
+const userDropdownRef = ref(null)
 
 const closeMenu = () => {
-  // For both logged-in and logged-out states, find the button and nav
-  const collapseButton = document.querySelector('.header-btn-collapse-nav')
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
-
-  if (navCollapse && collapseButton && navCollapse.classList.contains('show')) {
-    collapseButton.click()
+  if (navCollapse && navCollapse.classList.contains('show')) {
+    const collapseInstance = window.bootstrap.Collapse.getInstance(navCollapse)
+    if (collapseInstance) {
+      collapseInstance.hide()
+    }
   }
 }
 
@@ -394,6 +398,15 @@ const logout = async () => {
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
+  if (notificationDropdownRef.value) {
+    notificationDropdownRef.value.addEventListener(
+      'show.bs.dropdown',
+      closeMenu,
+    )
+  }
+  if (userDropdownRef.value) {
+    userDropdownRef.value.addEventListener('show.bs.dropdown', closeMenu)
+  }
 })
 
 watch(currentPath, () => {
@@ -403,6 +416,15 @@ watch(currentPath, () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside)
+  if (notificationDropdownRef.value) {
+    notificationDropdownRef.value.removeEventListener(
+      'show.bs.dropdown',
+      closeMenu,
+    )
+  }
+  if (userDropdownRef.value) {
+    userDropdownRef.value.removeEventListener('show.bs.dropdown', closeMenu)
+  }
 })
 </script>
 
