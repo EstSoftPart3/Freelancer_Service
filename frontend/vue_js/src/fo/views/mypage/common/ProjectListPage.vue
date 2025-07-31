@@ -1,5 +1,10 @@
 <template>
   <div>
+    <CommonPageHeader
+      title=""
+      strongText="프로젝트 목록"
+      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '프로젝트' }]"
+    />
     <ProjectFilterBar
       :localFilters="['서울', '부산', '대구']"
       :careerFilters="['신입', '경력']"
@@ -37,6 +42,7 @@ import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 import { useUserStore } from '@/fo/stores/userStore'
+import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 
 import { ref, watch, onMounted } from 'vue'
 import { api } from '@/axios.js'
