@@ -8,9 +8,17 @@
     />
 
     <div class="container pt-3 pb-2">
+      <!-- Off-canvas menu button -->
+      <button
+        class="btn btn-primary d-lg-none mb-3"
+        @click="isOffcanvasOpen = true"
+      >
+        마이페이지 메뉴
+      </button>
+
       <div class="row pt-2">
-        <!-- Sidebar -->
-        <div class="col-lg-3 order-2 order-lg-1 mt-4 mt-lg-0">
+        <!-- Sidebar for desktop -->
+        <div class="col-lg-3 order-2 order-lg-1 mt-4 mt-lg-0 d-none d-lg-block">
           <MyPageSideBar />
         </div>
 
@@ -20,15 +28,28 @@
         </div>
       </div>
     </div>
+
+    <!-- Off-canvas Sidebar for mobile -->
+    <div
+      class="offcanvas-sidebar"
+      :class="{ open: isOffcanvasOpen }"
+      @click.self="isOffcanvasOpen = false"
+    >
+      <div class="offcanvas-content">
+        <button class="btn-close" @click="isOffcanvasOpen = false">X</button>
+        <MyPageSideBar @navigate="isOffcanvasOpen = false" />
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MyPageSideBar from '@/fo/components/mypage/MyPageSideBar.vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 
+const isOffcanvasOpen = ref(false)
 const route = useRoute()
 
 const headerInfo = computed(() => {
@@ -178,3 +199,46 @@ const headerInfo = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+.offcanvas-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  display: none;
+}
+
+.offcanvas-sidebar.open {
+  display: block;
+}
+
+.offcanvas-content {
+  position: fixed;
+  top: 0;
+  left: -300px; /* Start off-screen */
+  width: 300px;
+  height: 100%;
+  background-color: white;
+  padding: 20px;
+  transition: left 0.3s ease-in-out;
+  z-index: 1041;
+  overflow-y: auto;
+}
+
+.offcanvas-sidebar.open .offcanvas-content {
+  left: 0; /* Slide in */
+}
+
+.btn-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+}
+</style>

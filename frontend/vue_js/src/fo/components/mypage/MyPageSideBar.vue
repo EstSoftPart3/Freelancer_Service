@@ -8,12 +8,18 @@
           <span class="nav-link">소속 공고 관리</span>
           <ul>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/affiliationEdit"
+              <router-link
+                class="nav-link"
+                to="/mypage/affiliationEdit"
+                @click="handleNavigate"
                 >소속 정보 수정</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/affiliatedMembers"
+              <router-link
+                class="nav-link"
+                to="/mypage/affiliatedMembers"
+                @click="handleNavigate"
                 >소속 인원 목록</router-link
               >
             </li>
@@ -21,6 +27,7 @@
               <router-link
                 class="nav-link"
                 to="/mypage/affiliationApplicantList"
+                @click="handleNavigate"
                 >지원자 현황</router-link
               >
             </li>
@@ -30,17 +37,26 @@
           <span class="nav-link">프로젝트 관리</span>
           <ul>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/affiliationProjectList"
+              <router-link
+                class="nav-link"
+                to="/mypage/affiliationProjectList"
+                @click="handleNavigate"
                 >프로젝트 공고 목록</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/appliedProjects"
+              <router-link
+                class="nav-link"
+                to="/mypage/appliedProjects"
+                @click="handleNavigate"
                 >지원 내역</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/projectScrap"
+              <router-link
+                class="nav-link"
+                to="/mypage/projectScrap"
+                @click="handleNavigate"
                 >스크랩 내역</router-link
               >
             </li>
@@ -58,12 +74,16 @@
                     $route.path === '/mypage' ||
                     $route.path === '/mypage/informationEdit',
                 }"
+                @click="handleNavigate"
               >
                 회원 정보 수정
               </router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/withdraw"
+              <router-link
+                class="nav-link"
+                to="/mypage/withdraw"
+                @click="handleNavigate"
                 >회원 탈퇴</router-link
               >
             </li>
@@ -80,12 +100,18 @@
           <span class="nav-link">이력서 관리</span>
           <ul>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/resumeForm"
+              <router-link
+                class="nav-link"
+                to="/mypage/resumeForm"
+                @click="handleNavigate"
                 >이력서 등록</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/resumeList"
+              <router-link
+                class="nav-link"
+                to="/mypage/resumeList"
+                @click="handleNavigate"
                 >이력서 목록</router-link
               >
             </li>
@@ -98,11 +124,15 @@
               <router-link
                 class="nav-link"
                 to="/mypage/affiliatedJobApplications"
+                @click="handleNavigate"
                 >지원 내역</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/affiliatedScrap"
+              <router-link
+                class="nav-link"
+                to="/mypage/affiliatedScrap"
+                @click="handleNavigate"
                 >스크랩 내역</router-link
               >
             </li>
@@ -112,12 +142,18 @@
           <span class="nav-link">프로젝트 관리</span>
           <ul>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/appliedProjects"
+              <router-link
+                class="nav-link"
+                to="/mypage/appliedProjects"
+                @click="handleNavigate"
                 >지원 내역</router-link
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/projectScrap"
+              <router-link
+                class="nav-link"
+                to="/mypage/projectScrap"
+                @click="handleNavigate"
                 >스크랩 내역</router-link
               >
             </li>
@@ -135,12 +171,16 @@
                     $route.path === '/mypage' ||
                     $route.path === '/mypage/informationEdit',
                 }"
+                @click="handleNavigate"
               >
                 회원 정보 수정
               </router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/mypage/withdraw"
+              <router-link
+                class="nav-link"
+                to="/mypage/withdraw"
+                @click="handleNavigate"
                 >회원 탈퇴</router-link
               >
             </li>
@@ -153,8 +193,14 @@
 
 <script setup>
 import { useUserStore } from '@/fo/stores/userStore'
+import { defineEmits } from 'vue'
 
+const emit = defineEmits(['navigate'])
 const userStore = useUserStore()
+
+const handleNavigate = () => {
+  emit('navigate')
+}
 </script>
 
 <style scoped>
