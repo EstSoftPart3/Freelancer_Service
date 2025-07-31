@@ -8,8 +8,8 @@
           <th class="th-wm">작성자</th>
           <th class="th-wl">등록일</th>
           <th class="th-ws">조회</th>
-          <th class="th-ws">댓글</th>
-          <th class="th-ws">추천</th>
+          <th class="th-ws d-none d-md-table-cell">댓글</th>
+          <th class="th-ws d-none d-md-table-cell">추천</th>
           <th v-if="isQna" class="th-wl">상태</th>
         </tr>
       </thead>
@@ -34,8 +34,8 @@
           <td>{{ board.userNm }}</td>
           <td>{{ formatTime(board.createdAt) }}</td>
           <td>{{ board.viewCnt }}</td>
-          <td>{{ board.commentCnt }}</td>
-          <td>{{ board.recommendCnt }}</td>
+          <td class="d-none d-md-table-cell">{{ board.commentCnt }}</td>
+          <td class="d-none d-md-table-cell">{{ board.recommendCnt }}</td>
           <td v-if="isQna">
             <span
               v-if="board.boardAdoptStatusCd == 1501"
@@ -62,7 +62,7 @@
       </tbody>
       <tbody v-else>
         <tr>
-          <td class="text-start px-3 text-center" :colspan="isQna ? 7 : 6">
+          <td class="text-start px-3 text-center" :colspan="isQna ? 8 : 7">
             게시글이 없습니다.
           </td>
         </tr>
@@ -84,7 +84,7 @@ const isQna = computed(() => props.isQna)
 
 const formatTime = (createdAt) => {
   const date = new Date(createdAt)
-  let year = date.getFullYear()
+  let year = date.getFullYear().toString().slice(-2)
   let month = date.getMonth() + 1
   let day = date.getDate()
   if (month < 10) month = '0' + month
