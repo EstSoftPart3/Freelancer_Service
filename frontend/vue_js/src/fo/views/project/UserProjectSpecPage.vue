@@ -6,106 +6,8 @@
   />
   <div class="container py-5 detail-list">
     <div class="row pt-4 mt-2 mb-5">
-      <!-- 좌측: 지원 자격 (스크롤 없애기) -->
-      <div
-        class="col-md-8 mb-4 mb-md-0"
-        style="
-          border: 1px solid #dee2e6;
-          border-radius: 10px;
-          padding: 24px 32px;
-          background-color: #ffffff;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-        "
-      >
-        <h2 class="text-color-dark font-weight-normal text-5 mb-2">
-          지원 자격 / 근무 조건
-        </h2>
-
-        <ul>
-          <li>
-            <strong class="text-color-primary">필수 기술 </strong>
-            <ul class="ps-4 mb-2">
-              <li
-                v-for="skillGroup in project.projectRequiredSkills"
-                :key="skillGroup.parentSkillTagNm"
-              >
-                <strong class="text-dark">{{
-                  skillGroup.parentSkillTagNm
-                }}</strong>
-                <ul class="child-skill-list mt-1 ps-3">
-                  <li
-                    v-for="skill in skillGroup.childSkillTagNms"
-                    :key="skill"
-                    class="d-flex align-items-center gap-2 mb-1"
-                  >
-                    <img
-                      :src="getSkillIconUrl(skill)"
-                      :alt="skill"
-                      width="24"
-                      height="24"
-                      class="me-1"
-                    />
-                    <span>{{ skill }}</span>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-
-          <li>
-            <strong class="text-color-primary">우대 기술</strong>
-            <ul class="ps-4 mb-2">
-              <li
-                v-for="skillGroup in project.projectPreferredSkills"
-                :key="skillGroup.parentSkillTagNm"
-                class="mb-2"
-              >
-                <strong class="text-dark">{{
-                  skillGroup.parentSkillTagNm
-                }}</strong>
-                <ul class="child-skill-list mt-1 ps-3">
-                  <li
-                    v-for="skill in skillGroup.childSkillTagNms"
-                    :key="skill"
-                    class="d-flex align-items-center gap-2 mb-1"
-                  >
-                    <img
-                      :src="getSkillIconUrl(skill)"
-                      :alt="skill"
-                      width="24"
-                      height="24"
-                      class="me-1"
-                    />
-                    <span>{{ skill }}</span>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-          <!-- 우대 사항 -->
-          <li>
-            <strong class="text-color-primary">우대 사항 :</strong>
-            {{ project.projectPreferredEtc }}
-          </li>
-
-          <!-- 근무 조건 -->
-          <li>
-            <strong class="text-color-primary">근무 형태 :</strong>
-            <span>{{ project.projectWorkType?.join(' / ') }}</span>
-          </li>
-          <li>
-            <strong class="text-color-primary">근무 지역 :</strong>
-            {{ project.projectAddress }}
-          </li>
-          <li>
-            <strong class="text-color-primary">단가 :</strong>
-            {{ project.projectSalary }}
-          </li>
-        </ul>
-      </div>
-
       <!-- 우측: 회사 정보 (고정된 카드) -->
-      <div class="col-md-4" style="position: sticky; top: 100px">
+      <div class="col-md-4 order-md-2" style="position: sticky; top: 100px">
         <div class="card">
           <div class="card-body">
             <div class="d-flex align-items-center mb-3">
@@ -222,6 +124,104 @@
             >
           </div>
         </div>
+      </div>
+
+      <!-- 좌측: 지원 자격 (스크롤 없애기) -->
+      <div
+        class="col-md-8 mb-4 mb-md-0 order-md-1"
+        style="
+          border: 1px solid #dee2e6;
+          border-radius: 10px;
+          padding: 24px 32px;
+          background-color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        "
+      >
+        <h2 class="text-color-dark font-weight-normal text-5 mb-2">
+          지원 자격 / 근무 조건
+        </h2>
+
+        <ul>
+          <li>
+            <strong class="text-color-primary">필수 기술 </strong>
+            <ul class="ps-4 mb-2">
+              <li
+                v-for="skillGroup in project.projectRequiredSkills"
+                :key="skillGroup.parentSkillTagNm"
+              >
+                <strong class="text-dark">{{
+                  skillGroup.parentSkillTagNm
+                }}</strong>
+                <ul class="child-skill-list mt-1 ps-3">
+                  <li
+                    v-for="skill in skillGroup.childSkillTagNms"
+                    :key="skill"
+                    class="d-flex align-items-center gap-2 mb-1"
+                  >
+                    <img
+                      :src="getSkillIconUrl(skill)"
+                      :alt="skill"
+                      width="24"
+                      height="24"
+                      class="me-1"
+                    />
+                    <span>{{ skill }}</span>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <strong class="text-color-primary">우대 기술</strong>
+            <ul class="ps-4 mb-2">
+              <li
+                v-for="skillGroup in project.projectPreferredSkills"
+                :key="skillGroup.parentSkillTagNm"
+                class="mb-2"
+              >
+                <strong class="text-dark">{{
+                  skillGroup.parentSkillTagNm
+                }}</strong>
+                <ul class="child-skill-list mt-1 ps-3">
+                  <li
+                    v-for="skill in skillGroup.childSkillTagNms"
+                    :key="skill"
+                    class="d-flex align-items-center gap-2 mb-1"
+                  >
+                    <img
+                      :src="getSkillIconUrl(skill)"
+                      :alt="skill"
+                      width="24"
+                      height="24"
+                      class="me-1"
+                    />
+                    <span>{{ skill }}</span>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <!-- 우대 사항 -->
+          <li>
+            <strong class="text-color-primary">우대 사항 :</strong>
+            {{ project.projectPreferredEtc }}
+          </li>
+
+          <!-- 근무 조건 -->
+          <li>
+            <strong class="text-color-primary">근무 형태 :</strong>
+            <span>{{ project.projectWorkType?.join(' / ') }}</span>
+          </li>
+          <li>
+            <strong class="text-color-primary">근무 지역 :</strong>
+            {{ project.projectAddress }}
+          </li>
+          <li>
+            <strong class="text-color-primary">단가 :</strong>
+            {{ project.projectSalary }}
+          </li>
+        </ul>
       </div>
     </div>
   </div>
