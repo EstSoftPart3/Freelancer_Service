@@ -319,7 +319,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import router from '@/fo/router'
@@ -394,21 +394,11 @@ const logout = async () => {
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
+})
 
-  // Add click listeners to nav links to close the menu
-  const navs = document.querySelectorAll('.header-nav-main nav.collapse')
-  navs.forEach((nav) => {
-    nav.addEventListener('click', (event) => {
-      const targetLink = event.target.closest('a')
-
-      // Close menu if a link is clicked, unless it's the community dropdown toggle
-      if (targetLink && !targetLink.hasAttribute('data-community-toggle')) {
-        closeMenu()
-        isCommunityDropdownOpen.value = false // also close dropdown
-      }
-    })
-  })
-  // console.log('currentPath', currentPath.value)
+watch(currentPath, () => {
+  closeMenu()
+  isCommunityDropdownOpen.value = false
 })
 
 onBeforeUnmount(() => {
