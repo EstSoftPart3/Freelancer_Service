@@ -13,5 +13,5 @@ public interface RecommendationMapper {
 	void insert(Recommendation recommendation);
     void delete(@Param("recommendationSq") Long recommendationSq);
     void deleteAll(@Param("boardSq") Long boardSq, @Param("answerSq") Long answerSq, @Param("commentSq") Long commentSq);
-    
+
 }

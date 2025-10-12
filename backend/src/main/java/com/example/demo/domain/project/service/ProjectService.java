@@ -470,4 +470,32 @@ public class ProjectService {
 		}
 		return UserRole.COMPANY_EXTERNAL;
 	}
+
+
+//    // 프로젝트 유형별 최다 공고 조회
+//    public List<ProjectSummary> fetchPopularProjects(String sortType) {
+//        ProjectSearchRequest request = new ProjectSearchRequest();
+//        request.setSortBy(sortType);  // "view_count", "applicant_count", "project_start_dt"
+//        request.setSortOrder("DESC");
+//        request.setSize(3);
+//
+//        List<Project> projects = projectMapper.findProjectsBySearch(request);
+//        return convertToProjectSummary(projects);
+//    }
+
+    // 공통 변환 로직을 별도 메서드로 분리 (응답용 메소드)
+    private List<ProjectSummary> convertToProjectSummary(List<Project> projects) {
+        List<ProjectSummary> responses = new ArrayList<>();
+
+        projects.forEach(p -> {
+            String address = fetchAddressString(p.getAddressSq());
+            String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
+            String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+
+            responses.add(ProjectSummary.from(p, projectUtil, address, status, "N", companyImageUrl));
+        });
+
+        return responses;
+    }
+
 }
