@@ -35,7 +35,7 @@ public class ReplyService {
                 .boardSq(boardSq)
                 .replyCommentDescriptionTxt(description)
                 .build();
-        
+
         replyMapper.insert(reply);
 
         if (reply.getReplyCommentSq() == null) {
@@ -64,7 +64,7 @@ public class ReplyService {
     public void deleteReply(Long userSq, Long replyCommentSq) {
         Reply reply = getReply(replyCommentSq);
         replyMapper.delete(userSq, replyCommentSq);
-        
+
         // 대댓글과 연관된 추천 삭제 (deleteAll 메서드에 replyCommentSq 파라미터 추가 필요)
         // recommendationMapper.deleteAll(null, null, null, replyCommentSq);
     }

@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 public class LoginController {
-
         private final LoginService loginService;
 
         @PostMapping("/login")
