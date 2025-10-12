@@ -1,10 +1,7 @@
 package com.example.demo.domain.project.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.example.demo.domain.project.vo.ProjectSummary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -137,18 +134,4 @@ public class ProjectController {
 		return ResponseEntity
 				.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 필터 내용 반환 성공", projectService.fetchFilterInfos(type)));
 	}
-
-    // 프로젝트 유형별 최다 공고 조회
-    @GetMapping("/top")
-    public ResponseEntity<ApiResponse<Map<String, List<ProjectSummary>>>> getPopularProjects() {
-        Map<String, List<ProjectSummary>> result = new HashMap<>();
-
-        // 올바른 Java 문법으로 메서드 호출
-        result.put("viewCount", projectService.fetchPopularProjects("view_count"));
-        result.put("applicantCount", projectService.fetchPopularProjects("applicant_count"));
-        result.put("recent", projectService.fetchPopularProjects("project_start_dt"));
-
-        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인기 프로젝트 조회 성공", result));
-    }
-
 }

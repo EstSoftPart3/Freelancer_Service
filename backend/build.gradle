@@ -37,9 +37,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    //maradb
-    runtimeOnly  'org.mariadb.jdbc:mariadb-java-client'
-
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
