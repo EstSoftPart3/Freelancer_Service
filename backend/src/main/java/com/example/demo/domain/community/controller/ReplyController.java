@@ -22,7 +22,7 @@ public class ReplyController {
             @RequestParam Long commentSq,
             @RequestParam Long boardSq,
             @RequestParam String description) {
-        
+
         replyService.createReply(userSq, commentSq, boardSq, description);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED, "대댓글 등록이 완료되었습니다.", null));
     }
@@ -33,7 +33,7 @@ public class ReplyController {
             @AuthenticationPrincipal Long userSq,
             @PathVariable Long replyCommentSq,
             @RequestParam String description) {
-        
+
         replyService.updateReply(userSq, replyCommentSq, description);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "대댓글 수정이 완료되었습니다.", null));
     }
@@ -43,7 +43,7 @@ public class ReplyController {
     public ResponseEntity<ApiResponse<NullType>> deleteReply(
             @AuthenticationPrincipal Long userSq,
             @PathVariable Long replyCommentSq) {
-        
+
         replyService.deleteReply(userSq, replyCommentSq);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "대댓글 삭제가 완료되었습니다.", null));
     }
@@ -53,7 +53,7 @@ public class ReplyController {
     public ResponseEntity<ApiResponse<NullType>> updateRecommendReply(
             @AuthenticationPrincipal Long userSq,
             @PathVariable Long replyCommentSq) {
-        
+
         replyService.updateRecommendCntReply(userSq, replyCommentSq);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "대댓글 추천 반영이 완료되었습니다.", null));
     }
