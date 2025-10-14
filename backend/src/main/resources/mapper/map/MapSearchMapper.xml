@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.map.mapper.MapSearchMapper">
+
+    <!-- 반경 내 프로젝트 검색 -->
+    <select id="findProjectsWithinRadius" 
+            resultType="com.example.demo.domain.map.dto.MapProjectDto">
+        SELECT 
+            p.project_sq as projectSq,
+            p.project_ttl as projectTitle,
+            c.company_nm as companyName,
+            cc1.common_code_nm as jobType,
+            a.address,
+            a.detail_address as detailAddress,
+            a.latitude,
+            a.longitude,
+            p.project_salary as projectSalary,
+            DATE_FORMAT(p.project_start_dt, '%Y-%m-%d') as projectStartDate,
+            DATE_FORMAT(p.project_end_dt, '%Y-%m-%d') as projectEndDate,
+            a.sigungu
+        FROM TBL_PROJECT_M p
+        INNER JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+        INNER JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+        INNER JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+        WHERE p.project_is_deleted_yn = 'N'
+          AND p.project_recruit_end_dt >= CURDATE()
+          AND (
+              <!-- 하버사인 공식을 사용한 거리 계산 -->
+              <!-- 6371은 지구 반지름(km) -->
+              <!-- acos는 역코사인 함수 -->
+              <!-- cos, sin은 코사인, 사인 함수 -->
+              (6371 * acos(
+                  cos(radians(#{userLat})) 
+                  * cos(radians(a.latitude)) 
+                  * cos(radians(a.longitude) - radians(#{userLon})) 
+                  + sin(radians(#{userLat})) 
+                  * sin(radians(a.latitude))
+              )) &lt;= #{radius}
+          )
+          <!-- 동적 쿼리: jobType이 있을 때만 조건 추가 -->
+          <if test="jobType != null and jobType != ''">
+              AND cc1.common_code_nm = #{jobType}
+          </if>
+          <!-- 동적 쿼리: searchKeyword가 있을 때만 조건 추가 -->
+          <if test="searchKeyword != null and searchKeyword != ''">
+              AND (
+                  p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+                  OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')
+              )
+          </if>
+        ORDER BY (
+            <!-- 거리순 정렬을 위해 거리 계산 -->
+            6371 * acos(
+                cos(radians(#{userLat})) 
+                * cos(radians(a.latitude)) 
+                * cos(radians(a.longitude) - radians(#{userLon})) 
+                + sin(radians(#{userLat})) 
+                * sin(radians(a.latitude))
+            )
+        ) ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 검색 조건에 맞는 총 개수 -->
+    <select id="countProjectsWithinRadius" resultType="int">
+        SELECT COUNT(*)
+        FROM TBL_PROJECT_M p
+        INNER JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+        INNER JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+        INNER JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+        WHERE p.project_is_deleted_yn = 'N'
+          AND p.project_recruit_end_dt >= CURDATE()
+          AND (
+              (6371 * acos(
+                  cos(radians(#{userLat})) 
+                  * cos(radians(a.latitude)) 
+                  * cos(radians(a.longitude) - radians(#{userLon})) 
+                  + sin(radians(#{userLat})) 
+                  * sin(radians(a.latitude))
+              )) &lt;= #{radius}
+          )
+          <if test="jobType != null and jobType != ''">
+              AND cc1.common_code_nm = #{jobType}
+          </if>
+          <if test="searchKeyword != null and searchKeyword != ''">
+              AND (
+                  p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%')
+                  OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')
+              )
+          </if>
+    </select>
+
+</mapper>
