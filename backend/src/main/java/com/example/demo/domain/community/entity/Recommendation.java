@@ -17,5 +17,6 @@ public class Recommendation {
     private Long boardSq;
     private Long answerSq;
     private Long commentSq;
+    private Long replyCommentSq;
     private Long recommendationTypeCd;
 }

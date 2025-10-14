@@ -17,6 +17,7 @@ public class Report {
     private Long boardSq;
     private Long answerSq;
     private Long commentSq;
+    private Long replyCommentSq;
     private String reportReasonTxt;
     private Long reportTypeCd;
 }

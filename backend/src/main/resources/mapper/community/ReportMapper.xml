@@ -3,24 +3,25 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.community.mapper.ReportMapper">
-     
-     <resultMap id="ReportResultMap" type="com.example.demo.domain.community.entity.Report">
+
+    <resultMap id="ReportResultMap" type="com.example.demo.domain.community.entity.Report">
         <result column="report_sq" property="reportSq"/>
         <result column="user_sq" property="userSq"/>
-	    <result column="board_sq" property="boardSq"/>
+        <result column="board_sq" property="boardSq"/>
         <result column="answer_sq" property="answerSq"/>
         <result column="comment_sq" property="commentSq"/>
+        <result column="reply_comment_sq" property="replyCommentSq"/>
         <result column="report_reason_txt" property="reportReasonTxt"/>
         <result column="report_type_cd" property="reportTypeCd"/>
-	  </resultMap>
+    </resultMap>
 
     <select id="findAll" resultMap="ReportResultMap">
         SELECT * FROM TBL_REPORT_S
     </select>
 
     <insert id="insert" parameterType="com.example.demo.domain.community.entity.Report" useGeneratedKeys="true" keyProperty="reportSq">
-        INSERT INTO TBL_REPORT_S (user_sq, board_sq, answer_sq, comment_sq, report_reason_txt, report_type_cd) 
-        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{reportReasonTxt}, #{reportTypeCd})
+        INSERT INTO TBL_REPORT_S (user_sq, board_sq, answer_sq, comment_sq, reply_comment_sq, report_reason_txt, report_type_cd)
+        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{replyCommentSq}, #{reportReasonTxt}, #{reportTypeCd})
     </insert>
 
 </mapper>

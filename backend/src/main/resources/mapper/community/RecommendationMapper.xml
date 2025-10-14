@@ -19,28 +19,33 @@
         AND user_sq = #{userSq}
     </select>
 
+    <select id="findByReplyCommentSq" resultType="com.example.demo.domain.community.entity.Recommendation" parameterType="Long">
+        SELECT * FROM TBL_RECOMMENDATION_S WHERE reply_comment_sq = #{replyCommentSq}
+        AND user_sq = #{userSq}
+    </select>
+
     <insert id="insert" parameterType="com.example.demo.domain.community.entity.Recommendation" useGeneratedKeys="true" keyProperty="recommendationSq" keyColumn="recommendation_sq">
-        INSERT INTO TBL_RECOMMENDATION_S (user_sq, board_sq, answer_sq, comment_sq, recommendation_type_cd) 
-        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{recommendationTypeCd})
+        INSERT INTO TBL_RECOMMENDATION_S (user_sq, board_sq, answer_sq, comment_sq, reply_comment_sq, recommendation_type_cd)
+        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{replyCommentSq}, #{recommendationTypeCd})
     </insert>
 
     <delete id="delete" parameterType="Long">
-        DELETE FROM TBL_RECOMMENDATION_S 
-		WHERE recommendation_sq = #{recommendationSq}
+        DELETE FROM TBL_RECOMMENDATION_S
+        WHERE recommendation_sq = #{recommendationSq}
     </delete>
 
     <delete id="deleteAll" parameterType="com.example.demo.domain.community.entity.Recommendation">
         DELETE FROM TBL_RECOMMENDATION_S
-        
+
         <if test="boardSq != null">
-        	WHERE board_sq = #{boardSq}
-	    </if>
+            WHERE board_sq = #{boardSq}
+        </if>
         <if test="answerSq != null">
-        	WHERE answer_sq = #{answerSq}
-	    </if>
+            WHERE answer_sq = #{answerSq}
+        </if>
         <if test="commentSq != null">
-        	WHERE comment_sq = #{commentSq}
-	    </if>
+            WHERE comment_sq = #{commentSq}
+        </if>
     </delete>
 
 </mapper>
