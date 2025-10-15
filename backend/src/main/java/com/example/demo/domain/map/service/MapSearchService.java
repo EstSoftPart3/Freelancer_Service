@@ -73,16 +73,7 @@ public class MapSearchService {
             .userLongitude(request.getUserLongitude())
             .build();
     }
-    
-    /**
-     * MapProjectDto를 MapProjectResponse로 변환
-     * 
-     * 변환 과정:
-     * 1. 거리 계산 (사용자 위치 ↔ 프로젝트 위치)
-     * 2. 네이버 길찾기 URL 생성
-     * 3. VWorld 지도 이미지 URL 생성
-     * 4. Response 객체 생성
-     */
+
     private MapProjectResponse convertToResponse(MapProjectDto dto, MapSearchRequest request) {
         
         // 1단계: 거리 계산

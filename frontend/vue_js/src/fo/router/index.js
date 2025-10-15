@@ -39,6 +39,7 @@ import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
+import MapSearchPage from '../views/map/MapSearchPage.vue'
 
 const routes = [
   {
@@ -143,6 +144,12 @@ const routes = [
     path: '/projectListPage',
     name: 'ProjectListPage',
     component: ProjectListPage,
+  },
+
+  {
+    path: '/map/search',
+    name: 'MapSearchPage',
+    component: MapSearchPage,
   },
 
   {

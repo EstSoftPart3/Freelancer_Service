@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 
 
 @RestController
-@RequestMapping("/api/map")
+@RequestMapping("/map")
 @RequiredArgsConstructor
 public class MapSearchController {
     
