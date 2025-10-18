@@ -36,6 +36,7 @@ import WithdrawPage from '../views/mypage/common/WithdrawPage.vue'
 import AffiliatedJobApplicationsPage from '../views/mypage/personal/AffiliatedJobApplicationsPage.vue'
 import AffiliatedScrapPage from '../views/mypage/personal/AffiliatedScrapPage.vue'
 import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue'
+import CalendarPage from '../views/calendar/CalendarPage.vue'
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
@@ -137,6 +138,12 @@ const routes = [
     path: '/signUp',
     component: SignUpPage,
     name: 'SignUp',
+  },
+
+  {
+    path: '/calendar',
+    component: CalendarPage,
+    name: 'Calendar',
   },
 
   {
