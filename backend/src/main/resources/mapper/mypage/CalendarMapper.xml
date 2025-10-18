@@ -9,32 +9,33 @@
         SELECT *
         FROM(
         <!--개인일정-->
-        SELECT s.schedule_sq, 'PERSONAL' AS sourceType, NULL AS projectSq, NULL AS companySq, s.title, s.start_dt AS start_dt, s.end_dt AS end_dt
+        SELECT s.schedule_sq, 'PERSONAL' AS sourceType, NULL AS projectSq, NULL AS companySq ,s.title AS title, s.start_dt AS startDt, s.end_dt AS endDt
         FROM TBL_SCHEDULE_EVNT s JOIN TBL_CALENDAR_INDVDI_EVNT cie ON cie.schedule_sq = s.schedule_sq WHERE s.schedule_user_sq = #{userSq}
 
         UNION ALL
 
         <!--내가 스크랩한 프로젝트의 모집기간-->
-        SELECT NULL AS scheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq AS companySq, pj.project_ttl AS projectTtl, pj.project_recruit_start_dt AS project_recruit_start_dt, pj.project_recruit_end_dt AS project_recruit_end_dt
-        FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.project_sq = sc.project_sq WHERE sc.user_sq = #{userSq}
-        AND sc.scrap_type_cd = 'PROJECT'
+        SELECT s.schedule_sq AS scheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq AS companySq, pj.project_ttl AS title, pj.project_recruit_start_dt AS startDt, pj.project_recruit_end_dt AS endDt
+        FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.project_sq = sc.project_sq JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.project_sq = pj.project_sq JOIN TBL_SCHEDULE_EVNT s
+        ON s.schedule_sq = cpe.schedule_sq WHERE sc.user_sq = #{userSq} AND sc.scrap_type_cd = 601 AND s.schedule_is_deleted_yn = 'N'
 
         UNION ALL
 
         <!--내가 스크랩한 '기업'의 모든 프로젝트 모집기간-->
-        SELECT NULL as ScheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq AS companySq, pj.project_ttl AS projectTtl, pj.project_recruit_start_dt AS project_recruit_start_dt, pj.project_recruit_end_dt AS project_recruit_end_dt
-        FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.company_sq = sc.company_sq WHERE sc.user_sq = #{userSq} AND sc.scrap_type_cd = 'COMPANY'
+        SELECT s.schedule_sq as ScheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq, pj.project_ttl AS title, pj.project_recruit_start_dt AS startDt, pj.project_recruit_end_dt AS endDt
+        FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.company_sq = sc.company_sq JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.project_sq = pj.project_sq
+        JOIN TBL_SCHEDULE_EVNT s ON s.schedule_sq = cpe.schedule_sq WHERE sc.user_sq = #{userSq} AND sc.scrap_type_cd = 602 AND s.schedule_is_deleted_yn = 'N'
         ) u
         <where>
             <!-- 기간 교집합 필터 : 한쪽만 들어와도 작동-->
             <if test="startDt != null">
-                AND (u.end_dt IS NULL OR u.end_dt <![CDATA[ >= ]]> #{startDt})
+                AND (u.endDt IS NULL OR u.endDt <![CDATA[ >= ]]> #{startDt})
             </if>
             <if test="endDt != null">
-                AND u.start_dt <![CDATA[ <= ]]> #{endDt}
+                AND u.startDt <![CDATA[ <= ]]> #{endDt}
             </if>
             <!-- 계약형태/모집직무 필터가 하나라도 있으면 project만 대상으로 -->
-            <if test="(contractTypeCd != null) or (jobTypeCd != null)">
+            <if test="(contractTypeCd != null) or (recruitJobPositionTypeCd != null)">
                 AND u.sourceType = 'PROJECT'
             </if>
 
@@ -43,19 +44,41 @@
                 AND EXISTS(
                 SELECT 1 FROM TBL_PROJECT_CONTRACT_TYPE_S pct
                 WHERE pct.project_sq = u.projectSq
-                AND pct.con
+                AND pct.contract_type_cd = #{contractTypeCd}
+                )
             </if>
             <!-- 모집직무 코드: 프로젝트-직무 매핑 테이블에서 존재 여부 검사 -->
-            <if test="jobTypeCd != null">
+            <if test="recruitJobPositionTypeCd != null">
                 AND EXISTS(
                 SELECT 1
                 FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S prjr
                 WHERE prjr.project_sq = u.projectSq
-                AND prjr.job_type_cd = #{jobTypeCd}
+                AND prjr.recruit_job_position_type_cd = #{recruitJobPositionTypeCd}
+                )
+            </if>
+            <if test="searchKeyword != null">
+                AND (
+                u.title LIKE CONCAT('%', #{searchKeyword}, '%')
+
+                OR EXISTS (
+                SELECT 1
+                FROM TBL_COMPANY_S co
+                WHERE co.company_sq = u.companySq
+                AND co.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')
+                )
+
+                OR EXISTS (
+                SELECT 1
+                FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S prjr
+                JOIN TBL_COMMON_CODE_C c
+                ON c.common_code_sq = prjr.recruit_job_position_type_cd
+                WHERE prjr.project_sq = u.projectSq
+                AND c.common_code_nm LIKE CONCAT('%', #{searchKeyword}, '%')
+                )
                 )
             </if>
         </where>
-        ORDER BY start_dt
+        ORDER BY startDt
     </select>
 
     <select id="findByUser" resultType="com.example.demo.domain.user.dto.UserDTO" parameterType="Long">

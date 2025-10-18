@@ -16,6 +16,7 @@ public class CalendarViewDto {
     private String title; //개인일정 제목 or 프로젝트 제목
     private Long projectSq;
     private Long companySq;
+//    private Long scrapSq;
     private Date startDt;
     private Date endDt;
 

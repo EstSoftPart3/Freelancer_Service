@@ -4,50 +4,50 @@
 
 <mapper namespace="com.example.demo.domain.community.mapper.ReplyMapper">
 
-    <select id="findById" resultType="com.example.demo.domain.community.entity.Reply">
-        SELECT * FROM TBL_BOARD_COMMENT_REPLY_S
-        WHERE reply_comment_sq = #{replyCommentSq}
-        AND reply_comment_is_deleted_yn = 'N'
-    </select>
+<!--    <select id="findById" resultType="com.example.demo.domain.community.entity.Reply">-->
+<!--        SELECT * FROM TBL_BOARD_COMMENT_REPLY_S-->
+<!--        WHERE reply_comment_sq = #{replyCommentSq}-->
+<!--        AND reply_comment_is_deleted_yn = 'N'-->
+<!--    </select>-->
 
-    <select id="findByCommentSq" resultType="com.example.demo.domain.community.entity.Reply">
-        SELECT * FROM TBL_BOARD_COMMENT_REPLY_S
-        WHERE reply_comment_is_deleted_yn = 'N'
-        AND comment_sq = #{commentSq}
-        ORDER BY reply_comment_created_at_dtm ASC
-    </select>
+<!--    <select id="findByCommentSq" resultType="com.example.demo.domain.community.entity.Reply">-->
+<!--        SELECT * FROM TBL_BOARD_COMMENT_REPLY_S-->
+<!--        WHERE reply_comment_is_deleted_yn = 'N'-->
+<!--        AND comment_sq = #{commentSq}-->
+<!--        ORDER BY reply_comment_created_at_dtm ASC-->
+<!--    </select>-->
 
-    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Reply"
-            useGeneratedKeys="true" keyProperty="replyCommentSq" keyColumn="reply_comment_sq">
-        INSERT INTO TBL_BOARD_COMMENT_REPLY_S
-        (comment_sq, board_sq, user_sq, reply_comment_description_txt,
-         reply_comment_created_at_dtm, reply_comment_is_deleted_yn, reply_comment_recommend_cnt)
-        VALUES (#{commentSq}, #{boardSq}, #{userSq}, #{replyCommentDescriptionTxt},
-                NOW(), 'N', 0)
-    </insert>
+<!--    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Reply"-->
+<!--            useGeneratedKeys="true" keyProperty="replyCommentSq" keyColumn="reply_comment_sq">-->
+<!--        INSERT INTO TBL_BOARD_COMMENT_REPLY_S-->
+<!--        (comment_sq, board_sq, user_sq, reply_comment_description_txt,-->
+<!--         reply_comment_created_at_dtm, reply_comment_is_deleted_yn, reply_comment_recommend_cnt)-->
+<!--        VALUES (#{commentSq}, #{boardSq}, #{userSq}, #{replyCommentDescriptionTxt},-->
+<!--                NOW(), 'N', 0)-->
+<!--    </insert>-->
 
-    <update id="update" parameterType="com.example.demo.domain.community.entity.Reply">
-        UPDATE TBL_BOARD_COMMENT_REPLY_S
-        SET reply_comment_description_txt = #{replyCommentDescriptionTxt},
-            reply_comment_modified_at_dtm = NOW()
-        WHERE reply_comment_sq = #{replyCommentSq}
-    </update>
+<!--    <update id="update" parameterType="com.example.demo.domain.community.entity.Reply">-->
+<!--        UPDATE TBL_BOARD_COMMENT_REPLY_S-->
+<!--        SET reply_comment_description_txt = #{replyCommentDescriptionTxt},-->
+<!--            reply_comment_modified_at_dtm = NOW()-->
+<!--        WHERE reply_comment_sq = #{replyCommentSq}-->
+<!--    </update>-->
 
-    <update id="delete">
-        UPDATE TBL_BOARD_COMMENT_REPLY_S
-        SET reply_comment_is_deleted_yn = 'Y'
-        WHERE reply_comment_sq = #{replyCommentSq} AND user_sq = #{userSq}
-    </update>
+<!--    <update id="delete">-->
+<!--        UPDATE TBL_BOARD_COMMENT_REPLY_S-->
+<!--        SET reply_comment_is_deleted_yn = 'Y'-->
+<!--        WHERE reply_comment_sq = #{replyCommentSq} AND user_sq = #{userSq}-->
+<!--    </update>-->
 
-    <update id="updateRecommendCnt">
-        UPDATE TBL_BOARD_COMMENT_REPLY_S
-        SET reply_comment_recommend_cnt = (
-            SELECT COUNT(*)
-            FROM TBL_RECOMMENDATION_S
-            WHERE reply_comment_sq = #{replyCommentSq}
-        )
-        WHERE reply_comment_sq = #{replyCommentSq}
-    </update>
+<!--    <update id="updateRecommendCnt">-->
+<!--        UPDATE TBL_BOARD_COMMENT_REPLY_S-->
+<!--        SET reply_comment_recommend_cnt = (-->
+<!--            SELECT COUNT(*)-->
+<!--            FROM TBL_RECOMMENDATION_S-->
+<!--            WHERE reply_comment_sq = #{replyCommentSq}-->
+<!--        )-->
+<!--        WHERE reply_comment_sq = #{replyCommentSq}-->
+<!--    </update>-->
 
 </mapper>
 
