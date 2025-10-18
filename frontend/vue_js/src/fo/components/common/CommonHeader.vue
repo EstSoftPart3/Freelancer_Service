@@ -90,6 +90,19 @@
                         </li>
                       </ul>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isCalendarActive,
+                          'current-page-active': true,
+                        }"
+                        to="/calendar"
+                      >
+                        캘린더
+                        <i class="fas fa-chevron-down"></i>
+                      </router-link>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -364,6 +377,9 @@ const isProjectActive = computed(() =>
 )
 const isCommunityActive = computed(() =>
   ['/board', '/qna'].some((path) => currentPath.value.startsWith(path)),
+)
+const isCalendarActive = computed(() =>
+  currentPath.value.startsWith('/calendar'),
 )
 
 // Mobile dropdown state
