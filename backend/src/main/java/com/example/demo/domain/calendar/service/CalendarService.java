@@ -4,7 +4,9 @@ import com.amazonaws.services.kms.model.NotFoundException;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
+import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
+import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
 import com.example.demo.domain.calendar.entity.CalendarIndvdiEvnt;
 import com.example.demo.domain.calendar.entity.ScheduleEvnt;
 import com.example.demo.domain.calendar.mapper.CalendarIndvdiEvntMapper;
@@ -27,6 +29,7 @@ public class CalendarService {
     private final CommonCodeMapper commonCodeMapper;
 
     //    캘린더 일정 조회
+    @Transactional
     public List<CalendarViewDto> getCalendar(Long userSq, LocalDate start, LocalDate end,Long contractTypeCd,Long recruitJobPositionTypeCd,String searchKeyword){
         //사용자 조회
         UserDTO userInfo = calendarMapper.findByUser(userSq);
@@ -53,7 +56,7 @@ public class CalendarService {
     }
 
     //캘린더 필터링
-    // 검색 필터에 들어갈 내용을 DB에서 조회
+    @Transactional
     public List<?> fetchFilterInfos(String type) {
         switch (type) {
             case "계약형태":
@@ -63,5 +66,47 @@ public class CalendarService {
             default:
                 throw new IllegalArgumentException("Unexpected value: " + type);
         }
+    }
+
+    //캘린더 수정
+    @Transactional
+    public ScheduleUpdateResDto updateSchedule(Long scheduleSq, Long userSq, PersonalScheduleUpdateRequest req){
+        //path 변수 우선 적용
+        req.setScheduleSq(scheduleSq);
+
+        //사용자 검증 조회
+        UserDTO userInfo = calendarMapper.findByUser(userSq);
+        Optional.ofNullable(userInfo).orElseThrow(() -> new NotFoundException("없는 회원입니다."));
+
+        //일정 검증 조회
+        ScheduleEvnt scheduleEvnt = calendarMapper.findBySchedule(scheduleSq);
+        Optional.ofNullable(scheduleEvnt).orElseThrow(() -> new NotFoundException("등록된 일정이 없습니다."));
+
+        //메인 selective update
+        int affected = calendarMapper.updateScheduleSelective(userSq,req);
+        if (affected == 0){
+            //소유권 불일치 or 이미 삭제됨 등
+            throw new IllegalArgumentException("수정할 수 없습니다.");
+        }
+
+        //서브 selective update (개인 일정인경우만)
+        if (req.getMemo() != null || Boolean.TRUE.equals(req.getClearMemo())){
+            calendarIndvdiEvntMapper.updateByScheduleSelective(
+                    scheduleSq,
+                    req.getMemo(),
+                    req.getClearMemo()
+            );
+        }
+
+        //최종 데이터 다시 조회해서 응답 dto 구성
+        ScheduleEvnt updated = calendarMapper.findBySchedule(scheduleSq);
+        return new ScheduleUpdateResDto(
+                updated.getScheduleSq(),
+                updated.getTitle(),
+                updated.getStartDt(),
+                updated.getEndDt(),
+                req.getMemo(),
+                updated.getCalendarModifiedAtDtm()
+        );
     }
 }

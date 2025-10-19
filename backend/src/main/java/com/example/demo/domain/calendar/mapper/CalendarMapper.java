@@ -1,5 +1,6 @@
 package com.example.demo.domain.calendar.mapper;
 
+import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.entity.ScheduleEvnt;
 import com.example.demo.domain.user.dto.UserDTO;
@@ -17,4 +18,7 @@ public interface CalendarMapper {
             ,@Param("contractTypeCd") Long contractTypeCd, @Param("recruitJobPositionTypeCd") Long recruitJobPositionTypeCd, @Param("searchKeyword") String searchKeyword);
     UserDTO findByUser(@Param("userSq") Long userSq);
     void insert(ScheduleEvnt scheduleEvnt);
+    ScheduleEvnt findBySchedule(@Param("scheduleSq") Long scheduleSq);
+    int updateScheduleSelective(@Param("userSq") Long userSq,
+                                @Param("req") PersonalScheduleUpdateRequest req);
 }
