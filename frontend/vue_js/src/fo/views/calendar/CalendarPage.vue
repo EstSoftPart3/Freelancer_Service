@@ -26,7 +26,7 @@
                 <i class="bi bi-chevron-right"></i>
               </div>
             </div>
-            <div v-if="favoritesMode" class="add-schedule" @click="openScheduleModal">
+            <div class="add-schedule" @click="openScheduleModal">
               일정 추가
             </div>
           </div>
