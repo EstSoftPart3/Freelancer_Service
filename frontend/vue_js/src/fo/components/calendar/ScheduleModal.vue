@@ -145,6 +145,17 @@ export default {
         return
       }
 
+      // 종료일이 시작일보다 이전인지 검증
+      if (form.value.endDate) {
+        const startDate = new Date(form.value.startDate)
+        const endDate = new Date(form.value.endDate)
+        
+        if (endDate < startDate) {
+          alertStore.show('마감일은 시작일보다 이전일 수 없습니다.', 'warning')
+          return
+        }
+      }
+
       try {
         loading.value = true
 

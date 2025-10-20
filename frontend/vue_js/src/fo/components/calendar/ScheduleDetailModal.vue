@@ -266,6 +266,17 @@ export default {
         return
       }
       
+      // 종료일이 시작일보다 이전인지 검증
+      if (editForm.value.endDt && !editForm.value.clearEndDt) {
+        const startDate = new Date(editForm.value.startDt)
+        const endDate = new Date(editForm.value.endDt)
+        
+        if (endDate < startDate) {
+          alertStore.show('마감일은 시작일보다 이전일 수 없습니다.', 'warning')
+          return
+        }
+      }
+      
       try {
         saving.value = true
         
