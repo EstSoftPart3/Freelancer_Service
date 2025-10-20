@@ -4,6 +4,21 @@
 
 <mapper namespace="com.example.demo.domain.map.mapper.MapSearchMapper">
 
+    <!-- 사용자 주소 조회 -->
+    <select id="findUserAddress" 
+            resultType="com.example.demo.domain.map.dto.MapProjectDto">
+        SELECT 
+            a.latitude,
+            a.longitude,
+            a.address,
+            a.detail_address as detailAddress,
+            a.sigungu
+        FROM TBL_USER_M u
+        INNER JOIN TBL_ADDRESS_S a ON u.address_sq = a.address_sq
+        WHERE u.user_sq = #{userId}
+          AND u.user_is_deleted_yn = 'N'
+    </select>
+
     <!-- 반경 내 프로젝트 검색 -->
     <select id="findProjectsWithinRadius" 
             resultType="com.example.demo.domain.map.dto.MapProjectDto">
@@ -11,7 +26,7 @@
             p.project_sq as projectSq,
             p.project_ttl as projectTitle,
             c.company_nm as companyName,
-            cc1.common_code_nm as jobType,
+            GROUP_CONCAT(cc1.common_code_nm) as jobType,
             a.address,
             a.detail_address as detailAddress,
             a.latitude,
@@ -19,11 +34,21 @@
             p.project_salary as projectSalary,
             DATE_FORMAT(p.project_start_dt, '%Y-%m-%d') as projectStartDate,
             DATE_FORMAT(p.project_end_dt, '%Y-%m-%d') as projectEndDate,
-            a.sigungu
+            a.sigungu,
+            ROUND(
+                6371 * acos(
+                    cos(radians(#{userLat})) 
+                    * cos(radians(a.latitude)) 
+                    * cos(radians(a.longitude) - radians(#{userLon})) 
+                    + sin(radians(#{userLat})) 
+                    * sin(radians(a.latitude))
+                ), 1
+            ) as distance
         FROM TBL_PROJECT_M p
         INNER JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
         INNER JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
-        INNER JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+        INNER JOIN TBL_PROJECT_RECRUIT_JOB_ROLE_S pjr ON p.project_sq = pjr.project_sq
+        INNER JOIN TBL_COMMON_CODE_C cc1 ON pjr.recruit_job_position_type_cd = cc1.common_code_sq
         WHERE p.project_is_deleted_yn = 'N'
           AND p.project_recruit_end_dt >= CURDATE()
           AND (
@@ -50,6 +75,7 @@
                   OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')
               )
           </if>
+        GROUP BY p.project_sq, p.project_ttl, c.company_nm, a.address, a.detail_address, a.latitude, a.longitude, p.project_salary, p.project_start_dt, p.project_end_dt, a.sigungu
         ORDER BY (
             <!-- 거리순 정렬을 위해 거리 계산 -->
             6371 * acos(
@@ -65,11 +91,12 @@
 
     <!-- 검색 조건에 맞는 총 개수 -->
     <select id="countProjectsWithinRadius" resultType="int">
-        SELECT COUNT(*)
+        SELECT COUNT(DISTINCT p.project_sq)
         FROM TBL_PROJECT_M p
         INNER JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
         INNER JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
-        INNER JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+        INNER JOIN TBL_PROJECT_RECRUIT_JOB_ROLE_S pjr ON p.project_sq = pjr.project_sq
+        INNER JOIN TBL_COMMON_CODE_C cc1 ON pjr.recruit_job_position_type_cd = cc1.common_code_sq
         WHERE p.project_is_deleted_yn = 'N'
           AND p.project_recruit_end_dt >= CURDATE()
           AND (

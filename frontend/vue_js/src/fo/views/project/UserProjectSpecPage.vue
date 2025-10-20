@@ -13,7 +13,7 @@
             <div class="d-flex align-items-center mb-3">
               <div class="me-4 flex-shrink-0">
                 <img
-                  src="img/blog/medium/blog-2.jpg"
+                  src="/img/blog/medium/blog-2.jpg"
                   alt="프로젝트 이미지"
                   class="rounded-circle"
                   style="width: 70px; height: 70px; object-fit: cover"
@@ -252,10 +252,13 @@ const fetchProjectDetail = async () => {
     document.body.style.overflow = 'hidden'
 
     const projectSq = route.params.project_sq
+    console.log('프로젝트 상세 조회 - projectSq:', projectSq)
+    console.log('route.params:', route.params)
 
     const response = await api.$get(`/projects/${projectSq}/details`, {
       withCredentials: true,
     })
+    console.log('프로젝트 상세 응답:', response)
     project.value = response.output
     scrapCount.value = project.value.projectScrapCnt
   } catch (e) {

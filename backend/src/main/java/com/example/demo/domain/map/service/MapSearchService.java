@@ -7,7 +7,6 @@ import com.example.demo.domain.map.dto.response.MapSearchResponse;
 import com.example.demo.domain.map.mapper.MapSearchMapper;
 import com.example.demo.domain.map.util.DistanceCalculator;
 import com.example.demo.domain.map.util.NaverMapUrlGenerator;
-import com.example.demo.domain.map.service.VWorldMapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +22,46 @@ public class MapSearchService {
     private final MapSearchMapper mapSearchMapper;        // 데이터베이스 조회
     private final DistanceCalculator distanceCalculator;  // 거리 계산
     private final NaverMapUrlGenerator naverMapUrlGenerator; // 네이버 URL 생성
-    private final VWorldMapService vWorldMapService;      // VWorld 지도
 
+    // 사용자 주소 정보 조회
+    public MapProjectDto getUserLocation(Long userId) {
+        return mapSearchMapper.findUserAddress(userId);
+    }
+
+    // 사용자 ID로 주소를 조회하여 프로젝트 검색
+    public MapSearchResponse searchProjectsByUserId(Long userId, double radius, String jobType, String keyword, int page, int size) {
+        
+        // 1단계: 사용자 주소 조회
+        MapProjectDto userLocation = mapSearchMapper.findUserAddress(userId);
+        if (userLocation == null) {
+            throw new RuntimeException("사용자 주소를 찾을 수 없습니다. userId: " + userId);
+        }
+        
+        // 2단계: 사용자 주소 기준 반경 내 프로젝트 조회
+        List<MapProjectDto> projectDtos = mapSearchMapper.findProjectsWithinRadius(
+            userLocation.getLatitude().doubleValue(),    // 사용자 위도
+            userLocation.getLongitude().doubleValue(),   // 사용자 경도
+            radius,                        // 검색 반경
+            jobType,                       // 직무 필터
+            keyword,                       // 검색 키워드
+            page * size,                   // 오프셋 계산
+            size                           // 가져올 개수
+        );
+        
+        // 3단계: 총 개수 조회
+        int totalCount = mapSearchMapper.countProjectsWithinRadius(
+            userLocation.getLatitude().doubleValue(),
+            userLocation.getLongitude().doubleValue(),
+            radius,
+            jobType,
+            keyword
+        );
+        
+        // 4단계: DTO를 Response로 변환
+        return convertToResponse(projectDtos, totalCount, userLocation.getLatitude().doubleValue(), userLocation.getLongitude().doubleValue(), radius, jobType, keyword);
+    }
+
+    // 직접 좌표로 프로젝트 검색 (기존 방식)
     public MapSearchResponse searchProjects(MapSearchRequest request) {
         
         // 1단계: 데이터베이스에서 반경 내 프로젝트 조회
@@ -48,55 +85,56 @@ public class MapSearchService {
         );
         
         // 3단계: DTO를 Response로 변환
+        return convertToResponse(projectDtos, totalCount, request.getUserLatitude(), request.getUserLongitude(), request.getRadius(), request.getJobType(), request.getSearchKeyword());
+    }
+
+    // DTO를 Response로 변환하는 공통 메서드
+    private MapSearchResponse convertToResponse(List<MapProjectDto> projectDtos, int totalCount, double userLat, double userLon, double radius, String jobType, String keyword) {
         // Stream API 사용
         List<MapProjectResponse> projects = projectDtos.stream()
-            .map(dto -> convertToResponse(dto, request))
+            .map(dto -> convertToResponse(dto, userLat, userLon))
             .collect(Collectors.toList());
         
-        // 4단계: 페이징 정보 계산
-        int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
-        boolean hasNext = request.getPage() < totalPages - 1;
-        boolean hasPrevious = request.getPage() > 0;
+        // 4단계: 페이징 정보 계산 (기본값 사용)
+        int size = 20;
+        int totalPages = (int) Math.ceil((double) totalCount / size);
+        boolean hasNext = false; // 단순화
+        boolean hasPrevious = false; // 단순화
         
         // 5단계: 최종 응답 객체 생성 (Builder 사용)
         return MapSearchResponse.builder()
             .projects(projects)
             .totalCount(totalCount)
-            .currentPage(request.getPage())
+            .currentPage(0)
             .totalPages(totalPages)
             .hasNext(hasNext)
             .hasPrevious(hasPrevious)
-            .searchRadius(request.getRadius())
-            .searchJobType(request.getJobType())
-            .searchKeyword(request.getSearchKeyword())
-            .userLatitude(request.getUserLatitude())
-            .userLongitude(request.getUserLongitude())
+            .searchRadius(radius)
+            .searchJobType(jobType)
+            .searchKeyword(keyword)
+            .userLatitude(userLat)
+            .userLongitude(userLon)
             .build();
     }
 
-    private MapProjectResponse convertToResponse(MapProjectDto dto, MapSearchRequest request) {
+    private MapProjectResponse convertToResponse(MapProjectDto dto, double userLat, double userLon) {
         
         // 1단계: 거리 계산
         double distance = distanceCalculator.calculateDistance(
-            request.getUserLatitude(),           // 사용자 위도
-            request.getUserLongitude(),          // 사용자 경도
+            userLat,                             // 사용자 위도
+            userLon,                             // 사용자 경도
             dto.getLatitude().doubleValue(),     // 프로젝트 위도
             dto.getLongitude().doubleValue()     // 프로젝트 경도
         );
         
         // 2단계: 네이버 길찾기 URL 생성 (사용자 → 프로젝트)
         String naverMapUrl = naverMapUrlGenerator.generateRouteUrl(
-            request.getUserLatitude(),           // 출발지: 사용자 위치
-            request.getUserLongitude(),
+            userLat,                             // 출발지: 사용자 위치
+            userLon,
             dto.getLatitude().doubleValue(),     // 도착지: 프로젝트 위치 (BigDecimal → double 변환)
             dto.getLongitude().doubleValue()
         );
-        
-        // 3단계: VWorld 정적 지도 이미지 URL 생성
-        String mapImageUrl = vWorldMapService.generateStaticMapUrl(
-            dto.getLatitude(),
-            dto.getLongitude()
-        );
+
         
         // 4단계: Response 객체 생성 (Builder 패턴)
         return MapProjectResponse.builder()
@@ -114,7 +152,6 @@ public class MapSearchService {
             .distance(distanceCalculator.roundDistance(distance))  // 거리 반올림
             
             // 지도 관련 URL
-            .mapImageUrl(mapImageUrl)     // VWorld 정적 지도
             .naverMapUrl(naverMapUrl)     // 네이버 길찾기 딥링크
             
             // 프로젝트 상세 정보
@@ -124,20 +161,4 @@ public class MapSearchService {
             .build();
     }
     
-    /**
-     * VWorld 지도 이미지 URL 생성
-     */
-    public String generateVWorldMapUrl(double latitude, double longitude) {
-        return vWorldMapService.generateStaticMapUrl(
-            java.math.BigDecimal.valueOf(latitude),
-            java.math.BigDecimal.valueOf(longitude)
-        );
-    }
-    
-    /**
-     * 네이버 길찾기 URL 생성
-     */
-    public String generateNaverRouteUrl(double startLat, double startLon, double endLat, double endLon) {
-        return naverMapUrlGenerator.generateRouteUrl(startLat, startLon, endLat, endLon);
-    }
 }

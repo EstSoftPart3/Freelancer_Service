@@ -23,4 +23,5 @@ public class MapProjectDto {
     private String projectStartDate;
     private String projectEndDate;
     private String sigungu;             // 시군구 정보
+    private Double distance;            // 사용자로부터의 거리 (km)
 }
