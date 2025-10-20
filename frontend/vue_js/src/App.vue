@@ -31,6 +31,8 @@ const fetchUserInfo = async () => {
     localStorage.setItem('userTypeCd', data.userTypeCd)
 
     userStore.setUser({
+      // 인턴 추가 작업: userSq 추가
+      userSq: data.userSq,
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
     })

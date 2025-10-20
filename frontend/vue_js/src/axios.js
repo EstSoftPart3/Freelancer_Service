@@ -15,8 +15,13 @@ const apiInstance = axios.create({
 apiInstance.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken')
+    // 인턴 추가 작업: 토큰 확인 디버깅 로그 추가
+    console.log('토큰 확인:', accessToken)
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
+      console.log('토큰 헤더 추가됨')
+    } else {
+      console.log('토큰 없음')
     }
     return config
   },

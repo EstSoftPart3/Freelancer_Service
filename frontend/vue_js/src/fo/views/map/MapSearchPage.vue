@@ -33,6 +33,17 @@
               <option value="프론트엔드">프론트엔드</option>
               <option value="백엔드">백엔드</option>
               <option value="데이터분석가">데이터분석가</option>
+              <option value="UI/UX디자이너">UI/UX디자이너</option>
+              <option value="기획자">기획자</option>
+              <option value="마케터">마케터</option>
+              <option value="DevOps">DevOps</option>
+              <option value="QA">QA</option>
+              <option value="PM">PM</option>
+              <option value="데이터엔지니어">데이터엔지니어</option>
+              <option value="AI개발자">AI개발자</option>
+              <option value="모바일개발자">모바일개발자</option>
+              <option value="게임개발자">게임개발자</option>
+              <option value="시스템관리자">시스템관리자</option>
             </select>
           </div>
           
@@ -71,7 +82,7 @@
               <h5 class="text-color-dark mb-0">
                 <i class="bi bi-list-ul me-2"></i>프로젝트 리스트
               </h5>
-              <span class="badge bg-primary">{{ projects.length }}개</span>
+              <!-- <span class="badge bg-primary">{{ projects.length }}개</span> -->
             </div>
             
             <!-- 로딩 상태 -->
