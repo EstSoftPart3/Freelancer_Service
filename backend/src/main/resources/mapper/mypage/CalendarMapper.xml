@@ -101,7 +101,7 @@
         UPDATE TBL_SCHEDULE_EVNT
         <set>
             <if test="req.title != null">title = #{req.title},</if>
-            <if test="req.startDt != null">startDt_dt = #{req.startDt},</if>
+            <if test="req.startDt != null">start_dt = #{req.startDt},</if>
 
 <!--            NULL로 비우기 우선-->
             <if test="req.clearEndDt != null and req.clearEndDt == true">end_dt = NULL,</if>
@@ -116,4 +116,7 @@
         AND schedule_is_deleted_yn = 'N'
     </update>
 
+    <update id="deleteSchedule" parameterType="long">
+        UPDATE TBL_SCHEDULE_EVNT SET schedule_is_deleted_yn = 'Y' WHERE schedule_sq = #{scheduleSq}
+    </update>
 </mapper>
