@@ -52,13 +52,22 @@ public class ProjectDetailResponse {
     public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req, List<GroupSkillInfoResponse> prefer
     		, String address, int hasScrapped, int hasApplied, UserRole userRole) {
     	Long projectSq = p.getProjectSq();
+    	// 인턴 추가 작업: interviewTimes null 체크 추가
     	Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
+    	String interviewStartDt = null;
+    	String interviewEndDt = null;
+    	
+    	if (interviewTimes != null) {
+    		interviewStartDt = DateUtil.formatLocalDate(interviewTimes.get("minTime"));
+    		interviewEndDt = DateUtil.formatLocalDate(interviewTimes.get("maxTime"));
+    	}
+    	
     	return ProjectDetailResponse.builder()
                 .projectTtl(p.getProjectTtl())
                 .companyNm(util.convertCompanySqToName(p.getCompanySq()))
                 .projectDetail(p.getProjectDescriptionTxt())
-                .interviewStartDt(DateUtil.formatLocalDate(interviewTimes.get("minTime")))
-                .interviewEndDt(DateUtil.formatLocalDate(interviewTimes.get("maxTime")))
+                .interviewStartDt(interviewStartDt)
+                .interviewEndDt(interviewEndDt)
                 .projectRecruitStartDt(p.getProjectRecruitStartDt().toString())
                 .projectRecruitEndDt(p.getProjectRecruitEndDt().toString())
                 .projectStartDt(p.getProjectStartDt().toString())

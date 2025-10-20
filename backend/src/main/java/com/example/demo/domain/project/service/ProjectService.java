@@ -105,8 +105,20 @@ public class ProjectService {
 
 	// 주소 문자열로 변환 (ex: "서울 강남구")
 	public String fetchAddressString(Long addressSq) {
+		// 인턴 추가 작업: null 체크 추가
+		if (addressSq == null) {
+			return "주소 정보 없음";
+		}
+		
 		AreaInfoResponse subDistrict = addressMapper.findAreaInfoBySq(addressSq);
+		if (subDistrict == null) {
+			return "주소 정보 없음";
+		}
+		
 		AreaInfoResponse parentDistrict = districtMapper.findParentDisctrictByCodeSq(subDistrict.getAreaSq());
+		if (parentDistrict == null) {
+			return subDistrict.getAreaName();
+		}
 
 		String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
 		return parentName + " " + subDistrict.getAreaName();

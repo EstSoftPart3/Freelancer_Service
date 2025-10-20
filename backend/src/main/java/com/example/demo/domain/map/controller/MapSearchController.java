@@ -56,25 +56,16 @@ public class MapSearchController {
         }
     }
 
-//    @PostMapping("/search")
-//    public ResponseEntity<MapSearchResponse> searchProjects(
-//            @Valid @RequestBody MapSearchRequest request) {
-//
-//
-//        MapSearchResponse response = mapSearchService.searchProjects(request);
-//        return ResponseEntity.ok(response);
-//    }
-
     @GetMapping("/search")
     public ResponseEntity<MapSearchResponse> searchProjectsSimple(
-            @RequestParam(required = false) Long userId,           // 사용자 ID
-            @RequestParam(required = false) Double lat,            // 사용자 위도
-            @RequestParam(required = false) Double lon,            // 사용자 경도
-            @RequestParam(defaultValue = "5.0") double radius,     // 반경 (기본값 5km)
-            @RequestParam(required = false) String jobType,        // 직무
-            @RequestParam(required = false) String keyword,        // 검색어
-            @RequestParam(defaultValue = "0") int page,            // 페이지 (기본값 0)
-            @RequestParam(defaultValue = "20") int size) {         // 개수 (기본값 20)
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
+            @RequestParam(defaultValue = "5.0") double radius,
+            @RequestParam(required = false) String jobType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         
         // 사용자 ID가 있으면 사용자 주소로 검색, 없으면 직접 좌표 사용
         MapSearchResponse response;
@@ -118,14 +109,14 @@ public class MapSearchController {
     }
 
     @GetMapping("/naver/static")
-    public ResponseEntity<byte[]> getNaverStaticMap(
+    public ResponseEntity<?> getNaverStaticMap(
             @RequestParam double centerLon,
             @RequestParam double centerLat,
             @RequestParam(defaultValue = "800") int width,
             @RequestParam(defaultValue = "500") int height,
             @RequestParam(defaultValue = "13") int level) {
         
-        System.out.println("========== /naver/static API 호출 ==========");
+        System.out.println("/naver/static API 호출");
         System.out.println("centerLon: " + centerLon);
         System.out.println("centerLat: " + centerLat);
         System.out.println("width: " + width);
@@ -165,41 +156,31 @@ public class MapSearchController {
                     .body(response.body());
             } else {
                 System.out.println("네이버 API 호출 실패: " + response.statusCode());
-                // 에러 응답 본문도 출력
+                // 에러 응답 본문
                 String errorBody = new String(response.body());
                 System.out.println("에러 응답 본문: " + errorBody);
                 
-                // 실패 시 기본 지도 이미지 반환
-                return createFallbackMapImage(width, height, centerLon, centerLat);
+                // 실패 시 응답 반환
+                return createFallbackResponse(centerLon, centerLat);
             }
             
         } catch (Exception e) {
             System.out.println("네이버 Static Map API 호출 중 오류: " + e.getMessage());
             e.printStackTrace();
-            // 오류 시 기본 지도 이미지 반환
-            return createFallbackMapImage(width, height, centerLon, centerLat);
+            // 오류 시 응답 반환
+            return createFallbackResponse(centerLon, centerLat);
         }
     }
     
-    private ResponseEntity<byte[]> createFallbackMapImage(int width, int height, double centerLon, double centerLat) {
-        // 기본 지도 이미지 SVG 생성
-        String svgContent = String.format(
-            "<svg width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">" +
-            "<rect width=\"100%%\" height=\"100%%\" fill=\"#e9ecef\"/>" +
-            "<text x=\"%d\" y=\"%d\" font-family=\"Arial\" font-size=\"20\" fill=\"#007bff\" text-anchor=\"middle\">🗺️ 지도</text>" +
-            "<text x=\"%d\" y=\"%d\" font-family=\"Arial\" font-size=\"14\" fill=\"#6c757d\" text-anchor=\"middle\">📍 위치: %.6f, %.6f</text>" +
-            "<circle cx=\"%d\" cy=\"%d\" r=\"8\" fill=\"#007bff\" stroke=\"white\" stroke-width=\"2\"/>" +
-            "</svg>",
-            width, height,
-            width/2, height/2 - 20,
-            width/2, height/2 + 10, centerLon, centerLat,
-            width/2, height/2 + 30
-        );
-
-        byte[] svgBytes = svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-
+    private ResponseEntity<Map<String, Object>> createFallbackResponse(double centerLon, double centerLat) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "지도 서비스를 일시적으로 사용할 수 없습니다");
+        response.put("location", Map.of("longitude", centerLon, "latitude", centerLat));
+        response.put("fallback", true);
+        
         return ResponseEntity.ok()
-            .contentType(org.springframework.http.MediaType.valueOf("image/svg+xml"))
-            .body(svgBytes);
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .body(response);
     }
 }

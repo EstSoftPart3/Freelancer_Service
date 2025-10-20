@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class MapSearchService {
 
-    private final MapSearchMapper mapSearchMapper;        // 데이터베이스 조회
-    private final NaverMapUrlGenerator naverMapUrlGenerator; // 네이버 URL 생성
+    private final MapSearchMapper mapSearchMapper;
+    private final NaverMapUrlGenerator naverMapUrlGenerator;
 
     // 사용자 주소 정보 조회
     public MapProjectDto getUserLocation(Long userId) {
@@ -37,13 +37,13 @@ public class MapSearchService {
         
         // 2단계: 사용자 주소 기준 반경 내 프로젝트 조회
         List<MapProjectDto> projectDtos = mapSearchMapper.findProjectsWithinRadius(
-            userLocation.getLatitude().doubleValue(),    // 사용자 위도
-            userLocation.getLongitude().doubleValue(),   // 사용자 경도
-            radius,                        // 검색 반경
-            jobType,                       // 직무 필터
-            keyword,                       // 검색 키워드
-            page * size,                   // 오프셋 계산
-            size                           // 가져올 개수
+            userLocation.getLatitude().doubleValue(),
+            userLocation.getLongitude().doubleValue(),
+            radius,
+            jobType,
+            keyword,
+            page * size,
+            size
         );
         
         // 3단계: 총 개수 조회
@@ -59,7 +59,7 @@ public class MapSearchService {
         return convertToResponse(projectDtos, totalCount, userLocation.getLatitude().doubleValue(), userLocation.getLongitude().doubleValue(), radius, jobType, keyword);
     }
 
-    // 직접 좌표로 프로젝트 검색 (기존 방식)
+    // 직접 좌표로 프로젝트 검색
     public MapSearchResponse searchProjects(MapSearchRequest request) {
         
         // 1단계: 데이터베이스에서 반경 내 프로젝트 조회
@@ -117,7 +117,7 @@ public class MapSearchService {
 
     private MapProjectResponse convertToResponse(MapProjectDto dto, double userLat, double userLon) {
         
-        // 네이버 길찾기 URL 생성 (사용자 → 프로젝트)
+        // 네이버 길찾기 URL 생성
         String naverMapUrl = naverMapUrlGenerator.generateRouteUrl(
             userLat,                             // 출발지: 사용자 위치
             userLon,
