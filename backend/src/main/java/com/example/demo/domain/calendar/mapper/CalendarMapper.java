@@ -21,4 +21,5 @@ public interface CalendarMapper {
     void insert(ScheduleEvnt scheduleEvnt);
     int updateScheduleSelective(@Param("userSq") Long userSq,
                                 @Param("req") PersonalScheduleUpdateRequest req);
+    int deleteSchedule(@Param("scheduleSq") Long scheduleSq);
 }

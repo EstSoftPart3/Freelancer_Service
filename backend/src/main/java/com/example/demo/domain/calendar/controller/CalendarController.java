@@ -67,4 +67,11 @@ public class CalendarController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"상세 조회 완료", calendarDetailResDto));
     }
 
+    //일정 삭제
+    @DeleteMapping("/evnts/{scheduleSq}")
+    public ResponseEntity<ApiResponse<Long>> deletedSchedule(@AuthenticationPrincipal Long userSq, @PathVariable Long scheduleSq){
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"일정 삭제 완료", calendarService.deletedSchedule(userSq,scheduleSq)));
+
+    }
+
 }

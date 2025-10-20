@@ -150,5 +150,28 @@ public class CalendarService {
 
     }
 
+    //일정 삭제
+    public Long deletedSchedule(Long userSq, Long scheduleSq){
+        //사용자 검증
+        UserDTO user = calendarMapper.findByUser(userSq);
+        Optional.ofNullable(user).orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
+
+        //일정 검증
+        ScheduleEvnt se = calendarMapper.findBySchedule(scheduleSq);
+        Optional.ofNullable(se).orElseThrow(() -> new NotFoundException("삭제할 일정이 없거나 권한이 없습니다."));
+
+        //삭제 실행
+        int deleted = calendarMapper.deleteSchedule(scheduleSq);
+
+        //삭제 성공 시 원래 일정 순번 반환
+        if (deleted > 0){
+            return scheduleSq;
+        } else {
+            throw new RuntimeException("삭제 실패: 이미 삭제되었거나 존재하지 않습니다.");
+        }
+
+    }
+
+
 
 }
