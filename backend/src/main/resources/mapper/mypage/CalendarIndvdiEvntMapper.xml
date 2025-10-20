@@ -8,4 +8,13 @@
         VALUES (#{scheduleSq}, #{memo})
     </insert>
 
+    <update id="updateByScheduleSelective">
+        UPDATE TBL_CALENDAR_INDVDI_EVNT
+        <set>
+            <if test="clearMemo != null and clearMemo == true">memo = NULL,</if>
+            <if test="memo != null and (clearMemo == null or clearMemo == false)">
+                memo = #{memo},
+            </if>
+        </set>
+    </update>
 </mapper>

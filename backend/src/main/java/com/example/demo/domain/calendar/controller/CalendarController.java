@@ -1,8 +1,10 @@
 package com.example.demo.domain.calendar.controller;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
+import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
 import com.example.demo.domain.calendar.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Param;
@@ -38,15 +40,23 @@ public class CalendarController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"일정 조회 완료",calendarViewDtoList));
     }
 
+    //일정 등록
     @PostMapping("/evnts")
     public ResponseEntity<ApiResponse<Long>> CreateSchedule(@RequestBody PersonalScheduleCreateRequest personalreq, @AuthenticationPrincipal Long userSq){
         Long scheduleSq = calendarService.createPersonalSchedule(userSq,personalreq);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "일정 등록 완료", scheduleSq));
     }
 
+    //일정 조회 필터링
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<List<?>>> getSearchFilterInfo(@RequestParam("type") String type){
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"캘린더 필터 조회 완료", calendarService.fetchFilterInfos(type)));
+    }
+
+    //일정 수정
+    @PatchMapping("/evnts/{scheduleSq}")
+    public ResponseEntity<ApiResponse<ScheduleUpdateResDto>> updateSchedule(@PathVariable Long scheduleSq, @AuthenticationPrincipal Long userSq, @RequestBody PersonalScheduleUpdateRequest req){
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "일정 수정 완료", calendarService.updateSchedule(scheduleSq,userSq,req)));
     }
 
 }

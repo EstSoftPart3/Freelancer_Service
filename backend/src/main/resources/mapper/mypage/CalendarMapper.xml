@@ -93,5 +93,27 @@
         )
     </insert>
 
+    <select id="findBySchedule" resultType="com.example.demo.domain.calendar.entity.ScheduleEvnt">
+        SELECT * FROM TBL_SCHEDULE_EVNT se WHERE se.schedule_sq = #{scheduleSq}
+    </select>
+
+    <update id="updateScheduleSelective">
+        UPDATE TBL_SCHEDULE_EVNT
+        <set>
+            <if test="req.title != null">title = #{req.title},</if>
+            <if test="req.startDt != null">startDt_dt = #{req.startDt},</if>
+
+<!--            NULL로 비우기 우선-->
+            <if test="req.clearEndDt != null and req.clearEndDt == true">end_dt = NULL,</if>
+            <if test="req.endDt != null and (req.clearEndDt == null or req.clearEndDt == false)">
+                end_dt = #{req.endDt},
+            </if>
+
+            calendar_modified_at_dtm = NOW()
+        </set>
+        WHERE schedule_sq = #{req.scheduleSq}
+        AND schedule_user_sq = #{userSq}
+        AND schedule_is_deleted_yn = 'N'
+    </update>
 
 </mapper>
