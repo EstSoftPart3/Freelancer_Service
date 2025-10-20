@@ -54,7 +54,7 @@
                     class="calendar-item"
                     :class="getItemClasses(event, day)"
                   >
-                    <a class="company" :href="event.projectSq ? `/project/spec/user/${event.projectSq}` : '#'">
+                    <div class="company" @click="handleScheduleClick(event)">
                       <div v-if="event.isStartDate(day.fullDate)" class="calendar-label start">시</div>
                       <div v-if="event.isEndDate(day.fullDate)" class="calendar-label end">끝</div>
                       <div class="company-name">
@@ -66,7 +66,7 @@
                       <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
                         <i class="bi bi-briefcase"></i>
                       </div>
-                    </a>
+                    </div>
                     <div class="favorite">
                     </div>
                   </div>
@@ -85,6 +85,15 @@
       @close="closeScheduleModal"
       @success="handleScheduleSuccess"
     />
+
+    <!-- 일정 상세 모달 -->
+    <ScheduleDetailModal
+      :show="showScheduleDetailModal"
+      :scheduleSq="selectedScheduleSq"
+      @close="closeScheduleDetailModal"
+      @updated="handleScheduleUpdated"
+      @deleted="handleScheduleDeleted"
+    />
   </div>
 </template>
 
@@ -96,12 +105,14 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 import calendarService from '@/fo/services/calendarService'
 import { CalendarEvent, CalendarSourceType } from '@/fo/types/calendar'
 import ScheduleModal from '@/fo/components/calendar/ScheduleModal.vue'
+import ScheduleDetailModal from '@/fo/components/calendar/ScheduleDetailModal.vue'
 import CalendarFilterBar from '@/fo/components/calendar/CalendarFilterBar.vue'
 
 export default {
   name: 'CalendarPage',
   components: {
     ScheduleModal,
+    ScheduleDetailModal,
     CalendarFilterBar
   },
   setup() {
@@ -121,6 +132,8 @@ export default {
     // 모달 관련
     const showScheduleModal = ref(false)
     const selectedDateForModal = ref(null)
+    const showScheduleDetailModal = ref(false)
+    const selectedScheduleSq = ref(null)
     
     // 필터 데이터
     const filters = ref({
@@ -223,6 +236,51 @@ export default {
       loadCalendarEvents()
     }
     
+    // 일정 클릭 핸들러
+    const handleScheduleClick = async (event) => {
+      try {
+        const { success, data } = await calendarService.getScheduleDetail(event.scheduleSq)
+        
+        if (success && data) {
+          if (data.sourceType === 'PERSONAL') {
+            // 개인 일정: 상세 모달 표시
+            selectedScheduleSq.value = event.scheduleSq
+            showScheduleDetailModal.value = true
+          } else if (data.sourceType === 'PROJECT') {
+            // 프로젝트 일정: 프로젝트 상세 페이지로 이동
+            if (data.projectDetail?.routePath) {
+              window.location.href = data.projectDetail.routePath
+            } else {
+              alertStore.show('프로젝트 상세 페이지를 찾을 수 없습니다.', 'warning')
+            }
+          }
+        } else {
+          alertStore.show('일정 정보를 불러오는데 실패했습니다.', 'danger')
+        }
+      } catch (error) {
+        console.error('일정 클릭 처리 실패:', error)
+        alertStore.show('일정 정보를 불러오는데 실패했습니다.', 'danger')
+      }
+    }
+    
+    // 일정 상세 모달 닫기
+    const closeScheduleDetailModal = () => {
+      showScheduleDetailModal.value = false
+      selectedScheduleSq.value = null
+    }
+    
+    // 일정 수정 완료 처리
+    const handleScheduleUpdated = () => {
+      // 일정 수정 완료 시 캘린더 데이터 새로고침
+      loadCalendarEvents()
+    }
+    
+    // 일정 삭제 완료 처리
+    const handleScheduleDeleted = () => {
+      // 일정 삭제 완료 시 캘린더 데이터 새로고침
+      loadCalendarEvents()
+    }
+    
     const isToday = (day) => {
       return isSameDay(day.fullDate, new Date())
     }
@@ -301,6 +359,8 @@ export default {
       calendarWeeks,
       showScheduleModal,
       selectedDateForModal,
+      showScheduleDetailModal,
+      selectedScheduleSq,
       
       // 메서드
       addMonth,
@@ -312,6 +372,10 @@ export default {
       loadCalendarEvents,
       closeScheduleModal,
       handleScheduleSuccess,
+      handleScheduleClick,
+      closeScheduleDetailModal,
+      handleScheduleUpdated,
+      handleScheduleDeleted,
       updateFilters
     }
   }
@@ -576,9 +640,14 @@ export default {
 .company {
   display: flex;
   align-items: center;
-  text-decoration: none;
   color: inherit;
   flex: 1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.company:hover {
+  opacity: 0.8;
 }
 
 .company-name {
