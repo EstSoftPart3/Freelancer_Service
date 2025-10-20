@@ -10,7 +10,7 @@
 
     <select id="findProjectDetailByScheduleSq" resultType="com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow">
         SELECT pj.project_sq AS projectSq, pj.company_sq AS companySq, pj.project_ttl AS projectTtl, pj.project_recruit_start_dt AS recruitStartDt,
-        pj.project_recruit_end_dt AS recruitEndDt,
+        pj.project_recruit_end_dt AS recruitEndDt
         FROM TBL_CALENDAR_POSITION_EVNT cpe JOIN TBL_PROJECT_M pj ON pj.project_sq = cpe.project_sq WHERE cpe.schedule_sq =
         #{scheduleSq} LIMIT 1
     </select>
