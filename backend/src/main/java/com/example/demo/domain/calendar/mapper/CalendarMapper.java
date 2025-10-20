@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper
 public interface CalendarMapper {
     List<CalendarViewDto> findCalendarEvents(@Param("userSq") Long userSq, @Param("startDt") LocalDate startDt, @Param("endDt") LocalDate endDt
-            ,@Param("contractTypeCd") Long contractTypeCd, @Param("jobTypeCd") Long jobTypeCd);
+            ,@Param("contractTypeCd") Long contractTypeCd, @Param("recruitJobPositionTypeCd") Long recruitJobPositionTypeCd, @Param("searchKeyword") String searchKeyword);
     UserDTO findByUser(@Param("userSq") Long userSq);
     void insert(ScheduleEvnt scheduleEvnt);
 }
