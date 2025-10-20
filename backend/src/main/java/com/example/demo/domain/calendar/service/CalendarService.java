@@ -52,6 +52,9 @@ public class CalendarService {
     public Long createPersonalSchedule(Long userSq, PersonalScheduleCreateRequest personalReq){
         // 공통일정 저장 (source_type = PERSONAL)
         ScheduleEvnt parent = personalReq.toParentEntity(userSq);
+        if (parent.getEndDt().isBefore(parent.getStartDt())){
+            throw new IllegalArgumentException("마감일은 시작일보다 이전일 수 없습니다.");
+        }
         calendarMapper.insert(parent);
 
         //개인 일정 자식 저장
