@@ -17,8 +17,8 @@ public interface CalendarMapper {
     List<CalendarViewDto> findCalendarEvents(@Param("userSq") Long userSq, @Param("startDt") LocalDate startDt, @Param("endDt") LocalDate endDt
             ,@Param("contractTypeCd") Long contractTypeCd, @Param("recruitJobPositionTypeCd") Long recruitJobPositionTypeCd, @Param("searchKeyword") String searchKeyword);
     UserDTO findByUser(@Param("userSq") Long userSq);
-    void insert(ScheduleEvnt scheduleEvnt);
     ScheduleEvnt findBySchedule(@Param("scheduleSq") Long scheduleSq);
+    void insert(ScheduleEvnt scheduleEvnt);
     int updateScheduleSelective(@Param("userSq") Long userSq,
                                 @Param("req") PersonalScheduleUpdateRequest req);
 }

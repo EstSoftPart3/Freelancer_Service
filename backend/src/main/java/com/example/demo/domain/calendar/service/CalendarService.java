@@ -5,18 +5,23 @@ import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
+import com.example.demo.domain.calendar.dto.response.CalendarDetailResDto;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
 import com.example.demo.domain.calendar.entity.CalendarIndvdiEvnt;
 import com.example.demo.domain.calendar.entity.ScheduleEvnt;
+import com.example.demo.domain.calendar.entity.SourceType;
 import com.example.demo.domain.calendar.mapper.CalendarIndvdiEvntMapper;
 import com.example.demo.domain.calendar.mapper.CalendarMapper;
 import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
+import com.example.demo.domain.calendar.mapper.rows.PersonalDetailRow;
+import com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow;
 import com.example.demo.domain.user.dto.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +31,7 @@ import java.util.Optional;
 public class CalendarService {
     private final CalendarMapper calendarMapper;
     private final CalendarIndvdiEvntMapper calendarIndvdiEvntMapper;
+    private final CalendarPositionMapper calendarPositionMapper;
     private final CommonCodeMapper commonCodeMapper;
 
     //    캘린더 일정 조회
@@ -109,4 +115,40 @@ public class CalendarService {
                 updated.getCalendarModifiedAtDtm()
         );
     }
+
+    //캘린더 상세 조회
+    public CalendarDetailResDto getEventDetail(Long userSq, Long scheduleSq){
+        //사용자 검증
+        UserDTO user = calendarMapper.findByUser(userSq);
+        Optional.ofNullable(user).orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
+
+        //일정 검증
+        ScheduleEvnt se = calendarMapper.findBySchedule(scheduleSq);
+        Optional.ofNullable(se).orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
+
+        //타입 분기
+        SourceType sourceType = se.getSourceType();
+
+        if(SourceType.PERSONAL.equals(sourceType)){
+            //개인 일정 상세
+            PersonalDetailRow personalDetailRow = calendarIndvdiEvntMapper.findDetailByScheduleSq(scheduleSq);
+            CalendarDetailResDto.PersonalDetail personalDetail = new CalendarDetailResDto.PersonalDetail(se.getScheduleSq(), se.getTitle(),
+                    se.getStartDt(), se.getEndDt(),personalDetailRow != null ? personalDetailRow.getMemo() : null);
+            return new CalendarDetailResDto(SourceType.PERSONAL,personalDetail,null);
+        }
+        else if (SourceType.PROJECT.equals(sourceType)){
+            //프로젝트 공고 일정 상세
+            ProjectDetailRow projectDetailRow = calendarPositionMapper.findProjectDetailByScheduleSq(scheduleSq);
+            String routePath = "/projects/" + projectDetailRow.getProjectSq() + "/details";
+            CalendarDetailResDto.ProjectDetail projectDetail = new CalendarDetailResDto.ProjectDetail(se.getScheduleSq(),
+            projectDetailRow.getProjectSq(), projectDetailRow.getCompanySq(), projectDetailRow.getProjectTtl(), projectDetailRow.getRecruitStartDt(),
+                    projectDetailRow.getRecruitEndDt(), routePath);
+            return new CalendarDetailResDto(SourceType.PROJECT,null, projectDetail);
+        }else {
+            throw new IllegalStateException("지원하지 않는 sourceType: " + sourceType);
+        }
+
+    }
+
+
 }

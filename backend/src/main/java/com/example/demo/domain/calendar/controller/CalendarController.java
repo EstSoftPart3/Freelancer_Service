@@ -2,6 +2,7 @@ package com.example.demo.domain.calendar.controller;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
+import com.example.demo.domain.calendar.dto.response.CalendarDetailResDto;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
 import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
@@ -57,6 +58,13 @@ public class CalendarController {
     @PatchMapping("/evnts/{scheduleSq}")
     public ResponseEntity<ApiResponse<ScheduleUpdateResDto>> updateSchedule(@PathVariable Long scheduleSq, @AuthenticationPrincipal Long userSq, @RequestBody PersonalScheduleUpdateRequest req){
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "일정 수정 완료", calendarService.updateSchedule(scheduleSq,userSq,req)));
+    }
+
+    //일정 상세조회
+    @GetMapping("/evnts/detail/{scheduleSq}")
+    public ResponseEntity<ApiResponse<CalendarDetailResDto>> getEvntDetail(@AuthenticationPrincipal Long userSq, @PathVariable Long scheduleSq){
+        CalendarDetailResDto calendarDetailResDto = calendarService.getEventDetail(userSq,scheduleSq);
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"상세 조회 완료", calendarDetailResDto));
     }
 
 }

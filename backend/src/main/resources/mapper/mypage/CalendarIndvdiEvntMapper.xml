@@ -17,4 +17,8 @@
             </if>
         </set>
     </update>
+
+    <select id="findDetailByScheduleSq" resultType="com.example.demo.domain.calendar.mapper.rows.PersonalDetailRow">
+        SELECT cie.indvdi_evnt_sq, cie.memo FROM TBL_CALENDAR_INDVDI_EVNT cie WHERE cie.schedule_sq = #{scheduleSq} LIMIT 1
+    </select>
 </mapper>
