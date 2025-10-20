@@ -15,8 +15,8 @@ public class NaverMapUrlGenerator {
         return String.format(
             "%s/%s,%s,출발지/%s,%s,도착지",
             NAVER_MAP_BASE_URL,
-            startLat, startLon,  // 출발지 좌표
-            endLat, endLon       // 도착지 좌표
+            startLat, startLon,
+            endLat, endLon
         );
     }
 

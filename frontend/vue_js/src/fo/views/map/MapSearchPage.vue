@@ -104,14 +104,9 @@
               >
                 <div class="card-body p-3">
                   <!-- 프로젝트 제목 -->
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="card-title mb-0 fw-bold text-color-dark">
-                      {{ project.projectTitle }}
-                    </h6>
-                    <span class="badge bg-light text-dark border">
-                      {{ project.distance }}km
-                    </span>
-                  </div>
+                  <h6 class="card-title mb-2 fw-bold text-color-dark">
+                    {{ project.projectTitle }}
+                  </h6>
                   
                   <!-- 회사명 -->
                   <p class="card-text text-muted mb-1">
@@ -126,9 +121,15 @@
                   </p>
                   
                   <!-- 주소 -->
-                  <p class="card-text text-muted mb-3">
+                  <p class="card-text text-muted mb-1">
                     <i class="bi bi-geo-alt me-2"></i>
-                    {{ project.address }}
+                    {{ project.address }}{{ project.detailAddress ? ' ' + project.detailAddress : '' }}
+                  </p>
+                  
+                  <!-- 거리 정보 -->
+                  <p class="card-text text-muted mb-3">
+                    <i class="bi bi-rulers me-2"></i>
+                    {{ project.distance }}km
                   </p>
                   
                   <!-- 버튼들 -->
@@ -406,7 +407,7 @@
 .project-cards .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border-left-color: #007bff !important;
+  /* 인턴 추가 작업: 호버 시 파란 선 제거 */
 }
 
 /* 반응형 디자인 */
