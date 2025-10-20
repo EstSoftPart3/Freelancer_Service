@@ -34,7 +34,6 @@ public class MapSearchController {
     @GetMapping("/user-address")
     public ResponseEntity<Map<String, Object>> getUserAddress(@RequestParam Long userId) {
         try {
-            System.out.println("========== /user-address API 호출 ==========");
             System.out.println("userId: " + userId);
             
             // 실제 사용자 주소 정보 조회
@@ -49,31 +48,28 @@ public class MapSearchController {
             userAddress.put("address", userLocation.getAddress());
             
             System.out.println("응답 데이터: " + userAddress);
-            System.out.println("==========================================");
             
             return ResponseEntity.ok(userAddress);
         } catch (Exception e) {
-            System.out.println("========== /user-address API 에러 ==========");
             e.printStackTrace();
-            System.out.println("==========================================");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<MapSearchResponse> searchProjects(
-            @Valid @RequestBody MapSearchRequest request) {
-
-        
-        MapSearchResponse response = mapSearchService.searchProjects(request);
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping("/search")
+//    public ResponseEntity<MapSearchResponse> searchProjects(
+//            @Valid @RequestBody MapSearchRequest request) {
+//
+//
+//        MapSearchResponse response = mapSearchService.searchProjects(request);
+//        return ResponseEntity.ok(response);
+//    }
 
     @GetMapping("/search")
     public ResponseEntity<MapSearchResponse> searchProjectsSimple(
-            @RequestParam(required = false) Long userId,           // 사용자 ID (우선 사용)
-            @RequestParam(required = false) Double lat,            // 사용자 위도 (fallback)
-            @RequestParam(required = false) Double lon,            // 사용자 경도 (fallback)
+            @RequestParam(required = false) Long userId,           // 사용자 ID
+            @RequestParam(required = false) Double lat,            // 사용자 위도
+            @RequestParam(required = false) Double lon,            // 사용자 경도
             @RequestParam(defaultValue = "5.0") double radius,     // 반경 (기본값 5km)
             @RequestParam(required = false) String jobType,        // 직무
             @RequestParam(required = false) String keyword,        // 검색어
@@ -137,10 +133,10 @@ public class MapSearchController {
         System.out.println("level: " + level);
         
         try {
-            // 네이버 Static Map API URL 생성 (정확한 엔드포인트 사용)
+            // 네이버 Static Map API URL 생성 (API 키를 URL 파라미터에 포함)
             String staticMapUrl = String.format(
-                "https://maps.apigw.ntruss.com/map-static/v2/raster?w=%d&h=%d&center=%.6f,%.6f&level=%d&format=png&maptype=basic",
-                width, height, centerLon, centerLat, level
+                "https://maps.apigw.ntruss.com/map-static/v2/raster?w=%d&h=%d&center=%.6f,%.6f&level=%d&format=png&maptype=basic&X-NCP-APIGW-API-KEY-ID=%s",
+                width, height, centerLon, centerLat, level, naverClientId
             );
             
             System.out.println("네이버 Static Map API URL: " + staticMapUrl);
@@ -151,8 +147,8 @@ public class MapSearchController {
             java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                 .uri(java.net.URI.create(staticMapUrl))
-                .header("X-NCP-APIGW-API-KEY-ID", naverClientId)
-                .header("X-NCP-APIGW-API-KEY", naverClientSecret)
+                .header("x-ncp-apigw-api-key-id", naverClientId)
+                .header("x-ncp-apigw-api-key", naverClientSecret)
                 .GET()
                 .build();
             
@@ -163,12 +159,12 @@ public class MapSearchController {
             System.out.println("네이버 API 응답 헤더: " + response.headers().map());
             
             if (response.statusCode() == 200) {
-                System.out.println("✅ 네이버 Static Map API 성공!");
+                System.out.println("네이버 Static Map API 성공!");
                 return ResponseEntity.ok()
                     .contentType(org.springframework.http.MediaType.IMAGE_PNG)
                     .body(response.body());
             } else {
-                System.out.println("❌ 네이버 API 호출 실패: " + response.statusCode());
+                System.out.println("네이버 API 호출 실패: " + response.statusCode());
                 // 에러 응답 본문도 출력
                 String errorBody = new String(response.body());
                 System.out.println("에러 응답 본문: " + errorBody);
@@ -199,9 +195,9 @@ public class MapSearchController {
             width/2, height/2 + 10, centerLon, centerLat,
             width/2, height/2 + 30
         );
-        
+
         byte[] svgBytes = svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        
+
         return ResponseEntity.ok()
             .contentType(org.springframework.http.MediaType.valueOf("image/svg+xml"))
             .body(svgBytes);

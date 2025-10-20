@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponseDTO {
+    // 인턴 추가 작업: userSq 필드 추가
+    private Long userSq;
     private String userNm;
     private Long userTypeCd;
     private TokenDTO token;

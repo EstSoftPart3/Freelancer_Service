@@ -49,6 +49,8 @@ public class LoginService {
 
         TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
         LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+        // 인턴 추가 작업: 로그인 응답에 userSq 추가
+        loginResponseDTO.setUserSq(user.getUserSq());
         loginResponseDTO.setUserNm(user.getUserNm());
         loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 

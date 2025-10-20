@@ -7,12 +7,11 @@ import java.util.List;
 import com.example.demo.domain.map.dto.MapProjectDto;
 
 
-@Mapper  // MyBatis 매퍼임을 표시하는 어노테이션
+@Mapper
 public interface MapSearchMapper {
 
-    /**
-     * 사용자 주소 조회 (위도, 경도)
-     */
+
+     // 사용자 주소 조회 (위도, 경도)
     MapProjectDto findUserAddress(@Param("userId") Long userId);
 
     List<MapProjectDto> findProjectsWithinRadius(

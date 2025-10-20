@@ -5,7 +5,6 @@ import com.example.demo.domain.map.dto.request.MapSearchRequest;
 import com.example.demo.domain.map.dto.response.MapProjectResponse;
 import com.example.demo.domain.map.dto.response.MapSearchResponse;
 import com.example.demo.domain.map.mapper.MapSearchMapper;
-import com.example.demo.domain.map.util.DistanceCalculator;
 import com.example.demo.domain.map.util.NaverMapUrlGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 public class MapSearchService {
 
     private final MapSearchMapper mapSearchMapper;        // 데이터베이스 조회
-    private final DistanceCalculator distanceCalculator;  // 거리 계산
     private final NaverMapUrlGenerator naverMapUrlGenerator; // 네이버 URL 생성
 
     // 사용자 주소 정보 조회
@@ -119,24 +117,15 @@ public class MapSearchService {
 
     private MapProjectResponse convertToResponse(MapProjectDto dto, double userLat, double userLon) {
         
-        // 1단계: 거리 계산
-        double distance = distanceCalculator.calculateDistance(
-            userLat,                             // 사용자 위도
-            userLon,                             // 사용자 경도
-            dto.getLatitude().doubleValue(),     // 프로젝트 위도
-            dto.getLongitude().doubleValue()     // 프로젝트 경도
-        );
-        
-        // 2단계: 네이버 길찾기 URL 생성 (사용자 → 프로젝트)
+        // 네이버 길찾기 URL 생성 (사용자 → 프로젝트)
         String naverMapUrl = naverMapUrlGenerator.generateRouteUrl(
             userLat,                             // 출발지: 사용자 위치
             userLon,
-            dto.getLatitude().doubleValue(),     // 도착지: 프로젝트 위치 (BigDecimal → double 변환)
+            dto.getLatitude().doubleValue(),     // 도착지: 프로젝트 위치
             dto.getLongitude().doubleValue()
         );
 
-        
-        // 4단계: Response 객체 생성 (Builder 패턴)
+        // Response 객체 생성
         return MapProjectResponse.builder()
             // 프로젝트 기본 정보
             .projectSq(dto.getProjectSq())
@@ -149,10 +138,10 @@ public class MapSearchService {
             // 위치 정보
             .latitude(dto.getLatitude())
             .longitude(dto.getLongitude())
-            .distance(distanceCalculator.roundDistance(distance))  // 거리 반올림
+            .distance(dto.getDistance())  // SQL에서 계산된 거리 사용
             
             // 지도 관련 URL
-            .naverMapUrl(naverMapUrl)     // 네이버 길찾기 딥링크
+            .naverMapUrl(naverMapUrl)
             
             // 프로젝트 상세 정보
             .projectSalary(dto.getProjectSalary())

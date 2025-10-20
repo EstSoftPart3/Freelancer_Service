@@ -46,9 +46,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects",
             "/api/projects/*/districts",
             "/api/projects/applications/interviews/*",
-            "/api/mypage/resume"
+            "/api/mypage/resume",
+            "/api/map/naver/static"
 
-    // 여기에 더 추가 가능
+            // 여기에 더 추가 가능
     );
 
     @Override
@@ -57,7 +58,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
 
+        // 인턴 추가 작업: JWT 토큰 검증 디버깅 로그 추가
+        System.out.println("========== JWT 토큰 검증 시작 ==========");
+        System.out.println("요청 URI: " + uri);
+
         String token = resolveToken(request);
+        System.out.println("토큰: " + token);
 
         // 인증 제외 경로 처리
         if (EXCLUDE_URLS.stream().anyMatch(uri::startsWith)) {
@@ -88,10 +94,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long userSq = jwtProvider.getUserSqFromToken(token);
             Long userTypeCd = jwtProvider.getUserTypeCdFromToken(token);
 
+            // 인턴 추가 작업: 사용자 정보 추출 디버깅 로그 추가
+            System.out.println("추출된 userSq: " + userSq);
+            System.out.println("추출된 userTypeCd: " + userTypeCd);
+
+            if (userSq != null && userSq > 0) {
+                System.out.println("JWT 인증 성공, userSq: " + userSq);
+            } else {
+                System.out.println("userSq 추출 실패");
+            }
+
             JwtAuthenticationToken authentication = new JwtAuthenticationToken(userSq, userTypeCd);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {
+            // 인턴 추가 작업: 토큰 검증 실패 로그 추가
+            System.out.println("토큰 검증 실패: " + e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             return;
         }

@@ -69,9 +69,10 @@
 
   <select
     id="findUserInfoByUserSq" parameterType="long"
-    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT user_nm AS
-    userNm, user_type_cd AS userTypeCd FROM TBL_USER_M WHERE user_sq = #{userSq} AND
-    user_is_deleted_yn = 'N' </select>
+    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> 
+    SELECT user_sq AS userSq, user_nm AS userNm, user_type_cd AS userTypeCd 
+    FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' 
+  </select>
 
   <update id="deleteRefreshTokenByUserSq" parameterType="long"> UPDATE TBL_USER_M SET
     user_refresh_token = NULL WHERE user_sq = #{userSq} </update>
