@@ -19,10 +19,10 @@
         FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.project_sq = sc.project_sq JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.project_sq = pj.project_sq JOIN TBL_SCHEDULE_EVNT s
         ON s.schedule_sq = cpe.schedule_sq WHERE sc.user_sq = #{userSq} AND sc.scrap_type_cd = 601 AND s.schedule_is_deleted_yn = 'N'
 
-        UNION ALL
+        UNION
 
         <!--내가 스크랩한 '기업'의 모든 프로젝트 모집기간-->
-        SELECT s.schedule_sq as ScheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq, pj.project_ttl AS title, pj.project_recruit_start_dt AS startDt, pj.project_recruit_end_dt AS endDt
+        SELECT s.schedule_sq as ScheduleSq, 'PROJECT' AS sourceType, pj.project_sq AS projectSq, pj.company_sq AS companySq, pj.project_ttl AS title, pj.project_recruit_start_dt AS startDt, pj.project_recruit_end_dt AS endDt
         FROM TBL_SCRAP_S sc JOIN TBL_PROJECT_M pj ON pj.company_sq = sc.company_sq JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.project_sq = pj.project_sq
         JOIN TBL_SCHEDULE_EVNT s ON s.schedule_sq = cpe.schedule_sq WHERE sc.user_sq = #{userSq} AND sc.scrap_type_cd = 602 AND s.schedule_is_deleted_yn = 'N'
         ) u
