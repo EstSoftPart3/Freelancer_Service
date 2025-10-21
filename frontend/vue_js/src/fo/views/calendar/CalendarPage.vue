@@ -8,72 +8,77 @@
       </div>
     </div>
 
-    <!-- 캘린더 필터바 -->
-    <CalendarFilterBar @update="updateFilters" />
-
     <!-- 하단 캘린더 영역 -->
-    <div class="recruit-bottom">
-      <div class="calendar-right">
-        <!-- 캘린더 헤더 -->
-        <div class="calendar-right-head">
-          <div class="nav-search-bar">
-            <div class="calendar-nav">
-              <div class="icon-wrapper" @click="addMonth(-1)">
-                <i class="bi bi-chevron-left"></i>
-              </div>
-              <span class="current">{{ currentDate }}</span>
-              <div class="icon-wrapper" @click="addMonth(1)">
-                <i class="bi bi-chevron-right"></i>
+    <div class="calendar-layout-wrapper">
+      <!-- 사이드바 -->
+      <div class="calendar-sidebar-fixed">
+        <MyPageSideBar />
+      </div>
+      
+      <!-- 캘린더 콘텐츠 -->
+      <div class="calendar-content-full">
+        <!-- 캘린더 필터바 -->
+        <CalendarFilterBar @update="updateFilters" />
+        
+        <div class="calendar-right">
+            <!-- 캘린더 헤더 -->
+            <div class="calendar-right-head">
+              <div class="nav-search-bar">
+                <div class="calendar-nav">
+                  <div class="icon-wrapper" @click="addMonth(-1)">
+                    <i class="bi bi-chevron-left"></i>
+                  </div>
+                  <span class="current">{{ currentDate }}</span>
+                  <div class="icon-wrapper" @click="addMonth(1)">
+                    <i class="bi bi-chevron-right"></i>
+                  </div>
+                </div>
+                <div class="add-schedule" @click="openScheduleModal">
+                  일정 추가
+                </div>
               </div>
             </div>
-            <div class="add-schedule" @click="openScheduleModal">
-              일정 추가
-            </div>
-          </div>
-        </div>
 
-        <!-- 메인 캘린더 -->
-        <div class="calendar body employment-mode" :class="{ 'schedule-mode': favoritesMode }">
-          <div v-for="(week, weekIndex) in calendarWeeks" :key="`week-${weekIndex}`" class="calendar-week" :class="`week-${weekIndex}`">
-            <div v-for="day in week" :key="`${day.year}-${day.month}-${day.date}`" class="calendar-cell">
-              <div 
-                class="day-label" 
-                :class="{ today: isToday(day) }"
-              >
-                {{ day.date }}
-              </div>
-              <div 
-                class="day-content" 
-                :class="{ 'has-calendar-item': getDayItems(day).length > 0 }"
-                @dblclick="favoritesMode ? openScheduleModal(day) : null"
-              >
-                <div v-if="getDayItems(day).length > 0" class="calendar-items">
+            <!-- 메인 캘린더 -->
+            <div class="calendar body employment-mode" :class="{ 'schedule-mode': favoritesMode }">
+              <div v-for="(week, weekIndex) in calendarWeeks" :key="`week-${weekIndex}`" class="calendar-week" :class="`week-${weekIndex}`">
+                <div v-for="day in week" :key="`${day.year}-${day.month}-${day.date}`" class="calendar-cell">
                   <div 
-                    v-for="event in getDayItems(day)" 
-                    :key="event.scheduleSq"
-                    class="calendar-item"
-                    :class="getItemClasses(event, day)"
+                    class="day-label" 
+                    :class="{ today: isToday(day) }"
                   >
-                    <div class="company" @click="handleScheduleClick(event)">
-                      <div v-if="event.isStartDate(day.fullDate)" class="calendar-label start">시</div>
-                      <div v-if="event.isEndDate(day.fullDate)" class="calendar-label end">끝</div>
-                      <div class="company-name">
-                        <span>{{ truncateText(event.title, 10) }}</span>
+                    {{ day.date }}
+                  </div>
+                  <div 
+                    class="day-content" 
+                    :class="{ 'has-calendar-item': getDayItems(day).length > 0 }"
+                    @dblclick="favoritesMode ? openScheduleModal(day) : null"
+                  >
+                    <div v-if="getDayItems(day).length > 0" class="calendar-items">
+                      <div 
+                        v-for="event in getDayItems(day)" 
+                        :key="event.scheduleSq"
+                        class="calendar-item"
+                        :class="getItemClasses(event, day)"
+                        :style="getEventStyle(event)"
+                      >
+                        <div class="company" @click="handleScheduleClick(event)">
+                          <div class="company-name">
+                            <span>{{ truncateText(event.title, 9) }}</span>
+                          </div>
+                          <div v-if="event.sourceType === 'PERSONAL'" class="personal-badge">
+                            <i class="bi bi-person"></i>
+                          </div>
+                          <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
+                            <i class="bi bi-briefcase"></i>
+                          </div>
+                        </div>
                       </div>
-                      <div v-if="event.sourceType === 'PERSONAL'" class="personal-badge">
-                        <i class="bi bi-person"></i>
-                      </div>
-                      <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
-                        <i class="bi bi-briefcase"></i>
-                      </div>
-                    </div>
-                    <div class="favorite">
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -106,14 +111,16 @@ import calendarService from '@/fo/services/calendarService'
 import { CalendarEvent, CalendarSourceType } from '@/fo/types/calendar'
 import ScheduleModal from '@/fo/components/calendar/ScheduleModal.vue'
 import ScheduleDetailModal from '@/fo/components/calendar/ScheduleDetailModal.vue'
-import CalendarFilterBar from '@/fo/components/calendar/CalendarFilterBar.vue'
+import CalendarFilterBar from '@/fo/views/calendar/CalendarFilterBar.vue'
+import MyPageSideBar from '@/fo/components/mypage/MyPageSideBar.vue'
 
 export default {
   name: 'CalendarPage',
   components: {
     ScheduleModal,
     ScheduleDetailModal,
-    CalendarFilterBar
+    CalendarFilterBar,
+    MyPageSideBar
   },
   setup() {
     // 스토어
@@ -142,13 +149,8 @@ export default {
       jobRoleCd: null
     })
     
-    // 상수 데이터
-    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THR', 'FRI', 'SAT']
-    const korDayNames = ['일', '월', '화', '수', '목', '금', '토']
-    
     // 계산된 속성
     const currentDate = computed(() => format(currentMonth.value, 'yyyy.MM', { locale: ko }))
-    
     
     // 캘린더 주차 데이터 생성
     const calendarWeeks = computed(() => {
@@ -180,7 +182,6 @@ export default {
       return weeks
     })
   
-    
     // 캘린더 데이터 로드
     const loadCalendarEvents = async () => {
       try {
@@ -220,7 +221,6 @@ export default {
       loadCalendarEvents()
     }
   
-    
     const openScheduleModal = (day = null) => {
       selectedDateForModal.value = day ? day.fullDate : new Date()
       showScheduleModal.value = true
@@ -232,7 +232,6 @@ export default {
     }
     
     const handleScheduleSuccess = () => {
-      // 일정 추가 성공 시 캘린더 데이터 새로고침
       loadCalendarEvents()
     }
     
@@ -243,11 +242,9 @@ export default {
         
         if (success && data) {
           if (data.sourceType === 'PERSONAL') {
-            // 개인 일정: 상세 모달 표시
             selectedScheduleSq.value = event.scheduleSq
             showScheduleDetailModal.value = true
           } else if (data.sourceType === 'PROJECT') {
-            // 프로젝트 일정: 프로젝트 상세 페이지로 이동
             if (data.projectDetail?.routePath) {
               window.location.href = data.projectDetail.routePath
             } else {
@@ -263,21 +260,16 @@ export default {
       }
     }
     
-    // 일정 상세 모달 닫기
     const closeScheduleDetailModal = () => {
       showScheduleDetailModal.value = false
       selectedScheduleSq.value = null
     }
     
-    // 일정 수정 완료 처리
     const handleScheduleUpdated = () => {
-      // 일정 수정 완료 시 캘린더 데이터 새로고침
       loadCalendarEvents()
     }
     
-    // 일정 삭제 완료 처리
     const handleScheduleDeleted = () => {
-      // 일정 삭제 완료 시 캘린더 데이터 새로고침
       loadCalendarEvents()
     }
     
@@ -285,37 +277,34 @@ export default {
       return isSameDay(day.fullDate, new Date())
     }
     
-    // 특정 날짜가 "시작/마감만" 해당되도록 판단
-    const isEdgeDay = (event, date) => {
-    const isStart = typeof event.isStartDate === 'function' ? event.isStartDate(date) : false
-    const isEnd   = typeof event.isEndDate   === 'function' ? event.isEndDate(date)   : false
+    // 특정 날짜가 일정 기간에 포함되는지 판단
+    const isInPeriod = (event, date) => {
+      const isStart = typeof event.isStartDate === 'function' ? event.isStartDate(date) : false
+      const isEnd = typeof event.isEndDate === 'function' ? event.isEndDate(date) : false
+      const isOngoing = typeof event.isOngoing === 'function' ? event.isOngoing(date) : false
 
-      // 종료 없이 하루짜리(= 단일 일정)는 원래 로직대로 그 날 표시
-    const hasEnd =
-      !!event.endDt || !!event.endDate || !!event.end
+      const hasEnd = !!event.endDt || !!event.endDate || !!event.end
 
-    if (!hasEnd) {
-      return typeof event.isOnDate === 'function' ? event.isOnDate(date) : false
+      if (!hasEnd) {
+        return typeof event.isOnDate === 'function' ? event.isOnDate(date) : false
+      }
+      
+      return isStart || isEnd || isOngoing
     }
-      // 기간 일정은 시작/끝만 표시
-    return isStart || isEnd
-  }
     
     const getDayItems = (day) => {
-      return calendarEvents.value.filter(ev => isEdgeDay(ev, day.fullDate))
+      return calendarEvents.value.filter(ev => isInPeriod(ev, day.fullDate))
     }
     
     const getItemClasses = (event, day) => {
       const classes = []
       
-      // 소스 타입별 클래스
       if (event.sourceType === CalendarSourceType.PERSONAL) {
         classes.push('personal-schedule')
       } else if (event.sourceType === CalendarSourceType.PROJECT) {
         classes.push('project-schedule')
       }
       
-      // 이벤트 상태별 클래스
       if (event.isStartDate(day.fullDate)) {
         classes.push('start')
       } else if (event.isEndDate(day.fullDate)) {
@@ -327,16 +316,42 @@ export default {
       return classes
     }
     
-    
     const truncateText = (text, maxLength) => {
       if (!text) return ''
       if (text.length <= maxLength) return text
       return text.substring(0, maxLength) + '...'
     }
     
+    // 색상 팔레트 정의
+    const colorPalette = [
+      { bg: '#90CAF9', border: '#90CAF9' },  // 파란색
+      { bg: '#CE93D8', border: '#CE93D8' },  // 보라색
+      { bg: '#A5D6A7', border: '#A5D6A7' },  // 초록색
+      { bg: '#FFCC80', border: '#FFCC80' },  // 주황색
+      { bg: '#F48FB1', border: '#F48FB1' },  // 핑크색
+      { bg: '#80CBC4', border: '#80CBC4' },  // 청록색
+      { bg: '#FFF59D', border: '#FFF59D' },  // 노란색
+      { bg: '#C5E1A5', border: '#C5E1A5' },  // 라임색
+      { bg: '#81D4FA', border: '#81D4FA' },  // 하늘색
+      { bg: '#E6EE9C', border: '#E6EE9C' },  // 연두색
+      { bg: '#EF9A9A', border: '#EF9A9A' },  // 빨간색
+      { bg: '#B39DDB', border: '#B39DDB' },  // 진보라색
+    ]
+    
+    // 일정마다 고유한 색상 반환
+    const getEventStyle = (event) => {
+      const colorIndex = event.scheduleSq % colorPalette.length
+      const colors = colorPalette[colorIndex]
+      
+      return {
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        color: '#333'
+      }
+    }
+    
     // 초기화
     onMounted(() => {
-      // 초기 데이터 로드
       loadCalendarEvents()
     })
 
@@ -346,29 +361,23 @@ export default {
     })
     
     return {
-      // 데이터
       loading,
       favoritesMode,
       currentMonth,
       calendarEvents,
-      dayNames,
-      korDayNames,
-      
-      // 계산된 속성
       currentDate,
       calendarWeeks,
       showScheduleModal,
       selectedDateForModal,
       showScheduleDetailModal,
       selectedScheduleSq,
-      
-      // 메서드
       addMonth,
       openScheduleModal,
       isToday,
       getDayItems,
       getItemClasses,
       truncateText,
+      getEventStyle,
       loadCalendarEvents,
       closeScheduleModal,
       handleScheduleSuccess,
@@ -386,8 +395,8 @@ export default {
 .calendar-container {
   min-height: 100vh;
   background-color: #f8f9fa;
-  margin: -2rem;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
   max-width: 100vw;
   width: 100%;
   box-sizing: border-box;
@@ -424,25 +433,40 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-
-
-/* 캘린더 영역 */
-.recruit-bottom {
+/* 캘린더 레이아웃 */
+.calendar-layout-wrapper {
   display: flex;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 1rem;
-  gap: 1rem;
+  width: 100%;
+  min-height: calc(100vh - 100px);
+  margin: 0;
+  padding: 0;
+}
+
+.calendar-sidebar-fixed {
+  width: 250px;
+  flex-shrink: 0;
+  background-color: #fff;
+  padding: 1.5rem;
+  border-right: 1px solid #dee2e6;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 100px);
+}
+
+.calendar-content-full {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 250px);
+  overflow-x: hidden;
 }
 
 .calendar-right {
-  flex: 1;
   background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   width: 100%;
-  max-width: none;
+  flex: 1;
 }
 
 .calendar-right-head {
@@ -491,44 +515,6 @@ export default {
 
 .add-schedule:hover {
   background-color: #0056b3;
-}
-
-.dayname-container {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: #dee2e6;
-}
-
-.dayname-container .calendar-cell {
-  background-color: white;
-  padding: 0.75rem;
-  text-align: center;
-}
-
-.name-of-days {
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.875rem;
-}
-
-.top-calendar-week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: #dee2e6;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.top-calendar-week .calendar-cell {
-  background-color: white;
-  padding: 0.5rem;
-  text-align: center;
-}
-
-.top-calendar-week .day-label {
-  color: #6c757d;
-  font-size: 0.875rem;
 }
 
 /* 메인 캘린더 */
@@ -601,40 +587,45 @@ export default {
 .calendar-item {
   background-color: white;
   border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  position: relative;
 }
 
 .calendar-item:hover {
   border-color: #007bff;
   box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+  z-index: 10;
 }
 
-.calendar-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* 시작일 - 왼쪽에 둥근 모서리 */
+.calendar-item.start {
+  border-radius: 0.25rem 0 0 0.25rem;
+  border-right: none;
 }
 
-.calendar-item.personal-schedule {
-  background-color: #e3f2fd;
-  border-color: #2196f3;
+/* 중간 - 둥근 모서리 없음 */
+.calendar-item.ongoing {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
-.calendar-item.project-schedule {
-  background-color: #f3e5f5;
-  border-color: #9c27b0;
+/* 종료일 - 오른쪽에 둥근 모서리 */
+.calendar-item.end {
+  border-radius: 0 0.25rem 0.25rem 0;
+  border-left: none;
 }
 
-.calendar-label {
-  background-color: #007bff;
-  color: white;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.125rem;
-  font-size: 0.625rem;
-  margin-right: 0.25rem;
+/* 하루짜리 일정 - 전체 둥근 모서리 */
+.calendar-item.start.end {
+  border-radius: 0.25rem;
+  border: 1px solid #dee2e6;
 }
 
 .company {
@@ -654,11 +645,6 @@ export default {
   font-weight: 500;
 }
 
-.jss-badge {
-  color: #ffc107;
-  margin-left: 0.25rem;
-}
-
 .personal-badge {
   color: #2196f3;
   margin-left: 0.25rem;
@@ -669,82 +655,26 @@ export default {
   margin-left: 0.25rem;
 }
 
-.favorite {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.item-favorite,
-.item-no-favorite {
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.item-favorite:hover,
-.item-no-favorite:hover {
-  color: #ffc107;
-}
-
-.dayname-container .day-label-header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: #dee2e6;
-  margin-bottom: 0.5rem;
-}
-
-.dayname-container .day-label-header .day-label {
-  background-color: white;
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #495057;
-}
-
-.day-label-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: #dee2e6;
-}
-
-.day-label-body .day-label {
-  background-color: white;
-  padding: 0.5rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.75rem;
-}
-
-.day-label-body .day-label:hover {
-  background-color: #f8f9fa;
-}
-
-.day-label-body .day-label.today {
-  background-color: #007bff;
-  color: white;
-}
-
-.day-label-body .day-label.out-of-month {
-  color: #6c757d;
-}
-
 /* 반응형 디자인 */
-@media (max-width: 1200px) {
-  .recruit-bottom {
-    padding: 0.75rem;
+@media (max-width: 992px) {
+  .calendar-layout-wrapper {
+    flex-direction: column;
+  }
+  
+  .calendar-sidebar-fixed {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .calendar-content-full {
+    width: 100%;
   }
 }
 
 @media (max-width: 768px) {
-  .recruit-bottom {
-    flex-direction: column;
-    padding: 0.5rem;
-  }
-  
   .calendar-cell {
     min-height: 100px;
   }
