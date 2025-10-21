@@ -123,6 +123,14 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
+                to="/affiliation"
+                @click="handleNavigate"
+                >기업 공고 조회</router-link
+              >
+            </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
                 to="/mypage/affiliatedJobApplications"
                 @click="handleNavigate"
                 >지원 내역</router-link
@@ -141,6 +149,14 @@
         <li class="nav-item">
           <span class="nav-link">프로젝트 관리</span>
           <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/projectListPage"
+                @click="handleNavigate"
+                >프로젝트 공고 조회</router-link
+              >
+            </li>
             <li class="nav-item">
               <router-link
                 class="nav-link"
