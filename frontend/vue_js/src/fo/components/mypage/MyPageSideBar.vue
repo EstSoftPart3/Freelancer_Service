@@ -63,6 +63,19 @@
           </ul>
         </li>
         <li class="nav-item">
+          <span class="nav-link">일정 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/calendar"
+                @click="handleNavigate"
+                >캘린더</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
           <span class="nav-link">회원 정보 관리</span>
           <ul>
             <li class="nav-item">
@@ -171,6 +184,19 @@
                 to="/mypage/projectScrap"
                 @click="handleNavigate"
                 >스크랩 내역</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <span class="nav-link">일정 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/calendar"
+                @click="handleNavigate"
+                >캘린더</router-link
               >
             </li>
           </ul>
