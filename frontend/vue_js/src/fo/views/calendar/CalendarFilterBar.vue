@@ -1,24 +1,5 @@
 <template>
   <div class="calendar-filter-bar">
-    <!-- 검색 영역 -->
-    <div class="search-section">
-      <div class="search-wrapper">
-        <div class="search-icon-wrapper">
-          <i class="bi bi-search"></i>
-        </div>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="기업명, 직무명, 공고명을 검색하세요."
-          v-model="searchKeyword"
-          @keyup="handleSearch"
-        />
-        <div v-if="searchKeyword" class="clear-search" @click="clearSearch">
-          <i class="bi bi-x-circle"></i>
-        </div>
-      </div>
-    </div>
-
     <!-- 필터 영역 -->
     <div class="filters-section">
       <!-- 계약형태 필터 -->
@@ -85,6 +66,25 @@
             </div>
           </li>
         </ul>
+      </div>
+    </div>
+
+    <!-- 검색 영역 -->
+    <div class="search-section">
+      <div class="search-wrapper">
+        <div class="search-icon-wrapper">
+          <i class="bi bi-search"></i>
+        </div>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="기업명, 직무명, 공고명을 검색하세요."
+          v-model="searchKeyword"
+          @keyup="handleSearch"
+        />
+        <div v-if="searchKeyword" class="clear-search" @click="clearSearch">
+          <i class="bi bi-x-circle"></i>
+        </div>
       </div>
     </div>
   </div>
