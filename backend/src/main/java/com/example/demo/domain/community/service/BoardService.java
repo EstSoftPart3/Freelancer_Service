@@ -30,6 +30,7 @@ public class BoardService {
 	private final BoardMapper boardMapper;
 	private final CmntTagMapper cmntTagMapper;
 	private final CommentMapper commentMapper;
+	private final ReplyMapper replyMapper;
 	private final AnswerMapper answerMapper;
 	private final NormalTagConverter normalTagConverter;
 	private final SkillTagConverter skillTagConverter;
@@ -111,7 +112,30 @@ public class BoardService {
 				.map(comment -> {
 					UserDTO userDto = communityUserMapper.findById(comment.getUserSq());
 					String profileImageUrl = informationEditService.getProfileImageUrl(userDto.getUserSq());
-					return CommentResponse.fromEntity(comment, userDto, profileImageUrl);
+					CommentResponse commentResponse = CommentResponse.fromEntity(comment, userDto, profileImageUrl);
+					
+					// 각 댓글의 대댓글 조회 (인턴 수준 - 간단한 for문)
+					List<Reply> replies = replyMapper.findByCommentSq(comment.getCommentSq());
+					if (replies != null && !replies.isEmpty()) {
+						List<CommentResponse.ReplyDTO> replyDTOs = replies.stream()
+								.map(reply -> {
+									UserDTO replyUserDto = communityUserMapper.findById(reply.getUserSq());
+									String replyUserNm = (replyUserDto != null && replyUserDto.getUserNm() != null) 
+											? replyUserDto.getUserNm() : "존재하지 않는 사용자";
+									return new CommentResponse.ReplyDTO(
+											reply.getReplyCommentSq(),
+											reply.getUserSq(),
+											replyUserNm,
+											reply.getReplyCommentDescriptionTxt(),
+											reply.getReplyCommentCreatedAtDtm(),
+											reply.getReplyCommentRecommendCnt()
+									);
+								})
+								.collect(Collectors.toList());
+						commentResponse.setReplies(replyDTOs);
+					}
+					
+					return commentResponse;
 				})
 				.collect(Collectors.toList());
 
