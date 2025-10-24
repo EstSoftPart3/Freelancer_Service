@@ -47,7 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects/*/districts",
             "/api/projects/applications/interviews/*",
             "/api/mypage/resume",
-            "/api/map/naver/static"
+            "/api/map/naver/static",
+            "/api/map/naver/geocoding",
+            "/api/map/geocode"
 
             // 여기에 더 추가 가능
     );

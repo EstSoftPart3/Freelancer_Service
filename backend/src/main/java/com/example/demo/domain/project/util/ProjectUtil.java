@@ -56,7 +56,22 @@ public class ProjectUtil {
 	}
 	
 	public Map<String, LocalDateTime> fetchInterviewTimeMinMaxBySq(Long projectSq){
-		return projectMapper.findInterviewTimeMinMaxBySq(projectSq);
+		Map<String, Object> rawResult = projectMapper.findInterviewTimeMinMaxBySq(projectSq);
+		Map<String, LocalDateTime> result = new HashMap<>();
+		
+		if (rawResult != null && !rawResult.isEmpty()) {
+			Object minTime = rawResult.get("minTime");
+			Object maxTime = rawResult.get("maxTime");
+			
+			if (minTime instanceof java.sql.Timestamp) {
+				result.put("minTime", ((java.sql.Timestamp) minTime).toLocalDateTime());
+			}
+			if (maxTime instanceof java.sql.Timestamp) {
+				result.put("maxTime", ((java.sql.Timestamp) maxTime).toLocalDateTime());
+			}
+		}
+		
+		return result;
 	}
 	
 	public String convertCommonCodeSqToNm(Long codeSq) {

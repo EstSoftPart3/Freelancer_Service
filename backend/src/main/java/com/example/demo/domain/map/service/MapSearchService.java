@@ -147,6 +147,7 @@ public class MapSearchService {
             .projectSalary(dto.getProjectSalary())
             .projectStartDate(dto.getProjectStartDate())
             .projectEndDate(dto.getProjectEndDate())
+            .recruitEndDt(dto.getRecruitEndDt())
             .build();
     }
     
