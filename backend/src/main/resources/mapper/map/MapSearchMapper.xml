@@ -34,6 +34,7 @@
             p.project_salary as projectSalary,
             DATE_FORMAT(p.project_start_dt, '%Y-%m-%d') as projectStartDate,
             DATE_FORMAT(p.project_end_dt, '%Y-%m-%d') as projectEndDate,
+            DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as recruitEndDt,
             a.sigungu,
             ROUND(
                 6371 * acos(
@@ -75,7 +76,7 @@
                   OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')
               )
           </if>
-        GROUP BY p.project_sq, p.project_ttl, c.company_nm, a.address, a.detail_address, a.latitude, a.longitude, p.project_salary, p.project_start_dt, p.project_end_dt, a.sigungu
+        GROUP BY p.project_sq, p.project_ttl, c.company_nm, a.address, a.detail_address, a.latitude, a.longitude, p.project_salary, p.project_start_dt, p.project_end_dt, p.project_recruit_end_dt, a.sigungu
         ORDER BY (
             <!-- 거리순 정렬을 위해 거리 계산 -->
             6371 * acos(

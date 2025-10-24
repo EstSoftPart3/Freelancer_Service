@@ -22,6 +22,7 @@ public class MapProjectDto {
     private Long projectSalary;
     private String projectStartDate;
     private String projectEndDate;
+    private String recruitEndDt;        // 모집 마감일
     private String sigungu;             // 시군구 정보
     private Double distance;            // 사용자로부터의 거리 (km)
 }

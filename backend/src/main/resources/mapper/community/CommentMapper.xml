@@ -10,6 +10,7 @@
 
     <select id="findByBoardSq" resultType="com.example.demo.domain.community.entity.Comment">
         SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_is_deleted_yn = 'N' AND board_sq = #{boardSq}
+        ORDER BY comment_created_at_dtm ASC
     </select>
 
     <select id="findByAnswerSq" resultType="com.example.demo.domain.community.entity.Comment">

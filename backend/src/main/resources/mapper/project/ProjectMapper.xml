@@ -387,9 +387,13 @@
 		c.common_code_nm FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S m JOIN TBL_COMMON_CODE_C c ON
 		m.recruit_job_position_type_cd = c.common_code_sq WHERE m.project_sq = #{projectSq} </select>
 
-	<select id="findInterviewTimeMinMaxBySq" resultType="map" parameterType="Long"> SELECT
-		MIN(interview_available_dtm) AS minTime, MAX(interview_available_dtm) AS maxTime FROM
-		TBL_PROJECT_INTERVIEW_TIME_SLOT_S WHERE project_sq = #{projectSq} </select>
+	<select id="findInterviewTimeMinMaxBySq" resultType="map" parameterType="Long"> 
+		SELECT 
+			MIN(interview_available_dtm) AS minTime, 
+			MAX(interview_available_dtm) AS maxTime 
+		FROM TBL_PROJECT_INTERVIEW_TIME_SLOT_S 
+		WHERE project_sq = #{projectSq} 
+	</select>
 
 	<select id="findInterviewTimesByProjectSq" resultType="java.time.LocalDateTime"
 		parameterType="Long"> SELECT interview_available_dtm FROM TBL_PROJECT_INTERVIEW_TIME_SLOT_S

@@ -34,4 +34,5 @@ public class MapProjectResponse {
     private Long projectSalary;
     private String projectStartDate;
     private String projectEndDate;
+    private String recruitEndDt;        // 모집 마감일
 }
