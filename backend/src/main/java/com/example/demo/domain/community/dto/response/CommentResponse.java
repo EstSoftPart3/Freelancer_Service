@@ -5,6 +5,7 @@ import com.example.demo.domain.user.dto.*;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,6 +19,7 @@ public class CommentResponse {
     private String description;
     private LocalDateTime createdAt;
     private Integer recommendCnt;
+    private List<ReplyDTO> replies;
 
     public static CommentResponse fromEntity(Comment comment, UserDTO userDto, String profileImageUrl) {
         String userNm = "존재하지 않는 사용자";
@@ -35,6 +37,21 @@ public class CommentResponse {
                 userNm,
                 comment.getCommentDescriptionTxt(),
                 comment.getCommentCreatedAtDtm(),
-                comment.getCommentRecommendCnt());
+                comment.getCommentRecommendCnt(),
+                null); // replies는 나중에 BoardService에서 설정
+    }
+    
+    // 대댓글 DTO (인턴 수준 - 간단한 내부 클래스)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReplyDTO {
+        private Long replyCommentSq;
+        private Long userSq;
+        private String userNm;
+        private String replyCommentDescriptionTxt;
+        private LocalDateTime replyCommentCreatedAtDtm;
+        private Integer replyCommentRecommendCnt;
     }
 }
