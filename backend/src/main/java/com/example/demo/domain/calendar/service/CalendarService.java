@@ -16,6 +16,7 @@ import com.example.demo.domain.calendar.mapper.CalendarIndvdiEvntMapper;
 import com.example.demo.domain.calendar.mapper.CalendarMapper;
 import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
 import com.example.demo.domain.calendar.mapper.CalendarInterviewMapper;
+import com.example.demo.domain.calendar.mapper.rows.InterviewDetailRow;
 import com.example.demo.domain.calendar.mapper.rows.PersonalDetailRow;
 import com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -144,16 +146,23 @@ public class CalendarService {
             PersonalDetailRow personalDetailRow = calendarIndvdiEvntMapper.findDetailByScheduleSq(scheduleSq);
             CalendarDetailResDto.PersonalDetail personalDetail = new CalendarDetailResDto.PersonalDetail(se.getScheduleSq(), se.getTitle(),
                     se.getStartDt(), se.getEndDt(),personalDetailRow != null ? personalDetailRow.getMemo() : null);
-            return new CalendarDetailResDto(SourceType.PERSONAL,personalDetail,null);
+            return new CalendarDetailResDto(SourceType.PERSONAL,personalDetail,null,null);
         }
-        else if (SourceType.PROJECT.equals(sourceType)){
+        else if (SourceType.PROJECT.equals(sourceType)) {
             //프로젝트 공고 일정 상세
             ProjectDetailRow projectDetailRow = calendarPositionMapper.findProjectDetailByScheduleSq(scheduleSq);
-            String routePath = "/projects/" + projectDetailRow.getProjectSq() + "/details";
+            String routePath = "/project/spec/user/" + projectDetailRow.getProjectSq();
             CalendarDetailResDto.ProjectDetail projectDetail = new CalendarDetailResDto.ProjectDetail(se.getScheduleSq(),
-            projectDetailRow.getProjectSq(), projectDetailRow.getCompanySq(), projectDetailRow.getProjectTtl(), projectDetailRow.getRecruitStartDt(),
+                    projectDetailRow.getProjectSq(), projectDetailRow.getCompanySq(), projectDetailRow.getProjectTtl(), projectDetailRow.getRecruitStartDt(),
                     projectDetailRow.getRecruitEndDt(), routePath);
-            return new CalendarDetailResDto(SourceType.PROJECT,null, projectDetail);
+            return new CalendarDetailResDto(SourceType.PROJECT, null, projectDetail, null);
+        }
+        else if (SourceType.INTERVIEW.equals(sourceType)){
+                //인터뷰 일정 상세
+                InterviewDetailRow interviewDetailRow = calendarInterviewMapper.findInterviewDetailByScheduleSq(scheduleSq);
+                CalendarDetailResDto.InterviewDetail interviewDetail = new CalendarDetailResDto.InterviewDetail(se.getScheduleSq(),
+                        se.getTitle(),se.getStartDt(),se.getEndDt(),interviewDetailRow.getMemo());
+                return new CalendarDetailResDto(SourceType.PROJECT,null,null,interviewDetail);
         }else {
             throw new IllegalStateException("지원하지 않는 sourceType: " + sourceType);
         }
@@ -187,7 +196,19 @@ public class CalendarService {
     public void createdInterviewSchedule(ApplicationSqRequest request, Long userSq){
         //인터뷰 일정에 필요한 데이터 조회
         InterviewScheduleSeeDto interviewScheduleSeeDto = applicationMapper.findInterviewScheduleDataConversion(request.getApplicationSq());
-        ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq).title(interviewScheduleSeeDto.getProjectTtl())
+        String companyNm = interviewScheduleSeeDto.getCompanyNm();
+        String projectTtl = interviewScheduleSeeDto.getProjectTtl();
+        LocalDateTime interviewStartDt = interviewScheduleSeeDto.getInterviewStartDt();
+
+        //인터뷰 시작 시간 포맷팅
+        String formattedTime = interviewStartDt.format(DateTimeFormatter.ofPattern("HH시 mm분"));
+
+        //제목과 메모용 문구 생성
+        String title = String.format("[%s]%s %s 면접", companyNm, projectTtl, formattedTime);
+        String memo = String.format("[%s]%s %s 면접 예정입니다.",companyNm, projectTtl, formattedTime);
+
+        //공통일정 엔티티 저장
+        ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq).title(title)
                 .startDt(interviewScheduleSeeDto.getInterviewStartDt()).endDt(interviewScheduleSeeDto.getInterviewEndDt())
                 .calendarCreatedAtDtm(LocalDateTime.now()).calendarModifiedAtDtm(null).scheduleIsDeletedYn("N")
                 .sourceType(SourceType.INTERVIEW)
@@ -202,7 +223,7 @@ public class CalendarService {
         calendarInterviewMapper.insert(CalendarInterviewEvnt.builder().projectApplicationSq(interviewScheduleSeeDto.getApplicationSq())
                 .companySq(interviewScheduleSeeDto.getCompanySq()).projectSq(interviewScheduleSeeDto.getProjectSq())
                 .scheduleSq(scheduleSq).addressSq(interviewScheduleSeeDto.getAddressSq())
-                .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm())
+                .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm()).memo(memo)
                 .build());
     }
 

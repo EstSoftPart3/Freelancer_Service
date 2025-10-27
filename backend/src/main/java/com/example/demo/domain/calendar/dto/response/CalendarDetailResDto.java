@@ -4,6 +4,7 @@ import com.example.demo.domain.calendar.entity.SourceType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class CalendarDetailResDto {
     private SourceType sourceType;
     private PersonalDetail personalDetail;
     private ProjectDetail projectDetail;
+    private InterviewDetail interviewDetail;
 
     @Data
     @AllArgsConstructor
@@ -39,5 +41,16 @@ public class CalendarDetailResDto {
         private LocalDate recruitEndDt;
         private String routePath; // 프로젝트 공고 상세페이지 url
 
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class InterviewDetail{
+        private Long scheduleSq;
+        private String title;
+        private LocalDateTime startDt;
+        private LocalDateTime endDt;
+        private String memo;
     }
 }

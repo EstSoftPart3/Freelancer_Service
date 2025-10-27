@@ -36,4 +36,7 @@ public class CalendarInterviewEvnt {
 
     @Column(name = "company_nm_snapshot", nullable = false)
     private String companyNmSnapshot;
+
+    @Column(name = "memo", nullable = false)
+    private String memo;
 }

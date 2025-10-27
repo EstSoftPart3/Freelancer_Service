@@ -7,8 +7,13 @@
     <insert id="insert" parameterType="com.example.demo.domain.calendar.entity.CalendarInterviewEvnt" useGeneratedKeys="true"
             keyProperty="interviewEvntSq" keyColumn="interview_evnt_sq">
         INSERT INTO TBL_CALENDAR_INTERVIEW_EVNT(
-        company_sq, project_sq, project_application_sq, schedule_sq, address_sq, project_ttl_snapshot, company_nm_snapshot
-        ) VALUES(#{companySq}, #{projectSq},#{projectApplicationSq},#{scheduleSq},#{addressSq},#{projectTtlSq},#{companyNmSnapshotSq})
+        company_sq, project_sq, project_application_sq, schedule_sq, address_sq, company_nm_snapshot, memo
+        ) VALUES(#{companySq}, #{projectSq},#{projectApplicationSq},#{scheduleSq},#{addressSq},#{companyNmSnapshotSq}, #{memo})
     </insert>
+
+    <select id="findInterviewDetailByScheduleSq" parameterType="Long"
+            resultType="com.example.demo.domain.calendar.mapper.rows.InterviewDetailRow">
+        SELECT * FROM TBL_CALENDAR_INTERVIEW_EVNT
+    </select>
 
 </mapper>
