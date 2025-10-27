@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
 public class PersonalScheduleCreateRequest {
     private String title;
     @NotNull
-    private LocalDate startDt;
-    private LocalDate endDt;
+    private LocalDateTime startDt;
+    private LocalDateTime endDt;
     private String memo;
 
     //공통 엔티티로 변환

@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 public class ScheduleUpdateResDto {
     private Long scheduleSq;
     private String title;
-    private LocalDate startDt;
-    private LocalDate endDt;
+    private LocalDateTime startDt;
+    private LocalDateTime endDt;
     private String memo;
     private LocalDateTime calendarModifiedAtDtm;
 }

@@ -27,10 +27,10 @@ public class ScheduleEvnt {
     private String title;
 
     @Column(name = "start_dt", nullable = false)
-    private LocalDate startDt;
+    private LocalDateTime startDt;
 
     @Column(name = "end_dt")
-    private LocalDate endDt;
+    private LocalDateTime endDt;
 
     @Column(name = "calendar_created_at_dtm", nullable = false)
     private LocalDateTime calendarCreatedAtDtm;

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import com.example.demo.domain.project.dto.response.InterviewScheduleSeeDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -107,5 +108,8 @@ public interface ProjectApplicationMapper {
 	int countCorporateApplications(Map<String, Object> params);
 
 	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
+
+    //인터뷰 일정 캘린더 데이터로 변환하기 위한 조회
+    InterviewScheduleSeeDto findInterviewScheduleDataConversion(@Param("applicationSq") Long applicationSq);
 
 }

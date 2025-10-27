@@ -21,8 +21,8 @@ public class ProjectScheduleSyncRequest {
     private Long projectSq;
     private String title;
     @NotNull
-    private LocalDate startDt;
-    private LocalDate endDt;
+    private LocalDateTime startDt;
+    private LocalDateTime endDt;
 
     //공통 엔티티
     public ScheduleEvnt toParentEntity(Long userSq){
