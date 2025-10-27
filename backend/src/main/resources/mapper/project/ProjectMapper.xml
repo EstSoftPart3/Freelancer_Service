@@ -77,6 +77,7 @@
 					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
 		${sortOrder} </when>
 					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
+					<when test="sortBy == 'scrap_count'"> ORDER BY p.project_scrap_cnt ${sortOrder} </when>
 					<when test="sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
 		${sortOrder} </when>
 					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>

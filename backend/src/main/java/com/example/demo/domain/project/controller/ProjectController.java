@@ -185,8 +185,8 @@ public class ProjectController {
 
         // 올바른 Java 문법으로 메서드 호출
         result.put("viewCount", projectService.fetchPopularProjects("view_count"));
+        result.put("scrapCount", projectService.fetchPopularProjects("scrap_count"));
         result.put("applicantCount", projectService.fetchPopularProjects("applicant_count"));
-        result.put("recent", projectService.fetchPopularProjects("project_start_dt"));
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인기 프로젝트 조회 성공", result));
     }
