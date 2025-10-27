@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.demo.domain.calendar.mapper.CalendarMapper;
+import com.example.demo.domain.calendar.mapper.CalendarInterviewMapper;
+import com.example.demo.domain.calendar.service.CalendarService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,7 @@ public class ProjectApplicationService {
 	private final ResumeCareerMapper resumeCareerMapper;
 	private final ResumeSkillMapper resumeSkillMapper;
 	private final CompanyMapper companyMapper;
+    private final CalendarService calendarService;
 
 	@Transactional
 	public Map<String, Object> fetchProjectApplicationsWithCount(Long userSq, int offset, int size, String searchType,
@@ -112,10 +116,13 @@ public class ProjectApplicationService {
 		}
 	}
 
-	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request) {
+	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request, Long userSq) {
 		applicationMapper.updateInterviewTimeSelected(interviewTimeSq);
 		applicationMapper.updateApplicationInterviewTimeAndStatus(request.getApplicationSq(),
 				applicationMapper.findInterviewTimeBySq(interviewTimeSq));
+        //인터뷰 일정 생성
+        calendarService.createdInterviewSchedule(request,userSq);
+
 	}
 
 	public List<ApplicationStatusList> fetchProjectApplicationsByProject(Long projectSq) {

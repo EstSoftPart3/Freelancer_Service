@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -21,8 +22,8 @@ public class CalendarDetailResDto {
     public static class PersonalDetail{
         private Long scheduleSq;
         private String title;
-        private LocalDate startDt;
-        private LocalDate endDt;
+        private LocalDateTime startDt;
+        private LocalDateTime endDt;
         private String memo;
     }
 

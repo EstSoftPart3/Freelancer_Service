@@ -9,20 +9,25 @@ import com.example.demo.domain.calendar.dto.response.CalendarDetailResDto;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
 import com.example.demo.domain.calendar.entity.CalendarIndvdiEvnt;
+import com.example.demo.domain.calendar.entity.CalendarInterviewEvnt;
 import com.example.demo.domain.calendar.entity.ScheduleEvnt;
 import com.example.demo.domain.calendar.entity.SourceType;
 import com.example.demo.domain.calendar.mapper.CalendarIndvdiEvntMapper;
 import com.example.demo.domain.calendar.mapper.CalendarMapper;
 import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
+import com.example.demo.domain.calendar.mapper.CalendarInterviewMapper;
 import com.example.demo.domain.calendar.mapper.rows.PersonalDetailRow;
 import com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow;
+import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
+import com.example.demo.domain.project.dto.response.InterviewScheduleSeeDto;
+import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.user.dto.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +38,8 @@ public class CalendarService {
     private final CalendarIndvdiEvntMapper calendarIndvdiEvntMapper;
     private final CalendarPositionMapper calendarPositionMapper;
     private final CommonCodeMapper commonCodeMapper;
+    private final ProjectApplicationMapper applicationMapper;
+    private final CalendarInterviewMapper calendarInterviewMapper;
 
     //    캘린더 일정 조회
     @Transactional
@@ -175,6 +182,29 @@ public class CalendarService {
 
     }
 
+    //캘린더 인터뷰 자동 생성
+    @Transactional
+    public void createdInterviewSchedule(ApplicationSqRequest request, Long userSq){
+        //인터뷰 일정에 필요한 데이터 조회
+        InterviewScheduleSeeDto interviewScheduleSeeDto = applicationMapper.findInterviewScheduleDataConversion(request.getApplicationSq());
+        ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq).title(interviewScheduleSeeDto.getProjectTtl())
+                .startDt(interviewScheduleSeeDto.getInterviewStartDt()).endDt(interviewScheduleSeeDto.getInterviewEndDt())
+                .calendarCreatedAtDtm(LocalDateTime.now()).calendarModifiedAtDtm(null).scheduleIsDeletedYn("N")
+                .sourceType(SourceType.INTERVIEW)
+                .build();
+
+        //공통 일정 객체 생성
+        calendarMapper.insert(scheduleEvnt);
+
+        Long scheduleSq = scheduleEvnt.getScheduleSq();
+
+        //인터뷰 일정 객체 생성
+        calendarInterviewMapper.insert(CalendarInterviewEvnt.builder().projectApplicationSq(interviewScheduleSeeDto.getApplicationSq())
+                .companySq(interviewScheduleSeeDto.getCompanySq()).projectSq(interviewScheduleSeeDto.getProjectSq())
+                .scheduleSq(scheduleSq).addressSq(interviewScheduleSeeDto.getAddressSq())
+                .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm())
+                .build());
+    }
 
 
 }

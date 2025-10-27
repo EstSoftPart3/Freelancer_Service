@@ -376,4 +376,27 @@
 		'unread' AS type, COUNT(*) FROM TBL_PROJECT_APPLICATION_H a WHERE a.company_sq =
 		#{companySq} AND a.read_application_dtm IS NULL </select>
 
+    <!-- 인터뷰 캘린더 일정 등록 -->
+    <select id="findInterviewScheduleDataConversion"
+            parameterType="java.lang.Long"
+            resultType="com.example.demo.domain.project.dto.response.InterviewScheduleSeeDto">
+        <![CDATA[
+    SELECT
+      pa.application_sq                        AS applicationSq,
+      pj.project_sq                            AS projectSq,
+      pj.project_ttl                           AS projectTtl,
+      cp.company_sq                            AS companySq,
+      cp.company_nm                            AS companyNm,
+      ad.address_sq                            AS addressSq,
+      pa.selected_interview_dtm                AS interviewStartDt,
+      DATE_ADD(pa.selected_interview_dtm, INTERVAL 30 MINUTE) AS interviewEndDt
+    FROM TBL_PROJECT_APPLICATION_H pa
+    JOIN TBL_PROJECT_M     pj ON pj.project_sq   = pa.project_sq
+    JOIN TBL_COMPANY_S     cp ON cp.company_sq   = pj.company_sq
+    LEFT JOIN TBL_ADDRESS_S ad ON ad.address_sq  = cp.address_sq
+    WHERE pa.project_application_sq = #{applicationSq}
+      AND pj.project_is_deleted_yn = 'N'
+  ]]>
+    </select>
+
 </mapper>

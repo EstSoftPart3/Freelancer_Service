@@ -107,8 +107,8 @@ public class ProjectApplicationController {
 
 	@PatchMapping("/interviews/{interviewTimeSq}")
 	public ResponseEntity<ApiResponse<Void>> patchApplicationStatus(
-			@PathVariable("interviewTimeSq") Long interviewTimeSq, @RequestBody ApplicationSqRequest request) {
-		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request);
+			@PathVariable("interviewTimeSq") Long interviewTimeSq, @RequestBody ApplicationSqRequest request, @AuthenticationPrincipal Long userSq) {
+		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인터뷰 시간 선택 성공", null));
 	}
 

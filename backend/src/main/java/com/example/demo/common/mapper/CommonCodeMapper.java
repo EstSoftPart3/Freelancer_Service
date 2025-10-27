@@ -18,3 +18,4 @@ public interface CommonCodeMapper {
 	String findCommonCodeNmBySq(@Param("codeSq") Long codeSq);
 	List<Map<Long, String>> findCommonCodeSqAndNmByParent(@Param("parentCodeSq") Long parentCodeSq);
 }
+

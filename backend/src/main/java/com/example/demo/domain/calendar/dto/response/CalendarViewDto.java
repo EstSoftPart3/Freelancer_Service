@@ -19,5 +19,7 @@ public class CalendarViewDto {
 //    private Long scrapSq;
     private Date startDt;
     private Date endDt;
+    //인터뷰 일정
+    private String companyNm;
 
 }
