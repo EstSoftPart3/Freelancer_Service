@@ -487,9 +487,9 @@ public class ProjectService {
     // 프로젝트 유형별 최다 공고 조회
     public List<ProjectSummary> fetchPopularProjects(String sortType) {
         ProjectSearchRequest request = new ProjectSearchRequest();
-        request.setSortBy(sortType);  // "view_count", "applicant_count", "project_start_dt"
+        request.setSortBy(sortType);  // "view_count", "scrap_count", "applicant_count"
         request.setSortOrder("DESC");
-        request.setSize(3);
+        request.setSize(9);  // 3페이지 x 3개 = 9개
 
         List<Project> projects = projectMapper.findProjectsBySearch(request);
         return convertToProjectSummary(projects);

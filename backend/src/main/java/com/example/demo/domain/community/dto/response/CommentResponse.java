@@ -41,7 +41,7 @@ public class CommentResponse {
                 null); // replies는 나중에 BoardService에서 설정
     }
     
-    // 대댓글 DTO (인턴 수준 - 간단한 내부 클래스)
+    // 대댓글 DTO
     @Getter
     @Setter
     @NoArgsConstructor

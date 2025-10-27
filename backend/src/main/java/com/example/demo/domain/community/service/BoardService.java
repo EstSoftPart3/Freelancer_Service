@@ -364,8 +364,6 @@ public class BoardService {
 
 		board.setBoardAdoptStatusCd(statusCd);
 		boardMapper.update(board);
-
-		return;
 	}
 
 }

@@ -14,4 +14,3 @@ public interface ReplyMapper {
     void delete(@Param("userSq") Long userSq, @Param("replyCommentSq") Long replyCommentSq);
     void updateRecommendCnt(@Param("replyCommentSq") Long replyCommentSq);
 }
-//
