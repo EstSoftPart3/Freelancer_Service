@@ -241,6 +241,8 @@ public class CalendarService {
                 .title(project.getProjectTtl())
                 .startDt(project.getProjectRecruitStartDt().atStartOfDay())
                 .endDt(project.getProjectRecruitEndDt().plusDays(1).atStartOfDay()) //end-exclusive
+                .calendarCreatedAtDtm(LocalDateTime.now())
+                .calendarModifiedAtDtm(null)
                 .scheduleIsDeletedYn("N")
                 .sourceType(SourceType.PROJECT)
                 .scheduleAllDayYn("Y")
@@ -251,6 +253,7 @@ public class CalendarService {
         CalendarPostionEvnt calendarPostionEvnt = CalendarPostionEvnt.builder()
                 .scheduleSq(scheduleEvnt.getScheduleSq())
                 .projectSq(projectSq)
+                .companySq(project.getCompanySq())
                 .build();
         calendarPositionMapper.insert(calendarPostionEvnt);
     }
