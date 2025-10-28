@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminMapper">
+
+    <!-- 회원 목록 조회 (페이지네이션, 필터링) -->
+    <select id="selectMemberList" resultType="com.example.demo.domain.admin.dto.response.AdminMemberResponse">
+        SELECT 
+            u.user_sq AS userSq,
+            u.user_id AS userId,
+            u.user_nm AS userNm,
+            u.user_email AS userEmail,
+            u.user_phone_num AS userPhoneNum,
+            u.user_birth_dt AS userBirthDt,
+            u.user_type_cd AS userTypeCd,
+            u.user_is_activate_yn AS userIsActivateYn,
+            u.user_created_at_dtm AS createdAt,
+            u.user_modified_at_dtm AS updatedAt,
+            cc1.common_code_nm AS userTypeCdNm,
+            cc2.common_code_nm AS genderNm,
+            c.company_nm AS companyNm,
+            c.company_ceo_nm AS companyCeoNm,
+            c.company_biz_num AS companyBizNum
+        FROM TBL_USER_M u
+        LEFT JOIN TBL_COMMON_CODE_C cc1 ON u.user_type_cd = cc1.common_code_sq
+        LEFT JOIN TBL_COMMON_CODE_C cc2 ON u.user_gender_cd = cc2.common_code_sq
+        LEFT JOIN TBL_COMPANY_S c ON u.user_sq = c.user_sq
+        WHERE 1=1
+        <if test="searchQuery != null and searchQuery != ''">
+            AND (
+                u.user_id LIKE CONCAT('%', #{searchQuery}, '%')
+                OR u.user_nm LIKE CONCAT('%', #{searchQuery}, '%')
+                OR u.user_email LIKE CONCAT('%', #{searchQuery}, '%')
+            )
+        </if>
+        <if test="userTypeCd != null">
+            AND u.user_type_cd = #{userTypeCd}
+        </if>
+        <if test="userIsActivateYn != null and userIsActivateYn != ''">
+            AND u.user_is_activate_yn = #{userIsActivateYn}
+        </if>
+        ORDER BY u.user_created_at_dtm DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 회원 목록 전체 개수 조회 -->
+    <select id="countMemberList" resultType="long">
+        SELECT COUNT(*)
+        FROM TBL_USER_M u
+        WHERE 1=1
+        <if test="searchQuery != null and searchQuery != ''">
+            AND (
+                u.user_id LIKE CONCAT('%', #{searchQuery}, '%')
+                OR u.user_nm LIKE CONCAT('%', #{searchQuery}, '%')
+                OR u.user_email LIKE CONCAT('%', #{searchQuery}, '%')
+            )
+        </if>
+        <if test="userTypeCd != null">
+            AND u.user_type_cd = #{userTypeCd}
+        </if>
+        <if test="userIsActivateYn != null and userIsActivateYn != ''">
+            AND u.user_is_activate_yn = #{userIsActivateYn}
+        </if>
+    </select>
+
+    <!-- 회원 상세 정보 조회 -->
+    <select id="selectMemberDetail" resultType="com.example.demo.domain.admin.dto.response.AdminMemberResponse">
+        SELECT 
+            u.user_sq AS userSq,
+            u.user_id AS userId,
+            u.user_nm AS userNm,
+            u.user_email AS userEmail,
+            u.user_phone_num AS userPhoneNum,
+            u.user_birth_dt AS userBirthDt,
+            u.user_type_cd AS userTypeCd,
+            u.user_is_activate_yn AS userIsActivateYn,
+            u.user_created_at_dtm AS createdAt,
+            u.user_modified_at_dtm AS updatedAt,
+            cc1.common_code_nm AS userTypeCdNm,
+            cc2.common_code_nm AS genderNm,
+            c.company_nm AS companyNm,
+            c.company_ceo_nm AS companyCeoNm,
+            c.company_biz_num AS companyBizNum
+        FROM TBL_USER_M u
+        LEFT JOIN TBL_COMMON_CODE_C cc1 ON u.user_type_cd = cc1.common_code_sq
+        LEFT JOIN TBL_COMMON_CODE_C cc2 ON u.user_gender_cd = cc2.common_code_sq
+        LEFT JOIN TBL_COMPANY_S c ON u.user_sq = c.user_sq
+        WHERE u.user_sq = #{userSq}
+    </select>
+
+    <!-- 회원 계정 상태 변경 -->
+    <update id="updateMemberStatus">
+        UPDATE TBL_USER_M
+        SET user_is_activate_yn = #{userIsActivateYn},
+            user_modified_at_dtm = NOW()
+        WHERE user_sq = #{userSq}
+    </update>
+
+</mapper>
+

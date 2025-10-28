@@ -51,7 +51,7 @@ public class ReplyService {
         
         Reply reply = getReply(replyCommentSq);
         
-        if (reply.getUserSq() != userSq) {
+        if (!reply.getUserSq().equals(userSq)) {
             throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
         }
 
