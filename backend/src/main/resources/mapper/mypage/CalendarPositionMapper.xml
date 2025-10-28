@@ -14,4 +14,53 @@
         FROM TBL_CALENDAR_POSITION_EVNT cpe JOIN TBL_PROJECT_M pj ON pj.project_sq = cpe.project_sq WHERE cpe.schedule_sq =
         #{scheduleSq} LIMIT 1
     </select>
+    <!-- 소속 스크랩 취소 시 일정 삭제 -->
+    <update id="deleteScrapCompanyProjectSchedule" parameterType="Long">
+        UPDATE TBL_SCHEDULE_EVNT AS se JOIN TBL_CALENDAR_POSITION_EVNT AS cpe ON se.scheduleSq = cpe.scheduleSq
+        SET schedule_is_deleted_yn = 'Y'
+        WHERE se.schedule_user_sq = #{userSq} AND cpe.company_sq = #{companySq} AND se.schedule_is_deleted_yn = 'N'
+    </update>
+    <!-- 프로젝트 스크랩 취소 시 일정 삭제 -->
+    <update id="deleteScrapProjectSchedule" parameterType="Long">
+        UPDATE TBL_SCHEDULE_EVNT AS se JOIN TBL_CALENDAR_POSITION_EVNT AS cpe ON se.scheduleSq = cpe.scheduleSq
+        SET schedule_is_deleted_yn = 'Y'
+        WHERE se.schedule_user_sq = #{userSq} AND cpe.project_sq = #{projectSq} AND se.schedule_is_deleted_yn = 'N'
+    </update>
+
+
+    <!-- 동일(사용자+프로젝트) "활성(N)" 존재 여부 -->
+    <select id="existsActiveByUserAndProject" parameterType="map" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM TBL_SCHEDULE_EVNT se
+        JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.schedule_sq = se.schedule_sq
+        WHERE se.schedule_user_sq = #{userSq}
+        AND cpe.project_sq      = #{projectSq}
+        AND se.schedule_is_deleted_yn = 'N'
+        )
+    </select>
+
+    <!-- 동일(사용자+프로젝트) "삭제(Y)" 존재 여부 -->
+    <select id="existsDeletedByUserAndProject" parameterType="map" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM TBL_SCHEDULE_EVNT se
+        JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.schedule_sq = se.schedule_sq
+        WHERE se.schedule_user_sq = #{userSq}
+        AND cpe.project_sq      = #{projectSq}
+        AND se.schedule_is_deleted_yn = 'Y'
+        )
+    </select>
+
+    <!-- 삭제(Y) → 복구(N) -->
+    <update id="restoreByUserAndProject" parameterType="map">
+        UPDATE TBL_SCHEDULE_EVNT se
+        JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.schedule_sq = se.schedule_sq
+        SET se.schedule_is_deleted_yn = 'N',
+        se.calendar_modified_at_dtm = NOW()
+        WHERE se.schedule_user_sq = #{userSq}
+        AND cpe.project_sq      = #{projectSq}
+        AND se.schedule_is_deleted_yn = 'Y'
+    </update>
+
 </mapper>

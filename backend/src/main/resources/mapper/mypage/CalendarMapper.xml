@@ -129,4 +129,6 @@
     <update id="deleteSchedule" parameterType="long">
         UPDATE TBL_SCHEDULE_EVNT SET schedule_is_deleted_yn = 'Y' WHERE schedule_sq = #{scheduleSq}
     </update>
+
+
 </mapper>

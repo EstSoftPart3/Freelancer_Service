@@ -3,15 +3,13 @@ package com.example.demo.domain.calendar.service;
 import com.amazonaws.services.kms.model.NotFoundException;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleUpdateRequest;
 import com.example.demo.domain.calendar.dto.response.CalendarDetailResDto;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
-import com.example.demo.domain.calendar.entity.CalendarIndvdiEvnt;
-import com.example.demo.domain.calendar.entity.CalendarInterviewEvnt;
-import com.example.demo.domain.calendar.entity.ScheduleEvnt;
-import com.example.demo.domain.calendar.entity.SourceType;
+import com.example.demo.domain.calendar.entity.*;
 import com.example.demo.domain.calendar.mapper.CalendarIndvdiEvntMapper;
 import com.example.demo.domain.calendar.mapper.CalendarMapper;
 import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
@@ -21,7 +19,9 @@ import com.example.demo.domain.calendar.mapper.rows.PersonalDetailRow;
 import com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
 import com.example.demo.domain.project.dto.response.InterviewScheduleSeeDto;
+import com.example.demo.domain.project.entity.Project;
 import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
+import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.user.dto.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +42,8 @@ public class CalendarService {
     private final CommonCodeMapper commonCodeMapper;
     private final ProjectApplicationMapper applicationMapper;
     private final CalendarInterviewMapper calendarInterviewMapper;
+    private final ProjectMapper projectMapper;
+    private final AffiliationMapper affiliationMapper;
 
     //    캘린더 일정 조회
     @Transactional
@@ -55,6 +57,7 @@ public class CalendarService {
         List<CalendarViewDto> calendarViewDtoList = calendarMapper.findCalendarEvents(userSq,start, end, contractTypeCd, recruitJobPositionTypeCd,searchKeyword);
         return calendarViewDtoList;
     }
+
 
     //    캘린더 개인 일정 등록
     @Transactional
@@ -72,6 +75,7 @@ public class CalendarService {
 
         return parent.getScheduleSq();
     }
+
 
     //캘린더 필터링
     @Transactional
@@ -226,6 +230,74 @@ public class CalendarService {
                 .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm()).memo(memo)
                 .build());
     }
+
+    //프로젝트 스크랩 시 일정 자동 저장
+    public void projectScrapSchedule(Long projectSq, Long userSq){
+
+        // 프로젝트에 대한 정보 조회
+        Project project = projectMapper.findBySq(projectSq);
+        // 공통 일정 저장(추후 중복 코드 정리 필수!!)
+        ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq)
+                .title(project.getProjectTtl())
+                .startDt(project.getProjectRecruitStartDt().atStartOfDay())
+                .endDt(project.getProjectRecruitEndDt().plusDays(1).atStartOfDay()) //end-exclusive
+                .scheduleIsDeletedYn("N")
+                .sourceType(SourceType.PROJECT)
+                .scheduleAllDayYn("Y")
+                .build();
+        calendarMapper.insert(scheduleEvnt);
+
+        // 프로젝트 공고 일정 삽입
+        CalendarPostionEvnt calendarPostionEvnt = CalendarPostionEvnt.builder()
+                .scheduleSq(scheduleEvnt.getScheduleSq())
+                .projectSq(projectSq)
+                .build();
+        calendarPositionMapper.insert(calendarPostionEvnt);
+    }
+
+    //소속 스크랩 시 일정 자동 저장
+    @Transactional
+    public void companyScrapProjectSchedule(Long userSq, Long companySq){
+        //소속 프로젝트 조회
+        List<Long> projects = affiliationMapper.findProjectSqsByCompany(companySq);
+        for (Long project : projects){
+            upsertProjectRecruitEvent(userSq, project);
+        }
+    }
+    /**
+     * 프로젝트 스크랩/재스크랩 시 멱등 처리:
+     * 1) 활성(N) 일정 있으면 skip
+     * 2) 삭제(Y) 일정 있으면 복구(N)
+     * 3) 둘 다 없으면 신규 생성
+     */
+    public void upsertProjectRecruitEvent(Long userSq, Long projectSq) {
+        // 1) 이미 살아있는 동일(삭제여부 N) 일정이 있으면 스킵
+        if (calendarPositionMapper.existsActiveByUserAndProject(userSq, projectSq)) {
+            return;
+        }
+
+        // 2) 삭제된(Y) 동일 일정이 있으면 복구
+        if (calendarPositionMapper.existsDeletedByUserAndProject(userSq, projectSq)) {
+            int restored = calendarPositionMapper.restoreByUserAndProject(userSq, projectSq);
+            if (restored > 0) return; // 복구 성공
+            // 경쟁조건 등으로 실패한 경우 아래로 내려가 신규 시도
+        }
+
+        //신규 공고일정 등록
+        projectScrapSchedule(projectSq, userSq);
+    }
+
+    //소속 스크랩 취소 시, 공고 일정 삭제
+    public void companyScrapCancelProjectScheduleDel(Long userSq, Long companySq){
+        calendarPositionMapper.deleteScrapCompanyProjectSchedule(userSq,companySq);
+    }
+
+    //프로젝트 스크랩 취소 시, 공고 일정 삭제
+    public void projectScrapCancelScheduleDel(Long userSq, Long projectSq){
+        calendarPositionMapper.deleteScrapProjectSchedule(userSq,projectSq);
+    }
+
+
 
 
 }

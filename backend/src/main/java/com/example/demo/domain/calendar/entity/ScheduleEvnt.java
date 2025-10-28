@@ -44,4 +44,7 @@ public class ScheduleEvnt {
     @Column(name = "sourceType", nullable = false)
     private SourceType sourceType;
 
+    @Column(name = "schedule_all_day_yn", nullable = false)
+    private String scheduleAllDayYn;
+
 }
