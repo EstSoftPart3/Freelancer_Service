@@ -583,4 +583,9 @@
         SELECT * FROM TBL_AREA_C
     </select>
 
+    <select id="findProjectSqsByCompany" parameterType="long" resultType="long">
+        SELECT p.project_sq FROM TBL_PROJECT_M p WHERE p.company_sq = #{companySq}
+        AND p.project_is_deleted_yn = 'N'
+    </select>
+
 </mapper>

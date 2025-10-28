@@ -1,5 +1,7 @@
 package com.example.demo.domain.affiliation.service;
 
+import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
+import com.example.demo.domain.calendar.service.CalendarService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,7 @@ public class AffiliationService {
 	private final AffiliationMapper affiliationMapper;
 	private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
+    private final CalendarService calendarService;
 
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
@@ -90,7 +93,8 @@ public class AffiliationService {
 
 	// 소속 공고 스크랩
 	@Transactional
-	public void updateCompanyRecommend(Long userSq, Long companySq) {
+	public void
+    updateCompanyRecommend(Long userSq, Long companySq) {
 
 		if (userSq == null) {
 			throw new IllegalArgumentException("로그인 후 이용해주세요.");
@@ -101,9 +105,11 @@ public class AffiliationService {
 		if (scrap == null) {
 			scrap = Scrap.builder().userSq(userSq).companySq(companySq).scrapTypeCd(602L).build();
 			affiliationMapper.insertScrap(scrap);
-
+            calendarService.companyScrapProjectSchedule(userSq,companySq);
 		} else {
 			affiliationMapper.deleteScrap(scrap.getScrapSq());
+            //해당 소속 프로젝트 캘린더 일정 삭제
+            calendarService.companyScrapCancelProjectScheduleDel(userSq,companySq);
 		}
 
 		return;

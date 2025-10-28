@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.demo.domain.calendar.entity.ScheduleEvnt;
+import com.example.demo.domain.calendar.mapper.CalendarMapper;
+import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
+import com.example.demo.domain.calendar.service.CalendarService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +64,7 @@ public class ProjectService {
 	private final ProjectApplicationMapper projectApplicationMapper;
 	private final ScrapMapper scrapMapper;
 	private final CompanyService companyService;
+    private final CalendarService calendarService;
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -333,10 +338,14 @@ public class ProjectService {
 			ScrapInsertRequest scrapInsertRequest = new ScrapInsertRequest(userSq, projectSq, scrapTypeCd);
 			projectMapper.insertScrap(scrapInsertRequest);
 			projectMapper.increaseScrap(projectSq);
+            //프로젝트 스크랩시 일정에 등록됨
+            calendarService.upsertProjectRecruitEvent(userSq, projectSq);
 
 		} else {
 			projectMapper.deleteProjectScrap(projectSq, userSq);
 			projectMapper.decreaseScrap(projectSq);
+            //프로젝트 스크랩 취소시 일정에서 삭제여부 Y로 변경
+            calendarService.projectScrapCancelScheduleDel(userSq,projectSq);
 		}
 
 	}

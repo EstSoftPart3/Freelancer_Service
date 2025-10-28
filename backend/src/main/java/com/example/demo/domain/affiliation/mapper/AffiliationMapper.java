@@ -1,5 +1,6 @@
 package com.example.demo.domain.affiliation.mapper;
 
+import com.example.demo.domain.project.entity.Project;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -105,4 +106,6 @@ public interface AffiliationMapper {
 	// 주소 리스트 조회
 	List<AreaCd> findAddressCds();
 
+    //소속 프로젝트 조회
+    List<Long> findProjectSqsByCompany(Long companySq);
 }
