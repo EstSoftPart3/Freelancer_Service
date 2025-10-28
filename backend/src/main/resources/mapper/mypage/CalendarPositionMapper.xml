@@ -4,8 +4,8 @@
 <mapper namespace="com.example.demo.domain.calendar.mapper.CalendarPositionMapper">
     <insert id="insert" parameterType="com.example.demo.domain.calendar.entity.CalendarPostionEvnt" useGeneratedKeys="true"
             keyProperty="postionEvntSq" keyColumn="postion_evnt_sq">
-        INSERT INTO TBL_PROJECT_RECRUIT_EVNT (schedule_sq, project_sq)
-        VALUES (#{scheduleSq}, #{projectSq})
+        INSERT INTO TBL_CALENDAR_POSITION_EVNT (schedule_sq, project_sq, company_sq)
+        VALUES (#{scheduleSq}, #{projectSq}, #{companySq})
     </insert>
 
     <select id="findProjectDetailByScheduleSq" resultType="com.example.demo.domain.calendar.mapper.rows.ProjectDetailRow">
@@ -21,9 +21,9 @@
         WHERE se.schedule_user_sq = #{userSq} AND cpe.company_sq = #{companySq} AND se.schedule_is_deleted_yn = 'N'
     </update>
     <!-- 프로젝트 스크랩 취소 시 일정 삭제 -->
-    <update id="deleteScrapProjectSchedule" parameterType="Long">
-        UPDATE TBL_SCHEDULE_EVNT AS se JOIN TBL_CALENDAR_POSITION_EVNT AS cpe ON se.scheduleSq = cpe.scheduleSq
-        SET schedule_is_deleted_yn = 'Y'
+    <update id="deleteScrapProjectSchedule" parameterType="map">
+        UPDATE TBL_SCHEDULE_EVNT AS se JOIN TBL_CALENDAR_POSITION_EVNT AS cpe ON se.schedule_sq = cpe.schedule_sq
+        SET se.schedule_is_deleted_yn = 'Y'
         WHERE se.schedule_user_sq = #{userSq} AND cpe.project_sq = #{projectSq} AND se.schedule_is_deleted_yn = 'N'
     </update>
 
@@ -53,7 +53,7 @@
     </select>
 
     <!-- 삭제(Y) → 복구(N) -->
-    <update id="restoreByUserAndProject" parameterType="map">
+    <update id="restoreByUserAndProject" parameterType="Long">
         UPDATE TBL_SCHEDULE_EVNT se
         JOIN TBL_CALENDAR_POSITION_EVNT cpe ON cpe.schedule_sq = se.schedule_sq
         SET se.schedule_is_deleted_yn = 'N',

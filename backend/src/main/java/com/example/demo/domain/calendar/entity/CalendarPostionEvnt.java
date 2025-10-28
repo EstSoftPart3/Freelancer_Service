@@ -23,4 +23,7 @@ public class CalendarPostionEvnt {
 
     @Column(name = "project_sq", nullable = false)
     private Long projectSq;
+
+    @Column(name = "company_sq", nullable = false)
+    private Long companySq;
 }

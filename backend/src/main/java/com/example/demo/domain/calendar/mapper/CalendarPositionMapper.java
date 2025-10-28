@@ -12,7 +12,7 @@ public interface CalendarPositionMapper {
     //소속 스크랩 취소 시 일정 삭제
     void deleteScrapCompanyProjectSchedule(@Param("userSq") Long userSq, @Param("companySq")Long companySq);
     //프로젝트 스크랩 취소 시 일정 삭제
-    void deleteScrapProjectSchedule(@Param("userSq") Long userSq, @Param("companySq")Long companySq);
+    void deleteScrapProjectSchedule(@Param("userSq") Long userSq, @Param("projectSq")Long projectSq);
     // 동일(사용자+프로젝트) "활성(N)" 일정 존재 여부
     boolean existsActiveByUserAndProject(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
     // 동일(사용자+프로젝트) "삭제(Y)" 일정 존재 여부
