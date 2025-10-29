@@ -41,5 +41,13 @@ public interface AdminMapper {
             @Param("userSq") Long userSq,
             @Param("userIsActivateYn") String userIsActivateYn
     );
+    
+    /**
+     * 프로젝트 활성화 상태 변경
+     */
+    int updateProjectActivateStatus(
+            @Param("projectSq") Long projectSq,
+            @Param("projectActivateYn") String projectActivateYn
+    );
 }
 

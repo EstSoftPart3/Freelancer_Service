@@ -105,5 +105,30 @@ public class AdminController {
         adminService.updateMemberStatus(userSq, userIsActivateYn);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회원 상태 변경 성공", null));
     }
+    
+    /**
+     * 프로젝트 활성화 상태 변경
+     * 
+     * @param authentication 인증 정보
+     * @param projectSq 프로젝트 순번
+     * @param request { "projectActivateYn": "Y" or "N" }
+     */
+    @PatchMapping("/projects/{projectSq}/activate")
+    public ResponseEntity<ApiResponse<Void>> updateProjectActivateStatus(
+            Authentication authentication,
+            @PathVariable Long projectSq,
+            @RequestBody Map<String, String> request
+    ) {
+        // 관리자 권한 체크
+        JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+        if (!ADMIN_TYPE_CD.equals(token.getUserTypeCd())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.of(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다.", null));
+        }
+        
+        String projectActivateYn = request.get("projectActivateYn");
+        adminService.updateProjectActivateStatus(projectSq, projectActivateYn);
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 활성화 상태 변경 성공", null));
+    }
 }
 
