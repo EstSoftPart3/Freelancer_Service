@@ -42,6 +42,10 @@ import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vu
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import MapSearchPage from '../views/map/MapSearchPage.vue'
 
+// Admin
+import MemberListPage from '../views/admin/MemberListPage.vue'
+import MemberDetailPage from '../views/admin/MemberDetailPage.vue'
+
 const routes = [
   {
     path: '/',
@@ -148,7 +152,7 @@ const routes = [
   },
 
   {
-    path: '/projectListPage',
+    path: '/project',
     name: 'ProjectListPage',
     component: ProjectListPage,
   },
@@ -157,6 +161,19 @@ const routes = [
     path: '/map/search',
     name: 'MapSearchPage',
     component: MapSearchPage,
+  },
+
+  // Admin Routes
+  {
+    path: '/admin/members',
+    name: 'AdminMemberList',
+    component: MemberListPage,
+  },
+
+  {
+    path: '/admin/members/:userSq',
+    name: 'AdminMemberDetail',
+    component: MemberDetailPage,
   },
 
   {
@@ -273,7 +290,9 @@ router.beforeEach((to, from, next) => {
     'InformationEdit',
     'Withdraw',
     'QnaResisterPage',
-    'BoardResisterPage' /* ... 로그인 필요 페이지들 */,
+    'BoardResisterPage',
+    'AdminMemberList',
+    'AdminMemberDetail' /* ... 로그인 필요 페이지들 */,
   ]
 
   const userRolePages = ['UserProjectSpec']
@@ -285,6 +304,8 @@ router.beforeEach((to, from, next) => {
     'ProjectPostPage',
     'ProjectPostPageWithId',
   ]
+
+  const adminRolePages = ['AdminMemberList', 'AdminMemberDetail']
 
   // 로그인 중인데 로그인/회원가입 페이지 접근 시 메인으로 리다이렉트
   if (userStore.isLoggedIn && publicPages.includes(to.name)) {
@@ -311,17 +332,26 @@ router.beforeEach((to, from, next) => {
     (userStore.getUserType === 'COMPANY' || userStore.getUserType === '') &&
     userRolePages.includes(to.name)
   ) {
-    alertStore.show('개인 회원만 접근 가능합니다.', 'danger')
+    alertStore.show('회원만 접근 가능합니다.', 'danger')
     return next({ name: 'Main' })
   }
 
   // 비로그인 유저가 권한 필요한 페이지 접근 시
   if (
     !userStore.isLoggedIn &&
-    (userRolePages.includes(to.name) || companyRolePages.includes(to.name))
+    (userRolePages.includes(to.name) || companyRolePages.includes(to.name) || adminRolePages.includes(to.name))
   ) {
     alertStore.show('로그인이 필요한 서비스입니다.', 'danger')
     return next({ name: 'Login' })
+  }
+
+  // 관리자 페이지에 관리자가 아닌 유저가 접근하면 메인으로 리다이렉트
+  if (
+    userStore.getUserType !== 'ADMIN' &&
+    adminRolePages.includes(to.name)
+  ) {
+    alertStore.show('관리자만 접근 가능합니다.', 'danger')
+    return next({ name: 'Main' })
   }
 
   next()

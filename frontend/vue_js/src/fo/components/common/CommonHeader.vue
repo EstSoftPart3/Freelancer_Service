@@ -54,7 +54,7 @@
                           active: isProjectActive,
                           'current-page-active': true,
                         }"
-                        to="/projectListPage"
+                        to="/project"
                       >
                         프로젝트
                         <i class="fas fa-chevron-down"></i
@@ -89,6 +89,21 @@
                           </router-link>
                         </li>
                       </ul>
+                    </li>
+                    
+                    <!-- 인턴 추가: 관리자만 보이는 관리자페이지 메뉴 -->
+                    <li class="dropdown" v-if="userStore.getUserType === 'ADMIN'">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isAdminActive,
+                          'current-page-active': true,
+                        }"
+                        to="/admin/members"
+                      >
+                        관리자페이지
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
                     </li>
                   </ul>
                 </nav>
@@ -364,6 +379,10 @@ const isProjectActive = computed(() =>
 )
 const isCommunityActive = computed(() =>
   ['/board', '/qna'].some((path) => currentPath.value.startsWith(path)),
+)
+// 인턴 추가: 관리자 메뉴 활성 여부 판별
+const isAdminActive = computed(() =>
+  currentPath.value.startsWith('/admin'),
 )
 
 // Mobile dropdown state

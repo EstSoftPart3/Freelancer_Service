@@ -1,0 +1,15 @@
+.alert {
+  position: fixed;
+  top: 115px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 400px;
+  width: 90%;
+}
+
+.alert :global(*) {
+  pointer-events: all;
+}
+

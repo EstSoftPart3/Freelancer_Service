@@ -1,0 +1,32 @@
+.filterSection {
+  background: transparent;
+}
+
+.textColorDark {
+  color: #333;
+}
+
+/* 선택된 위치 정보 (심플) */
+.selectedLocationSimple {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  padding: 0.5rem 0;
+}
+
+.selectedLocationSimple i {
+  font-size: 1.1rem;
+}
+
+/* 반경 칩 버튼 */
+.radiusChips {
+  justify-content: flex-start;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .radiusChips {
+    flex-wrap: wrap;
+  }
+}
+
