@@ -6,6 +6,7 @@ import com.example.demo.domain.calendar.dto.response.CalendarDetailResDto;
 import com.example.demo.domain.calendar.dto.response.CalendarViewDto;
 import com.example.demo.domain.calendar.dto.request.PersonalScheduleCreateRequest;
 import com.example.demo.domain.calendar.dto.response.ScheduleUpdateResDto;
+import com.example.demo.domain.calendar.entity.SourceType;
 import com.example.demo.domain.calendar.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Param;
@@ -28,7 +29,8 @@ public class CalendarController {
     @GetMapping("/evnts")
     public ResponseEntity<ApiResponse<List<CalendarViewDto>>> getCalendar(@AuthenticationPrincipal Long userSq, @RequestParam(required = false) Integer year,
                                                                           @RequestParam(required = false) Integer month, @RequestParam(required = false) Long recruitJobPositionTypeCd,
-                                                                          @RequestParam(required = false) Long contractTypeCd, @RequestParam(required = false) String searchKeyword){
+                                                                          @RequestParam(required = false) Long contractTypeCd, @RequestParam(required = false) String searchKeyword
+                                                                            ,@RequestParam(required = false) String calendarType){
         //값이 없으면  현재 달로 기본값
         YearMonth ym = (year == null || month == null) ? YearMonth.now(ZoneId.of("Asia/Seoul")) : YearMonth.of(year, month);
 
@@ -36,7 +38,7 @@ public class CalendarController {
         LocalDate end = ym.atEndOfMonth();
 
         //면접 일정 조회도 추가해야함
-        List<CalendarViewDto> calendarViewDtoList = calendarService.getCalendar(userSq,start,end,recruitJobPositionTypeCd,contractTypeCd,searchKeyword);
+        List<CalendarViewDto> calendarViewDtoList = calendarService.getCalendar(userSq,start,end,recruitJobPositionTypeCd,contractTypeCd,searchKeyword,calendarType);
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"일정 조회 완료",calendarViewDtoList));
     }

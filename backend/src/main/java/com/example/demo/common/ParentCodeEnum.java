@@ -15,7 +15,8 @@ public enum ParentCodeEnum {
     PRO_APPLICATION(800),
     CONTRACT_TYPE(900),
     JOB_POSITION(1000),
-    EDUCATION(2100);
+    EDUCATION(2100),
+    CALENDAR_TYPE(2200);
     private long code;
 
 }
