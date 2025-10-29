@@ -8,7 +8,7 @@
             keyProperty="interviewEvntSq" keyColumn="interview_evnt_sq">
         INSERT INTO TBL_CALENDAR_INTERVIEW_EVNT(
         company_sq, project_sq, project_application_sq, schedule_sq, address_sq, company_nm_snapshot, memo
-        ) VALUES(#{companySq}, #{projectSq},#{projectApplicationSq},#{scheduleSq},#{addressSq},#{companyNmSnapshotSq}, #{memo})
+        ) VALUES(#{companySq}, #{projectSq},#{projectApplicationSq},#{scheduleSq},#{addressSq},#{companyNmSnapshot}, #{memo})
     </insert>
 
     <select id="findInterviewDetailByScheduleSq" parameterType="Long"

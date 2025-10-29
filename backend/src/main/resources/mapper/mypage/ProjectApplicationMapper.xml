@@ -382,12 +382,14 @@
             resultType="com.example.demo.domain.project.dto.response.InterviewScheduleSeeDto">
         <![CDATA[
     SELECT
-      pa.application_sq                        AS applicationSq,
+      pa.project_application_sq                        AS applicationSq,
       pj.project_sq                            AS projectSq,
       pj.project_ttl                           AS projectTtl,
       cp.company_sq                            AS companySq,
       cp.company_nm                            AS companyNm,
       ad.address_sq                            AS addressSq,
+      ad.address                               AS address,
+      ad.detail_address                         AS detailAddress,
       pa.selected_interview_dtm                AS interviewStartDt,
       DATE_ADD(pa.selected_interview_dtm, INTERVAL 30 MINUTE) AS interviewEndDt
     FROM TBL_PROJECT_APPLICATION_H pa

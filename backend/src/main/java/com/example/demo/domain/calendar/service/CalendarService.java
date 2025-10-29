@@ -25,6 +25,7 @@ import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.user.dto.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -33,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CalendarService {
@@ -198,37 +200,48 @@ public class CalendarService {
     //캘린더 인터뷰 자동 생성
     @Transactional
     public void createdInterviewSchedule(ApplicationSqRequest request, Long userSq){
-        //인터뷰 일정에 필요한 데이터 조회
-        InterviewScheduleSeeDto interviewScheduleSeeDto = applicationMapper.findInterviewScheduleDataConversion(request.getApplicationSq());
-        String companyNm = interviewScheduleSeeDto.getCompanyNm();
-        String projectTtl = interviewScheduleSeeDto.getProjectTtl();
-        LocalDateTime interviewStartDt = interviewScheduleSeeDto.getInterviewStartDt();
+        log.info("[IV-SCHED][BEGIN] userSq={}, applicationSq={}", userSq, request.getApplicationSq());
+        try {
 
-        //인터뷰 시작 시간 포맷팅
-        String formattedTime = interviewStartDt.format(DateTimeFormatter.ofPattern("HH시 mm분"));
+            //인터뷰 일정에 필요한 데이터 조회
+            InterviewScheduleSeeDto interviewScheduleSeeDto = applicationMapper.findInterviewScheduleDataConversion(request.getApplicationSq());
+            String companyNm = interviewScheduleSeeDto.getCompanyNm();
+            String projectTtl = interviewScheduleSeeDto.getProjectTtl();
+            LocalDateTime interviewStartDt = interviewScheduleSeeDto.getInterviewStartDt();
 
-        //제목과 메모용 문구 생성
-        String title = String.format("[%s]%s %s 면접", companyNm, projectTtl, formattedTime);
-        String memo = String.format("[%s]%s %s 면접 예정입니다.",companyNm, projectTtl, formattedTime);
+            //인터뷰 시작 시간 포맷팅
+            String formattedTime = interviewStartDt.format(DateTimeFormatter.ofPattern("HH시 mm분"));
 
-        //공통일정 엔티티 저장
-        ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq).title(title)
-                .startDt(interviewScheduleSeeDto.getInterviewStartDt()).endDt(interviewScheduleSeeDto.getInterviewEndDt())
-                .calendarCreatedAtDtm(LocalDateTime.now()).calendarModifiedAtDtm(null).scheduleIsDeletedYn("N")
-                .sourceType(SourceType.INTERVIEW)
-                .build();
+            //제목과 메모용 문구 생성
+            String title = String.format("[%s]%s %s 면접", companyNm, projectTtl, formattedTime);
+            String memo = String.format("[%s]%s %s 면접 예정입니다.",companyNm, projectTtl, formattedTime);
 
-        //공통 일정 객체 생성
-        calendarMapper.insert(scheduleEvnt);
+            //공통일정 엔티티 저장
+            ScheduleEvnt scheduleEvnt = ScheduleEvnt.builder().scheduleUserSq(userSq).title(title)
+                    .startDt(interviewScheduleSeeDto.getInterviewStartDt()).endDt(interviewScheduleSeeDto.getInterviewEndDt())
+                    .calendarCreatedAtDtm(LocalDateTime.now()).calendarModifiedAtDtm(null).scheduleIsDeletedYn("N")
+                    .sourceType(SourceType.INTERVIEW)
+                    .build();
 
-        Long scheduleSq = scheduleEvnt.getScheduleSq();
+            //공통 일정 객체 생성
+            calendarMapper.insert(scheduleEvnt);
+            log.info("[IV-SCHED][END] OK scheduleSq={}",scheduleEvnt.getScheduleSq());
+            Long scheduleSq = scheduleEvnt.getScheduleSq();
 
-        //인터뷰 일정 객체 생성
-        calendarInterviewMapper.insert(CalendarInterviewEvnt.builder().projectApplicationSq(interviewScheduleSeeDto.getApplicationSq())
-                .companySq(interviewScheduleSeeDto.getCompanySq()).projectSq(interviewScheduleSeeDto.getProjectSq())
-                .scheduleSq(scheduleSq).addressSq(interviewScheduleSeeDto.getAddressSq())
-                .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm()).memo(memo)
-                .build());
+            //인터뷰 일정 객체 생성
+            calendarInterviewMapper.insert(CalendarInterviewEvnt.builder().projectApplicationSq(interviewScheduleSeeDto.getApplicationSq())
+                    .companySq(interviewScheduleSeeDto.getCompanySq()).projectSq(interviewScheduleSeeDto.getProjectSq())
+                    .scheduleSq(scheduleSq).addressSq(interviewScheduleSeeDto.getAddressSq())
+                    .companyNmSnapshot(interviewScheduleSeeDto.getCompanyNm()).memo(memo)
+                    .build());
+            log.info("[IV-SCHED][INSERT-IV] OK");
+
+            log.info("[IV-SCHED][END] OK scheduleSq={}", scheduleEvnt.getScheduleSq());
+        }catch (Exception e){
+            log.error("[IV-SCHED][ERROR] userSq={}, applicationSq={}, msg={}", userSq, request.getApplicationSq(), e.getMessage(),e);
+            throw e;
+        }
+
     }
 
     //프로젝트 스크랩 시 일정 자동 저장
