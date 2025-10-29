@@ -2,6 +2,30 @@
   <div class="calendar-filter-bar">
     <!-- 필터 영역 -->
     <div class="filters-section">
+      <!-- 일정 종류 필터 -->
+      <div class="filter-dropdown">
+        <button
+          class="filter-btn"
+          type="button"
+          data-bs-toggle="dropdown"
+          :class="{ active: selectedCalendarType !== null }"
+        >
+          {{ selectedCalendarTypeText }}
+        </button>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="#" @click.prevent="clearSelection('calendarType')">
+              전체
+            </a>
+          </li>
+          <li v-for="calType in calendarTypeOptions" :key="calType.value">
+            <a class="dropdown-item" href="#" @click.prevent="selectCalendarType(calType.value)">
+              {{ calType.label }}
+            </a>
+          </li>
+        </ul>
+      </div>
+
       <!-- 계약형태 필터 -->
       <div class="filter-dropdown">
         <button
@@ -99,10 +123,16 @@ const emit = defineEmits(['update'])
 // 필터 옵션 데이터
 const contractTypeOptions = ref([])
 const jobTypeOptions = ref([])
+const calendarTypeOptions = ref([
+  { value: 'PERSONAL', label: '개인 일정' },
+  { value: 'PROJECT', label: '프로젝트 일정' },
+  { value: 'INTERVIEW', label: '인터뷰 일정' }
+])
 
 // 선택된 값들 (배열로 다중 선택 지원)
 const selectedContractTypes = ref([])
 const selectedJobTypes = ref([])
+const selectedCalendarType = ref(null)
 
 // 검색어
 const searchKeyword = ref('')
@@ -135,6 +165,14 @@ const selectedJobTypeText = createSelectedText(
   { id: 'common_code_sq', name: 'common_code_nm' },
 )
 
+const selectedCalendarTypeText = computed(() => {
+  if (selectedCalendarType.value === null) return '일정 종류'
+  const selected = calendarTypeOptions.value.find(
+    (opt) => opt.value === selectedCalendarType.value
+  )
+  return selected ? selected.label : '일정 종류'
+})
+
 // 필터 옵션 가져오기
 const fetchFilterOptions = async () => {
   try {
@@ -151,12 +189,13 @@ const fetchFilterOptions = async () => {
 
 // 필터 변경 감지 및 부모로 전달
 watch(
-  [selectedContractTypes, selectedJobTypes, searchKeyword],
+  [selectedContractTypes, selectedJobTypes, selectedCalendarType, searchKeyword],
   () => {
     const filters = {
       searchKeyword: searchKeyword.value,
       contractTypeCd: selectedContractTypes.value.length > 0 ? selectedContractTypes.value[0] : null,
       jobRoleCd: selectedJobTypes.value.length > 0 ? selectedJobTypes.value[0] : null,
+      calendarType: selectedCalendarType.value,
     }
     emit('update', filters)
   },
@@ -175,6 +214,11 @@ const clearSearch = () => {
 const clearSelection = (type) => {
   if (type === 'contractTypes') selectedContractTypes.value = []
   if (type === 'jobTypes') selectedJobTypes.value = []
+  if (type === 'calendarType') selectedCalendarType.value = null
+}
+
+const selectCalendarType = (type) => {
+  selectedCalendarType.value = type
 }
 
 // 초기화
