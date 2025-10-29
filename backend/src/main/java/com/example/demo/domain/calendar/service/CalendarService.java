@@ -168,7 +168,7 @@ public class CalendarService {
                 InterviewDetailRow interviewDetailRow = calendarInterviewMapper.findInterviewDetailByScheduleSq(scheduleSq);
                 CalendarDetailResDto.InterviewDetail interviewDetail = new CalendarDetailResDto.InterviewDetail(se.getScheduleSq(),
                         se.getTitle(),se.getStartDt(),se.getEndDt(),interviewDetailRow.getMemo());
-                return new CalendarDetailResDto(SourceType.PROJECT,null,null,interviewDetail);
+                return new CalendarDetailResDto(SourceType.INTERVIEW,null,null,interviewDetail);
         }else {
             throw new IllegalStateException("지원하지 않는 sourceType: " + sourceType);
         }

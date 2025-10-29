@@ -72,6 +72,9 @@
                           <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
                             <i class="bi bi-briefcase"></i>
                           </div>
+                          <div v-else-if="event.sourceType === 'INTERVIEW'" class="interview-badge">
+                            <i class="bi bi-clipboard-check"></i>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -88,7 +91,7 @@
       :show="showScheduleModal"
       :selectedDate="selectedDateForModal"
       @close="closeScheduleModal"
-      @success="handleScheduleSuccess"
+      @success="refreshCalendar"
     />
 
     <!-- 일정 상세 모달 -->
@@ -96,14 +99,14 @@
       :show="showScheduleDetailModal"
       :scheduleSq="selectedScheduleSq"
       @close="closeScheduleDetailModal"
-      @updated="handleScheduleUpdated"
-      @deleted="handleScheduleDeleted"
+      @updated="refreshCalendar"
+      @deleted="refreshCalendar"
     />
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, addDays, isSameDay } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useAlertStore } from '@/fo/stores/alertStore'
@@ -123,36 +126,33 @@ export default {
     MyPageSideBar
   },
   setup() {
-    // 스토어
+    // ==================== Store ====================
     const alertStore = useAlertStore()
     
-    // 반응형 데이터
+    // ==================== State ====================
     const loading = ref(false)
     const favoritesMode = ref(false)
-    
-    // 현재 날짜 관련
     const currentMonth = ref(new Date())
-    
-    // 캘린더 데이터
     const calendarEvents = ref([])
     
-    // 모달 관련
+    // 모달 상태
     const showScheduleModal = ref(false)
     const selectedDateForModal = ref(null)
     const showScheduleDetailModal = ref(false)
     const selectedScheduleSq = ref(null)
     
-    // 필터 데이터
+    // 필터 상태
     const filters = ref({
       searchKeyword: '',
       contractTypeCd: null,
       jobRoleCd: null
     })
     
-    // 계산된 속성
-    const currentDate = computed(() => format(currentMonth.value, 'yyyy.MM', { locale: ko }))
+    // ==================== Computed ====================
+    const currentDate = computed(() => 
+      format(currentMonth.value, 'yyyy.MM', { locale: ko })
+    )
     
-    // 캘린더 주차 데이터 생성
     const calendarWeeks = computed(() => {
       const monthStart = startOfMonth(currentMonth.value)
       const monthEnd = endOfMonth(currentMonth.value)
@@ -182,7 +182,7 @@ export default {
       return weeks
     })
   
-    // 캘린더 데이터 로드
+    // ==================== API 호출 ====================
     const loadCalendarEvents = async () => {
       try {
         loading.value = true
@@ -210,7 +210,7 @@ export default {
       }
     }
 
-    // 메서드
+    // ==================== 이벤트 핸들러 ====================
     const updateFilters = (newFilters) => {
       filters.value = { ...filters.value, ...newFilters }
       loadCalendarEvents()
@@ -220,7 +220,12 @@ export default {
       currentMonth.value = addMonths(currentMonth.value, months)
       loadCalendarEvents()
     }
+    
+    const refreshCalendar = () => {
+      loadCalendarEvents()
+    }
   
+    // 모달 제어
     const openScheduleModal = (day = null) => {
       selectedDateForModal.value = day ? day.fullDate : new Date()
       showScheduleModal.value = true
@@ -231,8 +236,9 @@ export default {
       selectedDateForModal.value = null
     }
     
-    const handleScheduleSuccess = () => {
-      loadCalendarEvents()
+    const closeScheduleDetailModal = () => {
+      showScheduleDetailModal.value = false
+      selectedScheduleSq.value = null
     }
     
     // 일정 클릭 핸들러
@@ -241,11 +247,19 @@ export default {
         const { success, data } = await calendarService.getScheduleDetail(event.scheduleSq)
         
         if (success && data) {
-          if (data.sourceType === 'PERSONAL') {
+          // 개인 일정
+          if (data.personalDetail) {
             selectedScheduleSq.value = event.scheduleSq
             showScheduleDetailModal.value = true
-          } else if (data.sourceType === 'PROJECT') {
-            if (data.projectDetail?.routePath) {
+          }
+          // 면접 일정 (interviewDetail이 있으면 면접 일정)
+          else if (data.interviewDetail) {
+            selectedScheduleSq.value = event.scheduleSq
+            showScheduleDetailModal.value = true
+          }
+          // 프로젝트 일정
+          else if (data.projectDetail) {
+            if (data.projectDetail.routePath) {
               window.location.href = data.projectDetail.routePath
             } else {
               alertStore.show('프로젝트 상세 페이지를 찾을 수 없습니다.', 'warning')
@@ -260,19 +274,7 @@ export default {
       }
     }
     
-    const closeScheduleDetailModal = () => {
-      showScheduleDetailModal.value = false
-      selectedScheduleSq.value = null
-    }
-    
-    const handleScheduleUpdated = () => {
-      loadCalendarEvents()
-    }
-    
-    const handleScheduleDeleted = () => {
-      loadCalendarEvents()
-    }
-    
+    // ==================== 유틸리티 함수 ====================
     const isToday = (day) => {
       return isSameDay(day.fullDate, new Date())
     }
@@ -303,6 +305,8 @@ export default {
         classes.push('personal-schedule')
       } else if (event.sourceType === CalendarSourceType.PROJECT) {
         classes.push('project-schedule')
+      } else if (event.sourceType === CalendarSourceType.INTERVIEW) {
+        classes.push('interview-schedule')
       }
       
       if (event.isStartDate(day.fullDate)) {
@@ -322,7 +326,7 @@ export default {
       return text.substring(0, maxLength) + '...'
     }
     
-    // 색상 팔레트 정의
+    // ==================== 스타일 ====================
     const colorPalette = [
       { bg: '#90CAF9', border: '#90CAF9' },  // 파란색
       { bg: '#CE93D8', border: '#CE93D8' },  // 보라색
@@ -338,7 +342,6 @@ export default {
       { bg: '#B39DDB', border: '#B39DDB' },  // 진보라색
     ]
     
-    // 일정마다 고유한 색상 반환
     const getEventStyle = (event) => {
       const colorIndex = event.scheduleSq % colorPalette.length
       const colors = colorPalette[colorIndex]
@@ -350,42 +353,41 @@ export default {
       }
     }
     
-    // 초기화
+    // ==================== 라이프사이클 ====================
     onMounted(() => {
       loadCalendarEvents()
     })
-
-    // 월 변경 감지
-    watch(currentMonth, () => {
-      loadCalendarEvents()
-    })
     
+    // ==================== Return ====================
     return {
+      // State
       loading,
       favoritesMode,
       currentMonth,
       calendarEvents,
+      // Computed
       currentDate,
       calendarWeeks,
+      // Modal State
       showScheduleModal,
       selectedDateForModal,
       showScheduleDetailModal,
       selectedScheduleSq,
+      // Event Handlers
       addMonth,
+      updateFilters,
+      refreshCalendar,
+      handleScheduleClick,
+      // Modal Controls
       openScheduleModal,
+      closeScheduleModal,
+      closeScheduleDetailModal,
+      // Utilities
       isToday,
       getDayItems,
       getItemClasses,
       truncateText,
-      getEventStyle,
-      loadCalendarEvents,
-      closeScheduleModal,
-      handleScheduleSuccess,
-      handleScheduleClick,
-      closeScheduleDetailModal,
-      handleScheduleUpdated,
-      handleScheduleDeleted,
-      updateFilters
+      getEventStyle
     }
   }
 }
@@ -652,6 +654,11 @@ export default {
 
 .project-badge {
   color: #9c27b0;
+  margin-left: 0.25rem;
+}
+
+.interview-badge {
+  color: #ff5722;
   margin-left: 0.25rem;
 }
 

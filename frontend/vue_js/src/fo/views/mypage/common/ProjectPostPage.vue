@@ -481,7 +481,14 @@ const loadKakao = () => {
 
 const loadDefaultFormData = async () => {
   try {
+    console.log('🚀 API 호출 시작: /projects/forms')
     const response = await api.$get('/projects/forms')
+    console.log('✅ API 응답 전체:', response)
+    console.log('✅ response.output:', response.output)
+    console.log('✅ Skills 데이터:', response.output?.skills)
+    console.log('✅ Skills 타입:', typeof response.output?.skills)
+    console.log('✅ Skills 길이:', response.output?.skills?.length)
+    
     cities.value = response.output.cities.map((city) => ({
       code: city.areaSq,
       name: city.areaName,
@@ -490,18 +497,25 @@ const loadDefaultFormData = async () => {
     educationLevels.value = response.output.educationLevels
     recruitJobs.value = response.output.recruitJobs
     workTypes.value = response.output.workTypes
-    skills.value = response.output.skills
+    skills.value = response.output.skills || []
+    
+    console.log('✅ skills.value 설정 후:', skills.value)
+    console.log('✅ recruitJobs.value:', recruitJobs.value)
   } catch (e) {
-    console.error('프로젝트 정보 불러오기 실패 (신규)', e)
+    console.error('❌ 프로젝트 정보 불러오기 실패 (신규)', e)
+    console.error('❌ 에러 상세:', e.response || e.message)
   }
 }
 
 const loadEditFormData = async (projectSq) => {
   try {
+    console.log('🚀 API 호출 시작 (수정): /projects/forms with projectSq:', projectSq)
     const { output } = await api.$get(`/projects/forms`, {
       params: { projectSq },
     })
-    console.log(output)
+    console.log('✅ API 응답 (수정):', output)
+    console.log('✅ Skills 데이터 (수정):', output?.skills)
+    
     cities.value = output.cities.map((city) => ({
       code: city.areaSq,
       name: city.areaName,
@@ -510,7 +524,7 @@ const loadEditFormData = async (projectSq) => {
     educationLevels.value = output.educationLevels
     recruitJobs.value = output.recruitJobs
     workTypes.value = output.workTypes
-    skills.value = output.skills
+    skills.value = output.skills || []
     const exist = output.existProjectVo
     if (!exist) return
 
@@ -724,6 +738,9 @@ watch(isOpen, (newVal) => {
 })
 
 const openSkillModal = () => {
+  console.log('🔍 모달 열기 전 skills.value:', skills.value)
+  console.log('🔍 skills.value 타입:', typeof skills.value)
+  console.log('🔍 skills.value 길이:', skills.value?.length)
   modalStore.openModal(SkillSelectModal, {
     onConfirm: onSkillsConfirmed,
     skills: skills.value,

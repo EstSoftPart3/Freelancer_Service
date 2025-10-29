@@ -13,7 +13,7 @@
 
     <select id="findInterviewDetailByScheduleSq" parameterType="Long"
             resultType="com.example.demo.domain.calendar.mapper.rows.InterviewDetailRow">
-        SELECT * FROM TBL_CALENDAR_INTERVIEW_EVNT
+        SELECT cie.memo, cie.interview_evnt_sq FROM TBL_CALENDAR_INTERVIEW_EVNT cie WHERE cie.schedule_sq = #{scheduleSq}
     </select>
 
 </mapper>
