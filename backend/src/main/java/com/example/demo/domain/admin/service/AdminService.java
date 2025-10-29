@@ -78,5 +78,21 @@ public class AdminService {
             throw new RuntimeException("회원 상태 변경에 실패했습니다.");
         }
     }
+    
+    /**
+     * 프로젝트 활성화 상태 변경
+     */
+    @Transactional
+    public void updateProjectActivateStatus(Long projectSq, String projectActivateYn) {
+        // Y 또는 N만 허용
+        if (!projectActivateYn.equals("Y") && !projectActivateYn.equals("N")) {
+            throw new IllegalArgumentException("올바르지 않은 상태 값입니다.");
+        }
+        
+        int result = adminMapper.updateProjectActivateStatus(projectSq, projectActivateYn);
+        if (result == 0) {
+            throw new RuntimeException("프로젝트 상태 변경에 실패했습니다.");
+        }
+    }
 }
 

@@ -83,6 +83,9 @@ public class Project {
     @Column(name = "project_is_deleted_yn", length = 1)
     private String projectIsDeletedYn;
 
+    @Column(name = "project_activate_yn", length = 1)
+    private String projectActivateYn;
+
     @Column(name = "project_view_cnt")
     private Integer projectViewCnt;
 
@@ -111,6 +114,7 @@ public class Project {
         this.projectModifiedAtDtm = LocalDateTime.now();
         if (this.projectIsNotificationYn == null) this.projectIsNotificationYn = "N";
         if (this.projectIsDeletedYn == null) this.projectIsDeletedYn = "N";
+        if (this.projectActivateYn == null) this.projectActivateYn = "Y";
         this.projectCandidateCnt = 0;
         this.projectScrapCnt = 0;
         this.projectViewCnt = 0;

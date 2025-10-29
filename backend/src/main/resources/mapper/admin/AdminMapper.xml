@@ -95,6 +95,14 @@
             user_modified_at_dtm = NOW()
         WHERE user_sq = #{userSq}
     </update>
+    
+    <!-- 프로젝트 활성화 상태 변경 -->
+    <update id="updateProjectActivateStatus">
+        UPDATE TBL_PROJECT_M
+        SET project_activate_yn = #{projectActivateYn},
+            project_modified_at_dtm = NOW()
+        WHERE project_sq = #{projectSq}
+    </update>
 
 </mapper>
 
