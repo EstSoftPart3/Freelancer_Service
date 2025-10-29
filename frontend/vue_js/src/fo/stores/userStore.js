@@ -13,7 +13,10 @@ export const useUserStore = defineStore('user', {
   actions: {
     setUser({ userSq, userNm, userTypeCd }) {
       const userType =
-        userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
+        userTypeCd === 301 ? 'PERSONAL' 
+        : userTypeCd === 302 ? 'COMPANY' 
+        : userTypeCd === 303 ? 'ADMIN'
+        : ''
 
       // 인턴 추가 작업: userSq 값 검증 및 저장
       if (userSq && userSq !== '') {

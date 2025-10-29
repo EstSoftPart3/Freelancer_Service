@@ -11,9 +11,11 @@
           <div class="card border-0 shadow-lg">
             <div class="card-body p-4">
               <!-- 회원 유형 토글 버튼 -->
+              <!-- 인턴 추가: 관리자 로그인 버튼 추가 -->
               <div class="btn-group w-100 mb-4" role="group">
                 <button
-                  class="btn w-50"
+                  class="btn"
+                  style="width: 33.33%"
                   :class="
                     loginType === 'PERSONAL'
                       ? 'btn-primary'
@@ -24,7 +26,8 @@
                   개인회원
                 </button>
                 <button
-                  class="btn w-50"
+                  class="btn"
+                  style="width: 33.33%"
                   :class="
                     loginType === 'COMPANY'
                       ? 'btn-primary'
@@ -33,6 +36,18 @@
                   @click="loginType = 'COMPANY'"
                 >
                   기업회원
+                </button>
+                <button
+                  class="btn"
+                  style="width: 33.33%"
+                  :class="
+                    loginType === 'ADMIN'
+                      ? 'btn-primary'
+                      : 'btn-outline btn-primary'
+                  "
+                  @click="loginType = 'ADMIN'"
+                >
+                  관리자
                 </button>
               </div>
 
@@ -45,6 +60,7 @@
                 />
 
                 <!-- ID 입력 -->
+                <!-- 인턴 추가: 관리자 로그인 입력 필드 추가 -->
                 <div class="mb-3">
                   <label for="id" class="form-label">아이디</label>
                   <input
@@ -56,11 +72,19 @@
                     required
                   />
                   <input
-                    v-else
+                    v-else-if="loginType === 'COMPANY'"
                     v-model="form.cid"
                     type="text"
                     class="form-control"
                     id="cid"
+                    required
+                  />
+                  <input
+                    v-else
+                    v-model="form.aid"
+                    type="text"
+                    class="form-control"
+                    id="aid"
                     required
                   />
                 </div>
@@ -78,11 +102,20 @@
                     required
                   />
                   <input
-                    v-else
+                    v-else-if="loginType === 'COMPANY'"
                     v-model="form.cpassword"
                     type="password"
                     class="form-control"
                     id="cpassword"
+                    maxlength="32"
+                    required
+                  />
+                  <input
+                    v-else
+                    v-model="form.apassword"
+                    type="password"
+                    class="form-control"
+                    id="apassword"
                     maxlength="32"
                     required
                   />
@@ -170,24 +203,28 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 
 const alertStore = useAlertStore()
 
+// 인턴 추가: 관리자 로그인 타입 및 폼 데이터 추가
 const loginType = ref('PERSONAL')
 const form = ref({
   id: '',
   password: '',
   cid: '',
   cpassword: '',
+  aid: '',
+  apassword: '',
   autologin: false,
   id_save: false,
 })
 
 const userStore = useUserStore()
 
+// 인턴 추가: 관리자 로그인 처리 로직 추가 (userTypeCd 303)
 const login = async () => {
   const type = loginType.value
-  const userTypeCd = type === 'PERSONAL' ? 301 : 302
+  const userTypeCd = type === 'PERSONAL' ? 301 : type === 'COMPANY' ? 302 : 303
 
-  const id = type === 'PERSONAL' ? form.value.id : form.value.cid
-  const pw = type === 'PERSONAL' ? form.value.password : form.value.cpassword
+  const id = type === 'PERSONAL' ? form.value.id : type === 'COMPANY' ? form.value.cid : form.value.aid
+  const pw = type === 'PERSONAL' ? form.value.password : type === 'COMPANY' ? form.value.cpassword : form.value.apassword
 
   const payload = {
     userId: id,
@@ -210,16 +247,20 @@ const login = async () => {
     await fetchUserInfo()
 
     // 아이디 저장
+    // 인턴 추가: 관리자 아이디 저장 처리 추가
     if (form.value.id_save) {
       if (type === 'PERSONAL') {
         localStorage.setItem('savedPersonalId', form.value.id)
-      } else {
+      } else if (type === 'COMPANY') {
         localStorage.setItem('savedCompanyId', form.value.cid)
+      } else {
+        localStorage.setItem('savedAdminId', form.value.aid)
       }
       localStorage.setItem('savedLoginType', loginType.value)
     } else {
       localStorage.removeItem('savedPersonalId')
       localStorage.removeItem('savedCompanyId')
+      localStorage.removeItem('savedAdminId')
       localStorage.removeItem('savedLoginType')
     }
 
@@ -231,7 +272,9 @@ const login = async () => {
     }
 
     alertStore.show(userStore.userNm + '님 안녕하세요.', 'success')
-    router.push('/') // 메인 페이지로 이동
+    
+    // 인턴 수정: 모든 계정 타입이 동일한 메인 페이지로 이동
+    router.push('/')
   } catch (error) {
     console.error(error)
     alertStore.show(error.response?.data?.message || error.message, 'danger')
@@ -266,6 +309,7 @@ const fetchUserInfo = async () => {
 }
 
 // 저장된 아이디를 form에 세팅하는 함수
+// 인턴 추가: 관리자 저장된 아이디 로드 처리 추가
 const loadSavedId = () => {
   const savedType = localStorage.getItem('savedLoginType')
   if (savedType) {
@@ -274,9 +318,12 @@ const loadSavedId = () => {
   if (loginType.value === 'PERSONAL') {
     form.value.id = localStorage.getItem('savedPersonalId') || ''
     form.value.id_save = !!localStorage.getItem('savedPersonalId')
-  } else {
+  } else if (loginType.value === 'COMPANY') {
     form.value.cid = localStorage.getItem('savedCompanyId') || ''
     form.value.id_save = !!localStorage.getItem('savedCompanyId')
+  } else {
+    form.value.aid = localStorage.getItem('savedAdminId') || ''
+    form.value.id_save = !!localStorage.getItem('savedAdminId')
   }
 
   // 자동 로그인 여부도 로드해서 체크박스 초기화
@@ -289,11 +336,17 @@ onMounted(() => {
 })
 
 // loginType 변경 시 저장된 아이디 변경 반영
+// 인턴 추가: 관리자 타입 변경 시 저장된 아이디 로드 처리 추가
 watch(loginType, () => {
   if (loginType.value === 'PERSONAL') {
     form.value.id = localStorage.getItem('savedPersonalId') || ''
-  } else {
+    form.value.id_save = !!localStorage.getItem('savedPersonalId')
+  } else if (loginType.value === 'COMPANY') {
     form.value.cid = localStorage.getItem('savedCompanyId') || ''
+    form.value.id_save = !!localStorage.getItem('savedCompanyId')
+  } else {
+    form.value.aid = localStorage.getItem('savedAdminId') || ''
+    form.value.id_save = !!localStorage.getItem('savedAdminId')
   }
 })
 

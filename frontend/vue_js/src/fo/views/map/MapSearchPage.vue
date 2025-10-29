@@ -8,71 +8,7 @@
     
     <div class="container py-5">
       <!-- 필터 영역 -->
-      <div class="filter-section border rounded p-4 mb-4 bg-light">
-        <h5 class="mb-3 text-color-dark">
-          <i class="bi bi-funnel me-2"></i>검색 조건 설정
-        </h5>
-        
-        <div class="row align-items-center">
-          <!-- 반경 필터 -->
-          <div class="col-md-2 mb-3">
-            <label class="form-label text-color-dark fw-bold">반경</label>
-            <select v-model="filters.radius" class="form-select">
-              <option value="3">3km</option>
-              <option value="5" selected>5km</option>
-              <option value="10">10km</option>
-              <option value="20">20km</option>
-            </select>
-          </div>
-          
-          <!-- 직무 필터 -->
-          <div class="col-md-2 mb-3">
-            <label class="form-label text-color-dark fw-bold">직무</label>
-            <select v-model="filters.jobRole" class="form-select">
-              <option value="">전체</option>
-              <option value="프론트엔드">프론트엔드</option>
-              <option value="백엔드">백엔드</option>
-              <option value="데이터분석가">데이터분석가</option>
-              <option value="UI/UX디자이너">UI/UX디자이너</option>
-              <option value="기획자">기획자</option>
-              <option value="마케터">마케터</option>
-              <option value="DevOps">DevOps</option>
-              <option value="QA">QA</option>
-              <option value="PM">PM</option>
-              <option value="데이터엔지니어">데이터엔지니어</option>
-              <option value="AI개발자">AI개발자</option>
-              <option value="모바일개발자">모바일개발자</option>
-              <option value="게임개발자">게임개발자</option>
-              <option value="시스템관리자">시스템관리자</option>
-            </select>
-          </div>
-          
-          <!-- 검색 입력 -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label text-color-dark fw-bold">검색어</label>
-            <input 
-              v-model="filters.keyword"
-              type="text" 
-              class="form-control" 
-              placeholder="프로젝트명, 기업명 검색"
-            />
-          </div>
-          
-          <!-- 버튼들 -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label text-color-dark fw-bold">&nbsp;</label>
-            <div class="d-flex gap-2">
-              <button @click="resetFilters" class="btn btn-rounded btn-outline-secondary">
-                <i class="bi bi-arrow-clockwise me-1"></i>초기화
-              </button>
-              <button @click="applyFilters" class="btn btn-rounded btn-primary">
-                <i class="bi bi-search me-1"></i>검색
-              </button>
-            </div>
-          </div>
-        </div>
-        
-      </div>
+      <MapFilterComponent @filter-change="handleFilterChange" />
       
       <div class="row">
         <!-- 좌측: 프로젝트 리스트 -->
@@ -162,107 +98,13 @@
         
         <!-- 우측: 지도 -->
         <div class="col-md-8">
-          <div class="map-section">
-            <h5 class="text-color-dark mb-3">
-              <i class="bi bi-map me-2"></i>지도
-            </h5>
-            
-            <!-- 주소 표시 -->
-            <div class="current-location mb-3 p-3 bg-light rounded">
-              <div class="d-flex align-items-center">
-                <!-- <i class="bi bi-geo-alt-fill text-primary me-2 fs-5"></i> -->
-                <div>
-                  <strong class="text-color-dark">{{ userLocation.address }}</strong>
-                  <!-- <br> -->
-                  <!-- <small class="text-muted">{{ userLocation.address }}</small> -->
-                </div>
-              </div>
-            </div>
-            
-            <!-- 지도 영역 -->
-            <div class="map-wrapper border rounded position-relative" style="height: 500px; overflow: hidden;">
-              <!-- 네이버 지도 이미지 -->
-              <img 
-                :src="mapImageUrl"
-                alt="지도"
-                class="w-100 h-100"
-                style="object-fit: cover;"
-                @load="handleImageLoad"
-                @error="handleImageError"
-              />
-              
-              <!-- 줌 컨트롤 -->
-              <div class="zoom-controls position-absolute top-0 end-0 m-3">
-                <div class="btn-group-vertical" role="group">
-                  <button 
-                    @click="zoomIn" 
-                    class="btn btn-light btn-sm border shadow-sm"
-                    :disabled="mapZoom >= 18"
-                    title="확대"
-                  >
-                    <i class="bi bi-plus"></i>
-                  </button>
-                  <button 
-                    @click="zoomOut" 
-                    class="btn btn-light btn-sm border shadow-sm"
-                    :disabled="mapZoom <= 10"
-                    title="축소"
-                  >
-                    <i class="bi bi-dash"></i>
-                  </button>
-                </div>
-              </div>
-              
-              <!-- 사용자 위치 마커 -->
-              <div 
-                v-if="userLocation.latitude && userLocation.longitude"
-                class="user-marker position-absolute"
-                :style="getUserMarkerStyle()"
-                title="내 위치"
-              >
-                <i class="bi bi-geo-alt-fill text-primary fs-4"></i>
-              </div>
-              
-              <!-- 프로젝트 마커들 -->
-              <div 
-                v-for="project in visibleProjects" 
-                :key="project.projectSq"
-                class="project-marker position-absolute"
-                :style="getProjectMarkerStyle(project)"
-                @click="handleMarkerClick(project)"
-                :title="project.projectTitle"
-              >
-                <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
-              </div>
-              
-              <!-- 로딩 중 -->
-              <div v-if="!mapImageUrl" class="map-placeholder d-flex justify-content-center align-items-center h-100 bg-light">
-                <div class="text-center">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">로딩 중...</span>
-                  </div>
-                  <p class="mt-2 text-muted">지도 로딩 중...</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 범례 -->
-            <div class="map-legend mt-3 p-3 bg-light rounded">
-              <div class="d-flex gap-4">
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                  <small class="text-muted">내 주소</small>
-                </div>
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-geo-alt-fill text-danger me-2"></i>
-                  <small class="text-muted">프로젝트 위치</small>
-                </div>
-                <div class="d-flex align-items-center">
-                  <small class="text-muted">총 {{ projects.length }}개 프로젝트</small>
-                </div>
-              </div>
-            </div>
-          </div>
+          <MapComponent 
+            :user-location="userLocation"
+            :projects="projects"
+            :map-image-url="mapImageUrl"
+            @marker-click="handleMarkerClick"
+            @zoom-change="handleZoomChange"
+          />
         </div>
       </div>
     </div>
@@ -430,6 +272,8 @@
 
 <script setup>
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
+import MapFilterComponent from '@/fo/components/map/MapFilterComponent.vue'
+import MapComponent from '@/fo/components/map/MapComponent.vue'
 import { api } from '@/axios.js'
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/fo/stores/userStore'
@@ -437,13 +281,6 @@ import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter.js'
 
 const userStore = useUserStore()
 const userType = userStore.getUserType
-
-// 필터 상태
-const filters = ref({
-  radius: '5',
-  jobRole: '',
-  keyword: ''
-})
 
 // UI 상태
 const loading = ref(false)
@@ -526,17 +363,8 @@ const mapZoom = ref(13) // 지도 줌 레벨 (10-18) - 5km 반경을 보기 위�
 const visibleProjects = ref([]) // 화면에 표시될 프로젝트들
 const selectedProject = ref(null) // 선택된 프로젝트
 
-// 필터 함수들
-const resetFilters = () => {
-  filters.value = {
-    radius: '5',
-    jobRole: '',
-    keyword: ''
-  }
-  applyFilters()
-}
-
-const applyFilters = async () => {
+// 필터 변경 핸들러
+const handleFilterChange = async (filters) => {
   loading.value = true
   
   try {
@@ -546,9 +374,9 @@ const applyFilters = async () => {
     const response = await api.$get('/map/search', {
       params: {
         userId: localStorage.getItem('userSq') || userStore.userSq || 0,
-        radius: parseFloat(filters.value.radius),
-        jobType: filters.value.jobRole || null,
-        keyword: filters.value.keyword || null,
+        radius: parseFloat(filters.radius),
+        jobType: filters.jobRole || null,
+        keyword: filters.keyword || null,
         page: 0,
         size: 20
       }
@@ -601,107 +429,17 @@ const applyFilters = async () => {
   }
 }
 
-// 줌 컨트롤 함수들
-const zoomIn = () => {
-  if (mapZoom.value < 18) {
-    mapZoom.value++
-    updateMapImage()
-  }
-}
-
-const zoomOut = () => {
-  if (mapZoom.value > 10) {
-    mapZoom.value--
-    updateMapImage()
-  }
-}
-
-// 지도 이미지 업데이트
-const updateMapImage = () => {
+// 줌 변경 핸들러
+const handleZoomChange = (zoom) => {
+  mapZoom.value = zoom
   mapImageUrl.value = generateMapImageUrl()
 }
 
 // 화면에 표시될 프로젝트들 업데이트
 const updateVisibleProjects = () => {
-  // 현재 필터 조건에 맞는 프로젝트들만 표시
-  visibleProjects.value = projects.value.filter(project => {
-    // 직무 필터
-    if (filters.value.jobRole && project.jobType !== filters.value.jobRole) {
-      return false
-    }
-    
-    // 검색어 필터
-    if (filters.value.keyword) {
-      const keyword = filters.value.keyword.toLowerCase()
-      const titleMatch = project.projectTitle.toLowerCase().includes(keyword)
-      const companyMatch = project.companyName.toLowerCase().includes(keyword)
-      if (!titleMatch && !companyMatch) {
-        return false
-      }
-    }
-    
-    return true
-  })
-  
+  // 프로젝트가 변경될 때마다 visibleProjects 업데이트
+  visibleProjects.value = projects.value
   console.log('화면에 표시될 프로젝트 개수:', visibleProjects.value.length)
-}
-
-// 사용자 마커 스타일 계산
-const getUserMarkerStyle = () => {
-  if (!userLocation.value.latitude || !userLocation.value.longitude) return {}
-  
-  // 지도 중심을 기준으로 마커 위치 계산
-  return {
-    left: '50%',
-    top: '50%',
-    transform: 'translate(-50%, -100%)',
-    zIndex: 1000
-  }
-}
-
-// 프로젝트 마커 스타일 계산 (간단하고 정확한 버전)
-const getProjectMarkerStyle = (project) => {
-  if (!project.latitude || !project.longitude) return {}
-  
-  const userLat = userLocation.value.latitude
-  const userLng = userLocation.value.longitude
-  const projectLat = project.latitude
-  const projectLng = project.longitude
-  
-  // 위도/경도 차이 계산
-  const latDiff = projectLat - userLat
-  const lngDiff = projectLng - userLng
-  
-  // 간단하고 정확한 픽셀 변환 (실제 테스트 기반)
-  const mapWidth = 800
-  const mapHeight = 500
-  
-  // 줌 레벨에 따른 스케일 (실제 네이버 지도 기준)
-  const zoomScale = Math.pow(2, mapZoom.value - 16)
-  
-  // 1도당 픽셀 수 (대폭 증가 - 실제 지도에 맞게 조정)
-  const pixelsPerDegree = 50000 * zoomScale
-  
-  // 지도 중심(50%, 50%) 기준으로 계산
-  const x = 50 + (lngDiff * pixelsPerDegree / mapWidth * 100)
-  const y = 50 - (latDiff * pixelsPerDegree / mapHeight * 100)
-  
-  // 디버깅 로그
-  console.log(`프로젝트 ${project.projectTitle}:`, {
-    userLat, userLng,
-    projectLat, projectLng,
-    latDiff, lngDiff,
-    zoomScale,
-    pixelsPerDegree,
-    x, y
-  })
-  
-  return {
-    left: `${Math.max(5, Math.min(95, x))}%`,
-    top: `${Math.max(5, Math.min(95, y))}%`,
-    transform: 'translate(-50%, -100%)',
-    zIndex: 999
-  }
 }
 
 // 마커 클릭 핸들러
@@ -723,7 +461,7 @@ const handleRouteClick = (project) => {
   console.log('경로 클릭:', project)
   
   // 네이버 지도 경로 안내 URL 생성
-  const naverMapUrl = `https://map.naver.com/index.nhn?slng=${userLocation.value.longitude}&slat=${userLocation.value.latitude}&stext=내위치&elng=${project.longitude}&elat=${project.latitude}&etext=${encodeURIComponent(project.companyName)}&menu=route&pathType=1`
+  const naverMapUrl = `https://map.naver.com/index.nhn?slng=${userLocation.value.longitude}&slat=${userLocation.value.latitude}&stext=${encodeURIComponent(userLocation.value.address)}&elng=${project.longitude}&elat=${project.latitude}&etext=${encodeURIComponent(project.companyName)}&menu=route&pathType=1`
   
   // 새 창으로 열기
   window.open(naverMapUrl, '_blank')
@@ -756,25 +494,6 @@ const generateMapImageUrl = () => {
 // 중복 호출 방지 플래그
 let isInitialized = false
 
-// 이미지 로드 성공 처리
-const handleImageLoad = (event) => {
-  console.log('✅ 지도 이미지 로드 성공!', event.target.src)
-}
-
-// 이미지 오류 처리
-const handleImageError = (event) => {
-  console.error('❌ 지도 이미지 로드 실패:', event.target.src)
-  console.error('오류 상세:', event)
-  
-  // 오류 시 로컬 SVG로 대체
-  const errorSvg = `
-    <svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="#dc3545"/>
-      <text x="400" y="250" font-family="Arial" font-size="24" fill="white" text-anchor="middle">❌ 지도 로딩 실패</text>
-    </svg>
-  `
-  event.target.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(errorSvg)))}`
-}
 
 // 컴포넌트 마운트 시 실행
 onMounted(async () => {
@@ -800,7 +519,11 @@ onMounted(async () => {
   console.log('사용자 위치:', userLocation.value)
   
   // 2. 첫 검색 실행
-  applyFilters()
+  handleFilterChange({
+    radius: '5',
+    jobRole: '',
+    keyword: ''
+  })
 })
 </script>
 

@@ -1,0 +1,13 @@
+select.form-control,
+select.form-control-lg {
+  line-height: 1.6;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  height: auto;
+}
+
+.invalidFeedback {
+  color: #007bff;
+  display: block;
+}
+

@@ -165,7 +165,7 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
-                to="/projectListPage"
+                to="/project"
                 @click="handleNavigate"
                 >프로젝트 공고 조회</router-link
               >
