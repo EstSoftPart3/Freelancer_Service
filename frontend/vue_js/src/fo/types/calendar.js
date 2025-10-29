@@ -1,17 +1,19 @@
 // 캘린더 이벤트 타입 정의
 export const CalendarSourceType = {
   PERSONAL: 'PERSONAL',
-  PROJECT: 'PROJECT'
+  PROJECT: 'PROJECT',
+  INTERVIEW: 'INTERVIEW'
 }
 
 // 캘린더 뷰 DTO (백엔드 CalendarViewDto와 매핑)
 export class CalendarEvent {
   constructor(data) {
     this.scheduleSq = data.scheduleSq
-    this.sourceType = data.sourceType // 'PERSONAL' | 'PROJECT'
+    this.sourceType = data.sourceType
     this.title = data.title
     this.projectSq = data.projectSq
     this.companySq = data.companySq
+    this.companyNm = data.companyNm
     this.startDt = new Date(data.startDt)
     this.endDt = data.endDt ? new Date(data.endDt) : null
   }

@@ -23,9 +23,9 @@
           </div>
           
           <div class="mb-3">
-            <label for="scheduleStartDate" class="form-label">시작일 *</label>
+            <label for="scheduleStartDate" class="form-label">시작일시 *</label>
             <input
-              type="date"
+              type="datetime-local"
               id="scheduleStartDate"
               v-model="form.startDate"
               class="form-control"
@@ -34,9 +34,9 @@
           </div>
           
           <div class="mb-3">
-            <label for="scheduleEndDate" class="form-label">종료일</label>
+            <label for="scheduleEndDate" class="form-label">종료일시</label>
             <input
-              type="date"
+              type="datetime-local"
               id="scheduleEndDate"
               v-model="form.endDate"
               class="form-control"
@@ -108,7 +108,7 @@ export default {
     // 선택된 날짜가 변경되면 폼 초기화
     watch(() => props.selectedDate, (newDate) => {
       if (newDate) {
-        const dateStr = format(newDate, 'yyyy-MM-dd')
+        const dateStr = format(newDate, "yyyy-MM-dd'T'HH:mm")
         form.value.startDate = dateStr
         form.value.endDate = dateStr
       }
@@ -124,8 +124,8 @@ export default {
     const resetForm = () => {
       form.value = {
         title: '',
-        startDate: props.selectedDate ? format(props.selectedDate, 'yyyy-MM-dd') : '',
-        endDate: props.selectedDate ? format(props.selectedDate, 'yyyy-MM-dd') : '',
+        startDate: props.selectedDate ? format(props.selectedDate, "yyyy-MM-dd'T'HH:mm") : '',
+        endDate: props.selectedDate ? format(props.selectedDate, "yyyy-MM-dd'T'HH:mm") : '',
         description: ''
       }
     }
@@ -141,7 +141,7 @@ export default {
       }
 
       if (!form.value.startDate) {
-        alertStore.show('시작일을 선택해주세요.', 'warning')
+        alertStore.show('시작일시를 선택해주세요.', 'warning')
         return
       }
 
@@ -151,7 +151,7 @@ export default {
         const endDate = new Date(form.value.endDate)
         
         if (endDate < startDate) {
-          alertStore.show('마감일은 시작일보다 이전일 수 없습니다.', 'warning')
+          alertStore.show('종료일시는 시작일시보다 이전일 수 없습니다.', 'warning')
           return
         }
       }

@@ -249,6 +249,12 @@ const backToSearch = () => {
 
 function formatDate(dateString) {
   if (!dateString) return ''
+  
+  // Date 객체인 경우 ISO 문자열로 변환
+  if (dateString instanceof Date) {
+    dateString = dateString.toISOString()
+  }
+  
   return dateString.substring(0, 10).replace(/-/g, '.')
 }
 
@@ -266,12 +272,21 @@ const completeSelection = () => {
     ? `${formatDate(startDate.value)} ~ ${formatDate(endDate.value)}`
     : `${formatDate(startDate.value)} ~`
 
+  // Date 객체를 문자열로 변환
+  const formatDateForAPI = (date) => {
+    if (!date) return ''
+    if (date instanceof Date) {
+      return date.toISOString().substring(0, 10)
+    }
+    return date
+  }
+
   props.onComplete &&
     props.onComplete({
       educationSchoolNm: selectedSchool.value.name,
       educationMajorNm: majorName.value,
-      educationAdmissionDt: startDate.value,
-      educationGraduationDt: endDate.value,
+      educationAdmissionDt: formatDateForAPI(startDate.value),
+      educationGraduationDt: formatDateForAPI(endDate.value),
       educationStatusCd: endDate.value ? 1201 : 1202, // 졸업 or 졸업예정
       period,
     })

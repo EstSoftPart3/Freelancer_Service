@@ -24,19 +24,19 @@
             </div>
             
             <div class="detail-item">
-              <label>시작일</label>
-              <div v-if="!isEditing" class="value">{{ formatDate(scheduleDetail.personalDetail.startDt) }}</div>
-              <input v-else v-model="editForm.startDt" type="date" class="form-input">
+              <label>시작일시</label>
+              <div v-if="!isEditing" class="value">{{ formatDateTime(scheduleDetail.personalDetail.startDt) }}</div>
+              <input v-else v-model="editForm.startDt" type="datetime-local" class="form-input">
             </div>
             
             <div class="detail-item">
-              <label>종료일</label>
-              <div v-if="!isEditing" class="value">{{ scheduleDetail.personalDetail.endDt ? formatDate(scheduleDetail.personalDetail.endDt) : '종료일 없음' }}</div>
+              <label>종료일시</label>
+              <div v-if="!isEditing" class="value">{{ scheduleDetail.personalDetail.endDt ? formatDateTime(scheduleDetail.personalDetail.endDt) : '종료일시 없음' }}</div>
               <div v-else class="end-date-container">
-                <input v-model="editForm.endDt" type="date" class="form-input">
+                <input v-model="editForm.endDt" type="datetime-local" class="form-input">
                 <label class="checkbox-label">
                   <input v-model="editForm.clearEndDt" type="checkbox">
-                  종료일 없음
+                  종료일시 없음
                 </label>
               </div>
             </div>
@@ -74,6 +74,29 @@
               </div>
             </div>
           </div>
+          
+          <!-- 인터뷰 일정 상세 -->
+          <div v-else-if="scheduleDetail.interviewDetail" class="interview-detail">
+            <div class="detail-item">
+              <label>제목</label>
+              <div class="value">{{ scheduleDetail.interviewDetail.title }}</div>
+            </div>
+            
+            <div class="detail-item">
+              <label>시작 시간</label>
+              <div class="value">{{ formatDateTime(scheduleDetail.interviewDetail.startDt) }}</div>
+            </div>
+            
+            <div class="detail-item">
+              <label>마감 시간</label>
+              <div class="value">{{ formatDateTime(scheduleDetail.interviewDetail.endDt) }}</div>
+            </div>
+            
+            <div class="detail-item" v-if="scheduleDetail.interviewDetail.memo">
+              <label>메모</label>
+              <div class="value memo">{{ scheduleDetail.interviewDetail.memo }}</div>
+            </div>
+          </div>
         </div>
         
         <div v-else class="error">
@@ -109,6 +132,16 @@
         <!-- 프로젝트일정 버튼들 -->
         <template v-else-if="scheduleDetail?.sourceType === 'PROJECT'">
           <button class="btn btn-primary" @click="goToProject">
+            프로젝트 상세보기
+          </button>
+          <button class="btn btn-secondary" @click="closeModal">
+            닫기
+          </button>
+        </template>
+        
+        <!-- 인터뷰일정 버튼들 -->
+        <template v-else-if="scheduleDetail?.interviewDetail">
+          <button v-if="scheduleDetail.interviewDetail?.projectSq" class="btn btn-primary" @click="goToProject">
             프로젝트 상세보기
           </button>
           <button class="btn btn-secondary" @click="closeModal">
@@ -197,6 +230,8 @@ export default {
         loading.value = true
         const { success, data } = await calendarService.getScheduleDetail(props.scheduleSq)
         
+        console.log('=== 일정 상세 조회 응답 ===', data)
+        
         if (success && data) {
           scheduleDetail.value = data
         } else {
@@ -262,7 +297,7 @@ export default {
       }
       
       if (!editForm.value.startDt) {
-        alertStore.show('시작일을 선택해주세요.', 'warning')
+        alertStore.show('시작일시를 선택해주세요.', 'warning')
         return
       }
       
@@ -272,7 +307,7 @@ export default {
         const endDate = new Date(editForm.value.endDt)
         
         if (endDate < startDate) {
-          alertStore.show('마감일은 시작일보다 이전일 수 없습니다.', 'warning')
+          alertStore.show('종료일시는 시작일시보다 이전일 수 없습니다.', 'warning')
           return
         }
       }
@@ -349,8 +384,13 @@ export default {
     
     // 프로젝트 상세 페이지로 이동
     const goToProject = () => {
+      // 프로젝트 일정인 경우
       if (scheduleDetail.value?.projectDetail?.routePath) {
         window.location.href = scheduleDetail.value.projectDetail.routePath
+      }
+      // 인터뷰 일정인 경우
+      else if (scheduleDetail.value?.interviewDetail?.projectSq) {
+        window.location.href = `/project/spec/user/${scheduleDetail.value.interviewDetail.projectSq}`
       }
     }
     
@@ -359,6 +399,16 @@ export default {
       if (!dateString) return ''
       try {
         return format(new Date(dateString), 'yyyy년 MM월 dd일', { locale: ko })
+      } catch (error) {
+        return dateString
+      }
+    }
+    
+    // 날짜+시간 포맷팅
+    const formatDateTime = (dateString) => {
+      if (!dateString) return ''
+      try {
+        return format(new Date(dateString), 'yyyy년 MM월 dd일 HH:mm', { locale: ko })
       } catch (error) {
         return dateString
       }
@@ -426,6 +476,7 @@ export default {
       deleteSchedule,
       goToProject,
       formatDate,
+      formatDateTime,
       getProjectStatus,
       getProjectStatusClass
     }

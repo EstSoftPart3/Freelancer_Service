@@ -13,6 +13,7 @@ export const calendarService = {
       return { success: false, data: [] }
     }
   },
+  
 
   // 개인 일정 생성
   async createPersonalSchedule(scheduleData) {
