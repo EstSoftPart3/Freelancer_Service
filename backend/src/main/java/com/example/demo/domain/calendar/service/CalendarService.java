@@ -49,14 +49,15 @@ public class CalendarService {
 
     //    캘린더 일정 조회
     @Transactional
-    public List<CalendarViewDto> getCalendar(Long userSq, LocalDate start, LocalDate end,Long contractTypeCd,Long recruitJobPositionTypeCd,String searchKeyword){
+    public List<CalendarViewDto> getCalendar(Long userSq, LocalDate start, LocalDate end,Long contractTypeCd,Long recruitJobPositionTypeCd,String searchKeyword
+                                            ,String calendarType){
         //사용자 조회
         UserDTO userInfo = calendarMapper.findByUser(userSq);
         Optional.ofNullable(userInfo).orElseThrow(() -> new NotFoundException("없는 회원입니다."));
         System.out.println(userSq);
 
         //사용자의 모든 캘린더 일정 조회
-        List<CalendarViewDto> calendarViewDtoList = calendarMapper.findCalendarEvents(userSq,start, end, contractTypeCd, recruitJobPositionTypeCd,searchKeyword);
+        List<CalendarViewDto> calendarViewDtoList = calendarMapper.findCalendarEvents(userSq,start, end, contractTypeCd, recruitJobPositionTypeCd,searchKeyword,calendarType);
         return calendarViewDtoList;
     }
 
@@ -83,6 +84,8 @@ public class CalendarService {
     @Transactional
     public List<?> fetchFilterInfos(String type) {
         switch (type) {
+            case "일정 종류":
+                return commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.CALENDAR_TYPE.getCode());
             case "계약형태":
                 return commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.CONTRACT_TYPE.getCode());
             case "직무":

@@ -145,7 +145,8 @@ export default {
     const filters = ref({
       searchKeyword: '',
       contractTypeCd: null,
-      jobRoleCd: null
+      jobRoleCd: null,
+      calendarType: null
     })
     
     // ==================== Computed ====================
@@ -192,7 +193,8 @@ export default {
           month: currentMonth.value.getMonth() + 1,
           contractTypeCd: filters.value.contractTypeCd,
           recruitJobPositionTypeCd: filters.value.jobRoleCd,
-          searchKeyword: filters.value.searchKeyword
+          searchKeyword: filters.value.searchKeyword,
+          calendarType: filters.value.calendarType
         }
         
         const { success, data } = await calendarService.getCalendarEvents(params)
