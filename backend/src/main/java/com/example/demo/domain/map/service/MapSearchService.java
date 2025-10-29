@@ -55,8 +55,8 @@ public class MapSearchService {
             keyword
         );
         
-        // 4단계: DTO를 Response로 변환
-        return convertToResponse(projectDtos, totalCount, userLocation.getLatitude().doubleValue(), userLocation.getLongitude().doubleValue(), radius, jobType, keyword);
+        // 4단계: DTO를 Response로 변환 (사용자 주소 정보 포함)
+        return convertToResponse(projectDtos, totalCount, userLocation.getLatitude().doubleValue(), userLocation.getLongitude().doubleValue(), radius, jobType, keyword, userLocation.getAddress());
     }
 
     // 직접 좌표로 프로젝트 검색
@@ -82,15 +82,15 @@ public class MapSearchService {
             request.getSearchKeyword()
         );
         
-        // 3단계: DTO를 Response로 변환
-        return convertToResponse(projectDtos, totalCount, request.getUserLatitude(), request.getUserLongitude(), request.getRadius(), request.getJobType(), request.getSearchKeyword());
+        // 3단계: DTO를 Response로 변환 (사용자 주소 없음 - 기본값 사용)
+        return convertToResponse(projectDtos, totalCount, request.getUserLatitude(), request.getUserLongitude(), request.getRadius(), request.getJobType(), request.getSearchKeyword(), "내위치");
     }
 
     // DTO를 Response로 변환하는 공통 메서드
-    private MapSearchResponse convertToResponse(List<MapProjectDto> projectDtos, int totalCount, double userLat, double userLon, double radius, String jobType, String keyword) {
+    private MapSearchResponse convertToResponse(List<MapProjectDto> projectDtos, int totalCount, double userLat, double userLon, double radius, String jobType, String keyword, String userAddress) {
         // Stream API 사용
         List<MapProjectResponse> projects = projectDtos.stream()
-            .map(dto -> convertToResponse(dto, userLat, userLon))
+            .map(dto -> convertToResponse(dto, userLat, userLon, userAddress))
             .collect(Collectors.toList());
         
         // 4단계: 페이징 정보 계산 (기본값 사용)
@@ -115,14 +115,17 @@ public class MapSearchService {
             .build();
     }
 
-    private MapProjectResponse convertToResponse(MapProjectDto dto, double userLat, double userLon) {
+    private MapProjectResponse convertToResponse(MapProjectDto dto, double userLat, double userLon, String userAddress) {
         
-        // 네이버 길찾기 URL 생성
+        // 네이버 길찾기 URL 생성 (EPSG:3857 좌표 변환 + 실제 주소 적용)
+        String projectAddress = dto.getAddress() + (dto.getDetailAddress() != null ? " " + dto.getDetailAddress() : "");
         String naverMapUrl = naverMapUrlGenerator.generateRouteUrl(
             userLat,                             // 출발지: 사용자 위치
             userLon,
             dto.getLatitude().doubleValue(),     // 도착지: 프로젝트 위치
-            dto.getLongitude().doubleValue()
+            dto.getLongitude().doubleValue(),
+            userAddress,                         // 출발지 주소
+            projectAddress                       // 도착지 주소
         );
 
         // Response 객체 생성
