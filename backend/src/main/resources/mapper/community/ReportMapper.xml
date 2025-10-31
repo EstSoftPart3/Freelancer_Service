@@ -20,8 +20,114 @@
     </select>
 
     <insert id="insert" parameterType="com.example.demo.domain.community.entity.Report" useGeneratedKeys="true" keyProperty="reportSq">
-        INSERT INTO TBL_REPORT_S (user_sq, board_sq, answer_sq, comment_sq, reply_comment_sq, report_reason_txt, report_type_cd)
-        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{replyCommentSq}, #{reportReasonTxt}, #{reportTypeCd})
+        INSERT INTO TBL_REPORT_S (user_sq, board_sq, answer_sq, comment_sq, reply_comment_sq, report_reason_txt, report_type_cd, created_at_dtm)
+        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{replyCommentSq}, #{reportReasonTxt}, #{reportTypeCd}, NOW())
+    </insert>
+
+    <!-- ========== 관리자용 쿼리 ========== -->
+    
+    <!-- 신고 목록 조회 -->
+    <select id="findReportsForAdmin" resultType="map">
+        SELECT 
+            r.report_sq as reportSq,
+            CASE 
+                WHEN r.board_sq IS NOT NULL THEN CONCAT('[게시글] ', COALESCE((SELECT board_ttl FROM TBL_BOARD_M WHERE board_sq = r.board_sq), '제목없음'))
+                WHEN r.answer_sq IS NOT NULL THEN CONCAT('[답변] ', COALESCE((SELECT answer_ttl FROM TBL_BOARD_ANSWER_S WHERE answer_sq = r.answer_sq), '제목없음'))
+                WHEN r.comment_sq IS NOT NULL THEN '[댓글] 댓글 신고'
+                WHEN r.reply_comment_sq IS NOT NULL THEN '[대댓글] 대댓글 신고'
+                ELSE '알 수 없음'
+            END as reportTitle,
+            u.user_id as reporterUserId,
+            r.created_at_dtm as createdAtDtm,
+            r.report_reason_txt as reportReasonTxt,
+            r.report_type_cd as reportTypeCd,
+            COALESCE(
+                (SELECT report_status FROM TBL_REPORT_H WHERE report_sq = r.report_sq ORDER BY created_at_dtm DESC LIMIT 1), 
+                'R'
+            ) as status
+        FROM TBL_REPORT_S r
+        JOIN TBL_USER_M u ON r.user_sq = u.user_sq
+        <where>
+            <if test="searchQuery != null and searchQuery != ''">
+                AND u.user_id LIKE CONCAT('%', #{searchQuery}, '%')
+            </if>
+            <if test="reportDate != null and reportDate != ''">
+                AND DATE(r.created_at_dtm) = #{reportDate}
+            </if>
+            <if test="reportReason != null and reportReason != ''">
+                AND r.report_reason_txt = #{reportReason}
+            </if>
+            <if test="status != null and status != ''">
+                AND COALESCE(
+                    (SELECT report_status FROM TBL_REPORT_H WHERE report_sq = r.report_sq ORDER BY created_at_dtm DESC LIMIT 1), 
+                    'R'
+                ) = #{status}
+            </if>
+        </where>
+        ORDER BY r.created_at_dtm DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 신고 개수 조회 -->
+    <select id="countReportsForAdmin" resultType="long">
+        SELECT COUNT(*)
+        FROM TBL_REPORT_S r
+        JOIN TBL_USER_M u ON r.user_sq = u.user_sq
+        <where>
+            <if test="searchQuery != null and searchQuery != ''">
+                AND u.user_id LIKE CONCAT('%', #{searchQuery}, '%')
+            </if>
+            <if test="reportDate != null and reportDate != ''">
+                AND DATE(r.created_at_dtm) = #{reportDate}
+            </if>
+            <if test="reportReason != null and reportReason != ''">
+                AND r.report_reason_txt = #{reportReason}
+            </if>
+            <if test="status != null and status != ''">
+                AND COALESCE(
+                    (SELECT report_status FROM TBL_REPORT_H WHERE report_sq = r.report_sq ORDER BY created_at_dtm DESC LIMIT 1), 
+                    'R'
+                ) = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 신고 상세 조회 -->
+    <select id="findReportDetailForAdmin" resultType="map">
+        SELECT 
+            r.report_sq as reportSq,
+            CASE 
+                WHEN r.board_sq IS NOT NULL THEN CONCAT('[게시글] ', COALESCE((SELECT board_ttl FROM TBL_BOARD_M WHERE board_sq = r.board_sq), '제목없음'))
+                WHEN r.answer_sq IS NOT NULL THEN CONCAT('[답변] ', COALESCE((SELECT answer_ttl FROM TBL_BOARD_ANSWER_S WHERE answer_sq = r.answer_sq), '제목없음'))
+                WHEN r.comment_sq IS NOT NULL THEN '[댓글] 댓글 신고'
+                WHEN r.reply_comment_sq IS NOT NULL THEN '[대댓글] 대댓글 신고'
+            END as reportTitle,
+            u.user_id as reporterUserId,
+            r.created_at_dtm as createdAtDtm,
+            r.report_reason_txt as reportReasonTxt,
+            r.report_type_cd as reportTypeCd,
+            cc.common_code_nm as reportTypeName,
+            CASE 
+                WHEN r.board_sq IS NOT NULL THEN (SELECT board_description_edt FROM TBL_BOARD_M WHERE board_sq = r.board_sq)
+                WHEN r.answer_sq IS NOT NULL THEN (SELECT answer_description_edt FROM TBL_BOARD_ANSWER_S WHERE answer_sq = r.answer_sq)
+                WHEN r.comment_sq IS NOT NULL THEN (SELECT comment_description_txt FROM TBL_BOARD_COMMENT_S WHERE comment_sq = r.comment_sq)
+                WHEN r.reply_comment_sq IS NOT NULL THEN (SELECT reply_comment_description_txt FROM TBL_BOARD_COMMENT_REPLY_S WHERE reply_comment_sq = r.reply_comment_sq)
+            END as targetContent,
+            COALESCE(
+                (SELECT report_status FROM TBL_REPORT_H WHERE report_sq = r.report_sq ORDER BY created_at_dtm DESC LIMIT 1), 
+                'R'
+            ) as status,
+            (SELECT report_result FROM TBL_REPORT_H WHERE report_sq = r.report_sq ORDER BY created_at_dtm DESC LIMIT 1) as reportResult
+        FROM TBL_REPORT_S r
+        JOIN TBL_USER_M u ON r.user_sq = u.user_sq
+        LEFT JOIN TBL_COMMON_CODE_C cc ON r.report_type_cd = cc.common_code_sq
+        WHERE r.report_sq = #{reportSq}
+    </select>
+
+    <!-- 신고 처리 이력 등록 -->
+    <insert id="insertReportHistory">
+        INSERT INTO TBL_REPORT_H (report_sq, created_at_dtm, report_status, report_result)
+        VALUES (#{reportSq}, NOW(), #{reportStatus}, #{reportResult})
     </insert>
 
 </mapper>
