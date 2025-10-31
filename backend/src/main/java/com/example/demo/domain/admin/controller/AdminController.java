@@ -1,9 +1,11 @@
 package com.example.demo.domain.admin.controller;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.admin.dto.request.AdminReportRequest;
 import com.example.demo.domain.admin.dto.response.AdminMemberListResponse;
 import com.example.demo.domain.admin.dto.response.AdminMemberResponse;
 import com.example.demo.domain.admin.service.AdminService;
+import com.example.demo.domain.admin.service.AdminReportService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,14 +16,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin/members")
+@RequestMapping("/admin")
 @RequiredArgsConstructor
 public class AdminController {
     
     private final AdminService adminService;
+    private final AdminReportService adminReportService;
     
     // 관리자 타입 코드 (303)
     private static final Long ADMIN_TYPE_CD = 303L;
+    
+    // ========================================
+    // 회원 관리 API
+    // ========================================
     
     /**
      * 회원 목록 조회 (페이지네이션, 필터링)
@@ -33,7 +40,7 @@ public class AdminController {
      * @param page 페이지 번호 (0부터 시작)
      * @param size 페이지 크기
      */
-    @GetMapping
+    @GetMapping("/members")
     public ResponseEntity<ApiResponse<AdminMemberListResponse>> getMemberList(
             Authentication authentication,
             @RequestParam(required = false) String searchQuery,
@@ -65,7 +72,7 @@ public class AdminController {
      * @param authentication 인증 정보
      * @param userSq 회원 순번
      */
-    @GetMapping("/{userSq}")
+    @GetMapping("/members/{userSq}")
     public ResponseEntity<ApiResponse<AdminMemberResponse>> getMemberDetail(
             Authentication authentication,
             @PathVariable Long userSq
@@ -88,7 +95,7 @@ public class AdminController {
      * @param userSq 회원 순번
      * @param request { "userIsActivateYn": "Y" or "N" }
      */
-    @PatchMapping("/{userSq}/status")
+    @PatchMapping("/members/{userSq}/status")
     public ResponseEntity<ApiResponse<Void>> updateMemberStatus(
             Authentication authentication,
             @PathVariable Long userSq,
@@ -129,6 +136,93 @@ public class AdminController {
         String projectActivateYn = request.get("projectActivateYn");
         adminService.updateProjectActivateStatus(projectSq, projectActivateYn);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 활성화 상태 변경 성공", null));
+    }
+    
+    // ========================================
+    // 신고 관리 API
+    // ========================================
+    
+    /**
+     * 신고 목록 조회
+     * 
+     * @param authentication 인증 정보
+     * @param searchQuery 검색어 (제목/신고자ID)
+     * @param reportDate 신고일자 (YYYY-MM-DD)
+     * @param reportReason 신고 사유
+     * @param status 상태 (R: 대기중, C: 처리완료)
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지 크기
+     */
+    @GetMapping("/reports")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getReports(
+            Authentication authentication,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(required = false) String reportDate,
+            @RequestParam(required = false) String reportReason,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // 관리자 권한 체크
+        JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+        if (!ADMIN_TYPE_CD.equals(token.getUserTypeCd())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.of(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다.", null));
+        }
+        
+        Map<String, Object> result = adminReportService.getReports(
+                searchQuery, reportDate, reportReason, status, page, size
+        );
+        
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "신고 목록 조회 성공", result));
+    }
+    
+    /**
+     * 신고 상세 조회
+     * 
+     * @param authentication 인증 정보
+     * @param reportSq 신고 순번
+     */
+    @GetMapping("/reports/{reportSq}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getReportDetail(
+            Authentication authentication,
+            @PathVariable Long reportSq
+    ) {
+        // 관리자 권한 체크
+        JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+        if (!ADMIN_TYPE_CD.equals(token.getUserTypeCd())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.of(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다.", null));
+        }
+        
+        Map<String, Object> result = adminReportService.getReportDetail(reportSq);
+        
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "신고 상세 조회 성공", result));
+    }
+    
+    /**
+     * 신고 처리 결과 등록
+     * 
+     * @param authentication 인증 정보
+     * @param reportSq 신고 순번
+     * @param request 처리 결과 내용
+     */
+    @PostMapping("/reports/{reportSq}/process")
+    public ResponseEntity<ApiResponse<Void>> processReport(
+            Authentication authentication,
+            @PathVariable Long reportSq,
+            @RequestBody AdminReportRequest request
+    ) {
+        // 관리자 권한 체크
+        JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+        if (!ADMIN_TYPE_CD.equals(token.getUserTypeCd())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.of(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다.", null));
+        }
+        
+        adminReportService.processReport(reportSq, request);
+        
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "신고 처리 완료", null));
     }
 }
 
