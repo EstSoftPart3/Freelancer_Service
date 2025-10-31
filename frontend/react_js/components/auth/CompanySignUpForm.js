@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
-import { debounce } from 'lodash'
+import debounce from 'lodash/debounce'
 import CompanyVerificationModal from './CompanyVerificationModal'
 import styles from './CompanySignUpForm.module.css'
 

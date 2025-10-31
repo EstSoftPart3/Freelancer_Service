@@ -1,0 +1,219 @@
+/* 기업 회원가입 폼 스타일 */
+
+/* 폼 그룹 간격 */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* 라벨 스타일 */
+.form-label {
+  font-weight: 500;
+  color: #212529;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+/* 입력 필드 포커스 */
+.form-control:focus,
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Select 박스 높이 조정 */
+select.form-control,
+select.form-control-lg {
+  line-height: 1.6;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  height: auto;
+}
+
+/* 에러 메시지 */
+.invalid-feedback {
+  color: #dc3545;
+  display: block;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* 체크 아이콘 애니메이션 */
+.bi-check-circle-fill {
+  animation: checkmark 0.3s ease-in-out;
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Input Group 버튼 스타일 */
+.input-group .btn {
+  white-space: nowrap;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.input-group .btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  transition: all 0.3s ease;
+}
+
+.input-group .btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* 체크박스 */
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.form-check-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 약관 링크 */
+.font-primary {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.font-primary:hover {
+  color: #0056b3;
+}
+
+/* 제출 버튼 */
+.btn-modern {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-modern:active {
+  transform: translateY(0);
+}
+
+/* 읽기 전용 입력 필드 */
+input[readonly] {
+  background-color: #e9ecef;
+  cursor: pointer;
+}
+
+input[readonly]:focus {
+  background-color: #e9ecef;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .row > [class*='col-'] {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .input-group {
+    flex-wrap: wrap;
+  }
+
+  .input-group .form-control,
+  .input-group .btn,
+  .input-group select {
+    flex: 1 1 100%;
+    border-radius: 0.25rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .input-group-text {
+    display: none;
+  }
+}
+
+/* 로딩 상태 */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 입력 그룹 텍스트 */
+.input-group-text {
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  padding: 0.375rem 0.75rem;
+  font-weight: 500;
+}
+
+/* 포커스 상태 */
+.form-control:focus {
+  outline: none;
+}
+
+/* 애니메이션 효과 */
+.form-group {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 기업 인증 관련 스타일 */
+.company-verification-wrapper {
+  border: 2px dashed #007bff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+}
+
+.company-verified {
+  border-color: #28a745;
+  background-color: #d4edda;
+}
+
+/* 에러 상태 표시 */
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+/* 성공 상태 표시 */
+.form-control.is-valid {
+  border-color: #28a745;
+}
