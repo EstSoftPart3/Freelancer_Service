@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import MapFilterComponent from './MapFilterComponent'
 import styles from './MapComponent.module.css'
 
-export default function MapComponent({
+const MapComponent = forwardRef(function MapComponent({
   userLocation,
   projects = [],
   mapImageUrl = '',
@@ -25,9 +25,16 @@ export default function MapComponent({
   onFilterChange,
   onZoomChange,
   onOpenLocationModal
-}) {
+}, ref) {
   // 필터 모달 상태
   const [showFilterModal, setShowFilterModal] = useState(false)
+
+  // 부모 컴포넌트에서 접근 가능하도록 expose
+  useImperativeHandle(ref, () => ({
+    openFilterModal: () => {
+      setShowFilterModal(true)
+    }
+  }))
   
   // 지도 관련 상태
   const [mapZoom, setMapZoom] = useState(initialZoom)
@@ -123,12 +130,12 @@ export default function MapComponent({
 
   // 이미지 로드 성공 처리
   const handleImageLoad = (event) => {
-    console.log('✅ 지도 이미지 로드 성공!', event.target.src)
+    console.log('지도 이미지 로드 성공!', event.target.src)
   }
 
   // 이미지 오류 처리
   const handleImageError = (event) => {
-    console.error('❌ 지도 이미지 로드 실패:', event.target.src)
+    console.error('지도 이미지 로드 실패:', event.target.src)
     
     const errorSvg = `
       <svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
@@ -222,7 +229,7 @@ export default function MapComponent({
             style={getUserMarkerStyle()}
             title="내 위치"
           >
-            <i className="bi bi-geo-alt-fill text-primary fs-4"></i>
+            <i className="bi bi-geo-alt-fill text-primary" style={{ fontSize: '10pt' }}></i>
           </div>
         )}
 
@@ -230,12 +237,20 @@ export default function MapComponent({
         {visibleProjects.map(project => (
           <div
             key={project.projectSq}
-            className="project-marker position-absolute"
+            className="project-marker-container position-absolute"
             style={getProjectMarkerStyle(project)}
             onClick={() => handleMarkerClick(project)}
-            title={project.projectTitle}
+            title={project.projectTitle || project.projectTtl}
           >
-            <i className="bi bi-geo-alt-fill text-danger" style={{ fontSize: '1.1rem' }}></i>
+            {/* 마커 아이콘 */}
+            <i className="bi bi-geo-alt-fill text-danger" style={{ fontSize: '9pt' }}></i>
+            
+            {/* 줌 레벨 13 이상일 때만 라벨 표시 (5km부터) */}
+            {mapZoom >= 13 && (
+              <div className="marker-label">
+                {project.projectTitle || project.projectTtl}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -285,5 +300,6 @@ export default function MapComponent({
       )}
     </div>
   )
-}
+})
 
+export default MapComponent

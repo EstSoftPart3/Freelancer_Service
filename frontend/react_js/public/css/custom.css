@@ -1,0 +1,131 @@
+/* 마커 라벨 */
+.marker-label {
+  margin-top: 2px;
+  padding: 0;
+  background: transparent;
+  color: #000;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  /* max-width, overflow, ellipsis 제거하여 전체 텍스트 표시 */
+  pointer-events: none; /* 라벨은 클릭 이벤트 통과 */
+}
+
+/* 호버 시 라벨 강조 */
+.project-marker-container:hover .marker-label {
+  max-width: none; /* 호버 시 전체 텍스트 보이기 */
+  font-weight: 900; /* 호버 시 더 진하게 */
+}
+
+/* 프로젝트 마커 컨테이너 */
+.project-marker-container {
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.project-marker-container:hover {
+  z-index: 1001;
+}
+
+.project-marker-container:hover i {
+  transform: scale(1.2);
+}
+
+/* 모달 오버레이 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* 모달 콘텐츠 (큰 사이즈) */
+.modal-content-large {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+  position: relative;
+  z-index: 10001;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #6c757d;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  color: #000;
+  background: #f8f9fa;
+}
+
+.text-color-dark {
+  color: #333;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .modal-content-large {
+    width: 95%;
+    max-height: 90vh;
+    padding: 16px;
+  }
+}
+

@@ -6,7 +6,6 @@ export default function Document() {
       <Head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
 
         {/* Web Fonts */}
@@ -19,10 +18,6 @@ export default function Document() {
         <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" href="/vendor/fontawesome-free/css/all.min.css" />
         <link rel="stylesheet" href="/vendor/animate/animate.compat.css" />
-        <link rel="stylesheet" href="/vendor/simple-line-icons/css/simple-line-icons.min.css" />
-        <link rel="stylesheet" href="/vendor/owl.carousel/assets/owl.carousel.min.css" />
-        <link rel="stylesheet" href="/vendor/owl.carousel/assets/owl.theme.default.min.css" />
-        <link rel="stylesheet" href="/vendor/magnific-popup/magnific-popup.min.css" />
 
         {/* Theme CSS */}
         <link rel="stylesheet" href="/css/theme.css" />
@@ -56,8 +51,6 @@ export default function Document() {
         <script src="/vendor/jquery/jquery.min.js"></script>
         <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="/vendor/jquery.easing/jquery.easing.min.js"></script>
-        <script src="/vendor/owl.carousel/owl.carousel.min.js"></script>
-        <script src="/vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
 
         {/* Theme JS */}
         <script src="/js/theme.js"></script>

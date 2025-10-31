@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
@@ -44,19 +44,22 @@ export default function MainPage() {
   // 미니 지도 관련 상태 (배너용)
   const [miniMapProjects, setMiniMapProjects] = useState([])
   const [miniMapImageUrl, setMiniMapImageUrl] = useState('')
+  
+  // MapComponent에 대한 ref (필터 모달 제어용)
+  const mapComponentRef = useRef(null)
 
   // 인기 프로젝트 관련 상태
   const filterTabs = [
-    { key: 'views', label: '조회수' },
-    { key: 'scraps', label: '스크랩수' },
-    { key: 'latest', label: '최신순' }
+    { key: 'views', label: '조회순' },
+    { key: 'scraps', label: '스크랩순' },
+    { key: 'applications', label: '지원순' }
   ]
   const [activeFilter, setActiveFilter] = useState('views')
   const [popularProjects, setPopularProjects] = useState([])
   const [allPopularProjectsData, setAllPopularProjectsData] = useState({
-    views: [],
-    scraps: [],
-    latest: []
+    viewCount: [],
+    scrapCount: [],
+    applicantCount: []
   })
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 3
@@ -66,24 +69,24 @@ export default function MainPage() {
   const [activeFaq, setActiveFaq] = useState(0)
   const faqList = [
     {
-      question: '프로젝트에 지원하려면 어떻게 해야 하나요?',
-      answer: '프로젝트 상세 페이지에서 "지원하기" 버튼을 클릭하면 지원할 수 있습니다. 로그인이 필요합니다.'
+      question: '프리랜서로 등록하려면 어떻게 해야 하나요?',
+      answer: '회원가입 후 프로필을 작성하고 포트폴리오를 등록하시면 됩니다. 검증 과정을 거쳐 승인되면 프리랜서로 활동할 수 있습니다.'
     },
     {
-      question: '프로젝트 모집이 마감되면 어떻게 되나요?',
-      answer: '모집 마감 후에는 지원이 불가능하며, 이미 지원한 내역은 마이페이지에서 확인할 수 있습니다.'
+      question: '프로젝트 등록 비용이 있나요?',
+      answer: '프로젝트 등록은 무료입니다. 성공적인 매칭 후에만 수수료가 발생합니다.'
     },
     {
-      question: '프로젝트 정보를 수정하려면 어떻게 해야 하나요?',
-      answer: '기업 회원은 마이페이지에서 등록한 프로젝트 정보를 수정할 수 있습니다.'
+      question: '거래는 어떻게 진행되나요?',
+      answer: '안전한 거래를 위해 에스크로 시스템을 제공합니다. 프로젝트 완료 후 결제가 진행됩니다.'
     },
     {
-      question: '스크랩한 프로젝트는 어디서 확인하나요?',
-      answer: '마이페이지의 "스크랩한 프로젝트" 메뉴에서 확인할 수 있습니다.'
+      question: '분쟁이 발생하면 어떻게 해결하나요?',
+      answer: '전담 고객지원팀이 중재하여 공정하게 해결해드립니다.'
     },
     {
-      question: '프로젝트 검색은 어떻게 하나요?',
-      answer: '상단 검색바에서 키워드를 입력하거나, 필터를 사용하여 원하는 프로젝트를 찾을 수 있습니다.'
+      question: '수수료는 얼마인가요?',
+      answer: '프로젝트 성공 시 거래 금액의 5% 수수료가 발생합니다.'
     }
   ]
 
@@ -104,6 +107,69 @@ export default function MainPage() {
   }
 
   // ============ 지도 관련 함수들 ============
+  // 좌표를 주소로 변환
+  const getAddressFromCoordinates = async (lat, lng) => {
+    try {
+      console.log('=== 프론트엔드 좌표 검증 ===')
+      console.log('입력된 좌표:', lat, lng)
+      console.log('좌표 타입:', typeof lat, typeof lng)
+      console.log('좌표 유효성:', !isNaN(lat), !isNaN(lng))
+      console.log('=== 지오코딩 API 호출 ===')
+      
+      // 네이버 지오코딩 API 호출
+      const response = await api.$get('/map/naver/geocoding', {
+        params: {
+          latitude: lat,
+          longitude: lng
+        }
+      })
+      
+      console.log('=== 지오코딩 API 응답 분석 ===')
+      console.log('전체 응답:', response)
+      console.log('response.output:', response.output)
+      console.log('response.address:', response.address)
+      console.log('response.success:', response.success)
+      console.log('응답 타입:', typeof response)
+      console.log('응답 키들:', Object.keys(response))
+      
+      // success가 true이고 유효한 주소가 있으면 사용
+      if (response.success !== false) {
+        if (response.output && response.output.address) {
+          console.log('네이버 지오코딩 성공:', response.output.address)
+          return response.output.address
+        } else if (response.address && !response.address.includes('위도:') && !response.address.includes('경도:')) {
+          console.log('네이버 지오코딩 성공:', response.address)
+          return response.address
+        }
+      }
+      
+      // 네이버 실패 시 카카오 지오코딩 시도
+      console.log('네이버 지오코딩 실패, 카카오 API 시도...')
+      if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+        return new Promise((resolve) => {
+          const geocoder = new window.kakao.maps.services.Geocoder()
+          geocoder.coord2Address(lng, lat, (result, status) => {
+            if (status === window.kakao.maps.services.Status.OK && result[0]) {
+              const address = result[0].address.address_name
+              console.log('카카오 지오코딩 성공:', address)
+              resolve(address)
+            } else {
+              console.log('카카오 지오코딩도 실패')
+              resolve(null)
+            }
+          })
+        })
+      }
+      
+      console.log('카카오 API 사용 불가')
+      return null
+    } catch (error) {
+      console.error('주소 변환 실패:', error)
+      return null
+    }
+  }
+
+  // 사용자 위치 가져오기 함수
   const getUserLocation = useCallback(() => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
@@ -116,24 +182,44 @@ export default function MainPage() {
         return
       }
 
-      const userId = localStorage.getItem('userSq') || user.userSq || 0
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
       api.$get(`/map/user-address?userId=${userId}`)
-        .then(response => {
+        .then(async (response) => {
+          console.log('주소 API 응답:', response)
           const data = response.data || response.output || response
+          
+          // API에서 주소를 제대로 반환했는지 확인
+          let finalAddress = data.address
+          
+          // 주소가 없거나 위도/경도 형식이면 지오코딩 시도
+          if (!finalAddress || finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
+            console.log('주소가 없거나 유효하지 않음, 지오코딩 시도')
+            finalAddress = await getAddressFromCoordinates(data.latitude, data.longitude)
+          }
+          
           resolve({
             latitude: data.latitude,
             longitude: data.longitude,
-            address: data.address
+            address: finalAddress
           })
         })
-        .catch(error => {
+        .catch(async (error) => {
           console.log('사용자 주소 정보 조회 실패:', error)
+          // 실패 시 브라우저 위치 정보 사용
           navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
+              const lat = position.coords.latitude
+              const lng = position.coords.longitude
+              
+              // 좌표를 주소로 변환
+              console.log('좌표를 주소로 변환 시도...')
+              const address = await getAddressFromCoordinates(lat, lng)
+              console.log('변환된 주소:', address)
+              
               resolve({
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                address: '현재 위치'
+                latitude: lat,
+                longitude: lng,
+                address: address || `위치: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
               })
             },
             (error) => {
@@ -147,8 +233,9 @@ export default function MainPage() {
           )
         })
     })
-  }, [user.userSq])
+  }, [user?.userSq])
 
+  // 네이버 지도 URL 생성
   const generateMapImageUrl = useCallback(() => {
     if (!userLocation.latitude || !userLocation.longitude) {
       return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwN2JmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyekOyduO2UhOyngCDrqZTsl4zsnoE8L3RleHQ+PC9zdmc+'
@@ -160,120 +247,435 @@ export default function MainPage() {
     return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=800&height=500&level=${mapZoom}`
   }, [userLocation, mapZoom])
 
+  // 현재 위치 가져오기
+  const getCurrentPosition = () => {
+    return new Promise((resolve, reject) => {
+      console.log('=== getCurrentPosition 시작 ===')
+      if (!navigator.geolocation) {
+        console.log('브라우저가 위치 정보를 지원하지 않음')
+        alert('이 브라우저는 위치 정보를 지원하지 않습니다.')
+        reject(new Error('위치 정보 미지원'))
+        return
+      }
+      
+      console.log('위치 정보 요청 중...')
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('위치 정보 획득 성공:', position.coords)
+          const coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          }
+          console.log('반환할 좌표:', coords)
+          console.log('정확도:', position.coords.accuracy, 'm')
+          resolve(coords)
+        },
+        (error) => {
+          console.log('위치 정보 획득 실패:', error)
+          alert('위치 정보를 가져올 수 없습니다.')
+          reject(error)
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      )
+    })
+  }
+
+  // 필터 변경 핸들러
+  const handleFilterChange = async (filters) => {
+    try {
+      console.log('필터 변경:', filters)
+      
+      // 현재 필터 상태 저장 (필터 유지용)
+      setCurrentFilters({ ...filters })
+      
+      // locationType 상태 동기화
+      setLocationType(filters.locationType)
+      
+      let searchLat, searchLng
+      
+      if (filters.locationType === 'address') {
+        // 내 주소 선택 시 사용자 주소 재조회
+        const userAddress = await getUserLocation()
+        console.log('사용자 등록 주소 재조회:', userAddress)
+        
+        // 주소가 위도/경도 형식이면 지오코딩 시도
+        let finalAddress = userAddress.address
+        if (finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
+          console.log('주소가 좌표 형식임, 지오코딩 시도')
+          finalAddress = await getAddressFromCoordinates(userAddress.latitude, userAddress.longitude)
+          userAddress.address = finalAddress
+        }
+        
+        setUserLocation(userAddress)
+        searchLat = userAddress.latitude
+        searchLng = userAddress.longitude
+      } else if (filters.locationType === 'current') {
+        console.log('=== 현재 위치 선택 시작 ===')
+        const currentPos = await getCurrentPosition()
+        console.log('현재 위치 좌표:', currentPos)
+        
+        // 좌표를 주소로 변환
+        console.log('지오코딩 API 호출 시작...')
+        const address = await getAddressFromCoordinates(currentPos.latitude, currentPos.longitude)
+        console.log('지오코딩 결과 주소:', address)
+        
+        // 주소 변환 실패 시 기본 텍스트 사용
+        const finalAddress = address || '현재 위치'
+        
+        // 현재 위치로 userLocation 업데이트
+        const newLocation = {
+          latitude: currentPos.latitude,
+          longitude: currentPos.longitude,
+          address: finalAddress
+        }
+        setUserLocation(newLocation)
+        console.log('userLocation 업데이트:', newLocation)
+        
+        searchLat = currentPos.latitude
+        searchLng = currentPos.longitude
+        // 지도 이미지 업데이트
+        setMapImageUrl(generateMapImageUrl())
+        console.log('=== 현재 위치 선택 완료 ===')
+      } else if (filters.locationType === 'custom') {
+        // 임시 저장된 위치가 있으면 이제 실제로 userLocation 업데이트 + 검색
+        if (tempSelectedLocation) {
+          // 이 시점에 처음으로 userLocation 업데이트 (지도 반영)
+          const newLocation = {
+            latitude: tempSelectedLocation.latitude,
+            longitude: tempSelectedLocation.longitude,
+            address: tempSelectedLocation.address
+          }
+          setUserLocation(newLocation)
+          
+          searchLat = tempSelectedLocation.latitude
+          searchLng = tempSelectedLocation.longitude
+          console.log('선택된 위치로 검색:', tempSelectedLocation.address)
+          
+          // 지도 이미지 업데이트
+          setMapImageUrl(generateMapImageUrl())
+        } else {
+          // 위치가 아직 선택 안 됐으면 검색 안 함
+          console.log('위치를 먼저 선택해주세요')
+          alert('위치를 먼저 선택해주세요.')
+          return
+        }
+      }
+      
+      // 백엔드 API 호출
+      const response = await api.$get('/map/search', {
+        params: {
+          userId: localStorage.getItem('userSq') || user?.userSq || 0,
+          latitude: searchLat,
+          longitude: searchLng,
+          radius: parseFloat(filters.radius),
+          jobType: filters.jobRole || null,
+          keyword: filters.keyword || null,
+          page: 0,
+          size: 20
+        }
+      })
+      
+      console.log('API 응답:', response)
+      
+      // 응답 데이터 저장
+      if (response.output) {
+        setProjects(response.output.projects || [])
+      } else {
+        setProjects(response.projects || [])
+      }
+      
+      // 지도 이미지 URL 생성
+      setMapImageUrl(generateMapImageUrl())
+      
+      console.log('프로젝트 데이터 업데이트:', projects)
+      
+    } catch (error) {
+      console.error('API 호출 실패:', error)
+      setProjects([])
+    }
+  }
+
   const handleMarkerClick = (project) => {
     console.log('마커 클릭:', project)
     setSelectedProject(project)
   }
 
+  // 프로젝트 클릭 핸들러
   const handleProjectClick = (project) => {
-    const userType = localStorage.getItem('userType') || user.userType
+    console.log('프로젝트 클릭:', project)
+    // 사용자 타입에 따라 프로젝트 상세 페이지로 이동
+    const userType = localStorage.getItem('userType') || user?.userType
     if (userType === 'PERSONAL') {
       router.push(`/project/spec/user/${project.projectSq}`)
     } else if (userType === 'COMPANY') {
       router.push(`/project/spec/company/${project.projectSq}`)
     } else {
-      showAlert('로그인이 필요한 서비스입니다.', 'danger')
-      router.push('/auth/login')
+      // 비로그인 사용자는 개인용 페이지로 이동
+      router.push(`/project/spec/user/${project.projectSq}`)
     }
+    setSelectedProject(null)
   }
 
+  // 경로 클릭 핸들러
   const handleRouteClick = (project) => {
-    const destLat = project.latitude
-    const destLon = project.longitude
-    const naverMapUrl = `https://map.naver.com/index.nhn?slng=${userLocation.longitude}&slat=${userLocation.latitude}&stext=내위치&elng=${destLon}&elat=${destLat}&pathType=0&showMap=true&etext=${encodeURIComponent(project.projectTitle || project.address)}&menu=route`
+    console.log('경로 클릭:', project)
+    
+    // 네이버 지도 경로 안내 URL 생성
+    const naverMapUrl = `https://map.naver.com/index.nhn?slng=${userLocation.longitude}&slat=${userLocation.latitude}&stext=${encodeURIComponent(userLocation.address)}&elng=${project.longitude}&elat=${project.latitude}&etext=${encodeURIComponent(project.companyName)}&menu=route&pathType=1`
+    
+    // 새 창으로 열기
     window.open(naverMapUrl, '_blank')
+    setSelectedProject(null)
   }
 
+  // 위치 선택 핸들러
+  const handleLocationSelected = async (location) => {
+    console.log('위치 선택됨:', location)
+    
+    // 좌표 유효성 검사
+    if (isNaN(location.latitude) || isNaN(location.longitude)) {
+      alert('유효하지 않은 좌표입니다. 주소를 다시 선택해주세요.')
+      return
+    }
+    
+    // 임시 변수에만 저장! userLocation은 검색 버튼 클릭 시에만 업데이트
+    setTempSelectedLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      address: location.address
+    })
+    
+    // 현재 필터의 locationType을 'custom'으로 업데이트
+    setCurrentFilters(prev => ({ ...prev, locationType: 'custom' }))
+    
+    // 위치 선택 모달 닫기
+    setShowLocationModal(false)
+    
+    console.log('위치가 임시 저장되었습니다. 검색 버튼을 눌러주세요.')
+    
+    // 잠시 후 필터 모달 자동으로 열기 (부드러운 전환을 위해 300ms 딜레이)
+    setTimeout(() => {
+      if (mapComponentRef.current) {
+        mapComponentRef.current.openFilterModal()
+        console.log('필터를 조정하고 검색 버튼을 클릭하세요!')
+      }
+    }, 300)
+    
+    // 검색은 하지 않음! userLocation도 업데이트 안 함! 
+    // 검색 버튼 클릭 시에만 모든 게 반영됨!
+  }
+
+  // 급여 포맷팅
   const formatSalary = (salary) => {
-    if (!salary) return '협의'
-    return `${parseInt(salary).toLocaleString()}만원`
+    if (!salary) return '미정'
+    return `${salary.toLocaleString()}원`
   }
 
+  // 모집 마감일 포맷팅 (날짜 + D-XX 형식)
   const formatDeadlineWithDate = (deadline) => {
-    if (!deadline) return '상시 모집'
-    const date = new Date(deadline)
+    if (!deadline) return '미정'
     const today = new Date()
-    const diffTime = date.getTime() - today.getTime()
+    const endDate = new Date(deadline)
+    const diffTime = endDate - today
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    if (diffDays < 0) return '마감'
-    if (diffDays === 0) return '오늘 마감'
-    return `D-${diffDays}`
+    const dateStr = endDate.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    
+    if (diffDays < 0) return `${dateStr} (마감)`
+    if (diffDays === 0) return `${dateStr} (D-0)`
+    return `${dateStr} (D-${diffDays})`
   }
 
+  // 프로젝트 기간 계산 (날짜 ~ 날짜 (N개월))
   const getProjectDuration = (startDate, endDate) => {
-    if (!startDate || !endDate) return '기간 미정'
-    return `${startDate} ~ ${endDate}`
+    if (!startDate || !endDate) return '미정'
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const diffMonths = Math.ceil((end - start) / (1000 * 60 * 60 * 24 * 30))
+    
+    const startStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    const endStr = end.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    
+    return `${startStr} ~ ${endStr} (${diffMonths}개월)`
+  }
+
+  // 미니 지도 이미지 URL 생성 (메인 지도와 동일한 위치 사용)
+  const generateMiniMapImageUrl = () => {
+    const centerLat = userLocation.latitude
+    const centerLon = userLocation.longitude
+    return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+  }
+
+  // 미니 지도 데이터 로드 (로그인 여부에 따라 분기)
+  const loadMiniMapData = async () => {
+    // 로그인 여부 확인
+    const loggedIn = isLoggedIn || localStorage.getItem('userSq')
+    
+    // 미니 지도 이미지 URL 생성
+    const centerLat = userLocation.latitude
+    const centerLon = userLocation.longitude
+    const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+    setMiniMapImageUrl(miniUrl)
+    
+    if (!loggedIn) {
+      // 로그인 안 되어 있으면 정적 지도만 표시 (마커 없음)
+      console.log('비로그인 상태: 정적 지도만 표시')
+      setMiniMapProjects([])
+      return
+    }
+    
+    // 로그인 되어 있으면 프로젝트 검색
+    try {
+      const response = await api.$get('/map/search', {
+        params: {
+          userId: localStorage.getItem('userSq') || user?.userSq || 0,
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          radius: 5,
+          jobType: null,
+          keyword: null,
+          page: 0,
+          size: 20
+        }
+      })
+      
+      if (response.output) {
+        setMiniMapProjects(response.output.projects || [])
+      } else {
+        setMiniMapProjects(response.projects || [])
+      }
+      
+      console.log('미니 지도 데이터 로드 완료:', response.output?.projects?.length || response.projects?.length || 0, '개')
+    } catch (error) {
+      console.error('미니 지도 데이터 로드 실패:', error)
+      setMiniMapProjects([])
+    }
   }
 
   // ============ 인기 프로젝트 관련 함수들 ============
-  const loadPopularProjects = useCallback(async () => {
-    setIsLoadingProjects(true)
+  // 인기 프로젝트 데이터 로드
+  const loadPopularProjects = async () => {
     try {
-      const userId = localStorage.getItem('userSq') || user.userSq || 0
+      setIsLoadingProjects(true)
+      const response = await api.$get('/projects/top')
+      console.log('인기 프로젝트 API 응답:', response)
       
-      const [viewsRes, scrapsRes, latestRes] = await Promise.all([
-        api.$get(`/project/popular/views?userId=${userId}&page=0&size=100`),
-        api.$get(`/project/popular/scraps?userId=${userId}&page=0&size=100`),
-        api.$get(`/project/popular/latest?userId=${userId}&page=0&size=100`)
-      ])
-
-      setAllPopularProjectsData({
-        views: viewsRes.data || viewsRes.output || [],
-        scraps: scrapsRes.data || scrapsRes.output || [],
-        latest: latestRes.data || latestRes.output || []
-      })
-
-      setPopularProjects(viewsRes.data || viewsRes.output || [])
+      // API 응답 데이터 저장
+      let newData = {
+        viewCount: [],
+        scrapCount: [],
+        applicantCount: []
+      }
+      
+      if (response.output) {
+        newData = {
+          viewCount: response.output.viewCount || [],
+          scrapCount: response.output.scrapCount || [],
+          applicantCount: response.output.applicantCount || []
+        }
+      } else {
+        newData = {
+          viewCount: response.viewCount || [],
+          scrapCount: response.scrapCount || [],
+          applicantCount: response.applicantCount || []
+        }
+      }
+      
+      setAllPopularProjectsData(newData)
+      
+      console.log('조회순:', newData.viewCount?.length || 0, '개')
+      console.log('스크랩순:', newData.scrapCount?.length || 0, '개')
+      console.log('지원순:', newData.applicantCount?.length || 0, '개')
+      
+      // 초기 필터(조회순)에 맞는 데이터 설정
+      setPopularProjects(newData.viewCount || [])
+      setCurrentPage(1)
+      
+      console.log('초기 프로젝트 설정 완료:', newData.viewCount?.length || 0, '개')
+      
     } catch (error) {
-      console.error('인기 프로젝트 조회 실패:', error)
-      showAlert('인기 프로젝트를 불러오는데 실패했습니다.', 'danger')
+      console.error('인기 프로젝트 로드 실패:', error)
+      setPopularProjects([])
     } finally {
       setIsLoadingProjects(false)
     }
-  }, [user.userSq, showAlert])
-
-  const updatePopularProjects = (filter) => {
-    let selectedProjects = []
-    if (filter === 'views') {
-      selectedProjects = allPopularProjectsData.views
-    } else if (filter === 'scraps') {
-      selectedProjects = allPopularProjectsData.scraps
-    } else if (filter === 'latest') {
-      selectedProjects = allPopularProjectsData.latest
-    }
-    setPopularProjects(selectedProjects)
-    setCurrentPage(1)
   }
 
+  // 필터에 따라 표시할 프로젝트 업데이트
+  const updatePopularProjects = (filter) => {
+    setCurrentPage(1) // 필터 변경 시 첫 페이지로
+    let selectedData = []
+    
+    switch(filter) {
+      case 'views':
+        selectedData = allPopularProjectsData.viewCount || []
+        break
+      case 'scraps':
+        selectedData = allPopularProjectsData.scrapCount || []
+        break
+      case 'applications':
+        selectedData = allPopularProjectsData.applicantCount || []
+        break
+      default:
+        selectedData = allPopularProjectsData.viewCount || []
+    }
+    
+    setPopularProjects(selectedData)
+    console.log(`${filter} 필터 선택됨`)
+    console.log('표시할 프로젝트 수:', selectedData.length)
+    console.log('프로젝트 목록:', selectedData.map(p => ({
+      제목: p.projectTtl,
+      조회수: p.viewCnt,
+      스크랩: p.projectScrapCnt,
+      지원자: p.applicantCnt
+    })))
+  }
+
+  // 페이지네이션을 위한 computed 속성
   const paginatedProjects = popularProjects.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
 
-  const totalPages = Math.ceil(popularProjects.length / itemsPerPage)
+  // 항상 3페이지 표시
+  const totalPages = 3
 
+  // 각 페이지에 데이터가 있는지 확인
   const hasDataForPage = (page) => {
-    return page <= totalPages
+    const start = (page - 1) * itemsPerPage
+    return start < popularProjects.length
   }
 
+  // 페이지 변경 핸들러
   const changePage = (page) => {
     if (page < 1 || page > totalPages || !hasDataForPage(page)) return
     setCurrentPage(page)
+    // 페이지 변경 시 스크롤을 인기 프로젝트 섹션으로 이동
+    const section = document.querySelector('.popular-projects-section')
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
+  // 프로젝트 카드 클릭 핸들러
   const handleProjectCardClick = (project) => {
-    const userType = localStorage.getItem('userType') || user.userType
+    console.log('프로젝트 카드 클릭:', project)
+    const userType = localStorage.getItem('userType') || user?.userType
     if (userType === 'PERSONAL') {
       router.push(`/project/spec/user/${project.projectSq}`)
     } else if (userType === 'COMPANY') {
       router.push(`/project/spec/company/${project.projectSq}`)
     } else {
-      showAlert('로그인이 필요한 서비스입니다.', 'danger')
-      router.push('/auth/login')
+      // 비로그인 사용자는 개인용 페이지로 이동
+      router.push(`/project/spec/user/${project.projectSq}`)
     }
   }
 
+  // 이미지 로드 실패 시 기본 이미지로 대체
   const handleImageError = (event) => {
     event.target.src = defaultProjectImage
   }
@@ -285,32 +687,44 @@ export default function MainPage() {
   }
 
   const toggleFaq = (index) => {
-    setActiveFaq(activeFaq === index ? null : index)
+    setActiveFaq(activeFaq === index ? -1 : index)
   }
 
+  // 프로젝트 목록 페이지의 지도 탭으로 이동 (로그인 체크)
   const scrollToMap = () => {
-    // 지도 섹션으로 스크롤 (구현 필요)
-    window.scrollTo({ top: 600, behavior: 'smooth' })
-  }
-
-  // 지도 이미지 URL 업데이트
-  useEffect(() => {
-    if (userLocation.latitude && userLocation.longitude) {
-      const newMapUrl = generateMapImageUrl()
-      setMapImageUrl(newMapUrl)
-      setMiniMapImageUrl(newMapUrl)
+    if (!isLoggedIn) {
+      showAlert('로그인이 필요한 서비스입니다.', 'danger')
+      router.push('/auth/login')
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation, mapZoom])
+    router.push({ pathname: '/project', query: { tab: 'map' } })
+  }
 
   // ============ 초기화 ============
+  // 컴포넌트 마운트 시 실행
   useEffect(() => {
     const initData = async () => {
       // 사용자 위치 가져오기
       const location = await getUserLocation()
       setUserLocation(location)
+      console.log('사용자 위치:', location)
       
-      // 인기 프로젝트 로드
+      // 초기 지도 이미지 생성
+      const initialMapUrl = generateMapImageUrl()
+      setMapImageUrl(initialMapUrl)
+      
+      // 초기 검색 실행
+      await handleFilterChange({
+        locationType: 'address',
+        radius: '5',
+        jobRole: '',
+        keyword: ''
+      })
+      
+      // 미니 지도 데이터 로드 (배너용)
+      await loadMiniMapData()
+      
+      // 인기 프로젝트 데이터 로드
       await loadPopularProjects()
     }
 
@@ -335,7 +749,7 @@ export default function MainPage() {
           {/* 슬라이드 영역 */}
           <div className={styles.carouselTrack}>
             {/* 슬라이드 1: 캘린더 배너 이미지 */}
-            <div className={`${styles.carouselSlide} ${currentSlideIndex === 0 ? 'active' : ''}`}>
+            <div className={`${styles.carouselSlide} ${currentSlideIndex === 0 ? styles.active : ''}`}>
               <img 
                 src="/assets/banners/main-calendar.png" 
                 alt="캘린더 배너" 
@@ -344,7 +758,7 @@ export default function MainPage() {
             </div>
 
             {/* 슬라이드 2: 히어로 배너 이미지 + 지도 축소판 */}
-            <div className={`${styles.carouselSlide} ${styles.mapSlideWhite} ${currentSlideIndex === 1 ? 'active' : ''}`}>
+            <div className={`${styles.carouselSlide} ${styles.mapSlideWhite} ${currentSlideIndex === 1 ? styles.active : ''}`}>
               {/* 좌측 텍스트 영역 */}
               <div className={styles.leftTextArea}>
                 <h1 className={styles.heroTitle}>
@@ -357,7 +771,7 @@ export default function MainPage() {
                 </button>
               </div>
 
-              {/* 우측에 지도 */}
+              {/* 우측에 지도 (항상 표시, 로그인 시 주소/범례 추가) */}
               <div className={styles.miniMapWrapper}>
                 <MapComponent
                   userLocation={userLocation}
@@ -369,8 +783,8 @@ export default function MainPage() {
                   initialZoom={13}
                   mapWidth={600}
                   mapHeight={500}
-                  showControls={isLoggedIn}
-                  showRadiusText={isLoggedIn}
+                  showControls={false}
+                  showRadiusText={false}
                   onMarkerClick={handleMarkerClick}
                   onZoomChange={() => {}}
                   onLocationSelected={() => {}}
@@ -394,11 +808,11 @@ export default function MainPage() {
           {/* 인디케이터 점 */}
           <div className={styles.carouselDots}>
             <button 
-              className={`dot ${currentSlideIndex === 0 ? 'active' : ''}`} 
+              className={`${styles.dot} ${currentSlideIndex === 0 ? styles.active : ''}`} 
               onClick={() => jumpToSlide(0)}
             ></button>
             <button 
-              className={`dot ${currentSlideIndex === 1 ? 'active' : ''}`} 
+              className={`${styles.dot} ${currentSlideIndex === 1 ? styles.active : ''}`} 
               onClick={() => jumpToSlide(1)}
             ></button>
           </div>
@@ -466,7 +880,12 @@ export default function MainPage() {
               </button>
               <button 
                 onClick={() => handleRouteClick(selectedProject)} 
-                className={`btn ${styles.btnRounded} btn-outline-primary btn-sm flex-fill`}
+                className={`btn ${styles.btnRounded} btn-primary btn-sm flex-fill`}
+                style={{ 
+                  backgroundColor: 'white',
+                  color: '#007bff',
+                  border: '1px solid #007bff'
+                }}
               >
                 <i className="bi bi-route me-1"></i>경로 안내
               </button>
@@ -564,7 +983,7 @@ export default function MainPage() {
                       <span aria-hidden="true">&laquo;</span>
                     </a>
                   </li>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  {[1, 2, 3].map(page => (
                     <li
                       key={page}
                       className={`page-item ${currentPage === page ? 'active' : ''} ${!hasDataForPage(page) ? 'disabled' : ''}`}
@@ -639,10 +1058,7 @@ export default function MainPage() {
       {showLocationModal && (
         <LocationSelectModal
           onClose={() => setShowLocationModal(false)}
-          onLocationSelected={(location) => {
-            setTempSelectedLocation(location)
-            setShowLocationModal(false)
-          }}
+          onLocationSelected={handleLocationSelected}
         />
       )}
     </div>

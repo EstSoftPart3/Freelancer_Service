@@ -198,13 +198,13 @@ export default function LoginPage() {
                 {/* 회원 유형 토글 버튼 */}
                 <div className="btn-group w-100 mb-4" role="group">
                   <button
-                    className={`btn w-50 ${loginType === 'PERSONAL' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    className={`btn w-50 ${loginType === 'PERSONAL' ? 'btn-primary' : 'btn-outline btn-primary'}`}
                     onClick={() => setLoginType('PERSONAL')}
                   >
                     개인회원
                   </button>
                   <button
-                    className={`btn w-50 ${loginType === 'COMPANY' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    className={`btn w-50 ${loginType === 'COMPANY' ? 'btn-primary' : 'btn-outline btn-primary'}`}
                     onClick={() => setLoginType('COMPANY')}
                   >
                     기업회원
