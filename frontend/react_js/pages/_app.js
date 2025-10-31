@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react'
+import Head from 'next/head'
+import { Provider } from 'react-redux'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { AlertProvider } from '@/contexts/AlertContext'
 import { api, setClearLoginState } from '@/lib/axios'
+import store from '@/store'
 import CommonHeader from '@/components/common/CommonHeader'
 import CommonFooter from '@/components/common/CommonFooter'
 import CommonAlert from '@/components/common/CommonAlert'
 
 function MyApp({ Component, pageProps }) {
   return (
-    <AuthProvider>
-      <AlertProvider>
-        <AppContent Component={Component} pageProps={pageProps} />
-      </AlertProvider>
-    </AuthProvider>
+    <Provider store={store}>
+      <AuthProvider>
+        <AlertProvider>
+          <AppContent Component={Component} pageProps={pageProps} />
+        </AlertProvider>
+      </AuthProvider>
+    </Provider>
   )
 }
 
@@ -60,28 +65,33 @@ function AppContent({ Component, pageProps }) {
   }
 
   return (
-    <div id="app">
-      <CommonHeader />
-      <CommonAlert />
-      <div className="main">
-        <Component {...pageProps} />
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </Head>
+      <div id="app">
+        <CommonHeader />
+        <CommonAlert />
+        <div className="main">
+          <Component {...pageProps} />
+        </div>
+        <CommonFooter />
+
+        <style jsx global>{`
+          #app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+          }
+
+          .main {
+            flex: 1;
+            min-height: 700px;
+            padding-top: 100px;
+          }
+        `}</style>
       </div>
-      <CommonFooter />
-
-      <style jsx global>{`
-        #app {
-          display: flex;
-          flex-direction: column;
-          min-height: 100vh;
-        }
-
-        .main {
-          flex: 1;
-          min-height: 700px;
-          padding-top: 100px;
-        }
-      `}</style>
-    </div>
+    </>
   )
 }
 
