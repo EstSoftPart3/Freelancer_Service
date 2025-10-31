@@ -3,8 +3,12 @@ import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
+import qs from 'qs'
 import MapComponent from '@/components/map/MapComponent'
 import LocationSelectModal from '@/components/map/LocationSelectModal'
+import ProjectFilterBar from '@/components/project/ProjectFilterBar'
+import ProjectCardGroup from '@/components/project/ProjectCardGroup'
+import CommonPagination from '@/components/common/CommonPagination'
 import styles from './index.module.css'
 
 export default function ProjectListPage() {
@@ -14,6 +18,23 @@ export default function ProjectListPage() {
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState('list')
+
+  // ========== 리스트 탭 관련 상태 ==========
+  const [filters, setFilters] = useState({
+    addressCodeSq: [],
+    projectDeveloperGradeCd: [],
+    educationCd: [],
+    jobRoleCd: [],
+    sortBy: 'project_start_dt',
+    sortOrder: 'desc',
+    searchKeyword: '',
+    searchType: '전체',
+    size: 5,
+    page: 1
+  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [projects, setProjects] = useState([])
 
   // ========== 지도 탭 관련 상태 ==========
   const [mapUserLocation, setMapUserLocation] = useState({
@@ -37,6 +58,38 @@ export default function ProjectListPage() {
   const [showProjectListModal, setShowProjectListModal] = useState(false)
   const [selectedCompanyProjects, setSelectedCompanyProjects] = useState([])
   const mapComponentRef = useRef(null)
+
+  // ========== 리스트 탭 관련 함수 ==========
+
+  // 프로젝트 목록 조회
+  const fetchProjects = async () => {
+    try {
+      const params = { ...filters }
+      const queryString = qs.stringify(params, { arrayFormat: 'repeat' })
+      const response = await api.$get(`/projects?${queryString}`)
+      setProjects(response.output.projects || [])
+
+      const totalCount = response.output.totalCount ?? 0
+      setTotalPages(Math.max(1, Math.ceil(totalCount / filters.size)))
+    } catch (e) {
+      console.error('프로젝트 정보 불러오기 실패', e)
+    }
+  }
+
+  // 필터 업데이트 (useCallback으로 메모이제이션)
+  const updateFilters = useCallback((updated) => {
+    setFilters(prev => ({ ...prev, ...updated }))
+    setCurrentPage(1) // 필터 바꾸면 1페이지부터
+  }, [])
+
+  // 페이지 변경 시 프로젝트 조회
+  useEffect(() => {
+    if (activeTab === 'list') {
+      setFilters(prev => ({ ...prev, page: currentPage }))
+      fetchProjects()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, activeTab])
 
   // ========== 지도 탭 관련 함수 ==========
 
@@ -104,8 +157,11 @@ export default function ProjectListPage() {
   // 사용자 위치 가져오기
   const getMapUserLocation = () => {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        console.log('이 브라우저는 위치 정보를 지원하지 않습니다.')
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      console.log('사용자 ID로 주소 조회:', userId)
+      
+      if (!userId || userId === 0) {
+        console.log('비로그인 상태: 기본 위치 사용')
         resolve({
           latitude: 37.5665,
           longitude: 126.9780,
@@ -114,61 +170,30 @@ export default function ProjectListPage() {
         return
       }
       
-      const userId = localStorage.getItem('userSq') || user?.userSq || 0
-      console.log('사용자 ID로 주소 조회:', userId)
-      
       api.$get(`/map/user-address?userId=${userId}`)
         .then(async (response) => {
           console.log('주소 API 응답:', response)
           const data = response.data || response.output || response
           
-          // API에서 주소를 제대로 반환했는지 확인
-          let finalAddress = data.address
-          
-          // 주소가 없거나 위도/경도 형식이면 지오코딩 시도
-          if (!finalAddress || finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
-            console.log('주소가 없거나 유효하지 않음, 지오코딩 시도')
-            finalAddress = await getAddressFromCoordinates(data.latitude, data.longitude)
-          }
-          
+          // API에서 반환한 주소를 그대로 사용
           const location = {
             latitude: data.latitude,
             longitude: data.longitude,
-            address: finalAddress
+            address: data.address
           }
           console.log('사용자 등록 주소 사용:', location)
           resolve(location)
         })
-        .catch(async (error) => {
+        .catch((error) => {
           console.log('사용자 주소 정보 조회 실패:', error)
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const lat = position.coords.latitude
-              const lng = position.coords.longitude
-              
-              console.log('좌표를 주소로 변환 시도...')
-              const address = await getAddressFromCoordinates(lat, lng)
-              console.log('변환된 주소:', address)
-              
-              const location = {
-                latitude: lat,
-                longitude: lng,
-                address: address || `위치: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-              }
-              console.log('현재 위치 사용:', location)
-              resolve(location)
-            },
-            (error) => {
-              console.log('위치 정보 획득 실패:', error.message)
-              const defaultLocation = {
-                latitude: 37.5665,
-                longitude: 126.9780,
-                address: '서울시 중구 (기본값)'
-              }
-              console.log('기본 위치 사용:', defaultLocation)
-              resolve(defaultLocation)
-            }
-          )
+          // 실패 시 기본 위치 사용 (GPS 접근 안 함)
+          const defaultLocation = {
+            latitude: 37.5665,
+            longitude: 126.9780,
+            address: '서울시 중구 (기본값)'
+          }
+          console.log('기본 위치 사용:', defaultLocation)
+          resolve(defaultLocation)
         })
     })
   }
@@ -305,14 +330,6 @@ export default function ProjectListPage() {
         console.log('=== 내 주소로 변경 ===')
         const userAddress = await getMapUserLocation()
         console.log('사용자 등록 주소 재조회:', userAddress)
-        
-        // 주소가 위도/경도 형식이면 지오코딩 시도
-        let finalAddress = userAddress.address
-        if (finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
-          console.log('주소가 좌표 형식임, 지오코딩 시도')
-          finalAddress = await getAddressFromCoordinates(userAddress.latitude, userAddress.longitude)
-          userAddress.address = finalAddress
-        }
         
         setMapUserLocation(userAddress)
         searchLat = userAddress.latitude
@@ -518,16 +535,27 @@ export default function ProjectListPage() {
       initializeMapTab()
     } else if (activeTab === 'list') {
       console.log('=== 리스트 탭 활성화 ===')
-      // 리스트 탭 로직 추가 예정
+      // 리스트가 비어있으면 프로젝트 목록 로드
+      if (projects.length === 0) {
+        fetchProjects()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   // 초기 마운트 시 query parameter 확인
   useEffect(() => {
-    if (router.query.tab === 'map') {
-      setActiveTab('map')
+    const initialize = async () => {
+      if (router.query.tab === 'map') {
+        setActiveTab('map')
+        await initializeMapTab()
+      } else {
+        fetchProjects()
+        console.log('fetchProjects')
+      }
     }
+    
+    initialize()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query.tab])
 
@@ -572,13 +600,39 @@ export default function ProjectListPage() {
 
       <div className="mb-3"></div>
 
+      {/* 리스트 탭일 때만 ProjectFilterBar 표시 */}
+      {activeTab === 'list' && (
+        <ProjectFilterBar onUpdate={updateFilters} />
+      )}
+
       <div className="container py-4">
         {/* 리스트 탭 내용 */}
         {activeTab === 'list' && (
           <div>
-            <div className="text-center py-5">
-              <p className="text-muted">리스트 탭은 아직 구현되지 않았습니다.</p>
+            <div className="d-flex justify-content-end mb-3">
+              <button className="btn btn-rounded btn-primary me-2" onClick={fetchProjects}>
+                검색
+              </button>
+              {user?.userType === 'COMPANY' && (
+                <a href="/mypage/projectPostPage" className="btn btn-rounded btn-light">
+                  등록하기
+                </a>
+              )}
             </div>
+            
+            <ProjectCardGroup projects={projects} />
+            
+            {projects.length === 0 && (
+              <div className="text-center text-muted py-5">
+                조건에 맞는 프로젝트가 없습니다.
+              </div>
+            )}
+            
+            <CommonPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
           </div>
         )}
 

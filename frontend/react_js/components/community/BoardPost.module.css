@@ -1,0 +1,36 @@
+.fontSizeXs {
+  font-size: 1rem;
+}
+
+.fontSizeS {
+  font-size: 1.2rem;
+}
+
+.fontSizeL {
+  font-size: large;
+}
+
+.ttlArea {
+  flex-wrap: wrap;
+}
+
+.boardTtl {
+  line-height: 1.2;
+}
+
+.ttlIconArea {
+  margin-left: auto;
+}
+
+.skillIcon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
+.iconBtn {
+  background: inherit !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+

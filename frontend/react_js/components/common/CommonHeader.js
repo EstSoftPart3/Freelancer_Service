@@ -23,7 +23,7 @@ export default function CommonHeader() {
   // 각 메뉴의 활성 여부 판별
   const isAffiliationActive = currentPath.startsWith('/affiliation')
   const isProjectActive = currentPath.startsWith('/project')
-  const isCommunityActive = ['/board', '/qna'].some((path) => currentPath.startsWith(path))
+  const isCommunityActive = currentPath.startsWith('/board') || currentPath.startsWith('/qna')
 
   // 모바일 메뉴 닫기
   const closeMenu = () => {

@@ -378,6 +378,38 @@
   z-index: 5;
 }
 
+/* 지도 테두리 제거 및 직각으로 */
+.miniMapWrapper :global(.map-wrapper) {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* 주소 정보 배경 투명 */
+.miniMapWrapper :global(.current-location) {
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  margin-bottom: 4px !important;
+}
+
+/* 범례 배경 투명 */
+.miniMapWrapper :global(.map-legend) {
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  margin-top: 4px !important;
+}
+
+/* 미니 지도 줌 컨트롤 숨기기 */
+.miniMapWrapper :global(.zoom-controls) {
+  display: none !important;
+}
+
+/* 미니 지도 필터 버튼 숨기기 */
+.miniMapWrapper :global(.current-location button) {
+  display: none !important;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .carouselWrapper {

@@ -1,0 +1,48 @@
+.fontSize10 {
+  font-size: 0.625rem;
+}
+
+.fontSize11 {
+  font-size: 0.6875rem;
+}
+
+.fontSize12 {
+  font-size: 0.75rem;
+}
+
+.fontSize13 {
+  font-size: 0.8125rem;
+}
+
+.fontSize15 {
+  font-size: 0.9375rem;
+}
+
+.commentProfile {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.thumbWrapper {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.replyDate {
+  display: block;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
