@@ -1,0 +1,30 @@
+.childSkillList {
+  list-style: none;
+  padding-left: 1rem;
+  margin: 0;
+}
+
+.childSkillList li {
+  margin-left: 0.5rem;
+}
+
+.detailList li {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.customScrapBtn {
+  background-color: #ffffff !important;
+  border: 1px solid #dee2e6;
+  color: #333;
+  transition: none;
+}
+
+.customScrapBtn:hover,
+.customScrapBtn:focus,
+.customScrapBtn:active {
+  background-color: #ffffff !important;
+  color: #333;
+  box-shadow: none;
+}
+

@@ -1,0 +1,9 @@
+.tagBtn {
+  font-size: 12px;
+}
+
+.tagBtn:focus {
+  background-color: inherit !important;
+  filter: none !important;
+}
+

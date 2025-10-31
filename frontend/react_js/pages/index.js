@@ -172,65 +172,40 @@ export default function MainPage() {
   // 사용자 위치 가져오기 함수
   const getUserLocation = useCallback(() => {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        console.log('이 브라우저는 위치 정보를 지원하지 않습니다.')
+      // 비로그인 시: 기본 위치만 사용 (GPS 접근 안 함)
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      if (!userId || userId === 0) {
+        console.log('비로그인 상태: 기본 위치 사용')
         resolve({
           latitude: 37.5665,
           longitude: 126.9780,
-          address: '서울시 중구 (기본값)'
+          address: '서울시 중구'
         })
         return
       }
 
-      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      // 로그인 시: 사용자 등록 주소 정보 API 호출
+      console.log('로그인 상태: 사용자 주소 조회', userId)
       api.$get(`/map/user-address?userId=${userId}`)
         .then(async (response) => {
           console.log('주소 API 응답:', response)
           const data = response.data || response.output || response
           
-          // API에서 주소를 제대로 반환했는지 확인
-          let finalAddress = data.address
-          
-          // 주소가 없거나 위도/경도 형식이면 지오코딩 시도
-          if (!finalAddress || finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
-            console.log('주소가 없거나 유효하지 않음, 지오코딩 시도')
-            finalAddress = await getAddressFromCoordinates(data.latitude, data.longitude)
-          }
-          
+          // API에서 반환한 주소를 그대로 사용
           resolve({
             latitude: data.latitude,
             longitude: data.longitude,
-            address: finalAddress
+            address: data.address
           })
         })
-        .catch(async (error) => {
+        .catch((error) => {
           console.log('사용자 주소 정보 조회 실패:', error)
-          // 실패 시 브라우저 위치 정보 사용
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const lat = position.coords.latitude
-              const lng = position.coords.longitude
-              
-              // 좌표를 주소로 변환
-              console.log('좌표를 주소로 변환 시도...')
-              const address = await getAddressFromCoordinates(lat, lng)
-              console.log('변환된 주소:', address)
-              
-              resolve({
-                latitude: lat,
-                longitude: lng,
-                address: address || `위치: ${lat.toFixed(4)}, ${lng.toFixed(4)}`
-              })
-            },
-            (error) => {
-              console.log('위치 정보 획득 실패:', error.message)
-              resolve({
-                latitude: 37.5665,
-                longitude: 126.9780,
-                address: '서울시 중구 (기본값)'
-              })
-            }
-          )
+          // 실패 시 기본 위치 사용 (GPS 접근 안 함)
+          resolve({
+            latitude: 37.5665,
+            longitude: 126.9780,
+            address: '서울시 중구 (기본값)'
+          })
         })
     })
   }, [user?.userSq])
@@ -301,14 +276,6 @@ export default function MainPage() {
         // 내 주소 선택 시 사용자 주소 재조회
         const userAddress = await getUserLocation()
         console.log('사용자 등록 주소 재조회:', userAddress)
-        
-        // 주소가 위도/경도 형식이면 지오코딩 시도
-        let finalAddress = userAddress.address
-        if (finalAddress.includes('위도:') || finalAddress.includes('경도:')) {
-          console.log('주소가 좌표 형식임, 지오코딩 시도')
-          finalAddress = await getAddressFromCoordinates(userAddress.latitude, userAddress.longitude)
-          userAddress.address = finalAddress
-        }
         
         setUserLocation(userAddress)
         searchLat = userAddress.latitude
@@ -513,7 +480,8 @@ export default function MainPage() {
   // 미니 지도 데이터 로드 (로그인 여부에 따라 분기)
   const loadMiniMapData = async () => {
     // 로그인 여부 확인
-    const loggedIn = isLoggedIn || localStorage.getItem('userSq')
+    const userId = localStorage.getItem('userSq') || user?.userSq || 0
+    const loggedIn = userId && userId !== 0
     
     // 미니 지도 이미지 URL 생성
     const centerLat = userLocation.latitude
@@ -532,7 +500,7 @@ export default function MainPage() {
     try {
       const response = await api.$get('/map/search', {
         params: {
-          userId: localStorage.getItem('userSq') || user?.userSq || 0,
+          userId: userId,
           latitude: userLocation.latitude,
           longitude: userLocation.longitude,
           radius: 5,
@@ -703,26 +671,60 @@ export default function MainPage() {
   // ============ 초기화 ============
   // 컴포넌트 마운트 시 실행
   useEffect(() => {
+    let isInitialized = false
+    
     const initData = async () => {
+      if (isInitialized) return
+      isInitialized = true
+      
       // 사용자 위치 가져오기
       const location = await getUserLocation()
-      setUserLocation(location)
       console.log('사용자 위치:', location)
       
-      // 초기 지도 이미지 생성
-      const initialMapUrl = generateMapImageUrl()
+      // state 업데이트는 비동기이므로, location 값을 직접 사용
+      setUserLocation(location)
+      
+      // location 값으로 직접 지도 이미지 생성
+      const centerLat = location.latitude
+      const centerLon = location.longitude
+      const initialMapUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=800&height=500&level=13`
       setMapImageUrl(initialMapUrl)
       
-      // 초기 검색 실행
-      await handleFilterChange({
-        locationType: 'address',
-        radius: '5',
-        jobRole: '',
-        keyword: ''
-      })
+      // 미니 지도 이미지도 생성
+      const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+      setMiniMapImageUrl(miniUrl)
       
-      // 미니 지도 데이터 로드 (배너용)
-      await loadMiniMapData()
+      // 로그인 시에만 프로젝트 검색
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      if (userId && userId !== 0) {
+        try {
+          // 초기 검색 실행
+          const response = await api.$get('/map/search', {
+            params: {
+              userId: userId,
+              latitude: location.latitude,
+              longitude: location.longitude,
+              radius: 5,
+              jobType: null,
+              keyword: null,
+              page: 0,
+              size: 20
+            }
+          })
+          
+          if (response.output) {
+            setProjects(response.output.projects || [])
+            setMiniMapProjects(response.output.projects || [])
+          } else {
+            setProjects(response.projects || [])
+            setMiniMapProjects(response.projects || [])
+          }
+          
+          console.log('초기 프로젝트 로드 완료')
+        } catch (error) {
+          console.error('초기 프로젝트 로드 실패:', error)
+        }
+      }
       
       // 인기 프로젝트 데이터 로드
       await loadPopularProjects()
@@ -783,8 +785,8 @@ export default function MainPage() {
                   initialZoom={13}
                   mapWidth={600}
                   mapHeight={500}
-                  showControls={false}
-                  showRadiusText={false}
+                  showControls={isLoggedIn}
+                  showRadiusText={isLoggedIn}
                   onMarkerClick={handleMarkerClick}
                   onZoomChange={() => {}}
                   onLocationSelected={() => {}}
