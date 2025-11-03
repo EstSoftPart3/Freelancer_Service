@@ -213,13 +213,13 @@ export default function MainPage() {
   // 네이버 지도 URL 생성
   const generateMapImageUrl = useCallback(() => {
     if (!userLocation.latitude || !userLocation.longitude) {
-      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwN2JmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyekOyduO2UhOyngCDrqZTsl4zsnoE8L3RleHQ+PC9zdmc+'
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjcwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwN2JmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyekOyduO2UhOyngCDrqZTsl4zsnoE8L3RleHQ+PC9zdmc+'
     }
     
     const centerLat = userLocation.latitude
     const centerLon = userLocation.longitude
     
-    return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=800&height=500&level=${mapZoom}`
+    return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=900&height=700&level=${mapZoom}`
   }, [userLocation, mapZoom])
 
   // 현재 위치 가져오기
@@ -253,7 +253,7 @@ export default function MainPage() {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 0  // 캐시 사용 안 함
         }
       )
     })
@@ -336,8 +336,8 @@ export default function MainPage() {
       const response = await api.$get('/map/search', {
         params: {
           userId: localStorage.getItem('userSq') || user?.userSq || 0,
-          latitude: searchLat,
-          longitude: searchLng,
+          lat: searchLat,
+          lon: searchLng,
           radius: parseFloat(filters.radius),
           jobType: filters.jobRole || null,
           keyword: filters.keyword || null,
@@ -501,8 +501,7 @@ export default function MainPage() {
       const response = await api.$get('/map/search', {
         params: {
           userId: userId,
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
+          // 메인 페이지는 항상 내 주소 기준이므로 userId만 전달 (lat/lon 불필요)
           radius: 5,
           jobType: null,
           keyword: null,
@@ -665,7 +664,7 @@ export default function MainPage() {
       router.push('/auth/login')
       return
     }
-    router.push({ pathname: '/project', query: { tab: 'map' } })
+    router.push({ pathname: '/project/projectList', query: { tab: 'map' } })
   }
 
   // ============ 초기화 ============
@@ -702,8 +701,7 @@ export default function MainPage() {
           const response = await api.$get('/map/search', {
             params: {
               userId: userId,
-              latitude: location.latitude,
-              longitude: location.longitude,
+              // 메인 페이지는 항상 내 주소 기준이므로 userId만 전달
               radius: 5,
               jobType: null,
               keyword: null,
@@ -783,8 +781,8 @@ export default function MainPage() {
                   currentFilters={{ locationType: 'address', radius: '5', jobRole: '', keyword: '' }}
                   tempSelectedLocation={null}
                   initialZoom={13}
-                  mapWidth={600}
-                  mapHeight={500}
+                  mapWidth={900}
+                  mapHeight={700}
                   showControls={isLoggedIn}
                   showRadiusText={isLoggedIn}
                   onMarkerClick={handleMarkerClick}

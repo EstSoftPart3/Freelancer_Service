@@ -138,9 +138,9 @@ const MapComponent = forwardRef(function MapComponent({
     console.error('지도 이미지 로드 실패:', event.target.src)
     
     const errorSvg = `
-      <svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+      <svg width="900" height="800" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="#e9ecef"/>
-        <text x="400" y="250" font-family="Arial" font-size="18" fill="#6c757d" text-anchor="middle">지도를 불러오는 중입니다...</text>
+        <text x="450" y="400" font-family="Arial" font-size="18" fill="#6c757d" text-anchor="middle">지도를 불러오는 중입니다...</text>
       </svg>
     `
     event.target.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(errorSvg)))}`

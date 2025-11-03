@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '@/lib/axios'
 import styles from './LocationSelectModal.module.css'
 
 export default function LocationSelectModal({ onClose, onLocationSelected }) {
@@ -66,10 +67,10 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
     }
 
     try {
-      // 카카오 지오코딩 사용
+      // 카카오 지오코딩 시도
       if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
         const geocoder = new window.kakao.maps.services.Geocoder()
-        geocoder.addressSearch(selectedAddress, (result, status) => {
+        geocoder.addressSearch(selectedAddress, async (result, status) => {
           if (status === window.kakao.maps.services.Status.OK) {
             const location = {
               latitude: parseFloat(result[0].y),
@@ -79,13 +80,43 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
             console.log('카카오 지오코딩 성공:', location)
             onLocationSelected(location)
           } else {
-            console.log('카카오 지오코딩 실패:', status)
-            alert('주소를 좌표로 변환할 수 없습니다')
+            // 카카오 실패 시 네이버 백엔드 API 시도
+            console.log('카카오 지오코딩 실패:', status, '→ 네이버 API 시도')
+            try {
+              const response = await api.$post('/map/geocode', { address: selectedAddress })
+              if (response.success && response.latitude && response.longitude) {
+                const location = {
+                  latitude: response.latitude,
+                  longitude: response.longitude,
+                  address: selectedAddress
+                }
+                console.log('네이버 지오코딩 성공:', location)
+                onLocationSelected(location)
+              } else {
+                console.error('네이버 지오코딩도 실패:', response)
+                alert('주소를 좌표로 변환할 수 없습니다. 다른 주소를 입력해주세요.')
+              }
+            } catch (error) {
+              console.error('네이버 지오코딩 API 오류:', error)
+              alert('주소를 좌표로 변환할 수 없습니다')
+            }
           }
         })
       } else {
-        console.log('카카오 지도 API가 로드되지 않음')
-        alert('지도 서비스를 사용할 수 없습니다')
+        // 카카오 API 없으면 바로 네이버 사용
+        console.log('카카오 지도 API 없음 → 네이버 API 사용')
+        const response = await api.$post('/map/geocode', { address: selectedAddress })
+        if (response.success && response.latitude && response.longitude) {
+          const location = {
+            latitude: response.latitude,
+            longitude: response.longitude,
+            address: selectedAddress
+          }
+          console.log('네이버 지오코딩 성공:', location)
+          onLocationSelected(location)
+        } else {
+          alert('주소를 좌표로 변환할 수 없습니다')
+        }
       }
     } catch (error) {
       console.error('주소 변환 실패:', error)

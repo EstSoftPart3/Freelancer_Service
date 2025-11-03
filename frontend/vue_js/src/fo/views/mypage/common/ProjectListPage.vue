@@ -432,6 +432,8 @@ const getMapUserLocation = () => {
             const lat = position.coords.latitude
             const lng = position.coords.longitude
             
+            console.log('GPS 정확도:', position.coords.accuracy, 'm')
+            
             // 좌표를 주소로 변환
             const address = await getAddressFromCoordinates(lat, lng)
             
@@ -452,6 +454,11 @@ const getMapUserLocation = () => {
             }
             console.log('기본 위치 사용:', defaultLocation)
             resolve(defaultLocation)
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0  // 캐시 사용 안 함
           }
         )
       })
@@ -491,16 +498,25 @@ const fetchMapProjects = async () => {
     console.log('사용자 위치:', mapUserLocation.value)
     console.log('필터 조건:', currentMapFilters.value)
     
-    const params = {
-      userId: userStore.userSq || 0,
-      latitude: mapUserLocation.value.latitude,
-      longitude: mapUserLocation.value.longitude,
-      radius: currentMapFilters.value.radius,
-      jobType: currentMapFilters.value.jobRole || '',
-      searchKeyword: currentMapFilters.value.keyword || '',
-      page: 0,
-      size: 20
-    }
+    // "내 주소" 모드일 때만 userId 사용, 아니면 직접 좌표 전달
+    const params = currentMapFilters.value.locationType === 'address'
+      ? {
+          userId: userStore.userSq || 0,
+          radius: currentMapFilters.value.radius,
+          jobType: currentMapFilters.value.jobRole || '',
+          searchKeyword: currentMapFilters.value.keyword || '',
+          page: 0,
+          size: 20
+        }
+      : {
+          lat: mapUserLocation.value.latitude,
+          lon: mapUserLocation.value.longitude,
+          radius: currentMapFilters.value.radius,
+          jobType: currentMapFilters.value.jobRole || '',
+          searchKeyword: currentMapFilters.value.keyword || '',
+          page: 0,
+          size: 20
+        }
     console.log('API 요청 파라미터:', params)
     
     const response = await api.$get('/map/search', { params })
@@ -612,19 +628,28 @@ const handleMapFilterChange = async (filters) => {
     console.log('검색 좌표 - searchLat:', searchLat, 'searchLng:', searchLng)
     console.log('mapUserLocation:', mapUserLocation.value)
     
-    const params = {
-      userId: userStore.userSq || 0,
-      latitude: searchLat,
-      longitude: searchLng,
-      radius: parseFloat(filters.radius),
-      jobType: filters.jobRole || '',
-      searchKeyword: filters.keyword || '',
-      page: 0,
-      size: 20
-    }
+    // "내 주소" 모드일 때만 userId 사용, 아니면 직접 좌표 전달
+    const params = filters.locationType === 'address'
+      ? {
+          userId: userStore.userSq || 0,
+          radius: parseFloat(filters.radius),
+          jobType: filters.jobRole || '',
+          searchKeyword: filters.keyword || '',
+          page: 0,
+          size: 20
+        }
+      : {
+          lat: searchLat,
+          lon: searchLng,
+          radius: parseFloat(filters.radius),
+          jobType: filters.jobRole || '',
+          searchKeyword: filters.keyword || '',
+          page: 0,
+          size: 20
+        }
     console.log('=== 최종 API 요청 파라미터 ===')
     console.log('params:', params)
-    console.log('위도:', params.latitude, '경도:', params.longitude, '반경:', params.radius, 'km')
+    console.log('위도:', searchLat, '경도:', searchLng, '반경:', parseFloat(filters.radius), 'km')
     
     const response = await api.$get('/map/search', { params })
     console.log('=== API 응답 분석 ===')
@@ -672,21 +697,37 @@ const handleMapFilterChange = async (filters) => {
 
 // 현재 위치 가져오기
 const getCurrentPosition = () => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       alert('이 브라우저는 위치 정보를 지원하지 않습니다.')
+      reject(new Error('위치 정보 미지원'))
       return
     }
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log('GPS 정확도:', position.coords.accuracy, 'm')
+        
+        // GPS 정확도 체크 (경고만, 계속 진행)
+        if (position.coords.accuracy > 1000) {
+          console.warn('⚠️ GPS 정확도가 낮습니다:', position.coords.accuracy, 'm')
+          console.warn('위치가 부정확할 수 있습니다.')
+        }
+        
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         })
       },
-      () => {
+      (error) => {
+        console.log('위치 정보 획득 실패:', error)
         alert('위치 정보를 가져올 수 없습니다.')
+        reject(error)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0  // 캐시 사용 안 함
       }
     )
   })

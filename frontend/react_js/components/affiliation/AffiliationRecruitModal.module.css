@@ -1,0 +1,14 @@
+.textBold {
+  font-weight: bold;
+}
+
+.bgF5 {
+  background: #f5f5f5;
+  padding: 2rem !important;
+}
+
+.modalContent {
+  max-width: 600px;
+  margin: 0 auto;
+}
+

@@ -268,19 +268,19 @@
   background-color: white;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 140px;
+  justify-content: center;
+  padding: 0 50px;
+  gap: 40px;
 }
 
 /* 좌측 텍스트 영역 */
 .leftTextArea {
-  flex: 0 0 40%;
+  flex: 0 0 38%;
   z-index: 5;
-  padding-right: 40px;
 }
 
 .leftTextArea .heroTitle {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: bold;
   color: #2c3e50;
   margin-bottom: 1.5rem;
@@ -288,13 +288,13 @@
 }
 
 .heroSubtitle {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: #6c757d;
   margin-bottom: 2rem;
 }
 
 .leftTextArea .heroSubtitle {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: #6c757d;
   margin-bottom: 2rem;
 }
@@ -374,7 +374,8 @@
 
 /* 미니 지도 (배너 우측) */
 .miniMapWrapper {
-  flex: 0 0 600px;
+  flex: 1;
+  max-width: 900px;
   z-index: 5;
 }
 
