@@ -17,7 +17,7 @@ export default function BoardTable({ boardList, isQna }) {
   }
   
   const handleRowClick = (boardSq) => {
-    const path = isQna ? `/qna/${boardSq}` : `/board/${boardSq}`
+    const path = isQna ? `/community/qna/${boardSq}` : `/community/board/${boardSq}`
     router.push(path)
   }
   
@@ -43,7 +43,7 @@ export default function BoardTable({ boardList, isQna }) {
                 <td onClick={() => handleRowClick(board.sq)}>{board.sq}</td>
                 <td className="text-start px-3" onClick={() => handleRowClick(board.sq)}>
                   <a
-                    href={`/${isQna ? 'qna' : 'board'}/${board.sq}`}
+                    href={`/community/${isQna ? 'qna' : 'board'}/${board.sq}`}
                     onClick={(e) => {
                       e.preventDefault()
                       handleRowClick(board.sq)

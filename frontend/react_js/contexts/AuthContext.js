@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
 
   const setUserInfo = useCallback(({ userSq, userNm, userTypeCd }) => {
     const userType =
-      userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
+      userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : userTypeCd === 303 ? 'ADMIN' : ''
 
     setUser({ userSq, userNm, userType })
 

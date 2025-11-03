@@ -116,7 +116,7 @@ export default function BoardListPage() {
             <div className="d-flex justify-content-end mb-3">
               <button
                 className="btn btn-primary px-4"
-                onClick={() => router.push('/board/register')}
+                onClick={() => router.push('/community/board/register')}
               >
                 등록
               </button>

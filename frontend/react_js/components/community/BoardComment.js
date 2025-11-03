@@ -385,7 +385,7 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
                         <li key={reply.replyCommentSq}>
                           <div className="comment">
                             <div className={`img-thumbnail img-thumbnail-no-borders d-none d-sm-block ${styles.thumbWrapper}`}>
-                              <div className={`rounded-circle ${styles.commentProfile}`}>
+                              <div className={`rounded-circle ${styles.replyProfile}`}>
                                 <i className="fas fa-user text-muted"></i>
                               </div>
                             </div>

@@ -12,6 +12,7 @@ export default function CommonHeader() {
   const { showAlert } = useAlert()
 
   const [isCommunityDropdownOpen, setIsCommunityDropdownOpen] = useState(false)
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false)
   
   const headerRef = useRef(null)
   const notificationDropdownRef = useRef(null)
@@ -24,6 +25,10 @@ export default function CommonHeader() {
   const isAffiliationActive = currentPath.startsWith('/affiliation')
   const isProjectActive = currentPath.startsWith('/project')
   const isCommunityActive = currentPath.startsWith('/board') || currentPath.startsWith('/qna')
+  const isAdminActive = currentPath.startsWith('/admin')
+  
+  // 관리자 여부 확인
+  const isAdmin = user?.userType === 'ADMIN'
 
   // 모바일 메뉴 닫기
   const closeMenu = () => {
@@ -48,6 +53,11 @@ export default function CommonHeader() {
     setIsCommunityDropdownOpen(!isCommunityDropdownOpen)
   }
 
+  // 관리자 드롭다운 토글
+  const toggleAdminDropdown = () => {
+    setIsAdminDropdownOpen(!isAdminDropdownOpen)
+  }
+
   // 로그아웃
   const logout = async () => {
     await api.$post('/logout', {})
@@ -55,6 +65,7 @@ export default function CommonHeader() {
     // 1. 아이디 저장값만 따로 저장
     const savedPersonalId = localStorage.getItem('savedPersonalId')
     const savedCompanyId = localStorage.getItem('savedCompanyId')
+    const savedAdminId = localStorage.getItem('savedAdminId')
     const savedLoginType = localStorage.getItem('savedLoginType')
 
     // 2. 로컬스토리지 전체 초기화
@@ -63,6 +74,7 @@ export default function CommonHeader() {
     // 3. 아이디 저장값 복원
     if (savedPersonalId) localStorage.setItem('savedPersonalId', savedPersonalId)
     if (savedCompanyId) localStorage.setItem('savedCompanyId', savedCompanyId)
+    if (savedAdminId) localStorage.setItem('savedAdminId', savedAdminId)
     if (savedLoginType) localStorage.setItem('savedLoginType', savedLoginType)
 
     // 4. Context 상태 초기화
@@ -86,6 +98,7 @@ export default function CommonHeader() {
   useEffect(() => {
     closeMenu()
     setIsCommunityDropdownOpen(false)
+    setIsAdminDropdownOpen(false)
   }, [currentPath])
 
   return (
@@ -121,11 +134,11 @@ export default function CommonHeader() {
                       <ul className="nav nav-pills" id="mainNav">
                         <li className="dropdown">
                           <a
-                            href="/affiliation"
+                            href="/affiliation/affiliationList"
                             className={`dropdown-item dropdown-toggle ${isAffiliationActive ? 'active current-page-active' : ''}`}
                             onClick={(e) => {
                               e.preventDefault()
-                              router.push('/affiliation')
+                              router.push('/affiliation/affiliationList')
                             }}
                           >
                             소속
@@ -134,11 +147,11 @@ export default function CommonHeader() {
                         </li>
                         <li className="dropdown">
                           <a
-                            href="/project"
+                            href="/project/projectList"
                             className={`dropdown-item dropdown-toggle ${isProjectActive ? 'active current-page-active' : ''}`}
                             onClick={(e) => {
                               e.preventDefault()
-                              router.push('/project')
+                              router.push('/project/projectList')
                             }}
                           >
                             프로젝트
@@ -161,11 +174,11 @@ export default function CommonHeader() {
                           <ul className="dropdown-menu">
                             <li>
                               <a
-                                href="/board"
+                                href="/community/board/boardList"
                                 className="dropdown-item"
                                 onClick={(e) => {
                                   e.preventDefault()
-                                  router.push('/board')
+                                  router.push('/community/board/boardList')
                                 }}
                               >
                                 일반 게시판
@@ -173,11 +186,11 @@ export default function CommonHeader() {
                             </li>
                             <li>
                               <a
-                                href="/qna"
+                                href="/community/qna/qnaList"
                                 className="dropdown-item"
                                 onClick={(e) => {
                                   e.preventDefault()
-                                  router.push('/qna')
+                                  router.push('/community/qna/qnaList')
                                 }}
                               >
                                 Q&A 게시판
@@ -185,6 +198,74 @@ export default function CommonHeader() {
                             </li>
                           </ul>
                         </li>
+                        
+                        {/* 관리자 메뉴 */}
+                        {isAdmin && (
+                          <li className={`dropdown ${isAdminDropdownOpen ? 'open' : ''}`}>
+                            <a
+                              href="#"
+                              className={`dropdown-item dropdown-toggle ${isAdminActive ? 'active current-page-active' : ''}`}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                toggleAdminDropdown()
+                              }}
+                              data-admin-toggle
+                            >
+                              관리자페이지
+                              <i className="fas fa-chevron-down"></i>
+                            </a>
+                            <ul className="dropdown-menu">
+                              <li>
+                                <a
+                                  href="/admin/adminIndex"
+                                  className="dropdown-item"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push('/admin/adminIndex')
+                                  }}
+                                >
+                                  관리자 대시보드
+                                </a>
+                              </li>
+                              <li>
+                                <a
+                                  href="/admin/members"
+                                  className="dropdown-item"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push('/admin/members')
+                                  }}
+                                >
+                                  회원 관리
+                                </a>
+                              </li>
+                              <li>
+                                <a
+                                  href="/admin/projects"
+                                  className="dropdown-item"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push('/admin/projects')
+                                  }}
+                                >
+                                  프로젝트 관리
+                                </a>
+                              </li>
+                              <li>
+                                <a
+                                  href="/admin/reports"
+                                  className="dropdown-item"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push('/admin/reports')
+                                  }}
+                                >
+                                  신고 관리
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                        )}
                       </ul>
                     </nav>
                   </div>
@@ -308,11 +389,11 @@ export default function CommonHeader() {
                       <ul className="nav nav-pills" id="mainNav">
                         <li className="dropdown">
                           <a
-                            href="/affiliation"
+                            href="/affiliation/affiliationList"
                             className={`dropdown-item dropdown-toggle ${isAffiliationActive ? 'active current-page-active' : ''}`}
                             onClick={(e) => {
                               e.preventDefault()
-                              router.push('/affiliation')
+                              router.push('/affiliation/affiliationList')
                             }}
                           >
                             소속
@@ -321,11 +402,11 @@ export default function CommonHeader() {
                         </li>
                         <li className="dropdown">
                           <a
-                            href="/project"
+                            href="/project/projectList"
                             className={`dropdown-item dropdown-toggle ${isProjectActive ? 'active current-page-active' : ''}`}
                             onClick={(e) => {
                               e.preventDefault()
-                              router.push('/project')
+                              router.push('/project/projectList')
                             }}
                           >
                             프로젝트
@@ -348,11 +429,11 @@ export default function CommonHeader() {
                           <ul className="dropdown-menu">
                             <li>
                               <a
-                                href="/board"
+                                href="/community/board/boardList"
                                 className="dropdown-item"
                                 onClick={(e) => {
                                   e.preventDefault()
-                                  router.push('/board')
+                                  router.push('/community/board/boardList')
                                 }}
                               >
                                 일반 게시판
@@ -360,11 +441,11 @@ export default function CommonHeader() {
                             </li>
                             <li>
                               <a
-                                href="/qna"
+                                href="/community/qna/qnaList"
                                 className="dropdown-item"
                                 onClick={(e) => {
                                   e.preventDefault()
-                                  router.push('/qna')
+                                  router.push('/community/qna/qnaList')
                                 }}
                               >
                                 Q&A 게시판

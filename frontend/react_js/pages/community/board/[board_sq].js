@@ -30,7 +30,7 @@ export default function BoardDetailPage() {
     } catch (error) {
       console.error('게시글 불러오기 실패:', error)
       showAlert('게시글을 불러올 수 없습니다.', 'danger')
-      router.push('/board')
+      router.push('/community/board/boardList')
     } finally {
       setLoading(false)
     }

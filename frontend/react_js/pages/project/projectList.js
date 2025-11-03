@@ -9,7 +9,8 @@ import LocationSelectModal from '@/components/map/LocationSelectModal'
 import ProjectFilterBar from '@/components/project/ProjectFilterBar'
 import ProjectCardGroup from '@/components/project/ProjectCardGroup'
 import CommonPagination from '@/components/common/CommonPagination'
-import styles from './index.module.css'
+import CommonPageHeader from '@/components/common/CommonPageHeader'
+import styles from './projectList.module.css'
 
 export default function ProjectListPage() {
   const router = useRouter()
@@ -212,12 +213,12 @@ export default function ProjectListPage() {
   // 지도 이미지 URL 생성
   const generateMapImageUrl = () => {
     if (!mapUserLocation.latitude || !mapUserLocation.longitude) {
-      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwN2JmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyekOyduO2UhOyngCDrqZTsl4zsnoE8L3RleHQ+PC9zdmc+'
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjgwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwN2JmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyekOyduO2UhOyngCDrqZTsl4zsnoE8L3RleHQ+PC9zdmc+'
     }
     
     const centerLat = mapUserLocation.latitude
     const centerLon = mapUserLocation.longitude
-    const mapUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=800&height=500&level=${mapZoom}`
+    const mapUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=900&height=800&level=${mapZoom}`
     
     console.log('지도 URL 생성:', mapUrl)
     return mapUrl
@@ -230,16 +231,25 @@ export default function ProjectListPage() {
       console.log('사용자 위치:', mapUserLocation)
       console.log('필터 조건:', currentMapFilters)
       
-      const params = {
-        userId: user?.userSq || 0,
-        latitude: mapUserLocation.latitude,
-        longitude: mapUserLocation.longitude,
-        radius: currentMapFilters.radius,
-        jobType: currentMapFilters.jobRole || '',
-        searchKeyword: currentMapFilters.keyword || '',
-        page: 0,
-        size: 20
-      }
+      // "내 주소" 모드일 때만 userId 사용, 아니면 직접 좌표 전달
+      const params = currentMapFilters.locationType === 'address'
+        ? {
+            userId: user?.userSq || 0,
+            radius: currentMapFilters.radius,
+            jobType: currentMapFilters.jobRole || '',
+            searchKeyword: currentMapFilters.keyword || '',
+            page: 0,
+            size: 20
+          }
+        : {
+            lat: mapUserLocation.latitude,
+            lon: mapUserLocation.longitude,
+            radius: currentMapFilters.radius,
+            jobType: currentMapFilters.jobRole || '',
+            searchKeyword: currentMapFilters.keyword || '',
+            page: 0,
+            size: 20
+          }
       console.log('API 요청 파라미터:', params)
       
       const response = await api.$get('/map/search', { params })
@@ -274,7 +284,7 @@ export default function ProjectListPage() {
     }
   }
 
-  // 현재 위치 가져오기
+  // 현재 위치 가져오기 (여러 번 시도해서 가장 정확한 GPS 선택)
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
       console.log('=== getCurrentPosition 시작 ===')
@@ -285,29 +295,78 @@ export default function ProjectListPage() {
         return
       }
       
-      console.log('위치 정보 요청 중...')
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('위치 정보 획득 성공:', position.coords)
-          const coords = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+      console.log('위치 정보 3회 요청 시작... (가장 정확한 것 선택)')
+      const positions = []
+      let attempts = 0
+      const maxAttempts = 3
+      
+      const getPosition = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            attempts++
+            positions.push(position)
+            console.log(`GPS 시도 ${attempts}/${maxAttempts}:`, {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            })
+            
+            if (attempts >= maxAttempts) {
+              // 가장 정확한 GPS 선택 (accuracy가 가장 낮은 것)
+              const bestPosition = positions.reduce((prev, curr) => 
+                curr.coords.accuracy < prev.coords.accuracy ? curr : prev
+              )
+              
+              console.log('✅ 가장 정확한 GPS 선택:', {
+                lat: bestPosition.coords.latitude,
+                lon: bestPosition.coords.longitude,
+                accuracy: bestPosition.coords.accuracy
+              })
+              
+              const coords = {
+                latitude: bestPosition.coords.latitude,
+                longitude: bestPosition.coords.longitude
+              }
+              resolve(coords)
+            } else {
+              // 다음 시도
+              setTimeout(getPosition, 500)
+            }
+          },
+          (error) => {
+            console.log(`GPS 시도 ${attempts + 1} 실패:`, error)
+            attempts++
+            
+            if (attempts >= maxAttempts) {
+              if (positions.length > 0) {
+                // 실패해도 이전 성공한 것이 있으면 사용
+                const bestPosition = positions.reduce((prev, curr) => 
+                  curr.coords.accuracy < prev.coords.accuracy ? curr : prev
+                )
+                console.log('일부 실패했지만 가장 정확한 GPS 사용:', bestPosition.coords.accuracy, 'm')
+                const coords = {
+                  latitude: bestPosition.coords.latitude,
+                  longitude: bestPosition.coords.longitude
+                }
+                resolve(coords)
+              } else {
+                alert('위치 정보를 가져올 수 없습니다.')
+                reject(error)
+              }
+            } else {
+              // 다음 시도
+              setTimeout(getPosition, 500)
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
           }
-          console.log('반환할 좌표:', coords)
-          console.log('정확도:', position.coords.accuracy, 'm')
-          resolve(coords)
-        },
-        (error) => {
-          console.log('위치 정보 획득 실패:', error)
-          alert('위치 정보를 가져올 수 없습니다.')
-          reject(error)
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      )
+        )
+      }
+      
+      getPosition()
     })
   }
 
@@ -338,8 +397,15 @@ export default function ProjectListPage() {
         console.log('=== 내 주소로 변경 완료 ===')
       } else if (filters.locationType === 'current') {
         console.log('=== 현재 위치 선택 시작 ===')
-        const currentPos = await getCurrentPosition()
-        console.log('현재 위치 좌표:', currentPos)
+        let currentPos
+        try {
+          currentPos = await getCurrentPosition()
+          console.log('현재 위치 좌표:', currentPos)
+        } catch (error) {
+          console.error('GPS 획득 실패:', error)
+          showAlert('현재 위치를 가져올 수 없습니다. "위치 선택" 기능을 사용해주세요.', 'danger')
+          return
+        }
         
         console.log('지오코딩 API 호출 시작...')
         const address = await getAddressFromCoordinates(currentPos.latitude, currentPos.longitude)
@@ -384,16 +450,25 @@ export default function ProjectListPage() {
       console.log('=== API 호출 전 검증 ===')
       console.log('검색 좌표 - searchLat:', searchLat, 'searchLng:', searchLng)
       
-      const params = {
-        userId: user?.userSq || 0,
-        latitude: searchLat,
-        longitude: searchLng,
-        radius: parseFloat(filters.radius),
-        jobType: filters.jobRole || '',
-        searchKeyword: filters.keyword || '',
-        page: 0,
-        size: 20
-      }
+      // "내 주소" 모드일 때만 userId 사용, 아니면 직접 좌표 전달
+      const params = filters.locationType === 'address' 
+        ? {
+            userId: user?.userSq || 0,
+            radius: parseFloat(filters.radius),
+            jobType: filters.jobRole || '',
+            searchKeyword: filters.keyword || '',
+            page: 0,
+            size: 20
+          }
+        : {
+            lat: searchLat,
+            lon: searchLng,
+            radius: parseFloat(filters.radius),
+            jobType: filters.jobRole || '',
+            searchKeyword: filters.keyword || '',
+            page: 0,
+            size: 20
+          }
       console.log('=== 최종 API 요청 파라미터 ===', params)
       
       const response = await api.$get('/map/search', { params })
@@ -562,17 +637,11 @@ export default function ProjectListPage() {
   return (
     <div className={styles.projectListPage}>
       {/* 페이지 헤더 */}
-      <div className="bg-light py-4 mb-4">
-        <div className="container">
-          <h2 className="mb-0">프로젝트 목록</h2>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-0 mt-2">
-              <li className="breadcrumb-item"><a href="/">Home</a></li>
-              <li className="breadcrumb-item active">프로젝트</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
+      <CommonPageHeader
+        title=""
+        strongText="프로젝트 목록"
+        breadcrumbs={[{ text: 'Home', link: '/' }, { text: '프로젝트' }]}
+      />
 
       {/* 탭 */}
       <div className="container">
@@ -649,8 +718,8 @@ export default function ProjectListPage() {
                 currentFilters={currentMapFilters}
                 tempSelectedLocation={tempSelectedLocation}
                 initialZoom={mapZoom}
-                mapWidth={800}
-                mapHeight={600}
+                mapWidth={900}
+                mapHeight={800}
                 showControls={true}
                 showRadiusText={true}
                 onMarkerClick={handleMapMarkerClick}

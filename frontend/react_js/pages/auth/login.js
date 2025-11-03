@@ -17,6 +17,8 @@ export default function LoginPage() {
     password: '',
     cid: '',
     cpassword: '',
+    aid: '',
+    apassword: '',
     autologin: false,
     id_save: false,
   })
@@ -56,11 +58,17 @@ export default function LoginPage() {
         id: localStorage.getItem('savedPersonalId') || '',
         id_save: !!localStorage.getItem('savedPersonalId')
       }))
-    } else {
+    } else if (loginType === 'COMPANY') {
       setForm(prev => ({
         ...prev,
         cid: localStorage.getItem('savedCompanyId') || '',
         id_save: !!localStorage.getItem('savedCompanyId')
+      }))
+    } else {
+      setForm(prev => ({
+        ...prev,
+        aid: localStorage.getItem('savedAdminId') || '',
+        id_save: !!localStorage.getItem('savedAdminId')
       }))
     }
 
@@ -97,9 +105,9 @@ export default function LoginPage() {
     e.preventDefault()
 
     const type = loginType
-    const userTypeCd = type === 'PERSONAL' ? 301 : 302
-    const id = type === 'PERSONAL' ? form.id : form.cid
-    const pw = type === 'PERSONAL' ? form.password : form.cpassword
+    const userTypeCd = type === 'PERSONAL' ? 301 : type === 'COMPANY' ? 302 : 303
+    const id = type === 'PERSONAL' ? form.id : type === 'COMPANY' ? form.cid : form.aid
+    const pw = type === 'PERSONAL' ? form.password : type === 'COMPANY' ? form.cpassword : form.apassword
 
     const payload = {
       userId: id,
@@ -125,13 +133,16 @@ export default function LoginPage() {
       if (form.id_save) {
         if (type === 'PERSONAL') {
           localStorage.setItem('savedPersonalId', form.id)
-        } else {
+        } else if (type === 'COMPANY') {
           localStorage.setItem('savedCompanyId', form.cid)
+        } else {
+          localStorage.setItem('savedAdminId', form.aid)
         }
         localStorage.setItem('savedLoginType', loginType)
       } else {
         localStorage.removeItem('savedPersonalId')
         localStorage.removeItem('savedCompanyId')
+        localStorage.removeItem('savedAdminId')
         localStorage.removeItem('savedLoginType')
       }
 
@@ -165,12 +176,20 @@ export default function LoginPage() {
     if (loginType === 'PERSONAL') {
       setForm(prev => ({
         ...prev,
-        id: localStorage.getItem('savedPersonalId') || ''
+        id: localStorage.getItem('savedPersonalId') || '',
+        id_save: !!localStorage.getItem('savedPersonalId')
+      }))
+    } else if (loginType === 'COMPANY') {
+      setForm(prev => ({
+        ...prev,
+        cid: localStorage.getItem('savedCompanyId') || '',
+        id_save: !!localStorage.getItem('savedCompanyId')
       }))
     } else {
       setForm(prev => ({
         ...prev,
-        cid: localStorage.getItem('savedCompanyId') || ''
+        aid: localStorage.getItem('savedAdminId') || '',
+        id_save: !!localStorage.getItem('savedAdminId')
       }))
     }
   }, [loginType])
@@ -198,16 +217,25 @@ export default function LoginPage() {
                 {/* 회원 유형 토글 버튼 */}
                 <div className="btn-group w-100 mb-4" role="group">
                   <button
-                    className={`btn w-50 ${loginType === 'PERSONAL' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    className={`btn ${loginType === 'PERSONAL' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    style={{ width: '33.33%' }}
                     onClick={() => setLoginType('PERSONAL')}
                   >
                     개인회원
                   </button>
                   <button
-                    className={`btn w-50 ${loginType === 'COMPANY' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    className={`btn ${loginType === 'COMPANY' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    style={{ width: '33.33%' }}
                     onClick={() => setLoginType('COMPANY')}
                   >
                     기업회원
+                  </button>
+                  <button
+                    className={`btn ${loginType === 'ADMIN' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    style={{ width: '33.33%' }}
+                    onClick={() => setLoginType('ADMIN')}
+                  >
+                    관리자
                   </button>
                 </div>
 
@@ -232,13 +260,23 @@ export default function LoginPage() {
                         onChange={handleInputChange}
                         required
                       />
-                    ) : (
+                    ) : loginType === 'COMPANY' ? (
                       <input
                         type="text"
                         className="form-control"
                         id="cid"
                         name="cid"
                         value={form.cid}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="aid"
+                        name="aid"
+                        value={form.aid}
                         onChange={handleInputChange}
                         required
                       />
@@ -259,13 +297,24 @@ export default function LoginPage() {
                         maxLength="32"
                         required
                       />
-                    ) : (
+                    ) : loginType === 'COMPANY' ? (
                       <input
                         type="password"
                         className="form-control"
                         id="cpassword"
                         name="cpassword"
                         value={form.cpassword}
+                        onChange={handleInputChange}
+                        maxLength="32"
+                        required
+                      />
+                    ) : (
+                      <input
+                        type="password"
+                        className="form-control"
+                        id="apassword"
+                        name="apassword"
+                        value={form.apassword}
                         onChange={handleInputChange}
                         maxLength="32"
                         required
