@@ -8,80 +8,72 @@
       </div>
     </div>
 
-    <!-- 하단 캘린더 영역 -->
-    <div class="calendar-layout-wrapper">
-      <!-- 사이드바 -->
-      <div class="calendar-sidebar-fixed">
-        <MyPageSideBar />
-      </div>
+    <!-- 캘린더 콘텐츠 -->
+    <div class="calendar-content">
+      <!-- 캘린더 필터바 -->
+      <CalendarFilterBar @update="updateFilters" />
       
-      <!-- 캘린더 콘텐츠 -->
-      <div class="calendar-content-full">
-        <!-- 캘린더 필터바 -->
-        <CalendarFilterBar @update="updateFilters" />
-        
-        <div class="calendar-right">
-            <!-- 캘린더 헤더 -->
-            <div class="calendar-right-head">
-              <div class="nav-search-bar">
-                <div class="calendar-nav">
-                  <div class="icon-wrapper" @click="addMonth(-1)">
-                    <i class="bi bi-chevron-left"></i>
-                  </div>
-                  <span class="current">{{ currentDate }}</span>
-                  <div class="icon-wrapper" @click="addMonth(1)">
-                    <i class="bi bi-chevron-right"></i>
-                  </div>
-                </div>
-                <div class="add-schedule" @click="openScheduleModal">
-                  일정 추가
-                </div>
+      <div class="calendar-right">
+        <!-- 캘린더 헤더 -->
+        <div class="calendar-right-head">
+          <div class="nav-search-bar">
+            <div class="calendar-nav">
+              <div class="icon-wrapper" @click="addMonth(-1)">
+                <i class="bi bi-chevron-left"></i>
+              </div>
+              <span class="current">{{ currentDate }}</span>
+              <div class="icon-wrapper" @click="addMonth(1)">
+                <i class="bi bi-chevron-right"></i>
               </div>
             </div>
+            <div class="add-schedule" @click="openScheduleModal">
+              일정 추가
+            </div>
+          </div>
+        </div>
 
-            <!-- 메인 캘린더 -->
-            <div class="calendar body employment-mode" :class="{ 'schedule-mode': favoritesMode }">
-              <div v-for="(week, weekIndex) in calendarWeeks" :key="`week-${weekIndex}`" class="calendar-week" :class="`week-${weekIndex}`">
-                <div v-for="day in week" :key="`${day.year}-${day.month}-${day.date}`" class="calendar-cell">
+        <!-- 메인 캘린더 -->
+        <div class="calendar body employment-mode" :class="{ 'schedule-mode': favoritesMode }">
+          <div v-for="(week, weekIndex) in calendarWeeks" :key="`week-${weekIndex}`" class="calendar-week" :class="`week-${weekIndex}`">
+            <div v-for="day in week" :key="`${day.year}-${day.month}-${day.date}`" class="calendar-cell">
+              <div 
+                class="day-label" 
+                :class="{ today: isToday(day) }"
+              >
+                {{ day.date }}
+              </div>
+              <div 
+                class="day-content" 
+                :class="{ 'has-calendar-item': getDayItems(day).length > 0 }"
+                @dblclick="favoritesMode ? openScheduleModal(day) : null"
+              >
+                <div v-if="getDayItems(day).length > 0" class="calendar-items">
                   <div 
-                    class="day-label" 
-                    :class="{ today: isToday(day) }"
+                    v-for="event in getDayItems(day)" 
+                    :key="event.scheduleSq"
+                    class="calendar-item"
+                    :class="getItemClasses(event, day)"
+                    :style="getEventStyle(event)"
                   >
-                    {{ day.date }}
-                  </div>
-                  <div 
-                    class="day-content" 
-                    :class="{ 'has-calendar-item': getDayItems(day).length > 0 }"
-                    @dblclick="favoritesMode ? openScheduleModal(day) : null"
-                  >
-                    <div v-if="getDayItems(day).length > 0" class="calendar-items">
-                      <div 
-                        v-for="event in getDayItems(day)" 
-                        :key="event.scheduleSq"
-                        class="calendar-item"
-                        :class="getItemClasses(event, day)"
-                        :style="getEventStyle(event)"
-                      >
-                        <div class="company" @click="handleScheduleClick(event)">
-                          <div class="company-name">
-                            <span>{{ truncateText(event.title, 9) }}</span>
-                          </div>
-                          <div v-if="event.sourceType === 'PERSONAL'" class="personal-badge">
-                            <i class="bi bi-person"></i>
-                          </div>
-                          <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
-                            <i class="bi bi-briefcase"></i>
-                          </div>
-                          <div v-else-if="event.sourceType === 'INTERVIEW'" class="interview-badge">
-                            <i class="bi bi-clipboard-check"></i>
-                          </div>
-                        </div>
+                    <div class="company" @click="handleScheduleClick(event)">
+                      <div class="company-name">
+                        <span>{{ truncateText(event.title, 9) }}</span>
+                      </div>
+                      <div v-if="event.sourceType === 'PERSONAL'" class="personal-badge">
+                        <i class="bi bi-person"></i>
+                      </div>
+                      <div v-else-if="event.sourceType === 'PROJECT'" class="project-badge">
+                        <i class="bi bi-briefcase"></i>
+                      </div>
+                      <div v-else-if="event.sourceType === 'INTERVIEW'" class="interview-badge">
+                        <i class="bi bi-clipboard-check"></i>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
@@ -112,18 +104,16 @@ import { ko } from 'date-fns/locale'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import calendarService from '@/fo/services/calendarService'
 import { CalendarEvent, CalendarSourceType } from '@/fo/types/calendar'
-import ScheduleModal from '@/fo/components/calendar/ScheduleModal.vue'
-import ScheduleDetailModal from '@/fo/components/calendar/ScheduleDetailModal.vue'
-import CalendarFilterBar from '@/fo/views/calendar/CalendarFilterBar.vue'
-import MyPageSideBar from '@/fo/components/mypage/MyPageSideBar.vue'
+import ScheduleModal from '@/fo/components/mypage/calendar/ScheduleModal.vue'
+import ScheduleDetailModal from '@/fo/components/mypage/calendar/ScheduleDetailModal.vue'
+import CalendarFilterBar from '@/fo/views/mypage/calendar/CalendarFilterBar.vue'
 
 export default {
   name: 'CalendarPage',
   components: {
     ScheduleModal,
     ScheduleDetailModal,
-    CalendarFilterBar,
-    MyPageSideBar
+    CalendarFilterBar
   },
   setup() {
     // ==================== Store ====================
@@ -397,13 +387,8 @@ export default {
 
 <style scoped>
 .calendar-container {
-  min-height: 100vh;
-  background-color: #f8f9fa;
-  margin: 0;
-  padding: 0;
-  max-width: 100vw;
   width: 100%;
-  box-sizing: border-box;
+  background-color: #f8f9fa;
 }
 
 /* 로딩 화면 */
@@ -437,33 +422,9 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-/* 캘린더 레이아웃 */
-.calendar-layout-wrapper {
-  display: flex;
+/* 캘린더 콘텐츠 */
+.calendar-content {
   width: 100%;
-  min-height: calc(100vh - 100px);
-  margin: 0;
-  padding: 0;
-}
-
-.calendar-sidebar-fixed {
-  width: 250px;
-  flex-shrink: 0;
-  background-color: #fff;
-  padding: 1.5rem;
-  border-right: 1px solid #dee2e6;
-  overflow-y: auto;
-  position: sticky;
-  top: 0;
-  height: calc(100vh - 100px);
-}
-
-.calendar-content-full {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - 250px);
-  overflow-x: hidden;
 }
 
 .calendar-right {
@@ -665,24 +626,6 @@ export default {
 }
 
 /* 반응형 디자인 */
-@media (max-width: 992px) {
-  .calendar-layout-wrapper {
-    flex-direction: column;
-  }
-  
-  .calendar-sidebar-fixed {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid #dee2e6;
-  }
-  
-  .calendar-content-full {
-    width: 100%;
-  }
-}
-
 @media (max-width: 768px) {
   .calendar-cell {
     min-height: 100px;

@@ -190,6 +190,15 @@ const headerInfo = computed(() => {
           { text: '프로젝트 수정' },
         ],
       }
+    case 'CalendarPage':
+      return {
+        title: '일정',
+        strongText: '캘린더',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '일정 캘린더' },
+        ],
+      }
     default:
       return {
         title: '마이페이지',
