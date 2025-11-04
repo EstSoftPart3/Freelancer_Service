@@ -1,0 +1,169 @@
+.modal-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  position: relative;
+  width: 750px;
+  max-width: 95vw;
+  background: #fff;
+  padding: 28px 20px 16px 20px;
+  overflow-x: visible;
+  overflow-y: visible;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+.section-block {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 18px 16px 10px 16px;
+  margin-bottom: 20px;
+  background: #fafbfc;
+}
+
+.modal-header {
+  height: 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  padding-top: 0;
+}
+
+.modal-title {
+  color: #222;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  display: block;
+  line-height: 1;
+  padding: 0 8px;
+  color: #888;
+  position: relative;
+  top: -6px;
+}
+
+.modal-label {
+  display: none;
+}
+
+.section-title {
+  font-weight: bold;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.modal-body .form-group {
+  margin-bottom: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row .form-group {
+  flex: 1 1 0;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.datepicker-wrapper {
+  position: relative;
+}
+
+.datepicker-wrapper .form-control {
+  padding-right: 3rem;
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.datepicker-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.align-self-center {
+  align-self: center;
+}
+
+/* React DatePicker 커스터마이징 */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+.react-datepicker__month-container {
+  font-family: inherit;
+}
+
+.react-datepicker__header {
+  background-color: #007bff;
+  border-bottom: none;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: #fff;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #007bff;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+

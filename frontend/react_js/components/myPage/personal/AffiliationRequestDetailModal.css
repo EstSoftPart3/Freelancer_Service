@@ -1,0 +1,28 @@
+.modal-content {
+  border-radius: 8px;
+}
+
+.btn-rounded {
+  border-radius: 20px;
+}
+
+.btn-3d {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  text-decoration: none;
+}
+
