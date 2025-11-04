@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import styles from './CommonPageHeader.module.css'
 
 export default function CommonPageHeader({ title, strongText, breadcrumbs }) {
   return (
     <section className="page-header page-header-modern bg-color-grey page-header-sm">
-      <div className="container">
+      <div className={styles.pageHeaderContainer}>
         <div className="row">
           <div className="col-md-8 order-2 order-md-1 align-self-center p-static">
             <h1 className="text-dark">

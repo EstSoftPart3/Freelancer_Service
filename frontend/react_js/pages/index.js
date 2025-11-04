@@ -61,8 +61,6 @@ export default function MainPage() {
     scrapCount: [],
     applicantCount: []
   })
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 3
   const [isLoadingProjects, setIsLoadingProjects] = useState(false)
 
   // FAQ 관련 상태
@@ -474,7 +472,7 @@ export default function MainPage() {
   const generateMiniMapImageUrl = () => {
     const centerLat = userLocation.latitude
     const centerLon = userLocation.longitude
-    return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+    return `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=1100&height=580&level=13`
   }
 
   // 미니 지도 데이터 로드 (로그인 여부에 따라 분기)
@@ -486,7 +484,7 @@ export default function MainPage() {
     // 미니 지도 이미지 URL 생성
     const centerLat = userLocation.latitude
     const centerLon = userLocation.longitude
-    const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+    const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=1100&height=580&level=13`
     setMiniMapImageUrl(miniUrl)
     
     if (!loggedIn) {
@@ -560,7 +558,6 @@ export default function MainPage() {
       
       // 초기 필터(조회순)에 맞는 데이터 설정
       setPopularProjects(newData.viewCount || [])
-      setCurrentPage(1)
       
       console.log('초기 프로젝트 설정 완료:', newData.viewCount?.length || 0, '개')
       
@@ -574,7 +571,6 @@ export default function MainPage() {
 
   // 필터에 따라 표시할 프로젝트 업데이트
   const updatePopularProjects = (filter) => {
-    setCurrentPage(1) // 필터 변경 시 첫 페이지로
     let selectedData = []
     
     switch(filter) {
@@ -602,31 +598,8 @@ export default function MainPage() {
     })))
   }
 
-  // 페이지네이션을 위한 computed 속성
-  const paginatedProjects = popularProjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  // 항상 3페이지 표시
-  const totalPages = 3
-
-  // 각 페이지에 데이터가 있는지 확인
-  const hasDataForPage = (page) => {
-    const start = (page - 1) * itemsPerPage
-    return start < popularProjects.length
-  }
-
-  // 페이지 변경 핸들러
-  const changePage = (page) => {
-    if (page < 1 || page > totalPages || !hasDataForPage(page)) return
-    setCurrentPage(page)
-    // 페이지 변경 시 스크롤을 인기 프로젝트 섹션으로 이동
-    const section = document.querySelector('.popular-projects-section')
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
+  // 표시할 프로젝트 (최대 5개)
+  const displayedProjects = popularProjects.slice(0, 5)
 
   // 프로젝트 카드 클릭 핸들러
   const handleProjectCardClick = (project) => {
@@ -667,6 +640,11 @@ export default function MainPage() {
     router.push({ pathname: '/project/projectList', query: { tab: 'map' } })
   }
 
+  // 프로젝트 목록 페이지의 리스트 탭으로 이동
+  const goToProjectList = () => {
+    router.push({ pathname: '/project/projectList', query: { tab: 'list' } })
+  }
+
   // ============ 초기화 ============
   // 컴포넌트 마운트 시 실행
   useEffect(() => {
@@ -690,7 +668,7 @@ export default function MainPage() {
       setMapImageUrl(initialMapUrl)
       
       // 미니 지도 이미지도 생성
-      const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=600&height=650&level=13`
+      const miniUrl = `/api/map/naver/static?centerLon=${centerLon}&centerLat=${centerLat}&width=1100&height=580&level=13`
       setMiniMapImageUrl(miniUrl)
       
       // 로그인 시에만 프로젝트 검색
@@ -766,7 +744,7 @@ export default function MainPage() {
                   지금 바로 찾아드릴게요
                 </h1>
                 <p className={styles.heroSubtitle}>내 위치 반경을 설정해 빠르게 찾기</p>
-                <button className="btn btn-rounded btn-primary btn-lg" onClick={scrollToMap}>
+                <button className={`btn btn-rounded btn-primary btn-lg ${styles.btnRounded}`} onClick={scrollToMap}>
                   내 주변 공고
                 </button>
               </div>
@@ -781,8 +759,8 @@ export default function MainPage() {
                   currentFilters={{ locationType: 'address', radius: '5', jobRole: '', keyword: '' }}
                   tempSelectedLocation={null}
                   initialZoom={13}
-                  mapWidth={900}
-                  mapHeight={700}
+                  mapWidth={1100}
+                  mapHeight={580}
                   showControls={isLoggedIn}
                   showRadiusText={isLoggedIn}
                   onMarkerClick={handleMarkerClick}
@@ -883,8 +861,8 @@ export default function MainPage() {
                 className={`btn ${styles.btnRounded} btn-primary btn-sm flex-fill`}
                 style={{ 
                   backgroundColor: 'white',
-                  color: '#007bff',
-                  border: '1px solid #007bff'
+                  color: '#0d6efd',
+                  border: '1px solid #0d6efd'
                 }}
               >
                 <i className="bi bi-route me-1"></i>경로 안내
@@ -896,19 +874,28 @@ export default function MainPage() {
 
       {/* 인기 프로젝트 섹션 */}
       <section className={styles.popularProjectsSection}>
-        <div className="container">
-          <div className="section-header text-center mb-5">
-            <h2>인기 프로젝트</h2>
-            <p className="text-muted">많은 관심을 받고 있는 프로젝트들을 확인해보세요</p>
-          </div>
-
-          {/* 필터 탭 */}
-          <div className="filter-tabs mb-4">
-            <div className="d-flex justify-content-center">
+        <div className={styles.sectionInner}>
+          {/* 헤더와 필터를 같은 줄에 배치 */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            {/* 왼쪽: 제목과 소개글 */}
+            <div className={styles.sectionHeaderLeft}>
+              <div className="d-flex align-items-center gap-2">
+                <h2 className="mb-0">인기 프로젝트</h2>
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <p className="text-muted mb-0">많은 관심을 받고 있는 프로젝트들을 확인해보세요</p>
+                <button className={`btn btn-primary btn-sm ${styles.btnRoundedSmall}`} onClick={goToProjectList}>
+                  전체보기
+                </button>
+              </div>
+            </div>
+            
+            {/* 우측: 필터 탭 */}
+            <div className="filter-tabs">
               {filterTabs.map(tab => (
                 <button
                   key={tab.key}
-                  className={`btn me-2 ${activeFilter === tab.key ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  className={`btn btn-sm me-2 ${activeFilter === tab.key ? 'btn-primary' : 'btn-outline-secondary'}`}
                   onClick={() => setActiveFilterHandler(tab.key)}
                 >
                   {tab.label}
@@ -919,42 +906,34 @@ export default function MainPage() {
 
           {/* 프로젝트 카드 */}
           {isLoadingProjects ? (
-            <div className="text-center py-5" style={{ minHeight: '400px' }}>
+            <div className="text-center py-3" style={{ minHeight: '200px' }}>
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">로딩 중...</span>
               </div>
             </div>
           ) : popularProjects.length === 0 ? (
-            <div className="text-center py-5" style={{ minHeight: '400px' }}>
+            <div className="text-center py-3" style={{ minHeight: '200px' }}>
               <p className="text-muted">표시할 프로젝트가 없습니다.</p>
             </div>
           ) : (
-            <div className="row" style={{ minHeight: '400px' }}>
-              {paginatedProjects.map(project => (
+            <div className={styles.projectGrid}>
+              {displayedProjects.map(project => (
                 <div 
                   key={project.projectSq} 
-                  className="col-lg-4 col-md-6 mb-4"
+                  className={styles.projectGridItem}
                 >
                   <div 
                     className={`${styles.projectCard} card h-100`} 
                     onClick={() => handleProjectCardClick(project)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className={styles.projectImage}>
-                      <img
-                        src={project.companyImageUrl || defaultProjectImage}
-                        alt={project.projectTtl}
-                        className="card-img-top"
-                        onError={handleImageError}
-                      />
-                    </div>
                     <div className="card-body">
                       <h5 className="card-title">{project.projectTtl}</h5>
                       <p className="card-text text-muted">{project.companyNm}</p>
                       <p className="card-text small text-muted">
                         {project.address} / {project.devGradeNm} / {project.requiredEduLvl}
                       </p>
-                      <div className="d-flex gap-1 flex-wrap mt-2">
+                      <div className={`d-flex gap-1 flex-wrap mt-1 ${styles.skillTagsArea}`}>
                         {project.reqSkills?.slice(0, 3).map((skill, idx) => (
                           <span key={idx} className="badge bg-primary">
                             {skill}
@@ -967,89 +946,42 @@ export default function MainPage() {
               ))}
             </div>
           )}
-
-          {/* 페이지네이션 */}
-          {!isLoadingProjects && (
-            <div className="pagination-container text-center">
-              <nav>
-                <ul className="pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <a 
-                      className="page-link" 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); changePage(currentPage - 1) }}
-                      aria-label="Previous"
-                    >
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-                  {[1, 2, 3].map(page => (
-                    <li
-                      key={page}
-                      className={`page-item ${currentPage === page ? 'active' : ''} ${!hasDataForPage(page) ? 'disabled' : ''}`}
-                    >
-                      <a
-                        className="page-link"
-                        href="#"
-                        onClick={(e) => { e.preventDefault(); hasDataForPage(page) && changePage(page) }}
-                      >
-                        {page}
-                      </a>
-                    </li>
-                  ))}
-                  <li className={`page-item ${currentPage === totalPages || !hasDataForPage(currentPage + 1) ? 'disabled' : ''}`}>
-                    <a
-                      className="page-link"
-                      href="#"
-                      onClick={(e) => { e.preventDefault(); changePage(currentPage + 1) }}
-                      aria-label="Next"
-                    >
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          )}
         </div>
       </section>
 
       {/* FAQ 섹션 */}
       <section className={styles.faqSection}>
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              <div className="faq-header text-center mb-5">
-                <h2>자주 묻는 질문</h2>
-                <p className="text-muted">궁금한 점이 있으시면 FAQ를 확인해보세요</p>
-              </div>
-
-              <div className="accordion" id="faqAccordion">
-                {faqList.map((faq, index) => (
-                  <div key={index} className="accordion-item">
-                    <h2 className="accordion-header" id={`heading${index}`}>
-                      <button
-                        className={`accordion-button ${activeFaq !== index ? 'collapsed' : ''}`}
-                        type="button"
-                        onClick={() => toggleFaq(index)}
-                        aria-expanded={activeFaq === index}
-                      >
-                        {faq.question}
-                      </button>
-                    </h2>
-                    <div
-                      id={`collapse${index}`}
-                      className={`accordion-collapse collapse ${activeFaq === index ? 'show' : ''}`}
-                      aria-labelledby={`heading${index}`}
-                    >
-                      <div className="accordion-body">
-                        {faq.answer}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <div className={styles.faqSectionInner}>
+          {/* 헤더 */}
+          <div className="mb-4">
+            <div className={styles.sectionHeaderLeft}>
+              <h2>자주 묻는 질문</h2>
+              <p className="text-muted mb-0">궁금한 점이 있으시면 FAQ를 확인해보세요</p>
             </div>
+          </div>
+
+          {/* FAQ 아코디언 */}
+          <div className={styles.faqAccordion}>
+            {faqList.map((faq, index) => (
+              <div key={index} className={styles.faqItem}>
+                <button
+                  className={`${styles.faqQuestion} ${activeFaq === index ? styles.active : ''}`}
+                  onClick={() => toggleFaq(index)}
+                  style={activeFaq === index ? { color: '#0d6efd' } : {}}
+                >
+                  <span style={activeFaq === index ? { color: '#0d6efd' } : {}}>{faq.question}</span>
+                  <i 
+                    className={`bi ${activeFaq === index ? 'bi-chevron-up' : 'bi-chevron-down'}`}
+                    style={{ color: activeFaq === index ? '#0d6efd' : '#333' }}
+                  ></i>
+                </button>
+                {activeFaq === index && (
+                  <div className={styles.faqAnswer}>
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>

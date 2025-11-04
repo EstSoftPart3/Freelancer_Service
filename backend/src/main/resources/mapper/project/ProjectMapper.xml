@@ -29,7 +29,7 @@
 	</resultMap>
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
+		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' AND p.project_activate_yn = 'Y' <if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
 		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
@@ -131,7 +131,7 @@
 
 	<select id="countProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
+		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' AND p.project_activate_yn = 'Y' <if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
 		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("

@@ -144,49 +144,48 @@
     <!-- 인기 프로젝트 섹션 -->
     <section class="popular-projects-section">
       <div class="container">
-        <div class="section-header text-center mb-5">
-          <h2>인기 프로젝트</h2>
-          <p class="text-muted">많은 관심을 받고 있는 프로젝트들을 확인해보세요</p>
-        </div>
-        
-        <!-- 필터 탭 -->
-        <div class="filter-tabs mb-4">
-          <div class="d-flex justify-content-center">
-            <button 
-              v-for="tab in filterTabs" 
-              :key="tab.key"
-              :class="['btn', 'me-2', activeFilter === tab.key ? 'btn-primary' : 'btn-outline-secondary']"
-              @click="setActiveFilter(tab.key)"
-            >
-              {{ tab.label }}
+        <!-- 헤더와 필터를 같은 줄에 배치 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <!-- 왼쪽: 제목과 소개글 -->
+          <div class="section-header-left">
+            <h2>인기 프로젝트</h2>
+            <p class="text-muted mb-0">많은 관심을 받고 있는 프로젝트들을 확인해보세요</p>
+          </div>
+          
+          <!-- 우측: 필터 탭과 더보기 버튼 -->
+          <div class="d-flex align-items-center gap-3">
+            <div class="filter-tabs">
+              <button 
+                v-for="tab in filterTabs" 
+                :key="tab.key"
+                :class="['btn', 'btn-sm', 'me-2', activeFilter === tab.key ? 'btn-primary' : 'btn-outline-secondary']"
+                @click="setActiveFilter(tab.key)"
+              >
+                {{ tab.label }}
+              </button>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" @click="goToProjectList">
+              더보기 <i class="bi bi-arrow-right ms-1"></i>
             </button>
           </div>
         </div>
 
         <!-- 프로젝트 카드 -->
-        <div v-if="isLoadingProjects" class="text-center py-5" style="min-height: 400px;">
+        <div v-if="isLoadingProjects" class="text-center py-5" style="min-height: 300px;">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">로딩 중...</span>
           </div>
         </div>
-        <div v-else-if="popularProjects.length === 0" class="text-center py-5" style="min-height: 400px;">
+        <div v-else-if="popularProjects.length === 0" class="text-center py-5" style="min-height: 300px;">
           <p class="text-muted">표시할 프로젝트가 없습니다.</p>
         </div>
-        <div v-else class="row" style="min-height: 400px;">
+        <div v-else class="row" style="min-height: 300px;">
           <div 
-            v-for="project in paginatedProjects" 
+            v-for="project in displayedProjects" 
             :key="project.projectSq" 
-            class="col-lg-4 col-md-6 mb-4"
+            class="col mb-4"
           >
             <div class="project-card card h-100" @click="handleProjectCardClick(project)" style="cursor: pointer;">
-              <div class="project-image">
-                <img 
-                  :src="project.companyImageUrl || defaultProjectImage" 
-                  :alt="project.projectTtl"
-                  class="card-img-top"
-                  @error="handleImageError"
-                >
-              </div>
               <div class="card-body">
                 <h5 class="card-title">{{ project.projectTtl }}</h5>
                 <p class="card-text text-muted">{{ project.companyNm }}</p>
@@ -205,35 +204,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- 페이지네이션 -->
-        <div v-if="!isLoadingProjects" class="pagination-container text-center">
-          <nav>
-            <ul class="pagination justify-content-center">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)" aria-label="Previous">
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-              <li 
-                v-for="page in totalPages" 
-                :key="page"
-                class="page-item" 
-                :class="{ 
-                  active: currentPage === page,
-                  disabled: !hasDataForPage(page)
-                }"
-              >
-                <a class="page-link" href="#" @click.prevent="hasDataForPage(page) && changePage(page)">{{ page }}</a>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages || !hasDataForPage(currentPage + 1) }">
-                <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)" aria-label="Next">
-                  <span aria-hidden="true">&raquo;</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
         </div>
       </div>
     </section>
@@ -812,9 +782,7 @@ const allPopularProjectsData = ref({
   applicantCount: []
 })
 
-// 페이지네이션 상태
-const currentPage = ref(1)
-const itemsPerPage = 3
+// 페이지네이션 상태 (사용 안 함 - 5개만 표시)
 const isLoadingProjects = ref(false)
 
 // 인기 프로젝트 데이터 로드
@@ -856,7 +824,6 @@ const loadPopularProjects = async () => {
 
 // 필터에 따라 표시할 프로젝트 업데이트
 const updatePopularProjects = (filter) => {
-  currentPage.value = 1 // 필터 변경 시 첫 페이지로
   switch(filter) {
     case 'views':
       popularProjects.value = allPopularProjectsData.value.viewCount || []
@@ -880,34 +847,10 @@ const updatePopularProjects = (filter) => {
   })))
 }
 
-// 페이지네이션을 위한 computed 속성
-const paginatedProjects = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return popularProjects.value.slice(start, end)
+// 표시할 프로젝트 (최대 5개)
+const displayedProjects = computed(() => {
+  return popularProjects.value.slice(0, 5)
 })
-
-// 항상 3페이지 표시
-const totalPages = computed(() => {
-  return 3
-})
-
-// 각 페이지에 데이터가 있는지 확인
-const hasDataForPage = (page) => {
-  const start = (page - 1) * itemsPerPage
-  return start < popularProjects.value.length
-}
-
-// 페이지 변경 핸들러
-const changePage = (page) => {
-  if (page < 1 || page > totalPages.value || !hasDataForPage(page)) return
-  currentPage.value = page
-  // 페이지 변경 시 스크롤을 인기 프로젝트 섹션으로 이동
-  const section = document.querySelector('.popular-projects-section')
-  if (section) {
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-}
 
 // 프로젝트 카드 클릭 핸들러
 const handleProjectCardClick = (project) => {
@@ -971,6 +914,11 @@ const scrollToMap = () => {
     return
   }
   router.push({ path: '/project', query: { tab: 'map' } })
+}
+
+// 프로젝트 목록 페이지의 리스트 탭으로 이동
+const goToProjectList = () => {
+  router.push({ path: '/project', query: { tab: 'list' } })
 }
 </script>
 
@@ -1100,17 +1048,32 @@ const scrollToMap = () => {
   border-top: 1px solid #e9ecef;
 }
 
-.section-header h2 {
+.section-header-left h2 {
   font-size: 2.5rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   color: #333;
+}
+
+.section-header-left p {
+  font-size: 1rem;
 }
 
 .filter-tabs .btn {
   border-radius: 25px;
-  padding: 0.5rem 1.5rem;
+  padding: 0.4rem 1.2rem;
   font-weight: 500;
+  white-space: nowrap;
+}
+
+.popular-projects-section .row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.popular-projects-section .col {
+  padding: 0;
 }
 
 .project-card {
@@ -1126,14 +1089,8 @@ const scrollToMap = () => {
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.project-image img {
-  height: 200px;
-  object-fit: cover;
-  width: 100%;
-}
-
 .project-card .card-title {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
   color: #333;
@@ -1141,6 +1098,7 @@ const scrollToMap = () => {
 
 .project-card .card-text {
   margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 /* FAQ 섹션 */
@@ -1376,6 +1334,12 @@ const scrollToMap = () => {
 }
 
 /* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .popular-projects-section .row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .carousel-wrapper {
     height: 300px;
@@ -1445,12 +1409,22 @@ const scrollToMap = () => {
     margin-bottom: 0.5rem;
   }
   
-  .section-header h2 {
+  .section-header-left h2 {
     font-size: 2rem;
   }
   
   .faq-header h2 {
     font-size: 2rem;
+  }
+  
+  .popular-projects-section .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+  
+  .popular-projects-section .row {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1466,6 +1440,10 @@ const scrollToMap = () => {
   
   .hero-title {
     font-size: 2rem;
+  }
+  
+  .popular-projects-section .row {
+    grid-template-columns: 1fr;
   }
 }
 </style>
