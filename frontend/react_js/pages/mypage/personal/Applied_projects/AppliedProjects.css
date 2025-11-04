@@ -1,0 +1,52 @@
+.simple-post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.post-info {
+  padding: 1rem 0;
+}
+
+.interview-tooltip {
+  bottom: 80%;
+  left: 30%;
+  white-space: nowrap;
+  display: none;
+}
+
+.interview-wrapper:hover .interview-tooltip {
+  display: block;
+}
+
+.resume-hover {
+  cursor: pointer;
+}
+
+.resume-hover:hover {
+  text-decoration: underline;
+}
+
+.text-5 {
+  font-size: 1.1rem;
+}
+
+.text-4 {
+  font-size: 0.9rem;
+}
+
+.font-weight-semibold {
+  font-weight: 600;
+}
+
+.post-meta {
+  color: #666;
+}
+
+.text-dark {
+  color: #333;
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+}
+

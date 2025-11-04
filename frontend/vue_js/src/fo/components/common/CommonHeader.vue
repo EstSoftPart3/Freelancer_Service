@@ -205,7 +205,7 @@
                     style="min-width: 150px"
                   >
                     <li>
-                      <router-link class="dropdown-item" to="/mypage"
+                      <router-link class="dropdown-item" to="/mypage/calendar"
                         >마이페이지</router-link
                       >
                     </li>

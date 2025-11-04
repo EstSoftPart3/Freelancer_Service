@@ -217,7 +217,6 @@ import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import MapComponent from '@/fo/components/map/MapComponent.vue'
 import LocationSelectModal from '@/fo/components/map/LocationSelectModal.vue'
 import { useRouter } from 'vue-router'
-
 import { ref, watch, onMounted } from 'vue'
 import { api } from '@/axios.js'
 import qs from 'qs'
