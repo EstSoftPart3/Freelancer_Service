@@ -40,6 +40,10 @@ const MapComponent = forwardRef(function MapComponent({
   const [mapZoom, setMapZoom] = useState(initialZoom)
   const [isMapReady, setIsMapReady] = useState(false)
   
+  // 프로젝트 관리 상태
+  const [allProjects, setAllProjects] = useState([]) // 서버에서 받은 전체 프로젝트
+  const [visibleProjects, setVisibleProjects] = useState([]) // 현재 지도 영역에 보이는 프로젝트
+  
   // 지도 인스턴스 및 마커 관리를 위한 ref
   const mapRef = useRef(null) // 지도가 그려질 DOM 요소
   const mapInstanceRef = useRef(null) // 네이버 지도 인스턴스
@@ -47,7 +51,17 @@ const MapComponent = forwardRef(function MapComponent({
   const projectMarkersRef = useRef([]) // 프로젝트 마커들 배열
 
   // ========================================
-  // 1. 네이버 지도 초기화
+  // 1. props로 받은 projects를 allProjects로 저장
+  // ========================================
+  useEffect(() => {
+    if (projects && projects.length > 0) {
+      console.log('전체 프로젝트 업데이트:', projects.length, '개')
+      setAllProjects(projects)
+    }
+  }, [projects])
+
+  // ========================================
+  // 2. 네이버 지도 초기화
   // ========================================
   useEffect(() => {
     // 네이버 Maps API가 로드되지 않았거나 DOM이 준비되지 않은 경우 대기
@@ -88,12 +102,6 @@ const MapComponent = forwardRef(function MapComponent({
         if (onZoomChange) onZoomChange(newZoom)
       })
 
-      // 지도 드래그 종료 이벤트 리스너 (필요시 활성화)
-      // naver.maps.Event.addListener(map, 'dragend', () => {
-      //   const center = map.getCenter()
-      //   console.log('지도 중심 변경:', center.lat(), center.lng())
-      // })
-
       console.log('네이버 Dynamic Map 초기화 완료')
     } catch (error) {
       console.error('지도 초기화 실패:', error)
@@ -101,10 +109,65 @@ const MapComponent = forwardRef(function MapComponent({
   }, []) // 최초 1회만 실행
 
   // ========================================
-  // 2. 사용자 위치 변경 시 지도 중심 이동 + 사용자 마커 업데이트
+  // 3. 지도 영역 변경 시 보이는 프로젝트 필터링
   // ========================================
   useEffect(() => {
-    if (!mapInstanceRef.current || !userLocation.latitude || !userLocation.longitude || !window.naver || !window.naver.maps) {
+    if (!mapInstanceRef.current || !isMapReady || !window.naver || !window.naver.maps) {
+      return
+    }
+
+    const map = mapInstanceRef.current
+
+    // 지도 영역 내 프로젝트 필터링 함수
+    const updateVisibleProjects = () => {
+      if (allProjects.length === 0) {
+        setVisibleProjects([])
+        return
+      }
+
+      try {
+        const bounds = map.getBounds() // 현재 보이는 지도 영역
+
+        const filtered = allProjects.filter(project => {
+          if (!project.latitude || !project.longitude) return false
+          
+          const position = new naver.maps.LatLng(
+            project.latitude,
+            project.longitude
+          )
+          
+          return bounds.hasLatLng(position) // 영역 안에 있는지 확인
+        })
+
+        console.log('지도 영역 내 프로젝트:', filtered.length, '/', allProjects.length)
+        setVisibleProjects(filtered)
+      } catch (error) {
+        console.error('프로젝트 필터링 오류:', error)
+      }
+    }
+
+    // 초기 필터링
+    updateVisibleProjects()
+
+    // 지도 드래그 종료 시 필터링
+    const dragendListener = naver.maps.Event.addListener(map, 'dragend', updateVisibleProjects)
+
+    // 지도 줌 변경 시 필터링 (기존 줌 이벤트와 별개)
+    const zoomListener = naver.maps.Event.addListener(map, 'zoom_changed', updateVisibleProjects)
+
+    // 클린업
+    return () => {
+      naver.maps.Event.removeListener(dragendListener)
+      naver.maps.Event.removeListener(zoomListener)
+    }
+  }, [allProjects, isMapReady])
+
+  // ========================================
+  // 4. 사용자 위치 변경 시 지도 중심 이동 + 사용자 마커 업데이트 (로그인 시에만)
+  // ========================================
+  useEffect(() => {
+    // 로그인 안 했거나 위치 정보가 없으면 사용자 마커 표시 안 함
+    if (!mapInstanceRef.current || !userLocation || !userLocation.latitude || !userLocation.longitude || !window.naver || !window.naver.maps) {
       return
     }
 
@@ -146,7 +209,7 @@ const MapComponent = forwardRef(function MapComponent({
   }, [userLocation.latitude, userLocation.longitude])
 
   // ========================================
-  // 3. 프로젝트 목록 변경 시 프로젝트 마커들 업데이트
+  // 5. 보이는 프로젝트 목록 변경 시 마커 업데이트
   // ========================================
   useEffect(() => {
     if (!mapInstanceRef.current || !isMapReady || !window.naver || !window.naver.maps) {
@@ -168,15 +231,15 @@ const MapComponent = forwardRef(function MapComponent({
     projectMarkersRef.current = []
 
     // 프로젝트가 없으면 종료
-    if (!projects || projects.length === 0) {
+    if (!visibleProjects || visibleProjects.length === 0) {
       console.log('표시할 프로젝트가 없습니다.')
       return
     }
 
-    console.log('프로젝트 마커 생성 시작:', projects.length, '개')
+    console.log('프로젝트 마커 생성 시작:', visibleProjects.length, '개')
 
     // 각 프로젝트에 대해 마커 생성
-    projects.forEach((project, index) => {
+    visibleProjects.forEach((project, index) => {
       // 위도/경도가 없는 경우 스킵
       if (!project.latitude || !project.longitude) {
         console.warn(`프로젝트 ${project.projectSq}의 위치 정보가 없습니다.`)
@@ -226,10 +289,10 @@ const MapComponent = forwardRef(function MapComponent({
     })
 
     console.log('프로젝트 마커 생성 완료:', projectMarkersRef.current.length, '개')
-  }, [projects, isMapReady, onMarkerClick])
+  }, [visibleProjects, isMapReady, onMarkerClick])
 
   // ========================================
-  // 4. 줌 컨트롤 함수들
+  // 6. 줌 컨트롤 함수들
   // ========================================
   const zoomIn = () => {
     if (!mapInstanceRef.current) return
@@ -250,7 +313,7 @@ const MapComponent = forwardRef(function MapComponent({
   }
 
   // ========================================
-  // 5. 필터 관련 핸들러
+  // 7. 필터 관련 핸들러
   // ========================================
   const handleFilterChange = (filters) => {
     console.log('필터 변경 (MapComponent):', filters)
@@ -268,13 +331,22 @@ const MapComponent = forwardRef(function MapComponent({
   // ========================================
   return (
     <div className="map-section">
-      {/* 주소 표시 + 필터 버튼 */}
+      {/* 주소 표시 + 필터 버튼 (로그인 시에만 주소 표시) */}
       {showControls && (
         <div className="current-location mb-3 p-3 bg-light rounded">
           <div className="d-flex align-items-center justify-content-between">
-            <div>
-              <strong className="text-color-dark">{userLocation.address}</strong>
-            </div>
+            {/* 로그인 했을 때만 주소 표시 */}
+            {userLocation && userLocation.address && (
+              <div>
+                <strong className="text-color-dark">{userLocation.address}</strong>
+              </div>
+            )}
+            {/* 로그인 안 했을 때 안내 문구 */}
+            {(!userLocation || !userLocation.address) && (
+              <div>
+                <span className="text-muted">전국 프로젝트 지도</span>
+              </div>
+            )}
             {/* 필터 버튼 */}
             <button
               onClick={() => setShowFilterModal(true)}
@@ -352,17 +424,20 @@ const MapComponent = forwardRef(function MapComponent({
       {showControls && (
         <div className="map-legend mt-3 p-4 bg-light rounded">
           <div className="d-flex gap-5">
-            <div className="d-flex align-items-center">
-              <i className="bi bi-geo-alt-fill me-2 fs-5" style={{ color: '#0066FF' }}></i>
-              <span className="text-muted fw-bold">내 주소</span>
-            </div>
+            {/* 로그인 했을 때만 "내 주소" 표시 */}
+            {userLocation && userLocation.latitude && userLocation.longitude && (
+              <div className="d-flex align-items-center">
+                <i className="bi bi-geo-alt-fill me-2 fs-5" style={{ color: '#0066FF' }}></i>
+                <span className="text-muted fw-bold">내 주소</span>
+              </div>
+            )}
             <div className="d-flex align-items-center">
               <i className="bi bi-geo-alt-fill me-2" style={{ fontSize: '1.1rem', color: '#FF4444' }}></i>
               <span className="text-muted fw-bold">프로젝트 위치</span>
             </div>
             <div className="d-flex align-items-center">
               <span className="text-muted fw-bold">
-                {showRadiusText ? '주소 5km 내 ' : ''}총 {projects.length}개 프로젝트
+                총 {visibleProjects.length}개 프로젝트
               </span>
             </div>
           </div>

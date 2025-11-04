@@ -36,7 +36,7 @@ export default function MainPage() {
   // 현재 필터 상태
   const [currentFilters, setCurrentFilters] = useState({
     locationType: 'address',
-    radius: '5',
+    radius: '10000', // 초기값: 없음 (전국 전체)
     jobRole: '',
     keyword: ''
   })
@@ -170,14 +170,14 @@ export default function MainPage() {
   // 사용자 위치 가져오기 함수
   const getUserLocation = useCallback(() => {
     return new Promise((resolve) => {
-      // 비로그인 시: 기본 위치만 사용 (GPS 접근 안 함)
+      // 비로그인 시: 기본 위치만 사용 (GPS 접근 안 함, 주소 정보 없음)
       const userId = localStorage.getItem('userSq') || user?.userSq || 0
-      if (!userId || userId === 0) {
-        console.log('비로그인 상태: 기본 위치 사용')
+      if (!userId || userId === 0 || userId === '0') {
+        console.log('비로그인 상태: 위치 정보 없음')
         resolve({
           latitude: 37.5665,
           longitude: 126.9780,
-          address: '서울시 중구'
+          address: null // 주소 정보 없음 (사용자 마커 표시 안 함)
         })
         return
       }
@@ -726,13 +726,15 @@ export default function MainPage() {
 
           {/* 슬라이드 영역 */}
           <div className={styles.carouselTrack}>
-            {/* 슬라이드 1: 캘린더 배너 이미지 */}
-            <div className={`${styles.carouselSlide} ${currentSlideIndex === 0 ? styles.active : ''}`}>
-              <img 
-                src="/assets/banners/main-calendar.png" 
-                alt="캘린더 배너" 
-                className={styles.bannerImage}
-              />
+            {/* 슬라이드 1: 캘린더 텍스트 배너 */}
+            <div className={`${styles.carouselSlide} ${styles.calendarSlideWhite} ${currentSlideIndex === 0 ? styles.active : ''}`}>
+              <div className={styles.centerTextArea}>
+                <h1 className={styles.heroTitle}>
+                  관심있는 프로젝트 공고 일정<br />
+                  달력에서 바로 확인하세요
+                </h1>
+                <p className={styles.heroSubtitle}>스크랩한 기업 프로젝트의 모집 일정 캘린더에서 한눈에 확인하세요</p>
+              </div>
             </div>
 
             {/* 슬라이드 2: 히어로 배너 이미지 + 지도 축소판 */}

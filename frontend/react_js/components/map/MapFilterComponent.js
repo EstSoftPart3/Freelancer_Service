@@ -47,11 +47,11 @@ export default function MapFilterComponent({
     onOpenLocationModal()
   }
 
-  // 필터 초기화
+  // 필터 초기화 (전국 전체 프로젝트 조회)
   const resetFilters = () => {
     const defaultFilters = {
       locationType: 'address',
-      radius: '5',
+      radius: '10000', // 10000km = 전국 전체
       jobRole: '',
       keyword: ''
     }
@@ -119,6 +119,14 @@ export default function MapFilterComponent({
               {r}km
             </button>
           ))}
+          {/* 없음 버튼 (전국 전체) */}
+          <button
+            type="button"
+            className={`btn btn-rounded ${filters.radius === '10000' ? 'btn-primary' : 'btn-light'}`}
+            onClick={() => updateFilter('radius', '10000')}
+          >
+            없음
+          </button>
         </div>
       </div>
 
