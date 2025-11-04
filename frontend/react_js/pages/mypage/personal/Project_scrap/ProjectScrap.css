@@ -1,0 +1,166 @@
+.project-scrap-container {
+  width: 100%;
+}
+
+.simple-post-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.simple-post-list li {
+  padding: 1rem 0;
+}
+
+.post-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 반응형 - 모바일 대응 */
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .d-flex.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  .post-meta.text-4 {
+    font-size: 0.875rem;
+  }
+
+  .form-select-sm.w-auto,
+  .form-control-sm.w-auto {
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .col-md-12.d-flex {
+    flex-direction: column;
+  }
+}
+
+/* 버튼 스타일 */
+.btn-outline.btn-primary {
+  border: 1px solid #007bff;
+  color: #007bff;
+  background-color: transparent;
+}
+
+.btn-outline.btn-primary:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* 뱃지 스타일 */
+.badge.bg-light {
+  background-color: #f8f9fa !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badge img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 페이지네이션 스타일 */
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page-item {
+  margin: 0 0.25rem;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  cursor: not-allowed;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+  z-index: 1;
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.page-link {
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.75rem;
+  margin-left: -1px;
+  line-height: 1.25;
+  color: #007bff;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.page-link:hover {
+  z-index: 2;
+  color: #0056b3;
+  text-decoration: none;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.page-link:focus {
+  z-index: 2;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 텍스트 스타일 */
+.text-5 {
+  font-size: 1.5rem;
+  text-decoration: none;
+  color: #333;
+}
+
+.text-5:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.text-4 {
+  font-size: 1rem;
+}
+
+.font-weight-semibold {
+  font-weight: 600;
+}
+
+/* 정렬 및 간격 */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.float-end {
+  float: right;
+}
+
+/* 반응형 스크롤 */
+@media (max-width: 576px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .float-end {
+    float: none;
+    display: flex;
+    justify-content: center;
+  }
+}
+

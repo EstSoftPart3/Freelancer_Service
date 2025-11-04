@@ -9,6 +9,7 @@
     "lint": "eslint \"**/*.{js,jsx}\""
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0",
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/interaction": "^6.1.19",
@@ -16,7 +17,7 @@
     "@fullcalendar/timegrid": "^6.1.19",
     "@reduxjs/toolkit": "^2.9.2",
     "axios": "^1.9.0",
-    "bootstrap": "^5.3.6",
+    "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
@@ -27,7 +28,8 @@
     "react-datepicker": "^7.6.0",
     "react-dom": "^18.3.0",
     "react-quill": "^2.0.0",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
