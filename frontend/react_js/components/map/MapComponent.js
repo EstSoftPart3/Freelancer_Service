@@ -1,11 +1,11 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import MapFilterComponent from './MapFilterComponent'
 import styles from './MapComponent.module.css'
 
 const MapComponent = forwardRef(function MapComponent({
   userLocation,
   projects = [],
-  mapImageUrl = '',
+  mapImageUrl = '', // 더이상 사용하지 않지만 호환성을 위해 유지
   locationType = 'address',
   currentFilters = {
     locationType: 'address',
@@ -38,120 +38,234 @@ const MapComponent = forwardRef(function MapComponent({
   
   // 지도 관련 상태
   const [mapZoom, setMapZoom] = useState(initialZoom)
+  const [isMapReady, setIsMapReady] = useState(false)
   
-  // 마커 관련 상태
-  const [visibleProjects, setVisibleProjects] = useState([])
+  // 지도 인스턴스 및 마커 관리를 위한 ref
+  const mapRef = useRef(null) // 지도가 그려질 DOM 요소
+  const mapInstanceRef = useRef(null) // 네이버 지도 인스턴스
+  const userMarkerRef = useRef(null) // 사용자 위치 마커
+  const projectMarkersRef = useRef([]) // 프로젝트 마커들 배열
 
-  // 프로젝트 변경 감지
+  // ========================================
+  // 1. 네이버 지도 초기화
+  // ========================================
   useEffect(() => {
-    console.log('프로젝트 변경 감지:', projects)
-    setVisibleProjects(projects || [])
-  }, [projects])
-
-  // 사용자 위치 변경 감지
-  useEffect(() => {
-    if (userLocation && onUpdateMap) {
-      console.log('사용자 위치 변경:', userLocation)
-      onUpdateMap(userLocation)
+    // 네이버 Maps API가 로드되지 않았거나 DOM이 준비되지 않은 경우 대기
+    if (!window.naver || !window.naver.maps || !mapRef.current) {
+      console.warn('네이버 Maps API가 아직 로드되지 않았습니다.')
+      return
     }
-  }, [userLocation, onUpdateMap])
 
-  // 줌 컨트롤 함수들
+    // 이미 지도가 생성된 경우 중복 생성 방지
+    if (mapInstanceRef.current) {
+      return
+    }
+
+    console.log('네이버 Dynamic Map 초기화 시작')
+
+    try {
+      // 네이버 지도 생성
+      const map = new naver.maps.Map(mapRef.current, {
+        center: new naver.maps.LatLng(
+          userLocation.latitude || 37.5665,
+          userLocation.longitude || 126.9780
+        ),
+        zoom: mapZoom,
+        zoomControl: false, // 기본 줌 컨트롤 숨김 (우리가 커스텀으로 만듦)
+        mapTypeControl: false,
+        scaleControl: false,
+        logoControl: false,
+        mapDataControl: false
+      })
+
+      mapInstanceRef.current = map
+      setIsMapReady(true)
+
+      // 지도 줌 변경 이벤트 리스너
+      naver.maps.Event.addListener(map, 'zoom_changed', () => {
+        const newZoom = map.getZoom()
+        setMapZoom(newZoom)
+        if (onZoomChange) onZoomChange(newZoom)
+      })
+
+      // 지도 드래그 종료 이벤트 리스너 (필요시 활성화)
+      // naver.maps.Event.addListener(map, 'dragend', () => {
+      //   const center = map.getCenter()
+      //   console.log('지도 중심 변경:', center.lat(), center.lng())
+      // })
+
+      console.log('네이버 Dynamic Map 초기화 완료')
+    } catch (error) {
+      console.error('지도 초기화 실패:', error)
+    }
+  }, []) // 최초 1회만 실행
+
+  // ========================================
+  // 2. 사용자 위치 변경 시 지도 중심 이동 + 사용자 마커 업데이트
+  // ========================================
+  useEffect(() => {
+    if (!mapInstanceRef.current || !userLocation.latitude || !userLocation.longitude || !window.naver || !window.naver.maps) {
+      return
+    }
+
+    const map = mapInstanceRef.current
+
+    try {
+      const userPosition = new naver.maps.LatLng(userLocation.latitude, userLocation.longitude)
+
+      // 지도 중심을 사용자 위치로 이동
+      map.setCenter(userPosition)
+
+      // 기존 사용자 마커 제거
+      if (userMarkerRef.current) {
+        try {
+          userMarkerRef.current.setMap(null)
+        } catch (error) {
+          console.warn('사용자 마커 제거 중 오류:', error)
+        }
+      }
+
+      // 새로운 사용자 마커 생성 (파란색 핀)
+      const userMarker = new naver.maps.Marker({
+        position: userPosition,
+        map: map,
+        title: '내 위치',
+        icon: {
+          content: '<div style="display: flex; flex-direction: column; align-items: center;"><i class="bi bi-geo-alt-fill" style="font-size: 10pt; color: #0066FF;"></i></div>',
+          anchor: new naver.maps.Point(8, 24)
+        },
+        zIndex: 1000
+      })
+
+      userMarkerRef.current = userMarker
+
+      console.log('사용자 위치 마커 업데이트:', userLocation)
+    } catch (error) {
+      console.error('사용자 마커 업데이트 실패:', error)
+    }
+  }, [userLocation.latitude, userLocation.longitude])
+
+  // ========================================
+  // 3. 프로젝트 목록 변경 시 프로젝트 마커들 업데이트
+  // ========================================
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isMapReady || !window.naver || !window.naver.maps) {
+      return
+    }
+
+    const map = mapInstanceRef.current
+
+    // 기존 프로젝트 마커들 모두 제거 (안전하게)
+    projectMarkersRef.current.forEach(marker => {
+      try {
+        if (marker && marker.setMap) {
+          marker.setMap(null)
+        }
+      } catch (error) {
+        console.warn('마커 제거 중 오류:', error)
+      }
+    })
+    projectMarkersRef.current = []
+
+    // 프로젝트가 없으면 종료
+    if (!projects || projects.length === 0) {
+      console.log('표시할 프로젝트가 없습니다.')
+      return
+    }
+
+    console.log('프로젝트 마커 생성 시작:', projects.length, '개')
+
+    // 각 프로젝트에 대해 마커 생성
+    projects.forEach((project, index) => {
+      // 위도/경도가 없는 경우 스킵
+      if (!project.latitude || !project.longitude) {
+        console.warn(`프로젝트 ${project.projectSq}의 위치 정보가 없습니다.`)
+        return
+      }
+
+      try {
+        const projectPosition = new naver.maps.LatLng(
+          project.latitude,
+          project.longitude
+        )
+
+        const projectTitle = project.projectTitle || project.projectTtl || '프로젝트'
+
+        // 프로젝트 마커 생성 (빨간색 핀 + 타이틀)
+        const marker = new naver.maps.Marker({
+          position: projectPosition,
+          map: map,
+          title: projectTitle,
+          icon: {
+            content: `
+              <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                <i class="bi bi-geo-alt-fill" style="font-size: 9pt; color: #FF4444;"></i>
+                <div style="font-size: 7pt; font-weight: bold; color: #333; background: rgba(255, 255, 255, 0.9); padding: 1px 3px; border-radius: 3px; white-space: nowrap; margin-top: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                  ${projectTitle}
+                </div>
+              </div>
+            `,
+            anchor: new naver.maps.Point(8, 24)
+          },
+          zIndex: 999
+        })
+
+        // 마커 클릭 이벤트 등록
+        naver.maps.Event.addListener(marker, 'click', () => {
+          console.log('프로젝트 마커 클릭:', project.projectTitle || project.projectTtl)
+          if (onMarkerClick) {
+            onMarkerClick(project)
+          }
+        })
+
+        // 마커 배열에 추가
+        projectMarkersRef.current.push(marker)
+      } catch (error) {
+        console.error(`프로젝트 ${project.projectSq} 마커 생성 실패:`, error)
+      }
+    })
+
+    console.log('프로젝트 마커 생성 완료:', projectMarkersRef.current.length, '개')
+  }, [projects, isMapReady, onMarkerClick])
+
+  // ========================================
+  // 4. 줌 컨트롤 함수들
+  // ========================================
   const zoomIn = () => {
-    if (mapZoom < 18) {
-      const newZoom = mapZoom + 1
-      setMapZoom(newZoom)
-      if (onZoomChange) onZoomChange(newZoom)
+    if (!mapInstanceRef.current) return
+    const map = mapInstanceRef.current
+    const currentZoom = map.getZoom()
+    if (currentZoom < 18) {
+      map.setZoom(currentZoom + 1)
     }
   }
 
   const zoomOut = () => {
-    if (mapZoom > 10) {
-      const newZoom = mapZoom - 1
-      setMapZoom(newZoom)
-      if (onZoomChange) onZoomChange(newZoom)
+    if (!mapInstanceRef.current) return
+    const map = mapInstanceRef.current
+    const currentZoom = map.getZoom()
+    if (currentZoom > 10) {
+      map.setZoom(currentZoom - 1)
     }
   }
 
-  // 사용자 마커 스타일 계산
-  const getUserMarkerStyle = () => {
-    if (!userLocation?.latitude || !userLocation?.longitude) return {}
-    
-    return {
-      left: '50%',
-      top: '50%',
-      transform: 'translate(-50%, -100%)',
-      zIndex: 1000
-    }
-  }
-
-  // 프로젝트 마커 스타일 계산
-  const getProjectMarkerStyle = (project) => {
-    if (!project.latitude || !project.longitude) return {}
-    
-    const userLat = userLocation.latitude
-    const userLng = userLocation.longitude
-    const projectLat = project.latitude
-    const projectLng = project.longitude
-    
-    // 위도/경도 차이 계산
-    const latDiff = projectLat - userLat
-    const lngDiff = projectLng - userLng
-    
-    // 줌 레벨에 따른 스케일
-    const zoomScale = Math.pow(2, mapZoom - 16)
-    
-    // 1도당 픽셀 수
-    const pixelsPerDegree = 50000 * zoomScale
-    
-    // 지도 중심(50%, 50%) 기준으로 계산
-    const x = 50 + (lngDiff * pixelsPerDegree / mapWidth * 100)
-    const y = 50 - (latDiff * pixelsPerDegree / mapHeight * 100)
-    
-    return {
-      left: `${Math.max(5, Math.min(95, x))}%`,
-      top: `${Math.max(5, Math.min(95, y))}%`,
-      transform: 'translate(-50%, -100%)',
-      zIndex: 999
-    }
-  }
-
-  // 마커 클릭 핸들러
-  const handleMarkerClick = (project) => {
-    if (onMarkerClick) onMarkerClick(project)
-  }
-
-  // 필터 변경 핸들러
+  // ========================================
+  // 5. 필터 관련 핸들러
+  // ========================================
   const handleFilterChange = (filters) => {
     console.log('필터 변경 (MapComponent):', filters)
     if (onFilterChange) onFilterChange(filters)
     setShowFilterModal(false)
   }
 
-  // 이미지 로드 성공 처리
-  const handleImageLoad = (event) => {
-    console.log('지도 이미지 로드 성공!', event.target.src)
-  }
-
-  // 이미지 오류 처리
-  const handleImageError = (event) => {
-    console.error('지도 이미지 로드 실패:', event.target.src)
-    
-    const errorSvg = `
-      <svg width="900" height="800" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#e9ecef"/>
-        <text x="450" y="400" font-family="Arial" font-size="18" fill="#6c757d" text-anchor="middle">지도를 불러오는 중입니다...</text>
-      </svg>
-    `
-    event.target.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(errorSvg)))}`
-  }
-
-  // 위치 선택 모달 열기 핸들러
   const handleOpenLocationModal = () => {
     setShowFilterModal(false)
     if (onOpenLocationModal) onOpenLocationModal()
   }
 
+  // ========================================
+  // 렌더링
+  // ========================================
   return (
     <div className="map-section">
       {/* 주소 표시 + 필터 버튼 */}
@@ -172,23 +286,34 @@ const MapComponent = forwardRef(function MapComponent({
         </div>
       )}
 
-      {/* 지도 영역 */}
+      {/* 지도 영역 - 네이버 지도가 여기에 렌더링됩니다 */}
       <div 
         className="map-wrapper border rounded position-relative" 
         style={{ height: `${mapHeight}px`, overflow: 'hidden' }}
       >
-        {/* 네이버 지도 이미지 */}
-        {mapImageUrl ? (
-          <img
-            src={mapImageUrl}
-            alt="지도"
-            className="w-100 h-100"
-            style={{ objectFit: 'cover' }}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-          />
-        ) : (
-          <div className="map-placeholder d-flex justify-content-center align-items-center h-100 bg-light">
+        {/* 네이버 Dynamic Map이 렌더링될 DOM 요소 */}
+        <div 
+          ref={mapRef}
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            position: 'relative'
+          }}
+        />
+
+        {/* 로딩 상태 표시 */}
+        {!isMapReady && (
+          <div 
+            className="map-placeholder d-flex justify-content-center align-items-center h-100 bg-light"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: 9999
+            }}
+          >
             <div className="text-center">
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">로딩 중...</span>
@@ -200,7 +325,7 @@ const MapComponent = forwardRef(function MapComponent({
 
         {/* 줌 컨트롤 */}
         {showControls && (
-          <div className="zoom-controls position-absolute top-0 end-0 m-3">
+          <div className="zoom-controls position-absolute top-0 end-0 m-3" style={{ zIndex: 1000 }}>
             <div className="btn-group-vertical" role="group">
               <button
                 onClick={zoomIn}
@@ -221,38 +346,6 @@ const MapComponent = forwardRef(function MapComponent({
             </div>
           </div>
         )}
-
-        {/* 사용자 위치 마커 */}
-        {userLocation.latitude && userLocation.longitude && (
-          <div
-            className="user-marker position-absolute"
-            style={getUserMarkerStyle()}
-            title="내 위치"
-          >
-            <i className="bi bi-geo-alt-fill text-primary" style={{ fontSize: '10pt' }}></i>
-          </div>
-        )}
-
-        {/* 프로젝트 마커들 */}
-        {visibleProjects.map(project => (
-          <div
-            key={project.projectSq}
-            className="project-marker-container position-absolute"
-            style={getProjectMarkerStyle(project)}
-            onClick={() => handleMarkerClick(project)}
-            title={project.projectTitle || project.projectTtl}
-          >
-            {/* 마커 아이콘 */}
-            <i className="bi bi-geo-alt-fill text-danger" style={{ fontSize: '9pt' }}></i>
-            
-            {/* 줌 레벨 13 이상일 때만 라벨 표시 (5km부터) */}
-            {mapZoom >= 13 && (
-              <div className="marker-label">
-                {project.projectTitle || project.projectTtl}
-              </div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* 범례 */}
@@ -260,11 +353,11 @@ const MapComponent = forwardRef(function MapComponent({
         <div className="map-legend mt-3 p-4 bg-light rounded">
           <div className="d-flex gap-5">
             <div className="d-flex align-items-center">
-              <i className="bi bi-geo-alt-fill text-primary me-2 fs-5"></i>
+              <i className="bi bi-geo-alt-fill me-2 fs-5" style={{ color: '#0066FF' }}></i>
               <span className="text-muted fw-bold">내 주소</span>
             </div>
             <div className="d-flex align-items-center">
-              <i className="bi bi-geo-alt-fill text-danger me-2" style={{ fontSize: '1.1rem' }}></i>
+              <i className="bi bi-geo-alt-fill me-2" style={{ fontSize: '1.1rem', color: '#FF4444' }}></i>
               <span className="text-muted fw-bold">프로젝트 위치</span>
             </div>
             <div className="d-flex align-items-center">

@@ -63,6 +63,12 @@ export default function Document() {
         {/* Daum & Kakao API */}
         <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
         <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=90610faa13d02b09f83a700d0885a872&libraries=services"></script>
+
+        {/* Naver Maps API - Dynamic Map */}
+        <script 
+          type="text/javascript" 
+          src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=soeyw6whad"
+        ></script>
       </body>
     </Html>
   )

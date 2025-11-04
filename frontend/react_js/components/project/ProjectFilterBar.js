@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '@/lib/axios'
+import styles from './ProjectFilterBar.module.css'
 
 export default function ProjectFilterBar({ onUpdate }) {
   // API로부터 가져올 옵션들
@@ -166,9 +167,9 @@ export default function ProjectFilterBar({ onUpdate }) {
   }
 
   return (
-    <div>
+    <div className={styles.filterBarContainer}>
       {/* Web Layout */}
-      <div className="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-3 flex-wrap" style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <div className="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-2">
         {/* Region Dropdown */}
         <div className="dropdown">
           <button className="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -278,12 +279,12 @@ export default function ProjectFilterBar({ onUpdate }) {
         </div>
 
         {/* Search Input */}
-        <div className="flex-grow-1">
+        <div>
           <input
             type="text"
             className="form-control"
             placeholder="검색어를 입력하세요..."
-            style={{ maxWidth: '400px' }}
+            style={{ width: '250px' }}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
           />
@@ -291,7 +292,7 @@ export default function ProjectFilterBar({ onUpdate }) {
 
         {/* Search Type Dropdown */}
         <div className="dropdown">
-          <button className="btn btn-outline btn-primary dropdown-toggle text-truncate" type="button" data-bs-toggle="dropdown" style={{ maxWidth: '120px' }}>
+          <button className="btn btn-outline btn-primary dropdown-toggle text-truncate" type="button" data-bs-toggle="dropdown" style={{ width: '100px' }}>
             {selectedTargetField}
           </button>
           <ul className="dropdown-menu">
@@ -307,7 +308,7 @@ export default function ProjectFilterBar({ onUpdate }) {
 
         {/* Sort Dropdown */}
         <div className="dropdown">
-          <button className="btn btn-outline btn-primary dropdown-toggle text-truncate" type="button" data-bs-toggle="dropdown" style={{ maxWidth: '120px' }}>
+          <button className="btn btn-outline btn-primary dropdown-toggle text-truncate" type="button" data-bs-toggle="dropdown" style={{ width: '100px' }}>
             {selectedSort}
           </button>
           <ul className="dropdown-menu">
@@ -323,7 +324,7 @@ export default function ProjectFilterBar({ onUpdate }) {
       </div>
 
       {/* Mobile Layout */}
-      <div className="filter-bar border rounded p-3 d-lg-none" style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <div className="filter-bar border rounded p-3 d-lg-none">
         <div className="d-flex flex-wrap gap-2 mb-3">
           {/* Region Dropdown */}
           <div className="dropdown flex-grow-1">
