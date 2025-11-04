@@ -178,7 +178,7 @@ const routes = [
       {
         path: '', // 여기! 기본 자식 경로
         name: 'MypageDefault',
-        component: InformationEditPage,
+        component: CalendarPage,
       },
       //common
       {
