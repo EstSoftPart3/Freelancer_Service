@@ -5,6 +5,7 @@ import { api } from '@/lib/axios'
 import CommonPageHeader from '@/components/common/CommonPageHeader'
 import BoardTable from '@/components/community/BoardTable'
 import CommonPagination from '@/components/common/CommonPagination'
+import styles from './qnaList.module.css'
 
 export default function QnaListPage() {
   const router = useRouter()
@@ -81,7 +82,7 @@ export default function QnaListPage() {
         strongText="QnA 게시판"
         breadcrumbs={[{ text: 'Home', link: '/' }, { text: '커뮤니티' }]}
       />
-      <div className="container py-5 mt-3">
+      <div className={`${styles.pageContainer} py-5 mt-3`}>
         {/* 검색창 및 필터 영역 */}
         <div className="row align-items-center justify-content-between py-3 border-bottom mb-3">
           <div className="col-md-6 mb-3 mb-md-0">

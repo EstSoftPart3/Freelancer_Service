@@ -241,18 +241,6 @@ export default function CommonHeader() {
                               </li>
                               <li>
                                 <a
-                                  href="/admin/projects"
-                                  className="dropdown-item"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    router.push('/admin/projects')
-                                  }}
-                                >
-                                  프로젝트 관리
-                                </a>
-                              </li>
-                              <li>
-                                <a
                                   href="/admin/reports"
                                   className="dropdown-item"
                                   onClick={(e) => {

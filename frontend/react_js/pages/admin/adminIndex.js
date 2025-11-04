@@ -1,4 +1,5 @@
 import CommonPageHeader from '@/components/common/CommonPageHeader'
+import styles from './adminIndex.module.css'
 
 export default function AdminDashboardPage() {
   return (
@@ -12,7 +13,7 @@ export default function AdminDashboardPage() {
           { text: '관리자 대시보드' }
         ]}
       />
-      <div className="container py-5">
+      <div className={`${styles.pageContainer} py-5`}>
         <div className="row justify-content-center">
           <div className="col-12 text-center">
             <h2>임시페이지입니다</h2>

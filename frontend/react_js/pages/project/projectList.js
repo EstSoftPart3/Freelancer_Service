@@ -644,7 +644,7 @@ export default function ProjectListPage() {
       />
 
       {/* 탭 */}
-      <div className="container">
+      <div className={styles.pageContainer}>
         <ul className="nav nav-tabs mb-0 pt-3">
           <li className="nav-item">
             <a
@@ -674,7 +674,7 @@ export default function ProjectListPage() {
         <ProjectFilterBar onUpdate={updateFilters} />
       )}
 
-      <div className="container py-4">
+      <div className={`${styles.pageContainer} py-4`}>
         {/* 리스트 탭 내용 */}
         {activeTab === 'list' && (
           <div>

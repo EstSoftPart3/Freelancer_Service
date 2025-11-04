@@ -184,7 +184,7 @@ export default function AffiliationListPage() {
         strongText="소속 모집 공고"
         breadcrumbs={[{ text: 'Home', link: '/' }, { text: '소속' }]}
       />
-      <div className="container py-4">
+      <div className={`${styles.pageContainer} py-4`}>
         {/* 검색창 및 필터 영역 */}
         <div className="row align-items-center justify-content-between py-3 border-bottom mb-3">
           {/* 왼쪽: 정렬, 지역 필터 */}

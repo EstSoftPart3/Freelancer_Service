@@ -3,6 +3,12 @@
   min-height: 100vh;
 }
 
+.pageContainer {
+  padding-left: 140px;
+  padding-right: 140px;
+  max-width: 100%;
+}
+
 /* 모달 스타일 */
 .modalOverlay {
   position: fixed;
@@ -80,3 +86,23 @@
   border-bottom: 2px solid #007bff;
 }
 
+@media (max-width: 1200px) {
+  .pageContainer {
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .pageContainer {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}

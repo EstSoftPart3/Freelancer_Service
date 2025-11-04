@@ -9,6 +9,9 @@ export default function ProjectCardGroup({ projects }) {
   const { user } = useAuth()
   const { showAlert } = useAlert()
 
+  // 관리자 여부 확인
+  const isAdmin = user?.userType === 'ADMIN'
+
   // 프로젝트 상세 페이지로 이동
   const goToProjectSpec = (project) => {
     const userType = localStorage.getItem('userType') || user?.userType
@@ -75,11 +78,55 @@ export default function ProjectCardGroup({ projects }) {
     }
   }
 
+  // 프로젝트 공개/숨김 토글 (관리자 전용)
+  const handleToggle = async (projectSq, currentStatus) => {
+    console.log('=== 숨김처리 디버깅 ===')
+    console.log('projectSq:', projectSq)
+    console.log('currentStatus:', currentStatus)
+    
+    const newStatus = currentStatus === 'Y' ? 'N' : 'Y'
+    console.log('newStatus:', newStatus)
+    
+    const confirmMsg = `프로젝트를 ${newStatus === 'Y' ? '공개' : '숨김'} 처리하시겠습니까?`
+    console.log('confirmMsg:', confirmMsg)
+    
+    if (!confirm(confirmMsg)) {
+      return
+    }
+    
+    try {
+      await api.$patch(`/admin/projects/${projectSq}/activate`, {
+        projectActivateYn: newStatus
+      })
+      
+      showAlert(
+        `프로젝트가 ${newStatus === 'Y' ? '공개' : '숨김'} 처리되었습니다.`,
+        'success'
+      )
+      
+      // 페이지 새로고침
+      window.location.reload()
+    } catch (error) {
+      console.error('프로젝트 상태 변경 실패:', error)
+      showAlert('상태 변경에 실패했습니다.', 'danger')
+    }
+  }
+
   return (
     <div className="row mb-4 position-relative">
       <div className="col">
-        {projects.map((project, index) => (
-          <div key={project.projectSq || project.id} className="card position-relative p-4 shadow-sm mb-3">
+        {projects.map((project, index) => {
+          const isHidden = project.projectActivateYn === 'N'
+          
+          return (
+          <div 
+            key={project.projectSq || project.id} 
+            className="card position-relative p-4 shadow-sm mb-3"
+            style={{
+              opacity: isAdmin && isHidden ? 0.5 : 1,
+              transition: 'opacity 0.3s ease'
+            }}
+          >
             {/* 스크랩 아이콘 (카드 우측 상단 고정) */}
             <div className="position-absolute top-0 end-0 m-3">
               <a
@@ -173,8 +220,34 @@ export default function ProjectCardGroup({ projects }) {
                 <div className="text-muted text-end">조회수: {project.viewCnt}</div>
               </div>
             </div>
+
+            {/* 관리자 전용 영역 */}
+            {isAdmin && (
+              <div className="mt-3 pt-3 border-top">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span className="me-2">공개 상태:</span>
+                    <span
+                      className={
+                        isHidden ? 'text-danger fw-bold' : 'text-primary fw-bold'
+                      }
+                    >
+                      {isHidden ? '비공개' : '공개'}
+                    </span>
+                  </div>
+
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleToggle(project.projectSq, project.projectActivateYn)}
+                  >
+                    {isHidden ? '공개 처리' : '숨김 처리'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
