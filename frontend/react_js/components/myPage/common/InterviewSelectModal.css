@@ -1,0 +1,156 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+.daterangepicker {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px 40px;
+  width: fit-content;
+}
+
+.calendar-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: center;
+}
+
+.drp-calendar {
+  flex: 1;
+}
+
+.calendar-table {
+  width: 100%;
+  text-align: center;
+}
+
+.calendar-table th,
+.calendar-table td {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-table td.available:hover {
+  background-color: #e0f7fa;
+}
+
+.calendar-table td.start-date,
+.calendar-table td.end-date {
+  background-color: #0088cc;
+  color: white;
+  font-weight: bold;
+}
+
+.calendar-table td.in-range {
+  background-color: #b2ebf2;
+}
+
+.calendar-table td.selected {
+  border: 2px solid #0088cc;
+}
+
+.calendar-table td.past-date {
+  background-color: #f0f0f0;
+  color: #aaa;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.drp-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 30px 40px;
+  border-top: 1px solid #ddd;
+}
+
+.drp-selected {
+  flex: 1;
+  align-self: center;
+  font-weight: bold;
+  text-align: left;
+  padding-left: 5px;
+}
+
+.drp-selected::before {
+  font-weight: normal;
+  color: #555;
+  margin-right: 4px;
+}
+
+td.selected {
+  background-color: #0088cc;
+  color: white;
+  font-weight: bold;
+  border-radius: 0;
+}
+
+td.has-times:not(.selected) {
+  background-color: #e6f0ff;
+  font-weight: 600;
+}
+
+.time-picker-wrapper {
+  padding: 0 40px 30px;
+  border-top: 1px solid #ddd;
+}
+
+.time-picker-title {
+  margin: 12px 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+}
+
+.time-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-slot {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-slot.selected {
+  background-color: #0088cc;
+  color: white;
+  border-color: #0088cc;
+  font-weight: bold;
+}
+
+.time-slot:disabled {
+  background-color: #f5f5f5;
+  color: #bbb;
+  border-color: #ddd;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.time-warning {
+  color: #d9534f;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+

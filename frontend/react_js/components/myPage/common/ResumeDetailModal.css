@@ -1,0 +1,28 @@
+.modal-content {
+  border-radius: 8px;
+}
+
+.btn-rounded {
+  border-radius: 20px;
+}
+
+.btn-3d {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+.transition-transform {
+  transition: transform 0.3s ease;
+}
+
+.bg-color-grey {
+  background-color: #f5f5f5;
+}
+

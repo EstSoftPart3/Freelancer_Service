@@ -68,7 +68,7 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
-                to="/calendar"
+                to="/mypage/calendar"
                 @click="handleNavigate"
                 >캘린더</router-link
               >
@@ -194,7 +194,7 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
-                to="/calendar"
+                to="/mypage/calendar"
                 @click="handleNavigate"
                 >캘린더</router-link
               >
