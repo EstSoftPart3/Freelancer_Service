@@ -39,6 +39,7 @@ public class ProjectSummary {
 	private List<String> reqSkills;
 
 	private String hasScrapped;
+	private String projectActivateYn;
 
 	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
 			String hasScrapped, String companyImageUrl) {
@@ -62,6 +63,7 @@ public class ProjectSummary {
 				.requiredEduLvl(util.convertCommonCodeSqToNm(project.getProjectRequiredEducationCd()))
 				.recruitStatus(status)
 				.hasScrapped(hasScrapped)
+				.projectActivateYn(project.getProjectActivateYn())
 				.build();
 	}
 }

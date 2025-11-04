@@ -498,7 +498,7 @@ public class ProjectService {
         ProjectSearchRequest request = new ProjectSearchRequest();
         request.setSortBy(sortType);  // "view_count", "scrap_count", "applicant_count"
         request.setSortOrder("DESC");
-        request.setSize(9);  // 3페이지 x 3개 = 9개
+        request.setSize(5);  // 5개만 조회
 
         List<Project> projects = projectMapper.findProjectsBySearch(request);
         return convertToProjectSummary(projects);

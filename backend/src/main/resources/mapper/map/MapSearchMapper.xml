@@ -51,6 +51,7 @@
         INNER JOIN TBL_PROJECT_RECRUIT_JOB_ROLE_S pjr ON p.project_sq = pjr.project_sq
         INNER JOIN TBL_COMMON_CODE_C cc1 ON pjr.recruit_job_position_type_cd = cc1.common_code_sq
         WHERE p.project_is_deleted_yn = 'N'
+          AND p.project_activate_yn = 'Y'
           AND p.project_recruit_end_dt >= CURDATE()
           AND (
               <!-- 하버사인 공식을 사용한 거리 계산 -->
@@ -99,6 +100,7 @@
         INNER JOIN TBL_PROJECT_RECRUIT_JOB_ROLE_S pjr ON p.project_sq = pjr.project_sq
         INNER JOIN TBL_COMMON_CODE_C cc1 ON pjr.recruit_job_position_type_cd = cc1.common_code_sq
         WHERE p.project_is_deleted_yn = 'N'
+          AND p.project_activate_yn = 'Y'
           AND p.project_recruit_end_dt >= CURDATE()
           AND (
               (6371 * acos(
