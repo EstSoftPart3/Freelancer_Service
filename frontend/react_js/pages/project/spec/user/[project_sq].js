@@ -5,6 +5,7 @@ import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
 import ResumeSelectModal from '@/components/project/ResumeSelectModal'
+import CommonPageHeader from '@/components/common/CommonPageHeader'
 import styles from './[project_sq].module.css'
 
 export default function UserProjectSpecPage() {
@@ -128,19 +129,13 @@ export default function UserProjectSpecPage() {
   return (
     <>
       {/* 페이지 헤더 */}
-      <div className="bg-light py-4 mb-4">
-        <div className="container">
-          <h2 className="mb-0">프로젝트 상세 정보</h2>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-0 mt-2">
-              <li className="breadcrumb-item"><a href="/">Home</a></li>
-              <li className="breadcrumb-item active">프로젝트</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
+      <CommonPageHeader
+        title=""
+        strongText="프로젝트 상세 정보"
+        breadcrumbs={[{ text: 'Home', link: '/' }, { text: '프로젝트' }]}
+      />
 
-      <div className={`container py-5 ${styles.detailList}`}>
+      <div style={{ maxWidth: 'calc(100% - 280px)', margin: '0 auto', padding: '0 20px' }} className={`py-5 ${styles.detailList}`}>
         <div className="row pt-4 mt-2 mb-5">
           {/* 우측: 회사 정보 (고정된 카드) */}
           <div className="col-md-4 order-md-2" style={{ position: 'sticky', top: '100px' }}>

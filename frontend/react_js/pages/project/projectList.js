@@ -50,7 +50,7 @@ export default function ProjectListPage() {
   const [tempSelectedLocation, setTempSelectedLocation] = useState(null)
   const [currentMapFilters, setCurrentMapFilters] = useState({
     locationType: 'address',
-    radius: '5',
+    radius: '10000', // 초기값: 없음 (전국 전체)
     jobRole: '',
     keyword: ''
   })
@@ -161,12 +161,12 @@ export default function ProjectListPage() {
       const userId = localStorage.getItem('userSq') || user?.userSq || 0
       console.log('사용자 ID로 주소 조회:', userId)
       
-      if (!userId || userId === 0) {
-        console.log('비로그인 상태: 기본 위치 사용')
+      if (!userId || userId === 0 || userId === '0') {
+        console.log('비로그인 상태: 위치 정보 없음 (전국 지도 표시)')
         resolve({
-          latitude: 37.5665,
+          latitude: 37.5665, // 지도 초기 중심점 (서울시청)
           longitude: 126.9780,
-          address: '서울시 중구 (기본값)'
+          address: null // 주소 정보 없음
         })
         return
       }
@@ -231,15 +231,17 @@ export default function ProjectListPage() {
       console.log('사용자 위치:', mapUserLocation)
       console.log('필터 조건:', currentMapFilters)
       
-      // "내 주소" 모드일 때만 userId 사용, 아니면 직접 좌표 전달
-      const params = currentMapFilters.locationType === 'address'
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      
+      // 비로그인 시 또는 "내 주소" 모드일 때 userId 사용, 아니면 직접 좌표 전달
+      const params = (currentMapFilters.locationType === 'address' && userId && userId !== 0 && userId !== '0')
         ? {
-            userId: user?.userSq || 0,
+            userId: userId,
             radius: currentMapFilters.radius,
             jobType: currentMapFilters.jobRole || '',
             searchKeyword: currentMapFilters.keyword || '',
             page: 0,
-            size: 20
+            size: 1000 // 전국 조회 시 많은 프로젝트 가져오기
           }
         : {
             lat: mapUserLocation.latitude,
@@ -248,7 +250,7 @@ export default function ProjectListPage() {
             jobType: currentMapFilters.jobRole || '',
             searchKeyword: currentMapFilters.keyword || '',
             page: 0,
-            size: 20
+            size: 1000 // 전국 조회 시 많은 프로젝트 가져오기
           }
       console.log('API 요청 파라미터:', params)
       
@@ -273,10 +275,27 @@ export default function ProjectListPage() {
       
       setMapUserLocation(location)
       
-      // 초기 줌 레벨 설정
-      const initialZoom = calculateZoomLevel(currentMapFilters.radius || '5')
-      setMapZoom(initialZoom)
-      console.log(`초기 줌 레벨: ${initialZoom}`)
+      // 비로그인 시 전국 프로젝트 조회
+      const userId = localStorage.getItem('userSq') || user?.userSq || 0
+      if (!userId || userId === 0 || userId === '0') {
+        console.log('비로그인 상태: 전국 프로젝트 조회')
+        setCurrentMapFilters({
+          locationType: 'address',
+          radius: '10000', // 전국 전체
+          jobRole: '',
+          keyword: ''
+        })
+        
+        // 전국 줌 레벨
+        const initialZoom = 10
+        setMapZoom(initialZoom)
+        console.log(`비로그인: 전국 지도 (줌 레벨 ${initialZoom})`)
+      } else {
+        // 로그인 시 기존 로직
+        const initialZoom = calculateZoomLevel(currentMapFilters.radius || '5')
+        setMapZoom(initialZoom)
+        console.log(`로그인: 초기 줌 레벨 ${initialZoom}`)
+      }
       
     } catch (error) {
       console.error('지도 초기화 실패:', error)

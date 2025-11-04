@@ -217,18 +217,6 @@ export default function CommonHeader() {
                             <ul className="dropdown-menu">
                               <li>
                                 <a
-                                  href="/admin/adminIndex"
-                                  className="dropdown-item"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    router.push('/admin/adminIndex')
-                                  }}
-                                >
-                                  관리자 대시보드
-                                </a>
-                              </li>
-                              <li>
-                                <a
                                   href="/admin/members"
                                   className="dropdown-item"
                                   onClick={(e) => {
