@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useModalStore } from '../../../store/modalStore';
+import { createPortal } from 'react-dom';
 import { useProjectStore } from '../../../store/ProjectHistoryStore';
 import { useAlertStore } from '../../../store/alertStore';
 import ProjectHistorySkillTagModal from './ProjectHistorySkillTagModal';
 import DatePicker from 'react-datepicker';
-import api from '../../../utils/api';
+import { api } from '@/lib/axios';
 import 'react-datepicker/dist/react-datepicker.css';
-import './ShowProjectFormModal.css';
+import styles from './ShowProjectFormModal.module.css';
 
 const ShowProjectFormModal = ({ onComplete, projectId }) => {
-  const modalStore = useModalStore();
   const projectStore = useProjectStore();
   const alertStore = useAlertStore();
+  const [showSkillModal, setShowSkillModal] = useState(false);
 
   const [projectRoleTypeList, setProjectRoleTypeList] = useState([]);
   const [projectTaskTypeList, setProjectTaskTypeList] = useState([]);
@@ -78,7 +78,7 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
   // 타입 코드 조회
   const fetchTypeCodes = async () => {
     try {
-      const response = await api.get('/mypage/resume/project-history/type-codes');
+      const response = await api.$get('/mypage/resume/project-history/type-codes');
       setProjectRoleTypeList(response.output.projectRoleTypeList);
       setProjectTaskTypeList(response.output.projectTaskTypeList);
     } catch (error) {
@@ -88,9 +88,14 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
 
   // 스킬 모달 열기
   const openSkillModal = () => {
-    modalStore.openModal(ProjectHistorySkillTagModal, {
-      projectId: projectId,
-    });
+    console.log('[스킬 모달 열기]');
+    setShowSkillModal(true);
+  };
+
+  // 스킬 모달 닫기
+  const closeSkillModal = () => {
+    console.log('[스킬 모달 닫기]');
+    setShowSkillModal(false);
   };
 
   // 제출
@@ -147,12 +152,13 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
     };
 
     onComplete?.(project);
-    closeModal();
+    projectStore.clearProject(projectId);
   };
 
   // 모달 닫기
   const closeModal = () => {
-    modalStore.closeModal();
+    projectStore.clearProject(projectId);
+    onComplete?.(null);
   };
 
   // 초기 로드
@@ -163,206 +169,225 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
     fetchTypeCodes();
   }, [projectId]);
 
-  return (
-    <div className="modal-layer">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h4 className="modal-title">프로젝트 이력 추가하기</h4>
-          <button className="close-btn" onClick={closeModal}>
-            ×
-          </button>
-        </div>
+  return createPortal(
+    <>
+      <div className={styles.modalLayer} onClick={closeModal}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeader}>
+            <h4 className={styles.modalTitle}>프로젝트 이력 추가하기</h4>
+            <button className={styles.closeBtn} onClick={closeModal}>
+              ×
+            </button>
+          </div>
 
-        <div className="modal-body">
-          {/* 프로젝트 내용 */}
-          <div className="section-block">
-            <div className="section-title">프로젝트 내용</div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="modal-label">프로젝트명</label>
-                <input
-                  value={form.name || ''}
-                  onChange={(e) => updateForm('name', e.target.value)}
-                  type="text"
-                  className="form-control"
-                  placeholder="프로젝트명 (예: 금융 시스템 구축)"
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">참여기간</label>
-                <div className="d-flex gap-2">
-                  <div className="datepicker-wrapper flex-grow-1">
-                    <DatePicker
-                      selected={form.startDate ? new Date(form.startDate) : null}
-                      onChange={(date) => {
-                        const formatted = date
-                          ? date.toISOString().substring(0, 10)
-                          : null;
-                        updateForm('startDate', formatted);
-                      }}
-                      dateFormat="yyyy-MM-dd"
-                      placeholderText="시작일"
-                      className="form-control"
-                      showMonthYearPicker
-                      showFullMonthYearPicker
-                    />
-                    <i className="fas fa-calendar datepicker-icon"></i>
-                  </div>
-                  <span className="align-self-center">~</span>
-                  <div className="datepicker-wrapper flex-grow-1">
-                    <DatePicker
-                      selected={form.endDate ? new Date(form.endDate) : null}
-                      onChange={(date) => {
-                        const formatted = date
-                          ? date.toISOString().substring(0, 10)
-                          : null;
-                        updateForm('endDate', formatted);
-                      }}
-                      dateFormat="yyyy-MM-dd"
-                      placeholderText="종료일"
-                      className="form-control"
-                      showMonthYearPicker
-                      showFullMonthYearPicker
-                    />
-                    <i className="fas fa-calendar datepicker-icon"></i>
+          <div className={styles.modalBody}>
+            {/* 프로젝트 내용 */}
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionTitle}>프로젝트 내용</div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>프로젝트명</label>
+                  <input
+                    value={form.name || ''}
+                    onChange={(e) => updateForm('name', e.target.value)}
+                    type="text"
+                    className="form-control"
+                    placeholder="프로젝트명 (예: 금융 시스템 구축)"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>참여기간</label>
+                  <div className={styles.dFlex} style={{ gap: '8px' }}>
+                    <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
+                      <DatePicker
+                        selected={form.startDate ? new Date(form.startDate) : null}
+                        onChange={(date) => {
+                          const formatted = date
+                            ? date.toISOString().substring(0, 10)
+                            : null;
+                          updateForm('startDate', formatted);
+                        }}
+                        dateFormat="yyyy-MM-dd"
+                        placeholderText="시작일"
+                        className="form-control"
+                        showYearDropdown
+                        showMonthDropdown
+                        dropdownMode="select"
+                      />
+                      <i className="fas fa-calendar datepicker-icon"></i>
+                    </div>
+                    <span className={styles.alignSelfCenter}>~</span>
+                    <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
+                      <DatePicker
+                        selected={form.endDate ? new Date(form.endDate) : null}
+                        onChange={(date) => {
+                          const formatted = date
+                            ? date.toISOString().substring(0, 10)
+                            : null;
+                          updateForm('endDate', formatted);
+                        }}
+                        dateFormat="yyyy-MM-dd"
+                        placeholderText="종료일"
+                        className="form-control"
+                        showYearDropdown
+                        showMonthDropdown
+                        dropdownMode="select"
+                      />
+                      <i className="fas fa-calendar datepicker-icon"></i>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="modal-label">고객사</label>
-                <input
-                  value={form.client || ''}
-                  onChange={(e) => updateForm('client', e.target.value)}
-                  type="text"
-                  className="form-control"
-                  placeholder="고객사 (예: OO은행)"
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">업무단</label>
-                <select
-                  value={form.workUnit || ''}
-                  onChange={(e) => updateForm('workUnit', e.target.value)}
-                  className="form-control"
-                >
-                  <option disabled value="">
-                    업무단 선택
-                  </option>
-                  {projectTaskTypeList.map((item) => (
-                    <option key={item.commonCodeSq} value={item.commonCodeSq}>
-                      {item.commonCodeNm}
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>고객사</label>
+                  <input
+                    value={form.client || ''}
+                    onChange={(e) => updateForm('client', e.target.value)}
+                    type="text"
+                    className="form-control"
+                    placeholder="고객사 (예: OO은행)"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>업무단</label>
+                  <select
+                    value={form.workUnit || ''}
+                    onChange={(e) => updateForm('workUnit', e.target.value)}
+                    className="form-control"
+                  >
+                    <option disabled value="">
+                      업무단 선택
                     </option>
-                  ))}
-                </select>
-              </div>
+                    {projectTaskTypeList.map((item) => (
+                      <option key={item.commonCodeSq} value={item.commonCodeSq}>
+                        {item.commonCodeNm}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label className="modal-label">역할</label>
-                <select
-                  value={form.role || ''}
-                  onChange={(e) => updateForm('role', e.target.value)}
-                  className="form-control"
-                >
-                  <option disabled value="">
-                    역할 선택
-                  </option>
-                  {projectRoleTypeList.map((item) => (
-                    <option key={item.commonCodeSq} value={item.commonCodeSq}>
-                      {item.commonCodeNm}
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>역할</label>
+                  <select
+                    value={form.role || ''}
+                    onChange={(e) => updateForm('role', e.target.value)}
+                    className="form-control"
+                  >
+                    <option disabled value="">
+                      역할 선택
                     </option>
-                  ))}
-                </select>
+                    {projectRoleTypeList.map((item) => (
+                      <option key={item.commonCodeSq} value={item.commonCodeSq}>
+                        {item.commonCodeNm}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 개발환경 */}
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionTitle}>개발환경</div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>기종</label>
+                  <input
+                    value={deviceText}
+                    type="text"
+                    className="form-control"
+                    placeholder="기종 (예: PC)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>OS</label>
+                  <input
+                    value={osText}
+                    type="text"
+                    className="form-control"
+                    placeholder="OS (예: Linux)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>DBMS</label>
+                  <input
+                    value={dbmsText}
+                    type="text"
+                    className="form-control"
+                    placeholder="DBMS (예: MySQL)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>언어</label>
+                  <input
+                    value={languageText}
+                    type="text"
+                    className="form-control"
+                    placeholder="언어 (쉼표로 구분, 예: Java, Python)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>TOOL</label>
+                  <input
+                    value={toolText}
+                    type="text"
+                    className="form-control"
+                    placeholder="TOOL (쉼표로 구분, 예: Eclipse, VSCode)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.modalLabel}>FW</label>
+                  <input
+                    value={frameworkText}
+                    type="text"
+                    className="form-control"
+                    placeholder="FW (쉼표로 구분, 예: Spring Boot, Vue.js)"
+                    readOnly
+                    onClick={openSkillModal}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
               </div>
             </div>
           </div>
-
-          {/* 개발환경 */}
-          <div className="section-block">
-            <div className="section-title">개발환경</div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="modal-label">기종</label>
-                <input
-                  value={deviceText}
-                  type="text"
-                  className="form-control"
-                  placeholder="기종 (예: PC)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">OS</label>
-                <input
-                  value={osText}
-                  type="text"
-                  className="form-control"
-                  placeholder="OS (예: Linux)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">DBMS</label>
-                <input
-                  value={dbmsText}
-                  type="text"
-                  className="form-control"
-                  placeholder="DBMS (예: MySQL)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="modal-label">언어</label>
-                <input
-                  value={languageText}
-                  type="text"
-                  className="form-control"
-                  placeholder="언어 (쉼표로 구분, 예: Java, Python)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">TOOL</label>
-                <input
-                  value={toolText}
-                  type="text"
-                  className="form-control"
-                  placeholder="TOOL (쉼표로 구분, 예: Eclipse, VSCode)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-              <div className="form-group">
-                <label className="modal-label">FW</label>
-                <input
-                  value={frameworkText}
-                  type="text"
-                  className="form-control"
-                  placeholder="FW (쉼표로 구분, 예: Spring Boot, Vue.js)"
-                  readOnly
-                  onClick={openSkillModal}
-                />
-              </div>
-            </div>
+          <div className={styles.modalFooter}>
+            <button className="btn btn-primary" onClick={submit}>
+              저장하기
+            </button>
+            <button className="btn btn-light" onClick={closeModal}>
+              닫기
+            </button>
           </div>
-        </div>
-        <div className="modal-footer">
-          <button className="btn btn-primary" onClick={submit}>
-            저장하기
-          </button>
-          <button className="btn btn-light" onClick={closeModal}>
-            닫기
-          </button>
         </div>
       </div>
-    </div>
+
+      {/* 스킬 선택 모달 */}
+      {showSkillModal && (
+        <ProjectHistorySkillTagModal 
+          projectId={projectId}
+          onClose={closeSkillModal}
+        />
+      )}
+    </>,
+    document.body
   );
 };
 

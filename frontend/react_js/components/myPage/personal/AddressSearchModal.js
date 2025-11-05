@@ -1,14 +1,16 @@
 /* global daum, kakao */ // 주소/좌표 API 전역 선언
 
 import { useEffect } from 'react';
-import { useModalStore } from '../../../store/modalStore';
-import './AddressSearchModal.css';
+import { createPortal } from 'react-dom';
+import styles from './AddressSearchModal.module.css';
 
 const AddressSearchModal = ({ onComplete }) => {
-  const modalStore = useModalStore();
 
   useEffect(() => {
     // Daum Postcode API 초기화
+    const container = document.getElementById('daum-postcode');
+    if (!container) return;
+
     new window.daum.Postcode({
       onComplete: function (data) {
         const addr =
@@ -36,48 +38,48 @@ const AddressSearchModal = ({ onComplete }) => {
             const latitude = result[0].y;
             const longitude = result[0].x;
 
-            onComplete?.({
+            const addressData = {
               zonecode: data.zonecode,
               address: addr,
               sido,
               sigungu,
               latitude,
               longitude,
-            });
+            };
 
-            console.log('[주소 선택 완료]', {
-              zonecode: data.zonecode,
-              address: addr,
-              sido,
-              sigungu,
-              latitude,
-              longitude,
-            });
+            console.log('[주소 선택 완료]', addressData);
+            console.log('[sigungu 확인]', sigungu, typeof sigungu);
 
-            modalStore.closeModal();
+            onComplete?.(addressData);
           } else {
             alert('선택한 주소의 좌표 정보를 찾을 수 없습니다.');
             console.warn('[좌표 변환 실패]', addr);
           }
         });
       },
-    }).embed(document.getElementById('daum-postcode'));
-  }, [onComplete, modalStore]);
+    }).embed(container);
+  }, [onComplete]);
 
-  return (
-    <div className="modal-layer">
-      <div className="modal-content">
-        <div className="modal-header">
+  const handleClose = () => {
+    onComplete?.(null);
+  };
+
+  return createPortal(
+    <div className={styles.modalLayer} onClick={handleClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h5 className={styles.modalTitle}>주소 검색</h5>
           <button 
-            className="close-btn" 
-            onClick={() => modalStore.closeModal()}
+            className={styles.closeBtn} 
+            onClick={handleClose}
           >
             ×
           </button>
         </div>
         <div id="daum-postcode"></div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

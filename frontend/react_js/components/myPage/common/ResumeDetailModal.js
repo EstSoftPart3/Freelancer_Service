@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './ResumeDetailModal.css';
+import './ResumeDetailModal.module.css';
 
 /**
  * Props

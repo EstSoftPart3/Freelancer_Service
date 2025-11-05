@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
-import { useModalStore } from '../../../store/modalStore';
 import { useProjectStore } from '../../../store/ProjectHistoryStore';
-import api from '../../../utils/api';
-import skillIconMap from '../../../assets/skillIconMap';
-import './ProjectHistorySkillTagModal.css';
+import { api } from '@/lib/axios';
+import skillIconMap from '@/lib/skillIconMap';
+import styles from './ProjectHistorySkillTagModal.module.css';
 
-const ProjectHistorySkillTagModal = ({ projectId }) => {
+const ProjectHistorySkillTagModal = ({ projectId, onClose }) => {
   const projectStore = useProjectStore();
   const alertStore = useAlertStore();
-  const modalStore = useModalStore();
 
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [skillList, setSkillList] = useState([]);
@@ -19,7 +17,9 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
   // 기술 태그 목록 조회
   const getSkills = async () => {
     try {
-      const res = await api.get(`/mypage/resume/project-history/skill-tags`);
+      const res = await api.$get(`/mypage/resume/project-history/skill-tags`);
+      console.log('[스킬 태그 API 응답]', res);
+      
       if (res.status === 'OK') {
         setSkillList([...res.output]);
         
@@ -33,9 +33,11 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
             ),
           }));
         
+        console.log('[그룹화된 스킬 태그]', grouped);
         setGroupedSkillTags(grouped);
       }
-    } catch {
+    } catch (error) {
+      console.error('[스킬 태그 조회 실패]', error);
       alertStore.show('기술 태그 리스트를 불러올 수 없습니다.', 'danger');
     }
   };
@@ -60,7 +62,7 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
   // 스킬 아이콘 URL 생성
   const getSkillIcon = (name) => {
     const key = name.toLowerCase().replace(/[\s.]+/g, '');
-    return skillIconMap[key] || skillIconMap.default;
+    return skillIconMap[key] || skillIconMap.default || '';
   };
 
   // 스토어에서 선택된 기술 동기화
@@ -79,6 +81,17 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
 
   // 선택 완료
   const handleConfirm = () => {
+    // 한국어 카테고리명을 영어로 매핑
+    const categoryMap = {
+      '언어': 'language',
+      '프레임워크': 'framework',
+      '툴': 'tool',
+      '기종': 'device',
+      '운영체제': 'os',
+      'DBMS': 'dbms',
+      'dbms': 'dbms',
+    };
+
     const grouped = {
       device: [],
       os: [],
@@ -94,19 +107,20 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
       );
       if (!parent) return;
 
-      const category = parent.skillTagNm.toLowerCase();
-      if (category in grouped) {
-        grouped[category].push(skill);
+      const categoryKey = categoryMap[parent.skillTagNm] || parent.skillTagNm.toLowerCase();
+      if (categoryKey in grouped) {
+        grouped[categoryKey].push(skill);
       }
     });
 
+    console.log('[선택된 스킬 그룹]', grouped);
     projectStore.setSkills(projectId, grouped);
-    closeModal();
+    onClose?.();
   };
 
   // 모달 닫기
   const closeModal = () => {
-    modalStore.closeModal();
+    onClose?.();
   };
 
   // 초기 로드
@@ -118,43 +132,37 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
     init();
   }, []);
 
-  // 모달 열림 감지
-  useEffect(() => {
-    const loadData = async () => {
-      if (modalStore.isOpen) {
-        await getSkills();
-        syncSelectedSkillsWithStore();
-      }
-    };
-    loadData();
-  }, [modalStore.isOpen]);
 
   // Portal을 사용하여 body에 렌더링
   return createPortal(
-    <div className="modal-backdrop">
-      <div className="modal-content-wrapper">
-        <div className="modal-header">
-          <h5 className="modal-title" id="customModalLabel">
-            기술 선택
-          </h5>
+    <div className={styles.modalBackdrop} onClick={closeModal}>
+      <div className={styles.modalContentWrapper} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h5 className={styles.modalTitle}>기술 선택</h5>
+          <button className={styles.closeBtn} onClick={closeModal}>
+            ×
+          </button>
         </div>
-        <div className="modal-body">
+        <div className={styles.modalBody}>
           <form id="techForm">
             {groupedSkillTags.map((group) => (
-              <div key={group.skillTagSq} className="mb-3">
-                <h6 className="section-title">{group.skillTagNm}</h6>
-                <div className="row row-cols-3 card-grid">
+              <div key={group.skillTagSq} className={styles.skillSection}>
+                <h6 className={styles.sectionTitle}>{group.skillTagNm}</h6>
+                <div className={styles.skillGrid}>
                   {group.children.map((skill) => (
-                    <div className="col" key={skill.skillTagNm}>
+                    <div key={skill.skillTagNm} className={styles.skillItem}>
                       <button
                         type="button"
-                        className={`tech-card ${isSelected(skill) ? 'selected' : ''}`}
+                        className={`${styles.techCard} ${isSelected(skill) ? styles.selected : ''}`}
                         onClick={() => toggleSkill(skill)}
                       >
-                        <img
-                          src={getSkillIcon(skill.skillTagNm)}
-                          alt={skill.skillTagNm}
-                        />
+                        {getSkillIcon(skill.skillTagNm) && (
+                          <img
+                            src={getSkillIcon(skill.skillTagNm)}
+                            alt={skill.skillTagNm}
+                            className={styles.skillIcon}
+                          />
+                        )}
                         <span>{skill.skillTagNm}</span>
                       </button>
                     </div>
@@ -162,7 +170,7 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
                 </div>
               </div>
             ))}
-            <div className="mt-4 d-flex justify-content-end">
+            <div className={styles.modalFooter}>
               <button
                 onClick={handleConfirm}
                 type="button"
@@ -173,7 +181,7 @@ const ProjectHistorySkillTagModal = ({ projectId }) => {
               <button
                 onClick={closeModal}
                 type="button"
-                className="btn btn-secondary ms-2"
+                className="btn btn-light ms-2"
               >
                 닫기
               </button>

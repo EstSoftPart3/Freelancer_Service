@@ -3,9 +3,9 @@ import { useModalStore } from '../../../store/modalStore';
 import { useAlertStore } from '../../../store/alertStore';
 import CommonConfirmModal from '../common/CommonConfirmModal';
 import ResumeDetailModal from '../common/ResumeDetailModal';
-import api from '../../../utils/api';
-import skillIconMap from '../../../assets/skillIconMap';
-import './PersonalApplyStatusModal.css';
+import { api } from '@/lib/axios';
+import skillIconMap from '@/lib/skillIconMap';
+import './PersonalApplyStatusModal.module.css';
 
 const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
@@ -23,18 +23,8 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   // 개인 지원자 목록 조회
   const fetchPersonalApplicants = async () => {
     try {
-      const res = await api.get(
-        `/projects/applications/${projectSq}/personal`,
-        {
-          withCredentials: true,
-          params: {
-            page: currentPage,
-            size: pageSize,
-            filter: currentFilter,
-            searchType: searchType,
-            keyword: searchText,
-          },
-        }
+      const res = await api.$get(
+        `/projects/applications/${projectSq}/personal?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
       );
       setLocalApplicants(res.response || []);
       setTotalPages(res.totalPages || 1);
@@ -141,10 +131,9 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   // 상태 변경
   const updateStatus = async (applicationSq, status) => {
     try {
-      await api.patch(
+      await api.$patch(
         `/projects/applications/${applicationSq}`,
-        { status },
-        { withCredentials: true }
+        { status }
       );
       updateStatusLocally(applicationSq, status);
       alertStore.show('상태가 정상적으로 변경되었습니다.');

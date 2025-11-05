@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
+import { useModalStore } from '@/store/modalStore';
+import { useAlertStore } from '@/store/alertStore';
+import AffiliationRecruitModal from '@/components/affiliation/AffiliationRecruitModal';
+import CommonConfirmModal from '@/components/myPage/common/CommonConfirmModal';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AffiliatedScrap.module.css';
 
 const AffiliatedScrap = () => {
+  const { openModal } = useModalStore();
+  const alertStore = useAlertStore();
+
   // State 관리
   const [scraps, setScraps] = useState([]);
   const [searchType, setSearchType] = useState('all');
@@ -48,7 +55,7 @@ const AffiliatedScrap = () => {
       }
     } catch (error) {
       console.error('스크랩 내역 조회 실패:', error);
-      alert('스크랩 내역을 불러올 수 없습니다.');
+      alertStore.show('스크랩 내역을 불러올 수 없습니다.', 'danger');
     }
   };
 
@@ -65,31 +72,35 @@ const AffiliatedScrap = () => {
     }
   };
 
-  // 상세보기 모달 열기
+  // 소속 신청하기 모달 열기
   const clickDetail = (afltnInfo) => {
-    // 모달 구현 필요
-    alert(`소속 상세보기 모달 구현 필요\n회사명: ${afltnInfo.companyNm}`);
-    // 실제 구현:
-    // setModalData({ type: 'affiliationRecruit', afltnInfo });
+    openModal(AffiliationRecruitModal, {
+      afltnInfo: afltnInfo,
+      onConfirm: () => {
+        getScrapList();
+      },
+    });
   };
 
   // 스크랩 삭제
-  const removeScrap = async (id) => {
-    const confirmed = window.confirm('해당 스크랩 내역을 삭제하시겠습니까?');
+  const removeScrap = (id) => {
+    openModal(CommonConfirmModal, {
+      title: '소속 스크랩 삭제',
+      message: '해당 스크랩 내역을 삭제하시겠습니까?',
+      onConfirm: async () => {
+        try {
+          const response = await api.$post(`/affiliation/${id}/scrap`);
 
-    if (!confirmed) return;
-
-    try {
-      const response = await api.$post(`/affiliation/${id}/scrap`);
-
-      if (response.status === 'OK') {
-        alert('스크랩이 삭제되었습니다.');
-        getScrapList();
-      }
-    } catch (error) {
-      console.error('스크랩 삭제 실패:', error);
-      alert('스크랩 내역 삭제에 실패했습니다.');
-    }
+          if (response.status === 'OK') {
+            alertStore.show('스크랩이 삭제되었습니다.', 'success');
+            getScrapList();
+          }
+        } catch (error) {
+          console.error('스크랩 삭제 실패:', error);
+          alertStore.show('스크랩 내역 삭제에 실패했습니다.', 'danger');
+        }
+      },
+    });
   };
 
   // 페이지 변경

@@ -1,5 +1,5 @@
 import { useModalStore } from '../../../store/modalStore';
-import './ResumeModal.css';
+import './ResumeModal.module.css';
 
 const ResumeModal = ({ resumeSq = null, onConfirm }) => {
   const modalStore = useModalStore();

@@ -1,4 +1,4 @@
-.sidebar span.nav-link {
+.sidebar :global(span.nav-link) {
   color: black;
   font-weight: bold;
 }

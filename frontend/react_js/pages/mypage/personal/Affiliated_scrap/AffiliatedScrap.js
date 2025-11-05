@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useModalStore } from '../../../../store/modalStore';
-import { useAlertStore } from '../../../../store/alertStore';
-import { useAffiliationStore } from '../../../../store/AffiliationStore';
-import CommonConfirmModal from '../../../../components/common/CommonConfirmModal';
-import CommonPagination from '../../../../components/common/CommonPagination';
-import AffiliationRecruit from '../../../../components/company/AffiliationRecruit';
-import api from '../../../../utils/api';
-import './AffiliatedScrap.css';
+import { useModalStore } from '@/store/modalStore';
+import { useAlertStore } from '@/store/alertStore';
+import { api } from '@/lib/axios';
+import AffiliationRecruitModal from '@/components/affiliation/AffiliationRecruitModal';
+import CommonConfirmModal from '@/components/myPage/common/CommonConfirmModal';
+import MyPageLayout from '../../MyPageLayout';
+import styles from './AffiliatedScrap.module.css';
 
 const AffiliatedScrap = () => {
-  const modalStore = useModalStore();
+  const { openModal, closeModal } = useModalStore();
   const alertStore = useAlertStore();
-  const affiliationStore = useAffiliationStore();
 
   const [searchType, setSearchType] = useState('all');
   const [keyword, setKeyword] = useState('');
@@ -30,7 +28,7 @@ const AffiliatedScrap = () => {
           ? ''
           : `&searchType=${searchType}&keyword=${keyword}`;
 
-      const res = await api.get(
+      const res = await api.$get(
         `/mypage/applications/scraps?page=${currentPage}&size=${size}${searchFilter}`
       );
 
@@ -39,7 +37,6 @@ const AffiliatedScrap = () => {
 
         setScraps(res.output.companies);
         setTotalElements(totalCnt);
-        affiliationStore.setViewerSq(res.output.viewerSq);
 
         if (totalCnt === 0) {
           setTotalPages(1);
@@ -52,26 +49,31 @@ const AffiliatedScrap = () => {
     }
   };
 
-  // 상세 모달 열기
+  // 소속 신청하기 모달 열기
   const clickDetail = (afltnInfo) => {
-    modalStore.openModal(AffiliationRecruit, { afltnInfo });
+    openModal(AffiliationRecruitModal, {
+      afltnInfo: afltnInfo,
+      onConfirm: () => {
+        getScrapList();
+      },
+    });
   };
 
   // 스크랩 삭제
   const removeScrap = (id) => {
-    modalStore.openModal(CommonConfirmModal, {
+    openModal(CommonConfirmModal, {
       title: '소속 스크랩 삭제',
       message: `해당 스크랩 내역을 삭제하시겠습니까?`,
       onConfirm: async () => {
         try {
-          const res = await api.post(`/affiliation/${id}/scrap`);
+          const res = await api.$post(`/affiliation/${id}/scrap`);
           if (res.status === 'OK') {
+            alertStore.show('스크랩이 삭제되었습니다.', 'success');
             getScrapList();
           }
         } catch (error) {
           alertStore.show('스크랩 내역 삭제에 실패했습니다.', 'danger');
         }
-        modalStore.closeModal();
       },
     });
   };
@@ -95,6 +97,7 @@ const AffiliatedScrap = () => {
   }, [currentPage]);
 
   return (
+    <MyPageLayout userType="PERSONAL">
     <div>
       <div className="row">
         <div className="col">
@@ -224,14 +227,59 @@ const AffiliatedScrap = () => {
           )}
 
           {/* 페이징 */}
-          <CommonPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+          {totalPages > 1 && (
+            <div className="d-flex justify-content-end mt-4">
+              <ul className="pagination">
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <a
+                    className="page-link"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) setCurrentPage(currentPage - 1);
+                    }}
+                  >
+                    &laquo;
+                  </a>
+                </li>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <li
+                    key={page}
+                    className={`page-item ${page === currentPage ? 'active' : ''}`}
+                  >
+                    <a
+                      className="page-link"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(page);
+                      }}
+                    >
+                      {page}
+                    </a>
+                  </li>
+                ))}
+                <li
+                  className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}
+                >
+                  <a
+                    className="page-link"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                    }}
+                  >
+                    &raquo;
+                  </a>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
+    </MyPageLayout>
   );
 };
 

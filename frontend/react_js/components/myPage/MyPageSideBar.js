@@ -1,9 +1,14 @@
 import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import styles from './MyPageSideBar.module.css';
 
-export default function MyPageSideBar({ onNavigate, userType = 'PERSONAL' }) {
+export default function MyPageSideBar({ onNavigate, userType: propUserType }) {
   const router = useRouter();
+  const { user } = useAuth();
+  
+  // prop으로 받은 userType이 있으면 우선 사용, 없으면 AuthContext의 user.userType 사용
+  const userType = propUserType || user.userType || 'PERSONAL';
 
   const handleNavigate = () => {
     if (onNavigate) {

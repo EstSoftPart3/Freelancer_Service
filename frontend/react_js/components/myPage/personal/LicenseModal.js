@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useModalStore } from '../../../store/modalStore';
+import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
-import api from '../../../utils/api';
-import './LicenseModal.css';
+import { api } from '@/lib/axios';
+import styles from './LicenseModal.module.css';
 
 const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
-  const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
   const [search, setSearch] = useState('');
@@ -25,13 +24,9 @@ const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
   // 자격증 검색
   const fetchLicenses = async () => {
     try {
-      const res = await api.get('/mypage/resume/certificates', {
-        params: {
-          searchNm: search,
-          page: page,
-          size: 5,
-        },
-      });
+      const res = await api.$get(
+        `/mypage/resume/certificates?searchNm=${search}&page=${page}&size=5`
+      );
 
       const items = res.output.certificates || [];
       setLicenses(
@@ -82,10 +77,7 @@ const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
 
   // 모달 닫기
   const close = () => {
-    setSearch('');
-    setLicenses([]);
-    setPage(1);
-    modalStore.closeModal();
+    onLicenseSelected?.(null);
   };
 
   // 페이지네이션
@@ -108,24 +100,24 @@ const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
     }
   };
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <span className="modal-title">자격증 검색</span>
-          <button className="modal-close" onClick={close}>
+  return createPortal(
+    <div className={styles.modalOverlay} onClick={close}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalTitle}>자격증 검색</span>
+          <button className={styles.modalClose} onClick={close}>
             ×
           </button>
         </div>
 
-        <div className="modal-search">
+        <div className={styles.modalSearch}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="자격증을 입력하세요."
           />
-          <button className="modal-search-btn" onClick={searchAndResetPage}>
+          <button className={styles.modalSearchBtn} onClick={searchAndResetPage}>
             <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
               <circle cx="8" cy="8" r="7" stroke="#fff" strokeWidth="2" />
               <path
@@ -138,32 +130,32 @@ const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
           </button>
         </div>
 
-        <div className="modal-list">
+        <div className={styles.modalList}>
           {licenses.length > 0 ? (
             <div>
               {licenses.map((license) => (
                 <div
                   key={license.id}
-                  className="modal-item"
+                  className={styles.modalItem}
                   onClick={() => selectLicense(license)}
                 >
-                  <a className="license-name">{license.name}</a>
+                  <span className={styles.licenseName}>{license.name}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="modal-empty">검색 결과가 없습니다.</div>
+            <div className={styles.modalEmpty}>검색 결과가 없습니다.</div>
           )}
         </div>
 
-        <div className="modal-pagination">
+        <div className={styles.modalPagination}>
           <button disabled={page === 1} onClick={prevPage}>
             &lt;
           </button>
           {pageGroup.map((p) => (
             <button
               key={p}
-              className={page === p ? 'active' : ''}
+              className={page === p ? styles.active : ''}
               onClick={() => goPage(p)}
             >
               {p}
@@ -174,13 +166,14 @@ const LicenseModal = ({ onLicenseSelected, selectedLicense = [] }) => {
           </button>
         </div>
 
-        <div className="modal-footer">
-          <button className="modal-footer-close" onClick={close}>
+        <div className={styles.modalFooter}>
+          <button className={styles.modalFooterClose} onClick={close}>
             닫기
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

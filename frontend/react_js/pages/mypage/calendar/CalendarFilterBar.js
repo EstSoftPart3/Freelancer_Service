@@ -78,7 +78,9 @@ const CalendarFilterBar = ({ onUpdate }) => {
   // 드롭다운 외부 클릭 감지
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.filter-dropdown')) {
+      // data-dropdown 속성으로 드롭다운 영역인지 확인
+      const isDropdownClick = e.target.closest('[data-dropdown]');
+      if (!isDropdownClick) {
         setOpenDropdown(null);
       }
     };
@@ -150,7 +152,7 @@ const CalendarFilterBar = ({ onUpdate }) => {
       {/* 필터 영역 */}
       <div className={styles['filters-section']}>
         {/* 일정 종류 필터 */}
-        <div className={styles['filter-dropdown']}>
+        <div className={styles['filter-dropdown']} data-dropdown="calendar">
           <button
             className={`${styles['filter-btn']} ${selectedCalendarType !== null ? styles.active : ''}`}
             type="button"
@@ -191,7 +193,7 @@ const CalendarFilterBar = ({ onUpdate }) => {
         </div>
 
         {/* 계약형태 필터 */}
-        <div className={styles['filter-dropdown']}>
+        <div className={styles['filter-dropdown']} data-dropdown="contract">
           <button
             className={`${styles['filter-btn']} ${selectedContractTypes.length > 0 ? styles.active : ''}`}
             type="button"
@@ -241,7 +243,7 @@ const CalendarFilterBar = ({ onUpdate }) => {
         </div>
 
         {/* 직무 필터 */}
-        <div className={styles['filter-dropdown']}>
+        <div className={styles['filter-dropdown']} data-dropdown="job">
           <button
             className={`${styles['filter-btn']} ${selectedJobTypes.length > 0 ? styles.active : ''}`}
             type="button"

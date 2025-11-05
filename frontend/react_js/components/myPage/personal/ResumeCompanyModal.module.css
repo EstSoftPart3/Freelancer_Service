@@ -1,0 +1,182 @@
+.modalLayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  position: relative;
+  width: 600px;
+  max-width: 95vw;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 30px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.modalTitle {
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  display: block;
+  line-height: 1;
+  padding: 5px 10px;
+  color: #6c757d;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #000;
+}
+
+.modalLabel {
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.modalBody {
+  padding: 24px 30px;
+}
+
+.modalBody .formGroup {
+  margin-bottom: 0;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.formRow .formGroup {
+  flex: 1 1 0;
+}
+
+.formRow .positionGroup {
+  flex: 0 0 30% !important;
+}
+
+.formRow .periodGroup {
+  flex: 0 0 70% !important;
+}
+
+.formGroup {
+  flex: 1;
+}
+
+.formGroup :global(.form-control) {
+  width: 100%;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.formGroup :global(.form-control):focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 30px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.datepickerWrapper {
+  position: relative;
+}
+
+.datepickerWrapper :global(.form-control) {
+  padding-right: 3rem;
+  height: auto;
+  padding: 10px 12px;
+}
+
+.datepickerWrapper :global(.datepicker-icon) {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
+}
+
+.flexGrow1 {
+  flex-grow: 1;
+}
+
+.positionGroup {
+  flex: 0 0 30% !important;
+}
+
+.periodGroup {
+  flex: 0 0 70% !important;
+}
+
+/* React DatePicker 커스터마이징 */
+.datepickerWrapper :global(.react-datepicker-wrapper) {
+  width: 100%;
+}
+
+.datepickerWrapper :global(.react-datepicker__input-container) {
+  width: 100%;
+}
+
+.datepickerWrapper :global(.react-datepicker__month-container) {
+  font-family: inherit;
+}
+
+.datepickerWrapper :global(.react-datepicker__header) {
+  background-color: #007bff;
+  border-bottom: none;
+}
+
+.datepickerWrapper :global(.react-datepicker__current-month),
+.datepickerWrapper :global(.react-datepicker__day-name) {
+  color: #fff;
+}
+
+.datepickerWrapper :global(.react-datepicker__day--selected),
+.datepickerWrapper :global(.react-datepicker__day--keyboard-selected) {
+  background-color: #007bff;
+}
+
+.datepickerWrapper :global(.react-datepicker__day:hover) {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+

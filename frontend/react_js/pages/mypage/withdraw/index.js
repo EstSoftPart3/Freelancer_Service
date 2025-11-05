@@ -60,7 +60,7 @@ export default function WithdrawPage() {
   };
 
   return (
-    <MyPageLayout userType="PERSONAL">
+    <MyPageLayout>
       <div className={styles.container}>
         {!isConfirmed ? (
           <PasswordCheck onConfirmed={() => setIsConfirmed(true)}>

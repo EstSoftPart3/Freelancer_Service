@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
+import AddressSearchModal from '@/components/myPage/personal/AddressSearchModal';
+import EducationSearchModal from '@/components/myPage/personal/EducationSearchModal';
+import ResumeCompanyModal from '@/components/myPage/personal/ResumeCompanyModal';
+import TrainingModal from '@/components/myPage/personal/TrainingModal';
+import ShowProjectFormModal from '@/components/myPage/personal/ShowProjectFormModal';
+import LicenseModal from '@/components/myPage/personal/LicenseModal';
+import SkillTagModal from '@/components/myPage/personal/SkillTagModal';
 import './ResumeForm.module.css';
 
 const ResumeForm = () => {
@@ -45,6 +52,16 @@ const ResumeForm = () => {
   // 사진 미리보기
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
+
+  // 모달 상태 관리
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showEducationModal, setShowEducationModal] = useState(false);
+  const [showCareerModal, setShowCareerModal] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [currentProjectId, setCurrentProjectId] = useState(null);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -177,67 +194,167 @@ const ResumeForm = () => {
 
   // 주소 검색 모달 열기
   const openAddressSearchModal = () => {
-    // 주소 검색 모달 구현 필요 (Daum Postcode API 등)
-    alert('주소 검색 모달 구현 필요');
-    // 예시 데이터 설정
-    // const mockData = {
-    //   address: '서울특별시 강남구 테헤란로',
-    //   zonecode: '06234',
-    //   sido: '서울특별시',
-    //   sigungu: '강남구',
-    //   latitude: '37.5665',
-    //   longitude: '126.9780',
-    //   addressSq: '12345',
-    // };
-    // setResumeData(prev => ({ ...prev, ...mockData }));
+    setShowAddressModal(true);
+  };
+
+  // 주소 선택 완료
+  const handleAddressComplete = (addressData) => {
+    if (addressData) {
+      setResumeData(prev => ({
+        ...prev,
+        address: addressData.address,
+        zonecode: addressData.zonecode,
+        sido: addressData.sido,
+        sigungu: addressData.sigungu,
+        latitude: addressData.latitude,
+        longitude: addressData.longitude,
+      }));
+    }
+    setShowAddressModal(false);
   };
 
   // 학력 추가
   const showEducationForm = () => {
-    // 학력 모달 구현 필요
-    alert('학력 추가 모달 구현 필요');
-    // 예시:
-    // const education = {
-    //   educationSchoolNm: '서울대학교',
-    //   educationMajorNm: '컴퓨터공학',
-    //   educationAdmissionDt: '2015-03',
-    //   educationGraduationDt: '2019-02',
-    //   educationStatusCd: 'GRADUATED',
-    // };
-    // setResumeData(prev => ({
-    //   ...prev,
-    //   education: [...prev.education, education],
-    // }));
+    setShowEducationModal(true);
+  };
+
+  // 학력 추가 완료
+  const handleEducationComplete = (education) => {
+    if (education) {
+      setResumeData(prev => ({
+        ...prev,
+        education: [...prev.education, education],
+      }));
+    }
+    setShowEducationModal(false);
   };
 
   // 경력 추가
   const showCareerForm = () => {
-    // 경력 모달 구현 필요
-    alert('경력 추가 모달 구현 필요');
+    setShowCareerModal(true);
+  };
+
+  // 경력 추가 완료
+  const handleCareerComplete = (career) => {
+    if (career) {
+      // Date 객체를 문자열로 변환
+      const formatDate = (date) => {
+        if (!date) return '';
+        if (date instanceof Date) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+        return date;
+      };
+
+      setResumeData(prev => ({
+        ...prev,
+        career: [...prev.career, {
+          ...career,
+          startDate: formatDate(career.startDate),
+          endDate: formatDate(career.endDate),
+        }],
+      }));
+    }
+    setShowCareerModal(false);
+  };
+
+  // 교육 이력 추가 완료
+  const handleTrainingComplete = (training) => {
+    if (training) {
+      setResumeData(prev => ({
+        ...prev,
+        trainingHistories: [...prev.trainingHistories, training],
+      }));
+    }
+    setShowTrainingModal(false);
   };
 
   // 교육 이력 추가
   const showTrainingForm = () => {
-    // 교육 이력 모달 구현 필요
-    alert('교육 이력 추가 모달 구현 필요');
+    setShowTrainingModal(true);
   };
 
   // 프로젝트 추가
   const showProjectForm = () => {
-    // 프로젝트 모달 구현 필요
-    alert('프로젝트 추가 모달 구현 필요');
+    const newProjectId = `project-${Date.now()}`;
+    setCurrentProjectId(newProjectId);
+    setShowProjectModal(true);
+  };
+
+  // 프로젝트 추가 완료
+  const handleProjectComplete = (project) => {
+    if (project) {
+      setResumeData(prev => ({
+        ...prev,
+        projects: [...prev.projects, { 
+          // 화면 표시용 필드
+          name: project.projectHistoryTask || '',
+          period: project.projectHistoryStartDt && project.projectHistoryEndDt 
+            ? `${project.projectHistoryStartDt} ~ ${project.projectHistoryEndDt}`
+            : project.projectHistoryStartDt || '',
+          client: project.projectHistoryClient || '',
+          workUnit: project.projectHistoryTypeCdNm || '',
+          role: project.projectHistoryJobPositionTypeCdNm || '',
+          device: project.skillTags?.device?.map(s => s.skillTagNm).join(', ') || '',
+          os: project.skillTags?.os?.map(s => s.skillTagNm).join(', ') || '',
+          dbms: project.skillTags?.dbms?.map(s => s.skillTagNm).join(', ') || '',
+          languages: project.skillTags?.language || [],
+          tools: project.skillTags?.tool?.map(s => s.skillTagNm) || [],
+          frameworks: project.skillTags?.framework || [],
+          etc: [],
+          isExpanded: true,
+          
+          // 백엔드 전송용 원본 데이터
+          projectHistoryTask: project.projectHistoryTask,
+          projectHistoryClient: project.projectHistoryClient,
+          projectHistoryTypeCd: project.projectHistoryTypeCd,
+          projectHistoryJobPositionTypeCd: project.projectHistoryJobPositionTypeCd,
+          projectHistoryStartDt: project.projectHistoryStartDt,
+          projectHistoryEndDt: project.projectHistoryEndDt,
+          skillTags: project.skillTags,
+        }],
+      }));
+    }
+    setShowProjectModal(false);
+    setCurrentProjectId(null);
   };
 
   // 자격증 추가
   const showCertificateForm = () => {
-    // 자격증 모달 구현 필요
-    alert('자격증 추가 모달 구현 필요');
+    setShowCertificateModal(true);
+  };
+
+  // 자격증 선택 완료
+  const handleLicenseSelected = (license) => {
+    if (license) {
+      setResumeData(prev => ({
+        ...prev,
+        certificates: [...prev.certificates, {
+          certificateName: license.name,
+          certificateCode: license.id,
+        }],
+      }));
+    }
+    setShowCertificateModal(false);
   };
 
   // 기술 추가
   const showSkillsForm = () => {
-    // 기술 스택 모달 구현 필요
-    alert('기술 스택 추가 모달 구현 필요');
+    setShowSkillsModal(true);
+  };
+
+  // 기술 추가 완료
+  const handleSkillsComplete = (skills) => {
+    if (skills) {
+      setResumeData(prev => ({
+        ...prev,
+        skills: skills,
+      }));
+    }
+    setShowSkillsModal(false);
   };
 
   // 삭제 핸들러들
@@ -327,9 +444,31 @@ const ResumeForm = () => {
 
   const careerPeriod = (start, end) => {
     if (!start) return '';
-    const startStr = start.replace('-', '.');
+    
+    // Date 객체인 경우 문자열로 변환
+    let startStr = start;
+    if (start instanceof Date) {
+      const year = start.getFullYear();
+      const month = String(start.getMonth() + 1).padStart(2, '0');
+      const day = String(start.getDate()).padStart(2, '0');
+      startStr = `${year}.${month}.${day}`;
+    } else if (typeof start === 'string') {
+      startStr = start.replace(/-/g, '.');
+    }
+    
     if (!end) return `${startStr} ~ `;
-    return `${startStr} ~ ${end.replace('-', '.')}`;
+    
+    let endStr = end;
+    if (end instanceof Date) {
+      const year = end.getFullYear();
+      const month = String(end.getMonth() + 1).padStart(2, '0');
+      const day = String(end.getDate()).padStart(2, '0');
+      endStr = `${year}.${month}.${day}`;
+    } else if (typeof end === 'string') {
+      endStr = end.replace(/-/g, '.');
+    }
+    
+    return `${startStr} ~ ${endStr}`;
   };
 
   const toYyyyMmDd = (dateStr) => {
@@ -370,56 +509,126 @@ const ResumeForm = () => {
         : resumeData.emailDomain
     }`;
 
-    // 전송용 payload 생성
-    const payload = {
-      addressSq: resumeData.addressSq,
+    // 전송용 DTO 생성 (백엔드 ResumeRequestDTO 구조에 맞춤)
+    const dto = {
       resumeTtl: resumeData.resumeTtl,
       resumeNm: resumeData.resumeNm,
       resumeBirthDt: resumeData.resumeBirthDt,
       resumePhoneNum: resumeData.resumePhoneNum,
       resumeEmail: email,
-      address: resumeData.address,
-      detailAddress: resumeData.detailAddress,
-      zonecode: resumeData.zonecode,
-      sido: resumeData.sido,
-      sigungu: resumeData.sigungu,
-      latitude: resumeData.latitude,
-      longitude: resumeData.longitude,
       resumeGreetingTxt: resumeData.resumeGreetingTxt,
       resumeIsNotificationYn: resumeData.resumeIsNotificationYn ? 'Y' : 'N',
-      resumePhotoUrl: resumeData.resumePhotoUrl || '',
-      education: resumeData.education.map((e) => ({
+      resumeIsRepresentativeYn: resumeData.resumeIsRepresentativeYn ? 'Y' : 'N',
+      
+      // 주소 객체
+      address: {
+        zonecode: resumeData.zonecode,
+        address: resumeData.address,
+        detailAddress: resumeData.detailAddress || '',
+        sigungu: resumeData.sigungu,
+        latitude: parseFloat(resumeData.latitude),
+        longitude: parseFloat(resumeData.longitude),
+        areaCodeSq: null, // 백엔드에서 sigungu로 조회하도록 함
+      },
+      
+      // 학력 리스트
+      educationList: resumeData.education.map((e) => ({
         educationSchoolNm: e.educationSchoolNm,
         educationMajorNm: e.educationMajorNm,
         educationAdmissionDt: e.educationAdmissionDt,
         educationGraduationDt: e.educationGraduationDt,
         educationStatusCd: e.educationStatusCd,
       })),
-      career: resumeData.career.map((e) => ({
+      
+      // 경력 리스트
+      careerList: resumeData.career.map((e) => ({
         careerCompanyNm: e.company,
         careerDepartmentNm: e.department,
         careerPositionNm: e.position,
-        careerStartDt: toYyyyMmDd(e.startDate),
-        careerEndDt: toYyyyMmDd(e.endDate),
+        careerStartDt: e.startDate,
+        careerEndDt: e.endDate,
       })),
-      projects: resumeData.projects,
-      certificates: resumeData.certificates,
-      skills: resumeData.skills,
-      attachments: resumeData.attachments,
-      resumeIsRepresentativeYn: resumeData.resumeIsRepresentativeYn ? 'Y' : 'N',
+      
+      // 프로젝트 이력 리스트
+      projectHistoryList: resumeData.projects.map((p) => ({
+        projectHistoryClient: p.projectHistoryClient || p.client,
+        projectHistoryTypeCd: p.projectHistoryTypeCd,
+        projectHistoryJobPositionTypeCd: p.projectHistoryJobPositionTypeCd,
+        projectHistoryTask: p.projectHistoryTask || p.name,
+        projectHistoryStartDt: p.projectHistoryStartDt,
+        projectHistoryEndDt: p.projectHistoryEndDt,
+        skillTagList: p.skillTags ? flattenSkillTags(p.skillTags) : [],
+      })),
+      
+      // 자격증 리스트
+      certificationList: resumeData.certificates.map((c) => ({
+        certificationCd: c.certificateCode || c.id,
+        certificationNm: c.certificateName || c.name,
+      })),
+      
+      // 교육 이력 리스트
+      trainingHistoryList: resumeData.trainingHistories.map((t) => ({
+        trainingInstitutionNm: t.trainingInstitutionNm,
+        trainingProgramNm: t.trainingProgramNm,
+        trainingStartDt: t.trainingStartDt,
+        trainingEndDt: t.trainingEndDt,
+      })),
+      
+      // 보유 기술 리스트
+      skillTagList: resumeData.skills.map((s) => ({
+        skillTagSq: s.skillTagSq,
+      })),
     };
 
-    console.log('[최종 전송 데이터]', payload);
+    // FormData 생성 (multipart/form-data)
+    const formData = new FormData();
+    
+    // DTO를 JSON으로 직렬화하여 추가
+    const dtoJson = JSON.stringify(dto);
+    console.log('[전송할 DTO JSON]', dtoJson);
+    console.log('[전송할 DTO 객체]', dto);
+    console.log('[주소 객체 상세]', dto.address);
+    
+    formData.append('dto', new Blob([dtoJson], { type: 'application/json' }));
+    
+    // 프로필 이미지 첨부 (있는 경우)
+    if (photoFile) {
+      formData.append('profileImages', photoFile);
+      console.log('[프로필 이미지 첨부]', photoFile.name);
+    }
+    
+    // 첨부파일들 추가 (있는 경우)
+    if (resumeData.attachments && resumeData.attachments.length > 0) {
+      resumeData.attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
+      console.log('[첨부파일 개수]', resumeData.attachments.length);
+    }
+
+    console.log('[FormData 내용 확인]');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ':', pair[1]);
+    }
+
+    // sigungu 검증
+    if (!resumeData.sigungu) {
+      alert('주소의 시군구 정보가 없습니다. 주소를 다시 선택해주세요.');
+      return;
+    }
 
     try {
       if (resumeSq) {
         // 수정
-        await api.$put(`/mypage/resume/update/${resumeSq}`, payload);
+        await api.$put(`/mypage/resume/${resumeSq}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         alert('이력서가 성공적으로 수정되었습니다.');
         router.push('/mypage/personal/resum_list');
       } else {
-        // 등록
-        await api.$post('/mypage/resume/new', payload);
+        // 등록 (백엔드 @PostMapping)
+        await api.$post('/mypage/resume', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         alert('이력서가 성공적으로 등록되었습니다.');
         router.push('/mypage/personal/resum_list');
       }
@@ -427,6 +636,24 @@ const ResumeForm = () => {
       console.error('이력서 등록/수정 실패:', error);
       alert('이력서 등록/수정 중 오류가 발생했습니다.');
     }
+  };
+
+  // 프로젝트의 skillTags 객체를 배열로 평탄화
+  const flattenSkillTags = (skillTags) => {
+    const result = [];
+    for (const category in skillTags) {
+      if (Array.isArray(skillTags[category])) {
+        skillTags[category].forEach((skill) => {
+          result.push({
+            skillTagSq: skill.skillTagSq,
+            parentSkillTagSq: skill.parentSkillTagSq,
+            skillTagLvl: skill.skillTagLvl,
+            skillTagNm: skill.skillTagNm,
+          });
+        });
+      }
+    }
+    return result;
   };
 
   return (
@@ -714,7 +941,7 @@ const ResumeForm = () => {
               <div className="mb-2">
                 {resumeData.trainingHistories.map((item, idx) => (
                   <span key={idx} className="training-tag">
-                    {item.program} / {item.institution} / {item.period}
+                    {item.trainingProgramNm || item.program} / {item.trainingInstitutionNm || item.institution} / {item.period}
                     <span
                       className="text-grey ms-2"
                       style={{ cursor: 'pointer' }}
@@ -1026,6 +1253,44 @@ const ResumeForm = () => {
         </div>
       </div>
     </div>
+
+    {/* 모달들 */}
+    {showAddressModal && (
+      <AddressSearchModal onComplete={handleAddressComplete} />
+    )}
+
+    {showEducationModal && (
+      <EducationSearchModal onComplete={handleEducationComplete} />
+    )}
+
+    {showCareerModal && (
+      <ResumeCompanyModal onComplete={handleCareerComplete} />
+    )}
+
+    {showTrainingModal && (
+      <TrainingModal onComplete={handleTrainingComplete} />
+    )}
+
+    {showProjectModal && currentProjectId && (
+      <ShowProjectFormModal 
+        onComplete={handleProjectComplete}
+        projectId={currentProjectId}
+      />
+    )}
+
+    {showCertificateModal && (
+      <LicenseModal 
+        onLicenseSelected={handleLicenseSelected}
+        selectedLicense={resumeData.certificates}
+      />
+    )}
+
+    {showSkillsModal && (
+      <SkillTagModal 
+        onComplete={handleSkillsComplete}
+        selectedSkills={resumeData.skills}
+      />
+    )}
     </MyPageLayout>
   );
 };

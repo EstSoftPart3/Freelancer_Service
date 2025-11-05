@@ -1,12 +1,17 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
 import CommonPageHeader from '@/components/common/CommonPageHeader';
 import MyPageSideBar from '@/components/myPage/MyPageSideBar';
 import styles from './MyPageLayout.module.css';
 
-export default function MyPageLayout({ children, userType = 'PERSONAL' }) {
+export default function MyPageLayout({ children, userType: propUserType }) {
   const [isOffcanvasOpen, setIsOffcanvasOpen] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+  
+  // prop으로 받은 userType이 있으면 우선 사용, 없으면 AuthContext의 user.userType 사용
+  const userType = propUserType || user.userType || 'PERSONAL';
 
   // Vue의 computed headerInfo와 동일한 로직
   const headerInfo = useMemo(() => {
