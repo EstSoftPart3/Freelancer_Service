@@ -1,0 +1,185 @@
+.container {
+  width: 100%;
+}
+
+.header {
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin-bottom: 1rem;
+  font-size: 24px;
+}
+
+/* 폼 */
+.form {
+  width: 100%;
+}
+
+.formGroup {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  flex: 0 0 25%;
+  max-width: 25%;
+  padding-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.required::after {
+  content: ' *';
+  color: #dc3545;
+}
+
+.inputWide {
+  flex: 0 0 75%;
+  max-width: 75%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.input:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 안내문 */
+.notice {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: #495057;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  resize: none;
+  overflow-y: scroll;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.notice:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #ced4da;
+}
+
+/* 체크박스 */
+.checkboxGroup {
+  margin-bottom: 1.5rem;
+}
+
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+}
+
+.checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.checkboxError {
+  padding-left: 1.75rem;
+}
+
+/* 에러 메시지 */
+.errorDanger {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* 하단 제출 버튼 */
+.submitGroup {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.withdrawBtn {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.withdrawBtn:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* 반응형 - 태블릿 */
+@media (max-width: 992px) {
+  .formGroup {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .label {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+    padding-top: 0;
+  }
+
+  .inputWide {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 768px) {
+  .checkboxWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .checkbox {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* 반응형 - 작은 모바일 */
+@media (max-width: 576px) {
+  .title {
+    font-size: 20px;
+  }
+
+  .withdrawBtn {
+    width: 100%;
+  }
+}
+

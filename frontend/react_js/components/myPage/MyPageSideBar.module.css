@@ -1,0 +1,9 @@
+.sidebar span.nav-link {
+  color: black;
+  font-weight: bold;
+}
+
+.active {
+  font-weight: bold;
+}
+

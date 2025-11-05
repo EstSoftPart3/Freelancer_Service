@@ -265,7 +265,6 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
 import MapComponent from '@/fo/components/map/MapComponent.vue'
 import LocationSelectModal from '@/fo/components/map/LocationSelectModal.vue'
-import defaultProjectImage from '@/assets/basicProject.png'
 
 const userStore = useUserStore()
 const alertStore = useAlertStore()
@@ -864,11 +863,6 @@ const handleProjectCardClick = (project) => {
     // 비로그인 사용자는 개인용 페이지로 이동
     router.push(`/project/spec/user/${project.projectSq}`)
   }
-}
-
-// 이미지 로드 실패 시 기본 이미지로 대체
-const handleImageError = (event) => {
-  event.target.src = defaultProjectImage
 }
 
 // FAQ 데이터

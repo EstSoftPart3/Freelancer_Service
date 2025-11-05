@@ -1,0 +1,414 @@
+.container {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.col {
+  flex: 1 0 0%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.colMd6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+/* 제목 */
+.title {
+  margin-bottom: 1rem;
+  font-size: 24px;
+}
+
+/* 필터/검색 영역 */
+.filterRow {
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border: 1px solid #007bff;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.filterBtn:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.filterBtn.active {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #007bff;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+
+.searchGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.searchSelect {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.searchInput {
+  width: auto;
+  min-width: 200px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.searchBtn {
+  padding: 0.25rem 1rem;
+  font-size: 0.875rem;
+  color: #fff;
+  background-color: #007bff;
+  border: 1px solid #007bff;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.searchBtn:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* 구분선 */
+.divider {
+  margin: 0.5rem 0;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 지원 목록 */
+.postList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.postItem {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgb(230, 230, 230);
+}
+
+.postInfo {
+  position: relative;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.postTitleGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.projectTitle {
+  font-size: 1.25rem;
+  margin: 0;
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.projectTitle:hover {
+  text-decoration: underline;
+}
+
+.statusButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statusApplying,
+.statusPassed,
+.statusFailed,
+.statusCancelled,
+.statusEnded,
+.statusInterview {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.statusApplying {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.statusPassed,
+.statusFailed,
+.statusCancelled,
+.statusEnded,
+.statusInterview {
+  color: #212529;
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+
+.cancelBtn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  color: #007bff;
+  background-color: transparent;
+  border: 1px solid #007bff;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cancelBtn:hover {
+  color: #fff;
+  background-color: #007bff;
+}
+
+.interviewRequestBtn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  color: #007bff;
+  background-color: transparent;
+  border: 1px solid #007bff;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.interviewRequestBtn:hover {
+  color: #fff;
+  background-color: #007bff;
+}
+
+/* 인터뷰 툴팁 */
+.interviewWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.interviewTooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 30%;
+  transform: translateX(-50%);
+  padding: 0.5rem;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  color: #212529;
+  font-weight: 600;
+  display: none;
+  z-index: 10;
+}
+
+.interviewWrapper:hover .interviewTooltip {
+  display: block;
+}
+
+/* 메타 정보 */
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.meta {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.metaLabel {
+  color: #212529;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.resumeHover {
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.resumeHover:hover {
+  text-decoration: underline;
+}
+
+/* 빈 메시지 */
+.emptyMessage {
+  padding: 3rem 0;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* 페이지네이션 */
+.paginationWrapper {
+  margin-top: 3rem;
+  padding: 3rem 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.25rem;
+}
+
+.pageItem {
+  display: inline-block;
+}
+
+.pageItem.disabled .pageLink {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.pageItem.active .pageLink {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.pageLink {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  color: #007bff;
+  text-decoration: none;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.pageLink:hover {
+  color: #0056b3;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+/* 반응형 - 태블릿 */
+@media (max-width: 992px) {
+  .postHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statusButtons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 768px) {
+  .colMd6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .filterRow {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .filterButtons {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .searchGroup {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .searchSelect,
+  .searchInput,
+  .searchBtn {
+    width: 100%;
+  }
+
+  .metaRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .filterBtn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+  }
+}
+
+/* 반응형 - 작은 모바일 */
+@media (max-width: 576px) {
+  .title {
+    font-size: 20px;
+  }
+
+  .projectTitle {
+    font-size: 1.1rem;
+  }
+
+  .meta {
+    font-size: 0.875rem;
+  }
+}

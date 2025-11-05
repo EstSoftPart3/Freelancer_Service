@@ -1,0 +1,467 @@
+.calendar-container {
+  width: 100%;
+  background-color: #f8f9fa;
+  position: relative;
+}
+
+/* 로딩 화면 */
+.fullpage-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.25rem;
+  color: #007bff;
+}
+
+.loading-spinner i {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 캘린더 콘텐츠 */
+.calendar-content {
+  width: 100%;
+}
+
+.calendar-right {
+  background-color: white;
+  overflow: hidden;
+  width: 100%;
+  flex: 1;
+  border-radius: 0 0 0.5rem 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-right-head {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
+}
+
+.nav-search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 캘린더 네비게이션 */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.icon-wrapper:hover {
+  background-color: #f8f9fa;
+}
+
+.icon-wrapper i {
+  font-size: 1.25rem;
+  color: #495057;
+}
+
+.current {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* 일정 추가 버튼 */
+.add-schedule {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.add-schedule:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* 메인 캘린더 */
+.calendar-body {
+  min-height: 1100px;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background-color: #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  flex: 1;
+}
+
+.calendar-week:last-child {
+  border-bottom: none;
+}
+
+.calendar-cell {
+  background-color: white;
+  min-height: 180px;
+  position: relative;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-cell:hover {
+  background-color: #f8f9fa;
+}
+
+/* 날짜 레이블 */
+.day-label {
+  padding: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.875rem;
+}
+
+.day-label.today {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem;
+  font-weight: 600;
+}
+
+/* 날짜 콘텐츠 영역 */
+.day-content {
+  padding: 0.5rem;
+  height: calc(100% - 3rem);
+  cursor: pointer;
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.day-content.has-calendar-item {
+  background-color: rgba(248, 249, 250, 0.5);
+}
+
+.calendar-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* 캘린더 아이템 */
+.calendar-item {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.calendar-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+  z-index: 10;
+  transform: translateY(-1px);
+}
+
+/* 시작일 - 왼쪽에 둥근 모서리 */
+.calendar-item.start {
+  border-radius: 0.25rem 0 0 0.25rem;
+}
+
+/* 중간 - 둥근 모서리 없음 */
+.calendar-item.ongoing {
+  border-radius: 0;
+}
+
+/* 종료일 - 오른쪽에 둥근 모서리 */
+.calendar-item.end {
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+/* 하루짜리 일정 - 전체 둥근 모서리 */
+.calendar-item.start.end {
+  border-radius: 0.25rem;
+}
+
+/* 소스 타입별 스타일 */
+.calendar-item.personal-schedule {
+  border-left: 3px solid #2196f3;
+}
+
+.calendar-item.project-schedule {
+  border-left: 3px solid #9c27b0;
+}
+
+.calendar-item.interview-schedule {
+  border-left: 3px solid #ff5722;
+}
+
+.company {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: inherit;
+  flex: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.company:hover {
+  opacity: 0.8;
+}
+
+.company-name {
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-name > span {
+  display: inline-block;
+}
+
+/* 뱃지 */
+.personal-badge,
+.project-badge,
+.interview-badge {
+  margin-left: 0.25rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.personal-badge {
+  color: #2196f3;
+}
+
+.project-badge {
+  color: #9c27b0;
+}
+
+.interview-badge {
+  color: #ff5722;
+}
+
+/* 텍스트 유틸리티 */
+.text-center {
+  text-align: center;
+}
+
+.py-4 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+/* 반응형 - 태블릿 */
+@media (max-width: 992px) {
+  .calendar-body {
+    min-height: 800px;
+  }
+
+  .calendar-cell {
+    min-height: 140px;
+  }
+
+  .calendar-item {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .company-name > span {
+    font-size: 0.7rem;
+  }
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 768px) {
+  .calendar-body {
+    min-height: 600px;
+  }
+
+  .calendar-cell {
+    min-height: 100px;
+  }
+
+  .day-label {
+    padding: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .day-label.today {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0.25rem;
+  }
+
+  .day-content {
+    padding: 0.25rem;
+  }
+
+  .calendar-item {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
+    margin-bottom: 1px;
+  }
+
+  .company-name {
+    font-size: 0.65rem;
+  }
+
+  .personal-badge > i,
+  .project-badge > i,
+  .interview-badge > i {
+    font-size: 0.7rem;
+  }
+
+  .nav-search-bar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .current {
+    font-size: 1.1rem;
+  }
+
+  .add-schedule {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 모달 */
+  .modal-content {
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
+}
+
+/* 반응형 - 작은 모바일 */
+@media (max-width: 576px) {
+  .calendar-body {
+    min-height: 450px;
+  }
+
+  .calendar-cell {
+    min-height: 70px;
+  }
+
+  .calendar-item {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.2rem;
+  }
+
+  .icon-wrapper {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.25rem;
+  }
+
+  .icon-wrapper > i {
+    font-size: 1rem;
+  }
+
+  .current {
+    font-size: 1rem;
+  }
+
+  .company-name {
+    font-size: 0.6rem;
+  }
+
+  /* 뱃지 숨기기 */
+  .personal-badge,
+  .project-badge,
+  .interview-badge {
+    display: none;
+  }
+}
+
+/* 스크롤바 스타일 (선택사항) */
+.day-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.day-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.day-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2px;
+}
+
+.day-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Bootstrap Icons 사용 */
+.bi {
+  display: inline-block;
+  vertical-align: middle;
+}
+
