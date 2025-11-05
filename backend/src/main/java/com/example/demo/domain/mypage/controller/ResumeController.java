@@ -38,25 +38,25 @@ import lombok.RequiredArgsConstructor;
 public class ResumeController {
 
 	private final ResumeService resumeService;
+    // 이력서 생성 (등록)
+    @PostMapping
+    public ResponseEntity<ApiResponse<?>> createResume(
+            @AuthenticationPrincipal Long userSq,
+            @RequestPart ResumeRequestDTO dto,
+            @RequestPart(required = false) List<MultipartFile> profileImages,
+            @RequestPart(required = false) List<MultipartFile> attachments) {
 
-	// 이력서 생성 (등록)
-	@PostMapping
-	public ResponseEntity<ApiResponse<?>> createResume(
-			@AuthenticationPrincipal Long userSq,
-			@RequestPart ResumeRequestDTO dto,
-			@RequestPart(required = false) List<MultipartFile> profileImages,
-			@RequestPart(required = false) List<MultipartFile> attachments) {
+        int result = resumeService.createResume(userSq, dto, profileImages, attachments);
 
-		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
+        if (result > 0) {
+            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 등록 완료", "success"));
+        } else {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이력서 등록 실패", "fail"));
+        }
+    }
 
-		if (result > 0) {
-			return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 등록 완료", "success"));
-		} else {
-			return ResponseEntity
-					.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이력서 등록 실패", "fail"));
-		}
-	}
 
 	// 이력서 수정
 	@PutMapping("/{resumeSq}")

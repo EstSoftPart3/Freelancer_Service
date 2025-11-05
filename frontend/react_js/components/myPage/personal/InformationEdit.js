@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import PasswordCheck from '../common/PasswordCheck';
 import { useAlertStore } from '../../../store/alertStore';
-import api from '../../../utils/api';
+import { api } from '@/lib/axios';
 import { debounce } from 'lodash';
-import './InformationEdit.css';
+import './InformationEdit.module.css';
 
 const InformationEdit = () => {
   const alertStore = useAlertStore();
@@ -60,7 +60,7 @@ const InformationEdit = () => {
   // 사용자 정보 조회
   const fetchUserInfo = async () => {
     try {
-      const response = await api.get('/mypage/edit/info', null);
+      const response = await api.$get('/mypage/edit/info');
       const data = response.output;
       console.log('data', data);
 
@@ -104,7 +104,7 @@ const InformationEdit = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await api.post('/mypage/edit/profile-image/update', formData, {
+      const response = await api.$post('/mypage/edit/profile-image/update', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -125,7 +125,7 @@ const InformationEdit = () => {
   // 프로필 이미지 삭제
   const removeProfileImage = async () => {
     try {
-      const response = await api.delete('/mypage/edit/profile-image');
+      const response = await api.$delete('/mypage/edit/profile-image');
       if (response.status === 'OK') {
         alertStore.show('프로필 이미지가 삭제되었습니다.', 'success');
         setUserProfileImageUrl(null);
@@ -154,7 +154,7 @@ const InformationEdit = () => {
       const requestBody = {
         currentPassword: pw,
       };
-      const response = await api.post(`/mypage/edit/check-password`, requestBody);
+      const response = await api.$post(`/mypage/edit/check-password`, requestBody);
       
       if (response.status === 'OK' && response.output === true) {
         setPasswordError('기존 비밀번호와 동일합니다.');
@@ -249,7 +249,7 @@ const InformationEdit = () => {
 
     try {
       const email = editEmail.emailId + '@' + editEmail.emailDomain;
-      const response = await api.post('/email/send-code', { email });
+      const response = await api.$post('/email/send-code', { email });
 
       console.log('인증 이메일 전송 완료', response);
       alertStore.show(
@@ -271,7 +271,7 @@ const InformationEdit = () => {
 
     try {
       const email = editEmail.emailId + '@' + editEmail.emailDomain;
-      const response = await api.post('/email/verify-code', {
+      const response = await api.$post('/email/verify-code', {
         email,
         code: editEmail.verificationCode,
       });
@@ -415,7 +415,7 @@ const InformationEdit = () => {
     };
 
     try {
-      const response = await api.post('/mypage/edit/update', requestBody);
+      const response = await api.$post('/mypage/edit/update', requestBody);
 
       if (response.status === 'OK') {
         alertStore.show(

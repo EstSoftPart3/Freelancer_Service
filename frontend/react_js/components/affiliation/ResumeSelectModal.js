@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useAlert } from '@/contexts/AlertContext'
+import { useModalStore } from '@/store/modalStore'
+import { useAlertStore } from '@/store/alertStore'
 import { api } from '@/lib/axios'
-import CommonPagination from '@/components/common/CommonPagination'
+import CommonConfirmModal from '@/components/myPage/common/CommonConfirmModal'
 
 export default function ResumeSelectModal({ onClose, onSelect }) {
-  const { showAlert } = useAlert()
+  const { openModal, closeModal } = useModalStore()
+  const alertStore = useAlertStore()
   const [resumes, setResumes] = useState([])
   const [selectedResume, setSelectedResume] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
 
   const formatTime = (createdAt) => {
     if (!createdAt) return ''
@@ -28,16 +28,21 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
         setResumes(res.output)
       }
     } catch (error) {
-      showAlert('이력서 목록 조회에 실패했습니다.', 'danger')
+      alertStore.show('이력서 목록 조회에 실패했습니다.', 'danger')
     }
   }
 
   const selectResume = (resume) => {
-    if (confirm('해당 이력서를 선택하시겠습니까?')) {
-      onSelect(resume)
-      showAlert('이력서 선택이 완료되었습니다.', 'success')
-      onClose()
-    }
+    openModal(CommonConfirmModal, {
+      title: '이력서 선택',
+      message: '해당 이력서를 선택하시겠습니까?',
+      onConfirm: () => {
+        onSelect?.(resume)
+        alertStore.show('이력서 선택이 완료되었습니다.', 'success')
+        closeModal() // 확인 모달 닫기
+        closeModal() // 이력서 선택 모달 닫기
+      },
+    })
   }
 
   useEffect(() => {
@@ -51,7 +56,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
         <button
           type="button"
           className="btn-close"
-          onClick={onClose}
+          onClick={closeModal}
           aria-label="Close"
         ></button>
       </div>
@@ -116,7 +121,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
         )}
       </div>
       <div className="modal-footer">
-        <button type="button" className="btn btn-light" onClick={onClose}>
+        <button type="button" className="btn btn-light" onClick={closeModal}>
           닫기
         </button>
       </div>

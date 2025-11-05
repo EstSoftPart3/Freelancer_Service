@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useModalStore } from '../../../store/modalStore';
+import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './TrainingModal.css';
+import styles from './TrainingModal.module.css';
 
 const TrainingModal = ({ onComplete }) => {
-  const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
   const [form, setForm] = useState({
@@ -71,24 +70,26 @@ const TrainingModal = ({ onComplete }) => {
       trainingEndDt: formatDateForAPI(form.trainingEndDt),
       period: period,
     });
-
-    modalStore.closeModal();
   };
 
-  return (
-    <div className="modal-layer">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h4 className="modal-title">교육 이력 추가하기</h4>
-          <button className="close-btn" onClick={() => modalStore.closeModal()}>
+  const close = () => {
+    onComplete?.(null);
+  };
+
+  return createPortal(
+    <div className={styles.modalLayer} onClick={close}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h4 className={styles.modalTitle}>교육 이력 추가하기</h4>
+          <button className={styles.closeBtn} onClick={close}>
             ×
           </button>
         </div>
 
-        <div className="modal-body">
-          <div className="form-row">
-            <div className="form-group">
-              <label className="modal-label">교육명</label>
+        <div className={styles.modalBody}>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.modalLabel}>교육명</label>
               <input
                 value={form.trainingProgramNm}
                 onChange={(e) =>
@@ -99,8 +100,8 @@ const TrainingModal = ({ onComplete }) => {
                 placeholder="교육명"
               />
             </div>
-            <div className="form-group">
-              <label className="modal-label">교육 기관</label>
+            <div className={styles.formGroup}>
+              <label className={styles.modalLabel}>교육 기관</label>
               <input
                 value={form.trainingInstitutionNm}
                 onChange={(e) =>
@@ -115,36 +116,38 @@ const TrainingModal = ({ onComplete }) => {
               />
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group position-group">
-              <label className="modal-label">교육 기간</label>
+          <div className={styles.formRow}>
+            <div className={`${styles.formGroup} ${styles.positionGroup}`}>
+              <label className={styles.modalLabel}>교육 기간</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div className="datepicker-wrapper flex-grow-1">
+                <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
                   <DatePicker
                     selected={form.trainingStartDt}
                     onChange={(date) =>
                       setForm((prev) => ({ ...prev, trainingStartDt: date }))
                     }
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="시작년월"
+                    placeholderText="시작일"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
                 <span style={{ alignSelf: 'center' }}>~</span>
-                <div className="datepicker-wrapper flex-grow-1">
+                <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
                   <DatePicker
                     selected={form.trainingEndDt}
                     onChange={(date) =>
                       setForm((prev) => ({ ...prev, trainingEndDt: date }))
                     }
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="종료년월"
+                    placeholderText="종료일"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
@@ -153,16 +156,17 @@ const TrainingModal = ({ onComplete }) => {
           </div>
         </div>
 
-        <div className="modal-footer">
+        <div className={styles.modalFooter}>
           <button className="btn btn-primary" onClick={submit}>
             저장하기
           </button>
-          <button className="btn btn-light" onClick={() => modalStore.closeModal()}>
+          <button className="btn btn-light" onClick={close}>
             닫기
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

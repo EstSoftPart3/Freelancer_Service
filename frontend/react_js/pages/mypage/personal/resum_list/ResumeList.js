@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '@/lib/axios';
+import { useModalStore } from '@/store/modalStore';
+import skillIconMap from '@/lib/skillIconMap';
+import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
 import MyPageLayout from '../../MyPageLayout';
 import './ResumeList.module.css';
 
@@ -61,6 +64,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 
 const ResumeList = () => {
   const router = useRouter();
+  const { openModal } = useModalStore();
 
   // State 관리
   const [resumeList, setResumeList] = useState([]);
@@ -120,9 +124,14 @@ const ResumeList = () => {
   // 이력서 상세보기
   const openResumeDetail = (resumeSq) => {
     console.log('resumeSq', resumeSq);
-    // 모달 처리 - 실제 프로젝트의 모달 시스템으로 교체하세요
-    // 예: setModalData({ type: 'resumeDetail', resumeSq });
-    alert('이력서 상세 모달 구현 필요 (resumeSq: ' + resumeSq + ')');
+    openModal(ResumeDetailModal, {
+      resumeSq: resumeSq,
+      projectSq: 0,
+      applicationSq: 0,
+      isFromApplicationList: false,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
   };
 
   // 이력서 복사하기

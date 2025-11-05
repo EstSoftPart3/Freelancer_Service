@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import './InterviewSelectModal.css';
+import './InterviewSelectModal.module.css';
 
 const { Button } = require("@/public/vendor/bootstrap/js/bootstrap.bundle");
 

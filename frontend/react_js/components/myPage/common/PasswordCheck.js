@@ -1,117 +1,91 @@
 import React, { useState } from 'react';
-import './PasswordCheck.module.css';
+import { api } from '@/lib/axios';
+import { useAlertStore } from '@/store/alertStore';
+import styles from './PasswordCheck.module.css';
 
 /**
  * Props
  * - onConfirmed: () => void  // 비밀번호 확인 성공 시 호출되는 콜백
  * - children: ReactNode      // slot 역할 (헤더 등)
- * - api?: object            // axios 인스턴스 (선택)
  */
-export default function PasswordCheck({ onConfirmed, children, api }) {
+export default function PasswordCheck({ onConfirmed, children }) {
+  const alertStore = useAlertStore();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const getAccessTokenFromCookie = () => {
-    const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  };
 
   const handleCheck = async (e) => {
     e.preventDefault();
     setError(''); // 에러 초기화
+
+    if (!password) {
+      setError('비밀번호를 입력해주세요.');
+      return;
+    }
 
     try {
       const requestBody = {
         currentPassword: password,
       };
 
-      const token = getAccessTokenFromCookie();
+      // API 호출 - 토큰이 자동으로 포함됩니다
+      const response = await api.$post('/mypage/edit/check-password', requestBody);
 
-      if (api) {
-        // axios 인스턴스를 주입받은 경우
-        const response = await api.$post('/mypage/edit/check-password', requestBody, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
-          withCredentials: true,
-        });
-
-        if (response.status === 'OK' && response.output === true) {
-          // 비밀번호 일치
-          onConfirmed?.();
-        } else {
-          // 비밀번호 불일치
-          setError(response.message || '비밀번호가 일치하지 않습니다.');
-        }
+      if (response.status === 'OK' && response.output === true) {
+        // 비밀번호 일치
+        alertStore.show('비밀번호가 확인되었습니다.', 'success');
+        onConfirmed?.();
       } else {
-        // fetch 기본 구현
-        const response = await fetch('/api/mypage/edit/check-password', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token ? `Bearer ${token}` : '',
-          },
-          credentials: 'include',
-          body: JSON.stringify(requestBody),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.status === 'OK' && data.output === true) {
-          // 비밀번호 일치
-          onConfirmed?.();
-        } else {
-          // 비밀번호 불일치
-          setError(data.message || '비밀번호가 일치하지 않습니다.');
-        }
+        // 비밀번호 불일치
+        setError(response.message || '비밀번호가 일치하지 않습니다.');
       }
     } catch (e) {
-      setError('서버와 통신 중 오류가 발생했습니다.');
-      console.error(e);
+      console.error('비밀번호 확인 실패:', e);
+      const errorMsg = e?.response?.data?.message || '서버와 통신 중 오류가 발생했습니다.';
+      setError(errorMsg);
     }
   };
 
   return (
-    <div>
-      <div className="overflow-hidden mb-3">
+    <div className={styles.container}>
+      <div className={styles.headerSection}>
         {children}
-        {/* <h2 className="font-weight-normal text-7 mb-0">회원 정보 수정</h2> */}
       </div>
-      <div className="overflow-hidden mb-4 pb-3">
-        <p className="mb-0">비밀번호 확인</p>
+      <div className={styles.titleSection}>
+        <i className="fas fa-lock me-2"></i>
+        <p className={styles.subtitle}>비밀번호 확인</p>
       </div>
 
-      <form
-        onSubmit={handleCheck}
-        className="needs-validation"
-        noValidate
-      >
-        <div className="form-group row">
-          <label className="col-lg-3 col-form-label form-control-label line-height-9 pt-2 text-2 required">
+      <form onSubmit={handleCheck} className={styles.form}>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
             비밀번호
+            <span className={styles.required}>*</span>
           </label>
-          <div className="col-lg-9">
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-control text-3 h-auto py-2"
-              type="password"
-              required
-            />
-            <div className="invalid-feedback text-primary" style={{ display: 'block' }}>
-              {error}
+          <div className={styles.inputWrapper}>
+            <div className={styles.passwordInputGroup}>
+              <i className="fas fa-key"></i>
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.passwordInput}
+                type="password"
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
             </div>
+            {error && (
+              <div className={styles.errorMessage}>
+                <i className="fas fa-exclamation-circle me-2"></i>
+                {error}
+              </div>
+            )}
           </div>
         </div>
-        <div className="form-group row">
-          <div className="form-group col-lg-9"></div>
-          <div className="form-group col-lg-3">
-            <input
-              type="submit"
-              value="확인"
-              className="btn btn-primary btn-modern float-end"
-            />
-          </div>
+        <div className={styles.submitSection}>
+          <button type="submit" className={styles.submitBtn}>
+            <i className="fas fa-check me-2"></i>
+            확인
+          </button>
         </div>
       </form>
     </div>

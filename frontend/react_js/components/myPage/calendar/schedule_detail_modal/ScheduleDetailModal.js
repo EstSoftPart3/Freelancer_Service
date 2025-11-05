@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import axios from 'axios';
-import './ScheduleDetailModal.module.css';
+import { api } from '@/lib/axios';
+import { useAlertStore } from '@/store/alertStore';
+import styles from './ScheduleDetailModal.module.css';
 
 const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }) => {
+  const alertStore = useAlertStore();
+
   // State 관리
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,19 +42,22 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
     try {
       setLoading(true);
       
-      // API 호출 - 실제 엔드포인트에 맞게 수정
-      const response = await axios.get(`/api/calendar/schedule/${scheduleSq}`);
+      // API 호출 - 토큰이 자동으로 포함됩니다
+      const response = await api.$get(`/calendar/evnts/detail/${scheduleSq}`);
 
-      console.log('=== 일정 상세 조회 응답 ===', response.data);
+      console.log('=== 일정 상세 조회 응답 ===', response);
 
-      if (response.data.success || response.data.status === 'OK') {
-        setScheduleDetail(response.data.data || response.data.output);
+      if (response.status === 'OK') {
+        setScheduleDetail(response.output);
       } else {
-        alert('일정 정보를 불러오는데 실패했습니다.');
+        alertStore.show('일정 정보를 불러오는데 실패했습니다.', 'danger');
       }
     } catch (error) {
       console.error('일정 상세 조회 실패:', error);
-      alert('일정 정보를 불러오는데 실패했습니다.');
+      alertStore.show(
+        error?.response?.data?.message || '일정 정보를 불러오는데 실패했습니다.',
+        'danger'
+      );
     } finally {
       setLoading(false);
     }
@@ -107,12 +113,12 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
 
     // 유효성 검사
     if (!editForm.title.trim()) {
-      alert('제목을 입력해주세요.');
+      alertStore.show('제목을 입력해주세요.', 'danger');
       return;
     }
 
     if (!editForm.startDt) {
-      alert('시작일시를 선택해주세요.');
+      alertStore.show('시작일시를 선택해주세요.', 'danger');
       return;
     }
 
@@ -122,7 +128,7 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
       const endDate = new Date(editForm.endDt);
 
       if (endDate < startDate) {
-        alert('종료일시는 시작일시보다 이전일 수 없습니다.');
+        alertStore.show('종료일시는 시작일시보다 이전일 수 없습니다.', 'danger');
         return;
       }
     }
@@ -144,14 +150,14 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
         updateData.endDt = editForm.endDt;
       }
 
-      // API 호출 - 실제 엔드포인트에 맞게 수정
-      const response = await axios.put(
-        `/api/calendar/schedule/${scheduleSq}`,
+      // API 호출 - 토큰이 자동으로 포함됩니다
+      const response = await api.$put(
+        `/calendar/evnts/${scheduleSq}`,
         updateData
       );
 
-      if (response.data.success || response.data.status === 'OK') {
-        alert('일정이 수정되었습니다.');
+      if (response.status === 'OK') {
+        alertStore.show(response.message || '일정이 수정되었습니다.', 'success');
         setIsEditing(false);
         // 수정된 데이터로 다시 로드
         await loadScheduleDetail();
@@ -159,11 +165,14 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
           onUpdated();
         }
       } else {
-        alert('일정 수정에 실패했습니다.');
+        alertStore.show('일정 수정에 실패했습니다.', 'danger');
       }
     } catch (error) {
       console.error('일정 수정 실패:', error);
-      alert('일정 수정에 실패했습니다.');
+      alertStore.show(
+        error?.response?.data?.message || '일정 수정에 실패했습니다.',
+        'danger'
+      );
     } finally {
       setSaving(false);
     }
@@ -186,22 +195,25 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
     try {
       setDeleting(true);
       
-      // API 호출 - 실제 엔드포인트에 맞게 수정
-      const response = await axios.delete(`/api/calendar/schedule/${scheduleSq}`);
+      // API 호출 - 토큰이 자동으로 포함됩니다
+      const response = await api.$delete(`/calendar/evnts/${scheduleSq}`);
 
-      if (response.data.success || response.data.status === 'OK') {
-        alert('일정이 삭제되었습니다.');
+      if (response.status === 'OK') {
+        alertStore.show(response.message || '일정이 삭제되었습니다.', 'success');
         setShowDeleteConfirm(false);
         if (onDeleted) {
           onDeleted();
         }
         closeModal();
       } else {
-        alert('일정 삭제에 실패했습니다.');
+        alertStore.show('일정 삭제에 실패했습니다.', 'danger');
       }
     } catch (error) {
       console.error('일정 삭제 실패:', error);
-      alert('일정 삭제에 실패했습니다.');
+      alertStore.show(
+        error?.response?.data?.message || '일정 삭제에 실패했습니다.',
+        'danger'
+      );
     } finally {
       setDeleting(false);
     }
@@ -259,11 +271,11 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
     const status = getProjectStatus(projectDetail);
     switch (status) {
       case '모집 예정':
-        return 'status-upcoming';
+        return 'statusUpcoming';
       case '모집 중':
-        return 'status-active';
+        return 'statusActive';
       case '모집 마감':
-        return 'status-ended';
+        return 'statusEnded';
       default:
         return '';
     }
@@ -283,49 +295,58 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
   return (
     <>
       {/* 메인 모달 */}
-      <div className="modal-overlay" onClick={closeModal}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
-            <h3>일정 상세</h3>
-            <button className="close-btn" onClick={closeModal}>
-              <i className="bi bi-x"></i>
+      <div className={styles.modalOverlay} onClick={closeModal}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeader}>
+            <div className={styles.headerContent}>
+              <i className="fas fa-calendar-day me-2"></i>
+              <h3 className={styles.modalTitle}>일정 상세</h3>
+            </div>
+            <button className={styles.btnClose} onClick={closeModal}>
+              ×
             </button>
           </div>
 
-          <div className="modal-body">
+          <div className={styles.modalBody}>
             {/* 로딩 */}
             {loading && (
-              <div className="loading">
-                <i className="bi bi-arrow-clockwise"></i>
+              <div className={styles.loading}>
+                <span className={styles.spinner}></span>
                 <span>로딩 중...</span>
               </div>
             )}
 
             {/* 일정 상세 */}
             {!loading && scheduleDetail && (
-              <div className="schedule-detail">
+              <div className={styles.scheduleDetail}>
                 {/* 개인 일정 상세 */}
                 {scheduleDetail.sourceType === 'PERSONAL' && scheduleDetail.personalDetail && (
-                  <div className="personal-detail">
-                    <div className="detail-item">
-                      <label>제목</label>
+                  <div className={styles.personalDetail}>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-heading me-2"></i>
+                        제목
+                      </label>
                       {!isEditing ? (
-                        <div className="value">{scheduleDetail.personalDetail.title}</div>
+                        <div className={styles.detailValue}>{scheduleDetail.personalDetail.title}</div>
                       ) : (
                         <input
                           value={editForm.title}
                           onChange={(e) => handleEditFormChange('title', e.target.value)}
                           type="text"
-                          className="form-input"
+                          className={styles.formInput}
                           placeholder="제목을 입력하세요"
                         />
                       )}
                     </div>
 
-                    <div className="detail-item">
-                      <label>시작일시</label>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-play-circle me-2"></i>
+                        시작일시
+                      </label>
                       {!isEditing ? (
-                        <div className="value">
+                        <div className={styles.detailValue}>
                           {formatDateTime(scheduleDetail.personalDetail.startDt)}
                         </div>
                       ) : (
@@ -333,29 +354,32 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
                           value={editForm.startDt}
                           onChange={(e) => handleEditFormChange('startDt', e.target.value)}
                           type="datetime-local"
-                          className="form-input"
+                          className={styles.formInput}
                         />
                       )}
                     </div>
 
-                    <div className="detail-item">
-                      <label>종료일시</label>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-stop-circle me-2"></i>
+                        종료일시
+                      </label>
                       {!isEditing ? (
-                        <div className="value">
+                        <div className={styles.detailValue}>
                           {scheduleDetail.personalDetail.endDt
                             ? formatDateTime(scheduleDetail.personalDetail.endDt)
                             : '종료일시 없음'}
                         </div>
                       ) : (
-                        <div className="end-date-container">
+                        <div className={styles.endDateContainer}>
                           <input
                             value={editForm.endDt}
                             onChange={(e) => handleEditFormChange('endDt', e.target.value)}
                             type="datetime-local"
-                            className="form-input"
+                            className={styles.formInput}
                             disabled={editForm.clearEndDt}
                           />
-                          <label className="checkbox-label">
+                          <label className={styles.checkboxLabel}>
                             <input
                               type="checkbox"
                               checked={editForm.clearEndDt}
@@ -369,19 +393,22 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
                       )}
                     </div>
 
-                    <div className="detail-item">
-                      <label>메모</label>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-sticky-note me-2"></i>
+                        메모
+                      </label>
                       {!isEditing ? (
-                        <div className="value memo">
+                        <div className={`${styles.detailValue} ${styles.memo}`}>
                           {scheduleDetail.personalDetail.memo || '메모 없음'}
                         </div>
                       ) : (
                         <textarea
                           value={editForm.memo}
                           onChange={(e) => handleEditFormChange('memo', e.target.value)}
-                          className="form-textarea"
+                          className={styles.formTextarea}
                           placeholder="메모를 입력하세요"
-                          rows="3"
+                          rows="4"
                         ></textarea>
                       )}
                     </div>
@@ -390,34 +417,42 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
 
                 {/* 프로젝트 일정 상세 */}
                 {scheduleDetail.sourceType === 'PROJECT' && scheduleDetail.projectDetail && (
-                  <div className="project-detail">
-                    <div className="detail-item">
-                      <label>프로젝트명</label>
-                      <div className="value">{scheduleDetail.projectDetail.projectTtl}</div>
+                  <div className={styles.projectDetail}>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-project-diagram me-2"></i>
+                        프로젝트명
+                      </label>
+                      <div className={styles.detailValue}>{scheduleDetail.projectDetail.projectTtl}</div>
                     </div>
 
-                    <div className="detail-item">
-                      <label>모집 시작일</label>
-                      <div className="value">
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-calendar-check me-2"></i>
+                        모집 시작일
+                      </label>
+                      <div className={styles.detailValue}>
                         {formatDate(scheduleDetail.projectDetail.recruitStartDt)}
                       </div>
                     </div>
 
-                    <div className="detail-item">
-                      <label>모집 마감일</label>
-                      <div className="value">
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-calendar-times me-2"></i>
+                        모집 마감일
+                      </label>
+                      <div className={styles.detailValue}>
                         {formatDate(scheduleDetail.projectDetail.recruitEndDt)}
                       </div>
                     </div>
 
-                    <div className="detail-item">
-                      <label>상태</label>
-                      <div className="value">
-                        <span
-                          className={`status-badge ${getProjectStatusClass(
-                            scheduleDetail.projectDetail
-                          )}`}
-                        >
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-info-circle me-2"></i>
+                        상태
+                      </label>
+                      <div className={styles.detailValue}>
+                        <span className={styles[getProjectStatusClass(scheduleDetail.projectDetail)]}>
                           {getProjectStatus(scheduleDetail.projectDetail)}
                         </span>
                       </div>
@@ -427,30 +462,42 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
 
                 {/* 인터뷰 일정 상세 */}
                 {scheduleDetail.interviewDetail && (
-                  <div className="interview-detail">
-                    <div className="detail-item">
-                      <label>제목</label>
-                      <div className="value">{scheduleDetail.interviewDetail.title}</div>
+                  <div className={styles.interviewDetail}>
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-heading me-2"></i>
+                        제목
+                      </label>
+                      <div className={styles.detailValue}>{scheduleDetail.interviewDetail.title}</div>
                     </div>
 
-                    <div className="detail-item">
-                      <label>시작 시간</label>
-                      <div className="value">
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-play-circle me-2"></i>
+                        시작 시간
+                      </label>
+                      <div className={styles.detailValue}>
                         {formatDateTime(scheduleDetail.interviewDetail.startDt)}
                       </div>
                     </div>
 
-                    <div className="detail-item">
-                      <label>마감 시간</label>
-                      <div className="value">
+                    <div className={styles.detailItem}>
+                      <label className={styles.detailLabel}>
+                        <i className="fas fa-stop-circle me-2"></i>
+                        마감 시간
+                      </label>
+                      <div className={styles.detailValue}>
                         {formatDateTime(scheduleDetail.interviewDetail.endDt)}
                       </div>
                     </div>
 
                     {scheduleDetail.interviewDetail.memo && (
-                      <div className="detail-item">
-                        <label>메모</label>
-                        <div className="value memo">
+                      <div className={styles.detailItem}>
+                        <label className={styles.detailLabel}>
+                          <i className="fas fa-sticky-note me-2"></i>
+                          메모
+                        </label>
+                        <div className={`${styles.detailValue} ${styles.memo}`}>
                           {scheduleDetail.interviewDetail.memo}
                         </div>
                       </div>
@@ -462,47 +509,61 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
 
             {/* 에러 */}
             {!loading && !scheduleDetail && (
-              <div className="error">
-                <i className="bi bi-exclamation-triangle"></i>
+              <div className={styles.error}>
+                <i className="fas fa-exclamation-triangle"></i>
                 <span>일정 정보를 불러올 수 없습니다.</span>
               </div>
             )}
           </div>
 
-          <div className="modal-footer">
+          <div className={styles.modalFooter}>
             {/* 개인일정 수정 모드 버튼들 */}
             {scheduleDetail?.sourceType === 'PERSONAL' && (
               <>
                 {!isEditing ? (
                   <>
-                    <button className="btn btn-warning" onClick={startEdit}>
+                    <button className={styles.btnEdit} onClick={startEdit}>
+                      <i className="fas fa-edit me-2"></i>
                       수정
                     </button>
                     <button
-                      className="btn btn-danger"
+                      className={styles.btnDanger}
                       onClick={confirmDelete}
                       disabled={deleting}
                     >
+                      <i className="fas fa-trash me-2"></i>
                       {deleting ? '삭제 중...' : '삭제'}
                     </button>
-                    <button className="btn btn-secondary" onClick={closeModal}>
+                    <button className={styles.btnSecondary} onClick={closeModal}>
+                      <i className="fas fa-times me-2"></i>
                       닫기
                     </button>
                   </>
                 ) : (
                   <>
                     <button
-                      className="btn btn-primary"
+                      className={styles.btnPrimary}
                       onClick={saveEdit}
                       disabled={saving}
                     >
-                      {saving ? '저장 중...' : '저장'}
+                      {saving ? (
+                        <>
+                          <span className={styles.spinner}></span>
+                          저장 중...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-check me-2"></i>
+                          저장
+                        </>
+                      )}
                     </button>
                     <button
-                      className="btn btn-secondary"
+                      className={styles.btnSecondary}
                       onClick={cancelEdit}
                       disabled={saving}
                     >
+                      <i className="fas fa-times me-2"></i>
                       취소
                     </button>
                   </>
@@ -513,10 +574,12 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
             {/* 프로젝트일정 버튼들 */}
             {scheduleDetail?.sourceType === 'PROJECT' && (
               <>
-                <button className="btn btn-primary" onClick={goToProject}>
+                <button className={styles.btnPrimary} onClick={goToProject}>
+                  <i className="fas fa-external-link-alt me-2"></i>
                   프로젝트 상세보기
                 </button>
-                <button className="btn btn-secondary" onClick={closeModal}>
+                <button className={styles.btnSecondary} onClick={closeModal}>
+                  <i className="fas fa-times me-2"></i>
                   닫기
                 </button>
               </>
@@ -526,11 +589,13 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
             {scheduleDetail?.interviewDetail && (
               <>
                 {scheduleDetail.interviewDetail?.projectSq && (
-                  <button className="btn btn-primary" onClick={goToProject}>
+                  <button className={styles.btnPrimary} onClick={goToProject}>
+                    <i className="fas fa-external-link-alt me-2"></i>
                     프로젝트 상세보기
                   </button>
                 )}
-                <button className="btn btn-secondary" onClick={closeModal}>
+                <button className={styles.btnSecondary} onClick={closeModal}>
+                  <i className="fas fa-times me-2"></i>
                   닫기
                 </button>
               </>
@@ -539,7 +604,8 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
             {/* 기본 닫기 버튼 */}
             {!scheduleDetail?.sourceType &&
               !scheduleDetail?.interviewDetail && (
-                <button className="btn btn-secondary" onClick={closeModal}>
+                <button className={styles.btnSecondary} onClick={closeModal}>
+                  <i className="fas fa-times me-2"></i>
                   닫기
                 </button>
               )}
@@ -549,36 +615,50 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
 
       {/* 삭제 확인 다이얼로그 */}
       {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={cancelDelete}>
+        <div className={styles.modalOverlay} onClick={cancelDelete}>
           <div
-            className="modal-content delete-confirm-modal"
+            className={`${styles.modalContent} ${styles.deleteConfirmModal}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <h3>일정 삭제</h3>
-            </div>
-
-            <div className="modal-body">
-              <div className="delete-warning">
-                <i className="bi bi-exclamation-triangle"></i>
-                <p>정말로 이 일정을 삭제하시겠습니까?</p>
-                <p className="warning-text">삭제된 일정은 복구할 수 없습니다.</p>
+            <div className={styles.modalHeader}>
+              <div className={styles.headerContent}>
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                <h3 className={styles.modalTitle}>일정 삭제</h3>
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className={styles.modalBody}>
+              <div className={styles.deleteWarning}>
+                <i className="fas fa-exclamation-circle"></i>
+                <p>정말로 이 일정을 삭제하시겠습니까?</p>
+                <p className={styles.warningText}>삭제된 일정은 복구할 수 없습니다.</p>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
               <button
-                className="btn btn-danger"
+                className={styles.btnDanger}
                 onClick={deleteSchedule}
                 disabled={deleting}
               >
-                {deleting ? '삭제 중...' : '삭제'}
+                {deleting ? (
+                  <>
+                    <span className={styles.spinner}></span>
+                    삭제 중...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-trash me-2"></i>
+                    삭제
+                  </>
+                )}
               </button>
               <button
-                className="btn btn-secondary"
+                className={styles.btnSecondary}
                 onClick={cancelDelete}
                 disabled={deleting}
               >
+                <i className="fas fa-times me-2"></i>
                 취소
               </button>
             </div>

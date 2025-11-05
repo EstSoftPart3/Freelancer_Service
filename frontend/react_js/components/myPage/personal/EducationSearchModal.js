@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useModalStore } from '../../../store/modalStore';
+import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './EducationSearchModal.css';
+import styles from './EducationSearchModal.module.css';
 
 const EducationSearchModal = ({ onComplete }) => {
-  const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
   const [tab, setTab] = useState('high'); // 'high' 또는 'univ'
@@ -173,7 +172,9 @@ const EducationSearchModal = ({ onComplete }) => {
   };
 
   // 모달 닫기
-  const close = () => modalStore.closeModal();
+  const close = () => {
+    onComplete?.(null);
+  };
 
   // 페이지네이션
   const prevPage = () => {
@@ -195,14 +196,14 @@ const EducationSearchModal = ({ onComplete }) => {
     }
   };
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <span className="modal-title">
+  return createPortal(
+    <div className={styles.modalOverlay} onClick={close}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalTitle}>
             {isDateSelection ? '학력 기간 입력' : '학력 검색'}
           </span>
-          <button className="modal-close" onClick={close}>
+          <button className={styles.modalClose} onClick={close}>
             ×
           </button>
         </div>
@@ -210,15 +211,15 @@ const EducationSearchModal = ({ onComplete }) => {
         {!isDateSelection ? (
           <div>
             {/* 탭 */}
-            <div className="modal-tabs">
+            <div className={styles.modalTabs}>
               <button
-                className={tab === 'high' ? 'active' : ''}
+                className={tab === 'high' ? styles.active : ''}
                 onClick={() => onTabChange('high')}
               >
                 고등학교
               </button>
               <button
-                className={tab === 'univ' ? 'active' : ''}
+                className={tab === 'univ' ? styles.active : ''}
                 onClick={() => onTabChange('univ')}
               >
                 대학교
@@ -226,14 +227,14 @@ const EducationSearchModal = ({ onComplete }) => {
             </div>
 
             {/* 검색 */}
-            <div className="modal-search">
+            <div className={styles.modalSearch}>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="학교명을 입력하세요"
               />
-              <button className="modal-search-btn" onClick={fetchSchools}>
+              <button className={styles.modalSearchBtn} onClick={fetchSchools}>
                 <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
                   <circle cx="8" cy="8" r="7" stroke="#fff" strokeWidth="2" />
                   <path
@@ -247,17 +248,17 @@ const EducationSearchModal = ({ onComplete }) => {
             </div>
 
             {/* 학교 목록 */}
-            <div className="modal-list">
+            <div className={styles.modalList}>
               {schools.length > 0 ? (
                 <div>
                   {schools.map((school) => (
-                    <div key={school.id} className="modal-item">
+                    <div key={school.id} className={styles.modalItem}>
                       <div>
-                        <div className="school-name">{school.name}</div>
-                        <div className="school-address">{school.address}</div>
+                        <div className={styles.schoolName}>{school.name}</div>
+                        <div className={styles.schoolAddress}>{school.address}</div>
                       </div>
                       <button
-                        className="modal-add-btn"
+                        className={styles.modalAddBtn}
                         onClick={() => selectSchool(school)}
                       >
                         선택
@@ -266,12 +267,12 @@ const EducationSearchModal = ({ onComplete }) => {
                   ))}
                 </div>
               ) : (
-                <div className="modal-empty">검색 결과가 없습니다.</div>
+                <div className={styles.modalEmpty}>검색 결과가 없습니다.</div>
               )}
             </div>
 
             {/* 페이지네이션 */}
-            <div className="modal-pagination">
+            <div className={styles.modalPagination}>
               <button disabled={page === 1} onClick={prevPage}>
                 &lt;
               </button>
@@ -279,7 +280,7 @@ const EducationSearchModal = ({ onComplete }) => {
               {pageGroup.map((p) => (
                 <button
                   key={p}
-                  className={page === p ? 'active' : ''}
+                  className={page === p ? styles.active : ''}
                   onClick={() => goPage(p)}
                 >
                   {p}
@@ -292,43 +293,45 @@ const EducationSearchModal = ({ onComplete }) => {
             </div>
           </div>
         ) : (
-          <div className="date-selection">
+          <div className={styles.dateSelection}>
             {/* 선택된 학교 정보 */}
-            <div className="selected-school">
-              <div className="school-name">{selectedSchool?.name}</div>
-              <div className="school-address">{selectedSchool?.address}</div>
+            <div className={styles.selectedSchool}>
+              <div className={styles.schoolName}>{selectedSchool?.name}</div>
+              <div className={styles.schoolAddress}>{selectedSchool?.address}</div>
             </div>
 
             {/* 날짜 입력 */}
-            <div className="date-inputs">
-              <div className="date-input-group">
+            <div className={styles.dateInputs}>
+              <div className={styles.dateInputGroup}>
                 <label>
-                  입학년월 <span style={{ color: 'red' }}>*</span>
+                  입학일 <span style={{ color: 'red' }}>*</span>
                 </label>
-                <div className="datepicker-wrapper">
+                <div className={styles.datepickerWrapper}>
                   <DatePicker
                     selected={startDate}
                     onChange={(date) => setStartDate(date)}
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="입학년월 선택"
+                    placeholderText="입학일 선택"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
               </div>
-              <div className="date-input-group">
-                <label>졸업년월</label>
-                <div className="datepicker-wrapper">
+              <div className={styles.dateInputGroup}>
+                <label>졸업일</label>
+                <div className={styles.datepickerWrapper}>
                   <DatePicker
                     selected={endDate}
                     onChange={(date) => setEndDate(date)}
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="졸업년월 선택"
+                    placeholderText="졸업일 선택"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
@@ -336,7 +339,7 @@ const EducationSearchModal = ({ onComplete }) => {
             </div>
 
             {/* 전공명 입력 */}
-            <div className="date-input-group" style={{ marginTop: '20px' }}>
+            <div className={styles.dateInputGroup} style={{ marginTop: '20px' }}>
               <label>
                 전공명 <span style={{ color: 'red' }}>*</span>
               </label>
@@ -352,27 +355,28 @@ const EducationSearchModal = ({ onComplete }) => {
         )}
 
         {/* 푸터 */}
-        <div className="modal-footer">
+        <div className={styles.modalFooter}>
           {isDateSelection ? (
             <>
-              <button className="modal-footer-back" onClick={backToSearch}>
+              <button className={styles.modalFooterBack} onClick={backToSearch}>
                 이전
               </button>
               <button
-                className="modal-footer-complete"
+                className={styles.modalFooterComplete}
                 onClick={completeSelection}
               >
                 완료
               </button>
             </>
           ) : (
-            <button className="modal-footer-close" onClick={close}>
+            <button className={styles.modalFooterClose} onClick={close}>
               닫기
             </button>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -9,7 +9,7 @@
   margin: 0;
 }
 
-.simple-post-list li {
+.simple-post-list :global(li) {
   padding: 1.25rem 0;
 }
 
@@ -26,18 +26,18 @@
   gap: 0.5rem;
 }
 
-.filter-buttons .btn {
+.filter-buttons :global(.btn) {
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.filter-buttons .btn.active {
+.filter-buttons :global(.btn.active) {
   background-color: #0056b3;
   border-color: #0056b3;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.filter-buttons .badge {
+.filter-buttons :global(.badge) {
   margin-left: 0.25rem;
 }
 
@@ -185,7 +185,7 @@
   color: #212529 !important;
 }
 
-.badge img {
+.badge :global(img) {
   margin-right: 0.25rem;
   vertical-align: middle;
 }
@@ -203,7 +203,7 @@
   display: inline-block;
 }
 
-.page-item.disabled .page-link {
+.page-item.disabled :global(.page-link) {
   color: #6c757d;
   pointer-events: none;
   cursor: not-allowed;
@@ -212,7 +212,7 @@
   opacity: 0.5;
 }
 
-.page-item.active .page-link {
+.page-item.active :global(.page-link) {
   z-index: 1;
   color: #fff;
   background-color: #007bff;
@@ -478,8 +478,8 @@
     width: 100%;
   }
 
-  .search-group .form-select,
-  .search-group .form-control {
+  .search-group :global(.form-select),
+  .search-group :global(.form-control) {
     width: 100% !important;
   }
 
@@ -491,12 +491,12 @@
     font-size: 0.85rem;
   }
 
-  .post-actions .btn {
+  .post-actions :global(.btn) {
     flex: 1;
     min-width: calc(33.333% - 0.35rem);
   }
 
-  .badge img {
+  .badge :global(img) {
     width: 20px;
     height: 20px;
   }
@@ -504,16 +504,16 @@
 
 /* 반응형 - 작은 모바일 */
 @media (max-width: 576px) {
-  h4 {
+  :global(h4) {
     font-size: 20px !important;
   }
 
-  .filter-buttons .btn {
+  .filter-buttons :global(.btn) {
     font-size: 0.85rem;
     padding: 0.35rem 0.5rem;
   }
 
-  .filter-buttons .badge {
+  .filter-buttons :global(.badge) {
     font-size: 0.7rem;
     padding: 0.2rem 0.4rem;
   }
@@ -522,8 +522,8 @@
     font-size: 1rem;
   }
 
-  .post-actions .btn,
-  .btn.px-4 {
+  .post-actions :global(.btn),
+  :global(.btn.px-4) {
     width: 100%;
     margin-bottom: 0.25rem;
   }
@@ -539,13 +539,13 @@
     justify-content: center;
   }
 
-  .simple-post-list li {
+  .simple-post-list :global(li) {
     padding: 1rem 0;
   }
 }
 
 /* 아이콘 폰트 */
-.fas {
+:global(.fas) {
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
@@ -556,17 +556,17 @@
 }
 
 /* 호버 효과 */
-a:hover {
+:global(a:hover) {
   text-decoration: none;
 }
 
-.btn:focus {
+:global(.btn:focus) {
   outline: 0;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 /* 스킬 뱃지 내 이미지 */
-.badge img {
+.badge :global(img) {
   display: inline-block;
   vertical-align: middle;
   margin-right: 0.25rem;
@@ -577,4 +577,3 @@ a:hover {
   padding: 3rem 0;
   font-size: 1.1rem;
 }
-

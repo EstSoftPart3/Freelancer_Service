@@ -8,6 +8,7 @@ import store from '@/store'
 import CommonHeader from '@/components/common/CommonHeader'
 import CommonFooter from '@/components/common/CommonFooter'
 import CommonAlert from '@/components/common/CommonAlert'
+import ModalContainer from '@/components/common/ModalContainer'
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -72,6 +73,7 @@ function AppContent({ Component, pageProps }) {
       <div id="app">
         <CommonHeader />
         <CommonAlert />
+        <ModalContainer />
         <div className="main">
           <Component {...pageProps} />
         </div>

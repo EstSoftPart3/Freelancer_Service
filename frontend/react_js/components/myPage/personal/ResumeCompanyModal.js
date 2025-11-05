@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useModalStore } from '../../../store/modalStore';
+import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './ResumeCompanyModal.css';
+import styles from './ResumeCompanyModal.module.css';
 
 const ResumeCompanyModal = ({ onComplete }) => {
-  const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
   const [form, setForm] = useState({
@@ -72,31 +71,33 @@ const ResumeCompanyModal = ({ onComplete }) => {
 
     // 부모로 데이터 전달
     onComplete?.({
-      careerCompanyNm: form.company,
-      careerDepartmentNm: form.department,
-      careerPositionNm: form.position,
-      careerStartDt: formatDateForAPI(form.startDate),
-      careerEndDt: formatDateForAPI(form.endDate),
+      company: form.company,
+      department: form.department,
+      position: form.position,
+      startDate: form.startDate,
+      endDate: form.endDate,
       period: period,
     });
-
-    modalStore.closeModal();
   };
 
-  return (
-    <div className="modal-layer">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h4 className="modal-title">회사 이력 추가하기</h4>
-          <button className="close-btn" onClick={() => modalStore.closeModal()}>
+  const close = () => {
+    onComplete?.(null);
+  };
+
+  return createPortal(
+    <div className={styles.modalLayer} onClick={close}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h4 className={styles.modalTitle}>회사 이력 추가하기</h4>
+          <button className={styles.closeBtn} onClick={close}>
             ×
           </button>
         </div>
 
-        <div className="modal-body">
-          <div className="form-row">
-            <div className="form-group">
-              <label className="modal-label">회사명</label>
+        <div className={styles.modalBody}>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.modalLabel}>회사명</label>
               <input
                 value={form.company}
                 onChange={(e) =>
@@ -107,8 +108,8 @@ const ResumeCompanyModal = ({ onComplete }) => {
                 placeholder="회사명"
               />
             </div>
-            <div className="form-group">
-              <label className="modal-label">부서</label>
+            <div className={styles.formGroup}>
+              <label className={styles.modalLabel}>부서</label>
               <input
                 value={form.department}
                 onChange={(e) =>
@@ -120,9 +121,9 @@ const ResumeCompanyModal = ({ onComplete }) => {
               />
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group position-group">
-              <label className="modal-label">직급</label>
+          <div className={styles.formRow}>
+            <div className={`${styles.formGroup} ${styles.positionGroup}`}>
+              <label className={styles.modalLabel}>직급</label>
               <input
                 value={form.position}
                 onChange={(e) =>
@@ -133,35 +134,37 @@ const ResumeCompanyModal = ({ onComplete }) => {
                 placeholder="직급"
               />
             </div>
-            <div className="form-group period-group">
-              <label className="modal-label">근무 기간</label>
+            <div className={`${styles.formGroup} ${styles.periodGroup}`}>
+              <label className={styles.modalLabel}>근무 기간</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div className="datepicker-wrapper flex-grow-1">
+                <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
                   <DatePicker
                     selected={form.startDate}
                     onChange={(date) =>
                       setForm((prev) => ({ ...prev, startDate: date }))
                     }
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="입사년월"
+                    placeholderText="입사일"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
                 <span style={{ alignSelf: 'center' }}>~</span>
-                <div className="datepicker-wrapper flex-grow-1">
+                <div className={`${styles.datepickerWrapper} ${styles.flexGrow1}`}>
                   <DatePicker
                     selected={form.endDate}
                     onChange={(date) =>
                       setForm((prev) => ({ ...prev, endDate: date }))
                     }
                     dateFormat="yyyy-MM-dd"
-                    placeholderText="퇴사년월"
+                    placeholderText="퇴사일"
                     className="form-control"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                   <i className="fas fa-calendar datepicker-icon"></i>
                 </div>
@@ -170,16 +173,17 @@ const ResumeCompanyModal = ({ onComplete }) => {
           </div>
         </div>
 
-        <div className="modal-footer">
+        <div className={styles.modalFooter}>
           <button className="btn btn-primary" onClick={submit}>
             저장하기
           </button>
-          <button className="btn btn-light" onClick={() => modalStore.closeModal()}>
+          <button className="btn btn-light" onClick={close}>
             닫기
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

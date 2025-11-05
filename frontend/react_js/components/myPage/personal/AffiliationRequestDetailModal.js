@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useModalStore } from '../../../store/modalStore';
 import { useAlertStore } from '../../../store/alertStore';
 import ResumeDetailModal from '../common/ResumeDetailModal';
-import api from '../../../utils/api';
-import './AffiliationRequestDetailModal.css';
+import { api } from '@/lib/axios';
+import skillIconMap from '@/lib/skillIconMap';
+import styles from './AffiliationRequestDetailModal.module.css';
 
 const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
   const modalStore = useModalStore();
@@ -15,7 +16,7 @@ const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
   // 소속 정보 가져오기
   const getCompanyInfo = async () => {
     try {
-      const res = await api.get(`/mypage/applications/${applicationSq}`);
+      const res = await api.$get(`/mypage/applications/${applicationSq}`);
       setCompanyInfo(res.output.affiliation);
       setApplyInfo(res.output.apply);
     } catch (error) {
@@ -26,10 +27,12 @@ const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
   // 이력서 모달창 열기
   const openResumeModal = () => {
     modalStore.openModal(ResumeDetailModal, {
-      title: '이력서 상세보기',
-      size: 'modal-lg',
       resumeSq: applyInfo.resumeSq,
-      onConfirm: () => {},
+      projectSq: 0,
+      applicationSq: 0,
+      isFromApplicationList: false,
+      api: api,
+      skillIconMap: skillIconMap,
     });
   };
 
@@ -44,10 +47,11 @@ const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
 
   return (
     <div className="modal-content">
-      <div className="modal-header">
-        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>
-          소속 신청 내역
-        </h4>
+      <div className={styles.modalHeader}>
+        <div className={styles.headerContent}>
+          <i className="fas fa-building me-2"></i>
+          <h4 className={styles.modalTitle}>소속 신청 내역</h4>
+        </div>
         <button
           type="button"
           className="btn-close"
@@ -55,135 +59,119 @@ const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
           aria-hidden="true"
         ></button>
       </div>
-      <div className="modal-body" style={{ backgroundColor: '#f5f5f5' }}>
-        {/* 회사명 */}
-        <div className="mb-3">
-          <label
-            htmlFor="companyName"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            회사명
-          </label>
-          <div className="text-dark" id="companyName">
-            {companyInfo.companyNm}
+      
+      <div className={styles.modalBody}>
+        {/* 회사 기본 정보 카드 */}
+        <div className={styles.infoCard}>
+          <div className={styles.cardHeader}>
+            <i className="fas fa-briefcase me-2"></i>
+            <h5 className={styles.cardTitle}>기업 정보</h5>
+          </div>
+          
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>
+                <i className="fas fa-building me-2"></i>
+                회사명
+              </label>
+              <div className={styles.infoValue}>{companyInfo.companyNm}</div>
+            </div>
+
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>
+                <i className="fas fa-user-tie me-2"></i>
+                대표자명
+              </label>
+              <div className={styles.infoValue}>{companyInfo.ceoNm}</div>
+            </div>
+
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>
+                <i className="fas fa-calendar-alt me-2"></i>
+                개업년수
+              </label>
+              <div className={styles.infoValue}>{companyInfo.openYear}년</div>
+            </div>
+
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>
+                <i className="fas fa-map-marker-alt me-2"></i>
+                회사위치
+              </label>
+              <div className={styles.infoValue}>{companyInfo.address}</div>
+            </div>
           </div>
         </div>
 
-        {/* 대표자명 */}
-        <div className="mb-3">
-          <label
-            htmlFor="ceoName"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            대표자명
-          </label>
-          <div className="text-dark" id="ceoName">
-            {companyInfo.ceoNm}
+        {/* 회사 설명 카드 */}
+        <div className={styles.infoCard}>
+          <div className={styles.cardHeader}>
+            <i className="fas fa-info-circle me-2"></i>
+            <h5 className={styles.cardTitle}>회사 설명</h5>
+          </div>
+          <div className={styles.descriptionBox}>
+            {companyInfo.greeting || '회사 설명이 없습니다.'}
           </div>
         </div>
 
-        {/* 개업년수 */}
-        <div className="mb-3">
-          <label
-            htmlFor="yearsInBusiness"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            개업년수
-          </label>
-          <div className="text-dark" id="yearsInBusiness">
-            {companyInfo.openYear}년
+        {/* 관련 태그 카드 */}
+        {companyInfo.tags && companyInfo.tags.length > 0 && (
+          <div className={styles.infoCard}>
+            <div className={styles.cardHeader}>
+              <i className="fas fa-tags me-2"></i>
+              <h5 className={styles.cardTitle}>관련 기술</h5>
+            </div>
+            <div className={styles.tagsContainer}>
+              {companyInfo.tags.map((tag, index) => (
+                <span key={index} className={styles.tag}>
+                  <i className="fas fa-hashtag me-1"></i>
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* 회사위치 */}
-        <div className="mb-3">
-          <label
-            htmlFor="companyLocation"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            회사위치
-          </label>
-          <div className="text-dark" id="companyLocation">
-            {companyInfo.address}
+        {/* 이력서 정보 카드 */}
+        <div className={styles.infoCard}>
+          <div className={styles.cardHeader}>
+            <i className="fas fa-file-alt me-2"></i>
+            <h5 className={styles.cardTitle}>지원 정보</h5>
           </div>
-        </div>
-
-        {/* 간단한 설명 */}
-        <div className="mb-3">
-          <label
-            htmlFor="companyDescription"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            회사 설명
-          </label>
-          <div className="text-dark" id="companyDescription">
-            {companyInfo.greeting}
+          
+          <div className={styles.infoItem}>
+            <label className={styles.infoLabel}>
+              <i className="fas fa-paperclip me-2"></i>
+              소속 신청한 이력서
+            </label>
+            <div className={styles.resumeLink}>
+              <button 
+                type="button" 
+                className={styles.resumeButton}
+                onClick={openResumeModal}
+              >
+                <i className="fas fa-file-invoice me-2"></i>
+                {applyInfo.resumeTtl}
+                <i className="fas fa-external-link-alt ms-2"></i>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* 관련 태그 */}
-        <div className="mb-3">
-          <label
-            htmlFor="companyTags"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            관련 태그
-          </label>
-          <div className="d-flex flex-wrap gap-2 mb-3">
-            {companyInfo.tags?.map((tag, index) => (
-              <span key={index} className="btn btn-rounded btn-3d btn-light">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* 이력서 선택 */}
-        <div className="mb-3">
-          <label
-            htmlFor="resume"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            소속 신청한 이력서
-          </label>
-          <div className="text-dark" id="resume">
-            선택한 이력서:
-            <button 
-              type="button" 
-              className="text-primary btn-link" 
-              onClick={openResumeModal}
-            >
-              {applyInfo.resumeTtl}
-            </button>
-          </div>
-        </div>
-
-        {/* 간단한 자기소개 */}
-        <div className="mb-3">
-          <label
-            htmlFor="selfIntroduction"
-            className="form-label text-primary"
-            style={{ fontWeight: 'bold' }}
-          >
-            간단한 자기소개
-          </label>
-          <div className="text-dark" id="introduce">
-            {applyInfo.greeting}
+          <div className={styles.infoItem}>
+            <label className={styles.infoLabel}>
+              <i className="fas fa-comment-dots me-2"></i>
+              간단한 자기소개
+            </label>
+            <div className={styles.greetingBox}>
+              {applyInfo.greeting || '자기소개가 없습니다.'}
+            </div>
           </div>
         </div>
       </div>
-      <div className="modal-footer">
-        {/* <button type="button" className="btn btn-primary" onClick={handleSubmit}>
-          신청 취소
-        </button> */}
-        <button type="button" className="btn btn-light" onClick={closeModal}>
+      
+      <div className={styles.modalFooter}>
+        <button type="button" className={styles.closeButton} onClick={closeModal}>
+          <i className="fas fa-times me-2"></i>
           닫기
         </button>
       </div>

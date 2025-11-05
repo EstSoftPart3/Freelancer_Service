@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '@/lib/axios';
+import { useModalStore } from '@/store/modalStore';
+import AffiliationRequestDetailModal from '@/components/myPage/personal/AffiliationRequestDetailModal';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AffiliatedJobApplications.module.css';
 
 const AffiliatedJobApplications = () => {
+  const { openModal } = useModalStore();
+
   // State 관리
   const [applies, setApplies] = useState([]);
   const [readType, setReadType] = useState('all');
@@ -133,10 +137,9 @@ const AffiliatedJobApplications = () => {
 
   // 상세보기 모달 열기
   const openDetailModal = (applicationSq) => {
-    // 모달 구현 필요
-    alert(`상세보기 모달 구현 필요\nApplication SQ: ${applicationSq}`);
-    // 실제 구현:
-    // setModalData({ type: 'affiliationRequestDetail', applicationSq });
+    openModal(AffiliationRequestDetailModal, {
+      applicationSq: applicationSq,
+    });
   };
 
   // 페이지 변경

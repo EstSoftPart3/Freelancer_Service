@@ -6,7 +6,6 @@ import PasswordCheck from '@/components/myPage/common/PasswordCheck';
 import styles from './InformationEdit.module.css';
 
 export default function InformationEditPage() {
-  const [userType, setUserType] = useState('PERSONAL'); // TODO: userStore에서 가져오기
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [userProfileImageUrl, setUserProfileImageUrl] = useState(null);
   const [hovering, setHovering] = useState(false);
@@ -486,7 +485,7 @@ export default function InformationEditPage() {
   };
 
   return (
-    <MyPageLayout userType={userType}>
+    <MyPageLayout>
       <div className={styles.container}>
         {!isConfirmed ? (
           <PasswordCheck onConfirmed={() => setIsConfirmed(true)}>

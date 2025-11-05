@@ -1,11 +1,11 @@
-input[readonly] {
+:global(input[readonly]) {
   border: none !important;
   background-color: transparent !important;
   box-shadow: none !important;
   pointer-events: none;
 }
 
-.form-check-input[disabled] {
+:global(.form-check-input[disabled]) {
   pointer-events: none;
 }
 
