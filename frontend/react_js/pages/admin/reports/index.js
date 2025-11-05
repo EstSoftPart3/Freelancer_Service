@@ -224,7 +224,11 @@ export default function ReportListPage() {
                             <td>
                               {new Date(report.createdAtDtm).toLocaleDateString('ko-KR')}
                             </td>
-                            <td>{report.reportReasonTxt}</td>
+                            <td>
+                              {['욕설/비방', '스팸/홍보', '개인정보 노출'].includes(report.reportReasonTxt) 
+                                ? report.reportReasonTxt 
+                                : '기타'}
+                            </td>
                             <td>
                               <span
                                 className={

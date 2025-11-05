@@ -139,10 +139,25 @@ export default function ReportDetailPage() {
 
                     <div className="row mb-3 pb-3 border-bottom">
                       <div className="col-md-4">
-                        <strong className="text-muted">신고사유</strong>
+                        <strong className="text-muted">신고 사유</strong>
                       </div>
-                      <div className="col-md-8">{report.reportReasonTxt}</div>
+                      <div className="col-md-8">
+                        {['욕설/비방', '스팸/홍보', '개인정보 노출'].includes(report.reportReasonTxt) 
+                          ? report.reportReasonTxt 
+                          : '기타'}
+                      </div>
                     </div>
+
+                    {!['욕설/비방', '스팸/홍보', '개인정보 노출'].includes(report.reportReasonTxt) && (
+                      <div className="row mb-3 pb-3 border-bottom">
+                        <div className="col-md-4">
+                          <strong className="text-muted">상세 사유</strong>
+                        </div>
+                        <div className="col-md-8">
+                          {report.reportReasonTxt}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="row mb-3 pb-3 border-bottom">
                       <div className="col-md-4">
@@ -259,8 +274,22 @@ export default function ReportDetailPage() {
                       <div className="col-md-3">
                         <strong>신고사유:</strong>
                       </div>
-                      <div className="col-md-9">{report?.reportReasonTxt}</div>
+                      <div className="col-md-9">
+                        {['욕설/비방', '스팸/홍보', '개인정보 노출'].includes(report?.reportReasonTxt) 
+                          ? report?.reportReasonTxt 
+                          : '기타'}
+                      </div>
                     </div>
+                    {!['욕설/비방', '스팸/홍보', '개인정보 노출'].includes(report?.reportReasonTxt) && (
+                      <div className="row mb-2">
+                        <div className="col-md-3">
+                          <strong>상세 사유:</strong>
+                        </div>
+                        <div className="col-md-9">
+                          {report?.reportReasonTxt}
+                        </div>
+                      </div>
+                    )}
                     <div className="row">
                       <div className="col-md-3">
                         <strong>상태:</strong>
