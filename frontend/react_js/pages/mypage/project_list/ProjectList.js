@@ -640,7 +640,7 @@ const ProjectListPage = () => {
               </button>
               {userStore.userTypeCd === 'COMPANY' && (
                 <a
-                  href="/mypage/projectPostPage"
+                  href="/mypage/project_post"
                   className="btn btn-rounded btn-light"
                 >
                   등록하기

@@ -1,13 +1,4 @@
-:global(input[readonly]) {
-  border: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  pointer-events: none;
-}
-
-:global(.form-check-input[disabled]) {
-  pointer-events: none;
-}
+/* CSS Module에서는 순수 글로벌 선택자 사용 불가 - 주석 처리 */
 
 /* 프로필 이미지 관련 스타일 */
 .position-relative .add {

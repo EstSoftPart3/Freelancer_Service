@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import './AffiliationProjectList.module.css';
@@ -326,12 +327,12 @@ const AffiliationProjectList = () => {
                             </span>
                           )}
                         </span>
-                        <a
-                          href={`/mypage/projectPostPage/${post.projectSq}`}
+                        <Link
+                          href={`/mypage/project_post?projectSq=${post.projectSq}`}
                           className="btn btn-outline btn-primary btn-sm"
                         >
                           수정
-                        </a>
+                        </Link>
                         <a
                           onClick={(e) => {
                             e.preventDefault();
@@ -427,12 +428,12 @@ const AffiliationProjectList = () => {
 
           {/* 프로젝트 등록하기 버튼 */}
           <div className="d-flex justify-content-end mt-4 mb-5">
-            <a
-              href="/mypage/projectPostPage"
+            <Link
+              href="/mypage/project_post"
               className="btn btn-primary px-4 py-2"
             >
               프로젝트 등록하기
-            </a>
+            </Link>
           </div>
 
           {/* 페이징 */}
