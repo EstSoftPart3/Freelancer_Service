@@ -5,14 +5,20 @@
 
 
   <!-- 주소 -->
-  <insert id="insertAddress"
-    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"
-    useGeneratedKeys="true"
-    keyProperty="addressSq"> INSERT INTO TBL_ADDRESS_S ( zonecode, address, detail_address, sigungu,
-    latitude, longitude, area_code_sq ) VALUES ( #{zonecode}, #{address}, #{detailAddress}, (SELECT
-    area_sigungu FROM TBL_AREA_C WHERE area_code_sq = #{areaCodeSq}), #{latitude}, #{longitude},
-    #{areaCodeSq} ) </insert>
+<!--  <insert id="insertAddress"-->
+<!--    parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"-->
+<!--    useGeneratedKeys="true"-->
+<!--    keyProperty="addressSq"> INSERT INTO TBL_ADDRESS_S ( zonecode, address, detail_address, sigungu,-->
+<!--    latitude, longitude, area_code_sq ) VALUES ( #{zonecode}, #{address}, #{detailAddress}, (SELECT-->
+<!--    sigungu FROM TBL_AREA_C WHERE area_code_sq = #{areaCodeSq}), #{latitude}, #{longitude},-->
+<!--    #{areaCodeSq} ) </insert>-->
 
+    <insert id="insertAddress"
+            parameterType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"
+            useGeneratedKeys="true"
+            keyProperty="addressSq"> INSERT INTO TBL_ADDRESS_S ( zonecode, address, detail_address, sigungu,
+        latitude, longitude, area_code_sq ) VALUES ( #{zonecode}, #{address}, #{detailAddress},
+        #{sigungu}, #{latitude}, #{longitude},(SELECT area_code_sq FROM TBL_AREA_C WHERE sigungu = #{sigungu} LIMIT 1)) </insert>
 
   <!-- resumeSq로 addressSq 조회 -->
   <select id="selectAddressSqByResumeSq" parameterType="long" resultType="long"> SELECT address_sq
@@ -195,28 +201,60 @@
     SELECT RESUME_NM AS resumeNm, null as resumeTtl, null as resumeSq FROM TBL_RESUME_M WHERE
     RESUME_SQ = #{resumeSq} </select>
 
-  <select id="findParentSkillTags"
-    resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM
-    TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool','Device','OS','DBMS') </select>
+<!--  <select id="findParentSkillTags"-->
+<!--    resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM-->
+<!--    TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool','Device','OS','DBMS') </select>-->
 
-  <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT
-    * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags" item="tag"
-      separator="," open="(" close=")"> #{tag.skillTagSq} </foreach>
+    <select id="findParentSkillTags"
+            resultType="com.example.demo.domain.community.entity.CommonSkillTag">
+        SELECT * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IS NULL ORDER BY skill_tag_sq
+    </select>
 
-  </select>
+    <select id="findAll"
+            resultType="com.example.demo.domain.community.entity.CommonSkillTag">
+        SELECT *
+        FROM TBL_SKILL_TAG_C
+        WHERE parent_skill_tag_sq IN
+        <foreach collection="skillTags" item="tag" separator="," open="(" close=")">
+            #{tag.skillTagSq}
+        </foreach>
+        ORDER BY skill_tag_sq
+    </select>
+
+
+<!--    <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT-->
+<!--    * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags" item="tag"-->
+<!--      separator="," open="(" close=")"> #{tag.skillTagSq} </foreach>-->
+
+<!--  </select>-->
 
   <!-- 프로젝트 업무단,역할 불러오기 -->
   <!-- 역할 (1000) -->
-  <select id="selectProjectRoleTypeCodes"
-    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
-    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
-    parent_common_code_sq = 1000 AND common_code_is_active_yn = 'Y' </select>
+    <!-- db에 common_code_is_active_yn가 모두 N이여서 위에 코드가 실행이 안됨. 혹시몰라서 N인걸로 생성 -->
+
+<!--  <select id="selectProjectRoleTypeCodes"-->
+<!--    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq-->
+<!--    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE-->
+<!--    parent_common_code_sq = 1000 AND common_code_is_active_yn = 'Y' </select>-->
+
+    <!-- 역할 (1000) -->
+    <select id="selectProjectRoleTypeCodes"
+            resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
+        AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
+        parent_common_code_sq = 1000 AND common_code_is_active_yn = 'N' </select>
 
   <!-- 업무 (1100) -->
-  <select id="selectProjectTaskTypeCodes"
-    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
-    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
-    parent_common_code_sq = 1100 AND common_code_is_active_yn = 'Y' </select>
+<!--  <select id="selectProjectTaskTypeCodes"-->
+<!--    resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq-->
+<!--    AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE-->
+<!--    parent_common_code_sq = 1100 AND common_code_is_active_yn = 'Y' </select>-->
+
+    <!-- 업무 (1100) -->
+<!-- db에 common_code_is_active_yn가 모두 N이여서 위에 코드가 실행이 안됨. 혹시몰라서 N인걸로 생성 -->
+    <select id="selectProjectTaskTypeCodes"
+            resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
+        AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
+        parent_common_code_sq = 1100 AND common_code_is_active_yn = 'N' </select>
 
   <!-- 자격증  -->
 
