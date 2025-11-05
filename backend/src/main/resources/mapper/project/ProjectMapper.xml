@@ -29,7 +29,21 @@
 	</resultMap>
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' AND p.project_activate_yn = 'Y' <if
+		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N'
+		<choose>
+			<when test="projectActivateYn != null and projectActivateYn == 'ALL'">
+				<!-- 관리자가 '전체' 선택: 공개/비공개(숨김) 모두 조회 -->
+			</when>
+			<when test="projectActivateYn != null and projectActivateYn != ''">
+				<!-- 특정 값 지정: 해당 값으로 필터링 (Y=공개, N=비공개/숨김) -->
+				AND p.project_activate_yn = #{projectActivateYn}
+			</when>
+			<otherwise>
+				<!-- 기본값: 공개만 조회 -->
+				AND p.project_activate_yn = 'Y'
+			</otherwise>
+		</choose>
+		<if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
 		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
@@ -71,19 +85,22 @@
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
+		<!-- 인턴 수정: 프로젝트 정렬 쿼리 개선 -->
+		<!-- 사유: 페이징 시 같은 값(날짜, 조회수 등)을 가진 프로젝트들의 순서가 랜덤하게 나타나는 문제 해결 -->
+		<!-- 내용: 모든 ORDER BY에 고유 키(project_sq DESC)를 두 번째 정렬 기준으로 추가하여 일관된 순서 보장 -->
 		<choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
 					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
-		${sortOrder} </when>
-					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
-					<when test="sortBy == 'scrap_count'"> ORDER BY p.project_scrap_cnt ${sortOrder} </when>
+		${sortOrder}, p.project_sq DESC </when>
+					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder}, p.project_sq DESC </when>
+					<when test="sortBy == 'scrap_count'"> ORDER BY p.project_scrap_cnt ${sortOrder}, p.project_sq DESC </when>
 					<when test="sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
-		${sortOrder} </when>
-					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+		${sortOrder}, p.project_sq DESC </when>
+					<otherwise> ORDER BY p.project_created_at_dtm DESC, p.project_sq DESC </otherwise>
 				</choose>
 			</when>
-			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+			<otherwise> ORDER BY p.project_created_at_dtm DESC, p.project_sq DESC </otherwise>
 		</choose>
 		<if
 			test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
@@ -123,6 +140,11 @@
 	    ]]>
 	  </if>
     
+    <!-- 인턴 수정: 기업 프로젝트 목록 정렬 추가 -->
+    <!-- 사유: ORDER BY 없이 LIMIT만 사용하여 페이징마다 프로젝트 순서가 완전히 랜덤하게 출력되는 문제 -->
+    <!-- 내용: 생성일시 내림차순 + 고유 키(project_sq) 내림차순 정렬 추가 -->
+    ORDER BY p.project_created_at_dtm DESC, p.project_sq DESC
+    
     <if
 			test="request.size != null and request.offset != null"> LIMIT #{request.size} OFFSET
 		#{request.offset} </if>
@@ -131,7 +153,21 @@
 
 	<select id="countProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' AND p.project_activate_yn = 'Y' <if
+		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N'
+		<choose>
+			<when test="projectActivateYn != null and projectActivateYn == 'ALL'">
+				<!-- 관리자가 '전체' 선택: 공개/비공개(숨김) 모두 조회 -->
+			</when>
+			<when test="projectActivateYn != null and projectActivateYn != ''">
+				<!-- 특정 값 지정: 해당 값으로 필터링 (Y=공개, N=비공개/숨김) -->
+				AND p.project_activate_yn = #{projectActivateYn}
+			</when>
+			<otherwise>
+				<!-- 기본값: 공개만 조회 -->
+				AND p.project_activate_yn = 'Y'
+			</otherwise>
+		</choose>
+		<if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
 		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("

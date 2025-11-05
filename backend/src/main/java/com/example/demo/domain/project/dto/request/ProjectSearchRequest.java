@@ -21,6 +21,7 @@ public class ProjectSearchRequest extends BaseRequest {
     private String sortOrder; // 예: "asc" 또는 "desc"
     private List<Long> projectDeveloperGradeCd; // 예: 700
     private String projectIsDeletedYn; // "Y" or "N"
+    private String projectActivateYn; // 프로젝트 공개 여부: "Y" = 공개, "N" = 비공개, "ALL" = 전체 (관리자용)
     private String experience; // 예: "3년 이상"
     private List<Long> educationCd; // 예: "대졸 이상"
     private List<Long> jobRoleCd; // 예: "백엔드 개발자"

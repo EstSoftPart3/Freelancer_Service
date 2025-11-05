@@ -33,6 +33,13 @@ public class LoginService {
             throw new IllegalArgumentException("탈퇴한 사용자입니다.");
         }
 
+        // 인턴 수정: 계정 비활성화 체크 추가
+        // 수정 내용: userIsActivateYn이 N인 경우 로그인 차단
+        // 수정 사유: 관리자가 비활성화한 계정은 로그인 불가 처리하여 모든 인증 필요 기능 사용 차단
+        if ("N".equalsIgnoreCase(user.getUserIsActivateYn())) {
+            throw new IllegalArgumentException("비활성화된 계정입니다. 관리자에게 문의하세요.");
+        }
+
         if (!user.getUserTypeCd().equals(userTypeCd)) {
             throw new IllegalArgumentException("회원 유형이 일치하지 않습니다.");
         }
