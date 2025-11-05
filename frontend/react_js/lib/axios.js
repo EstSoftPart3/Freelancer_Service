@@ -14,12 +14,8 @@ const apiInstance = axios.create({
 apiInstance.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken')
-    console.log('토큰 확인:', accessToken)
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
-      console.log('토큰 헤더 추가됨')
-    } else {
-      console.log('토큰 없음')
     }
     return config
   },
@@ -133,9 +129,15 @@ export const api = {
       throw err
     }
   },
-  async $put(url, data) {
+  async $put(url, data, config = {}) {
     try {
-      const response = await apiInstance.put(url, data)
+      const response = await apiInstance.put(url, data, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...config.headers
+        },
+        ...config
+      })
       return response.data
     } catch (err) {
       console.error(err)

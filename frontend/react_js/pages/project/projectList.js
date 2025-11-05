@@ -30,6 +30,7 @@ export default function ProjectListPage() {
     sortOrder: 'desc',
     searchKeyword: '',
     searchType: '전체',
+    publicStatus: '전체',
     size: 5,
     page: 1
   })
@@ -66,6 +67,28 @@ export default function ProjectListPage() {
   const fetchProjects = async () => {
     try {
       const params = { ...filters }
+      
+      // publicStatus 처리 (관리자 전용)
+      const userType = (typeof window !== 'undefined' ? localStorage.getItem('userType') : null) || user?.userType
+      const isAdmin = userType === 'ADMIN'
+      
+      if (params.publicStatus === '전체') {
+        // 관리자: 공개+비공개 모두, 일반 사용자: 공개만
+        if (isAdmin) {
+          params.projectActivateYn = 'ALL'
+        } else {
+          params.projectActivateYn = 'Y'
+        }
+        delete params.publicStatus
+      } else if (params.publicStatus === '공개') {
+        // projectActivateYn: 'Y' = 공개, 'N' = 비공개
+        params.projectActivateYn = 'Y'
+        delete params.publicStatus
+      } else if (params.publicStatus === '비공개') {
+        params.projectActivateYn = 'N'
+        delete params.publicStatus
+      }
+      
       const queryString = qs.stringify(params, { arrayFormat: 'repeat' })
       const response = await api.$get(`/projects?${queryString}`)
       setProjects(response.output.projects || [])
@@ -702,13 +725,13 @@ export default function ProjectListPage() {
                 검색
               </button>
               {user?.userType === 'COMPANY' && (
-                <a href="/mypage/projectPostPage" className="btn btn-rounded btn-light">
+                <a href="/mypage/project_post" className="btn btn-rounded btn-light">
                   등록하기
                 </a>
               )}
             </div>
             
-            <ProjectCardGroup projects={projects} />
+            <ProjectCardGroup projects={projects} onProjectUpdate={fetchProjects} />
             
             {projects.length === 0 && (
               <div className="text-center text-muted py-5">

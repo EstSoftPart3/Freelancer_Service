@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import { useAlert } from '@/contexts/AlertContext';
 // import CalendarModal from '../../../components/project/CalendarModal';
 // import SkillSelectModal from '../../../components/project/SkillSelectModal';
 // import WorkTypeModal from '../../../components/project/WorkTypeModal';
@@ -8,16 +9,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 // import ProjectJobButtonGroup from '../../../components/project/ProjectJobButtonGroup';
 // import ProjectSkillButtonGroup from '../../../components/project/ProjectSkillButtonGroup';
 // import ProjectInterviewTimeButtonGroup from '../../../components/project/ProjectInterviewTimeButtonGroup';
-import { useModalStore } from '../../../store/modalStore';
-import { useAlertStore } from '../../../store/alertStore';
-import api from '../../../utils/api';
-import './ProjectPostPage.css';
+import { api } from '@/lib/axios';
+import styles from './ProjectPost.module.css';
 
-const ProjectPostPage = () => {
-  const { project_sq } = useParams();
-  const navigate = useNavigate();
-  const modalStore = useModalStore();
-  const alertStore = useAlertStore();
+export default function ProjectPostPage() {
+  const router = useRouter();
+  const { project_sq } = router.query;
+  const { showAlert } = useAlert();
   
   const projectSq = project_sq || null; // 등록이면 NULL, 수정이면 숫자
   console.log('projectSq:', projectSq);
@@ -91,9 +89,9 @@ const ProjectPostPage = () => {
   // Kakao Maps 로딩
   const loadKakao = () => {
     return new Promise((resolve, reject) => {
-      if (window.kakao?.maps?.services?.Geocoder) return resolve();
+      if (typeof window !== 'undefined' && window.kakao?.maps?.services?.Geocoder) return resolve();
 
-      if (!document.querySelector('script[src*="dapi.kakao.com"]')) {
+      if (typeof window !== 'undefined' && !document.querySelector('script[src*="dapi.kakao.com"]')) {
         const script = document.createElement('script');
         script.src =
           'https://dapi.kakao.com/v2/maps/sdk.js?appkey=90610faa13d02b09f83a700d0885a872&libraries=services';
@@ -122,7 +120,7 @@ const ProjectPostPage = () => {
   const loadDefaultFormData = async () => {
     try {
       console.log('🚀 API 호출 시작: /projects/forms');
-      const response = await api.get('/projects/forms');
+      const response = await api.$get('/projects/forms');
       console.log('✅ API 응답 전체:', response);
       console.log('✅ response.output:', response.output);
       console.log('✅ Skills 데이터:', response.output?.skills);
@@ -150,7 +148,7 @@ const ProjectPostPage = () => {
   const loadEditFormData = async (projectSq) => {
     try {
       console.log('🚀 API 호출 시작 (수정): /projects/forms with projectSq:', projectSq);
-      const response = await api.get(`/projects/forms`, {
+      const response = await api.$get(`/projects/forms`, {
         params: { projectSq },
       });
       const { output } = response;
@@ -208,8 +206,8 @@ const ProjectPostPage = () => {
       console.error('프로젝트 상세 조회 실패 (수정)', e);
 
       const message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.';
-      alertStore.show(message, 'danger');
-      navigate('/projects');
+      showAlert(message, 'danger');
+      router.push('/project');
     }
   };
 
@@ -222,7 +220,7 @@ const ProjectPostPage = () => {
     }
 
     try {
-      const response = await api.get(`/projects/${areaCodeSq}/districts`);
+      const response = await api.$get(`/projects/${areaCodeSq}/districts`);
       setDistricts(
         response.output.map((area) => ({
           code: area.areaSq,
@@ -236,12 +234,14 @@ const ProjectPostPage = () => {
 
   // 초기 로드
   useEffect(() => {
-    if (!projectSq) {
-      loadDefaultFormData(); // 신규 등록용
-    } else {
-      loadEditFormData(projectSq); // 수정용
+    if (router.isReady) {
+      if (!projectSq) {
+        loadDefaultFormData(); // 신규 등록용
+      } else {
+        loadEditFormData(projectSq); // 수정용
+      }
     }
-  }, [projectSq]);
+  }, [router.isReady, projectSq]);
 
   // 시 변경 시 구 목록 업데이트
   useEffect(() => {
@@ -308,68 +308,76 @@ const ProjectPostPage = () => {
   }, [preferContent]);
 
   // 모달 열림 시 스크롤 비활성화
-  useEffect(() => {
-    if (modalStore.isOpen) {
-      prevScrollY.current = window.scrollY;
-      document.body.style.setProperty('overflow', 'hidden', 'important');
-      document.documentElement.style.setProperty('overflow', 'hidden', 'important');
-    } else {
-      document.body.style.removeProperty('overflow');
-      document.documentElement.style.removeProperty('overflow');
-      window.scrollTo(0, prevScrollY.current);
-    }
-  }, [modalStore.isOpen]);
+  // TODO: 모달 구현 후 활성화
+  // useEffect(() => {
+  //   if (modalStore.isOpen) {
+  //     prevScrollY.current = window.scrollY;
+  //     document.body.style.setProperty('overflow', 'hidden', 'important');
+  //     document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+  //   } else {
+  //     document.body.style.removeProperty('overflow');
+  //     document.documentElement.style.removeProperty('overflow');
+  //     window.scrollTo(0, prevScrollY.current);
+  //   }
+  // }, [modalStore.isOpen]);
 
-  // 모달 열기 함수들
+  // 모달 열기 함수들 (TODO: 모달 컴포넌트 구현 후 활성화)
   const openSkillModal = () => {
     console.log('🔍 모달 열기 전 skills:', skills);
-    modalStore.openModal(SkillSelectModal, {
-      onConfirm: onSkillsConfirmed,
-      skills: skills,
-      selectedSkills: selectedSkills,
-    });
+    // TODO: SkillSelectModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(SkillSelectModal, {
+    //   onConfirm: onSkillsConfirmed,
+    //   skills: skills,
+    //   selectedSkills: selectedSkills,
+    // });
   };
 
   const openPreferSkillModal = () => {
-    modalStore.openModal(SkillSelectModal, {
-      onConfirm: onPreferSkillsConfirmed,
-      skills: skills,
-      selectedSkills: selectedPreferSkills,
-    });
+    // TODO: SkillSelectModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(SkillSelectModal, {
+    //   onConfirm: onPreferSkillsConfirmed,
+    //   skills: skills,
+    //   selectedSkills: selectedPreferSkills,
+    // });
   };
 
   const openProjectCalenderModal = () => {
-    modalStore.openModal(CalendarModal, {
-      onConfirm: onProjectTimeConfirmed,
-    });
+    // TODO: CalendarModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(CalendarModal, {
+    //   onConfirm: onProjectTimeConfirmed,
+    // });
   };
 
   const openRecruitCalenderModal = () => {
-    modalStore.openModal(CalendarModal, {
-      onConfirm: onRecruitTimeConfirmed,
-    });
+    // TODO: CalendarModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(CalendarModal, {
+    //   onConfirm: onRecruitTimeConfirmed,
+    // });
   };
 
   const openWorkTypeModal = () => {
-    modalStore.openModal(WorkTypeModal, {
-      onConfirm: onWorkTypeConfirmed,
-      works: workTypes,
-    });
+    // TODO: WorkTypeModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(WorkTypeModal, {
+    //   onConfirm: onWorkTypeConfirmed,
+    //   works: workTypes,
+    // });
   };
 
   const openJobModal = () => {
     console.log('selectedJobs:', selectedJobs);
-    modalStore.openModal(JobModal, {
-      onConfirm: onJobConfirmed,
-      jobs: recruitJobs,
-    });
+    // TODO: JobModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(JobModal, {
+    //   onConfirm: onJobConfirmed,
+    //   jobs: recruitJobs,
+    // });
   };
 
   const openInterviewTimeModal = () => {
-    modalStore.openModal(InterviewTimeModal, {
-      onConfirm: onInterviewTimeConfirmed,
-      interviewTimes: selectedInterviewTimes,
-    });
+    // TODO: InterviewTimeModal 컴포넌트 구현 후 활성화
+    // modalStore.openModal(InterviewTimeModal, {
+    //   onConfirm: onInterviewTimeConfirmed,
+    //   interviewTimes: selectedInterviewTimes,
+    // });
   };
 
   // 모달 확인 콜백들
@@ -447,6 +455,7 @@ const ProjectPostPage = () => {
 
   // 쿠키에서 토큰 가져오기
   const getAccessTokenFromCookie = () => {
+    if (typeof document === 'undefined') return null;
     const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
     return match ? decodeURIComponent(match[1]) : null;
   };
@@ -456,7 +465,7 @@ const ProjectPostPage = () => {
     e.preventDefault();
 
     if (preferList.length === 0 && preferContent.trim() === '') {
-      alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger');
+      showAlert('우대 사항을 한 개 이상 입력해주세요.', 'danger');
       return;
     }
 
@@ -517,22 +526,22 @@ const ProjectPostPage = () => {
       };
 
       if (projectSq) {
-        await api.patch('/projects', requestBody, config);
-        alertStore.show('수정 성공');
+        await api.$patch('/projects', requestBody, config);
+        showAlert('수정 성공');
       } else {
-        await api.post('/projects', requestBody, config);
-        alertStore.show('등록 성공');
+        await api.$post('/projects', requestBody, config);
+        showAlert('등록 성공');
       }
-      navigate('/projects');
+      router.push('/project');
     } catch (error) {
       console.error('프로젝트 등록 실패: ', error);
     }
   };
 
   return (
-    <div className="d-flex layout-wrapper mx-auto">
+    <div className={`d-flex ${styles.layoutWrapper} mx-auto`}>
       <div
-        className="tab-pane tab-pane-navigation active show content flex-grow-1 px-4"
+        className={`tab-pane tab-pane-navigation active show ${styles.content} flex-grow-1 px-4`}
         id="projectRegisterForm"
         role="tabpanel"
       >
@@ -660,7 +669,7 @@ const ProjectPostPage = () => {
                   </a>
                   <input
                     type="text"
-                    className="form-control text-3 h-auto py-2 readonly"
+                    className={`form-control text-3 h-auto py-2 ${styles.readonly}`}
                     name="period"
                     placeholder="예: 2025-04 ~ 2025-10"
                     value={projectPeriodDisplay}
@@ -688,7 +697,7 @@ const ProjectPostPage = () => {
                   </a>
                   <input
                     type="text"
-                    className="form-control text-3 h-auto py-2 readonly"
+                    className={`form-control text-3 h-auto py-2 ${styles.readonly}`}
                     name="period"
                     placeholder="예: 2025-04 ~ 2025-10"
                     value={recruitPeriodDisplay}
@@ -715,11 +724,11 @@ const ProjectPostPage = () => {
                 </label>
 
                 <div id="selectedSkillsPreview" className="mb-2 d-flex gap-2 flex-wrap">
+                  {/* TODO: ProjectJobButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedWorkTypes.length > 0 && (
-                    <ProjectJobButtonGroup
-                      onRemove={removeWorkType}
-                      selectedJobs={selectedWorkTypes}
-                    />
+                    <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
+                      {selectedWorkTypes.join(', ')}
+                    </div>
                   )}
                 </div>
               </div>
@@ -751,11 +760,11 @@ const ProjectPostPage = () => {
                 </label>
 
                 <div id="selectedSkillsPreview" className="mb-2 d-flex gap-2 flex-wrap">
+                  {/* TODO: ProjectJobButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedJobs.length > 0 && (
-                    <ProjectJobButtonGroup
-                      onRemove={removeJob}
-                      selectedJobs={selectedJobs}
-                    />
+                    <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
+                      {selectedJobs.join(', ')}
+                    </div>
                   )}
                 </div>
               </div>
@@ -778,11 +787,11 @@ const ProjectPostPage = () => {
 
                 {/* 선택된 기술 미리보기 */}
                 <div id="selectedSkillsPreview" className="mb-2 d-flex gap-2 flex-wrap">
+                  {/* TODO: ProjectSkillButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedSkills.length > 0 && (
-                    <ProjectSkillButtonGroup
-                      selectedSkills={selectedSkills}
-                      onRemove={removeSkill}
-                    />
+                    <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
+                      {selectedSkills.map(s => typeof s === 'string' ? s : s.name).join(', ')}
+                    </div>
                   )}
                 </div>
               </div>
@@ -802,11 +811,11 @@ const ProjectPostPage = () => {
                   </a>
                 </label>
                 <div id="selectedSkillsPreview" className="mb-2 d-flex gap-2 flex-wrap">
+                  {/* TODO: ProjectSkillButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedPreferSkills.length > 0 && (
-                    <ProjectSkillButtonGroup
-                      onRemove={removePreferSkill}
-                      selectedSkills={selectedPreferSkills}
-                    />
+                    <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
+                      {selectedPreferSkills.map(s => typeof s === 'string' ? s : s.name).join(', ')}
+                    </div>
                   )}
                 </div>
               </div>
@@ -887,10 +896,12 @@ const ProjectPostPage = () => {
                 </label>
 
                 <div id="selectedSkillsPreview" className="mb-2 d-flex gap-2 flex-wrap">
-                  <ProjectInterviewTimeButtonGroup
-                    onRemove={removeInterviewTime}
-                    interviewTimes={selectedInterviewTimes}
-                  />
+                  {/* TODO: ProjectInterviewTimeButtonGroup 컴포넌트 구현 후 활성화 */}
+                  {selectedInterviewTimes.length > 0 && (
+                    <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
+                      {selectedInterviewTimes.map(item => `${item.date}: ${item.times.join(', ')}`).join(' / ')}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -927,7 +938,4 @@ const ProjectPostPage = () => {
       </div>
     </div>
   );
-};
-
-export default ProjectPostPage;
-
+}

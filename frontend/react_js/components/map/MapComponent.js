@@ -428,7 +428,7 @@ const MapComponent = forwardRef(function MapComponent({
             {userLocation && userLocation.latitude && userLocation.longitude && (
               <div className="d-flex align-items-center">
                 <i className="bi bi-geo-alt-fill me-2 fs-5" style={{ color: '#0066FF' }}></i>
-                <span className="text-muted fw-bold">내 주소</span>
+                <span className="text-muted fw-bold">기준 위치</span>
               </div>
             )}
             <div className="d-flex align-items-center">

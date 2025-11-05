@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
+import ReportModal from './ReportModal'
 import styles from './BoardComment.module.css'
 
 export default function BoardComment({ comments = [], boardSq, boardType, onRefresh }) {
@@ -17,6 +18,10 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
   const [editReplySq, setEditReplySq] = useState(null)
   const [editReplyDescription, setEditReplyDescription] = useState('')
   const [commentReplies, setCommentReplies] = useState({})
+  
+  // 신고 모달 상태
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportTarget, setReportTarget] = useState({ typeCd: null, sq: null })
   
   const viewerSq = user?.userSq || null
   
@@ -67,17 +72,20 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
     }
     
     try {
-      const response = await api.$post(`/${boardType}/${boardSq}/comment`, {
-        description: newComment
+      const response = await api.$post(`/comment`, {
+        boardSq: Number(boardSq), // 문자열 → 숫자 변환
+        answerSq: null,
+        description: newComment.trim()
       })
-      if (response.status === 'OK') {
-        showAlert('댓글이 등록되었습니다.', 'success')
+      if (response.status === 'CREATED' || response.status === 'OK') {
+        showAlert(response.message || '댓글이 등록되었습니다.', 'success')
         setNewComment('')
         onRefresh()
       } else {
         showAlert('댓글 등록에 실패했습니다.', 'danger')
       }
     } catch (error) {
+      console.error('댓글 등록 에러:', error)
       showAlert('댓글 등록에 실패했습니다.', 'danger')
     }
   }
@@ -91,12 +99,30 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
   // 댓글 수정 제출
   const editRegisterConfirm = async (e, commentSq) => {
     e.preventDefault()
+    
+    if (!editDescription || editDescription.trim() === '') {
+      showAlert('내용을 입력해주세요.', 'danger')
+      return
+    }
+    
     try {
-      const response = await api.$put(`/comment/${commentSq}`, {
-        description: editDescription
-      })
+      const requestData = {
+        userSq: viewerSq,
+        description: editDescription.trim()
+      }
+      
+      console.log('댓글 수정 요청:')
+      console.log('- commentSq:', commentSq)
+      console.log('- viewerSq:', viewerSq)
+      console.log('- description:', editDescription.trim())
+      console.log('- 전송 데이터:', JSON.stringify(requestData))
+      
+      const response = await api.$put(`/comment/${commentSq}`, requestData)
+      
+      console.log('댓글 수정 응답:', response)
+      
       if (response.status === 'OK') {
-        showAlert('댓글이 수정되었습니다.', 'success')
+        showAlert(response.message || '댓글이 수정되었습니다.', 'success')
         setEditSq(null)
         setEditDescription('')
         onRefresh()
@@ -104,7 +130,9 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
         showAlert('댓글 수정에 실패했습니다.', 'danger')
       }
     } catch (error) {
-      showAlert('댓글 수정에 실패했습니다.', 'danger')
+      console.error('댓글 수정 에러:', error)
+      console.error('에러 응답:', error.response?.data)
+      showAlert(error.response?.data?.message || '댓글 수정에 실패했습니다.', 'danger')
     }
   }
   
@@ -150,7 +178,8 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
       showAlert('로그인 후 이용해주세요.', 'danger')
       return
     }
-    showAlert('신고 기능은 준비 중입니다.', 'info')
+    setReportTarget({ typeCd: 2003, sq: commentSq })
+    setShowReportModal(true)
   }
   
   // 대댓글 작성
@@ -167,9 +196,9 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
     
     try {
       const response = await api.$post('/reply', {
-        commentSq: commentSq,
-        boardSq: boardSq,
-        description: replyDescription
+        commentSq: Number(commentSq),
+        boardSq: Number(boardSq),
+        description: replyDescription.trim()
       })
       
       if (response.status === 'CREATED') {
@@ -253,7 +282,8 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
       showAlert('로그인 후 이용해주세요.', 'danger')
       return
     }
-    showAlert('신고 기능은 준비 중입니다.', 'info')
+    setReportTarget({ typeCd: 2004, sq: replyCommentSq })
+    setShowReportModal(true)
   }
   
   return (
@@ -521,6 +551,21 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
           </div>
         </form>
       </div>
+      
+      {/* 신고 모달 */}
+      {showReportModal && (
+        <ReportModal
+          reportTypeCd={reportTarget.typeCd}
+          sq={reportTarget.sq}
+          onClose={() => {
+            setShowReportModal(false)
+            setReportTarget({ typeCd: null, sq: null })
+          }}
+          onSuccess={() => {
+            // 신고 성공 후 필요한 액션 (선택적)
+          }}
+        />
+      )}
     </div>
   )
 }
