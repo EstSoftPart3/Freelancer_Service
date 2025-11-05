@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
@@ -18,6 +18,7 @@ export default function BoardDetailPage() {
     comments: [],
   })
   const [loading, setLoading] = useState(true)
+  const viewCountIncrementedRef = useRef(false) // 조회수 중복 증가 방지
   
   // 게시글 불러오기
   const getBoard = async () => {
@@ -47,7 +48,11 @@ export default function BoardDetailPage() {
   
   useEffect(() => {
     if (router.isReady && board_sq) {
-      addViewCnt()
+      // 조회수는 한 번만 증가 (React Strict Mode에서도 중복 방지)
+      if (!viewCountIncrementedRef.current) {
+        addViewCnt()
+        viewCountIncrementedRef.current = true
+      }
       getBoard()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

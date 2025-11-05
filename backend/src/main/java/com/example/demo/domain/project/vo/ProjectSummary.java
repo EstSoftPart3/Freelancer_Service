@@ -27,6 +27,7 @@ public class ProjectSummary {
 	private String devGradeNm;
 
 	private Integer viewCnt;
+	private Integer projectScrapCnt;
 	private Integer applicantCnt;
 
 	private LocalDate projectCreatedDt;
@@ -51,6 +52,7 @@ public class ProjectSummary {
 				.preferContent(project.getProjectPreferenceTxt())
 				.imageUrl(project.getProjectImageUrl())
 				.viewCnt(project.getProjectViewCnt())
+				.projectScrapCnt(project.getProjectScrapCnt())
 				.applicantCnt(project.getProjectCandidateCnt())
 				.salary(project.getProjectSalary())
 				.companyNm(util.convertCompanySqToName(project.getCompanySq()))

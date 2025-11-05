@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/axios'
 import styles from './ProjectFilterBar.module.css'
 
 export default function ProjectFilterBar({ onUpdate }) {
+  const { user } = useAuth()
+  
   // API로부터 가져올 옵션들
   const [localOptions, setLocalOptions] = useState([])
   const [careerOptions, setCareerOptions] = useState([])
@@ -20,6 +23,17 @@ export default function ProjectFilterBar({ onUpdate }) {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [selectedTargetField, setSelectedTargetField] = useState('전체')
   const [selectedSort, setSelectedSort] = useState('최신순')
+  const [selectedPublicStatus, setSelectedPublicStatus] = useState('전체')
+
+  // 관리자 여부 확인 (SSR safe)
+  const [userType, setUserType] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const type = localStorage.getItem('userType') || user?.userType
+    setUserType(type)
+    setIsAdmin(type === 'ADMIN')
+  }, [user])
 
   // 드롭다운 버튼 텍스트 (웹용 - 전체 표시)
   const selectedRegionText = useMemo(() => {
@@ -132,7 +146,8 @@ export default function ProjectFilterBar({ onUpdate }) {
       educationCd: selectedEducations,
       jobRoleCd: selectedJobTypes,
       searchKeyword: searchKeyword,
-      searchType: selectedTargetField
+      searchType: selectedTargetField,
+      publicStatus: selectedPublicStatus
     }
 
     if (selectedSort === '최신순') {
@@ -147,7 +162,7 @@ export default function ProjectFilterBar({ onUpdate }) {
     }
 
     onUpdate(filters)
-  }, [selectedRegions, selectedCareers, selectedEducations, selectedJobTypes, searchKeyword, selectedTargetField, selectedSort, onUpdate, isInitialized])
+  }, [selectedRegions, selectedCareers, selectedEducations, selectedJobTypes, searchKeyword, selectedTargetField, selectedSort, selectedPublicStatus, onUpdate, isInitialized])
 
   // 체크박스 토글
   const toggleCheckbox = (value, selectedArray, setSelectedArray) => {
@@ -277,6 +292,24 @@ export default function ProjectFilterBar({ onUpdate }) {
             ))}
           </ul>
         </div>
+
+        {/* Public Status Dropdown (관리자 전용) */}
+        {isAdmin && (
+          <div className="dropdown">
+            <button className="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              {selectedPublicStatus === '전체' ? '공개여부 (전체)' : selectedPublicStatus}
+            </button>
+            <ul className="dropdown-menu">
+              {['전체', '공개', '비공개'].map(status => (
+                <li key={status}>
+                  <a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setSelectedPublicStatus(status) }}>
+                    {status}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Search Input */}
         <div>
@@ -433,6 +466,24 @@ export default function ProjectFilterBar({ onUpdate }) {
               ))}
             </ul>
           </div>
+
+          {/* Public Status Dropdown (관리자 전용) */}
+          {isAdmin && (
+            <div className="dropdown flex-grow-1">
+              <button className="btn btn-outline btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                {selectedPublicStatus === '전체' ? '공개여부' : selectedPublicStatus}
+              </button>
+              <ul className="dropdown-menu">
+                {['전체', '공개', '비공개'].map(status => (
+                  <li key={status}>
+                    <a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setSelectedPublicStatus(status) }}>
+                      {status}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="d-flex align-items-center gap-2">

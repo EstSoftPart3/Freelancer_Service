@@ -175,12 +175,12 @@ export default function ReportDetailPage() {
 
                     {/* 처리완료인 경우 처리 결과 표시 */}
                     {report.status === '처리완료' && (
-                      <div className="row mb-3">
+                      <div className="row mb-3 pb-3 border-bottom">
                         <div className="col-md-4">
                           <strong className="text-muted">처리결과</strong>
                         </div>
                         <div className="col-md-8">
-                          <div className="alert alert-info mb-0">
+                          <div className="report-content">
                             {report.reportResult || '-'}
                           </div>
                         </div>

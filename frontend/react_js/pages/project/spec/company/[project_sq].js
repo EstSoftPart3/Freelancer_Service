@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
@@ -16,6 +16,9 @@ export default function CompanyProjectSpecPage() {
   const [project, setProject] = useState({})
   const [scrapCount, setScrapCount] = useState('')
   const [loading, setLoading] = useState(true)
+  
+  // 중복 호출 방지용 ref
+  const hasFetchedRef = useRef(false)
 
   // 프로젝트 상세 정보 조회
   const fetchProjectDetail = async () => {
@@ -40,8 +43,9 @@ export default function CompanyProjectSpecPage() {
 
   useEffect(() => {
     // router.isReady를 확인하여 query가 준비될 때까지 대기
-    if (router.isReady && project_sq) {
+    if (router.isReady && project_sq && !hasFetchedRef.current) {
       console.log('라우터 준비됨, 프로젝트 조회:', project_sq)
+      hasFetchedRef.current = true
       fetchProjectDetail()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

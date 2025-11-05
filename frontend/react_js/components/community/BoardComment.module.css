@@ -57,3 +57,21 @@
   margin-top: 0.5rem;
 }
 
+/* 대댓글 영역 여백 최적화 */
+.repliesWrapper {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0 !important;
+}
+
+.repliesBlock {
+  padding: 15px 15px 15px !important;
+}
+
+.repliesItem {
+  margin-bottom: 0.5rem !important;
+}
+
+.repliesItemLast {
+  margin-bottom: 0 !important;
+}
+

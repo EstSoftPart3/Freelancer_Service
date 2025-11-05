@@ -494,19 +494,19 @@ export default function MainPage() {
       return
     }
     
-    // 로그인 되어 있으면 프로젝트 검색
-    try {
-      const response = await api.$get('/map/search', {
-        params: {
-          userId: userId,
-          // 메인 페이지는 항상 내 주소 기준이므로 userId만 전달 (lat/lon 불필요)
-          radius: 5,
-          jobType: null,
-          keyword: null,
-          page: 0,
-          size: 20
-        }
-      })
+  // 로그인 되어 있으면 프로젝트 검색
+  try {
+    const response = await api.$get('/map/search', {
+      params: {
+        userId: userId,
+        // 메인 페이지는 항상 내 주소 기준이므로 userId만 전달 (lat/lon 불필요)
+        radius: 10000,
+        jobType: null,
+        keyword: null,
+        page: 0,
+        size: 1000
+      }
+    })
       
       if (response.output) {
         setMiniMapProjects(response.output.projects || [])
@@ -680,11 +680,11 @@ export default function MainPage() {
             params: {
               userId: userId,
               // 메인 페이지는 항상 내 주소 기준이므로 userId만 전달
-              radius: 5,
+              radius: 10000,
               jobType: null,
               keyword: null,
               page: 0,
-              size: 20
+              size: 1000
             }
           })
           
@@ -758,7 +758,7 @@ export default function MainPage() {
                   projects={miniMapProjects}
                   mapImageUrl={miniMapImageUrl}
                   locationType="address"
-                  currentFilters={{ locationType: 'address', radius: '5', jobRole: '', keyword: '' }}
+                  currentFilters={{ locationType: 'address', radius: '10000', jobRole: '', keyword: '' }}
                   tempSelectedLocation={null}
                   initialZoom={13}
                   mapWidth={1100}

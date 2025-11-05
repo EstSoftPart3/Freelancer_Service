@@ -67,7 +67,12 @@ public class CommentService {
     	
         Comment comment = getComment(commentSq);
         
-        if(comment.getUserSq() != commentRequest.getUserSq()) {
+        // 인턴 수정: Long 타입 비교 연산자 != 에서 equals() 메서드로 변경
+        // 수정 내용: != 연산자를 !equals()로 변경
+        // 수정 사유: Java에서 Long 타입(래퍼 클래스)은 객체이므로, != 연산자는 객체 참조를 비교합니다.
+        //           같은 값이어도 서로 다른 객체 인스턴스일 경우 false를 반환하여 버그가 발생할 수 있습니다.
+        //           equals() 메서드를 사용하여 실제 값을 비교하도록 수정했습니다.
+        if(!comment.getUserSq().equals(commentRequest.getUserSq())) {
         	throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
         }
 
