@@ -1,5 +1,6 @@
 import ResumeSelectModal from "@/components/project/ResumeSelectModal";
 import CommonPagination from "@/components/common/CommonPagination";
+import "./ResumeListModal.module.css";
 import { useState } from "react";
 
 

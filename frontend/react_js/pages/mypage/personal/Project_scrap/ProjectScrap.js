@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './ProjectScrap.css';
+import { useRouter } from 'next/router';
+import { api } from '@/lib/axios';
+import MyPageLayout from '../../MyPageLayout';
+import './ProjectScrap.module.css';
 
 // skillIconMap import 경로는 프로젝트 구조에 맞게 조정하세요
 // import skillIconMap from '../../../../assets/skillIconMap';
 
 const ProjectScrap = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // State 관리
   const [scraps, setScraps] = useState([]);
@@ -37,9 +38,9 @@ const ProjectScrap = () => {
   // 프로젝트 상세 페이지로 이동
   const goToProjectDetail = (projectSq) => {
     if (userType === 'PERSONAL') {
-      navigate(`/project/spec/user/${projectSq}`);
+      router.push(`/project/spec/user/${projectSq}`);
     } else if (userType === 'COMPANY') {
-      navigate(`/project/spec/company/${projectSq}`);
+      router.push(`/project/spec/company/${projectSq}`);
     }
   };
 
@@ -54,9 +55,9 @@ const ProjectScrap = () => {
       };
       
       // API 호출 - 실제 엔드포인트와 인증 방식에 맞게 수정하세요
-      const response = await axios.get('/api/mypage/projectScrap', { params });
+      const response = await api.$get('/mypage/projectScrap', { params });
       
-      const output = response.data.output;
+      const output = response.output;
       setScraps(output.content || []);
       setTotalPages(Math.ceil((output.totalCount || 0) / itemsPerPage) || 1);
     } catch (error) {
@@ -80,9 +81,9 @@ const ProjectScrap = () => {
   // 스크랩 삭제
   const removeScrap = async (projectSq) => {
     try {
-      const response = await axios.delete(`/api/mypage/projectScrap/${projectSq}`);
+      const response = await api.$delete(`/mypage/projectScrap/${projectSq}`);
       
-      if (response.data.status === 'OK') {
+      if (response.status === 'OK') {
         // 마지막 페이지의 마지막 항목 삭제 시 이전 페이지로
         if (scraps.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
@@ -118,7 +119,8 @@ const ProjectScrap = () => {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="project-scrap-container">
+    <MyPageLayout userType="PERSONAL">
+      <div className="project-scrap-container">
       <div className="row">
         <div className="col">
           <h4 className="mb-3" style={{ fontSize: '24px' }}>
@@ -328,6 +330,7 @@ const ProjectScrap = () => {
         </div>
       </div>
     </div>
+    </MyPageLayout>
   );
 };
 

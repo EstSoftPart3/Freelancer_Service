@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './PasswordCheck.css';
+import './PasswordCheck.module.css';
 
 /**
  * Props
