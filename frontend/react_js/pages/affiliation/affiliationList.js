@@ -156,14 +156,11 @@ export default function AffiliationListPage() {
     getAfltnList()
   }
 
-  // 검색/필터 변경
-  const changeFilter = () => {
-    setCurrentPage(1)
-  }
-
+  // 검색 버튼 클릭
   const handleSearch = (e) => {
     e.preventDefault()
-    changeFilter()
+    setCurrentPage(1)
+    getAfltnList()
   }
 
   // 페이지 변경 시 목록 새로고침

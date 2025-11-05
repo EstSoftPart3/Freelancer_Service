@@ -55,7 +55,14 @@
                 AND DATE(r.created_at_dtm) = #{reportDate}
             </if>
             <if test="reportReason != null and reportReason != ''">
-                AND r.report_reason_txt = #{reportReason}
+                <choose>
+                    <when test="reportReason == '기타'">
+                        AND r.report_reason_txt NOT IN ('욕설/비방', '스팸/홍보', '개인정보 노출')
+                    </when>
+                    <otherwise>
+                        AND r.report_reason_txt = #{reportReason}
+                    </otherwise>
+                </choose>
             </if>
             <if test="status != null and status != ''">
                 AND COALESCE(
@@ -81,7 +88,14 @@
                 AND DATE(r.created_at_dtm) = #{reportDate}
             </if>
             <if test="reportReason != null and reportReason != ''">
-                AND r.report_reason_txt = #{reportReason}
+                <choose>
+                    <when test="reportReason == '기타'">
+                        AND r.report_reason_txt NOT IN ('욕설/비방', '스팸/홍보', '개인정보 노출')
+                    </when>
+                    <otherwise>
+                        AND r.report_reason_txt = #{reportReason}
+                    </otherwise>
+                </choose>
             </if>
             <if test="status != null and status != ''">
                 AND COALESCE(
