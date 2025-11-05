@@ -112,13 +112,13 @@ const ResumeList = () => {
 
   // 이력서 등록하기
   const registerResume = () => {
-    router.push('/mypage/resumeform');
+    router.push('/mypage/personal/resume_form');
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   // 이력서 수정하기
   const editResume = (resumeSq) => {
-    router.push(`/mypage/resumeform/${resumeSq}`);
+    router.push(`/mypage/personal/resume_form?resumeSq=${resumeSq}`);
   };
 
   // 이력서 상세보기

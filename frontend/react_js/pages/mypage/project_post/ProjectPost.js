@@ -1,23 +1,21 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { useAlert } from '@/contexts/AlertContext';
-// import CalendarModal from '../../../components/project/CalendarModal';
-// import SkillSelectModal from '../../../components/project/SkillSelectModal';
-// import WorkTypeModal from '../../../components/project/WorkTypeModal';
-// import JobModal from '../../../components/project/JobModal';
-// import InterviewTimeModal from '../../../components/project/InterviewTimeModal';
-// import ProjectJobButtonGroup from '../../../components/project/ProjectJobButtonGroup';
-// import ProjectSkillButtonGroup from '../../../components/project/ProjectSkillButtonGroup';
-// import ProjectInterviewTimeButtonGroup from '../../../components/project/ProjectInterviewTimeButtonGroup';
+import { useAlertStore } from '@/store/alertStore';
+import { useModalStore } from '@/store/modalStore';
+import MyPageLayout from '../MyPageLayout';
+import CalendarModal from '@/components/common/CalendarModal';
+import SkillSelectModal from '@/components/common/SkillSelectModal';
+import WorkTypeModal from '@/components/common/WorkTypeModal';
+import JobModal from '@/components/common/JobModal';
 import { api } from '@/lib/axios';
 import styles from './ProjectPost.module.css';
 
 export default function ProjectPostPage() {
   const router = useRouter();
-  const { project_sq } = router.query;
-  const { showAlert } = useAlert();
+  const { projectSq } = router.query;
+  const alertStore = useAlertStore();
+  const { openModal } = useModalStore();
   
-  const projectSq = project_sq || null; // 등록이면 NULL, 수정이면 숫자
   console.log('projectSq:', projectSq);
 
   // Form data
@@ -206,7 +204,7 @@ export default function ProjectPostPage() {
       console.error('프로젝트 상세 조회 실패 (수정)', e);
 
       const message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.';
-      showAlert(message, 'danger');
+      alertStore.show(message, 'danger');
       router.push('/project');
     }
   };
@@ -321,55 +319,55 @@ export default function ProjectPostPage() {
   //   }
   // }, [modalStore.isOpen]);
 
-  // 모달 열기 함수들 (TODO: 모달 컴포넌트 구현 후 활성화)
+  // 모달 열기 함수들
   const openSkillModal = () => {
     console.log('🔍 모달 열기 전 skills:', skills);
-    // TODO: SkillSelectModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(SkillSelectModal, {
-    //   onConfirm: onSkillsConfirmed,
-    //   skills: skills,
-    //   selectedSkills: selectedSkills,
-    // });
+    openModal(SkillSelectModal, {
+      onConfirm: onSkillsConfirmed,
+      skills: skills,
+      selectedSkills: selectedSkills,
+      title: '사용 기술 선택',
+    });
   };
 
   const openPreferSkillModal = () => {
-    // TODO: SkillSelectModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(SkillSelectModal, {
-    //   onConfirm: onPreferSkillsConfirmed,
-    //   skills: skills,
-    //   selectedSkills: selectedPreferSkills,
-    // });
+    openModal(SkillSelectModal, {
+      onConfirm: onPreferSkillsConfirmed,
+      skills: skills,
+      selectedSkills: selectedPreferSkills,
+      title: '우대 기술 선택',
+    });
   };
 
   const openProjectCalenderModal = () => {
-    // TODO: CalendarModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(CalendarModal, {
-    //   onConfirm: onProjectTimeConfirmed,
-    // });
+    openModal(CalendarModal, {
+      onConfirm: onProjectTimeConfirmed,
+      title: '프로젝트 기간 선택',
+    });
   };
 
   const openRecruitCalenderModal = () => {
-    // TODO: CalendarModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(CalendarModal, {
-    //   onConfirm: onRecruitTimeConfirmed,
-    // });
+    openModal(CalendarModal, {
+      onConfirm: onRecruitTimeConfirmed,
+      title: '모집 기간 선택',
+    });
   };
 
   const openWorkTypeModal = () => {
-    // TODO: WorkTypeModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(WorkTypeModal, {
-    //   onConfirm: onWorkTypeConfirmed,
-    //   works: workTypes,
-    // });
+    openModal(WorkTypeModal, {
+      onConfirm: onWorkTypeConfirmed,
+      works: workTypes,
+      selectedWorks: selectedWorkTypes,
+    });
   };
 
   const openJobModal = () => {
     console.log('selectedJobs:', selectedJobs);
-    // TODO: JobModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(JobModal, {
-    //   onConfirm: onJobConfirmed,
-    //   jobs: recruitJobs,
-    // });
+    openModal(JobModal, {
+      onConfirm: onJobConfirmed,
+      jobs: recruitJobs,
+      selectedJobs: selectedJobs,
+    });
   };
 
   const openInterviewTimeModal = () => {
@@ -390,12 +388,12 @@ export default function ProjectPostPage() {
     setSelectedPreferSkills(skills);
   };
 
-  const onProjectTimeConfirmed = ({ start, end }) => {
+  const onProjectTimeConfirmed = (start, end) => {
     setProjectStartDt(start);
     setProjectEndDt(end);
   };
 
-  const onRecruitTimeConfirmed = ({ start, end }) => {
+  const onRecruitTimeConfirmed = (start, end) => {
     setRecruitStartDt(start);
     setRecruitEndDt(end);
   };
@@ -453,19 +451,13 @@ export default function ProjectPostPage() {
     );
   };
 
-  // 쿠키에서 토큰 가져오기
-  const getAccessTokenFromCookie = () => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  };
 
   // 프로젝트 제출
   const submitProject = async (e) => {
     e.preventDefault();
 
     if (preferList.length === 0 && preferContent.trim() === '') {
-      showAlert('우대 사항을 한 개 이상 입력해주세요.', 'danger');
+      alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger');
       return;
     }
 
@@ -517,35 +509,29 @@ export default function ProjectPostPage() {
     console.log('requestBody:', requestBody);
 
     try {
-      const token = getAccessTokenFromCookie();
-
-      const config = {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-        },
-      };
-
+      // API 호출 - 토큰이 자동으로 포함됩니다
       if (projectSq) {
-        await api.$patch('/projects', requestBody, config);
-        showAlert('수정 성공');
+        const response = await api.$patch('/projects', requestBody);
+        alertStore.show(response.message || '프로젝트가 수정되었습니다.', 'success');
       } else {
-        await api.$post('/projects', requestBody, config);
-        showAlert('등록 성공');
+        const response = await api.$post('/projects', requestBody);
+        alertStore.show(response.message || '프로젝트가 등록되었습니다.', 'success');
       }
-      router.push('/project');
+      router.push('/mypage/company/affiliation_project_list');
     } catch (error) {
       console.error('프로젝트 등록 실패: ', error);
     }
   };
 
   return (
-    <div className={`d-flex ${styles.layoutWrapper} mx-auto`}>
-      <div
-        className={`tab-pane tab-pane-navigation active show ${styles.content} flex-grow-1 px-4`}
-        id="projectRegisterForm"
-        role="tabpanel"
-      >
-        <h4 className="mb-3">프로젝트 등록</h4>
+    <MyPageLayout>
+      <div className={`d-flex ${styles.layoutWrapper} mx-auto`}>
+        <div
+          className={`tab-pane tab-pane-navigation active show ${styles.content} flex-grow-1 px-4`}
+          id="projectRegisterForm"
+          role="tabpanel"
+        >
+          <h4 className="mb-3">{projectSq ? '프로젝트 수정' : '프로젝트 등록'}</h4>
         <div className="card bg-color-grey mb-4">
           <div className="card-body">
             <form className="contact-form form-style-2" onSubmit={submitProject}>
@@ -925,7 +911,7 @@ export default function ProjectPostPage() {
               <div className="row">
                 <div className="form-group col">
                   <button type="submit" className="btn btn-primary">
-                    등록
+                    {projectSq ? '수정' : '등록'}
                   </button>
                   <button type="reset" className="btn btn-light">
                     취소
@@ -935,7 +921,8 @@ export default function ProjectPostPage() {
             </form>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </MyPageLayout>
   );
 }

@@ -504,7 +504,7 @@
 
 /* 반응형 - 작은 모바일 */
 @media (max-width: 576px) {
-  :global(h4) {
+  .affiliation-project-list-container :global(h4) {
     font-size: 20px !important;
   }
 
@@ -522,8 +522,12 @@
     font-size: 1rem;
   }
 
-  .post-actions :global(.btn),
-  :global(.btn.px-4) {
+  .post-actions :global(.btn) {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+  
+  .affiliation-project-list-container :global(.btn.px-4) {
     width: 100%;
     margin-bottom: 0.25rem;
   }
@@ -544,25 +548,9 @@
   }
 }
 
-/* 아이콘 폰트 */
-:global(.fas) {
-  font-family: 'Font Awesome 5 Free';
-  font-weight: 900;
-}
-
 /* 폰트 크기 */
 .fs-6 {
   font-size: 1rem;
-}
-
-/* 호버 효과 */
-:global(a:hover) {
-  text-decoration: none;
-}
-
-:global(.btn:focus) {
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 /* 스킬 뱃지 내 이미지 */

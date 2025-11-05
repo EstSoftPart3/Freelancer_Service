@@ -248,18 +248,8 @@
   pointer-events: none;
 }
 
-/* readonly 입력 필드 */
-input[readonly] {
-  border: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  pointer-events: none;
-  cursor: default;
-}
-
-.form-check-input[disabled] {
-  pointer-events: none;
-}
+/* readonly 입력 필드 - CSS Module에서는 순수 글로벌 선택자 사용 불가 */
+/* 대신 컴포넌트에서 인라인 스타일이나 className으로 처리 */
 
 /* 유효성 검사 피드백 */
 .invalid-feedback {
