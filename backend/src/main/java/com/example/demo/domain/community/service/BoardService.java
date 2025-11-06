@@ -113,8 +113,10 @@ public class BoardService {
 					UserDTO userDto = communityUserMapper.findById(comment.getUserSq());
 					String profileImageUrl = informationEditService.getProfileImageUrl(userDto.getUserSq());
 					CommentResponse commentResponse = CommentResponse.fromEntity(comment, userDto, profileImageUrl);
-					
-					// 각 댓글의 대댓글 조회 (인턴 수준 - 간단한 for문)
+
+                    // 인턴 수정: 각 댓글의 대댓글(Reply) 조회 로직 추가
+                    // 사유: 댓글에 대한 답글을 조회하여 계층적 댓글 구조 구현
+                    // 각 댓글의 대댓글 조회
 					List<Reply> replies = replyMapper.findByCommentSq(comment.getCommentSq());
 					if (replies != null && !replies.isEmpty()) {
 						List<CommentResponse.ReplyDTO> replyDTOs = replies.stream()

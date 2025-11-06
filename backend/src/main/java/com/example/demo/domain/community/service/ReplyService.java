@@ -63,8 +63,6 @@ public class ReplyService {
     public void deleteReply(Long userSq, Long replyCommentSq) {
         Reply reply = getReply(replyCommentSq);
         replyMapper.delete(userSq, replyCommentSq);
-        // 대댓글 삭제 시 관련 추천 데이터도 삭제 (별도 처리 필요)
-        // recommendationMapper.deleteAll(null, null, null, replyCommentSq);
     }
 
     @Transactional

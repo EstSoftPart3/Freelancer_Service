@@ -17,6 +17,7 @@ public class Report {
     private Long boardSq;
     private Long answerSq;
     private Long commentSq;
+    // 인턴 추가 : 대댓글
     private Long replyCommentSq;
     private String reportReasonTxt;
     private Long reportTypeCd;

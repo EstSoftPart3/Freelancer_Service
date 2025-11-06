@@ -3,9 +3,6 @@ package com.example.demo.domain.map.dto.response;
 import lombok.*;
 import java.util.List;
 
-// 지도 검색 결과 응답 DTO
-// - projects: 실제 프로젝트 리스트
-// - totalCount: 전체 검색된 프로젝트 개수
 @Getter
 @Setter
 @Builder
