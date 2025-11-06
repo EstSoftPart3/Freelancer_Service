@@ -4,9 +4,10 @@ import { useAlertStore } from '@/store/alertStore';
 import { useModalStore } from '@/store/modalStore';
 import MyPageLayout from '../MyPageLayout';
 import CalendarModal from '@/components/common/CalendarModal';
-import SkillSelectModal from '@/components/common/SkillSelectModal';
+import SkillTagModal from '@/components/myPage/personal/SkillTagModal';
 import WorkTypeModal from '@/components/common/WorkTypeModal';
 import JobModal from '@/components/common/JobModal';
+import InterviewTimeModal from '@/components/common/InterviewTimeModal';
 import { api } from '@/lib/axios';
 import styles from './ProjectPost.module.css';
 
@@ -15,8 +16,6 @@ export default function ProjectPostPage() {
   const { projectSq } = router.query;
   const alertStore = useAlertStore();
   const { openModal } = useModalStore();
-  
-  console.log('projectSq:', projectSq);
 
   // Form data
   const [cities, setCities] = useState([]);
@@ -47,6 +46,7 @@ export default function ProjectPostPage() {
   const [preferList, setPreferList] = useState([]);
   const [description, setDescription] = useState('');
   const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [showInterviewTimeModal, setShowInterviewTimeModal] = useState(false);
 
   // Location form
   const [form, setForm] = useState({
@@ -63,13 +63,15 @@ export default function ProjectPostPage() {
 
   // Computed values
   const selectedCityName = useMemo(() => {
-    const raw = cities.find((city) => city.code === selectedCity)?.name || '';
-    return raw.replace('전체', ''); // '서울전체' → '서울'
+    const raw = cities.find((city) => String(city.code) === String(selectedCity))?.name || '';
+    const result = raw.replace('전체', ''); // '서울전체' → '서울'
+    return result;
   }, [cities, selectedCity]);
 
   const selectedDistrictName = useMemo(() => {
-    const raw = districts.find((district) => district.code === selectedDistrict)?.name || '';
-    return raw.replace('전체', '');
+    const raw = districts.find((district) => String(district.code) === String(selectedDistrict))?.name || '';
+    const result = raw.replace('전체', '');
+    return result;
   }, [districts, selectedDistrict]);
 
   const projectPeriodDisplay = useMemo(() => {
@@ -117,11 +119,7 @@ export default function ProjectPostPage() {
   // 신규 등록용 폼 데이터 로드
   const loadDefaultFormData = async () => {
     try {
-      console.log('🚀 API 호출 시작: /projects/forms');
       const response = await api.$get('/projects/forms');
-      console.log('✅ API 응답 전체:', response);
-      console.log('✅ response.output:', response.output);
-      console.log('✅ Skills 데이터:', response.output?.skills);
 
       setCities(
         response.output.cities.map((city) => ({
@@ -134,23 +132,18 @@ export default function ProjectPostPage() {
       setRecruitJobs(response.output.recruitJobs);
       setWorkTypes(response.output.workTypes);
       setSkills(response.output.skills || []);
-
-      console.log('✅ skills 설정 완료');
     } catch (e) {
-      console.error('❌ 프로젝트 정보 불러오기 실패 (신규)', e);
-      console.error('❌ 에러 상세:', e.response || e.message);
+      // 프로젝트 정보 불러오기 실패
     }
   };
 
   // 수정용 폼 데이터 로드
   const loadEditFormData = async (projectSq) => {
     try {
-      console.log('🚀 API 호출 시작 (수정): /projects/forms with projectSq:', projectSq);
       const response = await api.$get(`/projects/forms`, {
         params: { projectSq },
       });
       const { output } = response;
-      console.log('✅ API 응답 (수정):', output);
 
       setCities(
         output.cities.map((city) => ({
@@ -201,8 +194,6 @@ export default function ProjectPostPage() {
       );
       setIsInitialLoad(false);
     } catch (e) {
-      console.error('프로젝트 상세 조회 실패 (수정)', e);
-
       const message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.';
       alertStore.show(message, 'danger');
       router.push('/project');
@@ -226,7 +217,7 @@ export default function ProjectPostPage() {
         }))
       );
     } catch (err) {
-      console.error('구 정보 불러오기 실패', err);
+      // 구 정보 불러오기 실패
     }
   };
 
@@ -255,6 +246,12 @@ export default function ProjectPostPage() {
 
       if (!exists) {
         setSelectedDistrict('');
+        // 좌표도 초기화
+        setForm((prev) => ({
+          ...prev,
+          latitude: null,
+          longitude: null,
+        }));
       }
     };
 
@@ -265,27 +262,33 @@ export default function ProjectPostPage() {
   useEffect(() => {
     const cityName = selectedCityName;
     const districtName = selectedDistrictName;
-    if (!cityName || !districtName) return;
+    
+    if (!cityName || !districtName) {
+      return;
+    }
 
     const convertToCoordinates = async () => {
       try {
         await loadKakao();
         const geocoder = new window.kakao.maps.services.Geocoder();
         const fullAddr = `${cityName} ${districtName}`;
+        
         geocoder.addressSearch(fullAddr, (result, status) => {
           if (status === window.kakao.maps.services.Status.OK) {
+            const lat = parseFloat(result[0].y);
+            const lon = parseFloat(result[0].x);
+            
             setForm((prev) => ({
               ...prev,
-              latitude: result[0].y,
-              longitude: result[0].x,
+              latitude: lat,
+              longitude: lon,
             }));
-            console.log('📍 좌표 변환 완료:', result[0]);
           } else {
-            console.warn('❌ 좌표 변환 실패:', fullAddr);
+            alertStore.show(`주소 검색에 실패했습니다: ${fullAddr}`, 'danger');
           }
         });
       } catch (err) {
-        console.error('❌ Geocoder 초기화 실패:', err);
+        alertStore.show('지도 API 로딩에 실패했습니다. 페이지를 새로고침해주세요.', 'danger');
       }
     };
 
@@ -321,21 +324,16 @@ export default function ProjectPostPage() {
 
   // 모달 열기 함수들
   const openSkillModal = () => {
-    console.log('🔍 모달 열기 전 skills:', skills);
-    openModal(SkillSelectModal, {
-      onConfirm: onSkillsConfirmed,
-      skills: skills,
+    openModal(SkillTagModal, {
+      onComplete: onSkillsConfirmed,
       selectedSkills: selectedSkills,
-      title: '사용 기술 선택',
     });
   };
 
   const openPreferSkillModal = () => {
-    openModal(SkillSelectModal, {
-      onConfirm: onPreferSkillsConfirmed,
-      skills: skills,
+    openModal(SkillTagModal, {
+      onComplete: onPreferSkillsConfirmed,
       selectedSkills: selectedPreferSkills,
-      title: '우대 기술 선택',
     });
   };
 
@@ -362,7 +360,6 @@ export default function ProjectPostPage() {
   };
 
   const openJobModal = () => {
-    console.log('selectedJobs:', selectedJobs);
     openModal(JobModal, {
       onConfirm: onJobConfirmed,
       jobs: recruitJobs,
@@ -371,21 +368,20 @@ export default function ProjectPostPage() {
   };
 
   const openInterviewTimeModal = () => {
-    // TODO: InterviewTimeModal 컴포넌트 구현 후 활성화
-    // modalStore.openModal(InterviewTimeModal, {
-    //   onConfirm: onInterviewTimeConfirmed,
-    //   interviewTimes: selectedInterviewTimes,
-    // });
+    setShowInterviewTimeModal(true);
   };
 
   // 모달 확인 콜백들
   const onSkillsConfirmed = (skills) => {
-    setSelectedSkills(skills);
-    console.log('selectedSkills:', skills);
+    if (skills) {
+      setSelectedSkills(skills);
+    }
   };
 
   const onPreferSkillsConfirmed = (skills) => {
-    setSelectedPreferSkills(skills);
+    if (skills) {
+      setSelectedPreferSkills(skills);
+    }
   };
 
   const onProjectTimeConfirmed = (start, end) => {
@@ -399,37 +395,33 @@ export default function ProjectPostPage() {
   };
 
   const onInterviewTimeConfirmed = (times) => {
-    setSelectedInterviewTimes(times);
-    console.log('selectedInterviewTimes:', times);
+    if (times) {
+      setSelectedInterviewTimes(times);
+    }
+    setShowInterviewTimeModal(false);
   };
 
   const onWorkTypeConfirmed = (workTypes) => {
-    console.log('workTypes:', workTypes);
     setSelectedWorkTypes(workTypes);
   };
 
   const onJobConfirmed = (jobs) => {
-    console.log('jobs:', jobs);
     setSelectedJobs(jobs);
   };
 
   // 제거 함수들
   const removeWorkType = (name) => {
-    console.log('삭제 대상:', name);
     setSelectedWorkTypes((prev) => prev.filter((work) => work !== name));
-    console.log('삭제 후');
   };
 
   const removeJob = (name) => {
-    console.log('삭제 대상:', name);
     setSelectedJobs((prev) => prev.filter((job) => job !== name));
-    console.log('삭제 후');
   };
 
   const removeSkill = (name) => {
     setSelectedSkills((prev) =>
       prev.filter((skill) => {
-        const skillName = typeof skill === 'string' ? skill : skill.name;
+        const skillName = typeof skill === 'string' ? skill : (skill.skillTagNm || skill.name);
         return skillName !== name;
       })
     );
@@ -439,7 +431,7 @@ export default function ProjectPostPage() {
     setSelectedPreferSkills((prev) =>
       prev.filter((preferSkill) => {
         const skillName =
-          typeof preferSkill === 'string' ? preferSkill : preferSkill.name;
+          typeof preferSkill === 'string' ? preferSkill : (preferSkill.skillTagNm || preferSkill.name);
         return skillName !== name;
       })
     );
@@ -458,6 +450,17 @@ export default function ProjectPostPage() {
 
     if (preferList.length === 0 && preferContent.trim() === '') {
       alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger');
+      return;
+    }
+
+    // 좌표 검증
+    if (!form.latitude || !form.longitude) {
+      alertStore.show('주소의 좌표 변환이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.', 'danger');
+      return;
+    }
+
+    if (!selectedDistrictName || selectedDistrictName.trim() === '') {
+      alertStore.show('구/군 정보가 올바르지 않습니다. 다시 선택해주세요.', 'danger');
       return;
     }
 
@@ -486,10 +489,10 @@ export default function ProjectPostPage() {
       recruitJob: [...selectedJobs],
 
       preferSkills: selectedPreferSkills
-        .map((s) => (typeof s === 'string' ? s : s?.name))
+        .map((s) => (typeof s === 'string' ? s : (s?.skillTagNm || s?.name)))
         .filter((name) => !!name),
       usingSkills: selectedSkills
-        .map((s) => (typeof s === 'string' ? s : s?.name))
+        .map((s) => (typeof s === 'string' ? s : (s?.skillTagNm || s?.name)))
         .filter((name) => !!name),
 
       preference: [...preferList, ...preferContent.split(',')]
@@ -506,8 +509,6 @@ export default function ProjectPostPage() {
       isNotification: notifyEnabled ? 'Y' : 'N',
     };
 
-    console.log('requestBody:', requestBody);
-
     try {
       // API 호출 - 토큰이 자동으로 포함됩니다
       if (projectSq) {
@@ -519,7 +520,7 @@ export default function ProjectPostPage() {
       }
       router.push('/mypage/company/affiliation_project_list');
     } catch (error) {
-      console.error('프로젝트 등록 실패: ', error);
+      alertStore.show('프로젝트 등록/수정 중 오류가 발생했습니다.', 'danger');
     }
   };
 
@@ -776,7 +777,7 @@ export default function ProjectPostPage() {
                   {/* TODO: ProjectSkillButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedSkills.length > 0 && (
                     <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
-                      {selectedSkills.map(s => typeof s === 'string' ? s : s.name).join(', ')}
+                      {selectedSkills.map(s => typeof s === 'string' ? s : (s.skillTagNm || s.name)).join(', ')}
                     </div>
                   )}
                 </div>
@@ -800,7 +801,7 @@ export default function ProjectPostPage() {
                   {/* TODO: ProjectSkillButtonGroup 컴포넌트 구현 후 활성화 */}
                   {selectedPreferSkills.length > 0 && (
                     <div className="badge me-1" style={{ backgroundColor: '#0088CC', color: 'white' }}>
-                      {selectedPreferSkills.map(s => typeof s === 'string' ? s : s.name).join(', ')}
+                      {selectedPreferSkills.map(s => typeof s === 'string' ? s : (s.skillTagNm || s.name)).join(', ')}
                     </div>
                   )}
                 </div>
@@ -923,6 +924,15 @@ export default function ProjectPostPage() {
         </div>
         </div>
       </div>
+
+      {/* 인터뷰 시간 모달 */}
+      {showInterviewTimeModal && (
+        <InterviewTimeModal
+          onConfirm={onInterviewTimeConfirmed}
+          onClose={() => setShowInterviewTimeModal(false)}
+          interviewTimes={selectedInterviewTimes}
+        />
+      )}
     </MyPageLayout>
   );
 }

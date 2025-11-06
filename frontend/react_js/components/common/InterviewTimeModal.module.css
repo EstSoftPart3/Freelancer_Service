@@ -1,0 +1,205 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modalContent {
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+.daterangepicker {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 30px 40px;
+  width: fit-content;
+}
+
+.calendarWrapper {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.calendar {
+  flex: 1;
+  min-width: 280px;
+}
+
+.calendarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+.monthYear {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.navBtn:hover {
+  color: #0d6efd;
+}
+
+.calendarTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.calendarTable th {
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.calendarTable td {
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.day {
+  position: relative;
+}
+
+.sameMonth {
+  color: #333;
+}
+
+.otherMonth {
+  color: #ccc;
+}
+
+.available:hover {
+  background-color: #e3f2fd;
+}
+
+.pastDate {
+  color: #ccc !important;
+  cursor: not-allowed !important;
+  text-decoration: line-through;
+}
+
+.pastDate:hover {
+  background-color: transparent !important;
+}
+
+.selected {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.hasTimes::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #28a745;
+  border-radius: 50%;
+}
+
+.timePickerWrapper {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.timePickerTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.timeWarning {
+  font-size: 13px;
+  color: #dc3545;
+  margin-bottom: 12px;
+}
+
+.timeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.timeSlot {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.timeSlot:hover:not(:disabled) {
+  border-color: #0d6efd;
+  background-color: #e3f2fd;
+}
+
+.timeSlot:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.selectedTime {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+  border-color: #0d6efd !important;
+  font-weight: 600;
+}
+
+.drpButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.drpSelected {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
