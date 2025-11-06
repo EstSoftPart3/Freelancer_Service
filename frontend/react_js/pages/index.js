@@ -108,12 +108,6 @@ export default function MainPage() {
   // 좌표를 주소로 변환
   const getAddressFromCoordinates = async (lat, lng) => {
     try {
-      console.log('=== 프론트엔드 좌표 검증 ===')
-      console.log('입력된 좌표:', lat, lng)
-      console.log('좌표 타입:', typeof lat, typeof lng)
-      console.log('좌표 유효성:', !isNaN(lat), !isNaN(lng))
-      console.log('=== 지오코딩 API 호출 ===')
-      
       // 네이버 지오코딩 API 호출
       const response = await api.$get('/map/naver/geocoding', {
         params: {
@@ -122,47 +116,32 @@ export default function MainPage() {
         }
       })
       
-      console.log('=== 지오코딩 API 응답 분석 ===')
-      console.log('전체 응답:', response)
-      console.log('response.output:', response.output)
-      console.log('response.address:', response.address)
-      console.log('response.success:', response.success)
-      console.log('응답 타입:', typeof response)
-      console.log('응답 키들:', Object.keys(response))
-      
       // success가 true이고 유효한 주소가 있으면 사용
       if (response.success !== false) {
         if (response.output && response.output.address) {
-          console.log('네이버 지오코딩 성공:', response.output.address)
           return response.output.address
         } else if (response.address && !response.address.includes('위도:') && !response.address.includes('경도:')) {
-          console.log('네이버 지오코딩 성공:', response.address)
           return response.address
         }
       }
       
       // 네이버 실패 시 카카오 지오코딩 시도
-      console.log('네이버 지오코딩 실패, 카카오 API 시도...')
       if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
         return new Promise((resolve) => {
           const geocoder = new window.kakao.maps.services.Geocoder()
           geocoder.coord2Address(lng, lat, (result, status) => {
             if (status === window.kakao.maps.services.Status.OK && result[0]) {
               const address = result[0].address.address_name
-              console.log('카카오 지오코딩 성공:', address)
               resolve(address)
             } else {
-              console.log('카카오 지오코딩도 실패')
               resolve(null)
             }
           })
         })
       }
       
-      console.log('카카오 API 사용 불가')
       return null
     } catch (error) {
-      console.error('주소 변환 실패:', error)
       return null
     }
   }
@@ -173,7 +152,6 @@ export default function MainPage() {
       // 비로그인 시: 기본 위치만 사용 (GPS 접근 안 함, 주소 정보 없음)
       const userId = localStorage.getItem('userSq') || user?.userSq || 0
       if (!userId || userId === 0 || userId === '0') {
-        console.log('비로그인 상태: 위치 정보 없음')
         resolve({
           latitude: 37.5665,
           longitude: 126.9780,
@@ -183,10 +161,8 @@ export default function MainPage() {
       }
 
       // 로그인 시: 사용자 등록 주소 정보 API 호출
-      console.log('로그인 상태: 사용자 주소 조회', userId)
       api.$get(`/map/user-address?userId=${userId}`)
         .then(async (response) => {
-          console.log('주소 API 응답:', response)
           const data = response.data || response.output || response
           
           // API에서 반환한 주소를 그대로 사용
@@ -197,7 +173,6 @@ export default function MainPage() {
           })
         })
         .catch((error) => {
-          console.log('사용자 주소 정보 조회 실패:', error)
           // 실패 시 기본 위치 사용 (GPS 접근 안 함)
           resolve({
             latitude: 37.5665,
@@ -223,28 +198,21 @@ export default function MainPage() {
   // 현재 위치 가져오기
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
-      console.log('=== getCurrentPosition 시작 ===')
       if (!navigator.geolocation) {
-        console.log('브라우저가 위치 정보를 지원하지 않음')
         alert('이 브라우저는 위치 정보를 지원하지 않습니다.')
         reject(new Error('위치 정보 미지원'))
         return
       }
       
-      console.log('위치 정보 요청 중...')
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('위치 정보 획득 성공:', position.coords)
           const coords = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           }
-          console.log('반환할 좌표:', coords)
-          console.log('정확도:', position.coords.accuracy, 'm')
           resolve(coords)
         },
         (error) => {
-          console.log('위치 정보 획득 실패:', error)
           alert('위치 정보를 가져올 수 없습니다.')
           reject(error)
         },
@@ -260,8 +228,6 @@ export default function MainPage() {
   // 필터 변경 핸들러
   const handleFilterChange = async (filters) => {
     try {
-      console.log('필터 변경:', filters)
-      
       // 현재 필터 상태 저장 (필터 유지용)
       setCurrentFilters({ ...filters })
       
@@ -273,20 +239,15 @@ export default function MainPage() {
       if (filters.locationType === 'address') {
         // 내 주소 선택 시 사용자 주소 재조회
         const userAddress = await getUserLocation()
-        console.log('사용자 등록 주소 재조회:', userAddress)
         
         setUserLocation(userAddress)
         searchLat = userAddress.latitude
         searchLng = userAddress.longitude
       } else if (filters.locationType === 'current') {
-        console.log('=== 현재 위치 선택 시작 ===')
         const currentPos = await getCurrentPosition()
-        console.log('현재 위치 좌표:', currentPos)
         
         // 좌표를 주소로 변환
-        console.log('지오코딩 API 호출 시작...')
         const address = await getAddressFromCoordinates(currentPos.latitude, currentPos.longitude)
-        console.log('지오코딩 결과 주소:', address)
         
         // 주소 변환 실패 시 기본 텍스트 사용
         const finalAddress = address || '현재 위치'
@@ -298,13 +259,11 @@ export default function MainPage() {
           address: finalAddress
         }
         setUserLocation(newLocation)
-        console.log('userLocation 업데이트:', newLocation)
         
         searchLat = currentPos.latitude
         searchLng = currentPos.longitude
         // 지도 이미지 업데이트
         setMapImageUrl(generateMapImageUrl())
-        console.log('=== 현재 위치 선택 완료 ===')
       } else if (filters.locationType === 'custom') {
         // 임시 저장된 위치가 있으면 이제 실제로 userLocation 업데이트 + 검색
         if (tempSelectedLocation) {
@@ -318,13 +277,11 @@ export default function MainPage() {
           
           searchLat = tempSelectedLocation.latitude
           searchLng = tempSelectedLocation.longitude
-          console.log('선택된 위치로 검색:', tempSelectedLocation.address)
           
           // 지도 이미지 업데이트
           setMapImageUrl(generateMapImageUrl())
         } else {
           // 위치가 아직 선택 안 됐으면 검색 안 함
-          console.log('위치를 먼저 선택해주세요')
           alert('위치를 먼저 선택해주세요.')
           return
         }
@@ -344,8 +301,6 @@ export default function MainPage() {
         }
       })
       
-      console.log('API 응답:', response)
-      
       // 응답 데이터 저장
       if (response.output) {
         setProjects(response.output.projects || [])
@@ -356,22 +311,17 @@ export default function MainPage() {
       // 지도 이미지 URL 생성
       setMapImageUrl(generateMapImageUrl())
       
-      console.log('프로젝트 데이터 업데이트:', projects)
-      
     } catch (error) {
-      console.error('API 호출 실패:', error)
       setProjects([])
     }
   }
 
   const handleMarkerClick = (project) => {
-    console.log('마커 클릭:', project)
     setSelectedProject(project)
   }
 
   // 프로젝트 클릭 핸들러
   const handleProjectClick = (project) => {
-    console.log('프로젝트 클릭:', project)
     // 사용자 타입에 따라 프로젝트 상세 페이지로 이동
     const userType = localStorage.getItem('userType') || user?.userType
     if (userType === 'PERSONAL') {
@@ -387,8 +337,6 @@ export default function MainPage() {
 
   // 경로 클릭 핸들러
   const handleRouteClick = (project) => {
-    console.log('경로 클릭:', project)
-    
     // 네이버 지도 경로 안내 URL 생성
     const naverMapUrl = `https://map.naver.com/index.nhn?slng=${userLocation.longitude}&slat=${userLocation.latitude}&stext=${encodeURIComponent(userLocation.address)}&elng=${project.longitude}&elat=${project.latitude}&etext=${encodeURIComponent(project.companyName)}&menu=route&pathType=1`
     
@@ -399,8 +347,6 @@ export default function MainPage() {
 
   // 위치 선택 핸들러
   const handleLocationSelected = async (location) => {
-    console.log('위치 선택됨:', location)
-    
     // 좌표 유효성 검사
     if (isNaN(location.latitude) || isNaN(location.longitude)) {
       alert('유효하지 않은 좌표입니다. 주소를 다시 선택해주세요.')
@@ -420,13 +366,10 @@ export default function MainPage() {
     // 위치 선택 모달 닫기
     setShowLocationModal(false)
     
-    console.log('위치가 임시 저장되었습니다. 검색 버튼을 눌러주세요.')
-    
     // 잠시 후 필터 모달 자동으로 열기 (부드러운 전환을 위해 300ms 딜레이)
     setTimeout(() => {
       if (mapComponentRef.current) {
         mapComponentRef.current.openFilterModal()
-        console.log('필터를 조정하고 검색 버튼을 클릭하세요!')
       }
     }, 300)
     
@@ -489,7 +432,6 @@ export default function MainPage() {
     
     if (!loggedIn) {
       // 로그인 안 되어 있으면 정적 지도만 표시 (마커 없음)
-      console.log('비로그인 상태: 정적 지도만 표시')
       setMiniMapProjects([])
       return
     }
@@ -514,9 +456,7 @@ export default function MainPage() {
         setMiniMapProjects(response.projects || [])
       }
       
-      console.log('미니 지도 데이터 로드 완료:', response.output?.projects?.length || response.projects?.length || 0, '개')
     } catch (error) {
-      console.error('미니 지도 데이터 로드 실패:', error)
       setMiniMapProjects([])
     }
   }
@@ -527,7 +467,6 @@ export default function MainPage() {
     try {
       setIsLoadingProjects(true)
       const response = await api.$get('/projects/top')
-      console.log('인기 프로젝트 API 응답:', response)
       
       // API 응답 데이터 저장
       let newData = {
@@ -552,17 +491,10 @@ export default function MainPage() {
       
       setAllPopularProjectsData(newData)
       
-      console.log('조회순:', newData.viewCount?.length || 0, '개')
-      console.log('스크랩순:', newData.scrapCount?.length || 0, '개')
-      console.log('지원순:', newData.applicantCount?.length || 0, '개')
-      
       // 초기 필터(조회순)에 맞는 데이터 설정
       setPopularProjects(newData.viewCount || [])
       
-      console.log('초기 프로젝트 설정 완료:', newData.viewCount?.length || 0, '개')
-      
     } catch (error) {
-      console.error('인기 프로젝트 로드 실패:', error)
       setPopularProjects([])
     } finally {
       setIsLoadingProjects(false)
@@ -588,14 +520,6 @@ export default function MainPage() {
     }
     
     setPopularProjects(selectedData)
-    console.log(`${filter} 필터 선택됨`)
-    console.log('표시할 프로젝트 수:', selectedData.length)
-    console.log('프로젝트 목록:', selectedData.map(p => ({
-      제목: p.projectTtl,
-      조회수: p.viewCnt,
-      스크랩: p.projectScrapCnt,
-      지원자: p.applicantCnt
-    })))
   }
 
   // 표시할 프로젝트 (최대 5개)
@@ -603,7 +527,6 @@ export default function MainPage() {
 
   // 프로젝트 카드 클릭 핸들러
   const handleProjectCardClick = (project) => {
-    console.log('프로젝트 카드 클릭:', project)
     const userType = localStorage.getItem('userType') || user?.userType
     if (userType === 'PERSONAL') {
       router.push(`/project/spec/user/${project.projectSq}`)
@@ -656,7 +579,6 @@ export default function MainPage() {
       
       // 사용자 위치 가져오기
       const location = await getUserLocation()
-      console.log('사용자 위치:', location)
       
       // state 업데이트는 비동기이므로, location 값을 직접 사용
       setUserLocation(location)
@@ -696,9 +618,7 @@ export default function MainPage() {
             setMiniMapProjects(response.projects || [])
           }
           
-          console.log('초기 프로젝트 로드 완료')
         } catch (error) {
-          console.error('초기 프로젝트 로드 실패:', error)
         }
       }
       

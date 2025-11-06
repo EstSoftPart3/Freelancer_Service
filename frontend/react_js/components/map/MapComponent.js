@@ -55,7 +55,6 @@ const MapComponent = forwardRef(function MapComponent({
   // ========================================
   useEffect(() => {
     if (projects && projects.length > 0) {
-      console.log('전체 프로젝트 업데이트:', projects.length, '개')
       setAllProjects(projects)
     }
   }, [projects])
@@ -66,7 +65,6 @@ const MapComponent = forwardRef(function MapComponent({
   useEffect(() => {
     // 네이버 Maps API가 로드되지 않았거나 DOM이 준비되지 않은 경우 대기
     if (!window.naver || !window.naver.maps || !mapRef.current) {
-      console.warn('네이버 Maps API가 아직 로드되지 않았습니다.')
       return
     }
 
@@ -74,8 +72,6 @@ const MapComponent = forwardRef(function MapComponent({
     if (mapInstanceRef.current) {
       return
     }
-
-    console.log('네이버 Dynamic Map 초기화 시작')
 
     try {
       // 네이버 지도 생성
@@ -102,7 +98,6 @@ const MapComponent = forwardRef(function MapComponent({
         if (onZoomChange) onZoomChange(newZoom)
       })
 
-      console.log('네이버 Dynamic Map 초기화 완료')
     } catch (error) {
       console.error('지도 초기화 실패:', error)
     }
@@ -139,7 +134,6 @@ const MapComponent = forwardRef(function MapComponent({
           return bounds.hasLatLng(position) // 영역 안에 있는지 확인
         })
 
-        console.log('지도 영역 내 프로젝트:', filtered.length, '/', allProjects.length)
         setVisibleProjects(filtered)
       } catch (error) {
         console.error('프로젝트 필터링 오류:', error)
@@ -184,7 +178,6 @@ const MapComponent = forwardRef(function MapComponent({
         try {
           userMarkerRef.current.setMap(null)
         } catch (error) {
-          console.warn('사용자 마커 제거 중 오류:', error)
         }
       }
 
@@ -202,7 +195,6 @@ const MapComponent = forwardRef(function MapComponent({
 
       userMarkerRef.current = userMarker
 
-      console.log('사용자 위치 마커 업데이트:', userLocation)
     } catch (error) {
       console.error('사용자 마커 업데이트 실패:', error)
     }
@@ -225,24 +217,19 @@ const MapComponent = forwardRef(function MapComponent({
           marker.setMap(null)
         }
       } catch (error) {
-        console.warn('마커 제거 중 오류:', error)
       }
     })
     projectMarkersRef.current = []
 
     // 프로젝트가 없으면 종료
     if (!visibleProjects || visibleProjects.length === 0) {
-      console.log('표시할 프로젝트가 없습니다.')
       return
     }
-
-    console.log('프로젝트 마커 생성 시작:', visibleProjects.length, '개')
 
     // 각 프로젝트에 대해 마커 생성
     visibleProjects.forEach((project, index) => {
       // 위도/경도가 없는 경우 스킵
       if (!project.latitude || !project.longitude) {
-        console.warn(`프로젝트 ${project.projectSq}의 위치 정보가 없습니다.`)
         return
       }
 
@@ -275,7 +262,6 @@ const MapComponent = forwardRef(function MapComponent({
 
         // 마커 클릭 이벤트 등록
         naver.maps.Event.addListener(marker, 'click', () => {
-          console.log('프로젝트 마커 클릭:', project.projectTitle || project.projectTtl)
           if (onMarkerClick) {
             onMarkerClick(project)
           }
@@ -288,7 +274,6 @@ const MapComponent = forwardRef(function MapComponent({
       }
     })
 
-    console.log('프로젝트 마커 생성 완료:', projectMarkersRef.current.length, '개')
   }, [visibleProjects, isMapReady, onMarkerClick])
 
   // ========================================
@@ -316,7 +301,6 @@ const MapComponent = forwardRef(function MapComponent({
   // 7. 필터 관련 핸들러
   // ========================================
   const handleFilterChange = (filters) => {
-    console.log('필터 변경 (MapComponent):', filters)
     if (onFilterChange) onFilterChange(filters)
     setShowFilterModal(false)
   }
