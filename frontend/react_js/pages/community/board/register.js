@@ -70,7 +70,7 @@ export default function BoardRegisterPage() {
       let response
       if (isEditMode) {
         // 수정
-        response = await api.$put(`/board/${edit}`, formData)
+        response = await api.$patch(`/board/${edit}/edit`, formData)
       } else {
         // 신규 등록
         response = await api.$post('/board', formData)

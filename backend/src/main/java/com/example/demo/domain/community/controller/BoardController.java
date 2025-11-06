@@ -82,7 +82,9 @@ public class BoardController {
     }
     
 //    게시글 수정
-    @PutMapping("/{boardSq}")
+    // 인턴 수정:
+    // 사유: Spring MVC의 PUT 요청에서 multipart/form-data 처리 제한 문제로 PATCH로 변경하고 경로에 /edit 추가
+    @PatchMapping("/{boardSq}/edit")
     public ResponseEntity<ApiResponse<NullType>> updateBoard(@AuthenticationPrincipal Long userSq, @PathVariable("boardSq") Long boardSq, 
     		@ModelAttribute BoardRequest boardRequest,
     		@RequestParam("skillTagsJson") String skillTagsJson){
