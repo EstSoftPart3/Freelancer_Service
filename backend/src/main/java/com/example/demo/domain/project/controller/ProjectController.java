@@ -57,32 +57,15 @@ public class ProjectController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<ProjectListResponse>> getProjectList(Authentication authentication,
 			@ModelAttribute ProjectSearchRequest request) {
-		// 인턴 추가 작업: 프로젝트 목록 조회 디버깅 로그 추가
-		System.out.println("========== /api/projects API 호출 ==========");
-		System.out.println("request: " + request);
-		System.out.println("authentication: " + authentication);
-		
-		try {
+
 			JwtAuthenticationToken token = null;
 			if (authentication != null) {
 				token = (JwtAuthenticationToken) authentication;
 			}
-			
-			System.out.println("========== 서비스 호출 시작 ==========");
 			ProjectListResponse response = projectService.fetchAllProject(token, request);
-			System.out.println("========== 서비스 호출 성공 ==========");
-			System.out.println("response: " + response);
 			
 			return ResponseEntity
 					.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 목록 조회 성공", response));
-		} catch (Exception e) {
-			System.out.println("========== /api/projects 예외 발생 ==========");
-			System.out.println("예외 타입: " + e.getClass().getName());
-			System.out.println("예외 메시지: " + e.getMessage());
-			e.printStackTrace();
-			System.out.println("==========================================");
-			throw e;
-		}
 	}
 
 	@GetMapping("/companies")
@@ -129,32 +112,15 @@ public class ProjectController {
 	@GetMapping("/{projectSq}/details")
 	public ResponseEntity<ApiResponse<ProjectDetailResponse>> getProjectDetails(
 			@PathVariable("projectSq") Long projectSq, Authentication authentication) {
-		// 인턴 추가 작업: 프로젝트 상세 조회 디버깅 로그 추가
-		System.out.println("========== /api/projects/" + projectSq + "/details API 호출 ==========");
-		System.out.println("projectSq: " + projectSq);
-		System.out.println("authentication: " + authentication);
-		
-		try {
+
 			JwtAuthenticationToken token = null;
 			if (authentication != null) {
 				token = (JwtAuthenticationToken) authentication;
 			}
-			
-			System.out.println("========== 서비스 호출 시작 ==========");
 			ProjectDetailResponse response = projectService.fetchProject(projectSq, token);
-			System.out.println("========== 서비스 호출 성공 ==========");
-			System.out.println("response: " + response);
-			
+
 			return ResponseEntity
 					.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 상세 내역 반환 성공", response));
-		} catch (Exception e) {
-			System.out.println("========== /api/projects/" + projectSq + "/details 예외 발생 ==========");
-			System.out.println("예외 타입: " + e.getClass().getName());
-			System.out.println("예외 메시지: " + e.getMessage());
-			e.printStackTrace();
-			System.out.println("==========================================");
-			throw e;
-		}
 	}
 
 	@GetMapping("/forms")
@@ -178,12 +144,12 @@ public class ProjectController {
 				.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 필터 내용 반환 성공", projectService.fetchFilterInfos(type)));
 	}
 
-    // 프로젝트 유형별 최다 공고 조회
+    // 인턴 추가: 프로젝트 유형별 최다 공고 조회 API
+    // 사유: 메인 페이지에 인기 프로젝트 표시 기능 구현
     @GetMapping("/top")
     public ResponseEntity<ApiResponse<Map<String, List<ProjectSummary>>>> getPopularProjects() {
         Map<String, List<ProjectSummary>> result = new HashMap<>();
 
-        // 올바른 Java 문법으로 메서드 호출
         result.put("viewCount", projectService.fetchPopularProjects("view_count"));
         result.put("scrapCount", projectService.fetchPopularProjects("scrap_count"));
         result.put("applicantCount", projectService.fetchPopularProjects("applicant_count"));

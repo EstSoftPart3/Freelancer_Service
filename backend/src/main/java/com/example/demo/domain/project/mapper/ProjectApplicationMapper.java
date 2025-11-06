@@ -109,7 +109,8 @@ public interface ProjectApplicationMapper {
 
 	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
 
-    //인터뷰 일정 캘린더 데이터로 변환하기 위한 조회
+    // 인턴 수정: 인터뷰 일정 캘린더 데이터 조회 메서드 추가
+    // 사유: 지원자의 인터뷰 일정을 캘린더 형식으로 표시하기 위한 데이터 조회 기능 구현
     InterviewScheduleSeeDto findInterviewScheduleDataConversion(@Param("applicationSq") Long applicationSq);
 
 }
