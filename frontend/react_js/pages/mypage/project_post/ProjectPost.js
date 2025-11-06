@@ -447,22 +447,39 @@ export default function ProjectPostPage() {
   // 프로젝트 제출
   const submitProject = async (e) => {
     e.preventDefault();
+    
+    console.log('🚀 프로젝트 제출 시작');
+    console.log('📍 현재 상태:', {
+      selectedCity,
+      selectedDistrict,
+      selectedCityName,
+      selectedDistrictName,
+      latitude: form.latitude,
+      longitude: form.longitude,
+      preferList,
+      preferContent,
+    });
 
     if (preferList.length === 0 && preferContent.trim() === '') {
+      console.log('❌ 우대 사항 검증 실패');
       alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger');
       return;
     }
 
     // 좌표 검증
     if (!form.latitude || !form.longitude) {
+      console.log('❌ 좌표 검증 실패');
       alertStore.show('주소의 좌표 변환이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.', 'danger');
       return;
     }
 
     if (!selectedDistrictName || selectedDistrictName.trim() === '') {
+      console.log('❌ 구/군 정보 검증 실패');
       alertStore.show('구/군 정보가 올바르지 않습니다. 다시 선택해주세요.', 'danger');
       return;
     }
+    
+    console.log('✅ 모든 검증 통과');
 
     const requestBody = {
       projectId: projectSq ?? null,
@@ -509,17 +526,24 @@ export default function ProjectPostPage() {
       isNotification: notifyEnabled ? 'Y' : 'N',
     };
 
+    console.log('📤 전송할 데이터:', requestBody);
+
     try {
+      console.log('🌐 API 호출 시작');
       // API 호출 - 토큰이 자동으로 포함됩니다
       if (projectSq) {
         const response = await api.$patch('/projects', requestBody);
+        console.log('✅ 수정 API 응답:', response);
         alertStore.show(response.message || '프로젝트가 수정되었습니다.', 'success');
       } else {
         const response = await api.$post('/projects', requestBody);
+        console.log('✅ 등록 API 응답:', response);
         alertStore.show(response.message || '프로젝트가 등록되었습니다.', 'success');
       }
       router.push('/mypage/company/affiliation_project_list');
     } catch (error) {
+      console.error('❌ API 호출 실패:', error);
+      console.error('❌ 에러 상세:', error.response?.data || error.message);
       alertStore.show('프로젝트 등록/수정 중 오류가 발생했습니다.', 'danger');
     }
   };

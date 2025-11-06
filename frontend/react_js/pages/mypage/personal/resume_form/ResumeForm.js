@@ -9,7 +9,6 @@ import TrainingModal from '@/components/myPage/personal/TrainingModal';
 import ShowProjectFormModal from '@/components/myPage/personal/ShowProjectFormModal';
 import LicenseModal from '@/components/myPage/personal/LicenseModal';
 import SkillTagModal from '@/components/myPage/personal/SkillTagModal';
-import InterviewTimeModal from '@/components/common/InterviewTimeModal';
 import './ResumeForm.module.css';
 
 const ResumeForm = () => {
@@ -43,7 +42,6 @@ const ResumeForm = () => {
     projects: [],
     certificates: [],
     skills: [],
-    interviewTimes: [],
     resumeGreetingTxt: '',
     resumeIsNotificationYn: false,
     resumeIsRepresentativeYn: false,
@@ -64,7 +62,6 @@ const ResumeForm = () => {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showSkillsModal, setShowSkillsModal] = useState(false);
-  const [showInterviewTimeModal, setShowInterviewTimeModal] = useState(false);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -358,22 +355,6 @@ const ResumeForm = () => {
     setShowSkillsModal(false);
   };
 
-  // 인터뷰 가능시간 추가
-  const showInterviewTimeForm = () => {
-    setShowInterviewTimeModal(true);
-  };
-
-  // 인터뷰 가능시간 추가 완료
-  const handleInterviewTimeComplete = (times) => {
-    if (times) {
-      setResumeData(prev => ({
-        ...prev,
-        interviewTimes: times,
-      }));
-    }
-    setShowInterviewTimeModal(false);
-  };
-
   // 삭제 핸들러들
   const removeEducation = (index) => {
     setResumeData((prev) => ({
@@ -414,13 +395,6 @@ const ResumeForm = () => {
     setResumeData((prev) => ({
       ...prev,
       skills: prev.skills.filter((_, i) => i !== index),
-    }));
-  };
-
-  const removeInterviewTime = (date) => {
-    setResumeData((prev) => ({
-      ...prev,
-      interviewTimes: prev.interviewTimes.filter((time) => time.date !== date),
     }));
   };
 
@@ -1219,54 +1193,6 @@ const ResumeForm = () => {
               />
             </div>
 
-            {/* 인터뷰 가능 시간 */}
-            <div className="form-group mb-3">
-              <label className="form-label mb-1 text-2" style={{ fontWeight: 'bold' }}>
-                인터뷰 가능 시간
-                <a
-                  href="#"
-                  className="text-grey text-decoration-none small ms-2"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    showInterviewTimeForm();
-                  }}
-                >
-                  + 추가하기
-                </a>
-              </label>
-              <div className="mb-2 d-flex gap-2 flex-wrap">
-                {resumeData.interviewTimes.map((item, index) => (
-                  <div
-                    key={index}
-                    className="badge"
-                    style={{
-                      backgroundColor: '#0088CC',
-                      color: 'white',
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <span>
-                      {item.date}: {item.times.join(', ')}
-                    </span>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeInterviewTime(item.date);
-                      }}
-                      style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}
-                    >
-                      ×
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* 자기소개 */}
             <div className="form-group mb-3">
               <label className="form-label mb-1 text-2" style={{ fontWeight: 'bold' }}>
@@ -1349,14 +1275,6 @@ const ResumeForm = () => {
       <SkillTagModal 
         onComplete={handleSkillsComplete}
         selectedSkills={resumeData.skills}
-      />
-    )}
-
-    {showInterviewTimeModal && (
-      <InterviewTimeModal 
-        onConfirm={handleInterviewTimeComplete}
-        onClose={() => setShowInterviewTimeModal(false)}
-        interviewTimes={resumeData.interviewTimes}
       />
     )}
     </MyPageLayout>

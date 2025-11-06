@@ -487,10 +487,6 @@
 
 /* 반응형 - 작은 모바일 */
 @media (max-width: 576px) {
-  h4 {
-    font-size: 20px !important;
-  }
-
   .member-item {
     padding: 8px 5px;
     font-size: 12px;
