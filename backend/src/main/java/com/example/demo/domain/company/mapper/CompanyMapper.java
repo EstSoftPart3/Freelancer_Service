@@ -36,4 +36,7 @@ public interface CompanyMapper {
 
     void updateMemberStatus(@Param("userSq") Long userSq, @Param("memberStatusCd") Long memberStatusCd);
 
+    // 인턴 추가: 기업 주소 조회 (프로젝트 등록 시 사용)
+    Long findAddressSqByCompanySq(@Param("companySq") Long companySq);
+
 }

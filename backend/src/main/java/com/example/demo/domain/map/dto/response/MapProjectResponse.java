@@ -21,6 +21,7 @@ public class MapProjectResponse {
     // 주소 정보
     private String address;
     private String detailAddress;
+    private String sigungu;             // 시군구 정보
     
     // 위치 정보 (지도 표시용)
     private BigDecimal latitude;

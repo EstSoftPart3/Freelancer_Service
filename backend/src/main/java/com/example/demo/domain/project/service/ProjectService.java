@@ -66,6 +66,8 @@ public class ProjectService {
 	private final CompanyService companyService;
     private final CalendarService calendarService;
 
+	// 인턴 수정:
+	// 사유: 프로젝트 주소를 시군구 중심 좌표 대신 기업 주소를 사용하도록 변경 (정확한 위치 표시 및 경로 안내를 위해)
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
 		long devgradeCodeSq = commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
@@ -77,7 +79,9 @@ public class ProjectService {
 		long userTypeCd = token.getUserTypeCd();
 
 		long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
-		Project project = Project.from(request, companySq, registerAddress(request), devgradeCodeSq, educationLvlSq);
+		// 기업 주소 사용 (시군구 대신)
+		long companyAddressSq = companyService.fetchCompanyAddressSq(companySq);
+		Project project = Project.from(request, companySq, companyAddressSq, devgradeCodeSq, educationLvlSq);
 		projectMapper.insertProject(project);
 
 		registerSubEntities(project, request);
@@ -278,10 +282,12 @@ public class ProjectService {
 		createInterviewTimes(projectSq, request.interviewTime());
 	}
 
+	// 인턴 수정:
+	// 사유: 프로젝트 수정 시에도 기업 주소를 사용하도록 변경 (주소 변경 불필요)
 	public void updateAddress(Project project, ProjectCreateRequest request) {
-		projectMapper.deleteProjectAddress(project.getAddressSq()); // 기존 주소 삭제
-		long newAddressSq = registerAddress(request); // 새 주소 insert
-		projectMapper.updateAddress(project.getProjectSq(), newAddressSq); // 바로 갱신
+		// 기업 주소를 계속 사용하므로 주소 변경 불필요
+		// 주소를 변경하려면 기업 정보에서 변경해야 함
+		// 따라서 이 메서드는 실행하지 않음
 	}
 
 	@Transactional

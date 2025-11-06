@@ -19,16 +19,24 @@
     WHERE address_sq = #{addressSq}
 	</select>
 	
+	<!-- 인턴 수정: -->
+	<!-- 사유: 프로젝트 등록 시 zonecode는 BIGINT 타입이므로 0으로, address와 detail_address는 NULL 허용이므로 NULL로 처리 -->
 	<insert id="createAddress"
         parameterType="com.example.demo.domain.project.dto.AddressInsertDto"
         useGeneratedKeys="true"
         keyProperty="addressSq">
     INSERT INTO TBL_ADDRESS_S (
+        zonecode,
+        address,
+        detail_address,
         sigungu,
         area_code_sq,
         latitude,
         longitude
     ) VALUES (
+        0,
+        NULL,
+        NULL,
         #{districtName},
         #{districtCode},
         #{districtLat},
