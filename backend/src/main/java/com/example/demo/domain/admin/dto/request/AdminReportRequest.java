@@ -10,7 +10,3 @@ public class AdminReportRequest {
     private String reportResult;  // 신고 처리 결과
 }
 
-
-
-
-

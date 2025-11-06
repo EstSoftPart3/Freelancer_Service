@@ -83,11 +83,13 @@ public class Project {
     @Column(name = "project_is_deleted_yn", length = 1)
     private String projectIsDeletedYn;
 
-    @Column(name = "project_activate_yn", length = 1)
-    private String projectActivateYn;
-
     @Column(name = "project_view_cnt")
     private Integer projectViewCnt;
+
+    // 인턴 수정: project_activate_yn 필드 추가
+    // 사유: 프로젝트 활성화/비활성화 상태 관리 기능 구현 (임시 중단, 관리자 검토 등에 활용)
+    @Column(name = "project_activate_yn", length = 1)
+    private String projectActivateYn;
 
     public static Project from(ProjectCreateRequest request,  Long companySq, long addressSq, long devgradeCodeSq, long educationLvlSq) {
     	return Project.builder()
@@ -114,6 +116,7 @@ public class Project {
         this.projectModifiedAtDtm = LocalDateTime.now();
         if (this.projectIsNotificationYn == null) this.projectIsNotificationYn = "N";
         if (this.projectIsDeletedYn == null) this.projectIsDeletedYn = "N";
+        // 인턴 수정: 프로젝트 활성화 상태 기본값 설정, 사유: 신규 프로젝트는 기본적으로 활성화 상태로 생성
         if (this.projectActivateYn == null) this.projectActivateYn = "Y";
         this.projectCandidateCnt = 0;
         this.projectScrapCnt = 0;
