@@ -70,6 +70,11 @@ public class CompanyService {
 		return companyMapper.findBizNumByCompanySq(companySq);
 	}
 
+	// 인턴 추가: 기업 주소 조회 (프로젝트 등록 시 사용)
+	public Long fetchCompanyAddressSq(Long companySq) {
+		return companyMapper.findAddressSqByCompanySq(companySq);
+	}
+
 	public String fetchCompanyImageUrl(Long companySq) {
 		String fileName = companyMapper.findCompanyImageUrlBySq(companySq);
 		if (fileName == null) {

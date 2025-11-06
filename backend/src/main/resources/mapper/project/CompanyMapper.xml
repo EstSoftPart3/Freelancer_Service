@@ -34,6 +34,11 @@
   </select>
 
 
+  <!-- 인턴 추가: 기업 주소 조회 (프로젝트 등록 시 사용) -->
+  <select id="findAddressSqByCompanySq" parameterType="Long" resultType="Long">
+    SELECT address_sq FROM TBL_COMPANY_S WHERE company_sq = #{companySq}
+  </select>
+
   <select id="findUserSqsByCompanySqAndSearch" resultType="Long"> SELECT DISTINCT cm.user_sq FROM
     TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
     TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq} <if

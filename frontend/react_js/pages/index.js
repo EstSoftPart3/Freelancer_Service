@@ -317,6 +317,10 @@ export default function MainPage() {
   }
 
   const handleMarkerClick = (project) => {
+    console.log('선택된 프로젝트 데이터:', project)
+    console.log('address:', project.address)
+    console.log('sigungu:', project.sigungu)
+    console.log('detailAddress:', project.detailAddress)
     setSelectedProject(project)
   }
 
@@ -738,7 +742,7 @@ export default function MainPage() {
                   <i className="bi bi-briefcase me-2"></i>{selectedProject.jobType}
                 </p>
                 <p className="text-muted mb-1">
-                  <i className="bi bi-geo-alt me-2"></i>{selectedProject.address}
+                  <i className="bi bi-geo-alt me-2"></i>{selectedProject.address || selectedProject.sigungu || '주소 정보 없음'}
                   {selectedProject.detailAddress ? ' ' + selectedProject.detailAddress : ''}
                 </p>
                 <p className="text-muted mb-2">

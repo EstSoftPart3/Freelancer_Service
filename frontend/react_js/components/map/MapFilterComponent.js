@@ -119,13 +119,13 @@ export default function MapFilterComponent({
               {r}km
             </button>
           ))}
-          {/* 없음 버튼 (전국 전체) */}
+          {/* 제한 없음 버튼 (전국 전체) */}
           <button
             type="button"
             className={`btn btn-rounded ${filters.radius === '10000' ? 'btn-primary' : 'btn-light'}`}
             onClick={() => updateFilter('radius', '10000')}
           >
-            없음
+            제한 없음
           </button>
         </div>
       </div>

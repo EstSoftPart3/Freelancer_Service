@@ -137,6 +137,7 @@ public class MapSearchService {
             .jobType(dto.getJobType())
             .address(dto.getAddress())
             .detailAddress(dto.getDetailAddress())
+            .sigungu(dto.getSigungu())
             
             // 위치 정보
             .latitude(dto.getLatitude())

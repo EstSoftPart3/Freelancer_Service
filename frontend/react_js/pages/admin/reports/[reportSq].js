@@ -290,7 +290,7 @@ export default function ReportDetailPage() {
                         </div>
                       </div>
                     )}
-                    <div className="row">
+                    <div className="row mb-2">
                       <div className="col-md-3">
                         <strong>상태:</strong>
                       </div>
@@ -298,9 +298,6 @@ export default function ReportDetailPage() {
                         <span className="text-danger">{report?.status}</span>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mb-3">
                     <div className="row mb-2">
                       <div className="col-md-3">
                         <strong>처리결과</strong>
@@ -315,10 +312,6 @@ export default function ReportDetailPage() {
                           placeholder="처리 결과를 입력하세요&#10;예: 해당 계정 비활성화 조치"
                           disabled={processing}
                         ></textarea>
-                        <div className="form-text">
-                          처리 내용을 상세히 작성해주세요. 저장 후 상태가 '처리완료'로
-                          변경됩니다.
-                        </div>
                       </div>
                     </div>
                   </div>
