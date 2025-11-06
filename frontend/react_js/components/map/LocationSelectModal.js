@@ -17,8 +17,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
 
     new window.daum.Postcode({
       oncomplete: function(data) {
-        console.log('다음 우편번호 서비스 전체 데이터:', data)
-
         setPostcode(data.zonecode)
         setSelectedAddress(data.address)
         setJibunAddress(data.jibunAddress)
@@ -33,12 +31,7 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
               latitude: lat,
               longitude: lng
             })
-            console.log('저장된 좌표:', { latitude: lat, longitude: lng })
-          } else {
-            console.log('유효하지 않은 좌표 - y:', data.y, 'x:', data.x)
           }
-        } else {
-          console.log('좌표 정보 없음! data.x:', data.x, 'data.y:', data.y)
         }
       }
     }).open()
@@ -51,9 +44,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
       return
     }
 
-    console.log('도로명 주소:', selectedAddress)
-    console.log('지번 주소:', jibunAddress)
-
     // 좌표가 이미 있으면 바로 사용
     if (selectedCoordinates) {
       const location = {
@@ -61,7 +51,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
         longitude: selectedCoordinates.longitude,
         address: selectedAddress
       }
-      console.log('저장된 좌표 사용:', location)
       onLocationSelected(location)
       return
     }
@@ -77,11 +66,9 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
               longitude: parseFloat(result[0].x),
               address: selectedAddress
             }
-            console.log('카카오 지오코딩 성공:', location)
             onLocationSelected(location)
           } else {
             // 카카오 실패 시 네이버 백엔드 API 시도
-            console.log('카카오 지오코딩 실패:', status, '→ 네이버 API 시도')
             try {
               const response = await api.$post('/map/geocode', { address: selectedAddress })
               if (response.success && response.latitude && response.longitude) {
@@ -90,7 +77,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
                   longitude: response.longitude,
                   address: selectedAddress
                 }
-                console.log('네이버 지오코딩 성공:', location)
                 onLocationSelected(location)
               } else {
                 console.error('네이버 지오코딩도 실패:', response)
@@ -104,7 +90,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
         })
       } else {
         // 카카오 API 없으면 바로 네이버 사용
-        console.log('카카오 지도 API 없음 → 네이버 API 사용')
         const response = await api.$post('/map/geocode', { address: selectedAddress })
         if (response.success && response.latitude && response.longitude) {
           const location = {
@@ -112,7 +97,6 @@ export default function LocationSelectModal({ onClose, onLocationSelected }) {
             longitude: response.longitude,
             address: selectedAddress
           }
-          console.log('네이버 지오코딩 성공:', location)
           onLocationSelected(location)
         } else {
           alert('주소를 좌표로 변환할 수 없습니다')
