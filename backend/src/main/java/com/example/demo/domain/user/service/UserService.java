@@ -82,6 +82,7 @@ public class UserService {
             companyProfileDTO.setCompanyCeoNm(requestDto.getCompanyCeoNm());
             companyProfileDTO.setCompanyOpenDt(requestDto.getCompanyOpenDt());
             companyProfileDTO.setCompanyBizNum(requestDto.getCompanyBizNum());
+            companyProfileDTO.setCompanyViewCnt(requestDto.getCompanyViewCnt());
 
             userRepository.insertCompanyProfile(companyProfileDTO);
         }

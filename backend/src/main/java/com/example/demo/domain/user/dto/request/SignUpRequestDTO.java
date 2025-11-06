@@ -28,6 +28,7 @@ public class SignUpRequestDTO {
     private BigDecimal longitude;
 
     // 기업 정보 (기업 회원인 경우만 사용)
+    private Long companyViewCnt;
     private String companyNm;
     private String companyCeoNm;
     private LocalDate companyOpenDt;

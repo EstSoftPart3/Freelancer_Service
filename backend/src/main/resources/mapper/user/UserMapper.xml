@@ -28,8 +28,8 @@
     id="insertCompanyProfile"
     parameterType="com.example.demo.domain.user.dto.CompanyProfileDTO"> INSERT INTO TBL_COMPANY_S (
     user_sq, address_sq, company_nm, company_ceo_nm, company_open_dt, company_biz_num,
-    company_greeting_txt ) VALUES ( #{userSq}, #{addressSq}, #{companyNm}, #{companyCeoNm},
-    #{companyOpenDt}, #{companyBizNum}, #{companyGreetingTxt} ) </insert>
+    company_greeting_txt, company_view_cnt ) VALUES ( #{userSq}, #{addressSq}, #{companyNm}, #{companyCeoNm},
+    #{companyOpenDt}, #{companyBizNum}, #{companyGreetingTxt}, #{companyViewCnt} ) </insert>
 
   <!-- 아이디 중복 확인 -->
   <select id="existsByUserId"
