@@ -45,9 +45,8 @@ export default function SignUpPage() {
       companyCeoNm: rawFormData.companyCeoName,
       companyOpenDt: rawFormData.companyOpenDate,
       companyBizNum: rawFormData.companyBizNumber,
+      companyViewCnt: 0,
     }
-
-    console.log('formData', formData)
 
     try {
       const response = await api.$post('/signup', formData)
