@@ -14,8 +14,10 @@ public interface ReportMapper {
     List<Report> findAll();
 //	신고 등록
     void insert(Report report);
-    
-//	===== 관리자용 메서드 =====
+
+
+//  인턴 추가 : 관리자 신고 관리
+
 //	관리자 신고 목록 조회
     List<Map<String, Object>> findReportsForAdmin(
         @Param("searchQuery") String searchQuery,

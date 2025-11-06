@@ -23,4 +23,3 @@ public class Reply {
     private Integer replyCommentRecommendCnt;
     private String replyCommentIsDeletedYn;
 }
-//

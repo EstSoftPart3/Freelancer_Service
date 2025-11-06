@@ -22,7 +22,7 @@ public class MapSearchRequest {
     private Double userLongitude;
 
     // 필터 조건들
-    private Double radius = 5.0;        // 기본값 5km
+    private Double radius = 5.0;
     private String jobType;
     private String searchKeyword;
     

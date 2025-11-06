@@ -226,7 +226,7 @@
 		#{request.keyword}, '%') OR p.project_preference_txt LIKE CONCAT('%', #{request.keyword},
 		'%') ) </if>
 
-		<!-- ✅ status 조건 추가 -->
+		<!-- status 조건 추가 -->
   <if test="request.status == 'recruiting'">
     <![CDATA[
       AND NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt

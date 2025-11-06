@@ -8,7 +8,7 @@ import java.net.URLEncoder;
 @Component
 public class NaverMapUrlGenerator {
     
-    // 네이버 지도 길찾기 기본 URL (v5 → p로 변경됨)
+    // 네이버 지도 길찾기 기본 URL (최근 v5 → p로 변경됨)
     private static final String NAVER_MAP_BASE_URL = "https://map.naver.com/p/directions";
     
     /**
