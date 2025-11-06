@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
+import { useModalStore } from '../../../store/modalStore';
 import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
 import styles from './SkillTagModal.module.css';
 
 const SkillTagModal = ({ onComplete, selectedSkills = [] }) => {
   const alertStore = useAlertStore();
+  const { closeModal: closeModalStore } = useModalStore();
 
   const [selected, setSelected] = useState([]);
   const [groupedSkillTags, setGroupedSkillTags] = useState([]);
@@ -74,11 +76,13 @@ const SkillTagModal = ({ onComplete, selectedSkills = [] }) => {
     }
     console.log('[선택된 보유 기술]', selected);
     onComplete?.(selected);
+    closeModalStore();
   };
 
   // 모달 닫기
   const closeModal = () => {
     onComplete?.(null);
+    closeModalStore();
   };
 
   return createPortal(

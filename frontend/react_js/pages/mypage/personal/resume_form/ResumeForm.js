@@ -9,6 +9,7 @@ import TrainingModal from '@/components/myPage/personal/TrainingModal';
 import ShowProjectFormModal from '@/components/myPage/personal/ShowProjectFormModal';
 import LicenseModal from '@/components/myPage/personal/LicenseModal';
 import SkillTagModal from '@/components/myPage/personal/SkillTagModal';
+import InterviewTimeModal from '@/components/common/InterviewTimeModal';
 import './ResumeForm.module.css';
 
 const ResumeForm = () => {
@@ -42,6 +43,7 @@ const ResumeForm = () => {
     projects: [],
     certificates: [],
     skills: [],
+    interviewTimes: [],
     resumeGreetingTxt: '',
     resumeIsNotificationYn: false,
     resumeIsRepresentativeYn: false,
@@ -62,6 +64,7 @@ const ResumeForm = () => {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showSkillsModal, setShowSkillsModal] = useState(false);
+  const [showInterviewTimeModal, setShowInterviewTimeModal] = useState(false);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -138,7 +141,6 @@ const ResumeForm = () => {
         }
       }
     } catch (error) {
-      console.error('이력서 데이터 불러오기 실패:', error);
       alert('이력서 정보를 불러오는데 실패했습니다.');
     }
   };
@@ -188,7 +190,6 @@ const ResumeForm = () => {
   // 파일 업로드
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
-    console.log('첨부파일:', file);
     // 파일 처리 로직 구현
   };
 
@@ -357,6 +358,22 @@ const ResumeForm = () => {
     setShowSkillsModal(false);
   };
 
+  // 인터뷰 가능시간 추가
+  const showInterviewTimeForm = () => {
+    setShowInterviewTimeModal(true);
+  };
+
+  // 인터뷰 가능시간 추가 완료
+  const handleInterviewTimeComplete = (times) => {
+    if (times) {
+      setResumeData(prev => ({
+        ...prev,
+        interviewTimes: times,
+      }));
+    }
+    setShowInterviewTimeModal(false);
+  };
+
   // 삭제 핸들러들
   const removeEducation = (index) => {
     setResumeData((prev) => ({
@@ -397,6 +414,13 @@ const ResumeForm = () => {
     setResumeData((prev) => ({
       ...prev,
       skills: prev.skills.filter((_, i) => i !== index),
+    }));
+  };
+
+  const removeInterviewTime = (date) => {
+    setResumeData((prev) => ({
+      ...prev,
+      interviewTimes: prev.interviewTimes.filter((time) => time.date !== date),
     }));
   };
 
@@ -585,16 +609,11 @@ const ResumeForm = () => {
     
     // DTO를 JSON으로 직렬화하여 추가
     const dtoJson = JSON.stringify(dto);
-    console.log('[전송할 DTO JSON]', dtoJson);
-    console.log('[전송할 DTO 객체]', dto);
-    console.log('[주소 객체 상세]', dto.address);
-    
     formData.append('dto', new Blob([dtoJson], { type: 'application/json' }));
     
     // 프로필 이미지 첨부 (있는 경우)
     if (photoFile) {
       formData.append('profileImages', photoFile);
-      console.log('[프로필 이미지 첨부]', photoFile.name);
     }
     
     // 첨부파일들 추가 (있는 경우)
@@ -602,12 +621,6 @@ const ResumeForm = () => {
       resumeData.attachments.forEach((file) => {
         formData.append('attachments', file);
       });
-      console.log('[첨부파일 개수]', resumeData.attachments.length);
-    }
-
-    console.log('[FormData 내용 확인]');
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
     }
 
     // sigungu 검증
@@ -633,7 +646,6 @@ const ResumeForm = () => {
         router.push('/mypage/personal/resum_list');
       }
     } catch (error) {
-      console.error('이력서 등록/수정 실패:', error);
       alert('이력서 등록/수정 중 오류가 발생했습니다.');
     }
   };
@@ -1207,6 +1219,54 @@ const ResumeForm = () => {
               />
             </div>
 
+            {/* 인터뷰 가능 시간 */}
+            <div className="form-group mb-3">
+              <label className="form-label mb-1 text-2" style={{ fontWeight: 'bold' }}>
+                인터뷰 가능 시간
+                <a
+                  href="#"
+                  className="text-grey text-decoration-none small ms-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    showInterviewTimeForm();
+                  }}
+                >
+                  + 추가하기
+                </a>
+              </label>
+              <div className="mb-2 d-flex gap-2 flex-wrap">
+                {resumeData.interviewTimes.map((item, index) => (
+                  <div
+                    key={index}
+                    className="badge"
+                    style={{
+                      backgroundColor: '#0088CC',
+                      color: 'white',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span>
+                      {item.date}: {item.times.join(', ')}
+                    </span>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeInterviewTime(item.date);
+                      }}
+                      style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}
+                    >
+                      ×
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* 자기소개 */}
             <div className="form-group mb-3">
               <label className="form-label mb-1 text-2" style={{ fontWeight: 'bold' }}>
@@ -1289,6 +1349,14 @@ const ResumeForm = () => {
       <SkillTagModal 
         onComplete={handleSkillsComplete}
         selectedSkills={resumeData.skills}
+      />
+    )}
+
+    {showInterviewTimeModal && (
+      <InterviewTimeModal 
+        onConfirm={handleInterviewTimeComplete}
+        onClose={() => setShowInterviewTimeModal(false)}
+        interviewTimes={resumeData.interviewTimes}
       />
     )}
     </MyPageLayout>

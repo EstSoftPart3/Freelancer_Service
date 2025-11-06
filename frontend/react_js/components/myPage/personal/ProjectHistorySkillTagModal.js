@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAlertStore } from '../../../store/alertStore';
+import { useModalStore } from '../../../store/modalStore';
 import { useProjectStore } from '../../../store/ProjectHistoryStore';
 import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
@@ -9,6 +10,7 @@ import styles from './ProjectHistorySkillTagModal.module.css';
 const ProjectHistorySkillTagModal = ({ projectId, onClose }) => {
   const projectStore = useProjectStore();
   const alertStore = useAlertStore();
+  const { closeModal: closeModalStore } = useModalStore();
 
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [skillList, setSkillList] = useState([]);
@@ -116,11 +118,13 @@ const ProjectHistorySkillTagModal = ({ projectId, onClose }) => {
     console.log('[선택된 스킬 그룹]', grouped);
     projectStore.setSkills(projectId, grouped);
     onClose?.();
+    closeModalStore();
   };
 
   // 모달 닫기
   const closeModal = () => {
     onClose?.();
+    closeModalStore();
   };
 
   // 초기 로드
