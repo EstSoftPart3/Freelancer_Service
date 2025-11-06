@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
 import { useModalStore } from '@/store/modalStore';
 import AffiliationRequestDetailModal from '@/components/myPage/personal/AffiliationRequestDetailModal';
@@ -7,6 +8,8 @@ import styles from './AffiliatedJobApplications.module.css';
 
 const AffiliatedJobApplications = () => {
   const { openModal } = useModalStore();
+  const { user } = useAuth();
+  const userType = user?.userType || 'PERSONAL';
 
   // State 관리
   const [applies, setApplies] = useState([]);
@@ -206,7 +209,7 @@ const AffiliatedJobApplications = () => {
   };
 
   return (
-    <MyPageLayout userType="PERSONAL">
+    <MyPageLayout userType={userType}>
       <div className={styles.container}>
         {/* 페이지 제목 */}
         <div className={styles.row}>

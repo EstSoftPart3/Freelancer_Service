@@ -151,7 +151,7 @@ const ScheduleDetailModal = ({ show, scheduleSq, onClose, onUpdated, onDeleted }
       }
 
       // API 호출 - 토큰이 자동으로 포함됩니다
-      const response = await api.$put(
+      const response = await api.$patch(
         `/calendar/evnts/${scheduleSq}`,
         updateData
       );

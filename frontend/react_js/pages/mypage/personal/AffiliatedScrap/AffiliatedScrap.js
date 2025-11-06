@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
 import { useModalStore } from '@/store/modalStore';
 import { useAlertStore } from '@/store/alertStore';
@@ -10,6 +11,8 @@ import styles from './AffiliatedScrap.module.css';
 const AffiliatedScrap = () => {
   const { openModal } = useModalStore();
   const alertStore = useAlertStore();
+  const { user } = useAuth();
+  const userType = user?.userType || 'PERSONAL';
 
   // State 관리
   const [scraps, setScraps] = useState([]);
@@ -167,7 +170,7 @@ const AffiliatedScrap = () => {
   };
 
   return (
-    <MyPageLayout userType="PERSONAL">
+    <MyPageLayout userType={userType}>
       <div className={styles.container}>
         {/* 페이지 제목 */}
         <div className={styles.row}>

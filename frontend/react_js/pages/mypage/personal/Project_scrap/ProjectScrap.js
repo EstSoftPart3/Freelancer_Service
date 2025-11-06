@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import './ProjectScrap.module.css';
@@ -9,6 +10,7 @@ import './ProjectScrap.module.css';
 
 const ProjectScrap = () => {
   const router = useRouter();
+  const { user } = useAuth();
   
   // State 관리
   const [scraps, setScraps] = useState([]);
@@ -16,7 +18,7 @@ const ProjectScrap = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [userType, setUserType] = useState('PERSONAL'); // userStore에서 가져오도록 수정
+  const userType = user?.userType || 'PERSONAL';
   
   const itemsPerPage = 5;
 
@@ -119,7 +121,7 @@ const ProjectScrap = () => {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <MyPageLayout userType="PERSONAL">
+    <MyPageLayout userType={userType}>
       <div className="project-scrap-container">
       <div className="row">
         <div className="col">

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AppliedProjects.module.css';
 
 const AppliedProjects = () => {
   const router = useRouter();
+  const { user } = useAuth();
 
   // State 관리
   const [applications, setApplications] = useState([]);
@@ -19,7 +21,7 @@ const AppliedProjects = () => {
   const [counts, setCounts] = useState({ all: 0, read: 0, unread: 0 });
 
   const itemsPerPage = 5;
-  const userType = 'PERSONAL'; // userStore에서 가져오도록 수정 필요
+  const userType = user?.userType || 'PERSONAL';
 
   // 필터 계산
   const readFilters = useMemo(
@@ -241,7 +243,7 @@ const AppliedProjects = () => {
   };
 
   return (
-    <MyPageLayout userType="PERSONAL">
+    <MyPageLayout userType={userType}>
       <div className={styles.container}>
         {/* 페이지 제목 */}
         <div className={styles.row}>

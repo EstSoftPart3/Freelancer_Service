@@ -9,6 +9,7 @@ export default function InformationEditPage() {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [userProfileImageUrl, setUserProfileImageUrl] = useState(null);
   const [hovering, setHovering] = useState(false);
+  const [userType, setUserType] = useState('PERSONAL'); // 사용자 타입
   const profileImageInputRef = useRef(null);
 
   // 원본 데이터
@@ -71,6 +72,10 @@ export default function InformationEditPage() {
     try {
       const response = await api.$get('/mypage/edit/info', null);
       const data = response.output;
+
+      // 사용자 타입 설정 (companyNm이 있으면 기업, 없으면 개인)
+      const isCompany = !!data.companyNm;
+      setUserType(isCompany ? 'COMPANY' : 'PERSONAL');
 
       const newData = {
         userId: data.userId,

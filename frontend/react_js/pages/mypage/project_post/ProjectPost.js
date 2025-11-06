@@ -460,23 +460,17 @@ export default function ProjectPostPage() {
       preferContent,
     });
 
-    if (preferList.length === 0 && preferContent.trim() === '') {
-      console.log('❌ 우대 사항 검증 실패');
-      alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger');
-      return;
-    }
-
-    // 좌표 검증
-    if (!form.latitude || !form.longitude) {
-      console.log('❌ 좌표 검증 실패');
-      alertStore.show('주소의 좌표 변환이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.', 'danger');
-      return;
-    }
+    // 우대 사항은 선택사항으로 변경 (검증 제거)
 
     if (!selectedDistrictName || selectedDistrictName.trim() === '') {
       console.log('❌ 구/군 정보 검증 실패');
       alertStore.show('구/군 정보가 올바르지 않습니다. 다시 선택해주세요.', 'danger');
       return;
+    }
+    
+    // 좌표가 없으면 경고 표시
+    if (!form.latitude || !form.longitude) {
+      console.warn('⚠️ 좌표가 없습니다. 기본값(0, 0)으로 진행합니다.');
     }
     
     console.log('✅ 모든 검증 통과');
@@ -490,8 +484,8 @@ export default function ProjectPostPage() {
       subDistrictCode: selectedDistrict,
       subDistrictName: selectedDistrictName,
 
-      districtLat: form.latitude,
-      districtLon: form.longitude,
+      districtLat: form.latitude || 0,
+      districtLon: form.longitude || 0,
 
       devGrade: selectedDevGrade,
       educationLvl: selectedEducation,
