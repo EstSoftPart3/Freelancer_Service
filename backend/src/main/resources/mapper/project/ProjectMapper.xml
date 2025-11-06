@@ -366,10 +366,20 @@
 		#{resumeSq}, #{companySq}, #{projectApplicationStatusCd}, #{projectApplicationMemberTypeCd},
 		NOW(), #{selectedInterviewDtm} ) </insert>
 
-	<insert id="insertInterviewTimes"> INSERT INTO TBL_PROJECT_INTERVIEW_TIME_SLOT_S (project_sq,
-		interview_available_dtm) VALUES <foreach collection="interviewTimes" item="time"
-			separator=","> (#{projectSq}, #{time}) </foreach>
-	</insert>
+<!--	<insert id="insertInterviewTimes"> INSERT INTO TBL_PROJECT_INTERVIEW_TIME_SLOT_S (project_sq,-->
+<!--		interview_available_dtm) VALUES <foreach collection="interviewTimes" item="time"-->
+<!--			separator=","> (#{projectSq}, #{time}) </foreach>-->
+<!--	</insert>-->
+
+    <insert id="insertInterviewTimes">
+        <if test="interviewTimes != null and interviewTimes.size() > 0">
+            INSERT INTO TBL_PROJECT_INTERVIEW_TIME_SLOT_S (project_sq, interview_available_dtm)
+            VALUES
+            <foreach collection="interviewTimes" item="time" separator=",">
+                (#{projectSq}, #{time,jdbcType=TIMESTAMP})
+            </foreach>
+        </if>
+    </insert>
 
 	<update id="increaseApplication" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_candidate_cnt = project_candidate_cnt + 1 WHERE project_sq = #{projectSq} </update>
