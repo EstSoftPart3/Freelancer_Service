@@ -1,0 +1,1 @@
+(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[9593],{87719:function(n,i,_){(window.__NEXT_P=window.__NEXT_P||[]).push(["/affiliation/affiliationList",function(){return _(1319)}])}},function(n){n.O(0,[5197,1319,2888,9774,179],function(){return n(n.s=87719)}),_N_E=n.O()}]);

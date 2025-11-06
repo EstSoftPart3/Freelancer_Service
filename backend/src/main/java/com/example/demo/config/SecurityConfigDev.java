@@ -51,6 +51,7 @@ public class SecurityConfigDev {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:8504",
                 "http://localhost:3000",
+                "http://localhost:8080",
                 "https://e4f5e44bf928.ngrok-free.app",
                 "https://test-eight-tau-87.vercel.app/"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
