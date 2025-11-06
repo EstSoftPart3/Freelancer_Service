@@ -84,8 +84,8 @@ const insertBoard = async () => {
     }
 
     if (boardSq.value != 0) {
-      const res = await api.$put(
-        `/${props.isQna ? 'qna' : 'board'}/${boardSq.value}`,
+      const res = await api.$patch(
+        `/${props.isQna ? 'qna' : 'board'}/${boardSq.value}/edit`,
         reqData,
       )
       if (res.status == 'OK') {

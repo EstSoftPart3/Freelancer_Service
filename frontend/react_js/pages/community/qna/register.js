@@ -70,7 +70,7 @@ export default function QnaRegisterPage() {
       let response
       if (isEditMode) {
         // 수정
-        response = await api.$put(`/qna/${edit}`, formData)
+        response = await api.$patch(`/qna/${edit}/edit`, formData)
       } else {
         // 신규 등록
         response = await api.$post('/qna', formData)
