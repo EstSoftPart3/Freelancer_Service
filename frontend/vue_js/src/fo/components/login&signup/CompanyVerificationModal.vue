@@ -241,7 +241,7 @@ async function handleVerify() {
     return
   }
 
-  const formattedOpenDate = openDate.value.replace(/-/g, '')
+  const formattedOpenDate = (openDate.value || '').toString().replace(/-/g, '')
 
   try {
     const response = await api.$post('/company/verify', {
