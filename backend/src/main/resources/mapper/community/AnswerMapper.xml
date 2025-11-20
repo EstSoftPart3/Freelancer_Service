@@ -5,7 +5,8 @@
 <mapper namespace="com.example.demo.domain.community.mapper.AnswerMapper">
 
     <select id="findById" resultType="com.example.demo.domain.community.entity.Answer" parameterType="Long">
-        SELECT * FROM TBL_BOARD_ANSWER_S WHERE answer_sq = #{answerSq} AND answer_is_deleted_yn = 'N'
+        SELECT * FROM TBL_BOARD_ANSWER_S WHERE answer_sq = #{answerSq} 
+
     </select>
 
     <select id="findAll" resultType="com.example.demo.domain.community.entity.Answer">

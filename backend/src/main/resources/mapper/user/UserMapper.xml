@@ -54,7 +54,7 @@
     resultType="com.example.demo.domain.user.dto.UserDTO"> SELECT user_sq AS userSq, user_id AS
     userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
     userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken FROM
-    TBL_USER_M WHERE user_id = #{userId} </select>
+    TBL_USER_M WHERE user_id = #{userId} and user_is_deleted_yn = 'N' </select>
 
   <update id="updateRefreshToken"> UPDATE TBL_USER_M SET user_refresh_token = #{refreshToken},
     user_modified_at_dtm = NOW() WHERE user_sq = #{userSq} </update>

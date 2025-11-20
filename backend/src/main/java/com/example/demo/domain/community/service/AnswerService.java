@@ -82,9 +82,16 @@ public class AnswerService {
     	
 
     	UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-    	String userNm = Optional.ofNullable(userInfo)
-    			.map(UserDTO::getUserNm)
-                    .orElse("존재하지 않는 사용자");
+    	String userNm;
+		if(userInfo == null) {
+			userNm = "존재하지 않는 사용자";
+		}
+		else if ("Y".equals(userInfo.getUserIsDeletedYn())) {
+			userNm = "탈퇴한 사용자";
+		}
+		else {
+			userNm = userInfo.getUserNm();
+		}
 
     	List<CommentResponse> comments = commentMapper.findByAnswerSq(answerSq).stream()
     		    .filter(Objects::nonNull)
