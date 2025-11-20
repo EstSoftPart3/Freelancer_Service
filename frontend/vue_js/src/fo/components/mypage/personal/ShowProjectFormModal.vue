@@ -301,6 +301,14 @@ const submit = () => {
     alertStore.show('프로젝트 담당 역할을 선택하세요.', 'danger')
     return
   }
+  if (form.value.endDate) {
+    const startDt = new Date(form.value.startDate)
+    const endDt = new Date(form.value.endDate)
+    if (endDt <= startDt) {
+      alertStore.show('종료일을 시작일보다 나중으로 선택하세요', 'danger')
+      return
+    }
+  }
   const totalSkillCount = Object.values(selectedSkills.value || {}).reduce(
     (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
     0,

@@ -408,8 +408,25 @@ const resumeInfo = ref({
 })
 
 function getTagsByCategory(project, category) {
-  const found = project.groupedSkillTags.find((item) => item[category])
-  return found ? found[category] : []
+  const keyMap = {
+    Device: '기종',
+    device: '기종',
+    OS: '운영체제',
+    os: '운영체제',
+    DBMS: 'DBMS',
+    dbms: 'DBMS',
+    Language: '언어',
+    language: '언어',
+    Tool: '툴',
+    tool: '툴',
+    FrameWork: '프레임워크',
+    framework: '프레임워크',
+  }
+  const mapKey = category.toLowerCase()
+  const finalKey = keyMap[mapKey] || category
+
+  const found = project.groupedSkillTags.find((item) => item[finalKey])
+  return found ? found[finalKey] : []
 }
 
 const toggleProject = (index) => {

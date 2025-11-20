@@ -130,6 +130,19 @@ const syncSelectedSkillsWithStore = () => {
 }
 
 const handleConfirm = () => {
+  const categoryMap = {
+    기종: 'device',
+    Os: 'os',
+    운영체제: 'os',
+    dbms: 'dbms',
+    DB: 'dbms',
+    언어: 'language',
+    툴: 'tool',
+    TOOL: 'tool',
+    프레임워크: 'framework',
+    FW: 'framework',
+  }
+
   const grouped = {
     device: [],
     os: [],
@@ -144,9 +157,12 @@ const handleConfirm = () => {
       (g) => g.skillTagSq === skill.parentSkillTagSq,
     )
     if (!parent) return
+    const parentNameKey = parent.skillTagNm.toLowerCase().replace(/[\s.]+/g, '')
 
-    const category = parent.skillTagNm.toLowerCase()
-    if (category in grouped) {
+    const category =
+      categoryMap[parentNameKey] || categoryMap[parent.skillTagNm.toLowerCase()]
+
+    if (category && category in grouped) {
       grouped[category].push(skill)
     }
   })
