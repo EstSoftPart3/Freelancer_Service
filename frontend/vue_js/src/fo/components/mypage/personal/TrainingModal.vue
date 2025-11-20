@@ -113,8 +113,22 @@ const submit = () => {
     alertStore.show('교육 기간을 선택하세요.', 'danger')
     return
   }
+  if (form.value.trainingEndDt) {
+    const StartDt = new Date(form.value.trainingStartDt)
+    const endDt = new Date(form.value.trainingEndDt)
+    if (endDt <= StartDt) {
+      alertStore.show('종료년월을 시작년월보다 나중으로 선택하세요', 'danger')
+      return
+    }
+  }
   function formatDate(dateString) {
     if (!dateString) return ''
+    if (dateString instanceof Date) {
+      dateString = dateString.toISOString()
+    }
+    if (typeof dateString !== 'string') {
+      dateString = String(dateString)
+    }
     return dateString.substring(0, 10).replace(/-/g, '.')
   }
 
