@@ -856,7 +856,7 @@ watch(
 onMounted(async () => {
   // 기술 목록 가져오기
   try {
-    const res = await api.$get('/mypage/resume/skills')
+    const res = await api.$get('/mypage/resume/project-history/skill-tags')
     skillList.value = res.data.data || res.data.output || res.data
   } catch (e) {
     console.error('[ 기술 목록 조회 실패 ]', e)
@@ -942,19 +942,21 @@ const submitResume = async () => {
 
   // 3. 전송용 객체 생성
   const payload = {
-    addressSq: resumeData.addressSq,
     resumeTtl: resumeData.resumeTtl,
     resumeNm: resumeData.resumeNm,
     resumeBirthDt: resumeData.resumeBirthDt,
     resumePhoneNum: resumeData.resumePhoneNum,
     resumeEmail: email,
-    address: resumeData.address,
-    detailAddress: resumeData.detailAddress,
-    zonecode: resumeData.zonecode,
-    sido: resumeData.sido,
-    sigungu: resumeData.sigungu,
-    latitude: resumeData.latitude,
-    longitude: resumeData.longitude,
+    address: {
+      addressSq: resumeData.addressSq,
+      zonecode: resumeData.zonecode,
+      address: resumeData.address,
+      detailAddress: resumeData.detailAddress,
+      sido: resumeData.sido,
+      sigungu: resumeData.sigungu,
+      latitude: resumeData.latitude,
+      longitude: resumeData.longitude,
+    },
     resumeGreetingTxt: resumeData.resumeGreetingTxt,
     resumeIsNotificationYn: resumeData.resumeIsNotificationYn ? 'Y' : 'N',
     resumePhotoUrl: resumeData.resumePhotoUrl || '',

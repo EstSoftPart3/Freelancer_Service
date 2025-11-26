@@ -114,12 +114,41 @@ const submit = () => {
     return
   }
   function formatDate(dateString) {
+    // datepicker가 date객체를 반환한 경우 
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    }
+
+    if (typeof dateString === 'string') {
+      return dateString.substring(0, 10).replace(/-/g, '.')
+    }
+
+    return ''
+  }
+
+  const toDateString = (dateString) => {
     if (!dateString) return ''
-    return dateString.substring(0, 10).replace(/-/g, '.')
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    }
+    return dateString
   }
 
   form.value.period = `${formatDate(form.value.trainingStartDt)} ~ ${formatDate(form.value.trainingEndDt)}`
-  props.onComplete({ ...form.value }) // 부모에게 데이터 전달
+  // props.onComplete({ ...form.value }) // 부모에게 데이터 전달
+  props.onComplete({
+    trainingProgramNm: form.value.trainingProgramNm,
+    trainingInstitutionNm: form.value.trainingInstitutionNm,
+    trainingStartDt: toDateString(form.value.trainingStartDt),
+    trainingEndDt: toDateString(form.value.trainingEndDt),
+    period: form.value.period,
+  })
   modalStore.closeModal()
 }
 </script>

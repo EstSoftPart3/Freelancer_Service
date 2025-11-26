@@ -132,19 +132,43 @@ const submit = () => {
   // 화면 표시용 기간 (YYYY.MM ~ YYYY.MM)
   function formatDate(dateString) {
     if (!dateString) return ''
-    return dateString.substring(0, 10).replace(/-/g, '.')
+
+    // datepicker가 date객체를 반환한 경우 
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    }
+
+    if (typeof dateString === 'string') {
+      return dateString.substring(0, 10).replace(/-/g, '.')
+    }
+
+    return ''
   }
   form.value.period = form.value.endDate
     ? `${formatDate(form.value.startDate)} ~ ${formatDate(form.value.endDate)}`
     : `${formatDate(form.value.startDate)} ~`
+
+  const toDateString = (dateString) => {
+    if (!dateString) return ''
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    }
+    return dateString
+  }
 
   // 부모로 넘길 때는 YYYY-MM-dd로 넘기기
   props.onComplete({
     careerCompanyNm: form.value.company,
     careerDepartmentNm: form.value.department,
     careerPositionNm: form.value.position,
-    careerStartDt: form.value.startDate,
-    careerEndDt: form.value.endDate,
+    careerStartDt: toDateString(form.value.startDate),
+    careerEndDt: toDateString(form.value.endDate),
     period: form.value.period,
   })
   modalStore.closeModal()
