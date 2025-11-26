@@ -353,7 +353,7 @@
 		p.skill_tag_nm AS parentSkillTagNm, c.skill_tag_nm AS childSkillTagNm FROM TBL_SKILL_TAG_C p
 		JOIN TBL_SKILL_TAG_C c ON p.skill_tag_sq = c.parent_skill_tag_sq WHERE
 		p.skill_tag_is_deleted_yn = 'N' AND c.skill_tag_is_deleted_yn = 'N' AND p.skill_tag_nm IN
-		('Language', 'FrameWork', 'Tool') ORDER BY p.skill_tag_sq, c.skill_tag_sq </select>
+		('언어', '프레임워크', '툴') ORDER BY p.skill_tag_sq, c.skill_tag_sq </select>
 
 	<select id="findSkillInfoList"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
