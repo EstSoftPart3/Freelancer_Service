@@ -26,6 +26,16 @@ public record ProjectCreateRequest(
 	    @NotBlank(message = "하위 행정구역 이름은 필수입니다.")
 	    String subDistrictName,
 	    
+	    @NotBlank(message = "우편번호는 필수입니다.")
+	    String zonecode,
+	    
+	    @NotBlank(message = "주소는 필수입니다.")
+	    String address,
+	    
+	    String detailAddress,
+	    
+	    @NotBlank(message = "시/군/구는 필수입니다.")
+	    String sigungu,
 
 	    @NotBlank(message = "하위 행정구역 위도는 필수입니다.")
 	    Double districtLat,

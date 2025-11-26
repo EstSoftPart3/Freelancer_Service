@@ -9,6 +9,7 @@ import com.example.demo.domain.project.dto.response.AreaInfoResponse;
 @Mapper
 public interface AddressMapper {
 	String findAddressBySq(@Param("addressSq") Long addressSq);
-	Long createAddress(AddressInsertDto dto);
+	Long createAddress(@Param("dto") AddressInsertDto dto,@Param("areaCodeSq") Long areaCodeSq);
 	AreaInfoResponse findAreaInfoBySq(@Param("addressSq") Long addressSq);
+	Long selectAreaCodeBySidoAndSigungu( @Param("sigungu") String sigungu);
 }
