@@ -40,7 +40,7 @@ const scrollToMap = () => {
 };
 
 const goToProjectList = () => {
-  router.push({ path: '/project', query: { tab: 'list' } });
+  router.push({ path: '/projectListPage' });
 };
 </script>
 
