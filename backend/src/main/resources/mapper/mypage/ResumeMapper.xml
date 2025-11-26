@@ -197,7 +197,7 @@
 
   <select id="findParentSkillTags"
     resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM
-    TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool','Device','OS','DBMS') </select>
+    TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('언어', '프레임워크', '툴','기종','운영체제','DBMS') </select>
 
   <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT
     * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags" item="tag"
@@ -210,13 +210,13 @@
   <select id="selectProjectRoleTypeCodes"
     resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
     AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
-    parent_common_code_sq = 1000 AND common_code_is_active_yn = 'Y' </select>
+    parent_common_code_sq = 1000 AND common_code_is_active_yn = 'N' </select>
 
   <!-- 업무 (1100) -->
   <select id="selectProjectTaskTypeCodes"
     resultType="com.example.demo.domain.mypage.dto.ProjectHistoryTypeCodeDTO"> SELECT common_code_sq
     AS commonCodeSq, common_code_nm AS commonCodeNm FROM TBL_COMMON_CODE_C WHERE
-    parent_common_code_sq = 1100 AND common_code_is_active_yn = 'Y' </select>
+    parent_common_code_sq = 1100 AND common_code_is_active_yn = 'N' </select>
 
   <!-- 자격증  -->
 

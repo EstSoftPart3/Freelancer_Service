@@ -5,7 +5,7 @@
 <mapper namespace="com.example.demo.domain.community.mapper.CommentMapper">
 
     <select id="findById" resultType="com.example.demo.domain.community.entity.Comment">
-        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_sq = #{commentSq} AND comment_is_deleted_yn = "N"
+        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_sq = #{commentSq} 
     </select>
 
     <select id="findByBoardSq" resultType="com.example.demo.domain.community.entity.Comment">

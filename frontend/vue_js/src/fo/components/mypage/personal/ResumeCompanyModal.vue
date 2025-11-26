@@ -135,6 +135,14 @@ const submit = () => {
     alertStore.show('근무 기간을 선택하세요.', 'danger')
     return
   }
+  if (form.value.endDate) {
+    const startDt = new Date(form.value.startDate)
+    const endDt = new Date(form.value.endDate)
+    if (endDt <= startDt) {
+      alertStore.show('퇴사년월을 입사년월보다 나중으로 선택하세요', 'danger')
+      return
+    }
+  }
   // 화면 표시용 기간 (YYYY.MM ~ YYYY.MM)
   function formatDate(dateString) {
     if (!dateString) return ''

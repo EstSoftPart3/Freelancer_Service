@@ -249,6 +249,12 @@ const backToSearch = () => {
 
 function formatDate(dateString) {
   if (!dateString) return ''
+  if (dateString instanceof Date) {
+    dateString = dateString.toISOString()
+  }
+  if (typeof dateString !== 'string') {
+    dateString = String(dateString)
+  }
   return dateString.substring(0, 10).replace(/-/g, '.')
 }
 
@@ -260,6 +266,14 @@ const completeSelection = () => {
   if (!majorName.value) {
     alertStore.show('전공명을 입력하세요.', 'danger')
     return
+  }
+  if (endDate.value) {
+    const startDt = new Date(startDate.value)
+    const endDt = new Date(endDate.value)
+    if (endDt <= startDt) {
+      alertStore.show('졸업년월을 입학년월보다 나중으로 선택해주세요', 'danger')
+      return
+    }
   }
 
   const period = endDate.value

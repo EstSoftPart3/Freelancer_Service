@@ -5,7 +5,7 @@
 <mapper namespace="com.example.demo.domain.community.mapper.CommunityUserMapper">
 
     <select id="findById" resultType="com.example.demo.domain.user.dto.UserDTO" parameterType="Long">
-        SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N'
+        SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} 
     </select>
 
 </mapper>

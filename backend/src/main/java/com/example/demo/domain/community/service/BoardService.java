@@ -73,10 +73,16 @@ public class BoardService {
 
 					// 각 게시글의 작성자 조회
 					UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-					String userNm = Optional.ofNullable(userInfo)
-							.map(UserDTO::getUserNm)
-							.orElse("존재하지 않는 사용자");
-
+					String userNm;
+					if(userInfo == null) {
+						userNm = "존재하지 않는 사용자";
+					}
+					else if ("Y".equals(userInfo.getUserIsDeletedYn())) {
+						userNm = "탈퇴한 사용자";
+					}
+					else {
+						userNm = userInfo.getUserNm();
+					}
 					// BoardListResponse 생성 (태그 포함)
 					return BoardListDTO.fromEntity(board, userNm, boardAnswerCnt, normalTags, skillTags);
 				})
@@ -99,10 +105,17 @@ public class BoardService {
 
 		// 게시글의 작성자 조회
 		UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-		String userNm = Optional.ofNullable(userInfo)
-				.map(UserDTO::getUserNm)
-				.orElse("존재하지 않는 사용자");
-
+		String userNm;
+		if(userInfo == null) {
+			userNm = "존재하지 않는 사용자";
+		}
+		else if ("Y".equals(userInfo.getUserIsDeletedYn())) {
+			userNm = "탈퇴한 사용자";
+		}
+		else {
+			userNm = userInfo.getUserNm();
+		}
+		
 		List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
 
 		// 게시글의 댓글 조회
