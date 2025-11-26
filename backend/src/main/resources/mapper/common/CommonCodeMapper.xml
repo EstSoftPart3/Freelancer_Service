@@ -21,7 +21,7 @@
 	<select id="findCommonCodeSqByEngName" parameterType="map" resultType="Long">
 	SELECT common_code_sq
 	FROM TBL_COMMON_CODE_C
-	WHERE COMMON_CODE_ENGLISH_NM = #{engName} AND PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+	WHERE COMMON_CEDE_ENGLISH_NM = #{engName} AND PARENT_COMMON_CODE_SQ = #{parentCodeSq}
 	</select>
 	
 	<select id="findByParentCode" parameterType="Long" resultType="String">

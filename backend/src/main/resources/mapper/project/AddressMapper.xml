@@ -11,12 +11,7 @@
     WHERE address_sq = #{addressSq}
 	</select>
 	
-	<!-- 1. 지역코드 조회 -->
-	   <select id="selectAreaCodeBySidoAndSigungu" resultType="long">
-        SELECT area_code_sq
-        FROM TBL_AREA_C
-  		WHERE TRIM(area_sigungu) = TRIM(#{sigungu})
-    </select>
+	
 	
 	<select id="findAreaInfoBySq" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
     SELECT area_code_sq, sigungu
@@ -27,23 +22,17 @@
 	<insert id="createAddress"
         parameterType="com.example.demo.domain.project.dto.AddressInsertDto"
         useGeneratedKeys="true"
-        keyProperty="dto.addressSq">
+        keyProperty="addressSq">
     INSERT INTO TBL_ADDRESS_S (
-		zonecode,
-		address,
-		detail_address,
         sigungu,
+        area_code_sq,
         latitude,
-        longitude,
-        area_code_sq
+        longitude
     ) VALUES (
-		#{dto.zonecode},
-		#{dto.address},
-		#{dto.detailAddress},
-		#{dto.sigungu},
-        #{dto.districtLat},
-        #{dto.districtLon},
-        #{areaCodeSq}
+        #{districtName},
+        #{districtCode},
+        #{districtLat},
+        #{districtLon}
     )
 	</insert>
 
