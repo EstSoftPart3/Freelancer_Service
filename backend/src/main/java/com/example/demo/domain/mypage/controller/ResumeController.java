@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,14 +40,31 @@ public class ResumeController {
 
 	private final ResumeService resumeService;
 
-	// 이력서 생성 (등록)
-	@PostMapping
+	// 이력서 생성 (등록) JSON
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponse<?>> createResume(
 			@AuthenticationPrincipal Long userSq,
-			@RequestPart(name = "dto") ResumeRequestDTO dto,
-			@RequestPart(name = "profileImages",required = false) List<MultipartFile> profileImages,
-			@RequestPart(name = "attachments",required = false) List<MultipartFile> attachments) {
+			@RequestBody ResumeRequestDTO dto) {
+
+		int result = resumeService.createResume(userSq, dto, null, null);
 		
+		if (result > 0) {
+			return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 등록 완료", "success"));
+		} else {
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이력서 등록 실패", "fail"));
+		}
+	}
+	
+	// 이력서 생성 (등록)  Multipart
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> createResume(
+			@AuthenticationPrincipal Long userSq,
+			@RequestPart (value = "dto") ResumeRequestDTO dto,
+			@RequestPart(value =  "profileImages", required = false) List<MultipartFile> profileImages,
+			@RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+
 		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
 
 		if (result > 0) {
