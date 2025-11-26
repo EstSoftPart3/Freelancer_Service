@@ -445,18 +445,6 @@ onBeforeUnmount(() => {
   transition: box-shadow 0.3s ease; /* transition을 box-shadow에만 적용 */
 }
 
-/* #header .header-nav-main nav > ul > li > a {
-  font-size: 1.1rem !important;
-}
-
-.dropdown-menu .dropdown-item {
-  font-size: 1.1rem !important;
-}
-
-.header-nav-features a {
-  font-size: 1.1rem !important;
-} */
-
 .header-body.shrink {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 스크롤 시 그림자 효과 */
 }
