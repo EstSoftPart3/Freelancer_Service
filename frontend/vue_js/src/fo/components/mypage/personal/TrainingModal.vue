@@ -113,27 +113,49 @@ const submit = () => {
     alertStore.show('교육 기간을 선택하세요.', 'danger')
     return
   }
-  if (form.value.trainingEndDt) {
-    const StartDt = new Date(form.value.trainingStartDt)
-    const endDt = new Date(form.value.trainingEndDt)
-    if (endDt <= StartDt) {
-      alertStore.show('종료년월을 시작년월보다 나중으로 선택하세요', 'danger')
-      return
-    }
+
+  // 날짜 비교 
+  if (form.value.trainingEndDt && form.value.trainingStartDt > form.value.trainingEndDt) {
+    alertStore.show('종료일은 시작일보다 이후여야 합니다.', 'danger');
+    return;
   }
+
   function formatDate(dateString) {
+    // datepicker가 date객체를 반환한 경우 
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    }
+
+    if (typeof dateString === 'string') {
+      return dateString.substring(0, 10).replace(/-/g, '.')
+    }
+
+    return ''
+  }
+
+  const toDateString = (dateString) => {
     if (!dateString) return ''
     if (dateString instanceof Date) {
-      dateString = dateString.toISOString()
+      const year = dateString.getFullYear()
+      const month = String(dateString.getMonth() + 1).padStart(2, '0')
+      const day = String(dateString.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
     }
-    if (typeof dateString !== 'string') {
-      dateString = String(dateString)
-    }
-    return dateString.substring(0, 10).replace(/-/g, '.')
+    return dateString
   }
 
   form.value.period = `${formatDate(form.value.trainingStartDt)} ~ ${formatDate(form.value.trainingEndDt)}`
-  props.onComplete({ ...form.value }) // 부모에게 데이터 전달
+  // props.onComplete({ ...form.value }) // 부모에게 데이터 전달
+  props.onComplete({
+    trainingProgramNm: form.value.trainingProgramNm,
+    trainingInstitutionNm: form.value.trainingInstitutionNm,
+    trainingStartDt: toDateString(form.value.trainingStartDt),
+    trainingEndDt: toDateString(form.value.trainingEndDt),
+    period: form.value.period,
+  })
   modalStore.closeModal()
 }
 </script>
