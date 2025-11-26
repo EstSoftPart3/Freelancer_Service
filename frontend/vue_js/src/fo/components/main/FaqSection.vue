@@ -108,7 +108,7 @@ const toggleFaq = (index) => {
   color: #1976d2;
   padding: 1.5rem;
   padding-right: 3rem;
-  font-size: 1.25rem;
+  font-size: 1rem;
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -159,7 +159,7 @@ const toggleFaq = (index) => {
   background: #f8f9fa;
   color: #666;
   line-height: 1.8;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -188,13 +188,13 @@ const toggleFaq = (index) => {
   }
 
   .accordion-button {
-    font-size: 1.1rem;
+    font-size: 1rem;
     padding: 1.25rem;
     padding-right: 2.5rem;
   }
 
   .accordion-body {
-    font-size: 1rem;
+    font-size: 0.9rem;
     padding: 1.25rem;
   }
 }
@@ -210,11 +210,11 @@ const toggleFaq = (index) => {
   }
 
   .accordion-button {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .accordion-body {
-    font-size: 1rem;
+    font-size: 0.8rem;
   }
 }
 
