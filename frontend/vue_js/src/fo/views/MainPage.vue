@@ -24,7 +24,7 @@ const handleBannerAction = (action) => {
   const actions = {
     'scroll-to-map': scrollToMap,
   }
-  if (action[action]) {
+  if (actions[action]) {
     actions[action]()
   }
 }
