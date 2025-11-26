@@ -1,31 +1,51 @@
 <template>
-  <div class="hello">
-    <h1>Freelancer_service</h1>
-    <div class="background-container">
-      <img alt="Vue logo" src="@/assets/logo.png" />
-    </div>
-    <h1>임시 메인페이지입니다.</h1>
-    <h1><router-link to="/test">공통 컴퍼넌트 바로가기</router-link></h1>
+  <div class="main-page">
+    <MainBanner @banner-action="handleBannerAction"/>
+    <PopularProjects @go-to-list="goToProjectList"/>
+    <FaqSection />
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/userStore';
+import { useAlertStore } from '../stores/alertStore';
+import FaqSection from '../components/main/FaqSection.vue';
+import MainBanner from '../components/main/MainBanner.vue';
+import PopularProjects from '../components/main/PopularProjects.vue';
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-.hello {
-  background-color: #d3d3d3; /* 회색 배경 */
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin: 0 100px;
+
+const router = useRouter();
+const userStore = useUserStore();
+const alertStore = useAlertStore();
+
+// 배너 액션 핸들러
+const handleBannerAction = (action) => {
+  const actions = {
+    'scroll-to-map': scrollToMap,
+  }
+  if (action[action]) {
+    actions[action]()
+  }
 }
 
-@media (max-width: 768px) {
-  .hello {
-    margin: 0 30px;
+const scrollToMap = () => {
+  const isLoggedIn = userStore.isLoggedIn || !!localStorage.getItem('userSq')
+  if (!isLoggedIn) {
+    alertStore.show('로그인이 필요한 서비스입니다.', 'danger');
+    router.push('login');
+    return;
   }
+  router.push({ path: '/project', query: { tab: 'map'}});
+};
+
+const goToProjectList = () => {
+  router.push({ path: '/project', query: { tab: 'list' } });
+};
+</script>
+
+<style scoped>
+.main-page {
+  background-color: #f8f9fa;
 }
 </style>
