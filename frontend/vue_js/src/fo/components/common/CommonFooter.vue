@@ -3,11 +3,18 @@
     <div class="footer-copyright bg-color-grey">
       <div class="container py-2">
         <div class="row py-4">
-          <div class="col d-flex align-items-center justify-content-center">
+          <div class="col-md-6">
             <p>
-              <strong>PORTO TEMPLATE</strong> - © Copyright 2024. All Rights
-              Reserved.
+              <strong>이에스티 소프트</strong> 
             </p>
+          </div>
+          <div class="col-md-6 text-end">
+            <p>
+              <router-link to="/privacy">개인정보 처리 방침</router-link> |
+              <router-link to="/terms">이용약관</router-link>
+            </p>
+            <p>- © Copyright 2024. All Rights
+              Reserved.</p>
           </div>
         </div>
       </div>
