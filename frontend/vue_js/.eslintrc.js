@@ -15,4 +15,10 @@ module.exports = {
   rules: {
     // 원하는 룰 추가
   },
+  globals: {
+    defineProps: 'readonly',
+    defineEmits: 'readonly',
+    defineExpose: 'readonly',
+    withDefaults: 'readonly'
+  }
 }
