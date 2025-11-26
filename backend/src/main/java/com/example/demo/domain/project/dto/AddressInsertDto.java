@@ -16,9 +16,18 @@ public class AddressInsertDto {
     private Long districtCode;
     private Double districtLat;
     private Double districtLon;
+    private String zonecode;
+    private String address;
+    private String detailAddress;
+    private String sigungu;
+    private Long areaCodeSq;
     
     public static AddressInsertDto from(ProjectCreateRequest request) {
     	return AddressInsertDto.builder()
+    			.zonecode(request.zonecode())
+    			.address(request.address())
+    			.detailAddress(request.detailAddress())
+    			.sigungu(request.sigungu())
     			.districtName(request.subDistrictName())
     			.districtCode(request.subDistrictCode())
     			.districtLat(request.districtLat())

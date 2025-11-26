@@ -13,20 +13,26 @@
 		<result property="projectDeveloperGradeCd" column="project_developer_grade_cd" />
 		<result property="projectRequiredEducationCd" column="project_required_education_cd" />
 		<result property="projectSalary" column="project_salary" />
-		<result property="projectStartDt" column="project_start_dt" />
-		<result property="projectEndDt" column="project_end_dt" />
-		<result property="projectRecruitStartDt" column="project_recruit_start_dt" />
-		<result property="projectRecruitEndDt" column="project_recruit_end_dt" />
+		<result property="projectStartDt" column="project_start_dt" javaType="java.time.LocalDate" />
+		<result property="projectEndDt" column="project_end_dt" javaType="java.time.LocalDate" />
+		<result property="projectRecruitStartDt" column="project_recruit_start_dt" javaType="java.time.LocalDate"/>
+		<result property="projectRecruitEndDt" column="project_recruit_end_dt" javaType="java.time.LocalDate"/>
 		<result property="projectPreferenceTxt" column="project_preference_txt" />
 		<result property="projectDescriptionTxt" column="project_description_txt" />
-		<result property="projectCreatedAtDtm" column="project_created_at_dtm" />
-		<result property="projectModifiedAtDtm" column="project_modified_at_dtm" />
+		<result property="projectCreatedAtDtm" column="project_created_at_dtm" javaType="java.time.LocalDateTime"/>
+		<result property="projectModifiedAtDtm" column="project_modified_at_dtm" javaType="java.time.LocalDateTime"/>
 		<result property="projectCandidateCnt" column="project_candidate_cnt" />
 		<result property="projectScrapCnt" column="project_scrap_cnt" />
 		<result property="projectIsNotificationYn" column="project_is_notification_yn" />
 		<result property="projectIsDeletedYn" column="project_is_deleted_yn" />
 		<result property="projectViewCnt" column="project_view_cnt" />
+	
 	</resultMap>
+		<resultMap id="interviewTimeMap" type="java.util.HashMap">
+	    <result property="minTime" column="minTime" javaType="java.time.LocalDateTime"/>
+	    <result property="maxTime" column="maxTime" javaType="java.time.LocalDateTime"/>
+	</resultMap>
+	
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
 		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
@@ -271,7 +277,7 @@
 		'N' </select>
 
 	<select id="findBySq" parameterType="Long"
-		resultType="com.example.demo.domain.project.entity.Project"> SELECT * FROM TBL_PROJECT_M
+		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M
 		WHERE project_sq = #{projectSq} AND project_is_deleted_yn = 'N' </select>
 
 	<select id="findAddressSqByProjectSq" parameterType="Long" resultType="Long"> SELECT address_sq
@@ -353,7 +359,7 @@
 		p.skill_tag_nm AS parentSkillTagNm, c.skill_tag_nm AS childSkillTagNm FROM TBL_SKILL_TAG_C p
 		JOIN TBL_SKILL_TAG_C c ON p.skill_tag_sq = c.parent_skill_tag_sq WHERE
 		p.skill_tag_is_deleted_yn = 'N' AND c.skill_tag_is_deleted_yn = 'N' AND p.skill_tag_nm IN
-		('Language', 'FrameWork', 'Tool') ORDER BY p.skill_tag_sq, c.skill_tag_sq </select>
+		('언어', '프레임워크', '툴') ORDER BY p.skill_tag_sq, c.skill_tag_sq </select>
 
 	<select id="findSkillInfoList"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
@@ -387,7 +393,7 @@
 		c.common_code_nm FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S m JOIN TBL_COMMON_CODE_C c ON
 		m.recruit_job_position_type_cd = c.common_code_sq WHERE m.project_sq = #{projectSq} </select>
 
-	<select id="findInterviewTimeMinMaxBySq" resultType="map" parameterType="Long"> SELECT
+	<select id="findInterviewTimeMinMaxBySq" resultMap="interviewTimeMap" parameterType="Long"> SELECT
 		MIN(interview_available_dtm) AS minTime, MAX(interview_available_dtm) AS maxTime FROM
 		TBL_PROJECT_INTERVIEW_TIME_SLOT_S WHERE project_sq = #{projectSq} </select>
 
