@@ -41,7 +41,7 @@
             <label class="modal-label">근무 기간</label>
             <div style="display: flex; gap: 8px">
               <div class="datepicker-wrapper flex-grow-1">
-                <Datepicker
+                <!-- <Datepicker
                   :key="datepickerKey1"
                   v-model="form.startDate"
                   :locale="ko"
@@ -51,12 +51,20 @@
                   teleport="body"
                   dayPickerHeadingFormat="yyyy년 LLLL"
                   @update:modelValue="datepickerKey1++"
+                /> -->
+                <Datepicker
+                  v-model="startDateModel"
+                  :locale="ko"
+                  placeholder="입사년월"
+                  class="form-control"
+                  teleport="body"
+                  dayPickerHeadingFormat="yyyy년 LLLL"
                 />
                 <i class="fas fa-calendar datepicker-icon"></i>
               </div>
               <span style="align-self: center">~</span>
               <div class="datepicker-wrapper flex-grow-1">
-                <Datepicker
+                <!-- <Datepicker
                   :key="datepickerKey2"
                   v-model="form.endDate"
                   :locale="ko"
@@ -66,6 +74,14 @@
                   teleport="body"
                   dayPickerHeadingFormat="yyyy년 LLLL"
                   @update:modelValue="datepickerKey2++"
+                /> -->
+                <Datepicker
+                  v-model="endDateModel"
+                  :locale="ko"
+                  placeholder="퇴사년월"
+                  class="form-control"
+                  teleport="body"
+                  dayPickerHeadingFormat="yyyy년 LLLL"
                 />
                 <i class="fas fa-calendar datepicker-icon"></i>
               </div>
@@ -85,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue'
+import { ref, computed, defineProps } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import Datepicker from 'vue3-datepicker'
@@ -97,18 +113,29 @@ const props = defineProps({
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 
-const inputFormat = ref('yyyy-MM-dd')
-const datepickerKey1 = ref(0)
-const datepickerKey2 = ref(0)
-
 const form = ref({
   company: '',
   department: '',
   position: '',
-  startDate: '',
-  endDate: '',
+  startDate: undefined,
+  endDate: undefined,
   period: '',
 })
+
+const startDateModel = computed({
+  get: () => form.value.startDate || undefined,
+  set: (val) => {
+    form.value.startDate = val instanceof Date ? val : undefined
+  }
+})
+
+const endDateModel = computed({
+  get: () => form.value.endDate || undefined,
+  set: (val) => {
+    form.value.endDate = val instanceof Date ? val : undefined
+  }
+})
+
 
 const submit = () => {
   if (!form.value.company) {

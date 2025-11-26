@@ -95,8 +95,8 @@ const datepickerKey2 = ref(0)
 const form = ref({
   trainingProgramNm: '',
   trainingInstitutionNm: '',
-  trainingStartDt: '',
-  trainingEndDt: '',
+  trainingStartDt: undefined,
+  trainingEndDt: undefined,
   period: '',
 })
 

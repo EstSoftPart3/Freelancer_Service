@@ -236,10 +236,10 @@
                 >
                 <span>
                   (
-                  {{ education.educationAdmissionDt }} ~
+                  {{ formatDate(education.educationAdmissionDt) }} ~
                   {{
                     education.educationGraduationDt
-                      ? education.educationGraduationDt
+                      ? formatDate(education.educationGraduationDt)
                       : ''
                   }}
                   )
@@ -278,8 +278,8 @@
                 {{ career.careerPositionNm }}
                 <span>
                   (
-                  {{ career.careerStartDt }} ~
-                  {{ career.careerEndDt ? career.careerEndDt : '' }}
+                  {{ formatDate(career.careerStartDt) }} ~
+                  {{ career.careerEndDt ? formatDate(career.careerEndDt) : '' }}
                   )
                 </span>
 
@@ -797,6 +797,15 @@ const resumeForm = reactive({
   skillTagList: [],
 })
 
+function formatDate(date) {
+  if (!date) return ''
+  if (typeof date === 'string') return date
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0] // YYYY-MM-DD
+  }
+  return ''
+}
+
 const resumeId = route.params.resumeSq
 
 const profileImages = ref([])
@@ -1148,8 +1157,23 @@ onMounted(async () => {
   if (resumeId) {
     const data = await api.$get(`/mypage/resume/${resumeId}`)
 
+    // 경력 날짜를 Date 객체로 변환
+    const transformCareerList = (data.output.careerList || []).map((career) => ({
+      ...career,
+      careerStartDt: career.careerStartDt ? new Date(career.careerStartDt) : undefined,
+      careerEndDt: career.careerEndDt ? new Date(career.careerEndDt) : undefined,
+    }))
+
+    // eslint-disable-next-line no-unused-vars
+    const { careerList, resumeBirthDt, ...restData } = data.output
+
     // 1. 이력서 기본값 세팅
-    Object.assign(resumeForm, data.output)
+    Object.assign(resumeForm, restData)
+
+    // 생년월일도 Date 객체로 변환
+    if (resumeBirthDt) {
+      resumeForm.resumeBirthDt = new Date(resumeBirthDt);
+    }
 
     // 2. 상위 태그 불러오기
     const parentTags = await api.$get(
@@ -1163,6 +1187,8 @@ onMounted(async () => {
         parentTags.output,
       )
     })
+
+    resumeForm.careerList = transformCareerList;
 
     setExistingAttachments(resumeForm.attachmentList)
     console.log('resumeForm', resumeForm)
