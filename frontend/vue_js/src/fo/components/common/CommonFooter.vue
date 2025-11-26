@@ -24,4 +24,14 @@
 
 <script setup></script>
 
-<style scoped></style>
+<style scoped>
+.footer-copyright p,
+.footer-copyright strong {
+  font-size: 1.03rem;
+}
+
+.footer-copyright a {
+  font-size: 1.05rem;
+}
+
+</style>
