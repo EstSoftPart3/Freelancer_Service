@@ -113,6 +113,13 @@ const submit = () => {
     alertStore.show('교육 기간을 선택하세요.', 'danger')
     return
   }
+
+  // 날짜 비교 
+  if (form.value.trainingEndDt && form.value.trainingStartDt > form.value.trainingEndDt) {
+    alertStore.show('종료일은 시작일보다 이후여야 합니다.', 'danger');
+    return;
+  }
+
   function formatDate(dateString) {
     // datepicker가 date객체를 반환한 경우 
     if (dateString instanceof Date) {

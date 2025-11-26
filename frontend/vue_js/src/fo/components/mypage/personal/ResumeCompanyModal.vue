@@ -125,6 +125,12 @@ const submit = () => {
     return
   }
 
+  // 날짜 비교 
+  if (form.value.endDate && form.value.startDate > form.value.endDate) {
+    alertStore.show('종료일은 시작일보다 이후여야 합니다.', 'danger');
+    return;
+  }
+
   if (!form.value.startDate) {
     alertStore.show('근무 기간을 선택하세요.', 'danger')
     return
