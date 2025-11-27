@@ -147,11 +147,11 @@ const setActiveFilter = (filter) => {
 const handleProjectCardClick = (project) => {
   const userType = userStore.getUserType;
   if (userType === 'PERSONAL') {
-    router.push(`/api/project/spec/user/${project.projectSq}`);
+    router.push(`/project/spec/user/${project.projectSq}`);
   } else if (userType === 'COMPANY') {
-    router.push(`/api/project/spec/company/${project.projectSq}`);
+    router.push(`/project/spec/company/${project.projectSq}`);
   } else {
-    router.push(`/api/project/spec/user/${project.projectSq}`);
+    router.push(`/project/spec/user/${project.projectSq}`);
   }
 }
 
