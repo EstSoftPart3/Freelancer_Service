@@ -2,11 +2,15 @@ package com.example.demo.domain.project.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +18,7 @@ import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
-
+import com.example.demo.domain.project.dto.PopularProjectDTO;
 import com.example.demo.domain.project.dto.UserRole;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
@@ -28,6 +32,7 @@ import com.example.demo.domain.project.dto.request.SkillInsertRequest;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
 import com.example.demo.domain.project.dto.response.GroupSkillInfoResponse;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
+import com.example.demo.domain.project.dto.response.PopularProjectsResponse;
 import com.example.demo.domain.project.dto.response.ProjectDetailResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectListResponse;
@@ -44,6 +49,7 @@ import com.example.demo.domain.project.mapper.SkillMapper;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
 import com.example.demo.domain.project.vo.ProjectSummary;
+import com.example.demo.domain.user.controller.FindController;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
@@ -51,6 +57,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
+
+    private final FindController findController;
 	private final ProjectMapper projectMapper;
 	private final CommonCodeMapper commonCodeMapper;
 	private final DistrictMapper districtMapper;
@@ -469,5 +477,108 @@ public class ProjectService {
 			return UserRole.COMPANY_MEMBER;
 		}
 		return UserRole.COMPANY_EXTERNAL;
+	}
+
+	// 메인 페이지 top5 프로젝트 조회
+	@Transactional(readOnly = true)
+	public PopularProjectsResponse getPopularProjects(JwtAuthenticationToken token) {
+		List<PopularProjectDTO> viewCount = projectMapper.findTop5ByViewCount();
+		List<PopularProjectDTO> scrapCount = projectMapper.findTop5ByScrapCount();
+		List<PopularProjectDTO> applicantCount = projectMapper.findTop5ByApplicantCount();
+		
+		withSkills(viewCount);
+		withSkills(scrapCount);
+		withSkills(applicantCount);
+		
+		if (token != null) {
+			Long userSq = token.getUserSq();
+			withScrapStatus(viewCount, userSq);
+			withScrapStatus(scrapCount, userSq);
+			withScrapStatus(applicantCount, userSq);
+		}
+		
+		return PopularProjectsResponse.builder()
+				.viewCount(viewCount)
+				.scrapCount(scrapCount)
+				.applicantCount(applicantCount)
+				.build();
+	}
+	
+	private void withScrapStatus(List<PopularProjectDTO> projects, Long userSq) {
+		if (projects.isEmpty()) return;
+		
+		List<Long> projectSqs = getProjectSqs(projects);
+		
+		List<Long> scrappedProjectSqs = scrapMapper.findScrappedProjectSqsByUserAndProjects(userSq, projectSqs);
+		Set<Long> scrappedSet = new HashSet<>(scrappedProjectSqs);
+		
+		for (int i = 0; i < projects.size(); i++) {
+			PopularProjectDTO project = projects.get(i);
+			projects.set(i, PopularProjectDTO.builder()
+					.projectSq(project.getProjectSq())
+					.projectTtl(project.getProjectTtl())
+					.projectImageUrl(project.getProjectImageUrl())
+					.companySq(project.getCompanySq())
+					.companyNm(project.getCompanyNm())
+					.addressSq(project.getAddressSq())
+					.address(project.getAddress())
+					.projectDeveloperGradeCd(project.getProjectDeveloperGradeCd())
+					.devGradeNm(project.getDevGradeNm())
+					.projectRequiredEducationCd(project.getProjectRequiredEducationCd())
+					.requiredEduLv1(project.getRequiredEduLv1())
+					.projectStartDt(project.getProjectStartDt())
+					.projectEndDt(project.getProjectEndDt())
+					.projectRecruitEndDt(project.getProjectRecruitEndDt())
+					.projectViewCnt(project.getProjectViewCnt())
+					.hasScrapped(scrappedSet.contains(project.getProjectSq()))
+					.reqSkills(project.getReqSkills())
+					.build());
+		}
+	}
+	
+	private void withSkills(List<PopularProjectDTO> projects) {
+		if (projects.isEmpty()) return;
+		
+		List<Long> projectSqs = getProjectSqs(projects);
+		
+		List<Map<String, Object>> results = projectMapper.findReqSkillsByProjectSqs(projectSqs);
+		
+		Map<Long, List<String>> skillsMap = results.stream()
+				.collect(Collectors.groupingBy(
+						map -> ((Number) map.get("project_sq")).longValue(),
+						Collectors.mapping(
+								map -> (String) map.get("skill_tag_nm"),
+								Collectors.toList()
+						)
+				));
+		
+		for (int i = 0; i < projects.size(); i++) {
+			PopularProjectDTO project = projects.get(i);
+			projects.set(i, PopularProjectDTO.builder()
+					.projectSq(project.getProjectSq())
+					.projectTtl(project.getProjectTtl())
+					.projectImageUrl(project.getProjectImageUrl())
+					.companySq(project.getCompanySq())
+					.companyNm(project.getCompanyNm())
+					.addressSq(project.getAddressSq())
+					.address(project.getAddress())
+					.projectDeveloperGradeCd(project.getProjectDeveloperGradeCd())
+					.devGradeNm(project.getDevGradeNm())
+					.projectRequiredEducationCd(project.getProjectRequiredEducationCd())
+					.requiredEduLv1(project.getRequiredEduLv1())
+					.projectStartDt(project.getProjectStartDt())
+					.projectEndDt(project.getProjectEndDt())
+					.projectRecruitEndDt(project.getProjectRecruitEndDt())
+					.projectViewCnt(project.getProjectViewCnt())
+					.hasScrapped(project.getHasScrapped())
+					.reqSkills(skillsMap.getOrDefault(project.getProjectSq(), List.of()))
+					.build());
+		}	
+	}
+	
+	private List<Long> getProjectSqs(List<PopularProjectDTO> projects) {
+		return projects.stream()
+				.map(PopularProjectDTO::getProjectSq)
+				.toList();
 	}
 }

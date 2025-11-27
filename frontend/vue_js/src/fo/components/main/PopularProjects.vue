@@ -41,6 +41,12 @@
           class="col mb-4"
         >
           <div class="project-card card h-100" @click="handleProjectCardClick(project)" style="cursor: pointer;">
+            <img
+              v-if="project.projectImageUrl"
+              :src="project.projectImageUrl"
+              class="card-img-top"
+              alt="프로젝트 이미지"
+            />
             <div class="card-body">
               <h5 class="card-title">{{ project.projectTtl }}</h5>
               <p class="card-text text-muted">{{ project.companyNm }}</p>
@@ -98,7 +104,7 @@ const displayedProjects = computed(() => {
 const loadPopularProjects = async () => {
   try {
     isLoadingProjects.value = true;
-    const response = await api.$get('/api/projects/top');
+    const response = await api.$get('/projects/top');
 
     if (response.output) {
       allPopularProjectsData.value = {
