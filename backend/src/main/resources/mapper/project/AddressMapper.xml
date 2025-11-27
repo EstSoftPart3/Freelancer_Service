@@ -25,12 +25,16 @@
         keyProperty="addressSq">
     INSERT INTO TBL_ADDRESS_S (
         sigungu,
+        address,
+        zonecode,
         area_code_sq,
         latitude,
         longitude
     ) VALUES (
         #{districtName},
+        #{districtName},
         #{districtCode},
+		#{districtCode},
         #{districtLat},
         #{districtLon}
     )
