@@ -9,4 +9,6 @@ import org.apache.ibatis.annotations.Param;
 public interface ScrapMapper {
 	public Long findScrapSqByUserSq(@Param("userSq") Long userSq);
 	public Long findScrapSqByUserSqAndProjectSq(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
+	
+	List<Long> findScrappedProjectSqsByUserAndProjects(@Param("userSq") Long userSq, @Param("projectSqs") List<Long> projectSqs);
 }

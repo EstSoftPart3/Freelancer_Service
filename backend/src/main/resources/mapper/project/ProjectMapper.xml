@@ -443,4 +443,117 @@
 
 	<update id="softDeleteProject" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_is_deleted_yn = 'Y', project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
+		
+	<select id="findTop5ByViewCount"
+			resultType="com.example.demo.domain.project.dto.PopularProjectDTO">
+		SELECT 
+			p.project_sq AS projectSq,
+			p.project_ttl AS projectTtl,
+			p.project_image_url AS projectImageUrl,
+			p.company_sq AS companySq,
+			c.company_nm AS companyNm,
+			p.address_sq AS addressSq,
+			CONCAT(
+				IFNULL(ac1.area_sigungu, ''), ' ',
+				IFNULL(ac2.area_sigungu, '')
+			) AS address,
+			p.project_developer_grade_cd AS projectDeveloperGradeCd,
+			cc1.common_code_nm AS devGradeNm,
+			p.project_required_education_cd AS projectRequiredEducationCd,
+			cc2.common_code_nm AS requiredEduLv1,
+			p.project_start_dt AS projectStartDt,
+			p.project_end_dt AS projectEndDt,
+			p.project_recruit_end_dt AS projectRecruitEndDt,
+			p.project_view_cnt AS projectViewCnt
+		FROM TBL_PROJECT_M p
+		LEFT JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+		LEFT JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+		LEFT JOIN TBL_AREA_C ac2 ON a.area_code_sq = ac2.area_code_sq
+		LEFT JOIN TBL_AREA_C ac1 ON ac2.parent_area_code_sq = ac1.area_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc2 ON p.project_required_education_cd = cc2.common_code_sq
+		WHERE p.project_is_deleted_yn = 'N'
+		ORDER BY p.project_view_cnt DESC
+		LIMIT 5
+	</select>
+	
+	<select id="findTop5ByScrapCount"
+			resultType="com.example.demo.domain.project.dto.PopularProjectDTO">
+		SELECT 
+			p.project_sq AS projectSq,
+			p.project_ttl AS projectTtl,
+			p.project_image_url AS projectImageUrl,
+			p.company_sq AS companySq,
+			c.company_nm AS companyNm,
+			p.address_sq AS addressSq,
+			CONCAT(
+				IFNULL(ac1.area_sigungu, ''), ' ',
+				IFNULL(ac2.area_sigungu, '')
+			) AS address,
+			p.project_developer_grade_cd AS projectDeveloperGradeCd,
+			cc1.common_code_nm AS devGradeNm,
+			p.project_required_education_cd AS projectRequiredEducationCd,
+			cc2.common_code_nm AS requiredEduLv1,
+			p.project_start_dt AS projectStartDt,
+			p.project_end_dt AS projectEndDt,
+			p.project_recruit_end_dt AS projectRecruitEndDt,
+			p.project_view_cnt AS projectViewCnt
+		FROM TBL_PROJECT_M p
+		LEFT JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+		LEFT JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+		LEFT JOIN TBL_AREA_C ac2 ON a.area_code_sq = ac2.area_code_sq
+		LEFT JOIN TBL_AREA_C ac1 ON ac2.parent_area_code_sq = ac1.area_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc2 ON p.project_required_education_cd = cc2.common_code_sq
+		WHERE p.project_is_deleted_yn = 'N'
+		ORDER BY p.project_scrap_cnt DESC
+		LIMIT 5
+	</select>
+	
+	<select id="findTop5ByApplicantCount"
+			resultType="com.example.demo.domain.project.dto.PopularProjectDTO">
+		SELECT 
+			p.project_sq AS projectSq,
+			p.project_ttl AS projectTtl,
+			p.project_image_url AS projectImageUrl,
+			p.company_sq AS companySq,
+			c.company_nm AS companyNm,
+			p.address_sq AS addressSq,
+			CONCAT(
+				IFNULL(ac1.area_sigungu, ''), ' ',
+				IFNULL(ac2.area_sigungu, '')
+			) AS address,
+			p.project_developer_grade_cd AS projectDeveloperGradeCd,
+			cc1.common_code_nm AS devGradeNm,
+			p.project_required_education_cd AS projectRequiredEducationCd,
+			cc2.common_code_nm AS requiredEduLv1,
+			p.project_start_dt AS projectStartDt,
+			p.project_end_dt AS projectEndDt,
+			p.project_recruit_end_dt AS projectRecruitEndDt,
+			p.project_view_cnt AS projectViewCnt
+		FROM TBL_PROJECT_M p
+		LEFT JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+		LEFT JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+		LEFT JOIN TBL_AREA_C ac2 ON a.area_code_sq = ac2.area_code_sq
+		LEFT JOIN TBL_AREA_C ac1 ON ac2.parent_area_code_sq = ac1.area_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc1 ON p.project_developer_grade_cd = cc1.common_code_sq
+		LEFT JOIN TBL_COMMON_CODE_C cc2 ON p.project_required_education_cd = cc2.common_code_sq
+		WHERE p.project_is_deleted_yn = 'N'
+		ORDER BY p.project_candidate_cnt DESC
+		LIMIT 5
+	</select>
+	
+	<select id="findReqSkillsByProjectSqs" resultType="map">
+		SELECT
+			project_sq,
+			skill_tag_nm
+		FROM
+			TBL_PROJECT_REQUIRED_SKILL_TAG_S
+		WHERE
+			project_sq IN
+		<foreach item="sq" collection="list" open="(" separator="," close=")">
+			#{sq}
+		</foreach>
+	</select>
+	
 </mapper>

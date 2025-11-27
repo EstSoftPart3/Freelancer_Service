@@ -25,5 +25,15 @@
     WHERE scrap_sq = #{scrapSq}
 	</delete>
 	
+	<select id="findScrappedProjectSqsByUserAndProjects" resultType="Long">
+		SELECT project_sq
+		FROM TBL_SCRAP_S
+		WHERE user_sq = #{userSq}
+			AND project_sq IN
+			<foreach item="sq" collection="projectSqs" open="(" separator="," close=")">
+				#{sq}
+			</foreach>	
+	</select>
+	
 	
 </mapper>

@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.company.dto.request.BaseRequest;
+import com.example.demo.domain.project.dto.PopularProjectDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
@@ -48,6 +49,11 @@ public interface ProjectMapper {
 	String judgeProjectRecruitStatus(@Param("projectSq") Long projectSq);
 	ProjectRecruitStatus countCompanyProjectsByStatus(@Param("request") CompanyFilterRequest request, @Param("companySq") Long companySq);
 	Long findProjectScrapCnt(@Param("projectSq") Long projectSq);
+	
+	List<PopularProjectDTO> findTop5ByViewCount();
+	List<PopularProjectDTO> findTop5ByScrapCount();
+	List<PopularProjectDTO> findTop5ByApplicantCount();
+	List<Map<String, Object>> findReqSkillsByProjectSqs(List<Long> projectSq);
 
 	void insertProject(Project project);
 	void insertProjectApplication(ProjectApplicationEntity entity);
