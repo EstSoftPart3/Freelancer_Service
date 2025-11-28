@@ -23,4 +23,8 @@ public class CertificateRepository {
     public void updateCertificate(CertificateDTO certificateDTO) {
         certificateMapper.updateCertificate(certificateDTO);
     }
+
+	public int count() {
+		return certificateMapper.count();
+	}
 }

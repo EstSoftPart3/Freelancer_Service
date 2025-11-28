@@ -11,4 +11,6 @@ public interface CertificateMapper {
     void insertCertificate(CertificateDTO certificateDTO);
 
     void updateCertificate(CertificateDTO certificateDTO);
+
+	int count();
 }

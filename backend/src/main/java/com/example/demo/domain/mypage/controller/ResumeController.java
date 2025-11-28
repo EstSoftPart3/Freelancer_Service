@@ -189,7 +189,7 @@ public class ResumeController {
 	// 자격증 불러오기
 	@GetMapping("/certificates")
 	public ResponseEntity<ApiResponse<CertificateListResponseDTO>> getCertificates(
-			@RequestParam(name = "seearchNm",required = false) String searchNm,
+			@RequestParam(name = "searchNm",required = false) String searchNm,
 			@RequestParam(name = "page",defaultValue = "1") int page,
 			@RequestParam(name = "size",defaultValue = "3") int size) {
 
