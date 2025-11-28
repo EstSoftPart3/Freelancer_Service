@@ -3,10 +3,14 @@ package com.example.demo.domain.community.service;
 
 import org.springframework.stereotype.Service;
 
+import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.community.dto.request.*;
 import com.example.demo.domain.community.entity.*;
 import com.example.demo.domain.community.mapper.*;
-
+import com.example.demo.domain.notification.dto.NotificationDTO;
+import com.example.demo.domain.notification.enums.NotificationTypeCode;
+import com.example.demo.domain.notification.service.NotificationService;
+import com.example.demo.domain.user.controller.FindController;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -14,10 +18,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
     private final CommentMapper commentMapper;
     private final BoardMapper boardMapper;
     private final AnswerMapper answerMapper;
     private final RecommendationMapper recommendationMapper;
+    private final NotificationService notificationService;
+
 
     @Transactional
     public Comment getComment(Long commentSq) {
@@ -53,9 +60,33 @@ public class CommentService {
         	answerMapper.updateCommentCnt(comment.getAnswerSq());
         }
 
-        
+        createCommentNotification(comment, commentRequest.getUserSq());
         
 		return;
+    }
+    
+    // 댓글 알림 생성
+    private void createCommentNotification(Comment comment, Long currentUserSq) {
+    	Board board = boardMapper.findByBoardSq(comment.getBoardSq());
+    	if (board == null) return;
+    	
+    	// 댓글 작성자가 게시글 작성자 본인일 경우 알림 안보냄
+    	if (currentUserSq.equals(board.getUserSq())) {
+    		return;
+    	}
+    	
+    	NotificationDTO notification = NotificationDTO.builder()
+    			.userSq(board.getUserSq())
+    			.notificationTypeCd(NotificationTypeCode.COMMENT.getCode())
+    			.notificationTargetTypeCd(NotificationTypeCode.COMMENT.getCode())
+    			.notificationTargetSq(comment.getCommentSq())
+    			.notificationTargetParentTypeCd(NotificationTypeCode.BOARD.getCode())
+    			.notificationTargetParentSq(comment.getBoardSq())
+    			.notificationTtl(NotificationTypeCode.COMMENT.getTitle())
+    			.notificationTxt(comment.getCommentDescriptionTxt())
+    			.build();
+    	
+    	notificationService.createNotification(notification);
     }
 
     @Transactional
