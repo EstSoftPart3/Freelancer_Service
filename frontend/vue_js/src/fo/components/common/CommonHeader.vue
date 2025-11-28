@@ -135,29 +135,38 @@
                     </span>
                   </a>
 
-                  <!-- <div
-                  class="dropdown-menu dropdown-menu-end p-2 shadow"
-                  aria-labelledby="notificationDropdown"
-                  style="min-width: 250px; max-height: 300px; overflow-y: auto"
-                >
-                  <h6 class="dropdown-header">알림</h6>
-                  <div class="dropdown-item small text-muted">
-                    📌 새로운 댓글이 달렸어요 <br /><small>2분 전</small>
-                  </div>
-                  <div class="dropdown-item small text-muted">
-                    ✅ 프로젝트가 승인되었어요 <br /><small>10분 전</small>
-                  </div>
-                  <div class="dropdown-item small text-muted">
-                    🔔 시스템 점검 예정 <br /><small>1시간 전</small>
-                  </div>
-                  <div class="dropdown-divider"></div>
-                  <a
-                    class="dropdown-item text-center small text-primary"
-                    href="/notifications"
-                    >전체 보기</a
-                  >
-                </div> -->
                   <div
+                    class="dropdown-menu dropdown-menu-end p-2 shadow"
+                    aria-labelledby="notificationDropdown"
+                    style="
+                      min-width: 250px;
+                      max-height: 300px;
+                      overflow-y: auto;
+                    "
+                  >
+                    <h6 class="dropdown-header">알림</h6>
+                    <div class="dropdown-item small text-muted">
+                      📌 프로젝트 모집 마감 임박 <br /><small>2분 전</small>
+                    </div>
+                    <div class="dropdown-item small text-muted">
+                      ✅ 프로젝트가 승인되었어요 <br /><small>10분 전</small>
+                    </div>
+                    <div class="dropdown-item small text-muted">
+                      🔔 스크랩 기업 신규 공고 <br /><small>3시간 전</small>
+                    </div>
+                    <div class="dropdown-item small text-muted">
+                      🗨️ 작성하신 게시글에 댓글이 달렸습니다. <br /><small
+                        >1시간 전</small
+                      >
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a
+                      class="dropdown-item text-center small text-primary"
+                      href="/notifications"
+                      >전체 보기</a
+                    >
+                  </div>
+                  <!-- <div
                     class="dropdown-menu dropdown-menu-end p-2 shadow"
                     aria-labelledby="notificationDropdown"
                     style="min-width: 250px"
@@ -165,7 +174,7 @@
                     <div class="dropdown-item small text-muted">
                       🔧 준비 중입니다.
                     </div>
-                  </div>
+                  </div> -->
                 </div>
 
                 <!-- 유저 아이콘 + 이름 (버튼 정렬) -->

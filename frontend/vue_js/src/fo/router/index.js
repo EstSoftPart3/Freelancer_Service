@@ -39,6 +39,8 @@ import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
+// import { compact } from 'lodash'
+import NotificationPage from '../views/mypage/personal/NotificationPage.vue'
 
 const routes = [
   {
@@ -46,7 +48,11 @@ const routes = [
     component: MainPage,
     name: 'Main',
   },
-
+  {
+    path: '/notifications',
+    component: NotificationPage,
+    name: 'notification',
+  },
   {
     path: '/test',
     component: TestPage,
@@ -259,6 +265,7 @@ router.beforeEach((to, from, next) => {
     'InformationEdit',
     'Withdraw',
     'QnaResisterPage',
+    'NotificationPage',
     'BoardResisterPage' /* ... 로그인 필요 페이지들 */,
   ]
 
