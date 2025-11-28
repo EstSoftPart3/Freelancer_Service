@@ -38,4 +38,6 @@ public interface BoardMapper {
      void deleteBoardFile(@Param("boardSq") Long boardSq, @Param("fileSq") Long fileSq);
      void deleteFile(@Param("fileSq") Long fileSq);
      
+     Board findByBoardSq(@Param("boardSq") Long boardSq);
+     
 }
