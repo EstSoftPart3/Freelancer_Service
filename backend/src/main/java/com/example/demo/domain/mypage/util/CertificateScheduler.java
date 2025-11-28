@@ -3,6 +3,8 @@ package com.example.demo.domain.mypage.util;
 import com.example.demo.domain.mypage.dto.CertificateDTO;
 import com.example.demo.domain.mypage.service.CertificateService;
 
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -25,7 +27,27 @@ public class CertificateScheduler {
     public CertificateScheduler(CertificateService certificateService) {
         this.certificateService = certificateService;
     }
-
+    
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStartup() {
+        try {
+            int count = certificateService.getCertificateCount();
+            System.out.println("========================================");
+            System.out.println("현재 DB 자격증 데이터 수: " + count + "건");
+            System.out.println("========================================");
+            
+            if (count == 0) {
+                System.out.println("⚠️ DB가 비어있습니다. 초기 데이터를 로딩합니다...");
+                fetchAndSaveCertificates();
+            } else {
+                System.out.println("✅ DB에 자격증 데이터가 이미 존재합니다. 스킵합니다.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 초기화 중 오류 발생:");
+            e.printStackTrace();
+        }
+    }
+    
     @Scheduled(cron = "0 0 1 * * MON")
     public void fetchAndSaveCertificates() {
         try {

@@ -24,6 +24,10 @@
     <select id="selectCertificateById" parameterType="long"
         resultType="com.example.demo.domain.mypage.dto.CertificateDTO"> SELECT * FROM
         TBL_CERTIFICATE_S WHERE certificate_cd = #{certificateCd} </select>
-
+	
+	<select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM TBL_CERTIFICATE_S
+    </select>
 
 </mapper>

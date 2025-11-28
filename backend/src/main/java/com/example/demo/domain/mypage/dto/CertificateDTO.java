@@ -10,7 +10,7 @@ public class CertificateDTO {
     private String middleObligationFieldNm; // mdobligfldnm
     private Long obligationFieldCd; // obligfldcd
     private String obligationFieldNm; // obligfldnm
-    private String qualificationGroupCd; // qualgbcd
+    private Long qualificationGroupCd; // qualgbcd
     private String qualificationGroupNm; // qualgbnm
     private Long seriesCd; // seriescd
     private String seriesNm; // seriesnm

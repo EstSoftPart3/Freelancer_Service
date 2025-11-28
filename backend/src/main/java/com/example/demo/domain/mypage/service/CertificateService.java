@@ -47,7 +47,7 @@ public class CertificateService {
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		Document doc = builder.parse(new InputSource(new StringReader(xml)));
 		NodeList itemList = doc.getElementsByTagName("item");
-
+		
 		for (int i = 0; i < itemList.getLength(); i++) {
 			Element item = (Element) itemList.item(i);
 
@@ -58,16 +58,40 @@ public class CertificateService {
 			dto.setMiddleObligationFieldNm(getTagValue("mdobligfldnm", item));
 			dto.setObligationFieldCd(parseLongSafe(getTagValue("obligfldcd", item)));
 			dto.setObligationFieldNm(getTagValue("obligfldnm", item));
-			dto.setQualificationGroupCd(getTagValue("qualgbcd", item));
+			// 자격구분 코드 - VARCHAR로 변경됨
+			String qualGroupCd = getTagValue("qualgbcd", item);
+			dto.setQualificationGroupCd(convertQualificationGroupCode(qualGroupCd));
 			dto.setQualificationGroupNm(getTagValue("qualgbnm", item));
 			dto.setSeriesCd(parseLongSafe(getTagValue("seriescd", item)));
 			dto.setSeriesNm(getTagValue("seriesnm", item));
-
+			
 			list.add(dto);
 		}
 		return list;
 	}
-
+	
+	private Long convertQualificationGroupCode(String code) {
+		if (code == null || code.trim().isEmpty()) {
+			return null;
+		}
+		
+		String trimmedCode = code.trim().toUpperCase();
+		
+		switch (trimmedCode) {
+			case "T":
+				return 1L; // 국가기술자격
+			case "S":
+				return 2L; // 국가전문자격
+			default:
+				// 이미 숫자인 경우 그대로 변환
+				try {
+					return Long.parseLong(trimmedCode);
+				} catch (NumberFormatException e) {
+					System.err.println("알 수 없는 자격구분 코드: " + code + " -> 0으로 설정");
+					return 0L;
+				}
+		}
+	}
 	private String getTagValue(String tag, Element element) {
 		NodeList nodeList = element.getElementsByTagName(tag);
 		if (nodeList.getLength() == 0)
@@ -80,6 +104,11 @@ public class CertificateService {
 		if (value == null || value.trim().isEmpty())
 			return null;
 		return Long.parseLong(value.trim());
+	}
+
+	public int getCertificateCount() {
+		// TODO Auto-generated method stub
+		return (int) certificateRepository.count();
 	}
 
 }
