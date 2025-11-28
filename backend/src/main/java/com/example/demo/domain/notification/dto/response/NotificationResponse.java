@@ -2,21 +2,30 @@ package com.example.demo.domain.notification.dto.response;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
-public class NotificationModalResponse {
+@Getter
+@Builder
+public class NotificationResponse {
 	
 	private Long notificationSq;
-	private Long notificationTypeCd;
-	private String notificationTypeName; // "게시글 댓글", "프로젝트 모집 마감" 등
-	private Long notificationTargetTypeCd;
+	
+	private Long notificationTypeCd; 	// 알림 분류 
+	
+	private Long notificationTargetTypeCd;	// 이동 대상 (게시글/댓글/프로젝트 등)
 	private Long notificationTargetSq;
+	
+	private Long notificationTargetParentTypeCd;	// 여기는 댓글, 답변일때만 존재하므로 nullable
+	private Long notificationTargetParentSq;
+	
 	private String notificationTtl;
 	private String notificationTxt;
-	private Boolean notificationIsReadYn;
+	
+	private String notificationIsReadYn;
+	
 	private LocalDateTime notificationCreatedAtDtm;
-	private String timeAgo; // "방금 전", "1시간 전", "어제", "2일 전"
-	private String targetUrl; // 클릭 시 이동할 URL
+	
 }

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.notification.mapper.NotificationMapper">
+
+	<!-- 알림 생성 -->
+	<insert id="insert" parameterType="com.example.demo.domain.notification.dto.NotificationDTO" useGeneratedKeys="true" keyProperty="notificationSq">
+		INSERT INTO TBL_NOTIFICATION (
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_is_deleted_yn,
+			notification_created_at_dtm,
+			user_sq
+		) VALUES (
+			#{notificationTypeCd},
+			#{notificationTargetTypeCd},
+			#{notificationTargetSq},
+			#{notificationTargetParentTypeCd},
+			#{notificationTargetParentSq},
+			#{notificationTtl},
+			#{notificationTxt},
+			#{notificationIsReadYn},
+			#{notificationIsDeletedYn},
+			#{notificationCreatedAtDtm},
+			#{userSq}
+		)
+	</insert>
+	
+	<!-- 읽음 처리 -->
+	<update id="updateReadStatus">
+		UPDATE TBL_NOTIFICATION
+		SET notification_is_read_yn = #{notificationIsReadYn}
+		WHERE notification_sq = #{notificationSq}
+	</update>
+	
+	<!-- 삭제 -->
+	<update id="updateDeleteStatus">
+		UPDATE TBL_NOTIFICATION
+		SET notification_is_deleted_yn = #{notificationIsDeletedYn},
+			notification_deleted_at_dtm = #{notificationDeletedAtDtm}
+		WHERE notification_sq = #{notificationSq}
+	</update>
+	
+	<!-- 모달 알림 조회 -->
+	<select id="findUnreadByUser" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
+		SELECT
+			notification_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_created_at_dtm
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_read_yn = 'N'
+		  AND notification_is_deleted_yn = 'N'
+		ORDER BY notification_created_at_dtm DESC
+	</select>
+		
+	<!-- 페이지 알림 조회 (커서) -->
+	<select id="findAllByUser" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
+		SELECT
+			notification_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_created_at_dtm
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_deleted_yn = 'N'
+		  <if test="cursor != null">
+		  	AND notification_sq &lt; #{cursor}
+		  </if>
+		ORDER BY notification_sq DESC
+		LIMIT #{size}
+	</select>
+	
+
+
+</mapper>

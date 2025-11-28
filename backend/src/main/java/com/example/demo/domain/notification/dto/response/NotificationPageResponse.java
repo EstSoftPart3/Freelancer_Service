@@ -1,23 +1,25 @@
 package com.example.demo.domain.notification.dto.response;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
+@Getter
+@NoArgsConstructor
 public class NotificationPageResponse {
-	private Long notificationSq;
-	private Long notificationTypeCd;
-	private String notificationTypeName;
-	private String notificationTtl;
-	private Boolean notificationIsReadYn;
-	private LocalDateTime notificationCreatedAtDtm;
-	private String timeago;
-	private String targetUrl;
 	
-	private String boardTitle;
-	private String projectTitle;
-	private String commentContent;
-	private String authorName;
+	private List<NotificationResponse> notifications;
+	private Long nextCursor;
+	private Boolean hasNext;
 	
+	@Builder
+	public NotificationPageResponse(List<NotificationResponse> notifications, Long nextCursor, Boolean hasNext) {
+		this.notifications = notifications;
+		this.nextCursor = nextCursor;
+		this.hasNext = hasNext;
+	}
+
 }

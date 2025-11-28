@@ -1,59 +1,56 @@
-package com.example.demo.domain.notification.entity;
+package com.example.demo.domain.notification.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.example.demo.domain.project.entity.Project;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Data;
 
-@Entity
-@Table(name ="TBL_NOTIFICAION" )
+
 @Data
-public class NotificationEntity {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "notification_sq")
+@Builder
+public class NotificationDTO {
+
 	private Long notificationSq;
 	
-	@Column(name = "notification_type_cd")
-	private Long notificationTypeCd;
+	private Long notificationTypeCd; 	// 알림 분류
 	
-	@Column(name = "notification_target_type_cd")
-	private Long notificationTargetTypeCd;
-	
-	@Column(name = "notification_target_sq")
+	private Long notificationTargetTypeCd;	// 이동 대상 (게시글/댓글/프로젝트 등)
 	private Long notificationTargetSq;
 	
-	@Column(name = "notification_target_parent_type_cd")
-	private Long notificationTargetParentTypeCd;
-	
-	@Column(name = "notification_target_parent_sq")
+	private Long notificationTargetParentTypeCd;	// 여기는 댓글, 답변일때만 존재하므로 nullable
 	private Long notificationTargetParentSq;
 	
-	@Column(name = "notification_ttl")
 	private String notificationTtl;
-	
-	@Column(name = "notification_txt")
 	private String notificationTxt;
 	
-	@Column(name = "notification_is_deleted_yn")
 	private String notificationIsReadYn;
-	
-	@Column(name = "notification_is_deleted_yn")
 	private String notificationIsDeletedYn;
 	
-	@Column(name = "notification_created_at_dtm")
 	private LocalDateTime notificationCreatedAtDtm;
-	
-	@Column(name = "notification_deleted_at_dtm")
 	private LocalDateTime notificationDeletedAtDtm;
 	
-	@Column(name = "user_sq")
 	private Long userSq;
 	
+	
+	/**
+	 * 
+	 * COMMON_CODE    2200
+	 * 
+	 * 2201 "ANSWER"   답변
+	 * 2202 "COMMENT"   댓글
+	 * 2203 "INTERVIEW"  면접일 알림
+	 * 2204 "PROJECT"  프로젝트 마감
+	 * 2205 "SCRAP_COMPANY"   스크랩 신규 공고_회사(소속)
+	 * 2206 "SCRAP_PROJECT"   스크랩 신규 공고_프로젝트
+	 * 
+	 */
 
 }
