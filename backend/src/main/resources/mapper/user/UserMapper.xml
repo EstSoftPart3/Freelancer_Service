@@ -35,6 +35,12 @@
   <select id="existsByUserId"
     parameterType="string" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_USER_M WHERE
     user_id = #{userId} AND user_is_deleted_yn = 'N' ) </select>
+    
+  <!-- 유저 시퀀스 중복 확인 -->
+  <select id="existsByUserSq"
+    parameterType="long" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_USER_M WHERE
+    user_sq = #{userSq} AND user_is_deleted_yn = 'N' ) </select>
+
 
   <!-- 이메일 중복 확인 -->
   <select id="existsByUserEmail"

@@ -20,6 +20,8 @@ public interface UserMapper {
     int insertUser(UserDTO userDTO);
 
     boolean existsByUserId(String userId);
+    
+    boolean existsByUserSq(@Param("userSq") Long userSq);
 
     boolean existsByUserEmail(String userEmail);
 

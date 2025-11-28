@@ -120,5 +120,11 @@
 		SET file_is_deleted_yn = 'Y'
 		WHERE file_sq = #{fileSq}
 	</update>
+	
+	<select id="findByBoardSq" resultType="com.example.demo.domain.community.entity.Board">
+		SELECT * 
+		FROM TBL_BOARD_M
+		WHERE board_sq = #{boardSq}
+	</select>
 
 </mapper>
