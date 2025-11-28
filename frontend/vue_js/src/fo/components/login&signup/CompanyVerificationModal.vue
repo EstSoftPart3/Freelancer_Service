@@ -241,7 +241,16 @@ async function handleVerify() {
     return
   }
 
-  const formattedOpenDate = (openDate.value || '').toString().replace(/-/g, '')
+  let formattedOpenDate = ''
+  if (openDate.value instanceof Date) {
+    const year = openDate.value.getFullYear()
+    const month = String(openDate.value.getMonth() + 1).padStart(2, '0')
+    const day = String(openDate.value.getDate()).padStart(2, '0')
+    formattedOpenDate = `${year}${month}${day}` // ✅ 20150223 형식으로 변환
+  } else {
+    alertStore.show('개업일자 형식이 올바르지 않습니다.', 'danger')
+    return
+  }
 
   try {
     const response = await api.$post('/company/verify', {
