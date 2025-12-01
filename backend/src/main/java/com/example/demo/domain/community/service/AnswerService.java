@@ -12,6 +12,9 @@ import com.example.demo.domain.community.mapper.*;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.mypage.service.InformationEditService;
+import com.example.demo.domain.notification.dto.NotificationDTO;
+import com.example.demo.domain.notification.enums.NotificationTypeCode;
+import com.example.demo.domain.notification.service.NotificationService;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.community.dto.response.*;
 import com.example.demo.common.AmazonS3.AmazonS3Service;
@@ -38,6 +41,7 @@ public class AnswerService {
     private final AmazonS3Service amazonS3Service;
     private final InformationEditRepository informationEditRepository;
     private final InformationEditService informationEditService;
+    private final NotificationService notificationService;
     
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -47,23 +51,21 @@ public class AnswerService {
     public List<AnswerListResponse> getAllAnswers(Long boardSq) {
     	List<Answer> answers = answerMapper.findAll(boardSq);
     	
-    	List<AnswerListResponse> responses = answers.stream()
-            .filter(Objects::nonNull)
-            .map(answer -> {
-            	if(answer.getAnswerIsDeletedYn().equals("Y")) {
-            		return AnswerListResponse.builder().isDeletedYn("Y").build(); 
-            	} else {
-            		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-                    String userNm = "존재하지 않는 사용자";
-                    if (userInfo != null && userInfo.getUserNm() != null) {
-                        userNm = userInfo.getUserNm();
-                    }
-
-                    return AnswerListResponse.fromEntity(answer, userNm);            		            		
-            	}
-            })
-            .collect(Collectors.toList());
-
+    	List<AnswerListResponse> responses = answers.stream()		
+          .filter(Objects::nonNull)
+          .map(answer -> {
+          	if(answer.getAnswerIsDeletedYn().equals("N")) {
+          		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
+                  String userNm = "존재하지 않는 사용자";
+                  if (userInfo != null && userInfo.getUserNm() != null) {
+                      userNm = userInfo.getUserNm();
+                  }
+                  return AnswerListResponse.fromEntity(answer, userNm);                   		
+          	} else { 
+                  return AnswerListResponse.builder().isDeletedYn("Y").build(); 
+          	}
+          })
+          .collect(Collectors.toList());	
         return responses;
     }
 
@@ -166,8 +168,33 @@ public class AnswerService {
     	    }
     	}
         
+    	createAnswerNotification(answer, answerRequest.getUserSq());
         
 		return;
+    }
+    
+    // 답글 알림 생성
+    private void createAnswerNotification(Answer answer, Long currentUserSq) {
+    	Board board = boardMapper.findByBoardSq(answer.getBoardSq());
+    	if (board == null) return;
+    	
+    	// 답글 작성자가 게시글 작성자 본인일 경우 알림 안보냄
+    	if (currentUserSq.equals(board.getUserSq())) {
+    		return;
+    	}
+    	
+    	NotificationDTO notification = NotificationDTO.builder()
+    			.userSq(board.getUserSq())
+    			.notificationTypeCd(NotificationTypeCode.ANSWER.getCode())
+    			.notificationTargetTypeCd(NotificationTypeCode.ANSWER.getCode())
+    			.notificationTargetSq(answer.getAnswerSq())
+    			.notificationTargetParentTypeCd(NotificationTypeCode.BOARD.getCode())
+    			.notificationTargetParentSq(answer.getBoardSq())
+    			.notificationTtl(NotificationTypeCode.ANSWER.getTitle())
+    			.notificationTxt(answer.getAnswerDescriptionEdt())
+    			.build();
+    	
+    	notificationService.createNotification(notification);
     }
 
 //    답변 수정
