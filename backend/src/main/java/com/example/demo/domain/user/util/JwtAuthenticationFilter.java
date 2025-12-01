@@ -9,6 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } catch (Exception e) {
                     // 토큰 오류 무시하고 통과 (로그 남기고 싶으면 여기서 처리)
+                	logger.debug("Token validation failed for excluded URl : "+e.getMessage());
                 }
             }
 
@@ -92,6 +94,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {
+        	logger.debug("Autnetication faled : "+ e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             return;
         }
@@ -103,6 +106,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        Cookie[] cookies = request.getCookies();
+        if(cookies != null) {
+        	for(Cookie cookie : cookies) {
+        		if("accessToken".equals(cookie.getName())) {
+        			return cookie.getValue();
+        		}
+        	}
         }
         return null;
     }
