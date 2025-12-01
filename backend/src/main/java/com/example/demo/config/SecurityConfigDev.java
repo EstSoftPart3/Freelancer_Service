@@ -56,6 +56,7 @@ public class SecurityConfigDev {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -67,10 +68,12 @@ public class SecurityConfigDev {
         http
                 // .cors().and() // 개발용
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 외부 배포 테스트용
-                .csrf().disable()
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/me").authenticated() // ✅ 사용자 정보는 인증 필요
+                        .requestMatchers("/login","/refresh-token").permitAll()
+                        .requestMatchers("/me","/logout").authenticated() // ✅ 사용자 정보는 인증 필요
+                        .requestMatchers("/api/notifications/**").authenticated()
                         .anyRequest().permitAll() // 그 외는 자유 접근 (필요시 조정)
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

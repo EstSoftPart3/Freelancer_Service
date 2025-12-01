@@ -41,26 +41,26 @@ public class NotificationController {
 	
     
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@AuthenticationPrincipal JwtAuthenticationToken token) {
-    	return emitterManager.createEmitter(token.getUserSq());
+    public SseEmitter subscribe(@AuthenticationPrincipal Long userSq) {
+    	return emitterManager.createEmitter(userSq);
     }
     
     
 	@GetMapping
 	public ResponseEntity<ApiResponse<List<NotificationResponse>>> getUnreadNotifications(
-			@AuthenticationPrincipal JwtAuthenticationToken token) {
-		List<NotificationResponse> response = notificationService.getUnreadNotifications(token.getUserSq());
+			@AuthenticationPrincipal Long userSq) {
+		List<NotificationResponse> response = notificationService.getUnreadNotifications(userSq);
 		
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "읽지 않은 알림 목록 조회 성공", response));
 	}
 	
 	@GetMapping("/page")
 	public ResponseEntity<ApiResponse<NotificationPageResponse>> getAllNotifications(
-			@AuthenticationPrincipal JwtAuthenticationToken token,
+			@AuthenticationPrincipal Long userSq,
 			@RequestParam(required = false) Long cursor,
 			@RequestParam(defaultValue = "20") int size
 			){
-		NotificationPageResponse response = notificationService.getAllNotifications(token.getUserSq(), cursor, size);
+		NotificationPageResponse response = notificationService.getAllNotifications(userSq, cursor, size);
 		
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "알림 페이지 조회 성공", response));
 	}
