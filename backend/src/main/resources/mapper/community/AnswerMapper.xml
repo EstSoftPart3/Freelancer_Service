@@ -10,7 +10,7 @@
     </select>
 
     <select id="findAll" resultType="com.example.demo.domain.community.entity.Answer">
-        SELECT * FROM TBL_BOARD_ANSWER_S WHERE board_sq = #{boardSq} AND answer_is_deleted_yn = 'N'
+        SELECT * FROM TBL_BOARD_ANSWER_S WHERE board_sq = #{boardSq}
     </select>
 
     <select id="findAllCnt" resultType="Integer">
