@@ -52,6 +52,9 @@ export default function QnaListPage() {
 
   // 검색 또는 채택 상태 변경
   const changeFilter = () => {
+    if (currentPage === 1) {
+      getBoardList();
+    }
     setCurrentPage(1)
   }
 

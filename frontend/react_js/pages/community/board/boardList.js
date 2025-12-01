@@ -42,6 +42,7 @@ export default function BoardListPage() {
         }
         setBoardList(response.output.boards || [])
       }
+      console.log(response)
     } catch (error) {
       showAlert('게시글을 불러올 수 없습니다.', 'danger')
     }

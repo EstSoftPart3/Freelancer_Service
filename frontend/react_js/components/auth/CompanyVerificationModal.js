@@ -132,6 +132,7 @@ export default function CompanyVerificationModal({ onConfirm, onClose }) {
 
       if (response.output === true) {
         setIsVerified(true)
+        console.log('isVerified = ', isVerified)
         showAlert('기업 인증이 성공했습니다.', 'success')
       } else {
         setIsVerified(false)
@@ -161,6 +162,8 @@ export default function CompanyVerificationModal({ onConfirm, onClose }) {
 
   // 인증 완료 버튼 클릭
   const handleConfirm = () => {
+    console.log('isVerified = ', isVerified)
+    console.log('form.termsAgreed = ', form.termsAgreed)
     if (!canConfirm) {
       showAlert('약관 동의와 기업인증이 모두 완료되어야 합니다.', 'danger')
       return

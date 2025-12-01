@@ -132,6 +132,7 @@ export default function ResumeDetailModal({
               },
               withCredentials: true,
             });
+            console.log(response)
           }
         } else {
           // fetch를 사용하는 경우
@@ -159,6 +160,7 @@ export default function ResumeDetailModal({
               credentials: 'include',
             });
             response = await res.json();
+            console.log(response)
           }
         }
 

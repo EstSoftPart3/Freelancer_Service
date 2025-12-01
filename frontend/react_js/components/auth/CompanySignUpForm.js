@@ -176,6 +176,7 @@ export default function CompanySignUpForm({ onSubmit }) {
 
   // 인증번호 유효성 검사
   const validateVerifyCode = () => {
+    console.log('verificationCode = ', form.verificationCode)
     if (!form.verificationCode) {
       setError('verifyCode', '인증번호를 입력하세요.')
     } else if (!validFields.verifyCode) {
@@ -345,7 +346,17 @@ export default function CompanySignUpForm({ onSubmit }) {
       validFields.email &&
       validFields.verifyCode &&
       validFields.terms
-
+    console.log({
+      id: validFields.id,
+      password : validFields.password,
+      confirmPassword : validFields.confirmPassword,
+      name : validFields.name,
+      phone : validFields.phone,
+      address : validFields.address,
+      email : validFields.email,
+      verifyCode : validFields.verifyCode,
+      terms : validFields.terms
+    })
     if (isFormValid) {
       onSubmit({ ...form })
     } else {
