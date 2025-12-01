@@ -51,23 +51,21 @@ public class AnswerService {
     public List<AnswerListResponse> getAllAnswers(Long boardSq) {
     	List<Answer> answers = answerMapper.findAll(boardSq);
     	
-    	List<AnswerListResponse> responses = answers.stream()
-            .filter(Objects::nonNull)
-            .map(answer -> {
-            	if(answer.getAnswerIsDeletedYn().equals("Y")) {
-            		return AnswerListResponse.builder().isDeletedYn("Y").build(); 
-            	} else {
-            		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-                    String userNm = "존재하지 않는 사용자";
-                    if (userInfo != null && userInfo.getUserNm() != null) {
-                        userNm = userInfo.getUserNm();
-                    }
-
-                    return AnswerListResponse.fromEntity(answer, userNm);            		            		
-            	}
-            })
-            .collect(Collectors.toList());
-
+    	List<AnswerListResponse> responses = answers.stream()		
+          .filter(Objects::nonNull)
+          .map(answer -> {
+          	if(!answer.getAnswerIsDeletedYn().equals("Y")) {
+          		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
+                  String userNm = "존재하지 않는 사용자";
+                  if (userInfo != null && userInfo.getUserNm() != null) {
+                      userNm = userInfo.getUserNm();
+                  }
+                  return AnswerListResponse.fromEntity(answer, userNm);                   		
+          	} else { 
+                  return AnswerListResponse.builder().isDeletedYn("Y").build(); 
+          	}
+          })
+          .collect(Collectors.toList());	
         return responses;
     }
 
