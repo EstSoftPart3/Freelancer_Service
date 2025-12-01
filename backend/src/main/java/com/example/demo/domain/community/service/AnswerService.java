@@ -54,7 +54,7 @@ public class AnswerService {
     	List<AnswerListResponse> responses = answers.stream()		
           .filter(Objects::nonNull)
           .map(answer -> {
-          	if(!answer.getAnswerIsDeletedYn().equals("Y")) {
+          	if(answer.getAnswerIsDeletedYn().equals("N")) {
           		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
                   String userNm = "존재하지 않는 사용자";
                   if (userInfo != null && userInfo.getUserNm() != null) {
