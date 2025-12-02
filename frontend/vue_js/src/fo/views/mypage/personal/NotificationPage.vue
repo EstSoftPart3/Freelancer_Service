@@ -117,6 +117,13 @@ export default {
         if (!confirm('이 알림을 삭제하시겠습니까?')) {
           return
         }
+        // 디버깅: 토큰 확인
+        const token = localStorage.getItem('accessToken')
+        console.log('AccessToken 존재 여부:', !!token)
+        console.log(
+          '삭제 요청 URL:',
+          `/notifications/${notification.notificationSq}`,
+        )
 
         await api.$delete(`/notifications/${notification.notificationSq}`)
 
@@ -124,21 +131,40 @@ export default {
         this.notifications = this.notifications.filter(
           (n) => n.notificationSq !== notification.notificationSq,
         )
+        alert('알림이 삭제되었습니다.')
       } catch (error) {
         console.error('알림 삭제 실패:', error)
+        console.error('에러 응답:', error.response?.data)
+        alert('알림 삭제에 실패했습니다.')
       }
     },
 
     navigateToTarget(notification) {
       const targetType = notification.notificationTargetTypeCd
       const targetSq = notification.notificationTargetSq
-
+      const parentSq = notification.notificationTargetParentSq
       switch (targetType) {
         case 2201: //답변
+          if (!parentSq) {
+            console.error(
+              'notificationTargetParentSq가 없습니다:',
+              notification,
+            )
+            alert('잘못된 알림 데이터입니다.')
+            return
+          }
+          this.$router.push(`/qna/${parentSq}`)
+          break
         case 2202: //댓글
-          this.$router.push(
-            `/qna/${notification.notificationTargetParentSq}#comment-${targetSq}`,
-          )
+          if (!parentSq) {
+            console.error(
+              'notificationTargetParentSq가 없습니다:',
+              notification,
+            )
+            alert('잘못된 알림 데이터입니다.')
+            return
+          }
+          this.$router.push(`/qna/${parentSq}`)
           break
         case 1:
           this.$router.push(`/projects/${targetSq}`)
