@@ -15,6 +15,9 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
+import com.example.demo.domain.notification.dto.NotificationDTO;
+import com.example.demo.domain.notification.enums.NotificationTypeCode;
+import com.example.demo.domain.notification.service.NotificationService;
 import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
 import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
@@ -40,6 +43,7 @@ public class ProjectApplicationService {
 	private final ResumeCareerMapper resumeCareerMapper;
 	private final ResumeSkillMapper resumeSkillMapper;
 	private final CompanyMapper companyMapper;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public Map<String, Object> fetchProjectApplicationsWithCount(Long userSq, int offset, int size, String searchType,
@@ -110,6 +114,32 @@ public class ProjectApplicationService {
 			Long projectSq = applicationMapper.findProjectBySq(applicationSq);
 			projectMapper.decreaseApplication(projectSq);
 		}
+		
+		updateApplicantResultNotification(statusCd, request, applicationSq);
+	}
+	
+	private void updateApplicantResultNotification(Long statusCd, ApplicationStatusRequest request, Long applicationSq) {
+		String statusName = commonCodeMapper.findCommonCodeNmBySq(statusCd);
+		
+		Long applicationUserSq = applicationMapper.findUserSqByApplicationSq(applicationSq);
+		Long projectSq = applicationMapper.findProjectBySq(applicationSq);
+		
+		if (applicationSq == null || projectSq == null) {
+			return;
+		}
+		
+		NotificationDTO notification = NotificationDTO.builder()
+				.userSq(applicationUserSq)
+				.notificationTypeCd(NotificationTypeCode.APPLICATION_RESULT.getCode())
+    			.notificationTargetTypeCd(NotificationTypeCode.APPLICATION_RESULT.getCode())
+    			.notificationTargetSq(projectSq)
+    			.notificationTargetParentTypeCd(null)
+    			.notificationTargetParentSq(null)
+    			.notificationTtl(NotificationTypeCode.APPLICATION_RESULT.getTitle())
+    			.notificationTxt("지원 결과를 확인하세요.")
+    			.build();
+		
+		notificationService.createNotification(notification);
 	}
 
 	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request) {
