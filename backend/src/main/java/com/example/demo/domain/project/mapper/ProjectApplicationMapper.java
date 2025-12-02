@@ -107,5 +107,7 @@ public interface ProjectApplicationMapper {
 	int countCorporateApplications(Map<String, Object> params);
 
 	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
+	
+	public Long findUserSqByApplicationSq(@Param("applicationSq") Long applicationSq);
 
 }

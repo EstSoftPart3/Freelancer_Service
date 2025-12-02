@@ -583,4 +583,12 @@
         SELECT * FROM TBL_AREA_C
     </select>
 
+	<!-- 해당 소속을 스크랩하고 있는 모든 유저 조회 -->
+	<select id="findScrappersByCompanySq" resultType="java.lang.Long">
+		SELECT user_sq
+		FROM TBL_SCRAP_S 
+		WHERE 
+			company_sq = #{companySq}
+			AND scrap_type_cd = #{scrapTypeCd}
+	</select>
 </mapper>
