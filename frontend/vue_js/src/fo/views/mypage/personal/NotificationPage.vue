@@ -22,14 +22,12 @@
               formatDate(notification.notificationCreatedAtDtm)
             }}</span>
             <a
-              href="#"
               class="btn btn-rounded"
               :class="
                 notification.notificationIsReadYn === 'N'
                   ? 'btn-unread'
                   : 'btn-read'
               "
-              @click.stop.prevent="toggleReadStatus(notification)"
             >
               {{
                 notification.notificationIsReadYn === 'N' ? '읽지않음' : '읽음'
@@ -63,7 +61,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { api } from '@/axios'
 
 export default {
   name: 'NotificationPage',
@@ -78,105 +76,25 @@ export default {
   methods: {
     async fetchNotifications() {
       try {
-        const response = await axios.get(`/api/notifications`)
-        this.notifications = response.data
+        const response = await api.$get(`/notifications/page`)
+        this.notifications = response.output?.notifications || []
       } catch (error) {
         console.error('알림 조회 실패 : ', error)
-        this.loadMockData()
       }
-    },
-
-    loadMockData() {
-      this.notifications = [
-        {
-          notificationSq: 1,
-          notificationTypeCd: 1,
-          notificationTargetTypeCd: 1,
-          notificationTargetSq: 101,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '모집 마감 알림',
-          notificationTxt: '프로젝트 A · 마감일 2025-11-26',
-          notificationIsReadYn: 'N',
-          notificationCreatedAtDtm: '2025-10-01T10:15:30',
-        },
-        {
-          notificationSq: 2,
-          notificationTypeCd: 2,
-          notificationTargetTypeCd: 2,
-          notificationTargetSq: 102,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '스크립 기업 신규 공고',
-          notificationTxt: '프로젝트 B · EST Soft',
-          notificationIsReadYn: 'N',
-          notificationCreatedAtDtm: '2025-11-27T09:40:00',
-        },
-        {
-          notificationSq: 3,
-          notificationTypeCd: 3,
-          notificationTargetTypeCd: 3,
-          notificationTargetSq: 103,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '면접 일정',
-          notificationTxt: '프로젝트 C · 오늘 14:00',
-          notificationIsReadYn: 'Y',
-          notificationCreatedAtDtm: '2025-11-27T08:30:00',
-        },
-        {
-          notificationSq: 4,
-          notificationTypeCd: 3,
-          notificationTargetTypeCd: 3,
-          notificationTargetSq: 104,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '면접 일정',
-          notificationTxt: '프로젝트 D · 내일 14:00',
-          notificationIsReadYn: 'N',
-          notificationCreatedAtDtm: '2025-11-26T16:20:00',
-        },
-        {
-          notificationSq: 5,
-          notificationTypeCd: 4,
-          notificationTargetTypeCd: 4,
-          notificationTargetSq: 105,
-          notificationTargetParentTypeCd: 1,
-          notificationTargetParentSq: 201,
-          notificationTtl: '내 게시글 댓글 알림',
-          notificationTxt: '"아이들하세요."',
-          notificationIsReadYn: 'Y',
-          notificationCreatedAtDtm: '2025-11-26T14:30:00',
-        },
-        {
-          notificationSq: 6,
-          notificationTypeCd: 5,
-          notificationTargetTypeCd: 5,
-          notificationTargetSq: 106,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '지원 결과 안내',
-          notificationTxt: '프로젝트 F · 공종 Si',
-          notificationIsReadYn: 'Y',
-          notificationCreatedAtDtm: '2025-11-26T14:30:00',
-        },
-        {
-          notificationSq: 7,
-          notificationTypeCd: 1,
-          notificationTargetTypeCd: 1,
-          notificationTargetSq: 107,
-          notificationTargetParentTypeCd: null,
-          notificationTargetParentSq: null,
-          notificationTtl: '모집 마감',
-          notificationTxt: '프로젝트 G · 금융권 Si',
-          notificationIsReadYn: 'N',
-          notificationCreatedAtDtm: '2025-11-26T10:00:00',
-        },
-      ]
     },
 
     async handleNotificationClick(notification) {
       console.log('알림 클릭 : ', notification)
+      if (notification.notificationIsReadYn === 'N') {
+        try {
+          await api.$patch(`/notifications/${notification.notificationSq}`, {
+            notificationIsReadYn: 'Y',
+          })
+          notification.notificationIsReadYn = 'Y'
+        } catch (error) {
+          console.error('읽음 상태 변경 실패 :', error)
+        }
+      }
       this.navigateToTarget(notification)
     },
 
@@ -184,12 +102,9 @@ export default {
       try {
         const newStatus = notification.notificationIsReadYn === 'N' ? 'Y' : 'N'
 
-        await axios.put(
-          `/api/notifications/${notification.notificationSq}/read`,
-          {
-            notificationIsReadYn: newStatus,
-          },
-        )
+        await api.$patch(`/notifications/${notification.notificationSq}`, {
+          notificationIsReadYn: newStatus,
+        })
 
         notification.notificationIsReadYn = newStatus
       } catch (error) {
@@ -203,7 +118,7 @@ export default {
           return
         }
 
-        await axios.delete(`/api/notifications/${notification.notificationSq}`)
+        await api.$delete(`/notifications/${notification.notificationSq}`)
 
         // 로컬 목록에서 제거
         this.notifications = this.notifications.filter(
@@ -219,6 +134,12 @@ export default {
       const targetSq = notification.notificationTargetSq
 
       switch (targetType) {
+        case 2201: //답변
+        case 2202: //댓글
+          this.$router.push(
+            `/qna/${notification.notificationTargetParentSq}#comment-${targetSq}`,
+          )
+          break
         case 1:
           this.$router.push(`/projects/${targetSq}`)
           break
@@ -227,11 +148,6 @@ export default {
           break
         case 3:
           this.$router.push(`/interviews/${targetSq}`)
-          break
-        case 4:
-          this.$router.push(
-            `/posts/${notification.notificationTargetParentSq}#comment-${targetSq}`,
-          )
           break
         case 5:
           this.$router.push(`/applications/${targetSq}`)
@@ -378,10 +294,10 @@ export default {
   border-color: #e8f5e9;
 }
 
-.btn-unread:hover {
+/* .btn-unread:hover {
   background-color: #c8e6c9;
   border-color: #a5d6a7;
-}
+} */
 
 .btn-read {
   color: #333;
@@ -389,10 +305,10 @@ export default {
   border-color: #ffc0cb;
 }
 
-.btn-read:hover {
+/* .btn-read:hover {
   background-color: #ffb3c1;
   border-color: #ff9eae;
-}
+} */
 
 /* ✅ 삭제 버튼: 왼쪽 마진을 주어 오른쪽 끝으로 밀어냅니다. */
 .btn-delete {
@@ -413,7 +329,6 @@ export default {
   background-color: #ffebee;
   border-radius: 4px;
 }
-
 .icon-delete {
   width: 16px;
   height: 16px;

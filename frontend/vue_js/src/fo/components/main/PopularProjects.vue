@@ -12,46 +12,95 @@
             <button
               v-for="tab in filterTabs"
               :key="tab.key"
-              :class="['btn', 'btn-sm', 'me-2', activeFilter === tab.key ? 'btn-primary' : 'btn-outline-secondary']"
+              :class="[
+                'btn',
+                'btn-sm',
+                'me-2',
+                activeFilter === tab.key
+                  ? 'btn-primary'
+                  : 'btn-outline-secondary',
+              ]"
               @click="setActiveFilter(tab.key)"
             >
-              {{  tab.label }}
+              {{ tab.label }}
             </button>
           </div>
-          <button class="btn btn-outline-primary btn-sm" @click="$emit('go-to-list')">
+          <button
+            class="btn btn-outline-primary btn-sm"
+            @click="$emit('go-to-list')"
+          >
             더보기 <i class="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
       </div>
 
-      <div v-if="isLoadingProjects" class="text-center py-5" style="min-height: 300px;">
+      <div
+        v-if="isLoadingProjects"
+        class="text-center py-5"
+        style="min-height: 300px"
+      >
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">로딩 중</span>
         </div>
       </div>
 
-      <div v-else-if="popularProjects.length === 0" class="text-center py-5 empty-message" style="min-height: 300px;">
+      <div
+        v-else-if="popularProjects.length === 0"
+        class="text-center py-5 empty-message"
+        style="min-height: 300px"
+      >
         <p class="text-muted">표시할 프로젝트가 없습니다.</p>
       </div>
 
-      <div v-else class="row" style="min-height: 300px;">
+      <div v-else class="row" style="min-height: 300px">
         <div
           v-for="project in displayedProjects"
           :key="project.projectSq"
           class="col mb-4"
         >
-          <div class="project-card card h-100" @click="handleProjectCardClick(project)" style="cursor: pointer;">
-            <img
-              v-if="project.projectImageUrl"
-              :src="project.projectImageUrl"
-              class="card-img-top"
-              alt="프로젝트 이미지"
-            />
+          <div
+            class="project-card card h-100"
+            @click="handleProjectCardClick(project)"
+            style="cursor: pointer"
+          >
+            <div class="card-img-wrapper">
+              <img
+                :src="project.projectImageUrl || defaultProjectImage"
+                class="card-img-top"
+                alt="프로젝트 이미지"
+              />
+              <div class="view-count-overlay">
+                <i class="bi bi-eye-fill me-1"></i>
+                {{ formatNumber(project.projectViewCnt || 0) }}
+              </div>
+            </div>
             <div class="card-body">
-              <h5 class="card-title">{{ project.projectTtl }}</h5>
-              <p class="card-text text-muted">{{ project.companyNm }}</p>
+              <div
+                class="d-flex justify-content-between align-items-start mb-2"
+              >
+                <h5 class="card-title mb-0">{{ project.projectTtl }}</h5>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                  <span class="days-left"
+                    >D-{{ calculateDaysLeft(project.projectEndDt) }}</span
+                  >
+                  <button
+                    class="btn-scrap"
+                    @click.stop="toggleScrap(project)"
+                    :class="{ active: project.hasScrapped }"
+                  >
+                    <i
+                      class="bi"
+                      :class="
+                        project.hasScrapped ? 'bi-heart-fill' : 'bi-heart'
+                      "
+                    ></i>
+                  </button>
+                </div>
+              </div>
+              <p class="card-text text-muted">🏢By {{ project.companyNm }}</p>
               <p class="card-text small text-muted">
-                {{ project.address }} / {{ project.devGradeNm }} / {{ project.requiredEduLv1 }}
+                {{ project.address }} / {{ project.devGradeNm }} /
+                {{ project.requiredEduLv1 }}
               </p>
               <div class="d-flex gap-1 flex-wrap mt-2">
                 <span
@@ -71,94 +120,202 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '@/fo/stores/userStore';
-import { api } from '@/axios';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/fo/stores/userStore'
+import { api } from '@/axios'
+import defaultProjectImage from '@/assets/default-kard.png'
 
-const router = useRouter();
-const userStore = useUserStore();
+const router = useRouter()
+const userStore = useUserStore()
 
-defineEmits(['go-to-list']);
+defineEmits(['go-to-list'])
 
 const filterTabs = [
   { key: 'views', label: '조회순' },
   { key: 'scraps', label: '스크랩순' },
-  { key: 'applications', label: '지원순' }
-];
+  { key: 'applications', label: '지원순' },
+]
 
-const activeFilter = ref('views');
-const popularProjects = ref([]);
+const activeFilter = ref('views')
+const popularProjects = ref([])
 const allPopularProjectsData = ref({
   viewCount: [],
   scrapCount: [],
-  applicantCount: []
-});
+  applicantCount: [],
+})
 
-const isLoadingProjects = ref(false);
+const isLoadingProjects = ref(false)
 
 const displayedProjects = computed(() => {
-  return popularProjects.value.slice(0, 5);
-});
+  return popularProjects.value.slice(0, 4)
+})
 
 const loadPopularProjects = async () => {
   try {
-    isLoadingProjects.value = true;
-    const response = await api.$get('/projects/top');
+    isLoadingProjects.value = true
+    const response = await api.$get('/projects/top')
 
     if (response.output) {
+      // 각 배열의 프로젝트에 hasScrapped 설정
+      // API에서 hasScrapped가 null이면 false로 설정
       allPopularProjectsData.value = {
-        viewCount: response.output.viewCount || [],
-        scrapCount: response.output.scrapCount || [],
-        applicantCount: response.output.applicantCount || []
-      };
+        viewCount: (response.output.viewCount || []).map((p) => ({
+          ...p,
+          hasScrapped: p.hasScrapped === true || p.hasScrapped === 'Y',
+        })),
+        scrapCount: (response.output.scrapCount || []).map((p) => ({
+          ...p,
+          hasScrapped: p.hasScrapped === true || p.hasScrapped === 'Y',
+        })),
+        applicantCount: (response.output.applicantCount || []).map((p) => ({
+          ...p,
+          hasScrapped: p.hasScrapped === true || p.hasScrapped === 'Y',
+        })),
+      }
     }
 
-    updatePopularProjects('views');
+    updatePopularProjects('views')
+
+    // 로그인한 경우 스크랩 상태 동기화
+    if (userStore.isLoggedIn) {
+      await syncScrapStatus()
+    }
   } catch (error) {
-    console.error('인기 프로젝트 로드 실패: ', error);
-    popularProjects.value = [];
+    console.error('인기 프로젝트 로드 실패: ', error)
+    popularProjects.value = []
   } finally {
-    isLoadingProjects.value = false;
+    isLoadingProjects.value = false
   }
-};
+}
+
+// 스크랩 상태 동기화 함수
+const syncScrapStatus = async () => {
+  try {
+    // 사용자의 스크랩 목록을 가져오는 API 호출
+    // API 엔드포인트를 확인하고 수정 필요
+    // 예: const scrapResponse = await api.$get('/mypage/scraps/projects')
+
+    // 임시: 각 프로젝트마다 스크랩 여부 확인하는 방법
+    // 이 부분은 백엔드 API 구조에 맞게 수정 필요
+    console.log('스크랩 상태 동기화 필요 - 백엔드 API 확인 필요')
+  } catch (error) {
+    console.error('스크랩 상태 동기화 실패:', error)
+  }
+}
 
 const updatePopularProjects = (filter) => {
-  switch(filter) {
+  switch (filter) {
     case 'views':
-      popularProjects.value = allPopularProjectsData.value.viewCount || [];
-      break;
+      popularProjects.value = allPopularProjectsData.value.viewCount || []
+      break
     case 'scraps':
-      popularProjects.value = allPopularProjectsData.value.scrapCount || [];
-      break;
+      popularProjects.value = allPopularProjectsData.value.scrapCount || []
+      break
     case 'applications':
-      popularProjects.value = allPopularProjectsData.value.applicantCount || [];
-      break;
+      popularProjects.value = allPopularProjectsData.value.applicantCount || []
+      break
     default:
-      popularProjects.value = allPopularProjectsData.value.viewCount || [];
+      popularProjects.value = allPopularProjectsData.value.viewCount || []
   }
-};
+}
 
 const setActiveFilter = (filter) => {
-  activeFilter.value = filter;
-  updatePopularProjects(filter);
-};
+  activeFilter.value = filter
+  updatePopularProjects(filter)
+}
 
 const handleProjectCardClick = (project) => {
-  const userType = userStore.getUserType;
+  const userType = userStore.getUserType
   if (userType === 'PERSONAL') {
-    router.push(`/project/spec/user/${project.projectSq}`);
+    router.push(`/project/spec/user/${project.projectSq}`)
   } else if (userType === 'COMPANY') {
-    router.push(`/project/spec/company/${project.projectSq}`);
+    router.push(`/project/spec/company/${project.projectSq}`)
   } else {
-    router.push(`/project/spec/user/${project.projectSq}`);
+    router.push(`/project/spec/user/${project.projectSq}`)
+  }
+}
+
+const calculateDaysLeft = (endDate) => {
+  if (!endDate) return '∞'
+  const today = new Date()
+  const end = new Date(endDate)
+  const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24))
+  return diff > 0 ? diff : 0
+}
+
+const formatNumber = (num) => {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K'
+  }
+  return num.toString()
+}
+
+const toggleScrap = async (project) => {
+  // 로그인 체크
+  if (!userStore.isLoggedIn) {
+    alert('로그인이 필요한 기능입니다.')
+    router.push('/login')
+    return
+  }
+
+  const previousState = project.hasScrapped
+
+  // 즉시 UI 업데이트 (낙관적 업데이트)
+  project.hasScrapped = !previousState
+
+  console.log('스크랩 토글:', {
+    projectSq: project.projectSq,
+    이전상태: previousState,
+    새상태: project.hasScrapped,
+  })
+
+  try {
+    const response = await api.$post(`/projects/${project.projectSq}/scraps`, {
+      hasScrapped: project.hasScrapped,
+      target: '프로젝트',
+    })
+
+    if (response.status === 'OK') {
+      console.log(
+        `스크랩 ${project.hasScrapped ? '추가' : '취소'} 성공! 현재 스크랩 수: ${response.output}`,
+      )
+
+      // Vue의 반응성을 위해 명시적으로 업데이트
+      const index = popularProjects.value.findIndex(
+        (p) => p.projectSq === project.projectSq,
+      )
+      if (index !== -1) {
+        popularProjects.value[index].hasScrapped = project.hasScrapped
+        if (response.output) {
+          popularProjects.value[index].scrapCount = response.output
+        }
+      }
+    }
+  } catch (error) {
+    console.error('스크랩 처리 실패:', error)
+
+    // 실패 시 원래 상태로 복구
+    project.hasScrapped = previousState
+    const index = popularProjects.value.findIndex(
+      (p) => p.projectSq === project.projectSq,
+    )
+    if (index !== -1) {
+      popularProjects.value[index].hasScrapped = previousState
+    }
+
+    if (error.response?.status === 401) {
+      alert('로그인이 만료되었습니다.')
+      router.push('/login')
+    } else {
+      alert('스크랩 처리 중 오류가 발생했습니다.')
+    }
   }
 }
 
 onMounted(() => {
-  loadPopularProjects();
-});
-
+  loadPopularProjects()
+})
 </script>
 
 <style scoped>
@@ -180,6 +337,10 @@ onMounted(() => {
   font-size: 1rem;
 }
 
+.section-header-left p.text-muted {
+  color: #6c757d !important;
+}
+
 .filter-tabs .btn {
   border-radius: 25px;
   padding: 0.4rem 1.2rem;
@@ -199,8 +360,8 @@ onMounted(() => {
 
 .popular-projects-section .row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .popular-projects-section .col {
@@ -211,24 +372,110 @@ onMounted(() => {
   border: none;
   border-radius: 15px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   background: white;
 }
 
+.card-img-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-img-wrapper img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.project-card:hover .card-img-wrapper img {
+  transform: scale(1.05);
+}
+
+.view-count-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.project-card:hover .view-count-overlay {
+  opacity: 1;
+}
+
 .project-card .card-body {
-  padding: 1.375rem;
+  padding: 1.5rem;
 }
 
 .project-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .project-card .card-title {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #333;
+  color: #0088cc;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.days-left {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ff6b6b;
+  white-space: nowrap;
+}
+
+.btn-scrap {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #ddd;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.btn-scrap:hover {
+  color: #ff6b6b;
+  transform: scale(1.1);
+}
+
+.btn-scrap.active {
+  color: #ff6b6b;
+}
+
+.btn-scrap.active i {
+  animation: heartBeat 0.3s ease;
+}
+
+@keyframes heartBeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.card-title {
+  color: #0088cc;
 }
 
 .project-card .card-text {
@@ -236,15 +483,23 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
+.popular-projects-section .text-muted {
+  color: #0088cc !important;
+}
+
+.project-card .card-text.small.text-muted {
+  color: #6c757d !important;
+}
+
 @media (max-width: 1400px) {
   .popular-projects-section .row {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
   .popular-projects-section .row {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -266,6 +521,11 @@ onMounted(() => {
 
   .popular-projects-section .row {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .card-img-wrapper img {
+    height: 180px;
   }
 }
 
@@ -283,6 +543,9 @@ onMounted(() => {
   .popular-projects-section .row {
     grid-template-columns: 1fr;
   }
-}
 
+  .card-img-wrapper img {
+    height: 200px;
+  }
+}
 </style>
