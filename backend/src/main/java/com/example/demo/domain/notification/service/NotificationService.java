@@ -49,6 +49,27 @@ public class NotificationService {
 		NotificationResponse response = toResponse(dto);
 		eventPublisher.publishEvent(new NotificationEvent(dto.getUserSq(), response));
 	}
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW) 
+    public void createBatchNotification(List<NotificationDTO> dtoList) {
+    	if (dtoList == null || dtoList.isEmpty()) {
+    		return;
+    	}
+    	
+    	LocalDateTime now = LocalDateTime.now();
+    	dtoList.forEach(dto -> {
+    		dto.setNotificationIsReadYn("N");
+    		dto.setNotificationIsDeletedYn("N");
+    		dto.setNotificationCreatedAtDtm(now);
+    	});
+    	
+    	notificationMapper.insertBatch(dtoList);
+    	
+    	dtoList.forEach(dto -> {
+    		NotificationResponse response = toResponse(dto);
+    		eventPublisher.publishEvent(new NotificationEvent(dto.getUserSq(), response));
+    	});
+    }
 	
 	private void validateDto(NotificationDTO dto) {
 		if (dto.getUserSq() == null) {

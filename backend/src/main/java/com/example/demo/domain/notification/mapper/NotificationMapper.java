@@ -14,6 +14,8 @@ public interface NotificationMapper {
 	
 	void insert(NotificationDTO dto);	
 	
+	void insertBatch(List<NotificationDTO> dtoList);
+	
 	NotificationDTO findBySq(@Param("notificationSq") Long notificationSq);
 	
 	void updateReadStatus(@Param("notificationSq") Long notificationSq,
