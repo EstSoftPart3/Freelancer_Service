@@ -12,11 +12,17 @@ import java.util.stream.Collectors;
 
 import org.checkerframework.checker.units.qual.s;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.company.service.CompanyService;
+import com.example.demo.domain.notification.controller.NotificationController;
+import com.example.demo.domain.notification.dto.NotificationDTO;
+import com.example.demo.domain.notification.enums.NotificationTypeCode;
+import com.example.demo.domain.notification.service.NotificationService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 import com.example.demo.domain.project.dto.PopularProjectDTO;
 import com.example.demo.domain.project.dto.UserRole;
@@ -53,12 +59,14 @@ import com.example.demo.domain.user.controller.FindController;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProjectService {
 
-    private final FindController findController;
+	private final FindController findController;
 	private final ProjectMapper projectMapper;
 	private final CommonCodeMapper commonCodeMapper;
 	private final DistrictMapper districtMapper;
@@ -68,6 +76,8 @@ public class ProjectService {
 	private final ProjectApplicationMapper projectApplicationMapper;
 	private final ScrapMapper scrapMapper;
 	private final CompanyService companyService;
+	private final AffiliationMapper affiliationMapper;
+	private final NotificationService notificationService;
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -84,6 +94,41 @@ public class ProjectService {
 		projectMapper.insertProject(project);
 
 		registerSubEntities(project, request);
+		
+		createScrapNotification(project);
+	}
+	
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	private void createScrapNotification(Project project) {
+		Long companyScrapCode = commonCodeMapper.findCommonCodeSqByEngName("COMPANY", ParentCodeEnum.SCRAP_TYPE.getCode());
+		
+		if (companyScrapCode == null) {
+			return;
+		}
+		
+		Long notificationTypeCd = NotificationTypeCode.SCRAP_COMPANY.getCode();
+		String notificationTtl = NotificationTypeCode.SCRAP_COMPANY.getTitle();
+		
+		List<Long> scrapperUserSqs = affiliationMapper.findScrappersByCompanySq(project.getCompanySq(), companyScrapCode);
+		
+		if (scrapperUserSqs.isEmpty()) {
+			return;
+		}
+		
+		List<NotificationDTO> notifications = scrapperUserSqs.stream()
+				.map(userSq -> NotificationDTO.builder()
+						.userSq(userSq)
+						.notificationTypeCd(notificationTypeCd)
+		    			.notificationTargetTypeCd(notificationTypeCd)
+		    			.notificationTargetSq(project.getProjectSq())
+		    			.notificationTargetParentTypeCd(null)
+		    			.notificationTargetParentSq(null)
+		    			.notificationTtl(notificationTtl)
+		    			.notificationTxt(project.getProjectDescriptionTxt())
+		    			.build())
+				.toList();
+		
+		notificationService.createBatchNotification(notifications);
 	}
 
 	public long registerAddress(ProjectCreateRequest request) {

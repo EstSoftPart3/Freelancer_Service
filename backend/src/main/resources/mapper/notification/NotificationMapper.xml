@@ -32,6 +32,37 @@
 		)
 	</insert>
 	
+	<insert id="insertBatch" parameterType="java.util.List">
+		INSERT INTO TBL_NOTIFICATION (
+			user_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_is_deleted_yn,
+			notification_created_at_dtm
+		) VALUES
+		<foreach collection="list" item="dto" separator=",">
+		(
+			#{dto.userSq}, 
+			#{dto.notificationTypeCd}, 
+        	#{dto.notificationTargetTypeCd}, 
+        	#{dto.notificationTargetSq}, 
+        	#{dto.notificationTargetParentTypeCd, jdbcType=NUMERIC}, 
+        	#{dto.notificationTargetParentSq, jdbcType=NUMERIC}, 
+        	#{dto.notificationTtl}, 
+        	#{dto.notificationTxt}, 
+        	#{dto.notificationIsReadYn}, 
+        	#{dto.notificationIsDeletedYn}, 
+        	#{dto.notificationCreatedAtDtm}
+		)
+		</foreach>
+	</insert>
+	
 	<!-- 읽음 처리 -->
 	<update id="updateReadStatus">
 		UPDATE TBL_NOTIFICATION

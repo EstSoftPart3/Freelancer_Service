@@ -104,5 +104,9 @@ public interface AffiliationMapper {
 
 	// 주소 리스트 조회
 	List<AreaCd> findAddressCds();
+	
+	// 특정 회사를 스크랩하고 있는 모든 유저 조회
+	List<Long> findScrappersByCompanySq(@Param("companySq") Long companySq,
+										@Param("scrapTypeCd") Long scrapTypeCd);
 
 }
