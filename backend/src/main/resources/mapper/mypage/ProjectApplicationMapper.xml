@@ -376,4 +376,14 @@
 		'unread' AS type, COUNT(*) FROM TBL_PROJECT_APPLICATION_H a WHERE a.company_sq =
 		#{companySq} AND a.read_application_dtm IS NULL </select>
 
+	<select id="findUserSqByApplicationSq" resultType="Long">
+		SELECT 
+			r.user_sq
+		FROM 
+			TBL_PROJECT_APPLICATION_H a
+		JOIN 
+			TBL_RESUME_M r ON a.resume_sq = r.resume_sq
+		WHERE
+			a.project_application_sq = #{applicationSq}
+	</select>
 </mapper>
