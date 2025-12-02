@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
 
 export default function FindAccountForm({findType}) {
   const router = useRouter()
-    const { setUserInfo } = useAuth()
     const { showAlert } = useAlert()
-  
     const [form, setForm] = useState({
       id: '',
       name: '',
@@ -102,6 +99,19 @@ export default function FindAccountForm({findType}) {
         }
       }
     }
+
+    // 폼 유효성 검사
+    const isValidatedForm = (fd) => {
+      console.log(validFields)
+      if (fd) {
+        return true
+      } else {
+        console.warn('❌ 유효성 검사 실패. 폼 제출 불가.')
+        showAlert('모든 필드를 올바르게 입력해주세요.', 'danger')
+        return false
+      }
+    }
+    
   
     // =============== 이벤트 핸들러 ===================
   
@@ -146,67 +156,70 @@ export default function FindAccountForm({findType}) {
       validateName()
       validateEmail()
       validateVerifyCode()
-
+      
       // ID찾기
       if (findType === 'id') {
       
         const isFormValid = validFields.name && validFields.email && validFields.verifyCode
-        const formData = {
-          name : form.name,
-          email : `${form.emailId}@${form.emailDomain}`,
-        }
-        try {
-          const response = await api.$post('/find-id', formData)
-          console.log('폼 제출', response)
-          if (response.status === 'OK') {
-            showAlert(
-              response.message || 'ID 찾기에 성공하였습니다.',
-              'success'
-            )
-            // 데이터를 sessionStorage에 저장
-            sessionStorage.setItem('findIdResult', JSON.stringify(response.output))
-            const stored = sessionStorage.getItem('findIdResult')
-            if (stored) {
-              router.push('/auth/find-result')
+        if (isValidatedForm(isFormValid)) {
+          const formData = {
+            name : form.name,
+            email : `${form.emailId}@${form.emailDomain}`,
+          }
+          try {
+            const response = await api.$post('/find-id', formData)
+            console.log('폼 제출', response)
+            if (response.status === 'OK') {
+              showAlert(
+                response.message || 'ID 찾기에 성공하였습니다.',
+                'success'
+              )
+              // 데이터를 sessionStorage에 저장
+              sessionStorage.setItem('findIdResult', JSON.stringify(response.output))
+              const stored = sessionStorage.getItem('findIdResult')
+              if (stored) {
+                router.push('/auth/find-result')
+              } else {
+                console.error('저장은 했지만 불러오기 실패')
+              }
             } else {
-              console.error('저장은 했지만 불러오기 실패')
-            }
-          } else {
-          showAlert(
-            response.message || 'ID 찾기에 실패하였습니다.',
-            'danger'
-          )
-        }
-        } catch (error) {
-          handleError(error)
+            showAlert(
+              response.message || 'ID 찾기에 실패하였습니다.',
+              'danger'
+            )
+          }
+          } catch (error) {
+            handleError(error)
+          }
         }
       }
-
       // password 찾기
       if (findType === 'password') {
-        const isFormValid = validFields.id && validFields.name && validFields.email && validFields.verifyCode
-        const formData = {
-          userId : form.id,
-          name : form.name,
-          email : `${form.emailId}@${form.emailDomain}`,
-        }
-        try {
-          const response = await api.$post('/reset-password/verify', formData)
-          console.log('폼 제출', response)
-          if (response.status === 'ok') {
-            showAlert(
-            response.message || '비밀번호 찾기에 성공하였습니다.',
-            'success'
-          )
-          router.push('/auth/find-account/reset-password')
-          } else {
-          showAlert(
-            response.message || '비밀번호 찾기에 실패하였습니다.',
-            'danger'
-          )
-        }
-        } catch (error) {
-          handleError(error)
+        const isFormValid = form.id && validFields.name && validFields.email && validFields.verifyCode
+        if (isValidatedForm(isFormValid)) {
+          const formData = {
+            userId : form.id,
+            name : form.name,
+            email : `${form.emailId}@${form.emailDomain}`,
+          }
+          try {
+            const response = await api.$post('/reset-password/verify', formData, {withCredentials: true})
+            console.log('폼 제출', response)
+            if (response.status === 'OK') {
+              showAlert(
+                response.message || '비밀번호 찾기에 성공하였습니다.',
+                'success'
+              )
+              router.push('/auth/reset-password')
+            } else {
+              showAlert(
+                response.message || '비밀번호 찾기에 실패하였습니다.',
+                'danger'
+              )
+            }
+          } catch (error) {
+            handleError(error)
+          }
         }
       }
     }

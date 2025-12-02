@@ -52,7 +52,7 @@ export default function CommonConfirmModal({
         <h5 className="modal-title">{title}</h5>
         <button type="button" className="btn-close" onClick={handleClose}></button>
       </div>
-      <div className="modal-body">
+      <div className="modal-body ps-4">
         <p>{message}</p>
       </div>
       <div className="modal-footer">

@@ -85,6 +85,9 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
       console.error('타입 코드 조회 실패:', error);
     }
   };
+  useEffect(() => {
+    console.log('업무단 리스트', projectTaskTypeList)
+  }, [projectRoleTypeList])
 
   // 스킬 모달 열기
   const openSkillModal = () => {
@@ -132,11 +135,11 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
     }
 
     const selectedWorkUnit = projectTaskTypeList.find(
-      (item) => item.commonCodeSq === form.workUnit
+      (item) => item.commonCodeSq.toString() === form.workUnit
     );
 
     const selectedRole = projectRoleTypeList.find(
-      (item) => item.commonCodeSq === form.role
+      (item) => item.commonCodeSq.toString() === form.role
     );
 
     const project = {
@@ -253,7 +256,8 @@ const ShowProjectFormModal = ({ onComplete, projectId }) => {
                   <label className={styles.modalLabel}>업무단</label>
                   <select
                     value={form.workUnit || ''}
-                    onChange={(e) => updateForm('workUnit', e.target.value)}
+                    onChange={(e) => {
+                      updateForm('workUnit', e.target.value)}}
                     className="form-control"
                   >
                     <option disabled value="">

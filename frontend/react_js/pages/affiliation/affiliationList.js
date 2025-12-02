@@ -366,7 +366,7 @@ export default function AffiliationListPage() {
         <div
           className="modal fade show d-block"
           tabIndex="-1"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1049 }}
         >
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <AffiliationRecruitModal

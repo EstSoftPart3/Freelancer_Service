@@ -3,6 +3,7 @@ import { useModalStore } from "../../../store/modalStore";
 import { useAlertStore } from "../../../store/alertStore";
 import { api } from "../../../api";
 import CommonPagination from "../../common/CommonPagination";
+import ResumeDetailModal from "./ResumeDetailModal";
 
 export default function ResumeSelectModal( {
     userSq,

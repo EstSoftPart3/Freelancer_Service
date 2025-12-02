@@ -3,6 +3,7 @@ import { useModalStore } from '@/store/modalStore'
 import { useAlertStore } from '@/store/alertStore'
 import { api } from '@/lib/axios'
 import CommonConfirmModal from '@/components/myPage/common/CommonConfirmModal'
+import ResumeDetailModal from '../myPage/common/ResumeDetailModal'
 
 export default function ResumeSelectModal({ onClose, onSelect }) {
   const { openModal, closeModal } = useModalStore()
@@ -24,6 +25,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
   const getResumes = async () => {
     try {
       const res = await api.$get('/mypage/resume/select-list')
+      console.log(res)
       if (Array.isArray(res.output)) {
         setResumes(res.output)
       }
@@ -32,6 +34,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
     }
   }
 
+  //이력서 선택
   const selectResume = (resume) => {
     openModal(CommonConfirmModal, {
       title: '이력서 선택',
@@ -45,14 +48,25 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
     })
   }
 
+  // 이력서 상세보기 모달
+  const openResumeDetailModal = (resumeSq) => {
+    openModal(ResumeDetailModal, {
+      title: '이력서 상세보기',
+      size: 'modal-lg',
+      resumeSq: resumeSq,
+      api: api
+    });
+  };
+  
+
   useEffect(() => {
     getResumes()
   }, [])
 
   return (
-    <div className="modal-content">
+    <div className="modal-content modal-md">
       <div className="modal-header">
-        <h4 className="modal-title">이력서 선택</h4>
+        <h4 className="modal-title fs-4">이력서 선택</h4>
         <button
           type="button"
           className="btn-close"
@@ -60,7 +74,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
           aria-label="Close"
         ></button>
       </div>
-      <div className="modal-body">
+      <div className="modal-body px-4">
         <div>
           <ul className="simple-post-list m-0">
             {resumes.map((resume) => (
@@ -73,7 +87,7 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault()
-                      // 상세보기는 추후 구현
+                      openResumeDetailModal(resume.resumeSq)
                     }}
                     className="text-decoration-none"
                   >

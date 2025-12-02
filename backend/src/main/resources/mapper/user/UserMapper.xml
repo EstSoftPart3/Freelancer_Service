@@ -57,7 +57,7 @@
     resultType="com.example.demo.domain.user.dto.UserDTO"> SELECT user_sq AS userSq, user_id AS
     userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
     userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_is_activate_yn AS userIsActivateYn, user_refresh_token AS userRefreshToken FROM
-    TBL_USER_M WHERE user_id = #{userId} </select>
+    TBL_USER_M WHERE user_id = #{userId} AND user_is_deleted_yn = 'N' </select>
 
   <update id="updateRefreshToken"> UPDATE TBL_USER_M SET user_refresh_token = #{refreshToken},
     user_modified_at_dtm = NOW() WHERE user_sq = #{userSq} </update>
@@ -89,7 +89,7 @@
 
   <select id="findCommonCodeNameByCodeSq" parameterType="long" resultType="string"> SELECT
     common_code_nm FROM TBL_COMMON_CODE_C WHERE common_code_sq = #{codeSq} AND
-    common_code_is_active_yn = 'Y' </select>
+    common_code_is_active_yn = 'N' </select>
 
 
   <select id="findUserByInfo" parameterType="map"

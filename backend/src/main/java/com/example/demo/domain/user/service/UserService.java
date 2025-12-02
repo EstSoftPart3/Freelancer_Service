@@ -102,15 +102,20 @@ public class UserService {
         Long userTypeCd = (userInfo.get("userTypeCd") instanceof Number)
                 ? ((Number) userInfo.get("userTypeCd")).longValue()
                 : null;
+
         String userTypeName = null;
         if (userTypeCd != null) {
             userTypeName = userRepository.findCommonCodeNameByCodeSq(userTypeCd);
         }
 
+        // LocalDateTime 변환
+        java.sql.Timestamp timestamp = (java.sql.Timestamp) userInfo.get("userCreatedAtDtm");
+        java.time.LocalDateTime localDateTime = timestamp.toLocalDateTime();
+
         FindIdResponseDTO dto = new FindIdResponseDTO();
         dto.setUserId((String) userInfo.get("userId"));
         dto.setUserNm((String) userInfo.get("userNm"));
-        dto.setUserCreatedAtDtm((LocalDateTime) userInfo.get("userCreatedAtDtm"));
+        dto.setUserCreatedAtDtm(localDateTime);
         dto.setUserType(userTypeName);
 
         return dto;

@@ -642,6 +642,8 @@ const ResumeForm = () => {
     return result;
   };
 
+  console.log('이력서 데이터', resumeData)
+
   return (
     <MyPageLayout userType="PERSONAL">
     <div className="resume-form-container">
@@ -1045,7 +1047,7 @@ const ResumeForm = () => {
                                     height="16"
                                   />
                                 )}
-                                {lang.name}
+                                {lang.skillTagNm}
                               </button>
                             ))}
                           </div>
@@ -1076,7 +1078,7 @@ const ResumeForm = () => {
                                 {fw.icon && (
                                   <img src={fw.icon} alt={fw.name} width="16" height="16" />
                                 )}
-                                {fw.name}
+                                {fw.skillTagNm}
                               </button>
                             ))}
                           </div>

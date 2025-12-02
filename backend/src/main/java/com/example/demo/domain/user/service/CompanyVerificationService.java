@@ -39,16 +39,20 @@ public class CompanyVerificationService {
             return ApiResponse.of(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다.", false);
         }
 
+        // 인증용 사업자 번호
+        String bNo = requestDto.getBNo();
+        String verifyBNo = bNo.replace("-","");
+
         RestTemplate restTemplate = new RestTemplate();
         URI uri = UriComponentsBuilder.fromHttpUrl("http://api.odcloud.kr/api/nts-businessman/v1/validate")
                 .queryParam("serviceKey",
-                        "oo7Cptu%2Fmuq0VdvJOvEZ816dEyBChjhrqLIM0HqL2%2BeJeZXKg46MztkspSRsh3HBX%2FlyqoXbNCWB4OydznQ%2Bmg%3D%3D")
+                        "cea655c589ba22eee7d0852ae019c3248e08fd86d8ba44f5cc7ab12414039d3d")
                 .build(true)
                 .toUri();
 
         Map<String, Object> requestBody = new HashMap<>();
         Map<String, String> business = new HashMap<>();
-        business.put("b_no", requestDto.getBNo());
+        business.put("b_no", verifyBNo);
         business.put("start_dt", requestDto.getStartDt());
         business.put("p_nm", requestDto.getPNm());
         business.put("b_nm", requestDto.getBNm());

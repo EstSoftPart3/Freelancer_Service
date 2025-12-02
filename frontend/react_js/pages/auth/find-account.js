@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import { useAuth } from '@/contexts/AuthContext'
-import { useAlert } from '@/contexts/AlertContext'
-import { api } from '@/lib/axios'
 import CommonPageHeader from '@/components/common/CommonPageHeader'
-import styles from './login.module.css'
 import FindAccountForm from '@/components/auth/FindAccountForm'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function findAccountPage() {
   const [findType, setFindType] = useState('id')
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   useEffect(() => {
-    const type = searchParams.get('ft')
-    if (type && type !== findType) {
-      setFindType(type);
+    const ft = searchParams.get('ft')
+    if (ft === 'password') {
+      setFindType('password')
+    } else {
+      setFindType('id')
     }
-  }, [searchParams, findType])
+  }, [searchParams])
+
+  // ======== 이벤트 핸들러 ==========
+  const handleFindTypeChange = (ft) => {
+    setFindType(ft);
+    router.push(`/auth/find-account${ft === 'password' ? '?ft=password' : ''}`)
+  }
+
   return (
     <section>
       <CommonPageHeader
@@ -32,16 +38,16 @@ export default function findAccountPage() {
                 {/* 회원 유형 토글 버튼 */}
                 <div className="btn-group w-100 mb-4" role="group">
                   <button
-                    className={`btn ${findType === 'ID' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    className={`btn ${findType === 'id' ? 'btn-primary' : 'btn-outline btn-primary'}`}
                     style={{ width: '33.33%' }}
-                    onClick={() => setFindType('ID')}
+                    onClick={() => handleFindTypeChange('id')}
                   >
                     아이디 찾기
                   </button>
                   <button
-                    className={`btn ${findType === 'PASSWORD' ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    className={`btn ${findType === 'password' ? 'btn-primary' : 'btn-outline btn-primary'}`}
                     style={{ width: '33.33%' }}
-                    onClick={() => setFindType('PASSWORD')}
+                    onClick={() => handleFindTypeChange('password')}
                   >
                     비밀번호 찾기
                   </button>

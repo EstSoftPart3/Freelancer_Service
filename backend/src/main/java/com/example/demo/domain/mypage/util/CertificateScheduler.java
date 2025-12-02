@@ -26,7 +26,7 @@ public class CertificateScheduler {
         this.certificateService = certificateService;
     }
 
-    @Scheduled(cron = "0 0 1 * * MON")
+    @Scheduled(cron = "0 0 0 1 * *")
     public void fetchAndSaveCertificates() {
         try {
             StringBuilder urlBuilder = new StringBuilder(

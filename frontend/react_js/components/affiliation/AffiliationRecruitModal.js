@@ -72,6 +72,7 @@ export default function AffiliationRecruitModal({ afltnInfo, onClose, onConfirm 
           alertStore.show('소속 신청에 실패했습니다.', 'danger')
         }
       },
+      size: 'modal-md'
     })
   }
 
@@ -222,7 +223,7 @@ export default function AffiliationRecruitModal({ afltnInfo, onClose, onConfirm 
               소속 신청 완료
             </button>
           )}
-          <button type="button" className={styles.closeButton} onClick={closeModal}>
+          <button type="button" className={styles.closeButton} onClick={onClose}>
             <i className="fas fa-times me-2"></i>
             닫기
           </button>

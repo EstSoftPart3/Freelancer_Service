@@ -37,10 +37,10 @@ public class EmailVerificationService {
 
     // 테스트용
     public String sendVerificationCode(String email) throws MessagingException {
-        UserDTO existingUser = userRepository.findByEmail(email);
-        if (existingUser != null) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
+//        UserDTO existingUser = userRepository.findByEmail(email);
+//        if (existingUser != null) {
+//            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+//        }
         String code = generateCode();
         redisRepository.saveVerificationCode(email, code);
 
