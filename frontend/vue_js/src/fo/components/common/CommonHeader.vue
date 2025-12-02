@@ -107,7 +107,7 @@
               <div
                 class="header-nav-feature d-inline-flex gap-2 align-items-center"
               >
-                <!-- 유저 아이콘 + 이름 (드롭다운) -->
+                <!-- 알림 드롭다운 -->
                 <div class="dropdown" ref="notificationDropdownRef">
                   <a
                     href="#"
@@ -155,35 +155,45 @@
                       <div
                         v-for="notification in notifications"
                         :key="notification.notificationSq"
-                        class="dropdown-item small"
+                        class="dropdown-item small position-relative"
                         :class="{
                           'text-dark':
                             notification.notificationIsReadYn !== 'Y',
                           'text-muted':
                             notification.notificationIsReadYn === 'Y',
-                          'bg-light': notification.notificationIsReadYn !== 'Y', // 읽지 않은 알림 배경색 강조 (선택 사항)
+                          'bg-light': notification.notificationIsReadYn !== 'Y',
                         }"
                         style="white-space: normal; cursor: pointer"
-                        @click="markAsRead(notification.notificationSq)"
+                        @click="handleNotificationClick(notification)"
                       >
-                        <i
-                          class="me-1"
-                          :class="{
-                            // 1. 프로젝트 관련 알림 (예: 등록, 마감, 승인)
-                            'fas fa-briefcase text-primary':
-                              notification.notificationType === 'PROJECT',
-                            // 2. 스크랩/관심 목록 관련 알림
-                            'fas fa-star text-warning':
-                              notification.notificationType === 'SCRAP',
-                            // 3. 댓글/메시지 관련 알림
-                            'fas fa-comment-dots text-info':
-                              notification.notificationType === 'COMMENT',
-                            // 4. 일반 시스템/공지 알림 (기본)
-                            'fas fa-bell text-secondary':
-                              notification.notificationType === 'SYSTEM' ||
-                              !notification.notificationType,
-                          }"
-                        ></i>
+                        <!-- 읽지 않은 알림 파란색 점 표시 -->
+                        <span
+                          v-if="notification.notificationIsReadYn === 'N'"
+                          class="position-absolute rounded-circle"
+                          style="
+                            top: 10px;
+                            left: 8px;
+                            width: 8px;
+                            height: 8px;
+                            background-color: var(--bs-primary);
+                          "
+                        ></span>
+                        <!-- 타입별 이모지 -->
+                        <span
+                          :style="
+                            notification.notificationIsReadYn === 'N'
+                              ? 'margin-left: 16px;'
+                              : ''
+                          "
+                        >
+                          {{
+                            getNotificationEmoji(
+                              notification.notificationTypeCd,
+                            )
+                          }}
+                        </span>
+
+                        <!-- 알림 제목 -->
                         <span
                           :class="{
                             'fw-medium':
@@ -193,8 +203,12 @@
                           {{ notification.notificationTtl }}
                         </span>
                         <br />
-                        <small :class="ms - 3">{{
-                          notification.createdAt || '방금 전'
+
+                        <!-- 시간 표시 -->
+                        <small class="ms-3">{{
+                          formatNotificationTime(
+                            notification.notificationCreatedAtDtm,
+                          )
                         }}</small>
                       </div>
                     </template>
@@ -236,8 +250,7 @@
                   </div> -->
                 </div>
 
-                <!-- 유저 아이콘 + 이름 (버튼 정렬) -->
-                <!-- 유저 아이콘 + 이름 (드롭다운) -->
+                <!-- 유저 드롭다운 -->
                 <div class="dropdown" ref="userDropdownRef">
                   <a
                     href="#"
@@ -407,10 +420,127 @@ const notificationDropdownRef = ref(null)
 const userDropdownRef = ref(null)
 
 const unreadCount = computed(() => notificationStore.unreadCount)
-
 const notifications = computed(() => notificationStore.notifications)
-const markAsRead = async (notificationSq) => {
-  await notificationStore.markAsRead(notificationSq)
+
+// 알림 타입별 이모지 반환
+const getNotificationEmoji = (typeCd) => {
+  const emojiMap = {
+    2201: '💬', // QnA 답변
+    2202: '🗨️', // 댓글
+    2203: '📝', // 게시글
+    2204: '📌', // 프로젝트 마감
+    2205: '🔔', // 스크랩
+    2206: '✅', // 승인
+    2207: '📋', // 지원 결과
+  }
+  return emojiMap[typeCd] || '🔔' // 기본값
+}
+
+// 알림 시간 포맷
+const formatNotificationTime = (dateTime) => {
+  if (!dateTime) return '방금 전'
+
+  const date = new Date(dateTime)
+  const now = new Date()
+  const diff = now - date
+
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '방금 전'
+  if (minutes < 60) return `${minutes}분 전`
+  if (hours < 24) return `${hours}시간 전`
+  if (days < 7) return `${days}일 전`
+
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}.${day}`
+}
+
+// 알림 클릭 처리
+const handleNotificationClick = async (notification) => {
+  console.log('알림 클릭:', notification)
+
+  // 읽음 처리
+  await notificationStore.markAsRead(notification.notificationSq)
+
+  // 드롭다운 닫기
+  const dropdownElement =
+    notificationDropdownRef.value?.querySelector('.dropdown-menu')
+  if (dropdownElement) {
+    window.bootstrap.Dropdown.getInstance(
+      notificationDropdownRef.value.querySelector(
+        '[data-bs-toggle="dropdown"]',
+      ),
+    )?.hide()
+  }
+
+  // 페이지 이동
+  navigateToTarget(notification)
+}
+
+// 페이지 이동 로직
+const navigateToTarget = (notification) => {
+  const typeCd = notification.notificationTargetTypeCd
+  const targetSq = notification.notificationTargetSq
+  const parentSq = notification.notificationTargetParentSq
+  const parentTypeCd = notification.notificationTargetParentTypeCd
+  const title = notification.notificationTtl || ''
+
+  console.log('navigateToTarget:', {
+    typeCd,
+    targetSq,
+    parentSq,
+    parentTypeCd,
+    title,
+  })
+
+  switch (typeCd) {
+    case 2201: // QnA 답변
+      if (parentSq) {
+        router.push(`/qna/${parentSq}`)
+      }
+      break
+
+    case 2202: // 댓글 (QnA 또는 Board)
+      if (!parentSq) {
+        console.error('parentSq가 없습니다')
+        return
+      }
+
+      if (parentTypeCd === 2208) {
+        // QnA
+        router.push(`/qna/${parentSq}`)
+      } else if (parentTypeCd === 2209) {
+        // Board
+        router.push(`/board/${parentSq}`)
+      } else {
+        console.warn('알 수 없는 parentTypeCd:', parentTypeCd)
+        router.push(`/qna/${parentSq}`) // 기본값
+      }
+      break
+
+    case 2205: // 스크랩
+      if (targetSq) {
+        router.push(`/projects/${targetSq}`)
+      }
+      break
+    case 2207: // 지원 결과
+      if (title.includes('지원')) {
+        // 지원 관련
+        if (targetSq) {
+          router.push(`/applications/${targetSq}`)
+        }
+      } else if (title.includes('스크랩')) {
+        // 스크랩 관련
+        if (targetSq) {
+          router.push(`/projects/${targetSq}`)
+        }
+      } else {
+        console.warn('알 수 없는 알림 타입:', typeCd, '제목:', title)
+      }
+  }
 }
 
 //SSE 연결 관리
@@ -544,24 +674,21 @@ onBeforeUnmount(() => {
   z-index: 999;
   width: 100%;
   background: white;
-  height: 100px; /* 초기 높이 설정 */
-  transition: box-shadow 0.3s ease; /* transition을 box-shadow에만 적용 */
+  height: 100px;
+  transition: box-shadow 0.3s ease;
 }
 
 .header-body.shrink {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 스크롤 시 그림자 효과 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* dropdown-toggle 클래스의 화살표 제거 */
 #notificationDropdown::after {
   display: none !important;
 }
 
-/* Mobile Menu Dropdown Styles */
 @media (max-width: 991px) {
   .header-nav-main nav .dropdown .dropdown-menu {
     display: none;
-    /* position: static; */ /* Caused layout issues */
     border: none;
     box-shadow: none;
     background: transparent;
@@ -573,7 +700,7 @@ onBeforeUnmount(() => {
   }
 
   .header-nav-main nav .dropdown .dropdown-toggle::after {
-    content: '\f078'; /* FontAwesome down arrow */
+    content: '\f078';
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     transition: transform 0.2s ease;

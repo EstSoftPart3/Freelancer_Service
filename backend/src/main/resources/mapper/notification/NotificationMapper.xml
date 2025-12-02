@@ -32,6 +32,26 @@
 		)
 	</insert>
 	
+	<!-- 알림 단건 조회 -->
+	<select id="findBySq" resultType="com.example.demo.domain.notification.dto.NotificationDTO">
+	    SELECT
+	        notification_sq,
+	        notification_type_cd,
+	        notification_target_type_cd,
+	        notification_target_sq,
+	        notification_target_parent_type_cd,
+	        notification_target_parent_sq,
+	        notification_ttl,
+	        notification_txt,
+	        notification_is_read_yn,
+	        notification_is_deleted_yn,
+	        notification_deleted_at_dtm,
+	        notification_created_at_dtm,
+	        user_sq
+	    FROM TBL_NOTIFICATION
+	    WHERE notification_sq = #{notificationSq}
+	</select>
+
 	<!-- 읽음 처리 -->
 	<update id="updateReadStatus">
 		UPDATE TBL_NOTIFICATION
