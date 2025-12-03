@@ -160,28 +160,32 @@ export default {
       const targetType = notification.notificationTargetTypeCd
       const targetSq = notification.notificationTargetSq
       const parentSq = notification.notificationTargetParentSq
+      const title = notification.notificationTtl
       switch (targetType) {
         case 2201: //답변
-          if (!parentSq) {
-            console.error(
-              'notificationTargetParentSq가 없습니다:',
-              notification,
-            )
-            alert('잘못된 알림 데이터입니다.')
-            return
-          }
           this.$router.push(`/qna/${parentSq}`)
           break
-        case 2202: //댓글
-          if (!parentSq) {
-            console.error(
-              'notificationTargetParentSq가 없습니다:',
-              notification,
-            )
-            alert('잘못된 알림 데이터입니다.')
-            return
-          }
+        case 2202: //일반게시판댓글
+          this.$router.push(`/board/${parentSq}`)
+          break
+        case 2205:
+          this.$router.push(`/project/spec/user/${targetSq}`)
+          break
+        case 2209: //QnA게시판댓글
           this.$router.push(`/qna/${parentSq}`)
+          break
+        case 2207: // 지원 결과
+          if (title.includes('지원')) {
+            // 지원 관련
+            if (targetSq) {
+              this.$router.push(`/applications/${targetSq}`)
+            }
+          } else if (title.includes('스크랩')) {
+            // 스크랩 관련
+            if (targetSq) {
+              this.$router.push(`/projects/${targetSq}`)
+            }
+          }
           break
         case 1:
           this.$router.push(`/projects/${targetSq}`)
