@@ -54,4 +54,9 @@ public class ProjectScrapRepository {
     public int deleteByUserAndProject(Long userSq, Long projectSq) {
         return mapper.deleteByUserAndProject(userSq, projectSq);
     }
+
+	public List<Long> getScrapProjectIds(Long userSq) {
+		// TODO Auto-generated method stub
+		return mapper.getScrapProjectIds(userSq);
+	}
 }

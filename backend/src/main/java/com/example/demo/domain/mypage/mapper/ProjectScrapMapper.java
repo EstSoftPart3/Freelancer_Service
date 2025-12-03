@@ -38,4 +38,6 @@ public interface ProjectScrapMapper {
             @Param("userSq") Long userSq,
             @Param("searchType") String searchType,
             @Param("searchKeyword") String searchKeyword);
+
+	List<Long> getScrapProjectIds(Long userSq);
 }

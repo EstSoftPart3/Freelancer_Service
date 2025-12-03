@@ -68,6 +68,12 @@
             </choose>
         </if>
     </select>
-
+	
+	<select id="getScrapProjectIds" resultType="Long">
+		SELECT s.project_sq
+    FROM TBL_SCRAP_S s
+    WHERE s.user_sq = #{userSq}
+      AND s.scrap_type_cd = 601
+	</select>
 
 </mapper>
