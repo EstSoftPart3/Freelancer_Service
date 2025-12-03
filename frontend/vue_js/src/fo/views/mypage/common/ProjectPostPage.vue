@@ -16,7 +16,7 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >프로젝트 제목</label
+                  >*프로젝트 제목</label
                 >
                 <input
                   type="text"
@@ -24,7 +24,6 @@
                   name="title"
                   placeholder="예: 쇼핑몰 관리자 시스템 구축"
                   v-model="projectTitle"
-                  required=""
                 />
               </div>
             </div>
@@ -33,13 +32,12 @@
             <div class="row">
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >시</label
+                  >*시</label
                 >
                 <select
                   class="form-select form-control h-auto"
                   name="city"
                   v-model="selectedCity"
-                  required=""
                 >
                   <option value="">선택</option>
                   <option
@@ -53,13 +51,12 @@
               </div>
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >구</label
+                  >*구</label
                 >
                 <select
                   class="form-select form-control h-auto"
                   name="district"
                   v-model="selectedDistrict"
-                  required=""
                 >
                   <option value="">선택</option>
                   <option
@@ -76,13 +73,12 @@
             <div class="row">
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >개발자 등급(경력)</label
+                  >*개발자 등급(경력)</label
                 >
                 <select
                   class="form-select form-control h-auto"
                   name="career"
                   v-model="selectedDevGrade"
-                  required=""
                 >
                   <option value="">선택</option>
                   <option
@@ -96,13 +92,12 @@
               </div>
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >학력</label
+                  >*학력</label
                 >
                 <select
                   class="form-select form-control h-auto"
                   name="education"
                   v-model="selectedEducation"
-                  required=""
                 >
                   <option value="">선택</option>
                   <option
@@ -119,7 +114,7 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >프로젝트 기간</label
+                  >*프로젝트 기간</label
                 >
                 <a
                   href="#"
@@ -133,7 +128,6 @@
                   name="period"
                   placeholder="예: 2025-04 ~ 2025-10"
                   v-model="projectPeriodDisplay"
-                  required=""
                   readonly
                 />
               </div>
@@ -143,7 +137,7 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >모집 기간</label
+                  >*모집 기간</label
                 >
                 <a
                   href="#"
@@ -157,7 +151,6 @@
                   name="period"
                   placeholder="예: 2025-04 ~ 2025-10"
                   v-model="recruitPeriodDisplay"
-                  required=""
                   readonly
                 />
               </div>
@@ -165,7 +158,7 @@
             <!-- 근무형태 / 모집직군 -->
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
-                근무 형태
+                *근무 형태
                 <a
                   href="#"
                   @click.prevent="openWorkTypeModal"
@@ -186,7 +179,7 @@
               </div>
             </div>
             <div class="form-group mb-3">
-              <label class="form-label fw-bold">단가</label>
+              <label class="form-label fw-bold">*단가</label>
               <input
                 type="text"
                 class="form-control"
@@ -196,7 +189,7 @@
             </div>
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
-                모집 직군
+                *모집 직군
                 <a
                   href="#"
                   @click.prevent="openJobModal"
@@ -220,7 +213,7 @@
             <!-- 기술 -->
             <div class="form-group mb-3">
               <div class="d-flex align-items-center mb-1">
-                <label class="form-label text-2 fw-bold mb-0">사용 기술</label>
+                <label class="form-label text-2 fw-bold mb-0">*사용 기술</label>
                 <a
                   href="#"
                   @click.prevent="openSkillModal"
@@ -244,7 +237,7 @@
 
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold"
-                >우대 기술
+                >*우대 기술
                 <a
                   href="#"
                   @click.prevent="openPreferSkillModal"
@@ -268,7 +261,7 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >우대 사항</label
+                  >*우대 사항</label
                 >
 
                 <!-- 태그 리스트 -->
@@ -303,7 +296,7 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >상세 내용</label
+                  >*상세 내용</label
                 >
                 <textarea
                   maxlength="5000"
@@ -311,7 +304,6 @@
                   class="form-control text-3 h-auto py-2"
                   name="description"
                   v-model="description"
-                  required=""
                 ></textarea>
               </div>
             </div>
@@ -321,7 +313,7 @@
                 class="form-label mb-1 text-2"
                 style="font-weight: bold; position: relative"
               >
-                인터뷰 가능 시간
+                *인터뷰 가능 시간
                 <a
                   href="#"
                   @click.prevent="openInterviewTimeModal"
@@ -620,10 +612,77 @@ watch(selectedCity, async (newCityCode) => {
   }
 })
 const submitProject = async () => {
+  if (!projectTitle.value || projectTitle.value == '') {
+    alertStore.show('프로젝트명을 입력해주세요', 'danger')
+    return
+  }
+  if (!selectedCity.value || String(selectedCity.value).trim() === '') {
+    alertStore.show('시를 선택하세요', 'danger')
+    return
+  }
+  if (!selectedDistrict.value || String(selectedDistrict.value).trim() === '') {
+    alertStore.show('구를 선택하세요', 'danger')
+    return
+  }
+  if (!selectedDevGrade.value || String(selectedDevGrade.value).trim() === '') {
+    alertStore.show('개발자 등급(경력)을 선택하세요', 'danger')
+    return
+  }
+  if (
+    !selectedEducation.value ||
+    String(selectedEducation.value).trim() === ''
+  ) {
+    alertStore.show('학력을 선택하세요', 'danger')
+    return
+  }
+  if (
+    !projectPeriodDisplay.value ||
+    String(projectPeriodDisplay.value).trim() === ''
+  ) {
+    alertStore.show('프로젝트 기간을 선택하세요', 'danger')
+    return
+  }
+  if (
+    !recruitPeriodDisplay.value ||
+    String(recruitPeriodDisplay.value).trim() === ''
+  ) {
+    alertStore.show('모집 기간을 선택하세요', 'danger')
+    return
+  }
+  if (selectedWorkTypes.value.length === 0) {
+    alertStore.show('근무 형태를 한 개 이상 선택해주세요.', 'danger')
+    return
+  }
+  if (projectSalary.value.length === 0 && projectSalary.value.trim() === '') {
+    alertStore.show('단가를 입력해주세요.', 'danger')
+    return
+  }
+  if (selectedJobs.value.length === 0) {
+    alertStore.show('모집직군을 한 개 이상 선택해주세요.', 'danger')
+    return
+  }
+
+  if (selectedSkills.value.length === 0) {
+    alertStore.show('사용 기술을 한 개 이상 선택해주세요.', 'danger')
+    return
+  }
+  if (selectedPreferSkills.value.length === 0) {
+    alertStore.show('우대 기술을 한 개 이상 선택해주세요.', 'danger')
+    return
+  }
   if (preferList.value.length === 0 && preferContent.value.trim() === '') {
     alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger')
     return
   }
+  if (!description.value || String(description.value).trim() === '') {
+    alertStore.show('상세내용을 선택하세요', 'danger')
+    return
+  }
+  if (selectedInterviewTimes.value.length === 0) {
+    alertStore.show('인터뷰 가능 시간을 한 타임 이상 선택해주세요.', 'danger')
+    return
+  }
+
   const requestBody = {
     projectId: projectSq ?? null,
     projectTitle: projectTitle.value,
