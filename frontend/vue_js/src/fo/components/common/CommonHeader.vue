@@ -522,9 +522,7 @@ const navigateToTarget = (notification) => {
       break
 
     case 2205: // 스크랩
-      if (targetSq) {
-        router.push(`/projects/${targetSq}`)
-      }
+      router.push(`/project/spec/user/${targetSq}`)
       break
     case 2207: // 지원 결과
       if (title.includes('지원')) {

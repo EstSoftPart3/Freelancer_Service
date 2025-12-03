@@ -74,17 +74,26 @@ public class CommentService {
     	if (currentUserSq.equals(board.getUserSq())) {
     		return;
     	}
-    	
     	NotificationDTO notification = NotificationDTO.builder()
     			.userSq(board.getUserSq())
-    			.notificationTypeCd(NotificationTypeCode.COMMENT.getCode())
-    			.notificationTargetTypeCd(NotificationTypeCode.COMMENT.getCode())
+//    			.notificationTypeCd(NotificationTypeCode.COMMENT.getCode())
+//    			.notificationTargetTypeCd(NotificationTypeCode.COMMENT.getCode())
     			.notificationTargetSq(comment.getCommentSq())
     			.notificationTargetParentTypeCd(NotificationTypeCode.BOARD.getCode())
     			.notificationTargetParentSq(comment.getBoardSq())
     			.notificationTtl(NotificationTypeCode.COMMENT.getTitle())
     			.notificationTxt(comment.getCommentDescriptionTxt())
     			.build();
+    	
+    	
+    	if("normal".equals(board.getBoardTyp())) {
+    		notification.setNotificationTypeCd(NotificationTypeCode.COMMENT.getCode());
+    		notification.setNotificationTargetTypeCd(NotificationTypeCode.COMMENT.getCode());
+    	}
+    	else {
+    		notification.setNotificationTypeCd(NotificationTypeCode.COMMENT_QNA.getCode());
+    		notification.setNotificationTargetTypeCd(NotificationTypeCode.COMMENT_QNA.getCode());
+    	}
     	
     	notificationService.createNotification(notification);
     }
