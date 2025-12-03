@@ -109,5 +109,13 @@ public interface ProjectApplicationMapper {
 	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
 	
 	public Long findUserSqByApplicationSq(@Param("applicationSq") Long applicationSq);
+	
+	List<ApplicationSummary> findConfirmedInterviews();
+	
+	Long selectApplicationForUpdate(@Param("applicationSq") Long applicationSq);
+	
+	boolean existsReminderNotification(@Param("userSq") Long userSq, 
+										@Param("applicationSq") Long applicationSq,
+										@Param("typeCd") Long typeCd);
 
 }

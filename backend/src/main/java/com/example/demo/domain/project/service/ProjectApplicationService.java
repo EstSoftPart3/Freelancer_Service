@@ -1,5 +1,6 @@
 package com.example.demo.domain.project.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.common.ParentCodeEnum;
@@ -119,19 +121,17 @@ public class ProjectApplicationService {
 	}
 	
 	private void updateApplicantResultNotification(Long statusCd, ApplicationStatusRequest request, Long applicationSq) {
-		String statusName = commonCodeMapper.findCommonCodeNmBySq(statusCd);
-		
 		Long applicationUserSq = applicationMapper.findUserSqByApplicationSq(applicationSq);
 		Long projectSq = applicationMapper.findProjectBySq(applicationSq);
 		
-		if (applicationSq == null || projectSq == null) {
+		if (applicationUserSq == null || projectSq == null) {
 			return;
 		}
 		
 		NotificationDTO notification = NotificationDTO.builder()
 				.userSq(applicationUserSq)
 				.notificationTypeCd(NotificationTypeCode.APPLICATION_RESULT.getCode())
-    			.notificationTargetTypeCd(NotificationTypeCode.APPLICATION_RESULT.getCode())
+    			.notificationTargetTypeCd(NotificationTypeCode.PROJECT.getCode())
     			.notificationTargetSq(projectSq)
     			.notificationTargetParentTypeCd(null)
     			.notificationTargetParentSq(null)
@@ -146,6 +146,57 @@ public class ProjectApplicationService {
 		applicationMapper.updateInterviewTimeSelected(interviewTimeSq);
 		applicationMapper.updateApplicationInterviewTimeAndStatus(request.getApplicationSq(),
 				applicationMapper.findInterviewTimeBySq(interviewTimeSq));
+	}
+	
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void processInterviewReminder(ApplicationSummary app, NotificationTypeCode type) {
+		try {
+			Long applicationSq = app.getApplicationSq();
+			
+			// 비관락
+			applicationMapper.selectApplicationForUpdate(applicationSq);
+			
+			Long resumeSq = app.getResumeSq();
+			if (resumeSq == null) {
+				return;
+			}
+			
+			Long applicantUserSq = resumeMapper.findUserByResumeSq(resumeSq);
+			if (applicantUserSq == null) {
+				return;
+			}
+			
+			boolean alreadySendNotification = applicationMapper.existsReminderNotification(applicantUserSq, applicationSq, type.getCode());
+			if (alreadySendNotification) {
+				return;
+			}
+			
+			createdInterviewReminderNotification(app, applicantUserSq, type);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void createdInterviewReminderNotification(ApplicationSummary applicationSummary, Long userSq, NotificationTypeCode type) {
+		Long projectSq = applicationSummary.getProjectSq();
+		LocalDateTime interviewTime = applicationSummary.getInterviewDt();
+		
+		String reminderText = (type == NotificationTypeCode.INTERVIEW_TOMORROW) 
+								? "내일 " + interviewTime.toLocalTime() + "시 면접 알림"
+								: "오늘 " + interviewTime.toLocalTime() + "시 면접 알림";
+		
+		NotificationDTO notification = NotificationDTO.builder()
+				.userSq(userSq)
+				.notificationTypeCd(type.getCode())
+    			.notificationTargetTypeCd(NotificationTypeCode.PROJECT.getCode())
+    			.notificationTargetSq(projectSq)
+    			.notificationTargetParentTypeCd(null)
+    			.notificationTargetParentSq(null)
+    			.notificationTtl(type.getTitle())
+    			.notificationTxt(reminderText)
+    			.build();
+		
+		notificationService.createNotification(notification);
 	}
 
 	public List<ApplicationStatusList> fetchProjectApplicationsByProject(Long projectSq) {
