@@ -20,8 +20,9 @@ public class NotificationSchedulerService {
 	private final ProjectApplicationService projectApplicationService;
 
 	
-	// 배포 시엔  @Scheduled(cron = "0 0 8 * * *")   매일 아침 8시로 변경
-	@Scheduled(cron = "*/30 * * * * *")
+	// 배포 시엔  매일 아침 8시
+	@Scheduled(cron = "0 0 8 * * *")   
+//	@Scheduled(cron = "*/30 * * * * *")
 	public void sendInterviewReminders() {
 		List<ApplicationSummary> confirmedInterviews = projectApplicationMapper.findConfirmedInterviews();
 		
