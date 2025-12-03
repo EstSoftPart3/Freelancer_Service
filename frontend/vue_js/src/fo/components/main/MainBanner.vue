@@ -1,96 +1,93 @@
 <template>
   <!-- 광고 배너 -->
-    <section class="banner-carousel-section">
-      <div class="carousel-wrapper">
-      
-        <!-- 왼쪽 버튼 -->  
-        <button 
-          v-if="banners.length > 1"
-          class="carousel-arrow left-arrow" 
-          @click="goToPrevSlide" 
-          aria-label="이전 배너"
+  <section class="banner-carousel-section">
+    <div class="carousel-wrapper">
+      <!-- 왼쪽 버튼 -->
+      <button
+        v-if="banners.length > 1"
+        class="carousel-arrow left-arrow"
+        @click="goToPrevSlide"
+        aria-label="이전 배너"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </button>
+
+      <!-- 슬라이드 -->
+      <div class="carousel-track">
+        <!-- 슬라이드 1: 캘린더 배너 -->
+        <div
+          v-for="(banner, index) in banners"
+          :key="index"
+          class="carousel-slide"
+          :class="{
+            active: currentSlideIndex === index,
+            [banner.slideClass]: banner.slideClass,
+          }"
         >
-          <i class="bi bi-chevron-left"></i>
-        </button>
+          <img
+            v-if="banner.type === 'image'"
+            :src="banner.imagePath"
+            :alt="banner.alt"
+            class="banner-image"
+          />
 
-        <!-- 슬라이드 -->
-        <div class="carousel-track">
+          <!-- 커스텀 컨텐츠 배너 -->
+          <template v-else-if="banner.type === 'custom'">
+            <component :is="banner.component" v-bind="banner.props" />
+          </template>
 
-          <!-- 슬라이드 1: 캘린더 배너 -->
-          <div 
-            v-for="(banner, index) in banners"  
-            :key="index"
-            class="carousel-slide" 
-            :class="{ 
-              'active': currentSlideIndex === index,
-              [banner.slideClass]: banner.slideClass 
-            }"
-          >
-            <img
-              v-if="banner.type === 'image'"
-              :src="banner.imagePath"
-              :alt="banner.alt"
-              class="banner-image"
-            >
-
-            <!-- 커스텀 컨텐츠 배너 -->
-            <template v-else-if="banner.type === 'custom'">
-              <component :is="banner.component" v-bind="banner.props"/>
-            </template>
-
-            <!-- 텍스트 + 버튼 타입 배너 -->
-            <template v-else-if="banner.type === 'text'">
-              <div class="left-text-area">
-                <h1 class="hero-title" v-html="banner.title"></h1>
-                <p class="hero-subtitle">{{  banner.subtitle }}</p>
-                <button
-                  v-if="banner.button"
-                  class="btn btn-rounded btn-primary btn-lg"
-                  @click="handleBannerAction(banner.button.action)"
-                >
-                  {{ banner.button.text }}
-                </button>
-              </div>
-            </template>
-          </div>  
-        </div>
-
-        
-        <!-- 우측 버튼 -->
-        <button 
-          v-if="banners.length > 1"
-          class="carousel-arrow right-arrow" 
-          @click="goToNextSlide" 
-          aria-label="다음 배너"
-        >
-          <i class="bi bi-chevron-right"></i>
-        </button>
-
-        <!-- 인디케이터 점 -->
-        <div v-if="banners.length > 1" class="carousel-dots">
-          <button 
-            v-for="(banner, index) in banners"
-            :key="index"
-            class="dot" 
-            :class="{ 
-              'active': currentSlideIndex === index,
-              'dot-dark': banners[currentSlideIndex].dotColor === 'skyBlue'
-            }" 
-            @click="jumpToSlide(index)"
-            :aria-label="`${index+1}번째 배너`"
-          ></button>
+          <!-- 텍스트 + 버튼 타입 배너 -->
+          <template v-else-if="banner.type === 'text'">
+            <div class="left-text-area">
+              <h1 class="hero-title" v-html="banner.title"></h1>
+              <p class="hero-subtitle">{{ banner.subtitle }}</p>
+              <button
+                v-if="banner.button"
+                class="btn btn-rounded btn-primary btn-lg"
+                @click="handleBannerAction(banner.button.action)"
+              >
+                {{ banner.button.text }}
+              </button>
+            </div>
+          </template>
         </div>
       </div>
-    </section>
+
+      <!-- 우측 버튼 -->
+      <button
+        v-if="banners.length > 1"
+        class="carousel-arrow right-arrow"
+        @click="goToNextSlide"
+        aria-label="다음 배너"
+      >
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <!-- 인디케이터 점 -->
+      <div v-if="banners.length > 1" class="carousel-dots">
+        <button
+          v-for="(banner, index) in banners"
+          :key="index"
+          class="dot"
+          :class="{
+            active: currentSlideIndex === index,
+            'dot-dark': banners[currentSlideIndex].dotColor === 'skyBlue',
+          }"
+          @click="jumpToSlide(index)"
+          :aria-label="`${index + 1}번째 배너`"
+        ></button>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-
+import { useAlertStore } from '@/fo/stores/alertStore'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 // 이벤트 정의
-const emit = defineEmits(['scroll-to-map']);
-
+// const emit = defineEmits(['scroll-to-map'])
+const alertStore = useAlertStore()
 // 배너 설정 - 여기서 배너 추가/삭제 가능
 const banners = ref([
   {
@@ -98,7 +95,7 @@ const banners = ref([
     imagePath: new URL('@/assets/main-calendar.png', import.meta.url).href,
     alt: '캘린더 배너',
     slideClass: '',
-    dotColor: 'white'
+    dotColor: 'white',
   },
   {
     type: 'text',
@@ -106,17 +103,17 @@ const banners = ref([
     subtitle: '내 위치 반경을 설정해 빠르게 찾기',
     button: {
       text: '내 주변 공고',
-      action: 'scroll-to-map'
+      action: 'scroll-to-map',
     },
     slideClass: 'map-slide-white',
-    dotColor: 'skyBlue'
+    dotColor: 'skyBlue',
   },
   {
     type: 'image',
     imagePath: new URL('@/assets/main-map.png', import.meta.url).href,
     alt: '맵',
     slideClass: '',
-    dotColor: 'skyBlue'
+    dotColor: 'skyBlue',
   },
   {
     type: 'text',
@@ -124,65 +121,68 @@ const banners = ref([
     subtitle: '수수료 할인 특가 진행 중',
     button: {
       text: '자세히 보기',
-      action: 'show-promotion'
+      action: 'show-promotion',
     },
     slideClass: 'promotion-slide center-layout',
-    dotColor: 'skyBlue'
-  }
-]);
-
+    dotColor: 'skyBlue',
+  },
+])
 
 // 캐러셀 상태
-const currentSlideIndex = ref(0);
-const autoPlayInterval = ref(null);
+const currentSlideIndex = ref(0)
+const autoPlayInterval = ref(null)
 
 // 캐러셀 함수들
 const goToNextSlide = () => {
-  currentSlideIndex.value = (currentSlideIndex.value + 1) % banners.value.length;
-};
+  currentSlideIndex.value = (currentSlideIndex.value + 1) % banners.value.length
+}
 
 const goToPrevSlide = () => {
-  currentSlideIndex.value = currentSlideIndex.value === 0 
-    ? banners.value.length - 1
-    : currentSlideIndex.value - 1;
-};
+  currentSlideIndex.value =
+    currentSlideIndex.value === 0
+      ? banners.value.length - 1
+      : currentSlideIndex.value - 1
+}
 
 const jumpToSlide = (index) => {
-  currentSlideIndex.value = index;
-};
+  currentSlideIndex.value = index
+}
 
 // 배너 액션 핸들러
 const handleBannerAction = (action) => {
-  emit('banner-action', action);
-};
+  // emit('banner-action', action)
+  const actionsToAlert = ['scroll-to-map', 'show-promotion']
+  if (actionsToAlert.includes(action)) {
+    alertStore.show('준비중입니다.', 'danger')
+    return
+  }
+}
 
 // 자동 재생
 const startAutoPlay = () => {
-  if (banners.value.length <= 1) return;
+  if (banners.value.length <= 1) return
   autoPlayInterval.value = setInterval(() => {
-    goToNextSlide();
-  }, 10000);
-};
+    goToNextSlide()
+  }, 10000)
+}
 
 const stopAutoPlay = () => {
   if (autoPlayInterval.value) {
-    clearInterval(autoPlayInterval.value);
+    clearInterval(autoPlayInterval.value)
   }
-};
+}
 
 // 컴포넌트 마운트
 onMounted(() => {
-  startAutoPlay();
-});
+  startAutoPlay()
+})
 
 onUnmounted(() => {
-  stopAutoPlay();
-});
-
+  stopAutoPlay()
+})
 </script>
 
 <style scoped>
-
 .btn-rounded {
   border-radius: 6px;
 }
@@ -281,7 +281,7 @@ onUnmounted(() => {
 }
 
 .carousel-arrow:hover {
-  color: skyblue; 
+  color: skyblue;
   transform: translateY(-50%) scale(1.2);
 }
 
@@ -367,7 +367,8 @@ onUnmounted(() => {
   }
 
   .left-text-area {
-    max-width: 100%;}
+    max-width: 100%;
+  }
 
   .hero-title {
     font-size: 2rem;
@@ -380,7 +381,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .carousel-wrapper {
-    aspect-ratio: 4 / 3;  
+    aspect-ratio: 4 / 3;
   }
 }
 
