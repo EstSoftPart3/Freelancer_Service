@@ -4,7 +4,11 @@
       <h1>알림 내역</h1>
     </div>
     <div class="notification-list">
+      <div v-if="isEmpty" class="text-center py-5 text-muted">
+        알림 내역이 없습니다.
+      </div>
       <div
+        v-else
         v-for="notification in notifications"
         :key="notification.notificationSq"
         class="notification-item"
@@ -13,7 +17,9 @@
       >
         <div class="item-content">
           <div class="item-title">{{ notification.notificationTtl }}</div>
-          <div class="item-subtitle">{{ notification.notificationTxt }}</div>
+          <div class="item-subtitle">
+            {{ truncateText(notification.notificationTxt, 15) }}
+          </div>
         </div>
 
         <div class="item-right-final">
@@ -70,10 +76,21 @@ export default {
       notifications: [],
     }
   },
+  computed: {
+    isEmpty() {
+      return this.notifications.length === 0
+    },
+  },
   created() {
     this.fetchNotifications()
   },
   methods: {
+    truncateText(text, maxlength = 15) {
+      if (!text || text.length <= maxlength) {
+        return text
+      }
+      return text.substring(0, maxlength) + '...'
+    },
     async fetchNotifications() {
       try {
         const response = await api.$get(`/notifications/page`)
