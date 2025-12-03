@@ -67,4 +67,9 @@ public class ProjectScrapService {
         int affected = repository.deleteByUserAndProject(userSq, projectSq);
         return affected > 0;
     }
+    @Transactional
+	public List<Long> getSCrapProjectIds(Long userSq) {
+		List<Long>projectIds = repository.getScrapProjectIds(userSq);
+		return projectIds;
+	}
 }

@@ -192,13 +192,25 @@ const loadPopularProjects = async () => {
 // 스크랩 상태 동기화 함수
 const syncScrapStatus = async () => {
   try {
-    // 사용자의 스크랩 목록을 가져오는 API 호출
-    // API 엔드포인트를 확인하고 수정 필요
-    // 예: const scrapResponse = await api.$get('/mypage/scraps/projects')
+    console.log('스크랩 상태 동기화 시작...')
+    const response = await api.$get('/mypage/projectScrapIds')
 
-    // 임시: 각 프로젝트마다 스크랩 여부 확인하는 방법
-    // 이 부분은 백엔드 API 구조에 맞게 수정 필요
-    console.log('스크랩 상태 동기화 필요 - 백엔드 API 확인 필요')
+    const scrappedProjectIds = response.output || []
+
+    console.log('스크랩된 프로젝트 id :', scrappedProjectIds)
+    ;['viewCount', 'scrapCount', 'applicantCount'].forEach((key) => {
+      if (allPopularProjectsData.value[key]) {
+        allPopularProjectsData.value[key].forEach((project) => {
+          project.hasScrapped = scrappedProjectIds.includes(project.projectSq)
+        })
+      }
+    })
+
+    //현재 표시 중인 프로젝트 목록도 업데이트
+    popularProjects.value.forEach((project) => {
+      project.hasScrapped = scrappedProjectIds.includes(project.projectSq)
+    })
+    console.log('✅ 스크랩 상태 동기화 완료')
   } catch (error) {
     console.error('스크랩 상태 동기화 실패:', error)
   }
@@ -258,23 +270,24 @@ const toggleScrap = async (project) => {
     router.push('/login')
     return
   }
-
-  const previousState = project.hasScrapped
-
-  // 즉시 UI 업데이트 (낙관적 업데이트)
-  project.hasScrapped = !previousState
-
-  console.log('스크랩 토글:', {
-    projectSq: project.projectSq,
-    이전상태: previousState,
-    새상태: project.hasScrapped,
-  })
-
   try {
+    const isScrapped = project.hasScrapped
+
+    // 즉시 UI 업데이트 (낙관적 업데이트)
+    project.hasScrapped = !isScrapped
+
+    console.log('스크랩 토글:', {
+      projectSq: project.projectSq,
+      이전상태: isScrapped,
+      새상태: project.hasScrapped,
+      API전송값: isScrapped,
+    })
     const response = await api.$post(`/projects/${project.projectSq}/scraps`, {
-      hasScrapped: project.hasScrapped,
+      hasScrapped: isScrapped,
       target: '프로젝트',
     })
+    console.log('API 응답 전체:', response)
+    console.log('응답 output:', response.output)
 
     if (response.status === 'OK') {
       console.log(
@@ -296,12 +309,12 @@ const toggleScrap = async (project) => {
     console.error('스크랩 처리 실패:', error)
 
     // 실패 시 원래 상태로 복구
-    project.hasScrapped = previousState
+    project.hasScrapped = !project.hasScrapped
     const index = popularProjects.value.findIndex(
       (p) => p.projectSq === project.projectSq,
     )
     if (index !== -1) {
-      popularProjects.value[index].hasScrapped = previousState
+      popularProjects.value[index].hasScrapped = project.hasScrapped
     }
 
     if (error.response?.status === 401) {
