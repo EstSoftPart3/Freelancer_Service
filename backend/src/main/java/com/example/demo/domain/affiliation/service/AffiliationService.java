@@ -2,6 +2,8 @@ package com.example.demo.domain.affiliation.service;
 
 import com.example.demo.domain.calendar.mapper.CalendarPositionMapper;
 import com.example.demo.domain.calendar.service.CalendarService;
+import com.example.demo.domain.mypage.dto.response.AffiliationApplyReadResponseDTO;
+import com.example.demo.domain.mypage.dto.response.AffiliationInfoResponseDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -225,12 +227,14 @@ public class AffiliationService {
 	}
 
 	// 열람 상태 변경
-	public void updateApplicationReadAt(Long companyApplicationSq) {
+	public AffiliationApplyReadResponseDTO updateApplicationReadAt(Long companyApplicationSq) {
 		CompanyApplication application = getApply(companyApplicationSq);
 		if (application.getCompanyApplicationReadAtDtm() == null) {
 			affiliationMapper.updateReadAt(companyApplicationSq);
 		}
-		return;
+		return AffiliationApplyReadResponseDTO.builder()
+				.resumeSq(application.getResumeSq())
+				.build();
 	}
 
 	// 소속 신청 취소

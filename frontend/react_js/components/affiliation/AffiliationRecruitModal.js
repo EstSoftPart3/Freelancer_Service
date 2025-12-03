@@ -64,7 +64,7 @@ export default function AffiliationRecruitModal({ afltnInfo, onClose, onConfirm 
             alertStore.show(res.message || '소속 신청이 완료되었습니다.', 'success')
             onConfirm?.()
             closeModal() // 확인 모달 닫기
-            closeModal() // 소속 신청 모달 닫기
+            onClose() // 소속 신청 모달 닫기
           } else {
             alertStore.show(res.message || '소속 신청에 실패했습니다.', 'danger')
           }

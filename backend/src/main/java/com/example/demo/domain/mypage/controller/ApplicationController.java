@@ -1,5 +1,6 @@
 package com.example.demo.domain.mypage.controller;
 
+import com.example.demo.domain.mypage.dto.response.AffiliationApplyReadResponseDTO;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -47,10 +48,10 @@ public class ApplicationController {
 
     // 열람 상태 변경
     @PutMapping("/read/{companyApplicationSq}")
-    public ResponseEntity<ApiResponse<NullType>> updateApplicationReadAt(
+    public ResponseEntity<ApiResponse<AffiliationApplyReadResponseDTO>> updateApplicationReadAt(
             @PathVariable("companyApplicationSq") Long companyApplicationSq) {
-        affiliationService.updateApplicationReadAt(companyApplicationSq);
-        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 지원 신청 열람이 완료되었습니다.", null));
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 지원 신청 열람이 완료되었습니다.",
+                affiliationService.updateApplicationReadAt(companyApplicationSq)));
     }
 
     // 합격 또는 불합격 변경

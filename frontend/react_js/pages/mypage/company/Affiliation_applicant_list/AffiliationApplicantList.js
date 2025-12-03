@@ -2,11 +2,18 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import './AffiliationApplicantList.module.css';
+import skillIconMap from '@/lib/skillIconMap';
+import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
+import { useModalStore } from '@/store/modalStore';
 
 // skillIconMap import - 경로는 프로젝트에 맞게 조정
 // import skillIconMap from '../../../../assets/skillIconMap';
 
 const AffiliationApplicantList = () => {
+
+  const modalStore = useModalStore();
+  const size = 10;
+
   // State 관리
   const [applicants, setApplicants] = useState([]);
   const [readType, setReadType] = useState('all');
@@ -17,8 +24,6 @@ const AffiliationApplicantList = () => {
   const [totalElements, setTotalElements] = useState(0);
   const [readElements, setReadElements] = useState(0);
   const [unreadElements, setUnreadElements] = useState(0);
-
-  const size = 10;
 
   // 필터 계산 (useMemo)
   const filters = useMemo(
@@ -54,6 +59,7 @@ const AffiliationApplicantList = () => {
       const response = await api.$get(
         `/mypage/applications/company?page=${currentPage}&size=${size}${searchFilter}${readFilter}`
       );
+      console.log('지원자 목록 조회', response)
 
       if (response.status === 'OK') {
         const output = response.output;
@@ -120,24 +126,26 @@ const AffiliationApplicantList = () => {
   };
 
   // 이력서 상세보기 모달 열기
-  const openDetailModal = (applicationSq) => {
-    // 모달 구현 필요
-    alert(`이력서 상세보기 모달 구현 필요\nApplication SQ: ${applicationSq}`);
-    // 실제 구현:
-    // setModalData({
-    //   type: 'affiliationRequestDetail',
-    //   applicationSq: applicationSq,
-    // });
+  const openResumeModal = (resumeSq) => {
+    modalStore.openModal(ResumeDetailModal, {
+      resumeSq,
+      projectSq: 0,
+      applicationSq: 0,
+      isFromApplicationList: false,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
   };
 
   // 지원자 클릭 (열람 처리 + 상세보기)
   const handleOpenApplicant = async (applicationSq) => {
     try {
       // 이력서 열람으로 업데이트
-      await api.$put(`/mypage/applications/read/${applicationSq}`);
+      const res = await api.$put(`/mypage/applications/read/${applicationSq}`);
+      const resumeSq = res.output.resumeSq
       getApplicants();
       // 이력서 모달 오픈
-      openDetailModal(applicationSq);
+      openResumeModal(resumeSq);
     } catch (error) {
       console.error('열람 처리 실패:', error);
     }
