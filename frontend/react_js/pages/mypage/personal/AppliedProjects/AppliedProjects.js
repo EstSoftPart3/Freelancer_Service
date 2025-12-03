@@ -4,10 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AppliedProjects.module.css';
+import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
+import { useModalStore } from '@/store/modalStore';
+import skillIconMap from '@/lib/skillIconMap';
 
 const AppliedProjects = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const modalStore = useModalStore();
 
   // State 관리
   const [applications, setApplications] = useState([]);
@@ -60,7 +64,7 @@ const AppliedProjects = () => {
       };
 
       const response = await api.$get(endpoint, { params });
-
+      
       const data = response.output || {};
       setApplications(data.applications || []);
       setTotalPages(Math.max(1, Math.ceil((data.totalCount || 0) / itemsPerPage)));
@@ -171,18 +175,15 @@ const AppliedProjects = () => {
     }
   };
 
-  // 이력서 상세 보기
-  const openResumeDetailModal = (item) => {
-    // 모달 구현 필요
-    alert(`이력서 상세보기 모달 구현 필요\nResume SQ: ${item.resumeSq}`);
-    // 실제 구현:
-    // setModalData({
-    //   type: 'resumeDetail',
-    //   resumeSq: item.resumeSq,
-    //   projectSq: item.projectSq,
-    //   applicationSq: item.applicationSq,
-    //   isFromApplicationList: true,
-    // });
+  // 이력서 상세보기 모달
+  const openResumeDetailModal = (resumeSq) => {
+    modalStore.openModal(ResumeDetailModal, {
+      title: '이력서 상세보기',
+      size: 'modal-lg',
+      resumeSq: resumeSq,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
   };
 
   // 페이지네이션 컴포넌트
@@ -403,7 +404,7 @@ const AppliedProjects = () => {
                           <span className={styles.metaLabel}>지원 이력서</span> |{' '}
                           <span
                             className={styles.resumeHover}
-                            onClick={() => openResumeDetailModal(item)}
+                            onClick={() => openResumeDetailModal(item.resumeSq)}
                           >
                             {userType === 'COMPANY'
                               ? `${item.applicantName} / ${item.resumeTitle}`

@@ -1,0 +1,90 @@
+.modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-body {
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+}
+
+.btn-rounded {
+  border-radius: 20px;
+}
+
+.btn-3d {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.interview:hover div {
+  display: block;
+}
+
+.interview div {
+  display: none;
+}
+
+.interview-tooltip {
+  bottom: 80%;
+  left: 30%;
+  white-space: nowrap;
+  display: none;
+}
+
+.interview-wrapper:hover .interview-tooltip {
+  display: block;
+}
+
+.bg-color-grey {
+  background-color: #f5f5f5;
+}
+
+.simple-post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.simple-post-list li {
+  padding: 1rem 0;
+}
+
+.text-6 {
+  font-size: 1.2rem;
+}
+
+.text-5 {
+  font-size: 1.1rem;
+}
+
+.text-4 {
+  font-size: 0.9rem;
+}
+
+.text-10 {
+  font-size: 2rem;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.post-info {
+  position: relative;
+}
+
+.post-meta {
+  color: #666;
+}
+
+.font-weight-semibold {
+  font-weight: 600;
+}
+
+.font-weight-normal {
+  font-weight: 400;
+}
+

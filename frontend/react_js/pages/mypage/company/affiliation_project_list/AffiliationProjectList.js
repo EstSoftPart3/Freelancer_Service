@@ -4,12 +4,15 @@ import Link from 'next/link';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import './AffiliationProjectList.module.css';
+import { useModalStore } from '@/store/modalStore';
+import ProjectApplyStatusModal from '@/components/myPage/personal/ProjectApplyStatusModal';
 
 // skillIconMap import - 경로는 프로젝트에 맞게 조정
 // import skillIconMap from '../../../../assets/skillIconMap';
 
 const AffiliationProjectList = () => {
   const router = useRouter();
+  const modalStore = useModalStore();
 
   // State 관리
   const [projects, setProjects] = useState([]);
@@ -208,12 +211,16 @@ const AffiliationProjectList = () => {
     }
   };
 
+  const [toggle, setToggle] =useState('')
+
   // 지원현황 모달 열기
   const openUserApplyModal = (projectSq, projectTtl) => {
-    // 모달 구현 필요
-    alert(`지원현황 모달 구현 필요\nProject: ${projectTtl} (${projectSq})`);
-    // 실제 구현 시:
-    // setModalData({ type: 'applyStatus', projectSq, projectTtl });
+    modalStore.openModal(ProjectApplyStatusModal, {
+      projectSq,
+      projectTitle: projectTtl,
+      onToggle: setToggle,
+      size: 'modal-xl'
+    })
   };
 
   // 페이지 번호 배열

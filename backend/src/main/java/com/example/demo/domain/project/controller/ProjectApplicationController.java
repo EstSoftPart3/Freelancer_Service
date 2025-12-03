@@ -72,7 +72,7 @@ public class ProjectApplicationController {
 	}
 
 	@GetMapping("/{projectSq}/personal")
-	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
+	public ResponseEntity<ApiResponse<PagedApplicantResponseDTO<PersonalApplicantDTO>>> getPersonalApplicants(
 			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "5") int size,
@@ -80,7 +80,8 @@ public class ProjectApplicationController {
 			@RequestParam(defaultValue = "all") String searchType,
 			@RequestParam(defaultValue = "") String keyword) {
 
-		return projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 개인 지원자 현황 조회 성공",
+						projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword)));
 	}
 
 	@GetMapping("/{projectSq}/corporate/grouped")

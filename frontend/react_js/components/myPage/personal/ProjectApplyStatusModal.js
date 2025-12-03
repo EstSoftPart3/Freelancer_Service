@@ -5,20 +5,23 @@ import CommonConfirmModal from '../common/CommonConfirmModal';
 import ResumeDetailModal from '../common/ResumeDetailModal';
 import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
-import './PersonalApplyStatusModal.module.css';
+import ProjectPersonalApplyStatus from './ProjectPersonalApplyStatus';
+import ProjectCompanyApplyStatus from './ProjectCompanyApplyStatus';
 
-const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
+const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
   const [currentFilter, setCurrentFilter] = useState('all');
   const [searchType, setSearchType] = useState('all');
   const [searchText, setSearchText] = useState('');
+  const [inputText, setInputText] = useState('');
   const [applicantType] = useState('personal');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [localApplicants, setLocalApplicants] = useState([]);
+  const [isTogglePersonal, setIsTogglePersonal] = useState(true)
 
   // 개인 지원자 목록 조회
   const fetchPersonalApplicants = async () => {
@@ -26,6 +29,7 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
       const res = await api.$get(
         `/projects/applications/${projectSq}/personal?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
       );
+      console.log('개인 지원자 목록 조회 = ', res)
       setLocalApplicants(res.response || []);
       setTotalPages(res.totalPages || 1);
     } catch (error) {
@@ -87,11 +91,6 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     [filterCounts]
   );
 
-  // 기업 모드로 토글
-  const toggleToCorporate = () => {
-    onToggle?.(projectSq, projectTitle);
-  };
-
   // 필터 변경
   const setFilter = (type) => {
     setCurrentFilter(type);
@@ -100,6 +99,7 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
 
   // 검색
   const search = () => {
+    setSearchText(inputText)
     setCurrentPage(1);
   };
 
@@ -154,15 +154,15 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     });
   };
 
-  // 이력서 상세보기 모달
-  const openResumeDetailModal = (resumeSq, applicationSq) => {
+  // 이력서 상세보기 모달 열기 + 열람처리
+  const openResumeDetailModal = (resumeSq, projectSq, applicationSq) => {
     modalStore.openModal(ResumeDetailModal, {
-      title: '이력서 상세보기',
-      size: 'modal-lg',
-      resumeSq: resumeSq,
-      applicationSq: applicationSq,
-      projectSq: projectSq,
+      resumeSq,
+      projectSq,
+      applicationSq,
       isFromApplicationList: true,
+      api: api,
+      skillIconMap: skillIconMap,
     });
   };
 
@@ -233,6 +233,22 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     return null;
   };
 
+  // 지원 현황 props
+  let props;
+  if (isTogglePersonal) {
+    props = {
+      projectSq,
+      localApplicants,
+      openResumeDetailModal, 
+      renderStatusButtons, 
+      generateIconUrl
+    }
+  } else {
+    props = {
+
+    }
+  }
+
   return (
     <div className="modal-content">
       <div className="modal-header">
@@ -291,8 +307,8 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
                 <option value="skills">사용 기술</option>
               </select>
               <input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
                 type="text"
                 className="form-control form-control-sm w-auto"
                 placeholder="검색어 입력"
@@ -302,24 +318,25 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
               </button>
             </div>
           </div>
-
+          {/* 개인 | 기업 토글 */}
           <div className="row">
             <div className="col-12 d-flex justify-content-end pt-2 mt-1">
               <div className="btn-group" role="group" aria-label="개인 기업 토글">
                 <button
                   type="button"
-                  className={`btn btn-primary ${
-                    applicantType === 'personal' ? 'active' : ''
+                  className={`btn btn-outline btn-primary ${
+                    isTogglePersonal ? 'active' : ''
                   }`}
+                  onClick={() => {setIsTogglePersonal(true)}}
                 >
                   개인
                 </button>
                 <button
                   type="button"
-                  className={`btn btn-primary btn-outline ${
-                    applicantType === 'company' ? 'active' : ''
+                  className={`btn btn-outline btn-primary ${
+                    !isTogglePersonal ? 'active' : ''
                   }`}
-                  onClick={toggleToCorporate}
+                  onClick={() => {setIsTogglePersonal(false)}}
                 >
                   기업
                 </button>
@@ -332,156 +349,56 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
               <hr className="my-4" />
             </div>
           </div>
-
-          {/* 지원자 목록 */}
-          <div className="row">
-            <div className="col">
-              {localApplicants.length === 0 ? (
-                <div className="text-muted py-3" style={{ fontSize: '14px' }}>
-                  조건에 해당하는 개인 지원자가 없습니다.
-                </div>
-              ) : (
-                <ul className="simple-post-list m-0 position-relative">
-                  {localApplicants.map((applicant) => (
-                    <li
-                      key={applicant.applicationSq}
-                      style={{ borderBottom: '1px rgb(230, 230, 230) solid' }}
-                    >
-                      <div className="post-info position-relative">
-                        {/* 제목 + 회사명 + 지원상태 버튼 */}
-                        <div className="d-flex justify-content-between align-items-center gap-2">
-                          <div className="d-flex gap-2">
-                            <a
-                              onClick={(e) => {
-                                e.preventDefault();
-                                openResumeDetailModal(
-                                  applicant.resumeSq,
-                                  applicant.applicationSq
-                                );
-                              }}
-                              href="#"
-                              className="d-flex gap-1 align-items-center text-decoration-none"
-                            >
-                              <span className="text-6 m-0">
-                                {applicant.resumeNmTtlVo.resumeNm} /
-                              </span>
-                              <span className="text-5 m-0">
-                                {applicant.resumeNmTtlVo.resumeTtl}
-                              </span>
-                            </a>
-                          </div>
-                          <div className="d-flex gap-2">
-                            {renderStatusButtons(applicant)}
-                          </div>
-                        </div>
-
-                        {/* 경력 + 열람일자 */}
-                        <div className="d-flex justify-content-between align-items-center mt-2">
-                          <div className="post-meta text-4">
-                            <span className="text-dark text-uppercase font-weight-semibold">
-                              경력
-                            </span>
-                            | {applicant.careerYear}년차
-                          </div>
-                          <div className="post-meta text-4">
-                            <span className="text-dark text-uppercase font-weight-semibold">
-                              열람일자
-                            </span>
-                            | {applicant.appStatusVo.readResumeDt || '미열람'}
-                          </div>
-                        </div>
-
-                        {/* 사용 기술 + 지원일자 */}
-                        <div
-                          className="d-flex justify-content-between align-items-center mt-2"
-                          style={{ fontSize: '16.8px !important' }}
-                        >
-                          <div className="d-flex align-items-center gap-2">
-                            <span className="text-dark text-uppercase font-weight-semibold">
-                              사용 기술
-                            </span>
-                            |
-                            {applicant.skillNames.map((skill) => (
-                              <div
-                                key={skill}
-                                className="btn d-flex align-items-center gap-2 border-0"
-                              >
-                                <img
-                                  src={generateIconUrl(skill)}
-                                  alt={skill}
-                                  width="24"
-                                  height="24"
-                                />
-                                <span>{skill}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="post-meta" style={{ fontSize: '16.8px' }}>
-                            <span
-                              className="text-dark text-uppercase font-weight-semibold"
-                              style={{ fontSize: '16.8px' }}
-                            >
-                              지원일자
-                            </span>
-                            | {applicant.appStatusVo.appDt}
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {/* 페이지네이션 */}
-              <div className="mt-5 py-5">
-                <ul className="pagination float-end">
-                  <li className="page-item">
-                    <a
-                      className="page-link"
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        changePage(currentPage - 1);
-                      }}
-                    >
-                      <i className="fas fa-angle-left"></i>
-                    </a>
-                  </li>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <li
-                      key={page}
-                      className={`page-item ${
-                        currentPage === page ? 'active' : ''
-                      }`}
-                    >
-                      <a
-                        className="page-link"
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          changePage(page);
-                        }}
-                      >
-                        {page}
-                      </a>
-                    </li>
-                  ))}
-                  <li className="page-item">
-                    <a
-                      className="page-link"
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        changePage(currentPage + 1);
-                      }}
-                    >
-                      <i className="fas fa-angle-right"></i>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {/* 지원자 현황 목록 */}
+          {isTogglePersonal ? <ProjectPersonalApplyStatus {...props} /> : <ProjectCompanyApplyStatus />}
+          {/* 페이지네이션 */}
+					<div className="mt-5 py-5">
+						<ul className="pagination float-end">
+							<li className="page-item">
+								<a
+									className="page-link"
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										changePage(currentPage - 1);
+									}}
+								>
+									<i className="fas fa-angle-left"></i>
+								</a>
+							</li>
+							{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+								<li
+									key={page}
+									className={`page-item ${
+										currentPage === page ? 'active' : ''
+									}`}
+								>
+									<a
+										className="page-link"
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											changePage(page);
+										}}
+									>
+										{page}
+									</a>
+								</li>
+							))}
+							<li className="page-item">
+								<a
+									className="page-link"
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										changePage(currentPage + 1);
+									}}
+								>
+									<i className="fas fa-angle-right"></i>
+								</a>
+							</li>
+						</ul>
+					</div>
         </div>
       </div>
       <div className="modal-footer">
@@ -493,5 +410,5 @@ const PersonalApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   );
 };
 
-export default PersonalApplyStatusModal;
+export default ProjectApplyStatusModal;
 
