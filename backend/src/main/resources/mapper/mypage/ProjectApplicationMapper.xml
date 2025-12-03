@@ -386,4 +386,38 @@
 		WHERE
 			a.project_application_sq = #{applicationSq}
 	</select>
+	
+	<select id="findConfirmedInterviews" resultType="com.example.demo.domain.project.vo.ApplicationSummary">
+		SELECT 
+			a.project_application_sq AS applicationSq,
+			a.project_sq AS projectSq,
+			a.resume_sq AS resumeSq,
+			a.selected_interview_dtm AS interviewDt
+		FROM
+			TBL_PROJECT_APPLICATION_H a
+		WHERE
+			a.project_application_status_cd = 805
+		AND
+			a.selected_interview_dtm IS NOT NULL
+	</select>
+	
+	<select id="selectApplicationForUpdate" resultType="long">
+		SELECT
+			project_application_sq
+		FROM
+			TBL_PROJECT_APPLICATION_H
+		WHERE
+			project_application_sq = #{applicationSq}
+		FOR UPDATE
+	</select>
+	
+	<select id="existsReminderNotification" resultType="boolean">
+		SELECT EXISTS (
+			SELECT 1
+			FROM TBL_NOTIFICATION
+			WHERE user_sq = #{userSq}
+			  AND notification_target_sq = #{applicationSq}
+			  AND notification_type_cd = #{typeCd}
+		)
+	</select>
 </mapper>
