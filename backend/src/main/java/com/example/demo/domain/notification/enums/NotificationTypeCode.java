@@ -14,7 +14,10 @@ public enum NotificationTypeCode {
 	SCRAP_COMPANY(2205L, "스크랩 신규 알림"),
 	SCRAP_PROJECT(2206L, "스크랩 신규 알림"),
 	APPLICATION_RESULT(2207L, "지원 결과 안내"),
-	BOARD(2208L, "");
+	BOARD(2208L, ""),
+	COMMENT_QNA(2209L, "작성하신 게시글에 댓글이 달렸습니다."),
+	INTERVIEW_TOMORROW(2210L, "내일 면접 일정 알림"),
+	INTERVIEW_TODAY(2211L, "오늘 면접 일정 알림");
 
 	private final Long code;
 	private final String title;
