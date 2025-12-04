@@ -31,8 +31,8 @@ public class NotificationSchedulerService {
 	 *  
 	 *  배포 시엔 매일 아침 8시
 	 */
-//	@Scheduled(cron = "0 0 8 * * *")   
-	@Scheduled(cron = "*/30 * * * * *")
+	@Scheduled(cron = "0 0 8 * * *")   
+//	@Scheduled(cron = "*/30 * * * * *")
 	public void sendInterviewReminders() {
 		List<ApplicationSummary> confirmedInterviews = projectApplicationMapper.findConfirmedInterviews();
 		
@@ -54,10 +54,10 @@ public class NotificationSchedulerService {
 	}
 	
 	/**
-	 * 프로젝트 마감 알림 스케줄러  (매 시간 정각)
+	 * 프로젝트 마감 알림 스케줄러  (오전 9시, 오후 6시)
 	 */
-//	@Scheduled(cron = "0 0 * * * *")
-	@Scheduled(cron = "0 */1 * * * *")
+	@Scheduled(cron = "0 0 9,18 * * *")
+//	@Scheduled(cron = "0 */1 * * * *")
 	public void sendProjectDeadlineReminders24H() {
 		List<ProjectReminderVo> reminderList24H = projectMapper.findScrapUsersForEndingProjects();
 		
