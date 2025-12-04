@@ -31,43 +31,42 @@ public class NotificationSchedulerService {
 	 *  
 	 *  배포 시엔 매일 아침 8시
 	 */
-//	@Scheduled(cron = "0 0 8 * * *")   
-	@Scheduled(cron = "*/30 * * * * *")
+	@Scheduled(cron = "0 0 8 * * *")   
+//	@Scheduled(cron = "*/30 * * * * *")
 	public void sendInterviewReminders() {
 		List<ApplicationSummary> confirmedInterviews = projectApplicationMapper.findConfirmedInterviews();
 		
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime tommorrow8AM = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0);
+		LocalDateTime tomorrow8AM = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0);
 		LocalDateTime today8AM = now.withHour(8).withMinute(0).withSecond(0).withNano(0);
 		
 		for (ApplicationSummary app : confirmedInterviews) {
 			LocalDateTime interviewTime = app.getInterviewDt();
 			
-			if (interviewTime.toLocalDate().isEqual(tommorrow8AM.toLocalDate())) {
+			if (interviewTime.toLocalDate().isEqual(tomorrow8AM.toLocalDate())) {
 				projectApplicationService.processInterviewReminder(app, NotificationTypeCode.INTERVIEW_TOMORROW);
 			}
 			
-			if (interviewTime.toLocalDate().isEqual(now.toLocalDate()) 
-					&& now.isAfter(today8AM) && now.isBefore(today8AM.plusMinutes(1))) {
+			if (interviewTime.toLocalDate().isEqual(now.toLocalDate())) {
 				projectApplicationService.processInterviewReminder(app, NotificationTypeCode.INTERVIEW_TODAY);
 			}
 		}
 	}
 	
 	/**
-	 * 프로젝트 마감 알림 스케줄러  (매 시간 정각)
+	 * 프로젝트 마감 알림 스케줄러  (오전 9시, 오후 6시)
 	 */
-//	@Scheduled(cron = "0 0 * * * *")
-	@Scheduled(cron = "0 */1 * * * *")
-	public void sendProjectDeadlineReminders() {
-		List<ProjectReminderVo> reminderList = projectMapper.findScrapUsersForEndingProjects();
+	@Scheduled(cron = "0 0 9,18 * * *")
+//	@Scheduled(cron = "0 */1 * * * *")
+	public void sendProjectDeadlineReminders24H() {
+		List<ProjectReminderVo> reminderList24H = projectMapper.findScrapUsersForEndingProjects();
 		
-		for (ProjectReminderVo reminder : reminderList) {
+		for (ProjectReminderVo reminder : reminderList24H) {
 			projectService.processProjectDeadlineReminder(
 					reminder.getProjectSq(),
 					reminder.getUserSq(),
 					reminder.getRecruitEndDt(),
-					NotificationTypeCode.PROJECT);
+					NotificationTypeCode.PROJECT_DEADLINE_TOMORROW);
 		}
 	}
 }

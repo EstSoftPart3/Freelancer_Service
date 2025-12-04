@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.checkerframework.checker.units.qual.s;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -625,5 +626,44 @@ public class ProjectService {
 		return projects.stream()
 				.map(PopularProjectDTO::getProjectSq)
 				.toList();
+	}
+	
+	@Async	
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void processProjectDeadlineReminder(
+			Long projectSq, Long userSq, LocalDateTime recruitEndDt, NotificationTypeCode type) 
+	{
+		try {
+			projectMapper.selectProjectScrapForUpdate(projectSq, userSq);
+			
+			boolean alreadySendNotification = projectApplicationMapper.existsReminderNotification(userSq, projectSq, type.getCode());
+			
+			if (alreadySendNotification) {
+				return;
+			}
+			
+			createDeadlineNotification(projectSq, userSq, recruitEndDt, type);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void createDeadlineNotification(
+			Long projectSq, Long userSq, LocalDateTime recruitEndDt, NotificationTypeCode type)
+	{
+		String reminderText = NotificationTypeCode.PROJECT_DEADLINE_TOMORROW.getTitle();
+		
+		NotificationDTO notification = NotificationDTO.builder()
+				.userSq(userSq)
+				.notificationTypeCd(type.getCode())
+				.notificationTargetTypeCd(type.getCode())
+				.notificationTargetSq(projectSq)
+				.notificationTargetParentTypeCd(null)
+    			.notificationTargetParentSq(null)
+    			.notificationTtl(type.getTitle())
+    			.notificationTxt(reminderText)
+    			.build();
+		
+		notificationService.createNotification(notification);
 	}
 }

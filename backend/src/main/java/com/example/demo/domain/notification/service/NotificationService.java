@@ -48,7 +48,7 @@ public class NotificationService {
 		try {
 			notificationMapper.insert(dto);
 		} catch (DuplicateKeyException e) {
-			log.warn("알림 중복 저장 userSq= {}", dto.getUserSq());
+			log.warn("알림 중복 저장 userSq = {}, notificationSq = {}", dto.getUserSq(), dto.getNotificationSq());
 		}
 		
 		NotificationResponse response = toResponse(dto);

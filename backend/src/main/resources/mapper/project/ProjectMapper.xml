@@ -556,4 +556,32 @@
 		</foreach>
 	</select>
 	
+	<select id="findScrapUsersForEndingProjects" resultType="com.example.demo.domain.project.vo.ProjectReminderVo">
+		SELECT
+			p.project_sq AS projectSq,
+			p.project_recruit_end_dt AS recruitEndDt,
+			s.user_sq AS userSq
+		FROM
+			TBL_PROJECT_M p
+		JOIN
+			TBL_SCRAP_S s ON p.project_sq = s.project_sq
+		WHERE
+			p.project_recruit_end_dt = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+			AND NOT EXISTS (
+				SELECT 1 
+				FROM TBL_PROJECT_APPLICATION_H a
+				JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq
+				WHERE r.user_sq = s.user_sq
+				AND a.project_sq = p.project_sq
+				AND a.project_application_status_cd != 806
+			)
+	</select>
+
+	<select id="selectProjectScrapForUpdate" resultType="long">
+		SELECT project_sq
+		FROM TBL_SCRAP_S
+		WHERE project_sq = #{projectSq} AND user_sq = #{userSq}
+		FOR UPDATE
+	</select>
+	
 </mapper>
