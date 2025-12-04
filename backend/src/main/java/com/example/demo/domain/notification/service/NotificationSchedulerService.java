@@ -37,18 +37,17 @@ public class NotificationSchedulerService {
 		List<ApplicationSummary> confirmedInterviews = projectApplicationMapper.findConfirmedInterviews();
 		
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime tommorrow8AM = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0);
+		LocalDateTime tomorrow8AM = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0);
 		LocalDateTime today8AM = now.withHour(8).withMinute(0).withSecond(0).withNano(0);
 		
 		for (ApplicationSummary app : confirmedInterviews) {
 			LocalDateTime interviewTime = app.getInterviewDt();
 			
-			if (interviewTime.toLocalDate().isEqual(tommorrow8AM.toLocalDate())) {
+			if (interviewTime.toLocalDate().isEqual(tomorrow8AM.toLocalDate())) {
 				projectApplicationService.processInterviewReminder(app, NotificationTypeCode.INTERVIEW_TOMORROW);
 			}
 			
-			if (interviewTime.toLocalDate().isEqual(now.toLocalDate()) 
-					&& now.isAfter(today8AM) && now.isBefore(today8AM.plusMinutes(1))) {
+			if (interviewTime.toLocalDate().isEqual(now.toLocalDate())) {
 				projectApplicationService.processInterviewReminder(app, NotificationTypeCode.INTERVIEW_TODAY);
 			}
 		}
@@ -59,15 +58,15 @@ public class NotificationSchedulerService {
 	 */
 //	@Scheduled(cron = "0 0 * * * *")
 	@Scheduled(cron = "0 */1 * * * *")
-	public void sendProjectDeadlineReminders() {
-		List<ProjectReminderVo> reminderList = projectMapper.findScrapUsersForEndingProjects();
+	public void sendProjectDeadlineReminders24H() {
+		List<ProjectReminderVo> reminderList24H = projectMapper.findScrapUsersForEndingProjects();
 		
-		for (ProjectReminderVo reminder : reminderList) {
+		for (ProjectReminderVo reminder : reminderList24H) {
 			projectService.processProjectDeadlineReminder(
 					reminder.getProjectSq(),
 					reminder.getUserSq(),
 					reminder.getRecruitEndDt(),
-					NotificationTypeCode.PROJECT);
+					NotificationTypeCode.PROJECT_DEADLINE_TOMORROW);
 		}
 	}
 }

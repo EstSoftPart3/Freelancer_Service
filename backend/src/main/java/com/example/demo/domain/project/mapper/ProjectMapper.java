@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.demo.domain.project.entity.ProjectApplicationEntity;
+import com.example.demo.domain.project.vo.ProjectReminderVo;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -78,4 +80,8 @@ public interface ProjectMapper {
 	void updateProject(Project project);
 	void updateAddress(@Param("projectSq") Long projectSq, @Param("newAddressSq") Long newAddressSq);
 	void softDeleteProject(@Param("projectSq") Long projectSq);
+	
+	List<ProjectReminderVo> findScrapUsersForEndingProjects();
+	
+	Long selectProjectScrapForUpdate(@Param("projectSq") Long projectSq, @Param("userSq") Long userSq);
 }
