@@ -29,9 +29,9 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
       const res = await api.$get(
         `/projects/applications/${projectSq}/personal?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
       );
-      console.log('개인 지원자 목록 조회 = ', res)
-      setLocalApplicants(res.response || []);
-      setTotalPages(res.totalPages || 1);
+      setLocalApplicants(res.output.response || []);
+      setTotalPages(res.output.totalPages || 1);
+      console.log(res.output)
     } catch (error) {
       console.error('개인 지원자 목록 불러오기 실패', error);
       setLocalApplicants([]);
@@ -39,10 +39,30 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     }
   };
 
+  // 기업 지원자 목록 조회
+  const fetchCompanyApplicants = async () => {
+    try {
+      const res = await api.$get(
+        `/projects/applications/${projectSq}/corporate/grouped?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
+      );
+      console.log('기업 지원자 목록 조회 = ', res)
+      setLocalApplicants(res.output.response || []);
+      setTotalPages(res.output.totalPages || 1);
+    } catch (error) {
+      console.error('기업 지원자 목록 불러오기 실패', error);
+      setLocalApplicants([]);
+      setTotalPages(1);
+    }
+  }
+
   // 초기 로드 및 필터/페이지 변경 시 재조회
   useEffect(() => {
-    fetchPersonalApplicants();
-  }, [currentPage, currentFilter, searchType, searchText]);
+    if (isTogglePersonal) {
+      fetchPersonalApplicants();
+    } else {
+      fetchCompanyApplicants();
+    }
+  }, [isTogglePersonal, currentPage, currentFilter, searchType, searchText]);
 
   // 필터별 카운트 계산
   const filterCounts = useMemo(() => {
@@ -232,6 +252,13 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     }
     return null;
   };
+
+  // 개인 | 기업 토글시 필터, 검색어 초기화
+  useEffect(() => {
+    setCurrentFilter('all')
+    setSearchType('all')
+    setSearchText('')
+  }, [isTogglePersonal])
 
   // 지원 현황 props
   let props;

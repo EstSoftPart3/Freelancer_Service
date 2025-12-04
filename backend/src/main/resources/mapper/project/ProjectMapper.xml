@@ -36,11 +36,11 @@
 			</when>
 			<when test="projectActivateYn != null and projectActivateYn != ''">
 				<!-- 특정 값 지정: 해당 값으로 필터링 (Y=공개, N=비공개/숨김) -->
-				AND p.project_activate_yn = #{projectActivateYn}
+<!--				AND p.project_activate_yn = #{projectActivateYn}-->
 			</when>
 			<otherwise>
 				<!-- 기본값: 공개만 조회 -->
-				AND p.project_activate_yn = 'Y'
+<!--				AND p.project_activate_yn = 'Y'-->
 			</otherwise>
 		</choose>
 		<if

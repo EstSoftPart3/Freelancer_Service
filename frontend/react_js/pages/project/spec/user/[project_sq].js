@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
-import ResumeSelectModal from '@/components/project/ResumeSelectModal'
+import ResumeSelectModal from '@/components/project/ProjectResumeSelectModal'
 import CommonPageHeader from '@/components/common/CommonPageHeader'
 import styles from './[project_sq].module.css'
 
@@ -352,6 +352,7 @@ export default function UserProjectSpecPage() {
           projectSq={project_sq}
           onClose={closeResumeModal}
           onConfirm={handleApplicationSuccess}
+          setShowResumeModal={setShowResumeModal}
         />
       )}
     </>

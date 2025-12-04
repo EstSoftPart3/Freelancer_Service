@@ -85,7 +85,7 @@ public class ProjectApplicationController {
 	}
 
 	@GetMapping("/{projectSq}/corporate/grouped")
-	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
+	public ResponseEntity<ApiResponse<PagedApplicantResponseDTO<CorporateApplicantGroupDTO>>> getCorporateApplicantsGrouped(
 			@PathVariable Long projectSq,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "5") int size,
@@ -93,8 +93,8 @@ public class ProjectApplicationController {
 			@RequestParam(defaultValue = "all") String searchType,
 			@RequestParam(defaultValue = "") String keyword) {
 
-		return projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size, filter, searchType,
-				keyword);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 기업 지원자 현황 조회 성공",
+				projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size, filter, searchType,keyword)));
 	}
 
 	@PatchMapping("/{applicationSq}")

@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { api } from '@/lib/axios'
+import { useModalStore } from '@/store/modalStore'
+import ResumeDetailModal from '../myPage/common/ResumeDetailModal'
+import skillIconMap from '@/lib/skillIconMap';
 
-export default function ResumeSelectModal({ projectSq, onClose, onConfirm }) {
+export default function ProjectResumeSelectModal({ projectSq, onClose, onConfirm, setShowResumeModal }) {
+
+  const modalStore = useModalStore();
+
   const { user } = useAuth()
   const { showAlert } = useAlert()
-  
+
   const [resumes, setResumes] = useState([])
   const [selectedResume, setSelectedResume] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -16,7 +22,7 @@ export default function ResumeSelectModal({ projectSq, onClose, onConfirm }) {
     try {
       setLoading(true)
       const response = await api.$get('/mypage/resume/select-list')
-      console.log('이력서 목록 응답:', response)
+      console.log('이력서 목록 조회', response)
       if (Array.isArray(response.output)) {
         setResumes(response.output)
       } else {
@@ -34,6 +40,27 @@ export default function ResumeSelectModal({ projectSq, onClose, onConfirm }) {
     getResumes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // 이력서 닫힐때 다시 이력서 선택 모달창 나오게
+  // const handleClose = () => {
+  //   setShowResumeModal(true)
+  //   setTimeout(() => {
+  //     modalStore.onClose()
+  //   }, 0)
+  // }
+
+  // 이력서 모달창 열기
+  const openResumeModal = (resumeSq) => {
+    modalStore.openModal(ResumeDetailModal, {
+      resumeSq,
+      projectSq: 0,
+      applicationSq: 0,
+      isFromApplicationList: false,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
+  };
+
   
   // 이력서 선택
   const selectResume = (resume) => {
@@ -81,14 +108,14 @@ export default function ResumeSelectModal({ projectSq, onClose, onConfirm }) {
       {/* 모달 배경 */}
       <div 
         className="modal-backdrop fade show" 
-        style={{ zIndex: 1050 }}
+        style={{ zIndex: 1049 }}
         onClick={onClose}
       ></div>
       
       {/* 모달 */}
       <div 
         className="modal fade show" 
-        style={{ display: 'block', zIndex: 1055 }}
+        style={{ display: 'block', zIndex: 1049 }}
         tabIndex="-1"
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -125,7 +152,7 @@ export default function ResumeSelectModal({ projectSq, onClose, onConfirm }) {
                       <div className="post-info flex-grow-1">
                         <a 
                           href="#" 
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {e.preventDefault(); openResumeModal(resume.resumeSq)}}
                           className="text-dark text-decoration-none"
                         >
                           {resume.resumeTtl}

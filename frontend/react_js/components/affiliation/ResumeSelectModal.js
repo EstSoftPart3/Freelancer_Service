@@ -25,7 +25,6 @@ export default function ResumeSelectModal({ onClose, onSelect }) {
   const getResumes = async () => {
     try {
       const res = await api.$get('/mypage/resume/select-list')
-      console.log(res)
       if (Array.isArray(res.output)) {
         setResumes(res.output)
       }
