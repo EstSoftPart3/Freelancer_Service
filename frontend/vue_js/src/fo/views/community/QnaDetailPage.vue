@@ -18,13 +18,14 @@
           <h4 class="mb-4 f-s-15">답변 ({{ boardInfo.answers.length }})</h4>
           <div
             v-for="answer in boardInfo.answers"
-            :key="answer"
+            :key="answer.sq"
+            :id="`answer-${answer.sq}`"
             class="answer-box card p-4 mb-3 border-0"
             :class="{ 'disable-box': answer.sq === null }"
             @click="clickApplication(answer.sq)"
           >
             <div
-              class="d-flex justif y-content-between align-items-center mb-2"
+              class="d-flex justify y-content-between align-items-center mb-2"
             >
               <h5 class="mb-0 text-dark f-s-13 me-2">
                 {{ answer.ttl || '삭제된 답변입니다.' }}
@@ -67,16 +68,16 @@ import BoardPost from '@/fo/components/community/BoardPost.vue'
 import AnswerDetailModal from '@/fo/components/community/AnswerDetailModal.vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { defineProps, ref } from 'vue'
+import { defineProps, ref, nextTick } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { onMounted } from 'vue'
 import { useBoardStore } from '@/fo/stores/boardStore'
-
+import { useRoute } from 'vue-router'
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const boardStore = useBoardStore()
-
+const route = useRoute()
 const props = defineProps({ board_sq: String })
 
 const boardInfo = ref({
@@ -127,10 +128,27 @@ const formatTime = (createdAt) => {
 
   return `${year}-${month}-${day}`
 }
+function scrollToElement(hash) {
+  //약간의 지연을 주어 DOM이 완전히 렌더링 되도록 함
+  setTimeout(() => {
+    const element = document.querySelector(hash)
+    if (element) {
+      //부드러운 스크롤
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, 300)
+}
 
-onMounted(() => {
+onMounted(async () => {
   addViewCnt()
-  getBoard()
+  await getBoard()
+  await nextTick()
+  if (route.hash) {
+    scrollToElement(route.hash)
+  }
 })
 </script>
 <style>
@@ -140,6 +158,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   cursor: pointer;
+  scroll-margin-top: 100px;
+  transition: background-color 0.3s ease;
 }
 .f-s-11 {
   font-size: 1.1rem;

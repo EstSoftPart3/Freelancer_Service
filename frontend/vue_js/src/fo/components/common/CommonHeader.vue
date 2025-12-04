@@ -499,28 +499,19 @@ const navigateToTarget = (notification) => {
   switch (typeCd) {
     case 2201: // QnA 답변
       if (parentSq) {
-        router.push(`/qna/${parentSq}`)
+        router.push({
+          path: `/qna/${parentSq}`,
+          hash: `#answer-${targetSq}`,
+        })
       }
       break
 
-    case 2202: // 댓글 (QnA 또는 Board)
-      if (!parentSq) {
-        console.error('parentSq가 없습니다')
-        return
-      }
-
-      if (parentTypeCd === 2208) {
-        // QnA
-        router.push(`/qna/${parentSq}`)
-      } else if (parentTypeCd === 2209) {
-        // Board
-        router.push(`/board/${parentSq}`)
-      } else {
-        console.warn('알 수 없는 parentTypeCd:', parentTypeCd)
-        router.push(`/qna/${parentSq}`) // 기본값
-      }
+    case 2202: //일반게시판 댓글
+      router.push({
+        path: `/board/${parentSq}`,
+        hash: `#comment-${targetSq}`,
+      })
       break
-
     case 2205: // 스크랩
       router.push(`/project/spec/user/${targetSq}`)
       break
@@ -538,6 +529,15 @@ const navigateToTarget = (notification) => {
       } else {
         console.warn('알 수 없는 알림 타입:', typeCd, '제목:', title)
       }
+      break
+    case 2209:
+      router.push({
+        path: `/qna/${parentSq}`,
+        hash: `#comment-${targetSq}`,
+      })
+      break
+    default:
+      console.log('알 수 없는 타입 : ', targetSq)
   }
 }
 
