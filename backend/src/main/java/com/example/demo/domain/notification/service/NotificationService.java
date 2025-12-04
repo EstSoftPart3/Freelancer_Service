@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,11 @@ public class NotificationService {
 		dto.setNotificationIsDeletedYn("N");
 		dto.setNotificationCreatedAtDtm(LocalDateTime.now());
 		
-		notificationMapper.insert(dto);
+		try {
+			notificationMapper.insert(dto);
+		} catch (DuplicateKeyException e) {
+			log.warn("알림 중복 저장 userSq= {}", dto.getUserSq());
+		}
 		
 		NotificationResponse response = toResponse(dto);
 		eventPublisher.publishEvent(new NotificationEvent(dto.getUserSq(), response));
