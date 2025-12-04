@@ -41,13 +41,13 @@
 import { useModalStore } from '@/fo/stores/modalStore'
 import BoardComment from './BoardComment.vue'
 import BoardPost from './BoardPost.vue'
-import { defineProps, ref } from 'vue'
+import { defineProps, nextTick, ref } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { onMounted } from 'vue'
-
+import { useRoute } from 'vue-router'
 const alertStore = useAlertStore()
-
+const route = useRoute()
 const modalStore = useModalStore()
 
 const props = defineProps({
@@ -96,14 +96,30 @@ const getBoard = async () => {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
   }
 }
-
+function scrollToElement(hash) {
+  //약간의 지연을 주어 DOM이 완전히 렌더링 되도록 함
+  setTimeout(() => {
+    const element = document.querySelector(hash)
+    if (element) {
+      //부드러운 스크롤
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, 300)
+}
 const addViewCnt = async () => {
   await api.$patch(`/answer/${props.answerSq}/increment-view`)
 }
 
-onMounted(() => {
+onMounted(async () => {
   addViewCnt()
-  getBoard()
+  await getBoard()
+  await nextTick()
+  if (route.hash) {
+    scrollToElement(route.hash)
+  }
 })
 </script>
 <style></style>

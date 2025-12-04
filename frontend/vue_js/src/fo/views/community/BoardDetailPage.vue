@@ -25,15 +25,16 @@
 import BoardPost from '@/fo/components/community/BoardPost.vue'
 import BoardComment from '@/fo/components/community/BoardComment.vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { defineProps } from 'vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
 import { useBoardStore } from '@/fo/stores/boardStore'
+import { useRoute } from 'vue-router'
 
 const alertStore = useAlertStore()
 const boardStore = useBoardStore()
-
+const route = useRoute()
 const props = defineProps({ board_sq: String })
 
 const boardInfo = ref({
@@ -59,9 +60,27 @@ const addViewCnt = async () => {
   await api.$patch(`/board/${props.board_sq}/increment-view`)
 }
 
-onMounted(() => {
+function scrollToElement(hash) {
+  //약간의 지연을 주어 DOM이 완전히 렌더링 되도록 함
+  setTimeout(() => {
+    const element = document.querySelector(hash)
+    if (element) {
+      //부드러운 스크롤
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, 300)
+}
+
+onMounted(async () => {
   addViewCnt()
-  getBoard()
+  await getBoard()
+  await nextTick()
+  if (route.hash) {
+    scrollToElement(route.hash)
+  }
 })
 </script>
 <style></style>

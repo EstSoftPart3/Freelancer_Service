@@ -163,16 +163,25 @@ export default {
       const title = notification.notificationTtl
       switch (targetType) {
         case 2201: //답변
-          this.$router.push(`/qna/${parentSq}`)
+          this.$router.push({
+            path: `/qna/${parentSq}`,
+            hash: `#answer-${targetSq}`,
+          })
           break
         case 2202: //일반게시판댓글
-          this.$router.push(`/board/${parentSq}`)
+          this.$router.push({
+            path: `/board/${parentSq}`,
+            hash: `#comment-${targetSq}`,
+          })
           break
         case 2205:
           this.$router.push(`/project/spec/user/${targetSq}`)
           break
         case 2209: //QnA게시판댓글
-          this.$router.push(`/qna/${parentSq}`)
+          this.$router.push({
+            path: `/qna/${parentSq}`,
+            hash: `#comment-${targetSq}`,
+          })
           break
         case 2207: // 지원 결과
           if (title.includes('지원')) {
@@ -186,18 +195,6 @@ export default {
               this.$router.push(`/projects/${targetSq}`)
             }
           }
-          break
-        case 1:
-          this.$router.push(`/projects/${targetSq}`)
-          break
-        case 2:
-          this.$router.push(`/announcements/${targetSq}`)
-          break
-        case 3:
-          this.$router.push(`/interviews/${targetSq}`)
-          break
-        case 5:
-          this.$router.push(`/applications/${targetSq}`)
           break
         default:
           console.log('알 수 없는 타입:', targetType)

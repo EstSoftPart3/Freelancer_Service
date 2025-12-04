@@ -3,7 +3,12 @@
     <div class="post-comments mt-5 post-comments">
       <h4 class="mb-3 font-size-15">댓글 ({{ props.comments.length }})</h4>
       <ul class="comments">
-        <li v-for="comment in props.comments" :key="comment">
+        <li
+          v-for="comment in props.comments"
+          :key="comment"
+          :id="`comment-${comment.sq}`"
+          class="comment-item"
+        >
           <div class="comment">
             <div
               class="img-thumbnail img-thumbnail-no-borders d-none d-sm-block"
@@ -357,5 +362,10 @@ button {
 }
 .comment-profile .fas.fa-user.text-muted {
   font-size: 20px;
+}
+
+.comment-item {
+  scroll-margin-top: 100px;
+  transition: background-color 0.3s ease;
 }
 </style>
