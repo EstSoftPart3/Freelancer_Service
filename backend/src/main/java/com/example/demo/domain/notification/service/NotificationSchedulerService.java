@@ -5,24 +5,34 @@ import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import com.example.demo.domain.mypage.controller.InformationEditController;
 import com.example.demo.domain.notification.enums.NotificationTypeCode;
 import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
+import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.service.ProjectApplicationService;
+import com.example.demo.domain.project.service.ProjectService;
 import com.example.demo.domain.project.vo.ApplicationSummary;
+import com.example.demo.domain.project.vo.ProjectReminderVo;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationSchedulerService {
-	
+
 	private final ProjectApplicationMapper projectApplicationMapper;
 	private final ProjectApplicationService projectApplicationService;
+	private final ProjectMapper projectMapper;
+	private final ProjectService projectService;
 
-	
-	// 배포 시엔  매일 아침 8시
-	@Scheduled(cron = "0 0 8 * * *")   
-//	@Scheduled(cron = "*/30 * * * * *")
+
+	/**
+	 *  인터뷰 알림 스케줄러
+	 *  
+	 *  배포 시엔 매일 아침 8시
+	 */
+//	@Scheduled(cron = "0 0 8 * * *")   
+	@Scheduled(cron = "*/30 * * * * *")
 	public void sendInterviewReminders() {
 		List<ApplicationSummary> confirmedInterviews = projectApplicationMapper.findConfirmedInterviews();
 		
@@ -41,6 +51,23 @@ public class NotificationSchedulerService {
 					&& now.isAfter(today8AM) && now.isBefore(today8AM.plusMinutes(1))) {
 				projectApplicationService.processInterviewReminder(app, NotificationTypeCode.INTERVIEW_TODAY);
 			}
+		}
+	}
+	
+	/**
+	 * 프로젝트 마감 알림 스케줄러  (매 시간 정각)
+	 */
+//	@Scheduled(cron = "0 0 * * * *")
+	@Scheduled(cron = "0 */1 * * * *")
+	public void sendProjectDeadlineReminders() {
+		List<ProjectReminderVo> reminderList = projectMapper.findScrapUsersForEndingProjects();
+		
+		for (ProjectReminderVo reminder : reminderList) {
+			projectService.processProjectDeadlineReminder(
+					reminder.getProjectSq(),
+					reminder.getUserSq(),
+					reminder.getRecruitEndDt(),
+					NotificationTypeCode.PROJECT);
 		}
 	}
 }
