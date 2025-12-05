@@ -7,6 +7,7 @@ import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
 import ProjectPersonalApplyStatus from './ProjectPersonalApplyStatus';
 import ProjectCompanyApplyStatus from './ProjectCompanyApplyStatus';
+import styles from './ProjectApplyStatusModal.module.css'
 
 const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
@@ -232,9 +233,9 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
       return <span className="btn btn-primary btn-sm">불합격</span>;
     } else if (status === '인터뷰확정') {
       return (
-        <div className="interview-wrapper position-relative d-inline-block">
+        <div className={`${styles['interview-wrapper']} position-relative d-inline-block`}>
           <div
-            className="interview-tooltip position-absolute bg-white border p-2 rounded shadow-sm text-dark font-weight-semibold"
+            className={`${styles['interview-tooltip']} position-absolute bg-white border p-2 rounded shadow-sm text-dark ${styles['font-weight-semibold']}`}
             style={{
               bottom: '80%',
               left: '50%',
@@ -244,7 +245,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
           >
             {formatDate(applicant.appStatusVo.interviewDt)}
           </div>
-          <span className="btn btn-light btn-sm interview">인터뷰 확정</span>
+          <span className={`btn btn-light btn-sm ${styles.interview}`}>인터뷰 확정</span>
         </div>
       );
     } else if (status === '지원취소') {

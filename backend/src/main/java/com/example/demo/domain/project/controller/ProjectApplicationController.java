@@ -40,11 +40,11 @@ public class ProjectApplicationController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<Map<String, Object>>> getApplicationList(
 			@AuthenticationPrincipal Long userSq,
-			@RequestParam(defaultValue = "0") int offset,
-			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(defaultValue = "all") String searchType,
-			@RequestParam(defaultValue = "") String keyword,
-			@RequestParam(defaultValue = "all") String readType) {
+			@RequestParam(value = "offset", defaultValue = "0") int offset,
+			@RequestParam(value = "size", defaultValue = "5") int size,
+			@RequestParam(value = "searchType", defaultValue = "all") String searchType,
+			@RequestParam(value = "keyword", defaultValue = "") String keyword,
+			@RequestParam(value = "readType", defaultValue = "all") String readType) {
 		Map<String, Object> data = projectApplicationService.fetchProjectApplicationsWithCount(userSq, offset, size,
 				searchType, keyword, readType);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 지원 조회 성공", data));
@@ -53,11 +53,11 @@ public class ProjectApplicationController {
 	@GetMapping("/corporate")
 	public ResponseEntity<ApiResponse<Map<String, Object>>> getCorporateApplicationList(
 			@AuthenticationPrincipal Long userSq,
-			@RequestParam(defaultValue = "0") int offset,
-			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(defaultValue = "all") String searchType,
-			@RequestParam(defaultValue = "") String keyword,
-			@RequestParam(defaultValue = "all") String readType) {
+			@RequestParam(value = "offset", defaultValue = "0") int offset,
+			@RequestParam(value = "size", defaultValue = "5") int size,
+			@RequestParam(value = "searchType", defaultValue = "all") String searchType,
+			@RequestParam(value = "keyword", defaultValue = "") String keyword,
+			@RequestParam(value = "readType", defaultValue = "all") String readType) {
 		Map<String, Object> data = projectApplicationService.fetchCorporateProjectApplicationsWithCount(userSq, offset,
 				size,
 				searchType, keyword, readType);
@@ -70,28 +70,28 @@ public class ProjectApplicationController {
 		return ResponseEntity.ok(
 				ApiResponse.of(HttpStatus.OK, "인터뷰 가능 시간 조회 성공", projectService.fetchProjectAvailableTimes(projectSq)));
 	}
-
+	
 	@GetMapping("/{projectSq}/personal")
 	public ResponseEntity<ApiResponse<PagedApplicantResponseDTO<PersonalApplicantDTO>>> getPersonalApplicants(
-			@PathVariable Long projectSq,
-			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(defaultValue = "all") String filter,
-			@RequestParam(defaultValue = "all") String searchType,
-			@RequestParam(defaultValue = "") String keyword) {
+	        @PathVariable("projectSq") Long projectSq,  // ← "projectSq" 추가
+	        @RequestParam(value = "page", defaultValue = "1") int page,  // ← value = "page" 추가
+	        @RequestParam(value = "size", defaultValue = "5") int size,  // ← value = "size" 추가
+	        @RequestParam(value = "filter", defaultValue = "all") String filter,  // ← value = "filter" 추가
+	        @RequestParam(value = "searchType", defaultValue = "all") String searchType,  // ← value = "searchType" 추가
+	        @RequestParam(value = "keyword", defaultValue = "") String keyword) {  // ← value = "keyword" 추가
 
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 개인 지원자 현황 조회 성공",
-						projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword)));
+	    return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 개인 지원자 현황 조회 성공",
+	            projectApplicationService.getPersonalApplicants(projectSq, page, size, filter, searchType, keyword)));
 	}
 
 	@GetMapping("/{projectSq}/corporate/grouped")
 	public ResponseEntity<ApiResponse<PagedApplicantResponseDTO<CorporateApplicantGroupDTO>>> getCorporateApplicantsGrouped(
-			@PathVariable Long projectSq,
-			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "5") int size,
-			@RequestParam(defaultValue = "all") String filter,
-			@RequestParam(defaultValue = "all") String searchType,
-			@RequestParam(defaultValue = "") String keyword) {
+			@PathVariable("projectSq") Long projectSq,
+			@RequestParam(value = "page", defaultValue = "1") int page,
+			@RequestParam(value = "size", defaultValue = "5") int size,
+			@RequestParam(value = "filter", defaultValue = "all") String filter,
+			@RequestParam(value = "searchType", defaultValue = "all") String searchType,
+			@RequestParam(value = "keyword", defaultValue = "") String keyword) {
 
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 기업 지원자 현황 조회 성공",
 				projectApplicationService.getCorporateApplicantsGrouped(projectSq, page, size, filter, searchType,keyword)));
