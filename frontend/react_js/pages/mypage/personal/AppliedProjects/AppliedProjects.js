@@ -7,11 +7,12 @@ import styles from './AppliedProjects.module.css';
 import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
 import { useModalStore } from '@/store/modalStore';
 import skillIconMap from '@/lib/skillIconMap';
+import InterviewSelectModal from '@/components/myPage/common/InterviewSelectModal';
 
 const AppliedProjects = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const modalStore = useModalStore();
+  const { openModal, closeModal } = useModalStore();
 
   // State 관리
   const [applications, setApplications] = useState([]);
@@ -160,31 +161,34 @@ const AppliedProjects = () => {
       );
 
       // 모달 구현 필요
-      alert(
-        `인터뷰 시간 선택 모달 구현 필요\nProject SQ: ${projectSq}\nApplication SQ: ${applicationSq}`
-      );
-      // 실제 구현:
       // setModalData({
       //   type: 'interviewTimeSelect',
       //   applicationSq,
       //   interviewTimes: response.data.output,
       //   onConfirm: fetchApplicationList,
       // });
+      openModal(InterviewSelectModal, {
+        applicationSq,
+        interviewTimes: response.output,
+        onConfirm: fetchApplicationList,
+        onCancel: closeModal,
+        apiPatch: api,
+      })
     } catch (error) {
       console.error('❌ 인터뷰 시간 조회 실패:', error);
     }
   };
 
   // 이력서 상세보기 모달
-  const openResumeDetailModal = (resumeSq) => {
-    modalStore.openModal(ResumeDetailModal, {
-      title: '이력서 상세보기',
-      size: 'modal-lg',
-      resumeSq: resumeSq,
-      api: api,
-      skillIconMap: skillIconMap,
-    });
-  };
+  // const openResumeDetailModal = (resumeSq) => {
+  //   modalStore.openModal(ResumeDetailModal, {
+  //     title: '이력서 상세보기',
+  //     size: 'modal-lg',
+  //     resumeSq: resumeSq,
+  //     api: api,
+  //     skillIconMap: skillIconMap,
+  //   });
+  // };
 
   // 페이지네이션 컴포넌트
   const Pagination = ({ currentPage, totalPages, onPageChange }) => {

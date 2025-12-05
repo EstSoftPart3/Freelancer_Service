@@ -136,6 +136,7 @@ public class ProjectService {
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
 		List<Project> projects = projectMapper.findProjectsBySearch(request);
+
 		Long totalCount = projectMapper.countProjectsBySearch(request);
 		List<ProjectSummary> responses = new ArrayList<>();
 

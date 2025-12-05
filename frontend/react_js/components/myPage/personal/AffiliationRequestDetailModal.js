@@ -17,6 +17,7 @@ const AffiliationRequestDetailModal = ({ applicationSq = 0 }) => {
   const getCompanyInfo = async () => {
     try {
       const res = await api.$get(`/mypage/applications/${applicationSq}`);
+      console.log("소속 정보", res);
       setCompanyInfo(res.output.affiliation);
       setApplyInfo(res.output.apply);
     } catch (error) {

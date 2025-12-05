@@ -321,11 +321,11 @@
 		project_recruit_start_dt, project_recruit_end_dt, project_preference_txt,
 		project_description_txt, project_created_at_dtm, project_modified_at_dtm,
 		project_candidate_cnt, project_scrap_cnt, project_is_notification_yn, project_is_deleted_yn,
-		project_view_cnt ) VALUES ( #{companySq}, #{addressSq}, #{projectTtl}, #{projectImageUrl},
+		project_view_cnt, project_activate_yn ) VALUES ( #{companySq}, #{addressSq}, #{projectTtl}, #{projectImageUrl},
 		#{projectDeveloperGradeCd}, #{projectRequiredEducationCd}, #{projectSalary},
 		#{projectStartDt}, #{projectEndDt}, #{projectRecruitStartDt}, #{projectRecruitEndDt},
 		#{projectPreferenceTxt}, #{projectDescriptionTxt}, NOW(), NOW(), 0, 0,
-		#{projectIsNotificationYn}, "N", 0 ) </insert>
+		#{projectIsNotificationYn}, "N", 0, "Y" ) </insert>
 
 	<insert id="insertScrap"
 		parameterType="com.example.demo.domain.project.dto.request.ScrapInsertRequest"> INSERT INTO
