@@ -97,7 +97,10 @@
                   </button>
                 </div>
               </div>
-              <p class="card-text text-muted">🏢By {{ project.companyNm }}</p>
+              <p class="card-text text-muted">
+                <i class="bi bi-buildings"></i>By
+                <span class="company-name">{{ project.companyNm }}</span>
+              </p>
               <p class="card-text small text-muted">
                 {{ project.address }} / {{ project.devGradeNm }} /
                 {{ project.requiredEduLv1 }}
@@ -494,14 +497,28 @@ onMounted(() => {
 .project-card .card-text {
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
-}
 
+  color: #6c757d !important;
+}
+.project-card p.card-text.text-muted {
+  color: #6c757d !important;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+.project-card p.card-text.text-muted i {
+  color: #6c757d;
+  margin-right: 4px;
+}
 .popular-projects-section .text-muted {
   color: #0088cc !important;
 }
 
 .project-card .card-text.small.text-muted {
   color: #6c757d !important;
+}
+.project-card .company-name {
+  color: #0088cc;
+  font-weight: 500;
 }
 
 @media (max-width: 1400px) {
