@@ -39,6 +39,6 @@ public interface ResumeDetailMapper {
 
     String selectResumePhotoSaveName(Long resumeSq);
 
-    void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq);
+    void updateReadApplicationDtmIfNull(@Param("resumeSq") Long resumeSq, @Param("projectSq") Long projectSq, @Param("applicationSq") Long applicationSq);
 
 }

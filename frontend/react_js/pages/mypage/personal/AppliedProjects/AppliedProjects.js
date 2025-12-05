@@ -13,6 +13,7 @@ const AppliedProjects = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { openModal, closeModal } = useModalStore();
+  
 
   // State 관리
   const [applications, setApplications] = useState([]);
@@ -24,6 +25,9 @@ const AppliedProjects = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [counts, setCounts] = useState({ all: 0, read: 0, unread: 0 });
+  const [showModal, setShowModal] = useState(false)
+  const [selectedProjectSq, setSelectedProjectSq] = useState('')
+  const [interviewProps, setInterviewProps] = useState();
 
   const itemsPerPage = 5;
   const userType = user?.userType || 'PERSONAL';
@@ -159,21 +163,23 @@ const AppliedProjects = () => {
       const response = await api.$get(
         `/projects/applications/interviews/${projectSq}`
       );
-
-      // 모달 구현 필요
-      // setModalData({
-      //   type: 'interviewTimeSelect',
-      //   applicationSq,
-      //   interviewTimes: response.data.output,
-      //   onConfirm: fetchApplicationList,
-      // });
-      openModal(InterviewSelectModal, {
-        applicationSq,
+      setShowModal(true)
+      setSelectedProjectSq(projectSq);
+      setInterviewProps({
         interviewTimes: response.output,
+        applicationSq,
         onConfirm: fetchApplicationList,
-        onCancel: closeModal,
-        apiPatch: api,
+        onCancel: () => setShowModal(false),
+        apiPatch: api
       })
+
+      // openModal(InterviewSelectModal, {
+      //   applicationSq,
+      //   interviewTimes: response.output,
+      //   onConfirm: fetchApplicationList,
+      //   onCancel: closeModal,
+      //   apiPatch: api,
+      // })
     } catch (error) {
       console.error('❌ 인터뷰 시간 조회 실패:', error);
     }
@@ -248,6 +254,7 @@ const AppliedProjects = () => {
   };
 
   return (
+    <>
     <MyPageLayout userType={userType}>
       <div className={styles.container}>
         {/* 페이지 제목 */}
@@ -440,6 +447,21 @@ const AppliedProjects = () => {
         </div>
       </div>
     </MyPageLayout>
+    {/* 소속 신청 모달 */}
+    {showModal && selectedProjectSq && (
+      <div
+        className="modal fade show d-block"
+        tabIndex="-1"
+        style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <InterviewSelectModal
+            {...interviewProps}
+          />
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

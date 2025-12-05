@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import './InterviewSelectModal.module.css';
+import styles from './InterviewSelectModal.module.css';
 
 // const { Button } = require("@/public/vendor/bootstrap/js/bootstrap.bundle");
 
@@ -77,6 +77,7 @@ export default function InterviewSelectModal(
 				if (!grouped[date]) grouped[date] = [];
 					grouped[date].push(time.slice(0, 5));
 			});
+			console.log('가능 시간 그룹 ', grouped)
 			return grouped;
 		}, [interviewTimes]);
 
@@ -101,14 +102,15 @@ export default function InterviewSelectModal(
 		const hasTimes = !!(availableTimes[dateString]?.length);
 
 		const classes = [];
-		if (!past && dateString in availableTimes && isSameMonth) classes.push("available");
-		if (dateString === selectedDate && isSameMonth) classes.push("selected");
-		if (hasTimes && isSameMonth) classes.push("has-times");
-		if (past && isSameMonth) classes.push("past-date");
+		if (!past && dateString in availableTimes && isSameMonth) classes.push(styles.available);
+		if (dateString === selectedDate && isSameMonth) classes.push(styles.selected);
+		if (hasTimes && isSameMonth) classes.push(styles['has-times']);
+		if (past && isSameMonth) classes.push(styles['past-date']);
 		return classes.join(" ");
 	};
 
-		// ======= actions =======
+	// ======= actions =======
+	// 날짜 선택
 	const selectDate = (date) => {
 		const formatted = formatDate(date);
 		if (isPastDate(date) || !(formatted in availableTimes)) return;
@@ -186,7 +188,7 @@ export default function InterviewSelectModal(
 			const payload = { applicationSq };
 			if (apiPatch) {
 				// 외부 axios 인스턴스를 주입받은 경우
-				await apiPatch(
+				await apiPatch.$patch(
 					`/projects/applications/interviews/${interviewTimeSq}`,
 					payload,
 					{
@@ -229,15 +231,21 @@ export default function InterviewSelectModal(
 		
 	// ======= render =======
 	return (
-  <div className='container'>
-    <div className="daterangepicker ltr show-calendar openscenter">
-      <div className="calendar-wrapper">
-        {/* LEFT CALENDAR */}
-        <div className="drp-calendar left">
-          <div className="calendar-table">
+  <div className={styles.container}>
+    {/* daterangepicker 클래스는 styles 객체로 대체합니다. */}
+    <div className={styles.daterangepicker + " ltr show-calendar openscenter"}>
+      <div className={styles['calendar-wrapper']}>
+        
+        {/* LEFT CALENDAR: 오류가 난 부분을 수정했습니다. */}
+        <div className={ `${styles['drp-calendar']} left` }>
+          
+          {/* className에 스타일이 정의되어 있다면 styles 객체를 사용합니다. */}
+          <div className={styles['calendar-table']}>
+            {/* table-condensed는 Bootstrap 클래스일 가능성이 높으므로 문자열 유지 */}
             <table className="table-condensed">
               <thead>
                 <tr>
+                  {/* prev available 클래스는 Bootstrap이나 daterangepicker 라이브러리 클래스일 수 있으므로 문자열 유지 */}
                   <th className="prev available" onClick={prevMonth}>
                     <span>&lt;</span>
                   </th>
@@ -277,9 +285,9 @@ export default function InterviewSelectModal(
           </div>
         </div>
 
-        {/* RIGHT CALENDAR */}
-        <div className="drp-calendar right">
-          <div className="calendar-table">
+        {/* RIGHT CALENDAR: drp-calendar 클래스를 styles 객체로 대체했습니다. */}
+        <div className={ `${styles['drp-calendar']} right` }>
+          <div className={styles['calendar-table']}>
             <table className="table-condensed">
               <thead>
                 <tr>
@@ -323,17 +331,18 @@ export default function InterviewSelectModal(
         </div>
       </div>
 
-      {/* 시간 선택 영역 */}
-      <div className="time-picker-wrapper">
-        <h6 className="time-picker-title">시간 선택 (30분 단위)</h6>
+      {/* 시간 선택 영역: CSS Modules 적용 */}
+      <div className={styles['time-picker-wrapper']}>
+        <h6 className={styles['time-picker-title']}>시간 선택 (30분 단위)</h6>
         {!selectedDate && (
-          <p className="time-warning">날짜를 먼저 선택해주세요.</p>
+          <p className={styles['time-warning']}>날짜를 먼저 선택해주세요.</p>
         )}
-        <div className="time-grid">
+        <div className={styles['time-grid']}>
           {displayedTimeOptions.map((time) => (
             <button
               key={time}
-              className={`time-slot ${isSelectedTime(time) ? 'selected' : ''}`}
+              // time-slot과 selected 클래스를 styles 객체로 대체
+              className={`${styles['time-slot']} ${isSelectedTime(time) ? styles.selected : ''}`}
               disabled={!selectedDate}
               onClick={() => toggleTime(time)}
             >
@@ -343,10 +352,11 @@ export default function InterviewSelectModal(
         </div>
       </div>
 
-      {/* 버튼 영역 */}
-      <div className="drp-buttons">
-        <span className="drp-selected">{formattedRange}</span>
+      {/* 버튼 영역: CSS Modules 적용 */}
+      <div className={styles['drp-buttons']}>
+        <span className={styles['drp-selected']}>{formattedRange}</span>
         <button 
+          // Bootstrap 클래스(btn btn-sm btn-default)와 커스텀 클래스(cancelBtn)를 함께 사용
           className="cancelBtn btn btn-sm btn-default" 
           type="button" 
           onClick={onCancel}
@@ -363,5 +373,5 @@ export default function InterviewSelectModal(
       </div>
     </div>
   </div>
-	)
+);
 }
