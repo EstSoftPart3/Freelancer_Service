@@ -512,6 +512,9 @@ const navigateToTarget = (notification) => {
         hash: `#comment-${targetSq}`,
       })
       break
+    case 2204:
+      router.push(`/mypage/appliedProjects`)
+      break
     case 2205: // 스크랩
       router.push(`/project/spec/user/${targetSq}`)
       break

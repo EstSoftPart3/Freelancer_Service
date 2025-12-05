@@ -85,11 +85,17 @@ export default {
     this.fetchNotifications()
   },
   methods: {
+    stripHTML(html) {
+      if (!html) return ''
+      return html.replace(/<[^>]*>/g, '').trim()
+    },
     truncateText(text, maxlength = 15) {
-      if (!text || text.length <= maxlength) {
-        return text
+      if (!text) return ''
+      const cleanText = this.stripHTML(text)
+      if (cleanText.length <= maxlength) {
+        return cleanText
       }
-      return text.substring(0, maxlength) + '...'
+      return cleanText.substring(0, maxlength) + '...'
     },
     async fetchNotifications() {
       try {
@@ -174,6 +180,9 @@ export default {
             hash: `#comment-${targetSq}`,
           })
           break
+        case 2204:
+          this.$router.push(`mypage/appliedProjects`)
+          break
         case 2205:
           this.$router.push(`/project/spec/user/${targetSq}`)
           break
@@ -187,7 +196,7 @@ export default {
           if (title.includes('지원')) {
             // 지원 관련
             if (targetSq) {
-              this.$router.push(`/applications/${targetSq}`)
+              this.$router.push(`mypage/appliedProjects`)
             }
           } else if (title.includes('스크랩')) {
             // 스크랩 관련
