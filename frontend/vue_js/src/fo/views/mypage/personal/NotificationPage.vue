@@ -342,9 +342,9 @@ export default {
 }
 
 .btn-unread {
-  color: #333;
-  background-color: #e8f5e9;
-  border-color: #e8f5e9;
+  color: #fff;
+  background-color: #0088cc;
+  border-color: #0088cc;
 }
 
 /* .btn-unread:hover {
@@ -353,9 +353,9 @@ export default {
 } */
 
 .btn-read {
-  color: #333;
-  background-color: #ffc0cb;
-  border-color: #ffc0cb;
+  color: #fff;
+  background-color: #dd4238;
+  border-color: #dd4238;
 }
 
 /* .btn-read:hover {
