@@ -88,7 +88,7 @@ public class CompanyService {
 		Long companySq = fetchCompanySq(token.getUserSq(), token.getUserTypeCd());
 
 		Long totalCount = companyMapper.countUsersBySearch(companySq, request);
-
+		
 		List<Long> companyUserSqs = companyMapper.findUserSqsByCompanySqAndSearch(companySq, request);
 		List<CompanyMemberVo> responses = new ArrayList<>();
 
@@ -106,13 +106,13 @@ public class CompanyService {
 
 					}
 					List<Long> resumeSqs = resumeMapper.findResumesByUserSq(sq);
-
 					LocalDate joinDt = companyMapper.findCompanyJoinDt(sq);
 					LocalDate leaveDt = companyMapper.findCompanyLeaveDt(sq);
 
 					Integer careerYr = calculateTotalCareer(repResumeSq);
 
 					List<String> skillTags = resumeSkillMapper.findAllNmBySq(repResumeSq);
+					
 
 					Long leavedYn = companyMapper.findCompanyMemberStatus(sq);
 

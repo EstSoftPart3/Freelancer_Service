@@ -42,9 +42,9 @@ public class ResumeController {
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createResume(
             @AuthenticationPrincipal Long userSq,
-            @RequestPart ResumeRequestDTO dto,
-            @RequestPart(required = false) List<MultipartFile> profileImages,
-            @RequestPart(required = false) List<MultipartFile> attachments) {
+            @RequestPart("dto") ResumeRequestDTO dto,
+            @RequestPart(value = "profileImages", required = false) List<MultipartFile> profileImages,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
 
         int result = resumeService.createResume(userSq, dto, profileImages, attachments);
 
@@ -113,8 +113,8 @@ public class ResumeController {
 
 	@GetMapping("/list")
 	public ResponseEntity<ApiResponse<Map<String, Object>>> getResumeList(
-			@RequestParam Long currentPage,
-			@RequestParam Long size,
+			@RequestParam(value = "currentPage") Long currentPage,
+			@RequestParam(value = "size") Long size,
 			@AuthenticationPrincipal Long userSq) {
 
 		List<ResumeListResponse> fullList = resumeService.getAllResumes(userSq);
@@ -171,9 +171,9 @@ public class ResumeController {
 	// 자격증 불러오기
 	@GetMapping("/certificates")
 	public ResponseEntity<ApiResponse<CertificateListResponseDTO>> getCertificates(
-			@RequestParam(required = false) String searchNm,
-			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "3") int size) {
+			@RequestParam(value = "searchNm", required = false) String searchNm,
+			@RequestParam(value = "page", defaultValue = "1") int page,
+			@RequestParam(value = "size", defaultValue = "3") int size) {
 
 		CertificateListResponseDTO result = resumeService.getCertificates(searchNm, page, size);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "자격증 리스트 조회 완료", result));

@@ -27,10 +27,10 @@ public class CalendarController {
     private final CalendarService calendarService;
 
     @GetMapping("/evnts")
-    public ResponseEntity<ApiResponse<List<CalendarViewDto>>> getCalendar(@AuthenticationPrincipal Long userSq, @RequestParam(required = false) Integer year,
-                                                                          @RequestParam(required = false) Integer month, @RequestParam(required = false) Long recruitJobPositionTypeCd,
-                                                                          @RequestParam(required = false) Long contractTypeCd, @RequestParam(required = false) String searchKeyword
-                                                                            ,@RequestParam(required = false) String calendarType){
+    public ResponseEntity<ApiResponse<List<CalendarViewDto>>> getCalendar(@AuthenticationPrincipal Long userSq, @RequestParam(value = "year", required = false) Integer year,
+                                                                          @RequestParam(value = "month", required = false) Integer month, @RequestParam(value = "recruitJobPositionTypeCd", required = false) Long recruitJobPositionTypeCd,
+                                                                          @RequestParam(value = "contractTypeCd", required = false) Long contractTypeCd, @RequestParam(value = "searchKeyword", required = false) String searchKeyword
+                                                                            ,@RequestParam(value = "calendarType", required = false) String calendarType){
         //값이 없으면  현재 달로 기본값
         YearMonth ym = (year == null || month == null) ? YearMonth.now(ZoneId.of("Asia/Seoul")) : YearMonth.of(year, month);
 
