@@ -1,14 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/router'
-import { useAuth } from '@/contexts/AuthContext'
+import CommonPageHeader from '@/components/common/CommonPageHeader'
+import ProjectCompanyApplyModal from '@/components/myPage/personal/ProjectCompanyApplyModal'
 import { useAlert } from '@/contexts/AlertContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
-import CommonPageHeader from '@/components/common/CommonPageHeader'
+import { useModalStore } from '@/store/modalStore'
+import { useRouter } from 'next/router'
+import { useEffect, useRef, useState } from 'react'
 import styles from './[project_sq].module.css'
 
 export default function CompanyProjectSpecPage() {
   const router = useRouter()
+  const modalStore = useModalStore();
   const { project_sq } = router.query
   const { user } = useAuth()
   const { showAlert } = useAlert()
@@ -59,10 +62,23 @@ export default function CompanyProjectSpecPage() {
     return endDate < now
   }
 
+  // 이력서 상세보기 모달 - 참고용
+  const openResumeDetailModal = (resumeSq) => {
+    openModal(ResumeDetailModal, {
+      title: '이력서 상세보기',
+      size: 'modal-lg',
+      resumeSq: resumeSq,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
+  };
+
   // 지원하기 (외부 기업)
   const openMemberModal = () => {
-    // TODO: 멤버 선택 모달 열기
-    showAlert('멤버 선택 모달 구현 예정', 'info')
+    modalStore.openModal(ProjectCompanyApplyModal, {
+      projectSq: project_sq,
+      projectTitle: project.projectTtl,
+    })
   }
 
   // 스크랩 클릭

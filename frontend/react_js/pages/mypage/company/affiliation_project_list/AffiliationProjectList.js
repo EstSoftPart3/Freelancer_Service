@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
+import ProjectApplyStatusModal from '@/components/myPage/personal/ProjectApplyStatusModal';
 import { api } from '@/lib/axios';
+import { useModalStore } from '@/store/modalStore';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
 import MyPageLayout from '../../MyPageLayout';
 import './AffiliationProjectList.module.css';
-import { useModalStore } from '@/store/modalStore';
-import ProjectApplyStatusModal from '@/components/myPage/personal/ProjectApplyStatusModal';
 
 // skillIconMap import - 경로는 프로젝트에 맞게 조정
-// import skillIconMap from '../../../../assets/skillIconMap';
 
 const AffiliationProjectList = () => {
   const router = useRouter();

@@ -1,122 +1,45 @@
 import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAlertStore } from '../../../store/alertStore';
 import { useModalStore } from '../../../store/modalStore';
 import CommonConfirmModal from '../common/CommonConfirmModal';
 import ResumeDetailModal from '../common/ResumeDetailModal';
+import CompanyMembers from './CompanyMembers';
 import styles from './ProjectApplyStatusModal.module.css';
-import ProjectCompanyApplyStatus from './ProjectCompanyApplyStatus';
-import ProjectPersonalApplyStatus from './ProjectPersonalApplyStatus';
 
-const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
+const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
   const alertStore = useAlertStore();
 
-  const [currentFilter, setCurrentFilter] = useState('all');
   const [searchType, setSearchType] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [inputText, setInputText] = useState('');
-  const [applicantType] = useState('personal');
+  const [companyMembers, setCompanyMembers] = useState([])
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
-  const [localApplicants, setLocalApplicants] = useState([]);
-  const [isTogglePersonal, setIsTogglePersonal] = useState(true)
+  const [selectedMembers, setSelectedMembers] = useState({});
 
-  // 개인 지원자 목록 조회
-  const fetchPersonalApplicants = async () => {
+  // 기업 소속 인원 목록 조회
+  const fetchCompanyMembers = async () => {
     try {
       const res = await api.$get(
-        `/projects/applications/${projectSq}/personal?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
+        `/companies?page=${currentPage}&size=${pageSize}&searchType=${searchType}&keyword=${searchText}`
       );
-      setLocalApplicants(res.output.response || []);
+      setCompanyMembers(res.output.members || []);
       setTotalPages(res.output.totalPages || 1);
       console.log(res.output)
     } catch (error) {
-      console.error('개인 지원자 목록 불러오기 실패', error);
-      setLocalApplicants([]);
+      console.error('기업 소속 인원 불러오기 실패', error);
+      setCompanyMembers([]);
       setTotalPages(1);
     }
   };
 
-  // 기업 지원자 목록 조회
-  const fetchCompanyApplicants = async () => {
-    try {
-      const res = await api.$get(
-        `/projects/applications/${projectSq}/corporate/grouped?page=${currentPage}&size=${pageSize}&filter=${currentFilter}&searchType=${searchType}&keyword=${searchText}`
-      );
-      console.log('기업 지원자 목록 조회 = ', res)
-      setLocalApplicants(res.output.response || []);
-      setTotalPages(res.output.totalPages || 1);
-    } catch (error) {
-      console.error('기업 지원자 목록 불러오기 실패', error);
-      setLocalApplicants([]);
-      setTotalPages(1);
-    }
-  }
-
-  // 초기 로드 및 필터/페이지 변경 시 재조회
   useEffect(() => {
-    if (isTogglePersonal) {
-      fetchPersonalApplicants();
-    } else {
-      fetchCompanyApplicants();
-    }
-  }, [isTogglePersonal, currentPage, currentFilter, searchType, searchText]);
-
-  // 필터별 카운트 계산
-  const filterCounts = useMemo(() => {
-    const counts = {
-      all: 0,
-      passed: 0,
-      in_progress: 0,
-      interview_confirmed: 0,
-      interview_requested: 0,
-      rejected: 0,
-    };
-    localApplicants.forEach((a) => {
-      counts.all++;
-      const status = a.appStatusVo?.appStatus;
-      if (status === '지원중') counts.in_progress++;
-      else if (status === '합격') counts.passed++;
-      else if (status === '인터뷰확정') counts.interview_confirmed++;
-      else if (status === '인터뷰요청중') counts.interview_requested++;
-      else if (['불합격', '지원취소'].includes(status)) counts.rejected++;
-    });
-    return counts;
-  }, [localApplicants]);
-
-  // 필터 목록
-  const filters = useMemo(
-    () => [
-      { type: 'all', label: '전체', count: filterCounts.all },
-      { type: 'passed', label: '합격', count: filterCounts.passed },
-      { type: 'in_progress', label: '지원중', count: filterCounts.in_progress },
-      {
-        type: 'interview_confirmed',
-        label: '인터뷰확정',
-        count: filterCounts.interview_confirmed,
-      },
-      {
-        type: 'interview_requested',
-        label: '인터뷰요청중',
-        count: filterCounts.interview_requested,
-      },
-      {
-        type: 'rejected',
-        label: '불합격 / 취소',
-        count: filterCounts.rejected,
-      },
-    ],
-    [filterCounts]
-  );
-
-  // 필터 변경
-  const setFilter = (type) => {
-    setCurrentFilter(type);
-    setCurrentPage(1);
-  };
+    fetchCompanyMembers();
+  }, [])
 
   // 검색
   const search = () => {
@@ -135,36 +58,24 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     modalStore.closeModal();
   };
 
-  // 로컬 상태 업데이트
-  const updateStatusLocally = (applicationSq, newStatus) => {
-    setLocalApplicants((prev) =>
-      prev.map((app) =>
-        app.applicationSq === applicationSq
-          ? {
-              ...app,
-              appStatusVo: { ...app.appStatusVo, appStatus: newStatus },
-            }
-          : app
-      )
-    );
-  };
+  // 선택하기
+  const handleSelect = (userSq, userNm) => {
+    setSelectedMembers(prev => {
+      const currentList = prev[currentPage] || [];
+      let newCurrentList;
+      if (currentList.some(member => member.userSq === userSq)) {
+        newCurrentList = currentList.filter(member => member.userSq !== userSq);
+      } else {
+        newCurrentList = [...currentList, {userSq, userNm}];
+      }
+      return {
+        ...prev,
+        [currentPage]: newCurrentList
+      }
+    })
+  }
 
-  // 상태 변경
-  const updateStatus = async (applicationSq, status) => {
-    try {
-      await api.$patch(
-        `/projects/applications/${applicationSq}`,
-        { status }
-      );
-      updateStatusLocally(applicationSq, status);
-      alertStore.show('상태가 정상적으로 변경되었습니다.');
-    } catch (e) {
-      console.error('지원 상태 변경 실패', e);
-      alertStore.show('상태 변경 중 오류가 발생했습니다.', 'danger');
-    }
-  };
-
-  // 불합격 확인 모달
+  // 불합격 확인 모달 -> 이력서 변경 모달로 바꾸자
   const openStatusFailureModal = (applicationSq) => {
     modalStore.openModal(CommonConfirmModal, {
       message: '해당 지원자를 불합격 처리하겠습니까?',
@@ -175,7 +86,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     });
   };
 
-  // 이력서 상세보기 모달 열기 + 열람처리
+  // 이력서 상세보기 모달 열기 + 열람처리 -> 대표 이력서 상세 보기로 바꾸자
   const openResumeDetailModal = (resumeSq, projectSq, applicationSq) => {
     modalStore.openModal(ResumeDetailModal, {
       resumeSq,
@@ -206,7 +117,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     });
   };
 
-  // 상태별 버튼 렌더링
+  // 상태별 버튼 렌더링 -> 선택하기 / 선택됨 두 가지로 변경
   const renderStatusButtons = (applicant) => {
     const status = applicant.appStatusVo.appStatus;
 
@@ -254,33 +165,25 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     return null;
   };
 
-  // 개인 | 기업 토글시 필터, 검색어 초기화
-  useEffect(() => {
-    setCurrentFilter('all')
-    setSearchType('all')
-    setSearchText('')
-  }, [isTogglePersonal])
-
   // 지원 현황 props
-  let props;
-  if (isTogglePersonal) {
-    props = {
-      projectSq,
-      localApplicants,
-      openResumeDetailModal, 
-      renderStatusButtons, 
-      generateIconUrl
-    }
-  } else {
-    props = {
-
-    }
+  const props = {
+    projectSq,
+    companyMembers,
+    currentPageSelectedMembers: selectedMembers[currentPage],
+    openResumeDetailModal,
+    renderStatusButtons, 
+    generateIconUrl,
+    handleSelect,
   }
+
+  useEffect(() => {
+    console.log("sm", selectedMembers)
+  }, [selectedMembers])
 
   return (
     <div className="modal-content">
       <div className="modal-header">
-        <h3 className="modal-title">지원 현황</h3>
+        <h3 className="modal-title">소속 인원 리스트</h3>
         <button
           type="button"
           className="btn-close"
@@ -294,37 +197,12 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
         className="modal-body"
         style={{ maxHeight: '80vh', overflowY: 'auto', padding: 0 }}
       >
-        <div className="container py-1 mt-3">
-          <div className="row">
-            <div className="col">
-              <h1 className="font-weight-normal text-10 mb-20">
-                <strong>{projectTitle}</strong>
-              </h1>
-            </div>
-          </div>
+        <div className="container py-1">
 
           {/* 필터 UI */}
-          <div className="row align-items-center mt-3 mb-2">
-            {/* 좌측 토글 버튼 */}
-            <div className="col-md-8 d-flex gap-2">
-              {filters.map((filter) => (
-                <button
-                  key={filter.type}
-                  className={`btn btn-primary fw-bold px-2 py-2 d-flex align-items-center gap-2 fs-6 btn-sm ${
-                    currentFilter === filter.type ? 'active' : ''
-                  }`}
-                  onClick={() => setFilter(filter.type)}
-                >
-                  {filter.label}
-                  <span className="badge bg-white text-primary fw-bold px-2 py-1">
-                    {filter.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
+          <div className="row align-items-center">
             {/* 우측 셀렉트 + 검색 */}
-            <div className="col-md-4 d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-end gap-2">
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value)}
@@ -346,28 +224,26 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
               </button>
             </div>
           </div>
-          {/* 개인 | 기업 토글 */}
+          {/* 선택한 인원 목록 */}
           <div className="row">
-            <div className="col-12 d-flex justify-content-end pt-2 mt-1">
-              <div className="btn-group" role="group" aria-label="개인 기업 토글">
-                <button
-                  type="button"
-                  className={`btn btn-outline btn-primary ${
-                    isTogglePersonal ? 'active' : ''
-                  }`}
-                  onClick={() => {setIsTogglePersonal(true)}}
-                >
-                  개인
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-outline btn-primary ${
-                    !isTogglePersonal ? 'active' : ''
-                  }`}
-                  onClick={() => {setIsTogglePersonal(false)}}
-                >
-                  기업
-                </button>
+            <div className="col-12 d-flex justify-content-start pt-2 mt-1">
+              <div className='d-flex flex-column'>
+                <p>현재 선택한 인원 : </p>
+                <div className='d-flex gap-2'>
+                  {Object.values(selectedMembers).flat().map((member) => (
+                    <span
+                      key={member.userSq}
+                      className="btn btn-rounded btn-light btn-sm px-3 py-2"
+                    >
+                      {member.userNm}
+                      <i
+                        className="fas fa-times ms-2"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleSelect(member.userSq, member.userNm)}
+                      ></i>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -378,7 +254,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
             </div>
           </div>
           {/* 지원자 현황 목록 */}
-          {isTogglePersonal ? <ProjectPersonalApplyStatus {...props} /> : <ProjectCompanyApplyStatus />}
+          <CompanyMembers {...props} />
           {/* 페이지네이션 */}
 					<div className="mt-5 py-5">
 						<ul className="pagination float-end">
@@ -438,5 +314,5 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   );
 };
 
-export default ProjectApplyStatusModal;
+export default ProjectCompanyApplyModal;
 
