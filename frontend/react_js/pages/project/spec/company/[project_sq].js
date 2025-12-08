@@ -78,6 +78,7 @@ export default function CompanyProjectSpecPage() {
     modalStore.openModal(ProjectCompanyApplyModal, {
       projectSq: project_sq,
       projectTitle: project.projectTtl,
+      size: 'modalHuge'
     })
   }
 

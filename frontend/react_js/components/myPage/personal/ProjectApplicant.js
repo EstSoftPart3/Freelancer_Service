@@ -1,5 +1,5 @@
-const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUrl}) => {
-
+const ProjectApplicant = ({index, projectSq, applicant, renderStatusButtons, openResumeDetailModal, generateIconUrl}) => {
+	console.log('data from ProjectApplicant', applicant)
 	return (
 		<li
 			key={applicant.applicationSq}
@@ -14,14 +14,17 @@ const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUr
 					>
 						<a
 							href="#"
-							// onClick={(e) => readResume(e, applicant.resumeSq, applicant.applicationSq)}
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								openResumeDetailModal(applicant.resumeSq, projectSq, applicant.applicationSq)}}
 							className="d-flex gap-1 align-items-center text-decoration-none"
 						>
-							<span className="text-6 m-0">
-								{applicant.resumeNmTtlVo.resumeNm} /
+							<span className="text-5 m-0">
+								{applicant.resumeNmTtlVo?.resumeNm} /
 							</span>
 							<span className="text-5 m-0">
-								{applicant.resumeNmTtlVo.resumeTtl}
+								{applicant.resumeNmTtlVo?.resumeTtl}
 							</span>
 						</a>
 					</div>
@@ -32,7 +35,7 @@ const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUr
 
 				{/* 경력 + 열람일자 */}
 				<div className="d-flex justify-content-between align-items-center mt-2">
-					<div className="post-meta text-4">
+					<div className="post-meta text-4 text-nowrap">
 						<span className="text-dark text-uppercase font-weight-semibold">
 							경력
 						</span>
@@ -42,7 +45,7 @@ const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUr
 						<span className="text-dark text-uppercase font-weight-semibold">
 							열람일자
 						</span>
-						&nbsp;| {applicant.appStatusVo.readResumeDt || '미열람'}
+						&nbsp;| {applicant.appStatusVo?.readResumeDt || '미열람'}
 					</div>
 				</div>
 
@@ -56,7 +59,7 @@ const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUr
 							<span>사용 기술 | </span>
 						</div>
 						<div className="d-flex align-items-center flex-wrap gap-2">
-						{applicant.skillNames.map((skill) => (
+						{applicant.skillNames?.map((skill) => (
 							<div
 								key={skill}
 								className="btn d-flex align-items-center p-1 gap-1 border-0"
@@ -79,7 +82,7 @@ const ProjectApplicant = ({index, applicant, renderStatusButtons, generateIconUr
 						>
 							지원일자
 						</span>
-						&nbsp;| {applicant.appStatusVo.appDt}
+						&nbsp;| {applicant.appStatusVo?.appDt}
 					</div>
 				</div>
 			</div>

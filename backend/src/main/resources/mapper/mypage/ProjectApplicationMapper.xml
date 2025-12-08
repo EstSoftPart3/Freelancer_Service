@@ -319,7 +319,7 @@
 		) AND (a.project_application_status_cd IS NULL OR a.project_application_status_cd != 806) ) </select>
 
 	<select id="findCorporateApplications" parameterType="map" resultType="map"> SELECT
-		a.project_application_sq AS applicationSq, p.project_ttl AS projectTitle, (SELECT
+		a.project_application_sq AS applicationSq, p.project_sq AS projectSq, p.project_ttl AS projectTitle, (SELECT
 		c.company_nm FROM TBL_COMPANY_S c WHERE c.company_sq = p.company_sq) AS companyTitle,
 		p.project_candidate_cnt AS applicantCnt, u.user_nm AS applicantName, r.resume_sq AS
 		resumeSq, r.resume_ttl AS resumeTitle, a.project_application_created_at_dtm AS appliedDt,

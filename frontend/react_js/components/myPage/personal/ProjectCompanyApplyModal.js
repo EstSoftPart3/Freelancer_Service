@@ -7,10 +7,13 @@ import CommonConfirmModal from '../common/CommonConfirmModal';
 import ResumeDetailModal from '../common/ResumeDetailModal';
 import CompanyMembers from './CompanyMembers';
 import styles from './ProjectApplyStatusModal.module.css';
+import ResumeSelectModal from '../common/ResumeSelectModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
   const alertStore = useAlertStore();
+  const { user } = useAuth()
 
   const [searchType, setSearchType] = useState('all');
   const [searchText, setSearchText] = useState('');
@@ -20,6 +23,8 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedMembers, setSelectedMembers] = useState({});
+  const [resumeSelect, setResumeSelect] = useState({});
+  const [showModal, setShowModal] = useState(false);
 
   // 기업 소속 인원 목록 조회
   const fetchCompanyMembers = async () => {
@@ -58,21 +63,32 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
     modalStore.closeModal();
   };
 
-  // 선택하기
-  const handleSelect = (userSq, userNm) => {
+  // 선택하기 - 이력서 선택 안됐을 경우 어떻게 할지 생각해보기
+  const handleSelect = (userSq, resumeSq, userNm) => {
+    if (!resumeSq) return;
     setSelectedMembers(prev => {
       const currentList = prev[currentPage] || [];
       let newCurrentList;
       if (currentList.some(member => member.userSq === userSq)) {
         newCurrentList = currentList.filter(member => member.userSq !== userSq);
       } else {
-        newCurrentList = [...currentList, {userSq, userNm}];
+        newCurrentList = [...currentList, {userSq, resumeSq, userNm}];
       }
       return {
         ...prev,
         [currentPage]: newCurrentList
       }
     })
+  }
+
+  // 이력서 선택 모달 열기
+  const openResumeSelectModal = (userSq) => {
+    if (!user?.userSq) {
+      alertStore.show('로그인 후 이용해주세요.', 'danger')
+      return
+    }
+    setResumeSelect(userSq);
+    setShowModal(true);
   }
 
   // 불합격 확인 모달 -> 이력서 변경 모달로 바꾸자
@@ -165,20 +181,65 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
     return null;
   };
 
+  // 지원하기
+  const handleApply = async () => {
+    console.log(selectedMembers)
+    const selectedMembersResumeSq = Object.values(selectedMembers).flat().map(member => member.resumeSq);
+    console.log(selectedMembersResumeSq);
+    try {
+      const response = await api.$post(`/projects/applications/${projectSq}`, {
+        resumeSq: selectedMembersResumeSq,
+        projectApplicationTyp: "COMPANY"
+      })
+      alertStore.show('기업 지원이 완료됏습니다.', 'success')
+      console.log('기업 지원이 완료됐습니다.', response)
+    } catch(error) {
+      alertStore.show('기업 지원에 실패했습니다.', 'danger')
+      console.log(error)
+    }
+  }
+
+  // 이력서 변경시 기존에 선택된게 있으면 제거
+  const deleteSelectedMember = (userSq) => {
+    console.log('deleteselected', userSq)
+    if (!userSq) return;
+    setSelectedMembers(prev => {
+      const currentList = prev[currentPage] || [];
+      let newCurrentList;
+      if (currentList.some(member => member.userSq === userSq)) {
+        newCurrentList = currentList.filter(member => member.userSq !== userSq);
+      }
+      return {
+        ...prev,
+        [currentPage]: newCurrentList
+      }
+    })
+  }
+
   // 지원 현황 props
   const props = {
     projectSq,
     companyMembers,
     currentPageSelectedMembers: selectedMembers[currentPage],
     openResumeDetailModal,
+    openResumeSelectModal,
     renderStatusButtons, 
     generateIconUrl,
     handleSelect,
   }
 
-  useEffect(() => {
-    console.log("sm", selectedMembers)
-  }, [selectedMembers])
+  const resumeProps = {
+    userSq: resumeSelect,
+    role: 'COMPANY',
+    onConfirm: () => deleteSelectedMember(resumeSelect),
+    onClose:
+      () => {
+        setShowModal(false);
+        fetchCompanyMembers()
+      }
+  }
+
+  useEffect(() => {console.log('selectedMembers',selectedMembers)}, [selectedMembers])
 
   return (
     <div className="modal-content">
@@ -232,14 +293,14 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
                 <div className='d-flex gap-2'>
                   {Object.values(selectedMembers).flat().map((member) => (
                     <span
-                      key={member.userSq}
+                      key={member.resumeSq}
                       className="btn btn-rounded btn-light btn-sm px-3 py-2"
                     >
                       {member.userNm}
                       <i
                         className="fas fa-times ms-2"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleSelect(member.userSq, member.userNm)}
+                        onClick={() => handleSelect(member.userSq, member.resumeSq, member.userNm)}
                       ></i>
                     </span>
                   ))}
@@ -306,10 +367,25 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
         </div>
       </div>
       <div className="modal-footer">
+        <button type="button" className="btn btn-primary" onClick={handleApply}>
+          지원하기
+        </button>
         <button type="button" className="btn btn-light" onClick={closeModal}>
           닫기
         </button>
       </div>
+    {/* 이력서 변경 모달 열기 */}
+    {showModal && (
+      <div
+      className="modal fade show d-block"
+      tabIndex="-1"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1049 }}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <ResumeSelectModal {...resumeProps}/>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

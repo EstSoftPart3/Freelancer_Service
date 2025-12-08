@@ -3,6 +3,13 @@ import {create} from 'zustand'
 
 export const useModalStore = create((set, get) => ({
     modalStack: [], //[{Component, props}]
+
+    // 프로젝트 지원현황 토글 상태 저장 추가
+    currentToggle: true,
+    setToggle: (value) => set({currentToggle: value}),
+    getToggle: () => get().currentToggle,
+    resetToggle: () => set({currentToggle: true}),
+
     //선택적 구독을 위해 geter 사용(selector에서 계산 x)
     getCurrentModal:() => {
         const stack = get().modalStack;

@@ -18,6 +18,10 @@
   width: 100%;
 }
 
+.modalHuge {
+  max-width: 1200px !important;
+}
+
 /* 반응형 처리 */
 @media (min-width: 576px) {
   .modalDialog.modal-sm {

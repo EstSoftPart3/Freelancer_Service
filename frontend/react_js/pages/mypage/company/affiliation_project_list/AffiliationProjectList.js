@@ -3,7 +3,7 @@ import { api } from '@/lib/axios';
 import { useModalStore } from '@/store/modalStore';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MyPageLayout from '../../MyPageLayout';
 import './AffiliationProjectList.module.css';
 
@@ -210,15 +210,13 @@ const AffiliationProjectList = () => {
     }
   };
 
-  const [toggle, setToggle] =useState('')
-
   // 지원현황 모달 열기
   const openUserApplyModal = (projectSq, projectTtl) => {
     modalStore.openModal(ProjectApplyStatusModal, {
       projectSq,
       projectTitle: projectTtl,
-      onToggle: setToggle,
-      size: 'modal-xl'
+      onToggle: modalStore.setToggle,
+      size: 'modalHuge'
     })
   };
 

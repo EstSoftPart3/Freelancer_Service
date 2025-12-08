@@ -1,10 +1,10 @@
 
-
 const CompanyMembers = ({
     projectSq,
     companyMembers,
 		currentPageSelectedMembers,
     openResumeDetailModal,
+		openResumeSelectModal,
 		handleSelect,
     generateIconUrl
   }) => {
@@ -40,7 +40,7 @@ const CompanyMembers = ({
 		// 마이너스일 경우 처리
 		return Math.max(0, integerYears);
 	}
-	
+
 	return (
 		// 지원자 현황
 		<div className="row">
@@ -56,14 +56,14 @@ const CompanyMembers = ({
 					>
 						{companyMembers.map((member, idx) => (
 							<li
-								key={member.userSq}
+								key={member.resumeSq}
 								style={{ borderBottom: '1px rgb(230, 230, 230) solid' }}
 							>
 								<div className="post-info d-flex justify-content-between position-relative">
 									<div className="d-flex flex-column gap-2">
 										{/* 제목 + 회사명 + 지원상태 버튼 */}
 										<div 
-											className="d-flex gap-2"
+											className="d-flex align-items-center gap-2"
 											data-member-index={idx}
 										>
 											<a
@@ -77,13 +77,22 @@ const CompanyMembers = ({
         								>
 													{member.userNm} /
 												</span>
-												<span 
-													className="text-5 m-0 p-0 d-inline-block" 
-													style={{ lineHeight: 'normal' }}
-												>
-													{member.resumeTtl}
-												</span>
+												{member.resumeSq &&
+													<span 
+														className="text-5 m-0 p-0 d-inline-block" 
+														style={{ lineHeight: 'normal' }}
+													>
+														{member.resumeTtl}
+													</span>
+												}
 											</a>
+											{!member.resumeSq && 
+											<span 
+													className="text-5 m-0 p-0 d-inline-block " 
+													style={{ lineHeight: 'normal' }}
+											>
+												이력서를 선택하세요.
+											</span>}
 										</div>
 										{/* 경력 + 사용 기술 */}
 										<div
@@ -91,7 +100,7 @@ const CompanyMembers = ({
 											style={{ fontSize: '16.8px !important' }}
 										>
 											<div className="d-flex align-items-center gap-2">
-												<div className="post-meta text-4">
+												<div className="post-meta text-4 text-nowrap">
 													<span className="text-dark text-uppercase font-weight-semibold">
 														경력
 													</span>
@@ -149,19 +158,19 @@ const CompanyMembers = ({
 									<div className="d-inline-flex gap-1 align-items-center">
 										{currentPageSelectedMembers?.some(sm => sm.userSq === member.userSq) ?
 											<span
-												onClick={() => handleSelect(member.userSq, member.userNm)}
-												className="btn btn-primary btn-lg"
+												onClick={() => handleSelect(member.userSq, member.resumeSq, member.userNm)}
+												className="btn btn-primary btn-lg text-nowrap"
 												>
 												선택됨
 											</span> : <span
-												onClick={() => handleSelect(member.userSq, member.userNm)}
-												className="btn btn-outline btn-primary btn-lg"
+												onClick={() => handleSelect(member.userSq, member.resumeSq, member.userNm)}
+												className="btn btn-outline btn-primary btn-lg text-nowrap"
 												>
 												선택하기
 											</span>}
 										<span
-											onClick={() => openStatusFailureModal(applicant.applicationSq)}
-											className="btn btn-outline btn-primary btn-lg"
+											onClick={() => openResumeSelectModal(member.userSq, member.resumeSq, member.userNm)}
+											className="btn btn-outline btn-primary btn-lg text-nowrap"
 											>
 											이력서 변경
 										</span>
