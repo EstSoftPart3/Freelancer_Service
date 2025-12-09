@@ -36,6 +36,7 @@ export default function QnaListPage() {
       const res = await api.$get(
         `/qna?page=${currentPage}&size=${size}&sortType=${sortType}${searchFilter}${adoptFilter}`
       )
+      console.log('게시글 리스트', res)
 
       if (res) {
         if (res.output.totalElements === 0) {

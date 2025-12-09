@@ -3,21 +3,11 @@ const CompanyMembers = ({
     projectSq,
     companyMembers,
 		currentPageSelectedMembers,
-    openResumeDetailModal,
+    openRepResumeDetailModal,
 		openResumeSelectModal,
 		handleSelect,
     generateIconUrl
   }) => {
-
-	// 이벤트 버블링 처리
-	const handleApplicantClick = (e) => {
-		e.preventDefault()
-		
-		const idx = e.target.dataset.memberIndex;
-		if (idx === undefined) return;
-		// 프로젝트 지원 이력서 열람
-		openResumeDetailModal(companyMembers[idx].resumeSq, projectSq, companyMembers[idx].applicationSq)
-	}
 
 	// 경력 계산
 	const calCareerYears = (careerStartDt, careerEndDt) => {
@@ -52,7 +42,6 @@ const CompanyMembers = ({
 				) : (
 					<ul 
 						className="simple-post-list m-0 position-relative"
-						onClick={handleApplicantClick}
 					>
 						{companyMembers.map((member, idx) => (
 							<li
@@ -68,7 +57,10 @@ const CompanyMembers = ({
 										>
 											<a
 												href="#"
-												// onClick={(e) => readResume(e, member.resumeSq, member.applicationSq)}
+												onClick={(e) => {
+													e.preventDefault()
+													openRepResumeDetailModal(member.resumeSq, projectSq, member.applicationSq)
+												}}
 												className="d-flex gap-1 align-items-center text-decoration-none"
 											>
 												<span 

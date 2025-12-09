@@ -6,10 +6,12 @@ import CommonPageHeader from '@/components/common/CommonPageHeader'
 import CommonPagination from '@/components/common/CommonPagination'
 import AffiliationRecruitModal from '@/components/affiliation/AffiliationRecruitModal'
 import styles from './affiliationList.module.css'
+import { useRouter } from 'next/router'
 
 export default function AffiliationListPage() {
-  const { user } = useAuth()
+  const { user, isLoggedIn } = useAuth()
   const { showAlert } = useAlert()
+  const router = useRouter();
 
   const [afltnList, setAfltnList] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -140,6 +142,9 @@ export default function AffiliationListPage() {
 
   // 소속 신청하기 클릭
   const clickApplication = async (afltn) => {
+    if (!isLoggedIn) {
+      router.push('/auth/login')
+    }
     await api.$patch(`/affiliation/${afltn.sq}/increment-view`)
     setSelectedAfltn(afltn)
     setShowModal(true)

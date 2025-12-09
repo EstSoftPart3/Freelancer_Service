@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AffiliatedMembers.module.css';
-
-// skillIconMap import - 경로는 프로젝트에 맞게 조정
-// import iconMap from '../../../../assets/skillIconMap';
+import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
+import { useModalStore } from '@/store/modalStore';
+import skillIconMap from '@/lib/skillIconMap'
+import ResumeSelectModal from '@/components/myPage/common/ResumeSelectModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AffiliatedMembers = () => {
+
+  const { user, isLoggedIn} = useAuth();
+  const modalStore = useModalStore();
+
   // State 관리
   const [members, setMembers] = useState([]);
   const [searchType, setSearchType] = useState('all');
@@ -14,6 +20,8 @@ const AffiliatedMembers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(5);
+  const [showModal, setShowModal] = useState(false);
+  const [resumeClickSq, setResumeClickSq] = useState();
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -51,11 +59,9 @@ const AffiliatedMembers = () => {
 
   // 스킬 아이콘 가져오기
   const getSkillIcon = (name) => {
-    // iconMap 사용 - 실제 구현에 맞게 수정
-    const key = name?.toLowerCase().replace(/[\s.]+/g, '');
-    // return iconMap[key] || iconMap.default;
-    return null; // 임시
-  };
+    const key = name.toLowerCase().replace(/[\s.]+/g, '')
+    return skillIconMap[key] || skillIconMap.default
+  }
 
   // 검색
   const search = () => {
@@ -77,29 +83,34 @@ const AffiliatedMembers = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 이력서 선택 모달 열기
-  const openResumeSelectModal = (memberSq) => {
-    // 모달 구현 필요
-    alert(`이력서 선택 모달 구현 필요\nUser SQ: ${memberSq}`);
-    // 실제 구현:
-    // setModalData({
-    //   type: 'resumeSelect',
-    //   userSq: memberSq,
-    //   role: 'COMPANY',
-    //   onConfirm: fetchAffiliationMemberList,
-    // });
-  };
+  // 이력서 변경 모달 열기
+  const openResumeSelectModal = (userSq) => {
+    if (!isLoggedIn) {
+      alertStore.show('로그인 후 이용해주세요.', 'danger')
+      return
+    }
+    setResumeClickSq(userSq);
+    setShowModal(true);
+  }
 
-  // 이력서 상세보기 모달
-  const openResumeDetail = (resumeSq) => {
-    console.log('resumeSq', resumeSq);
-    // 모달 구현 필요
-    alert(`이력서 상세보기 모달 구현 필요\nResume SQ: ${resumeSq}`);
-    // 실제 구현:
-    // setModalData({
-    //   type: 'resumeDetail',
-    //   resumeSq: resumeSq,
-    // });
+  // 이력서 변경 모달 props
+  const resumeProps = {
+    userSq: resumeClickSq,
+    role: 'COMPANY',
+    onConfirm: fetchAffiliationMemberList,
+    onClose: () => setShowModal(false)
+  }
+
+  // 이력서 상세보기 모달 열기
+  const openResumeDetailModal = (resumeSq, projectSq, applicationSq) => {
+    modalStore.openModal(ResumeDetailModal, {
+      resumeSq,
+      projectSq,
+      applicationSq,
+      isFromApplicationList: false,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
   };
 
   // 퇴사 처리
@@ -216,7 +227,7 @@ return (
                         className={`${styles['text-4']} ${styles['m-0']} ${styles['resume-title']}`}
                         onClick={(e) => {
                           e.preventDefault();
-                          openResumeDetail(member.resumeSq);
+                          openResumeDetailModal(member.resumeSq);
                         }}
                       >
                         {member.resumeTtl}
@@ -243,7 +254,7 @@ return (
                         <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                           경력
                         </span>
-                        | {member.careerYr}년차
+                        &nbsp; | {member.careerYr}년차
                       </div>
                       <div className={`${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['ms-3']} ${styles['skills-list']}`}>
                         <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
@@ -340,6 +351,18 @@ return (
         </div>
       </div>
     </div>
+    {/* 이력서 변경 모달 열기 */}
+    {showModal && (
+      <div
+      className="modal fade show d-block"
+      tabIndex="-1"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1049 }}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <ResumeSelectModal {...resumeProps}/>
+        </div>
+      </div>
+    )}
     </MyPageLayout>
   );
 };

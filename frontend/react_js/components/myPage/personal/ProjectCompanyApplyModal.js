@@ -7,7 +7,7 @@ import CommonConfirmModal from '../common/CommonConfirmModal';
 import ResumeDetailModal from '../common/ResumeDetailModal';
 import CompanyMembers from './CompanyMembers';
 import styles from './ProjectApplyStatusModal.module.css';
-import ResumeSelectModal from '../common/ResumeSelectModal';
+import ResumeSelectModal from '@/components/myPage/common/ResumeSelectModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
@@ -25,6 +25,8 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
   const [selectedMembers, setSelectedMembers] = useState({});
   const [resumeSelect, setResumeSelect] = useState({});
   const [showModal, setShowModal] = useState(false);
+  const [showRepModal, setShowRepModal] = useState(false);
+  const [repProps, setRepProps] = useState(null);
 
   // 기업 소속 인원 목록 조회
   const fetchCompanyMembers = async () => {
@@ -102,16 +104,18 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
     });
   };
 
-  // 이력서 상세보기 모달 열기 + 열람처리 -> 대표 이력서 상세 보기로 바꾸자
-  const openResumeDetailModal = (resumeSq, projectSq, applicationSq) => {
-    modalStore.openModal(ResumeDetailModal, {
+  // 대표 이력서 상세 보기
+  const openRepResumeDetailModal = (resumeSq, projectSq, applicationSq) => {
+    setRepProps({
       resumeSq,
       projectSq,
       applicationSq,
       isFromApplicationList: true,
       api: api,
       skillIconMap: skillIconMap,
-    });
+      onClose: () => setShowRepModal(false),
+    })
+    setShowRepModal(true);
   };
 
   // 스킬 아이콘 URL 생성
@@ -221,9 +225,8 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
     projectSq,
     companyMembers,
     currentPageSelectedMembers: selectedMembers[currentPage],
-    openResumeDetailModal,
+    openRepResumeDetailModal,
     openResumeSelectModal,
-    renderStatusButtons, 
     generateIconUrl,
     handleSelect,
   }
@@ -374,6 +377,18 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
           닫기
         </button>
       </div>
+    {/* 대표 이력서 열람 */}
+    {showRepModal && (
+      <div
+      className="modal fade show d-block"
+      tabIndex="-1"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1049 }}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg h-75">
+          <ResumeDetailModal {...repProps}/>
+        </div>
+      </div>
+    )}
     {/* 이력서 변경 모달 열기 */}
     {showModal && (
       <div

@@ -128,6 +128,11 @@ const AffiliationProjectList = () => {
     }
   };
 
+  // 프로젝트 수정 페이지로
+  const handleEditButton = (projectSq) => {
+    router.push(`/mypage/project_post/${projectSq}`)
+  }
+
   // 프로젝트 삭제 확인
   const confirmDelete = (projectSq) => {
     const confirmed = window.confirm(
@@ -222,6 +227,7 @@ const AffiliationProjectList = () => {
 
   // 페이지 번호 배열
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
 
   return (
     <MyPageLayout userType="COMPANY">
@@ -331,12 +337,12 @@ const AffiliationProjectList = () => {
                             </span>
                           )}
                         </span>
-                        <Link
-                          href={`/mypage/project_post?projectSq=${post.projectSq}`}
+                        <a
+                          onClick={() => handleEditButton(post.projectSq)}
                           className="btn btn-outline btn-primary btn-sm"
                         >
                           수정
-                        </Link>
+                        </a>
                         <a
                           onClick={(e) => {
                             e.preventDefault();

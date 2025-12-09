@@ -40,7 +40,7 @@ const ProjectCompanyApplyStatus = ({projectSq, localApplicants, openResumeDetail
 					>
 						{localApplicants.map((company, comIdx) => (
 							// 기업명 모달
-							<React.Fragment key={company.companyNm}>
+							<React.Fragment key={comIdx}>
 								<div className="accordion" id="accordionPanelsStayOpenExample">
 									<div className="accordion-item" style={{ border: 'none' }}>
 										<h1 className="accordion-header" id="panelsStayOpen-headingOne">
