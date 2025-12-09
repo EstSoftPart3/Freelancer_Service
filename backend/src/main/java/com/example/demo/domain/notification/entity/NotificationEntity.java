@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name ="TBL_NOTIFICAION" )
+@Table(name ="TBL_NOTIFICATION" )
 @Data
 public class NotificationEntity {
 	@Id
