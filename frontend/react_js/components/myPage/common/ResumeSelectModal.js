@@ -1,30 +1,35 @@
 import {useEffect, useMemo, useState} from "react";
 import { useModalStore } from "../../../store/modalStore";
 import { useAlertStore } from "../../../store/alertStore";
-import { api } from "../../../api";
+
 import CommonPagination from "../../common/CommonPagination";
 import ResumeDetailModal from "./ResumeDetailModal";
+import { api } from "@/lib/axios";
+import { useAlert } from "@/contexts/AlertContext";
 
 export default function ResumeSelectModal( {
     userSq,
     projectSq,
     role,
     onConfirm,
-    onClaose,
+    onClose,
 }) {
     const closeModal = useModalStore((s) => s.closeModal);
     const openModal = useModalStore((s) => s.openModal);
-
-    const [resume, setResume] = useState([]);
-    const [selectedResume, setSlectedResume] = useState([]);
+    
+    const [resumes, setResumes] = useState([]);
+    const [selectedResume, setSelectedResume] = useState([]);
+    const { showAlert } = useAlert()
 
     const close = () => {
-        //모달 닫기(부모에서 onCLose 주입됨)
+        //모달 닫기(부모에서 onCLose 주입됨) # 현재 프로젝트 기업 지원시 closeModal 안씀
         onClose?.();
-        closeModal();
+        if(role === 'PERSONAL') {
+          closeModal();
+        }
     };
 
-    const formatTime = (createAt) => {
+    const formatTime = (createdAt) => {
         const date = new Date(createdAt);
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -36,30 +41,34 @@ export default function ResumeSelectModal( {
     const getResumes = async () => {
         try{
             if(role === 'PERSONAL'){
-                const res = await api.get("/mypage/resume/select-list");
+                const res = await api.$get("/mypage/resume/select-list");
                 const list = Array.isArray(res.data.output) ? res.data.output : [];
-                setResume(list);
+                setResumes(list);
             } else if(role === 'COMPANY'){
-                const res = await api.get('/mypage/resume/list/${userSq}');
-                const list = Array.isArray(res.date?.output) ? res.date?.output : [];
-                setResume(list);
+                const res = await api.$get(`/mypage/resume/list/${userSq}`);
+                const list = Array.isArray(res.output) ? res.output : [];
+                setResumes(list);
+                console.log('이력서 목록', res)
             }
         }catch(e){
             console.error('이력서 목록 조회 실패:', e);
         }
     };
+
     // 대표 뱃지 토글 + 선택 상태 업데이트 (단일 선택))
     const selectResume = (resume) => {
-        //기존 대표 이력서 뱃지 제거
-        const next = (resumes || []).map((r) => ({
-            ...r,
-            resumeIsReporesentativeYn: 'N',
-        }));
-        //선택된 이력서에 대표 뱃지 부여
-        const idx = next.findIndex((r) => r.resumeSq === resume.resumeSq);
-        if(idx >= 0) next[idx].resumeIsRepresentativeYn = 'Y';
-        setResumes(next);
+      //기존 대표 이력서 뱃지 제거
+      const next = (resumes || []).map((r) => ({
+          ...r,
+          resumeIsRepresentativeYn: 'N',
+      }));
+      //선택된 이력서에 대표 뱃지 부여
+      const idx = next.findIndex((r) => r.resumeSq === resume.resumeSq);
+      if(idx >= 0) next[idx].resumeIsRepresentativeYn = 'Y';
+      setResumes(next);
+      setSelectedResume([resume])
     };
+
     //상세 모달 열기
     const openResumeDetailModal = (resume) => {
         openModal(ResumeDetailModal, {
@@ -73,12 +82,12 @@ export default function ResumeSelectModal( {
     const confirm = async () => {
         if (selectedResume.length === 0) {
             showAlert("이력서를 선택해주세요.", "danger");
-            resume;
+            resumes;
     }
 
     try{
         if(role === 'PERSONAL'){
-            await api.post(`/projects/applications/${projectSq}`, {
+            await api.$post(`/projects/applications/${projectSq}`, {
                 resumeSq: selectedResume.map((r) => r.resumeSq),
                 projectApplicationTyp: role,
             });
@@ -86,7 +95,7 @@ export default function ResumeSelectModal( {
             onConfirm?.();
             close();
         } else if( role === 'COMPANY'){
-            await api.patch(`/mypage/resume/representative/${selectedResume[0].resumeSq}`, 
+            await api.$patch(`/mypage/resume/representative/${selectedResume[0].resumeSq}`, 
                 {memberSq: userSq},
                 {withCredentials: true});
             showAlert("대표 이력서 설정에 성공하였습니다.");
@@ -117,12 +126,12 @@ export default function ResumeSelectModal( {
         <button type="button" className="btn-close" aria-hidden="true" onClick={close} />
       </div>
 
-      <div className="modal-body">
+      <div className="modal-body px-4">
         <ul className="simple-post-list m-0">
           {resumes.map((resume) => (
             <li
               key={resume.resumeSq}
-              className="d-flex align-items-center gap-2"
+              className="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom"
             >
               <div className="post-info align-items-center gap-2">
                 <a
@@ -169,12 +178,6 @@ export default function ResumeSelectModal( {
             </li>
           ))}
         </ul>
-
-        <CommonPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(p) => setCurrentPage(p)}
-        />
       </div>
 
       <div className="modal-footer">

@@ -1,0 +1,12 @@
+.grayHeader {
+  background-color: #ecedee !important;
+  color: black !important;
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+}
+
+.grayHeader:focus,
+.grayHeader:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}

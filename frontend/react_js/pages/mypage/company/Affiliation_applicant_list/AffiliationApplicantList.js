@@ -5,6 +5,7 @@ import './AffiliationApplicantList.module.css';
 import skillIconMap from '@/lib/skillIconMap';
 import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
 import { useModalStore } from '@/store/modalStore';
+import styles from './AffiliationApplicantList.module.css'
 
 // skillIconMap import - 경로는 프로젝트에 맞게 조정
 // import skillIconMap from '../../../../assets/skillIconMap';
@@ -266,30 +267,30 @@ const AffiliationApplicantList = () => {
 
   return (
     <MyPageLayout userType="COMPANY">
-      <div className="affiliation-applicant-list-container">
+      <div className={styles['affiliation-applicant-list-container']}>
       {/* 페이지 제목 */}
-      <div className="row">
-        <div className="col">
-          <h4 className="mb-3" style={{ fontSize: '24px' }}>
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <h4 className={styles['mb-3']} style={{ fontSize: '24px' }}>
             소속 공고 지원자 현황
           </h4>
         </div>
       </div>
 
       {/* 필터/검색 UI */}
-      <div className="row align-items-center mt-3 mb-2">
+      <div className={`${styles.row} ${styles['align-items-center']} ${styles['mt-3']} ${styles['mb-2']}`}>
         {/* 좌측: 필터 버튼 */}
-        <div className="col-md-6 d-flex gap-2 filter-buttons">
+        <div className={`${styles['col-md-6']} ${styles['d-flex']} ${styles['gap-2']} ${styles['filter-buttons']}`}>
           {filters.map((filter) => (
             <button
               key={filter.type}
-              className={`btn btn-primary fw-bold px-4 py-2 d-flex align-items-center gap-2 fs-6 ${
-                readType === filter.type ? 'active' : ''
+              className={`${styles.btn} ${styles['btn-primary']} ${styles['fw-bold']} ${styles['px-4']} ${styles['py-2']} ${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['fs-6']} ${
+                readType === filter.type ? styles.active : ''
               }`}
               onClick={() => setFilter(filter.type)}
             >
               {filter.label}
-              <span className="badge bg-white text-primary fw-bold px-2 py-1">
+              <span className={`${styles.badge} ${styles['bg-white']} ${styles['text-primary']} ${styles['fw-bold']} ${styles['px-2']} ${styles['py-1']}`}>
                 {filter.count}
               </span>
             </button>
@@ -297,11 +298,11 @@ const AffiliationApplicantList = () => {
         </div>
 
         {/* 우측: 검색 */}
-        <div className="col-md-6 d-flex justify-content-end gap-2 search-group">
+        <div className={`${styles['col-md-6']} ${styles['d-flex']} ${styles['justify-content-end']} ${styles['gap-2']} ${styles['search-group']}`}>
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
-            className="form-select form-select-sm w-auto"
+            className={`${styles['form-select']} ${styles['form-select-sm']} ${styles['w-auto']}`}
           >
             <option value="all">전체</option>
             <option value="title">이력서 제목</option>
@@ -313,36 +314,36 @@ const AffiliationApplicantList = () => {
             onChange={(e) => setKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
             type="text"
-            className="form-control form-control-sm w-auto"
+            className={`${styles['form-control']} ${styles['form-control-sm']} ${styles['w-auto']}`}
             placeholder="검색어 입력"
           />
-          <button className="btn btn-primary btn-sm" onClick={handleSearch}>
+          <button className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-sm']}`} onClick={handleSearch}>
             검색
           </button>
         </div>
       </div>
 
       {applicants.length > 0 ? (
-        <div className="row">
-          <div className="col">
-            <ul className="simple-post-list m-0 my-2 position-relative">
+        <div className={styles.row}>
+          <div className={styles.col}>
+            <ul className={`${styles['simple-post-list']} ${styles['m-0']} ${styles['my-2']} ${styles['position-relative']}`}>
               {applicants.map((applicant, index) => (
                 <li
                   key={applicant.applicationSq}
-                  className="applicant-item"
+                  className={styles['applicant-item']}
                   style={{
                     borderTop:
                       index === 0 ? '1px solid rgb(230, 230, 230)' : '',
                     borderBottom: '1px solid rgb(230, 230, 230)',
                   }}
                 >
-                  <div className="post-info position-relative">
+                  <div className={`${styles['post-info']} ${styles['position-relative']}`}>
                     {/* 이름 + 합격/불합격 버튼 */}
-                    <div className="d-flex justify-content-between align-items-center gap-2 applicant-header">
-                      <div className="d-flex gap-2">
+                    <div className={`${styles['d-flex']} ${styles['justify-content-between']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['applicant-header']}`}>
+                      <div className={`${styles['d-flex']} ${styles['gap-2']}`}>
                         <button
                           type="button"
-                          className="text-5 m-0 text-primary applicant-name"
+                          className={`${styles['text-5']} ${styles['m-0']} ${styles['text-primary']} ${styles['applicant-name']}`}
                           onClick={() =>
                             handleOpenApplicant(applicant.applicationSq)
                           }
@@ -350,12 +351,12 @@ const AffiliationApplicantList = () => {
                           {applicant.userNm}
                         </button>
                       </div>
-                      <div className="d-flex gap-2 action-buttons">
+                      <div className={`${styles['d-flex']} ${styles['gap-2']} ${styles['action-buttons']}`}>
                         {/* 합격 상태일 때 */}
                         {applicant.statusCd === 502 ? (
                           <button
                             type="button"
-                            className="btn btn-outline btn-primary btn-sm btn-light status-button"
+                            className={`${styles.btn} ${styles['btn-outline']} ${styles['btn-primary']} ${styles['btn-sm']} ${styles['btn-light']} ${styles['status-button']}`}
                             disabled
                           >
                             합격
@@ -364,7 +365,7 @@ const AffiliationApplicantList = () => {
                           /* 불합격 상태일 때 */
                           <button
                             type="button"
-                            className="btn btn-outline btn-primary btn-sm btn-light status-button"
+                            className={`${styles.btn} ${styles['btn-outline']} ${styles['btn-primary']} ${styles['btn-sm']} ${styles['btn-light']} ${styles['status-button']}`}
                             disabled
                           >
                             불합격
@@ -374,14 +375,14 @@ const AffiliationApplicantList = () => {
                           <>
                             <button
                               type="button"
-                              className="btn btn-outline btn-primary btn-sm"
+                              className={`${styles.btn} ${styles['btn-outline']} ${styles['btn-primary']} ${styles['btn-sm']}`}
                               onClick={() => handlePassClick(applicant, 502)}
                             >
                               합격
                             </button>
                             <button
                               type="button"
-                              className="btn btn-outline btn-primary btn-sm"
+                              className={`${styles.btn} ${styles['btn-outline']} ${styles['btn-primary']} ${styles['btn-sm']}`}
                               onClick={() => handlePassClick(applicant, 503)}
                             >
                               불합격
@@ -392,18 +393,18 @@ const AffiliationApplicantList = () => {
                     </div>
 
                     {/* 경력/열람일자 */}
-                    <div className="row mt-2">
-                      <div className="col-md-8">
-                        <div className="post-meta text-4">
-                          <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles.row} ${styles['mt-2']}`}>
+                      <div className={styles['col-md-8']}>
+                        <div className={`${styles['post-meta']} ${styles['text-4']}`}>
+                          <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                             경력
                           </span>
                           | {convertCareer(applicant.career)}
                         </div>
                       </div>
-                      <div className="col-md-4 text-end">
-                        <div className="post-meta text-4">
-                          <span className="text-dark text-uppercase font-weight-semibold">
+                      <div className={`${styles['col-md-4']} ${styles['text-end']}`}>
+                        <div className={`${styles['post-meta']} ${styles['text-4']}`}>
+                          <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                             열람일자
                           </span>
                           |{' '}
@@ -415,10 +416,10 @@ const AffiliationApplicantList = () => {
                     </div>
 
                     {/* 사용 기술/지원일자 */}
-                    <div className="row mt-2 align-items-start applicant-details">
-                      <div className="col-md-8">
-                        <div className="d-flex align-items-center gap-2 flex-wrap skills-section">
-                          <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles.row} ${styles['mt-2']} ${styles['align-items-start']} ${styles['applicant-details']}`}>
+                      <div className={styles['col-md-8']}>
+                        <div className={`${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['flex-wrap']} ${styles['skills-section']}`}>
+                          <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                             사용 기술
                           </span>
                           |
@@ -426,7 +427,7 @@ const AffiliationApplicantList = () => {
                             applicant.skills.map((skill, idx) => (
                               <div
                                 key={idx}
-                                className="btn d-flex align-items-center gap-2 border-0 p-0 skill-tag"
+                                className={`${styles.btn} ${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['border-0']} ${styles['p-0']} ${styles['skill-tag']}`}
                               >
                                 {getSkillIcon(skill.skillTagNm) && (
                                   <img
@@ -440,9 +441,9 @@ const AffiliationApplicantList = () => {
                             ))}
                         </div>
                       </div>
-                      <div className="col-md-4 text-end">
-                        <div className="post-meta apply-date">
-                          <span className="text-dark text-uppercase font-weight-semibold">
+                      <div className={`${styles['col-md-4']} ${styles['text-end']}`}>
+                        <div className={`${styles['post-meta']} ${styles['apply-date']}`}>
+                          <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                             지원일자
                           </span>
                           | {convertDate(applicant.createdAt)}
@@ -465,7 +466,7 @@ const AffiliationApplicantList = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center text-muted py-5">
+        <div className={`${styles['text-center']} ${styles['text-muted']} ${styles['py-5']}`}>
           지원자가 없습니다.
         </div>
       )}
@@ -475,4 +476,3 @@ const AffiliationApplicantList = () => {
 };
 
 export default AffiliationApplicantList;
-

@@ -9,11 +9,12 @@ import WorkTypeModal from '@/components/common/WorkTypeModal';
 import JobModal from '@/components/common/JobModal';
 import InterviewTimeModal from '@/components/common/InterviewTimeModal';
 import { api } from '@/lib/axios';
-import styles from './ProjectPost.module.css';
+import styles from './[[...project_sq]].module.css';
 
 export default function ProjectPostPage() {
   const router = useRouter();
-  const { projectSq } = router.query;
+  const { project_sq } = router.query;
+  const projectSq = (project_sq||[])[0]
   const alertStore = useAlertStore();
   const { openModal } = useModalStore();
 

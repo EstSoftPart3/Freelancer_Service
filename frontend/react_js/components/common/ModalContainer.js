@@ -39,14 +39,19 @@ export default function ModalContainer() {
 
   const { component: ModalComponent, props } = currentModal;
 
+  // modal-xl보다 큰 modalHuge를 위해 추가
+  console.log('모달props', props)
+  const sizeClass = props.size === 'modalHuge' ? styles.modalHuge : (props.size || 'modal-lg');
+  console.log('모달 사이즈', sizeClass)
+
   return (
     <div className={styles.modalOverlay} onClick={closeModal}>
       <div 
-        className={`modal fade show ${styles.modalDialog} ${props.size || 'modal-lg'}`}
+        className={`modal fade show ${styles.modalDialog}`}
         style={{ display: 'block' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div className={`modal-dialog modal-dialog-centered modal-dialog-scrollable ${sizeClass}`}>
           <ModalComponent {...props} onClose={closeModal} />
         </div>
       </div>

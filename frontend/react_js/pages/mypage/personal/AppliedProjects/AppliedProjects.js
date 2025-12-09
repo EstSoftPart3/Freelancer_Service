@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/router';
+import InterviewSelectModal from '@/components/myPage/common/InterviewSelectModal';
+import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
+import skillIconMap from '@/lib/skillIconMap';
+import { useModalStore } from '@/store/modalStore';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
 import MyPageLayout from '../../MyPageLayout';
 import styles from './AppliedProjects.module.css';
-import ResumeDetailModal from '@/components/myPage/common/ResumeDetailModal';
-import { useModalStore } from '@/store/modalStore';
-import skillIconMap from '@/lib/skillIconMap';
-import InterviewSelectModal from '@/components/myPage/common/InterviewSelectModal';
 
 const AppliedProjects = () => {
   const router = useRouter();
@@ -186,15 +186,15 @@ const AppliedProjects = () => {
   };
 
   // 이력서 상세보기 모달
-  // const openResumeDetailModal = (resumeSq) => {
-  //   modalStore.openModal(ResumeDetailModal, {
-  //     title: '이력서 상세보기',
-  //     size: 'modal-lg',
-  //     resumeSq: resumeSq,
-  //     api: api,
-  //     skillIconMap: skillIconMap,
-  //   });
-  // };
+  const openResumeDetailModal = (resumeSq) => {
+    openModal(ResumeDetailModal, {
+      title: '이력서 상세보기',
+      size: 'modal-lg',
+      resumeSq: resumeSq,
+      api: api,
+      skillIconMap: skillIconMap,
+    });
+  };
 
   // 페이지네이션 컴포넌트
   const Pagination = ({ currentPage, totalPages, onPageChange }) => {

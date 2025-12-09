@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useModalStore } from '../../../store/modalStore';
-import { useAlertStore } from '../../../store/alertStore';
-import CommonConfirmModal from '../common/CommonConfirmModal';
-import ResumeDetailModal from '../common/ResumeDetailModal';
 import { api } from '@/lib/axios';
 import skillIconMap from '@/lib/skillIconMap';
-import ProjectPersonalApplyStatus from './ProjectPersonalApplyStatus';
+import { useEffect, useMemo, useState } from 'react';
+import { useAlertStore } from '../../../store/alertStore';
+import { useModalStore } from '../../../store/modalStore';
+import CommonConfirmModal from '../common/CommonConfirmModal';
+import ResumeDetailModal from '../common/ResumeDetailModal';
+import styles from './ProjectApplyStatusModal.module.css';
 import ProjectCompanyApplyStatus from './ProjectCompanyApplyStatus';
-import styles from './ProjectApplyStatusModal.module.css'
+import ProjectPersonalApplyStatus from './ProjectPersonalApplyStatus';
 
 const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
@@ -22,7 +22,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [localApplicants, setLocalApplicants] = useState([]);
-  const [isTogglePersonal, setIsTogglePersonal] = useState(true)
+  const [isTogglePersonal, setIsTogglePersonal] = useState(modalStore.getToggle());
 
   // 개인 지원자 목록 조회
   const fetchPersonalApplicants = async () => {
@@ -65,6 +65,8 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
     }
   }, [isTogglePersonal, currentPage, currentFilter, searchType, searchText]);
 
+  // 토글 변경시
+
   // 필터별 카운트 계산
   const filterCounts = useMemo(() => {
     const counts = {
@@ -75,16 +77,33 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
       interview_requested: 0,
       rejected: 0,
     };
-    localApplicants.forEach((a) => {
-      counts.all++;
-      const status = a.appStatusVo?.appStatus;
-      if (status === '지원중') counts.in_progress++;
-      else if (status === '합격') counts.passed++;
-      else if (status === '인터뷰확정') counts.interview_confirmed++;
-      else if (status === '인터뷰요청중') counts.interview_requested++;
-      else if (['불합격', '지원취소'].includes(status)) counts.rejected++;
-    });
-    return counts;
+    if (isTogglePersonal) {
+      // 개인 지원 현황
+      localApplicants.forEach((a) => {
+        counts.all++;
+        const status = a.appStatusVo?.appStatus;
+        if (status === '지원중') counts.in_progress++;
+        else if (status === '합격') counts.passed++;
+        else if (status === '인터뷰확정') counts.interview_confirmed++;
+        else if (status === '인터뷰요청중') counts.interview_requested++;
+        else if (['불합격', '지원취소'].includes(status)) counts.rejected++;
+      });
+      return counts;
+    } else {
+      // 기업 지원 현황
+      localApplicants.forEach((company) => {
+        company.applicants.forEach((a) => {
+          counts.all++;
+          const status = a.appStatusVo?.appStatus;
+          if (status === '지원중') counts.in_progress++;
+          else if (status === '합격') counts.passed++;
+          else if (status === '인터뷰확정') counts.interview_confirmed++;
+          else if (status === '인터뷰요청중') counts.interview_requested++;
+          else if (['불합격', '지원취소'].includes(status)) counts.rejected++;
+        })
+      });
+      return counts;
+    }
   }, [localApplicants]);
 
   // 필터 목록
@@ -132,6 +151,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
 
   // 모달 닫기
   const closeModal = () => {
+    modalStore.resetToggle();
     modalStore.closeModal();
   };
 
@@ -208,7 +228,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
 
   // 상태별 버튼 렌더링
   const renderStatusButtons = (applicant) => {
-    const status = applicant.appStatusVo.appStatus;
+    const status = applicant.appStatusVo?.appStatus;
 
     if (status === '지원중') {
       return (
@@ -262,20 +282,13 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
   }, [isTogglePersonal])
 
   // 지원 현황 props
-  let props;
-  if (isTogglePersonal) {
-    props = {
-      projectSq,
-      localApplicants,
-      openResumeDetailModal, 
-      renderStatusButtons, 
-      generateIconUrl
-    }
-  } else {
-    props = {
-
-    }
-  }
+  const props = {
+    projectSq,
+    localApplicants,
+    openResumeDetailModal, 
+    renderStatusButtons, 
+    generateIconUrl
+  };
 
   return (
     <div className="modal-content">
@@ -355,7 +368,10 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
                   className={`btn btn-outline btn-primary ${
                     isTogglePersonal ? 'active' : ''
                   }`}
-                  onClick={() => {setIsTogglePersonal(true)}}
+                  onClick={() => {
+                    setIsTogglePersonal(true)
+                    onToggle(true)
+                  }}
                 >
                   개인
                 </button>
@@ -364,7 +380,10 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
                   className={`btn btn-outline btn-primary ${
                     !isTogglePersonal ? 'active' : ''
                   }`}
-                  onClick={() => {setIsTogglePersonal(false)}}
+                  onClick={() => {
+                    setIsTogglePersonal(false)
+                    onToggle(false)
+                  }}
                 >
                   기업
                 </button>
@@ -378,7 +397,7 @@ const ProjectApplyStatusModal = ({ projectSq, projectTitle, onToggle }) => {
             </div>
           </div>
           {/* 지원자 현황 목록 */}
-          {isTogglePersonal ? <ProjectPersonalApplyStatus {...props} /> : <ProjectCompanyApplyStatus />}
+          {isTogglePersonal ? <ProjectPersonalApplyStatus {...props} /> : <ProjectCompanyApplyStatus {...props} />}
           {/* 페이지네이션 */}
 					<div className="mt-5 py-5">
 						<ul className="pagination float-end">

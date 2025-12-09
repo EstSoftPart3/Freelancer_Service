@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
 import MyPageLayout from '../../MyPageLayout';
-import './AffiliatedMembers.module.css';
+import styles from './AffiliatedMembers.module.css';
 
 // skillIconMap import - 경로는 프로젝트에 맞게 조정
 // import iconMap from '../../../../assets/skillIconMap';
@@ -133,24 +133,24 @@ const AffiliatedMembers = () => {
   // 페이지 번호 배열
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  return (
+return (
     <MyPageLayout userType="COMPANY">
-      <div className="affiliated-members-container">
-      <div className="row">
-        <div className="col">
-          <h4 className="mb-3" style={{ fontSize: '24px' }}>
+      <div className={styles['affiliated-members-container']}>
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <h4 className={styles['mb-3']} style={{ fontSize: '24px' }}>
             소속 인원 목록
           </h4>
         </div>
       </div>
 
       {/* 필터/검색 UI */}
-      <div className="row align-items-center mt-3 mb-2">
-        <div className="col-md-12 d-flex justify-content-end gap-2 search-group">
+      <div className={`${styles.row} ${styles['align-items-center']} ${styles['mt-3']} ${styles['mb-2']}`}>
+        <div className={`${styles['col-md-12']} ${styles['d-flex']} ${styles['justify-content-end']} ${styles['gap-2']} ${styles['search-group']}`}>
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
-            className="form-select form-select-sm w-auto"
+            className={`${styles['form-select']} ${styles['form-select-sm']} ${styles['w-auto']}`}
             style={{ fontSize: '14px', padding: '4px' }}
           >
             <option value="all">전체</option>
@@ -162,12 +162,12 @@ const AffiliatedMembers = () => {
             onChange={(e) => setSearchText(e.target.value)}
             onKeyPress={handleKeyPress}
             type="text"
-            className="form-control form-control-sm w-auto"
+            className={`${styles['form-control']} ${styles['form-control-sm']} ${styles['w-auto']}`}
             placeholder="검색어 입력"
             style={{ fontSize: '14px', padding: '4px' }}
           />
           <button
-            className="btn btn-primary btn-sm"
+            className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-sm']}`}
             style={{ fontSize: '14px', padding: '4px' }}
             onClick={search}
           >
@@ -176,44 +176,44 @@ const AffiliatedMembers = () => {
         </div>
       </div>
 
-      <div className="row">
-        <div className="col pt-2 mt-1">
-          <hr className="my-2" />
+      <div className={styles.row}>
+        <div className={`${styles.col} ${styles['pt-2']} ${styles['mt-1']}`}>
+          <hr className={styles['my-2']} />
         </div>
       </div>
 
-      <div className="row">
-        <div className="col">
+      <div className={styles.row}>
+        <div className={styles.col}>
           {members.length === 0 ? (
             <div
-              className="text-muted py-3"
+              className={`${styles['text-muted']} ${styles['py-3']}`}
               style={{ fontSize: '14px' }}
             >
               소속 인원이 없습니다.
             </div>
           ) : (
-            <ul className="simple-post-list m-0 position-relative" style={{ padding: 0 }}>
+            <ul className={`${styles['simple-post-list']} ${styles['m-0']} ${styles['position-relative']}`} style={{ padding: 0 }}>
               {members.map((member) => (
                 <li
                   key={member.id || member.userSq}
-                  className="d-flex flex-column gap-2 member-item"
+                  className={`${styles['d-flex']} ${styles['flex-column']} ${styles['gap-2']} ${styles['member-item']}`}
                 >
                   {/* 상단: 이름/소개 + 퇴사처리 버튼 */}
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex gap-2 align-items-center member-info">
+                  <div className={`${styles['d-flex']} ${styles['justify-content-between']} ${styles['align-items-center']}`}>
+                    <div className={`${styles['d-flex']} ${styles['gap-2']} ${styles['align-items-center']} ${styles['member-info']}`}>
                       <a
                         onClick={(e) => {
                           e.preventDefault();
                           openResumeSelectModal(member.userSq);
                         }}
                         href="#"
-                        className="text-5 m-0 member-name"
+                        className={`${styles['text-5']} ${styles['m-0']} ${styles['member-name']}`}
                       >
                         {member.userNm} /
                       </a>
                       <a
                         href="#"
-                        className="text-4 m-0 resume-title"
+                        className={`${styles['text-4']} ${styles['m-0']} ${styles['resume-title']}`}
                         onClick={(e) => {
                           e.preventDefault();
                           openResumeDetail(member.resumeSq);
@@ -224,29 +224,29 @@ const AffiliatedMembers = () => {
                     </div>
                     {member.leavedYn === 401 ? (
                       <span
-                        className="btn btn-primary btn-outline btn-lg fire-button"
+                        className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-outline']} ${styles['btn-lg']} ${styles['fire-button']}`}
                         onClick={() => confirmFire(6, member.userSq)}
                       >
                         퇴사 처리
                       </span>
                     ) : (
-                      <span className="btn btn-light btn-lg fire-button disabled">
+                      <span className={`${styles.btn} ${styles['btn-light']} ${styles['btn-lg']} ${styles['fire-button']} ${styles.disabled}`}>
                         퇴사
                       </span>
                     )}
                   </div>
 
-                  <div className="d-flex justify-content-between align-items-center member-details">
+                  <div className={`${styles['d-flex']} ${styles['justify-content-between']} ${styles['align-items-center']} ${styles['member-details']}`}>
                     {/* 좌측: 경력 / 사용 기술 */}
-                    <div className="d-flex align-items-center gap-2 skills-section">
-                      <div className="post-meta text-4">
-                        <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['skills-section']}`}>
+                      <div className={`${styles['post-meta']} ${styles['text-4']}`}>
+                        <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                           경력
                         </span>
                         | {member.careerYr}년차
                       </div>
-                      <div className="d-flex align-items-center gap-2 ms-3 skills-list">
-                        <span className="text-dark text-uppercase font-weight-semibold">
+                      <div className={`${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['ms-3']} ${styles['skills-list']}`}>
+                        <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                           사용 기술
                         </span>
                         |
@@ -254,7 +254,7 @@ const AffiliatedMembers = () => {
                           member.skillTagNms.map((skill, index) => (
                             <div
                               key={index}
-                              className="btn d-flex align-items-center gap-2 border-0 skill-tag"
+                              className={`${styles.btn} ${styles['d-flex']} ${styles['align-items-center']} ${styles['gap-2']} ${styles['border-0']} ${styles['skill-tag']}`}
                             >
                               {getSkillIcon(skill) && (
                                 <img
@@ -269,8 +269,8 @@ const AffiliatedMembers = () => {
                       </div>
                     </div>
                     {/* 우측: 입사일자/퇴사일자 */}
-                    <div className="text-muted date-info" style={{ whiteSpace: 'nowrap' }}>
-                      <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles['text-muted']} ${styles['date-info']}`} style={{ whiteSpace: 'nowrap' }}>
+                      <span className={`${styles['text-dark']} ${styles['text-uppercase']} ${styles['font-weight-semibold']}`}>
                         {member.careerEndDt ? '퇴사일자' : '입사일자'}
                       </span>
                       | {member.careerEndDt || member.careerStartDt}
@@ -283,31 +283,31 @@ const AffiliatedMembers = () => {
 
           {/* 페이징 */}
           {totalPages > 1 && (
-            <div className="mt-5">
-              <ul className="pagination float-end">
+            <div className={styles['mt-5']}>
+              <ul className={`${styles.pagination} ${styles['float-end']}`}>
                 <li
-                  className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}
+                  className={`${styles['page-item']} ${currentPage === 1 ? styles.disabled : ''}`}
                 >
                   <a
-                    className="page-link"
+                    className={styles['page-link']}
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
                       changePage(currentPage - 1);
                     }}
                   >
-                    <i className="fas fa-angle-left"></i>
+                    <i className={styles.fas + ' fa-angle-left'}></i>
                   </a>
                 </li>
                 {pageNumbers.map((page) => (
                   <li
                     key={page}
-                    className={`page-item ${
-                      currentPage === page ? 'active' : ''
+                    className={`${styles['page-item']} ${
+                      currentPage === page ? styles.active : ''
                     }`}
                   >
                     <a
-                      className="page-link"
+                      className={styles['page-link']}
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
@@ -319,19 +319,19 @@ const AffiliatedMembers = () => {
                   </li>
                 ))}
                 <li
-                  className={`page-item ${
-                    currentPage === totalPages ? 'disabled' : ''
+                  className={`${styles['page-item']} ${
+                    currentPage === totalPages ? styles.disabled : ''
                   }`}
                 >
                   <a
-                    className="page-link"
+                    className={styles['page-link']}
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
                       changePage(currentPage + 1);
                     }}
                   >
-                    <i className="fas fa-angle-right"></i>
+                    <i className={styles.fas + ' fa-angle-right'}></i>
                   </a>
                 </li>
               </ul>
