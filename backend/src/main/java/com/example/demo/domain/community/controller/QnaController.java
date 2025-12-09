@@ -49,7 +49,7 @@ public class QnaController {
     @PostMapping
     public ResponseEntity<ApiResponse<NullType>> createQna(@AuthenticationPrincipal Long userSq, 
     		@ModelAttribute BoardRequest boardRequest,
-    		@RequestParam("skillTagsJson") String skillTagsJson){
+    		@RequestParam(value = "skillTagsJson") String skillTagsJson){
     	ObjectMapper objectMapper = new ObjectMapper();
     	List<SkillTagDTO> skillTags;
     	if(skillTagsJson != null && !skillTagsJson.isBlank()) {
