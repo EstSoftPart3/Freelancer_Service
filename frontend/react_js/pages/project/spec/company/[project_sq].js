@@ -113,7 +113,7 @@ export default function CompanyProjectSpecPage() {
 
   // 수정하기
   const goToProjectPost = () => {
-    router.push(`/mypage/projectPostPage/${project_sq}`)
+    router.push(`/mypage/project_post/${project_sq}`)
   }
 
   // 삭제하기
