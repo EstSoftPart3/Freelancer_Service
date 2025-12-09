@@ -10,6 +10,7 @@ import JobModal from '@/components/common/JobModal';
 import InterviewTimeModal from '@/components/common/InterviewTimeModal';
 import { api } from '@/lib/axios';
 import styles from './[[...project_sq]].module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProjectPostPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function ProjectPostPage() {
   const projectSq = (project_sq||[])[0]
   const alertStore = useAlertStore();
   const { openModal } = useModalStore();
+  const {user, isLoggedIn} = useAuth();
+
+  const [isLoading, setIsLoading] = useState(true)
 
   // Form data
   const [cities, setCities] = useState([]);
@@ -225,11 +229,22 @@ export default function ProjectPostPage() {
   // 초기 로드
   useEffect(() => {
     if (router.isReady) {
+
+      // 비로그인, 개인 사용자 처리
+      if (!isLoggedIn || user.userType !== 'COMPANY') {
+        router.push('/auth/login')
+        return
+      }
+
+      setIsLoading(false)
       if (!projectSq) {
         loadDefaultFormData(); // 신규 등록용
       } else {
         loadEditFormData(projectSq); // 수정용
       }
+      
+      // 비인가 사용자 처리 - api추가?
+
     }
   }, [router.isReady, projectSq]);
 

@@ -1,5 +1,5 @@
 const ProjectApplicant = ({index, projectSq, applicant, renderStatusButtons, openResumeDetailModal, generateIconUrl}) => {
-	console.log('data from ProjectApplicant', applicant)
+	
 	return (
 		<li
 			key={applicant.applicationSq}
