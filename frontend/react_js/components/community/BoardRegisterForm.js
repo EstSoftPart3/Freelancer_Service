@@ -2,11 +2,16 @@ import { useState, useRef, forwardRef, useImperativeHandle } from 'react'
 import dynamic from 'next/dynamic'
 import 'react-quill/dist/quill.snow.css'
 import skillIconMap from '@/lib/skillIconMap'
+import SkillTagModal from '../myPage/personal/SkillTagModal'
+import { useModalStore } from '@/store/modalStore'
 
 // Quill 에디터 동적 import (SSR 방지)
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 
 const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref) => {
+
+  const {openModal} = useModalStore();
+
   // 상태 관리
   const [title, setTitle] = useState(initialData?.ttl || '')
   const [content, setContent] = useState(initialData?.description || '')
@@ -52,6 +57,21 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
   const removeNormalTag = (tag) => {
     setNormalTags(normalTags.filter(t => t !== tag))
   }
+
+  // 기술 태그 모달 열기
+  const openSkillModal = () => {
+    openModal(SkillTagModal, {
+      onComplete: onSkillsConfirmed,
+      selectedSkills: skillTags,
+    });
+  };
+
+  // 모달 확인
+  const onSkillsConfirmed = (skills) => {
+    if (skills) {
+      setSkillTags(skills.map((s) => ({skillTagSq: s.skillTagSq, skillTagNm: s.skillTagNm})))
+    }
+  };
 
   // 기술 태그 삭제
   const removeSkillTag = (tag) => {
@@ -177,10 +197,7 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
             <button
               type="button"
               className="btn btn-light btn-sm"
-              onClick={() => {
-                // TODO: 기술 태그 모달 구현
-                alert('기술 태그 선택 모달 구현 예정')
-              }}
+              onClick={openSkillModal}
             >
               기술 태그 선택 하기
             </button>
