@@ -1,15 +1,18 @@
-import { useState, useRef, forwardRef, useImperativeHandle } from 'react'
+import { useState, useRef, forwardRef, useImperativeHandle, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import 'react-quill/dist/quill.snow.css'
 import skillIconMap from '@/lib/skillIconMap'
 import SkillTagModal from '../myPage/personal/SkillTagModal'
 import { useModalStore } from '@/store/modalStore'
+import { useRouter } from 'next/router'
 
 // Quill 에디터 동적 import (SSR 방지)
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 
 const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref) => {
-
+  console.log('등록폼이 받는 초기 데이터', initialData)
+  const router = useRouter();
+  const boardSq = router.query.board_sq;
   const {openModal} = useModalStore();
 
   // 상태 관리
@@ -20,6 +23,14 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
   const [files, setFiles] = useState([])
   const [existingAttachments, setExistingAttachments] = useState(initialData?.attachments || [])
   const [tagInput, setTagInput] = useState('')
+
+  useEffect(() => {
+    setTitle(initialData?.ttl || '')
+    setContent(initialData?.description || '')
+    setNormalTags(initialData?.normalTags || [])
+    setSkillTags(initialData?.skillTags || [])
+    setExistingAttachments(initialData?.attachments || [])
+  }, [initialData])
   
   const quillRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -112,6 +123,7 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
   // 데이터 전송 (부모 컴포넌트에서 호출)
   const getData = () => {
     const formData = new FormData()
+    formData.append('boardSq', boardSq)
     formData.append('ttl', title)
     formData.append('description', content)
     formData.append('normalTags', normalTags.join(','))
@@ -172,7 +184,7 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
           border-radius: 4px;
         }
         .quill-editor-wrapper .quill {
-          height: 400px;
+          height: 350px;
           display: flex;
           flex-direction: column;
         }
@@ -254,7 +266,7 @@ const BoardRegisterForm = forwardRef(({ isQna = false, initialData = null }, ref
       </div>
 
       {/* 첨부파일 */}
-      <div className="form-group mb-4">
+      <div className="form-group mb-3">
         <label className="form-label mb-1 text-2">첨부파일</label>
         <input
           ref={fileInputRef}

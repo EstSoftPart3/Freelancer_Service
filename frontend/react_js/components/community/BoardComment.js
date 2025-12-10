@@ -533,8 +533,8 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
       </div>
       
       {/* 댓글 작성 폼 */}
-      <div className="post-comments mt-4">
-        <h4 className={`mb-3 ${styles.fontSize15}`}>댓글 작성</h4>
+      <div className={`post-comments mt-4 ${styles.commentForm}`}>
+        <h4 className={`mb-2 ${styles.fontSize15}`}>댓글 작성</h4>
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <input

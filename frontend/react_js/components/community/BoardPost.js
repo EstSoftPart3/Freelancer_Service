@@ -1,20 +1,31 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { useRouter } from 'next/router'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
 import ReportModal from './ReportModal'
+import BoardAnswerModal from './BoardAnswerModal'
 
-export default function BoardPost({ boardInfo, boardType, onRefresh }) {
+/**
+ * @param {()=>{}} handleAnswerModal - 작성 / 수정 핸들러
+ * @param {boolean} isAnswer - 답변 포스트 모달에서 띄우는 상태인지 여부
+ * @param {int} boardPostUserSq - 게시글 작성자의 userSq
+ */
+
+export default function BoardPost({ boardInfo, boardType, onRefresh, handleAnswerModal, isAnswer = false, boardPostUserSq }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoggedIn } = useAuth()
   const { showAlert } = useAlert()
 
   const viewerSq = user?.userSq || null
   
-  // 신고 모달 상태
+  // 상태
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showAnswerModal, setShowAnswerModal] = useState(false)
+  const [clickAnswerSq, setClickAnswerSq] = useState()
+  const boardPostRef = useRef(null)
+  
 
   // 날짜 포맷팅
   const formatTime = (createdAt) => {
@@ -34,7 +45,7 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
     }
 
     try {
-      const response = await api.$post(`/${boardType}/${boardInfo.sq}/recommend`)
+      const response = await api.$post(`/${boardType}/${boardInfo.sq}/recommend`, {Credential: true})
       if (response.status === 'OK') {
         showAlert(response.message || '추천되었습니다.', 'success')
         onRefresh()
@@ -53,7 +64,22 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
       showAlert('로그인 후 이용해주세요.', 'danger')
       return
     }
-    router.push(`/community/${boardType}/register?edit=${boardInfo.sq}`)
+
+    // 답변 포스트 모달일 경우
+    if (isAnswer) {
+    // 답변 수정 모달 오픈
+      setClickAnswerSq(boardInfo.sq)
+      setShowAnswerModal(true);
+    }
+  }
+
+  //답변 작성 모달 props
+  const answerProps = {
+    isEditMode: true,
+    isAnswerPost: true,
+    answerSq: clickAnswerSq,
+    boardPostRef,
+    setShowAnswerModal,
   }
 
   // 삭제
@@ -98,6 +124,11 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
       1504: { text: '미해결', color: 'danger' }
     }
     return statusMap[statusCd] || null
+  }
+
+  // 자체 해결 처리
+  const handleSelfResolved = () => {
+
   }
 
   return (
@@ -244,26 +275,69 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
       )}
 
       {/* 하단 버튼들 */}
+      {!isAnswer &&
       <div className="post-admin mt-4 text-end">
+        <button
+          className="btn btn-primary me-2"
+          onClick={() => handleAnswerModal(false)}
+          >
+          답변 작성
+        </button>
         {/* 작성자만 수정/삭제 */}
         {boardInfo.userSq === viewerSq && (
           <>
             <button
               className="btn btn-primary me-2"
+              onClick={handleSelfResolved}
+              >
+              자체 해결
+            </button>
+            <button
+              className="btn btn-primary me-2"
               onClick={handleEdit}
-            >
+              >
               수정
             </button>
             <button
               type="button"
               className="btn btn-primary"
               onClick={handleDelete}
-            >
+              >
               삭제
             </button>
           </>
         )}
       </div>
+      }
+      {/* 답변 포스트 모달일 경우 */}
+      {isAnswer && (
+        <div className="post-admin mt-4 text-end">
+          {boardInfo.userSq === viewerSq && (
+            <>
+              <button
+                className="btn btn-primary me-2"
+                onClick={handleEdit}
+              >
+                수정
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDelete}
+              >
+                삭제
+              </button>
+            </>
+          )} 
+          {boardPostUserSq === viewerSq && (
+              <button className='btn btn-primary'>
+                채택하기
+              </button>
+            )
+          }
+        </div>
+        )
+      }
 
       <style jsx global>{`
         .font-size-xs {
@@ -292,6 +366,10 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
             // 신고 성공 후 필요한 액션 (선택적)
           }}
         />
+      )}
+      {/* 답변 수정 모달 */}
+      {showAnswerModal && (
+        <BoardAnswerModal {...answerProps} />
       )}
     </div>
   )

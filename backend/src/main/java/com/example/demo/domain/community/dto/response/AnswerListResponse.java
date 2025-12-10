@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AnswerListResponse{
-	private Long sq;
+	private Long answerSq;
     private Long userSq;
     private Long boardSq;
     private String userNm; // 사용자 이름

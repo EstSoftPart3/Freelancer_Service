@@ -55,7 +55,7 @@ public class AnswerController {
     }
     
 //    답변 수정
-    @PutMapping("/{answerSq}")
+    @PutMapping(value = "/{answerSq}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<NullType>> updateAnswer(@AuthenticationPrincipal Long userSq, @PathVariable("answerSq") Long answerSq,
     		@ModelAttribute AnswerRequest answerRequest,
     		@RequestParam("skillTagsJson") String skillTagsJson){

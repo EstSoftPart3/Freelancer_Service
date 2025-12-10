@@ -131,12 +131,14 @@ export const api = {
   },
   async $put(url, data, config = {}) {
     try {
+      const headers = { ...(config.headers || {}) }
+      // FormData가 아닌 경우에만 content-type을 application/json으로
+      if (!(data instanceof FormData)) {
+        headers['Content-Type'] = 'application/json'
+      }
       const response = await apiInstance.put(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...config.headers
-        },
-        ...config
+        ...config,
+        headers
       })
       return response.data
     } catch (err) {
