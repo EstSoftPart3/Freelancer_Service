@@ -32,7 +32,6 @@ export default function QnaDetailPage() {
   const [showAnswerModal, setShowAnswerModal] = useState(false)
   const [isAnswerEditMode, setIsAnswerEditMode] = useState(false)
   const [clickAnswerSq, setClickAnswerSq] = useState(0)
-  const [showAnswerPostModal, setShowAnswerPostModal] = useState(false)
   const boardPostRef = useRef(null)
   
   const formatTime = (createdAt) => {
@@ -74,18 +73,25 @@ export default function QnaDetailPage() {
     }
   }
 
-
-  // 답변 클릭
-  const clickApplication = (answerSq) => {
-    if (answerSq == null) {
-      return
-    }
-    openModal(AnswerPostModal, {
-      answerSq,
-      boardPostUserSq: boardInfo.userSq,
-      size: 'modal-xl'
-    })
+  // html태그 제거 함수
+  const stipHtmlTags = (htmlString) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlString;
+    return tempDiv.textContent || tempDiv.innerText || '';
   }
+
+  // 답변 내용 조정
+  const answerDesc = (description) => {
+    const plainText = stipHtmlTags(description)
+    if (!plainText) return;
+    if (plainText.length > 20) {
+      return plainText.substring(0, 20) + '...';
+    } else {
+      console.log(plainText)
+      return plainText;
+    }
+  }
+
 
   // 답변 작성 / 수정 모달 오픈
   const handleAnswerModal = (isEdit, answerSq) => {
@@ -102,9 +108,25 @@ export default function QnaDetailPage() {
     setShowAnswerModal(true);
   }
 
+  // 답변 클릭
+  const clickApplication = (answerSq) => {
+    if (answerSq == null) {
+      return
+    }
+    openModal(AnswerPostModal, {
+      handleAnswerModal,
+      answerSq,
+      onRefresh: getBoard,
+      onAnswerRefresh: () => clickApplication(answerSq),
+      boardPostUserSq: boardInfo.userSq,
+      boardAdoptStatusCd: boardInfo.boardAdoptStatusCd,
+      size: 'modal-xl'
+    })
+  }
+
+
   // 답변 삭제
   const deleteAnswer = async (answerSq) => {
-    e.stopPropagation();
     if (!isLoggedIn){
       showAlert('로그인을 해주세요.', 'info');
       return router.push('/auth/login')
@@ -118,6 +140,8 @@ export default function QnaDetailPage() {
     } catch (error) {
       console.log('답변 삭제 실패 : ', error)
       showAlert('답변 삭제 중 오류가 발생했습니다', 'danger')
+    } finally {
+      getBoard();
     }
   }
 
@@ -139,12 +163,10 @@ export default function QnaDetailPage() {
     answerSq: clickAnswerSq,
     boardPostRef,
     setShowAnswerModal,
+    onRefresh: getBoard,
   }
 
-  //답변 포스트 모달 props
-  const answerPostProps = {
-    answerSq: clickAnswerSq,
-  }
+
   
   if (loading) {
     return (
@@ -194,9 +216,14 @@ export default function QnaDetailPage() {
                 onClick={() => clickApplication(answer.answerSq)}
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
-                  <h5 className={`mb-0 text-dark ${styles.fS13} me-2`}>
-                    {answer.ttl || '삭제된 답변입니다.'}
-                  </h5>
+                  <div className='d-flex align-items-center'>
+                    <h5 className={`mb-0 text-dark ${styles.fS13} me-2`}>
+                      {answer.ttl || '삭제된 답변입니다.'}
+                    </h5>
+                    <p className={`mb-0 ${styles.fS13}`}>
+                      {answer.ttl && answerDesc(answer.description)}
+                    </p>
+                  </div>
                   {answer.isAdoptedYn === 'Y' && (
                     <span className={`badge bg-primary ${styles.fS11}`}>
                       채택 답변
@@ -211,15 +238,15 @@ export default function QnaDetailPage() {
                       <i className="far fa-calendar-alt"></i>
                       &nbsp;{formatTime(answer.createdAt)}
                     </div>
-                    {!isLoggedIn ? 
+                    {isLoggedIn && user.userSq === answer.userSq ? 
+                    <div>
+                      조회 {answer.viewCnt} · 댓글 {answer.commentCnt} · <a className='link-primary' onClick={(e) => {e.stopPropagation(); handleAnswerModal(true, answer.answerSq)}}>수정</a> · 
+                      <a className='link-primary' onClick={(e) => {e.stopPropagation(); deleteAnswer(answer.answerSq)}}>삭제</a>
+                    </div> :
                     <div>
                       조회 {answer.viewCnt} · 댓글 {answer.commentCnt} · 추천{' '}
                       {answer.recommendCnt}
-                    </div> :
-                    <div>
-                      조회 {answer.viewCnt} · 댓글 {answer.commentCnt} · <a className='link-primary' onClick={(e) => handleAnswerModal(e, true, answer.answerSq)}>수정</a> · 
-                      <a className='link-primary' onClick={(e) => {e.stopPropagation(); deleteAnswer(answer.answerSq)}}>삭제</a>
-                    </div>
+                    </div>                    
                     }
                   </div>
                 )}
@@ -239,10 +266,6 @@ export default function QnaDetailPage() {
       {showAnswerModal && (
         <BoardAnswerModal {...answerProps} />
       )}
-      {/* 답변 상세 모달
-      // {showAnswerPostModal && (
-      //   <AnswerPostModal {...answerPostProps} />
-      // )} */}
     </section>
   )
 }

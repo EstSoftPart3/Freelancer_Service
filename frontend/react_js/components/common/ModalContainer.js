@@ -40,9 +40,7 @@ export default function ModalContainer() {
   const { component: ModalComponent, props } = currentModal;
 
   // modal-xl보다 큰 modalHuge를 위해 추가
-  console.log('모달props', props)
   const sizeClass = props.size === 'modalHuge' ? styles.modalHuge : (props.size || 'modal-lg');
-  console.log('모달 사이즈', sizeClass)
 
   return (
     <div className={styles.modalOverlay} onClick={closeModal}>

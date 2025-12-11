@@ -6,10 +6,10 @@ import { api } from "@/lib/axios";
 
 /**
  * @param {boolean} isEditMode - 수정인지 등록인지 여부
- * @param {boolean} isAnswerPost - 답변 포스트 모달인지 여부
+ * @param {int} answerSq - 게시글에서는 게시글 번호 / 답변에서는 답변 번호
  */
 
-const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPostRef, setShowAnswerModal}) => {
+const BoardAnswerModal = ({isEditMode, answerSq, boardPostRef, setShowAnswerModal, onRefresh}) => {
 	const router = useRouter()
 	const { showAlert } = useAlert()
 	const [initialData, setInitialData] = useState(null)
@@ -21,6 +21,8 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 			loadAnswerData(answerSq)
 		}
 	}, [router.isReady, isEditMode, answerSq])
+
+	console.log('isEditMode', isEditMode, 'answerSq', answerSq)
 
 	// 기존 게시글 데이터 불러오기
 	const loadAnswerData = async (answerSq) => {
@@ -69,13 +71,8 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 			
 			let response
 			if (isEditMode) {
-				if (isAnswerPost) {
-					//답변 포스트 모달에서 수정
-					response = await api.$put(`/answer/${answerSq}`, formData, {withCredentials: true})
-				} else {
-					// 수정
-					response = await api.$patch(`/answer/${answerSq}/edit`, formData, {withCredentials: true})
-				}
+				// 수정
+				response = await api.$put(`/answer/${answerSq}`, formData, {withCredentials: true})
 			} else {
 				// 신규 등록
 				response = await api.$post('/answer', formData, {withCredentials: true})
@@ -83,7 +80,7 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 
 			if (response.status === 'CREATED' || response.status === 'OK') {
 				showAlert(response.message || (isEditMode ? '답변 수정되었습니다.' : '답변이 등록되었습니다.'), 'success')
-				router.push('/community/qna/25')
+				
 			} else {
 				showAlert(`답변 ${isEditMode ? '수정' : '등록'}에 실패하였습니다.`, 'danger')
 			}
@@ -91,6 +88,7 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 			console.error(`답변 ${isEditMode ? '수정' : '등록'} 실패:`, error)
 			showAlert(`답변 ${isEditMode ? '수정' : '등록'}에 실패하였습니다.`, 'danger')
 		} finally {
+			onRefresh();
 			setShowAnswerModal(false);
 		}
 	}
@@ -103,15 +101,16 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 	}
 
 	return(
+		// modalStore 기본 zIndex: 1050
 		<div
 			className="modal fade show d-block "
 			tabIndex="-1"
-			style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1049 }}
+			style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1051 }}
 		>
 			<div className="modal-dialog modal-dialog-centered modal-lg ">
 				<div className='modal-content'>
 					<div className='modal-header mb-0'>
-							<h4 className='mb-0'>{'QnA 답변 작성'}</h4>
+							<h4 className='mb-0'>{isEditMode ? 'QnA 답변 수정' : 'QnA 답변 작성'}</h4>
 					</div>
 					<form onSubmit={(e) => e.preventDefault()}>
 						<div className="container modal-body p-3 pb-2" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
@@ -119,7 +118,7 @@ const BoardAnswerModal = ({isEditMode, isAnswerPost = false, answerSq, boardPost
 								<div className="card bg-color-grey mb-4">
 									<div className="card-body pb-2">
 											<BoardRegisterForm
-												ref={boardPostRef} 
+												ref={boardPostRef}
 												isQna={true}
 												initialData={initialData}
 											/>
