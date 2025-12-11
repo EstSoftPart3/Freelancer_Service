@@ -252,33 +252,35 @@ const ResumeList = () => {
                 key={resume.resumeSq}
                 style={{ borderBottom: '1px rgb(230, 230, 230) solid' }}
               >
-                {/* X(닫기) 버튼 */}
-                <button
-                  className="btn btn-light btn-lg position-absolute resume-delete-btn"
-                  onClick={() => removeResume(resume.resumeSq)}
-                  disabled={isDeleting}
-                >
-                  &times;
-                </button>
 
                 <div className="post-info position-relative">
-                  {/* 제목 + 뱃지 */}
-                  <div className="d-flex align-items-center gap-2">
-                    <a
-                      href="#"
-                      className="text-5 m-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openResumeDetail(resume.resumeSq);
-                      }}
-                    >
-                      {resume.resumeTtl}
-                    </a>
-                    {resume.resumeIsRepresentativeYn === 'Y' && (
-                      <span className="btn btn-primary btn-sm">
-                        대표 이력서
-                      </span>
-                    )}
+                  <div className="d-flex align-items-center justify-content-between">
+                    {/* 제목 + 뱃지 */}
+                    <div className="d-flex align-items-center gap-2">
+                      <a
+                        href="#"
+                        className="text-5 m-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openResumeDetail(resume.resumeSq);
+                        }}
+                        >
+                        {resume.resumeTtl}
+                      </a>
+                      {resume.resumeIsRepresentativeYn === 'Y' && (
+                        <span className="btn btn-primary btn-sm">
+                          대표 이력서
+                        </span>
+                      )}
+                    </div>
+                    {/* X(닫기) 버튼 */}
+                    <button
+                      className="btn btn-light btn-sm rounded-3 resume-delete-btn"
+                      onClick={() => removeResume(resume.resumeSq)}
+                      disabled={isDeleting}
+                      >
+                      &times;
+                    </button>
                   </div>
 
                   {/* 등록일자 + 버튼 */}

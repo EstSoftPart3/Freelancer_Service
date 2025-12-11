@@ -6,6 +6,7 @@ import ReportModal from './ReportModal'
 import styles from './BoardComment.module.css'
 
 export default function BoardComment({ comments = [], boardSq, boardType, onRefresh }) {
+  
   const { user } = useAuth()
   const { showAlert } = useAlert()
   const [newComment, setNewComment] = useState('')
@@ -70,13 +71,23 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
       showAlert('댓글을 입력해주세요.', 'danger')
       return
     }
-    
-    try {
-      const response = await api.$post(`/comment`, {
+
+    let body;
+    if (boardType === 'answer') {
+      body = {
+        boardSq: null, // 문자열 → 숫자 변환
+        answerSq: Number(boardSq),
+        description: newComment.trim()
+      }
+    } else {
+      body = {
         boardSq: Number(boardSq), // 문자열 → 숫자 변환
         answerSq: null,
         description: newComment.trim()
-      })
+      }
+    }
+    try {
+      const response = await api.$post(`/comment`, body)
       if (response.status === 'CREATED' || response.status === 'OK') {
         showAlert(response.message || '댓글이 등록되었습니다.', 'success')
         setNewComment('')
@@ -386,8 +397,8 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
                     </span>
                   )}
                   
-                  {/* 대댓글 달기 버튼 */}
-                  {editSq !== comment.sq && (
+                  {/* 대댓글 달기 버튼(답변 대댓글 일단 막음) */}
+                  {boardType !== 'answer' && editSq !== comment.sq && (
                     <div className="mt-2 mb-2" style={{ clear: 'both' }}>
                       {showReplyForm !== comment.sq ? (
                         <button
@@ -533,8 +544,8 @@ export default function BoardComment({ comments = [], boardSq, boardType, onRefr
       </div>
       
       {/* 댓글 작성 폼 */}
-      <div className="post-comments mt-4">
-        <h4 className={`mb-3 ${styles.fontSize15}`}>댓글 작성</h4>
+      <div className={`post-comments mt-4 rounded-3 ${styles.commentForm}`}>
+        <h4 className={`mb-2 ${styles.fontSize15}`}>댓글 작성</h4>
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <input

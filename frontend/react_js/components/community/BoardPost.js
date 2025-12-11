@@ -1,20 +1,31 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAlert } from '@/contexts/AlertContext'
 import { useRouter } from 'next/router'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
 import ReportModal from './ReportModal'
+import BoardAnswerModal from './BoardAnswerModal'
+import { useAlertStore } from '@/store/alertStore'
 
-export default function BoardPost({ boardInfo, boardType, onRefresh }) {
+/**
+ * @param {()=>{}} handleAnswerModal - 작성 / 수정 핸들러
+ * @param {int} boardPostUserSq - 게시글 작성자의 userSq
+ */
+
+export default function BoardPost({ boardInfo, boardType, onRefresh, onAnswerRefresh, handleAnswerModal, boardPostUserSq, boardAdoptStatusCd }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoggedIn } = useAuth()
   const { showAlert } = useAlert()
 
   const viewerSq = user?.userSq || null
-  
-  // 신고 모달 상태
+  console.log('boardPost', boardInfo)
+  // 상태
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showAnswerModal, setShowAnswerModal] = useState(false)
+  const [clickSq, setClickSq] = useState(0)
+  const boardPostRef = useRef(null)
+  
 
   // 날짜 포맷팅
   const formatTime = (createdAt) => {
@@ -34,10 +45,14 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
     }
 
     try {
-      const response = await api.$post(`/${boardType}/${boardInfo.sq}/recommend`)
+      const response = await api.$post(`/${boardType}/${boardInfo.sq}/recommend`, {Credential: true})
       if (response.status === 'OK') {
         showAlert(response.message || '추천되었습니다.', 'success')
-        onRefresh()
+        if (boardType === 'answer') {
+          onAnswerRefresh()
+        } else {
+          onRefresh()
+        }
       } else {
         showAlert('추천 반영에 실패하였습니다.', 'danger')
       }
@@ -47,14 +62,22 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
     }
   }
 
-  // 수정
-  const handleEdit = () => {
-    if (!viewerSq) {
-      showAlert('로그인 후 이용해주세요.', 'danger')
-      return
-    }
+  // 게시글 수정
+  const handleBoardEdit = () => {
     router.push(`/community/${boardType}/register?edit=${boardInfo.sq}`)
   }
+
+  // 수정
+  // const handleEdit = () => {
+  //   if (!viewerSq) {
+  //     showAlert('로그인 후 이용해주세요.', 'danger')
+  //     return
+  //   }
+
+  //   // 답변 수정 모달 오픈
+  //   setClickSq(boardInfo.sq)
+  //   setShowAnswerModal(true);
+  // }
 
   // 삭제
   const handleDelete = async () => {
@@ -98,6 +121,34 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
       1504: { text: '미해결', color: 'danger' }
     }
     return statusMap[statusCd] || null
+  }
+
+  // 자체 해결 처리
+  const handleSelfResolved = async () => {
+    try {
+      const response = await api.$put(`/qna/${boardInfo.sq}/status/1503`)
+      if (response.status === 'OK') {
+        console.log('자체 해결 처리 성공했습니다.')
+        onRefresh();
+      }
+    } catch(error) {
+      showAlert('자체 해결 처리에 실패했습니다.', 'danger')
+      console.log('자체 해결 처리 실패했습니다.', error)
+    }
+  }
+  
+  // 답변 채택
+  const handleAdopt = async (answerSq) => {
+    try {
+      const response = await api.$patch(`/answer/${answerSq}/adopt`)
+      if (response.status === 'OK') {
+        console.log('채택을 성공했습니다.')
+        onRefresh();
+        onAnswerRefresh();
+      }
+    } catch (error) {
+      showAlert('채택에 실패했습니다.', 'danger')
+    }
   }
 
   return (
@@ -245,24 +296,93 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
 
       {/* 하단 버튼들 */}
       <div className="post-admin mt-4 text-end">
-        {/* 작성자만 수정/삭제 */}
-        {boardInfo.userSq === viewerSq && (
-          <>
-            <button
-              className="btn btn-primary me-2"
-              onClick={handleEdit}
+      {/* 일반 게시글일 경우 */}
+      {boardType === 'board' && 
+        <>
+          {/* 작성자만 수정/삭제 */}
+          {boardInfo.userSq === viewerSq && (
+            <>
+              <button
+                className="btn btn-primary me-2"
+                onClick={handleBoardEdit}
+                >
+                수정
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDelete}
+                >
+                삭제
+              </button>
+            </>
+          )}
+        </>
+      }
+      {/* 질문 게시글일 경우 */}
+      {boardType === 'qna' &&
+        <>
+          <button
+            className="btn btn-primary me-2"
+            onClick={() => handleAnswerModal(false)}
             >
-              수정
+            답변 작성
+          </button>
+          {/* 작성자만 수정/삭제 */}
+          {boardInfo.userSq === viewerSq && (
+            <>
+              {boardInfo.boardAdoptStatusCd === 1501 && (<button
+                className="btn btn-primary me-2"
+                onClick={handleSelfResolved}
+                >
+                자체 해결
+              </button>)}
+              <button
+                className="btn btn-primary me-2"
+                onClick={handleBoardEdit}
+                >
+                수정
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDelete}
+                >
+                삭제
+              </button>
+            </>
+          )}
+        </>
+      }
+      {/* 답변 포스트 모달일 경우 */}
+      {boardType === 'answer' && (
+        <>
+          {boardPostUserSq === viewerSq && boardInfo.isAdoptedYn === 'N' && boardAdoptStatusCd === 1501 && (
+            <button onClick={() => handleAdopt(boardInfo.sq)} className='btn btn-primary me-2'>
+              채택하기
             </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleDelete}
-            >
-              삭제
-            </button>
+            )
+          }
+          {boardInfo.userSq === viewerSq && (
+            <>
+              <button
+                className="btn btn-primary me-2"
+                onClick={()=>handleAnswerModal(true, boardInfo.sq)}
+                >
+                수정
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary "
+                onClick={handleDelete}
+                >
+                삭제
+              </button>
+            </>
+          )} 
           </>
-        )}
+        )
+      }
       </div>
 
       <style jsx global>{`
@@ -293,6 +413,10 @@ export default function BoardPost({ boardInfo, boardType, onRefresh }) {
           }}
         />
       )}
+      {/* AnswerPostModal에서 쓰는 답변 수정 모달 */}
+      {/* {showAnswerModal && (
+        <BoardAnswerModal {...answerProps} />
+      )} */}
     </div>
   )
 }

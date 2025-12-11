@@ -18,6 +18,11 @@
   font-size: 0.9375rem;
 }
 
+.commentForm {
+  background-color: rgb(241, 241, 241);
+  padding: 18px 25px 25px 25px;
+}
+
 .commentProfile {
   width: 50px;
   height: 50px;
