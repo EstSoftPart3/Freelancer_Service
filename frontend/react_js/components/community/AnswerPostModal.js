@@ -5,16 +5,16 @@ import { api } from '@/lib/axios'
 import CommonPageHeader from '@/components/common/CommonPageHeader'
 import BoardPost from '@/components/community/BoardPost'
 import BoardComment from '@/components/community/BoardComment'
-import styles from './AnswerPostModal.module.css'
 import { useAuth } from '@/contexts/AuthContext'
 import { useModalStore } from '@/store/modalStore'
 
 /**
- * @param {()=>{}} handleAnswerModal - 답변 작성 / 수정 모달 오픈
+ * @param {()=>{}} handleAnswerModal - 답변 작성/수정 모달 오픈
  * @param {int} answerSq - 답변 answerSq
+ * @param {()=>{}} onRefresh - 새로고침(게시글 정보 다시 불러오기)
  * @param {int} boardPostUserSq - 게시글 작성자 userSq
+ * @param {int} boardAdoptStatusCd - 게시글 상태 (진행중 / 채택완료 / 자체해결 / 미해결)
  */
-
 export default function AnswerPostModal({handleAnswerModal, answerSq, onRefresh, boardPostUserSq, boardAdoptStatusCd}) {
   const router = useRouter()
   const { board_sq } = router.query

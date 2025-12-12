@@ -81,8 +81,8 @@ export default function MyPageSideBar({ onNavigate, userType: propUserType }) {
             </li>
             <li className="nav-item">
               <Link 
-                href="/mypage/company/project_scrap" 
-                className={`nav-link ${isActiveLink('/mypage/company/project_scrap') ? styles.active : ''}`}
+                href="/mypage/project_scrap" 
+                className={`nav-link ${isActiveLink('/mypage/project_scrap') ? styles.active : ''}`}
                 onClick={handleNavigate}
               >
                 스크랩 내역
@@ -215,8 +215,8 @@ export default function MyPageSideBar({ onNavigate, userType: propUserType }) {
             </li>
             <li className="nav-item">
               <Link 
-                href="/mypage/personal/Project_scrap" 
-                className={`nav-link ${isActiveLink('/mypage/personal/Project_scrap') ? styles.active : ''}`}
+                href="/mypage/project_scrap" 
+                className={`nav-link ${isActiveLink('/mypage/project_scrap') ? styles.active : ''}`}
                 onClick={handleNavigate}
               >
                 스크랩 내역
