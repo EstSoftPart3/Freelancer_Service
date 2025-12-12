@@ -9,10 +9,12 @@ import CompanyMembers from './CompanyMembers';
 import styles from './ProjectApplyStatusModal.module.css';
 import ResumeSelectModal from '@/components/myPage/common/ResumeSelectModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
   const modalStore = useModalStore();
   const alertStore = useAlertStore();
+  const { showAlert } = useAlert()
   const { user } = useAuth()
 
   const [searchType, setSearchType] = useState('all');
@@ -187,16 +189,14 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
 
   // 지원하기
   const handleApply = async () => {
-    console.log(selectedMembers)
     const selectedMembersResumeSq = Object.values(selectedMembers).flat().map(member => member.resumeSq);
-    console.log(selectedMembersResumeSq);
     try {
       const response = await api.$post(`/projects/applications/${projectSq}`, {
         resumeSq: selectedMembersResumeSq,
         projectApplicationTyp: "COMPANY"
       })
-      alertStore.show('기업 지원이 완료됏습니다.', 'success')
-      console.log('기업 지원이 완료됐습니다.', response)
+      showAlert('기업 지원이 완료됐습니다.', 'success')
+      closeModal();
     } catch(error) {
       alertStore.show('기업 지원에 실패했습니다.', 'danger')
       console.log(error)
@@ -209,7 +209,7 @@ const ProjectCompanyApplyModal = ({ projectSq, projectTitle, onToggle }) => {
     if (!userSq) return;
     setSelectedMembers(prev => {
       const currentList = prev[currentPage] || [];
-      let newCurrentList;
+      let newCurrentList = currentList;
       if (currentList.some(member => member.userSq === userSq)) {
         newCurrentList = currentList.filter(member => member.userSq !== userSq);
       }

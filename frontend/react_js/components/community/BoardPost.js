@@ -5,12 +5,16 @@ import { useRouter } from 'next/router'
 import { api } from '@/lib/axios'
 import skillIconMap from '@/lib/skillIconMap'
 import ReportModal from './ReportModal'
-import BoardAnswerModal from './BoardAnswerModal'
-import { useAlertStore } from '@/store/alertStore'
 
 /**
+ * 
+ * @param {} boardInfo - 정보(게시글 / 답변)
+ * @param {string} boardType - 타입(board - 일반 / qna - qna / answer - 답변 )
+ * @param {()=>{}} onRefresh - 게시글 새로고침
+ * @param {()=>{}} onAnswerRefresh - 답변 새로고침
  * @param {()=>{}} handleAnswerModal - 작성 / 수정 핸들러
  * @param {int} boardPostUserSq - 게시글 작성자의 userSq
+ * @param {int} boardAdoptStatusCd - 게시글 상태 (진행중 / 채택완료 / 자체해결 / 미해결)
  */
 
 export default function BoardPost({ boardInfo, boardType, onRefresh, onAnswerRefresh, handleAnswerModal, boardPostUserSq, boardAdoptStatusCd }) {
@@ -66,18 +70,6 @@ export default function BoardPost({ boardInfo, boardType, onRefresh, onAnswerRef
   const handleBoardEdit = () => {
     router.push(`/community/${boardType}/register?edit=${boardInfo.sq}`)
   }
-
-  // 수정
-  // const handleEdit = () => {
-  //   if (!viewerSq) {
-  //     showAlert('로그인 후 이용해주세요.', 'danger')
-  //     return
-  //   }
-
-  //   // 답변 수정 모달 오픈
-  //   setClickSq(boardInfo.sq)
-  //   setShowAnswerModal(true);
-  // }
 
   // 삭제
   const handleDelete = async () => {
@@ -413,10 +405,6 @@ export default function BoardPost({ boardInfo, boardType, onRefresh, onAnswerRef
           }}
         />
       )}
-      {/* AnswerPostModal에서 쓰는 답변 수정 모달 */}
-      {/* {showAnswerModal && (
-        <BoardAnswerModal {...answerProps} />
-      )} */}
     </div>
   )
 }

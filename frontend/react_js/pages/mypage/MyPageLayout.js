@@ -105,7 +105,7 @@ export default function MyPageLayout({ children, userType: propUserType }) {
             { text: '프로젝트 지원 현황' },
           ],
         };
-      case '/mypage/personal/Project_scrap':
+      case '/mypage/Project_scrap':
         return {
           title: '프로젝트',
           strongText: '스크랩',

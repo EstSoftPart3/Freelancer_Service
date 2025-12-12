@@ -642,8 +642,6 @@ const ResumeForm = () => {
     return result;
   };
 
-  console.log('이력서 데이터', resumeData)
-
   return (
     <MyPageLayout userType="PERSONAL">
     <div className="resume-form-container">

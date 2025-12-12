@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/axios';
-import MyPageLayout from '../../MyPageLayout';
-import './ProjectScrap.module.css';
-
-// skillIconMap import 경로는 프로젝트 구조에 맞게 조정하세요
-// import skillIconMap from '../../../../assets/skillIconMap';
+import MyPageLayout from '../MyPageLayout';
+import styles from './ProjectScrap.module.css';
+import skillIconMap from '@/lib/skillIconMap';
 
 const ProjectScrap = () => {
   const router = useRouter();
@@ -121,8 +119,8 @@ const ProjectScrap = () => {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <MyPageLayout userType={userType}>
-      <div className="project-scrap-container">
+  <MyPageLayout userType={userType}>
+    <div className={styles['project-scrap-container']}>
       <div className="row">
         <div className="col">
           <h4 className="mb-3" style={{ fontSize: '24px' }}>
@@ -165,19 +163,20 @@ const ProjectScrap = () => {
 
       <div className="row">
         <div className="col">
-          <ul className="simple-post-list m-0 position-relative">
+          <ul className={`${styles['simple-post-list']} m-0 position-relative`}>
             {scraps.map((item) => (
               <li
                 key={item.projectSq}
                 style={{ borderBottom: '1px rgb(230, 230, 230) solid' }}
               >
-                <div className="post-info position-relative">
+                <div className={styles['post-info']}>
                   {/* 제목 + 회사명 + 상태 */}
                   <div className="d-flex justify-content-between align-items-center gap-2">
-                    <div className="d-flex gap-2">
+                    <div className={`d-flex ${styles['gap-2']}`}>
                       <a
                         href="#"
-                        className="text-5 m-0"
+                        className={styles['text-5']}
+                        style={{ margin: 0 }}
                         onClick={(e) => {
                           e.preventDefault();
                           goToProjectDetail(item.projectSq);
@@ -189,7 +188,7 @@ const ProjectScrap = () => {
                         </span>
                       </a>
                     </div>
-                    <div className="d-flex gap-2 align-items-center">
+                    <div className={`d-flex ${styles['gap-2']} align-items-center`}>
                       <span
                         className={`btn ${
                           item.dday >= 0 ? 'btn-primary' : 'btn-light'
@@ -203,7 +202,7 @@ const ProjectScrap = () => {
                         )}
                       </span>
                       <button
-                        className="btn btn-outline btn-primary btn-sm"
+                        className={`btn ${styles['btn-outline']} btn-primary btn-sm`}
                         onClick={() => removeScrap(item.projectSq)}
                       >
                         삭제
@@ -213,14 +212,14 @@ const ProjectScrap = () => {
 
                   {/* 지원자 수 + 등록일 */}
                   <div className="d-flex justify-content-between align-items-center mt-2">
-                    <div className="post-meta text-4">
-                      <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles['post-meta']} ${styles['text-4']}`}>
+                      <span className={`text-dark text-uppercase ${styles['font-weight-semibold']}`}>
                         등록일자
                       </span>
                       | {formatDate(item.createdAt)}
                     </div>
-                    <div className="post-meta text-4">
-                      <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles['post-meta']} ${styles['text-4']}`}>
+                      <span className={`text-dark text-uppercase ${styles['font-weight-semibold']}`}>
                         지원자 수
                       </span>
                       | {item.candidateCnt}
@@ -230,11 +229,11 @@ const ProjectScrap = () => {
                   {/* 지원 자격 + 기간 */}
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <div
-                      className="post-meta text-4 me-3 flex-grow-1"
+                      className={`${styles['post-meta']} ${styles['text-4']} me-3 flex-grow-1`}
                       style={{ minWidth: 0 }}
                     >
                       <div className="mb-1">
-                        <span className="text-dark text-uppercase font-weight-semibold">
+                        <span className={`text-dark text-uppercase ${styles['font-weight-semibold']}`}>
                           지원 자격
                         </span>
                         | {item.address.parentSigungu} {item.address.sigungu} /{' '}
@@ -242,11 +241,11 @@ const ProjectScrap = () => {
                       </div>
 
                       {/* 기술 스택 */}
-                      <div className="d-flex flex-wrap gap-2">
+                      <div className={`d-flex flex-wrap ${styles['gap-2']}`}>
                         {item.skillTags.map((skill, index) => (
                           <span
                             key={index}
-                            className="badge bg-light text-dark px-2 py-1"
+                            className={`badge ${styles['badge']} bg-light text-dark px-2 py-1`}
                           >
                             {generateIconUrl(skill) && (
                               <img
@@ -262,8 +261,8 @@ const ProjectScrap = () => {
                       </div>
                     </div>
 
-                    <div className="post-meta text-4">
-                      <span className="text-dark text-uppercase font-weight-semibold">
+                    <div className={`${styles['post-meta']} text-nowrap ${styles['text-4']}`}>
+                      <span className={`text-dark text-uppercase ${styles['font-weight-semibold']}`}>
                         채용기간
                       </span>
                       | {item.recruitStartDt} ~ {item.recruitEndDt}
@@ -281,10 +280,10 @@ const ProjectScrap = () => {
 
           {/* 페이징 */}
           <div className="mt-5 py-5">
-            <ul className="pagination float-end">
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <ul className={`${styles['pagination']} ${styles['float-end']}`}>
+              <li className={`${styles['page-item']} ${currentPage === 1 ? 'disabled' : ''}`}>
                 <a
-                  className="page-link"
+                  className={styles['page-link']}
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
@@ -297,10 +296,10 @@ const ProjectScrap = () => {
               {pageNumbers.map((page) => (
                 <li
                   key={page}
-                  className={`page-item ${page === currentPage ? 'active' : ''}`}
+                  className={`${styles['page-item']} ${page === currentPage ? 'active' : ''}`}
                 >
                   <a
-                    className="page-link"
+                    className={styles['page-link']}
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
@@ -312,12 +311,12 @@ const ProjectScrap = () => {
                 </li>
               ))}
               <li
-                className={`page-item ${
+                className={`${styles['page-item']} ${
                   currentPage === totalPages ? 'disabled' : ''
                 }`}
               >
                 <a
-                  className="page-link"
+                  className={styles['page-link']}
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
@@ -332,8 +331,8 @@ const ProjectScrap = () => {
         </div>
       </div>
     </div>
-    </MyPageLayout>
-  );
+  </MyPageLayout>
+)
 };
 
 export default ProjectScrap;

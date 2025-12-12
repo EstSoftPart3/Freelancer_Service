@@ -371,7 +371,7 @@ export default function ResumeDetailModal({
                         <div className="row mb-2">
                           <div className="col-sm-4">
                             <strong style={{ marginRight: '8px' }}>기종 : </strong>
-                            {getTagsByCategory(project, '기종')?.map((device) => (
+                            {getTagsByCategory(project, 'Device')?.map((device) => (
                               <button
                                 key={device}
                                 className="btn btn-rounded btn-3d btn-light btn-sm me-2"
@@ -390,7 +390,7 @@ export default function ResumeDetailModal({
                           </div>
                           <div className="col-sm-8">
                             <strong style={{ marginRight: '8px' }}>OS : </strong>
-                            {getTagsByCategory(project, '운영체제')?.map((os) => (
+                            {getTagsByCategory(project, 'OS')?.map((os) => (
                               <button
                                 key={os}
                                 className="btn btn-rounded btn-3d btn-light btn-sm me-2"
@@ -432,7 +432,7 @@ export default function ResumeDetailModal({
                         <div className="row mb-2">
                           <div className="col-sm-12">
                             <strong style={{ marginRight: '8px' }}>언어 : </strong>
-                            {getTagsByCategory(project, '언어')?.map((lang) => (
+                            {getTagsByCategory(project, 'Language')?.map((lang) => (
                               <button
                                 key={lang}
                                 className="btn btn-rounded btn-3d btn-light btn-sm me-2"
@@ -453,7 +453,7 @@ export default function ResumeDetailModal({
                         <div className="row mb-2">
                           <div className="col-sm-12">
                             <strong style={{ marginRight: '8px' }}>TOOL : </strong>
-                            {getTagsByCategory(project, '툴')?.map((tool) => (
+                            {getTagsByCategory(project, 'Tool')?.map((tool) => (
                               <button
                                 key={tool}
                                 className="btn btn-rounded btn-3d btn-light btn-sm me-2"
@@ -474,7 +474,7 @@ export default function ResumeDetailModal({
                         <div className="row mb-2">
                           <div className="col-sm-12">
                             <strong style={{ marginRight: '8px' }}>FW : </strong>
-                            {getTagsByCategory(project, '프레임워크')?.map((framework) => (
+                            {getTagsByCategory(project, 'FrameWork')?.map((framework) => (
                               <button
                                 key={framework}
                                 className="btn btn-rounded btn-3d btn-light btn-sm me-2"
