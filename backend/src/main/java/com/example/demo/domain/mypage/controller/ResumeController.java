@@ -171,9 +171,10 @@ public class ResumeController {
 	// 자격증 불러오기
 	@GetMapping("/certificates")
 	public ResponseEntity<ApiResponse<CertificateListResponseDTO>> getCertificates(
-			@RequestParam(required = false) String searchNm,
-			@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "3") int size) {
+			// @RequestParam 뒤에 "searchNm" 처럼 이름을 명시하세요.
+			@RequestParam(name = "searchNm", required = false) String searchNm,
+			@RequestParam(name = "page", defaultValue = "1") int page,
+			@RequestParam(name = "size", defaultValue = "3") int size) {
 
 		CertificateListResponseDTO result = resumeService.getCertificates(searchNm, page, size);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "자격증 리스트 조회 완료", result));
