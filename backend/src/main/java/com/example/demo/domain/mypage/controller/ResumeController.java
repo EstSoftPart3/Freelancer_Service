@@ -43,9 +43,9 @@ public class ResumeController {
 	@PostMapping
 	public ResponseEntity<ApiResponse<?>> createResume(
 			@AuthenticationPrincipal Long userSq,
-			@RequestPart ResumeRequestDTO dto,
-			@RequestPart(required = false) List<MultipartFile> profileImages,
-			@RequestPart(required = false) List<MultipartFile> attachments) {
+			@RequestPart("dto") ResumeRequestDTO dto,
+			@RequestPart(name = "profileImages", required = false) List<MultipartFile> profileImages,
+			@RequestPart(name = "attachments", required = false) List<MultipartFile> attachments) {
 
 		int result = resumeService.createResume(userSq, dto, profileImages, attachments);
 

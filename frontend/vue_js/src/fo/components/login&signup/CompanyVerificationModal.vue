@@ -71,13 +71,12 @@
             :key="datepickerKey"
             v-model="openDate"
             :locale="ko"
-            :inputFormat="inputFormat"
+            :format="inputFormat"
             placeholder="개업일자"
             class="form-control"
             :upper-limit="new Date()"
             @input="handleInputChange('date')"
             title="키보드 입력은 불가합니다. 달력에서 선택해주세요."
-            dayPickerHeadingFormat="yyyy년 LLLL"
             teleport="body"
             @update:modelValue="datepickerKey++"
           />
@@ -234,6 +233,23 @@ const verifyAllInputs = () => {
   return nameValid.value && ceoValid.value && dateValid.value && bizValid.value
 }
 
+function formatDate(date) {
+  if (!date) return ''
+
+  // date가 문자열로 들어오든 객체로 들어오든 Date 객체로 생성
+  const d = new Date(date)
+
+  // 유효하지 않은 날짜인 경우 빈 값 반환
+  if (isNaN(d.getTime())) return ''
+
+  const year = d.getFullYear()
+  // 월은 0부터 시작하므로 +1, 두 자리 유지를 위해 padStart 사용
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+
+  return `${year}.${month}.${day}`
+}
+
 // 인증하기 버튼 클릭 시
 async function handleVerify() {
   if (!verifyAllInputs()) {
@@ -241,7 +257,7 @@ async function handleVerify() {
     return
   }
 
-  const formattedOpenDate = openDate.value.replace(/-/g, '')
+  const formattedOpenDate = formatDate(openDate.value)
 
   try {
     const response = await api.$post('/company/verify', {
@@ -318,7 +334,7 @@ function handleConfirm() {
   companyPorfileStore.setProfile({
     companyName: companyName.value,
     ceoName: ceoName.value,
-    openDate: openDate.value,
+    openDate: formatDate(openDate.value),
     bizNumber: bizNumber.value,
     termsAgreed: true,
   })
