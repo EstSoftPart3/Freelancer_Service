@@ -61,6 +61,16 @@ onMounted(() => {
 })
 
 async function handleSubmit(rawFormData) {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return dateStr
+    // 숫자만 남기고 정규식을 통해 하이픈 추가
+    const cleanDate = dateStr.replace(/\D/g, '')
+    if (cleanDate.length === 8) {
+      return cleanDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')
+    }
+    return dateStr // 8자리가 아니면 그대로 반환
+  }
+
   // 백엔드 DTO에 맞게 키를 변환
   const formData = {
     userId: rawFormData.id,
@@ -83,7 +93,7 @@ async function handleSubmit(rawFormData) {
     // 기업 관련 추가
     companyNm: rawFormData.companyName,
     companyCeoNm: rawFormData.companyCeoName,
-    companyOpenDt: rawFormData.companyOpenDate,
+    companyOpenDt: formatDate(rawFormData.companyOpenDate),
     companyBizNum: rawFormData.companyBizNumber,
   }
   console.log('formData', formData)
