@@ -55,9 +55,27 @@ public class ProjectUtil {
 		return projectMapper.findJobsByProjectSq(projectSq);
 	}
 	
-	public Map<String, LocalDateTime> fetchInterviewTimeMinMaxBySq(Long projectSq){
-		return projectMapper.findInterviewTimeMinMaxBySq(projectSq);
+	public Map<String, LocalDateTime> fetchInterviewTimeMinMaxBySq(Long projectSq) {
+	    // 1. MyBatis로부터 Object 타입을 포함한 Map으로 받습니다.
+	    Map<String, Object> rawMap = projectMapper.findInterviewTimeMinMaxBySq(projectSq);
+	    Map<String, LocalDateTime> resultMap = new HashMap<>();
+
+	    if (rawMap != null) {
+	        rawMap.forEach((key, value) -> {
+	            if (value instanceof java.sql.Timestamp) {
+	                // Timestamp를 LocalDateTime으로 변환
+	                resultMap.put(key, ((java.sql.Timestamp) value).toLocalDateTime());
+	            } else if (value instanceof LocalDateTime) {
+	                resultMap.put(key, (LocalDateTime) value);
+	            } else {
+	                resultMap.put(key, null);
+	            }
+	        });
+	    }
+	    return resultMap;
 	}
+	
+	
 	
 	public String convertCommonCodeSqToNm(Long codeSq) {
 		return commonCodeMapper.findCommonCodeNmBySq(codeSq);
