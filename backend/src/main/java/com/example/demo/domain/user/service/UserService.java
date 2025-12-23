@@ -109,7 +109,13 @@ public class UserService {
         FindIdResponseDTO dto = new FindIdResponseDTO();
         dto.setUserId((String) userInfo.get("userId"));
         dto.setUserNm((String) userInfo.get("userNm"));
-        dto.setUserCreatedAtDtm((LocalDateTime) userInfo.get("userCreatedAtDtm"));
+     // 날짜 타입 안전하게 변환
+        Object createdAtObj = userInfo.get("userCreatedAtDtm");
+        if (createdAtObj instanceof java.sql.Timestamp) {
+            dto.setUserCreatedAtDtm(((java.sql.Timestamp) createdAtObj).toLocalDateTime());
+        } else if (createdAtObj instanceof LocalDateTime) {
+            dto.setUserCreatedAtDtm((LocalDateTime) createdAtObj);
+        }
         dto.setUserType(userTypeName);
 
         return dto;

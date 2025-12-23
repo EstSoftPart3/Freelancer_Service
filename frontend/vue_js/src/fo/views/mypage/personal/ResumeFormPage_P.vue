@@ -126,12 +126,11 @@
                       :key="datepickerKey"
                       v-model="resumeForm.resumeBirthDt"
                       :locale="ko"
-                      :inputFormat="inputFormat"
+                      :format="inputFormat"
                       placeholder="생년월일 선택"
                       class="form-control text-3 h-auto py-2"
                       style="border: none"
                       required
-                      dayPickerHeadingFormat="yyyy년 LLLL"
                       teleport="body"
                       @update:modelValue="datepickerKey++"
                     />
@@ -1144,6 +1143,18 @@ function convertSkillTagListToGrouped(skillTagList, parentTags) {
   return grouped
 }
 
+function formatDate(date) {
+  if (!date) return null
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return null
+
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}` // yyyy-mm-dd 형식
+}
+
 onMounted(async () => {
   if (resumeId) {
     const data = await api.$get(`/mypage/resume/${resumeId}`)
@@ -1215,7 +1226,36 @@ async function submitResume() {
   // API 요청용 JSON
   const apiJson = {
     ...resumeForm,
-    projectHistoryList: cleanedProjectHistoryList,
+    // 1. 기본 정보
+    resumeBirthDt: formatDate(resumeForm.resumeBirthDt),
+
+    // 2. 학력 리스트
+    educationList: resumeForm.educationList.map((edu) => ({
+      ...edu,
+      educationAdmissionDt: formatDate(edu.educationAdmissionDt),
+      educationGraduationDt: formatDate(edu.educationGraduationDt),
+    })),
+
+    // 3. 경력 리스트
+    careerList: resumeForm.careerList.map((career) => ({
+      ...career,
+      careerStartDt: formatDate(career.careerStartDt),
+      careerEndDt: formatDate(career.careerEndDt),
+    })),
+
+    // 4. 교육 리스트
+    trainingHistoryList: resumeForm.trainingHistoryList.map((train) => ({
+      ...train,
+      trainingStartDt: formatDate(train.trainingStartDt),
+      trainingEndDt: formatDate(train.trainingEndDt),
+    })),
+
+    // 5. 프로젝트 리스트 (이미 flattened 처리된 리스트 사용)
+    projectHistoryList: cleanedProjectHistoryList.map((proj) => ({
+      ...proj,
+      projectHistoryStartDt: formatDate(proj.projectHistoryStartDt),
+      projectHistoryEndDt: formatDate(proj.projectHistoryEndDt),
+    })),
   }
 
   const formData = new FormData()

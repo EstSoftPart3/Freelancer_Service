@@ -36,11 +36,10 @@
                   :key="datepickerKey1"
                   v-model="form.trainingStartDt"
                   :locale="ko"
-                  :inputFormat="inputFormat"
+                  :format="inputFormat"
                   placeholder="시작년월"
                   class="form-control"
                   teleport="body"
-                  dayPickerHeadingFormat="yyyy년 LLLL"
                   @update:modelValue="datepickerKey1++"
                 />
                 <i class="fas fa-calendar datepicker-icon"></i>
@@ -51,11 +50,10 @@
                   :key="datepickerKey2"
                   v-model="form.trainingEndDt"
                   :locale="ko"
-                  :inputFormat="inputFormat"
+                  :format="inputFormat"
                   placeholder="종료년월"
                   class="form-control"
                   teleport="body"
-                  dayPickerHeadingFormat="yyyy년 LLLL"
                   @update:modelValue="datepickerKey2++"
                 />
                 <i class="fas fa-calendar datepicker-icon"></i>
@@ -113,12 +111,26 @@ const submit = () => {
     alertStore.show('교육 기간을 선택하세요.', 'danger')
     return
   }
-  function formatDate(dateString) {
-    if (!dateString) return ''
-    return dateString.substring(0, 10).replace(/-/g, '.')
+  function formatDate(date) {
+    if (!date) return ''
+
+    // date가 문자열로 들어오든 객체로 들어오든 Date 객체로 생성
+    const d = new Date(date)
+
+    // 유효하지 않은 날짜인 경우 빈 값 반환
+    if (isNaN(d.getTime())) return ''
+
+    const year = d.getFullYear()
+    // 월은 0부터 시작하므로 +1, 두 자리 유지를 위해 padStart 사용
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+
+    return `${year}.${month}.${day}`
   }
 
   form.value.period = `${formatDate(form.value.trainingStartDt)} ~ ${formatDate(form.value.trainingEndDt)}`
+  form.value.trainingStartDt = formatDate(form.value.trainingStartDt)
+  form.value.trainingEndDt = formatDate(form.value.trainingEndDt)
   props.onComplete({ ...form.value }) // 부모에게 데이터 전달
   modalStore.closeModal()
 }

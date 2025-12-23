@@ -28,11 +28,10 @@
                     :key="datepickerKey1"
                     v-model="form.startDate"
                     :locale="ko"
-                    :inputFormat="inputFormat"
+                    :format="inputFormat"
                     placeholder="시작일"
                     class="form-control"
                     teleport="body"
-                    dayPickerHeadingFormat="yyyy년 LLLL"
                     @update:modelValue="datepickerKey1++"
                   />
                   <i class="fas fa-calendar datepicker-icon"></i>
@@ -43,11 +42,10 @@
                     :key="datepickerKey2"
                     v-model="form.endDate"
                     :locale="ko"
-                    :inputFormat="inputFormat"
+                    :format="inputFormat"
                     placeholder="종료일"
                     class="form-control"
                     teleport="body"
-                    dayPickerHeadingFormat="yyyy년 LLLL"
                     @update:modelValue="datepickerKey2++"
                   />
                   <i class="fas fa-calendar datepicker-icon"></i>
@@ -280,6 +278,23 @@ const openSkillModal = () => {
   })
 }
 
+function formatDate(date) {
+  if (!date) return ''
+
+  // date가 문자열로 들어오든 객체로 들어오든 Date 객체로 생성
+  const d = new Date(date)
+
+  // 유효하지 않은 날짜인 경우 빈 값 반환
+  if (isNaN(d.getTime())) return ''
+
+  const year = d.getFullYear()
+  // 월은 0부터 시작하므로 +1, 두 자리 유지를 위해 padStart 사용
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+
+  return `${year}.${month}.${day}`
+}
+
 const submit = () => {
   if (!form.value.name) {
     alertStore.show('프로젝트명을 입력해주세요.', 'danger')
@@ -321,8 +336,8 @@ const submit = () => {
 
   const project = {
     projectHistoryTask: form.value.name,
-    projectHistoryStartDt: form.value.startDate || null,
-    projectHistoryEndDt: form.value.endDate || null,
+    projectHistoryStartDt: formatDate(form.value.startDate) || null,
+    projectHistoryEndDt: formatDate(form.value.endDate) || null,
     projectHistoryClient: form.value.client,
     projectHistoryTypeCd: form.value.workUnit,
     projectHistoryTypeCdNm: selectedWorkUnit?.commonCodeNm || null, // 업무단 이름
