@@ -15,7 +15,11 @@ const apiInstance = axios.create({
 // 요청 인터셉터 설정
 apiInstance.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('accessToken')
+    // ✅ accessToken은 localStorage / sessionStorage 둘 다 확인 (기존 동작 유지 + 보완)
+    const accessToken =
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken')
+
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
     }
@@ -79,7 +83,11 @@ apiInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken')
+        // ✅ refreshToken도 localStorage / sessionStorage 둘 다 확인 (기존 동작 유지 + 보완)
+        const refreshToken =
+          localStorage.getItem('refreshToken') ||
+          sessionStorage.getItem('refreshToken')
+
         if (!refreshToken) {
           throw new Error('No refresh token available.')
         }
@@ -94,8 +102,21 @@ apiInstance.interceptors.response.use(
         )
         // console.log('refresh-token 요청 성공')
 
-        const newAccessToken = response.data.data.accessToken
-        const newRefreshToken = response.data.data.refreshToken
+        // ✅ 응답 구조가 data.data 또는 output.data 등으로 다를 수 있어 안전 처리
+        const tokenPayload =
+          response?.data?.data ||
+          response?.data?.output?.data ||
+          response?.data?.output ||
+          response?.data
+
+        const newAccessToken = tokenPayload?.accessToken
+        const newRefreshToken = tokenPayload?.refreshToken
+
+        if (!newAccessToken || !newRefreshToken) {
+          throw new Error('Refresh token response does not contain tokens.')
+        }
+
+        // ✅ 기존 저장 위치(localStorage) 유지
         localStorage.setItem('accessToken', newAccessToken)
         localStorage.setItem('refreshToken', newRefreshToken)
 

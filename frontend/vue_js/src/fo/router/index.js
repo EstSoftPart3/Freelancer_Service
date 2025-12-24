@@ -39,8 +39,11 @@ import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
-// import { compact } from 'lodash'
+
+// ✅ 알림 관련
 import NotificationPage from '../views/mypage/personal/NotificationPage.vue'
+import NotificationSettingPage from '../views/mypage/personal/NotificationSettingPage.vue'
+import NotificationTrashPage from '../views/mypage/personal/NotificationTrashPage.vue'
 
 const routes = [
   {
@@ -50,7 +53,7 @@ const routes = [
   },
   {
     path: '/notifications',
-    component: NotificationPage,
+    redirect: '/mypage/notifications',
     name: 'notification',
   },
   {
@@ -157,11 +160,12 @@ const routes = [
     children: [
       // 기본 화면 설정
       {
-        path: '', // 여기! 기본 자식 경로
+        path: '',
         name: 'MypageDefault',
         component: InformationEditPage,
       },
-      //common
+
+      // common
       {
         path: 'informationEdit',
         name: 'InformationEdit',
@@ -173,7 +177,7 @@ const routes = [
         component: WithdrawPage,
       },
 
-      //personal
+      // personal
       {
         path: 'affiliatedJobApplications',
         name: 'AffiliatedJobApplications',
@@ -190,12 +194,12 @@ const routes = [
         component: ResumeListPage,
       },
       {
-        path: 'resumeform', //등록하기
+        path: 'resumeform',
         name: 'ResumeFormNew',
         component: ResumeFormPage,
       },
       {
-        path: 'resumeform/:resumeSq', //수정하기
+        path: 'resumeform/:resumeSq',
         name: 'ResumeFormEdit',
         component: ResumeFormPage,
       },
@@ -209,7 +213,25 @@ const routes = [
         name: 'projectScrap',
         component: ProjectScrapPage,
       },
-      //company
+
+      // ✅ notifications (마이페이지 알림)
+      {
+        path: 'notifications',
+        name: 'MyNotificationList',
+        component: NotificationPage,
+      },
+      {
+        path: 'notifications/setting',
+        name: 'MyNotificationSetting',
+        component: NotificationSettingPage, // ✅ 변경
+      },
+      {
+        path: 'notifications/trash',
+        name: 'MyNotificationTrash',
+        component: NotificationTrashPage, // ✅ 변경
+      },
+
+      // company
       {
         path: 'affiliationEdit',
         name: 'AffiliationEdit',
@@ -235,7 +257,6 @@ const routes = [
         name: 'ProjectPostPageWithId',
         component: ProjectPostPage,
       },
-
       {
         path: 'projectPostPage',
         name: 'ProjectPostPage',
@@ -244,6 +265,7 @@ const routes = [
     ],
   },
 ]
+
 const router = createRouter({
   history: createWebHistory(),
   routes,
@@ -260,13 +282,16 @@ router.beforeEach((to, from, next) => {
     'FindIdResult',
     'ResetPassword',
   ]
+
   const authRequiredPages = [
     'MyPageDefault',
     'InformationEdit',
     'Withdraw',
     'QnaResisterPage',
-    'NotificationPage',
-    'BoardResisterPage' /* ... 로그인 필요 페이지들 */,
+    'BoardResisterPage',
+    'MyNotificationList',
+    'MyNotificationSetting',
+    'MyNotificationTrash',
   ]
 
   const userRolePages = ['UserProjectSpec']

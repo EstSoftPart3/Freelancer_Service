@@ -3,10 +3,12 @@
     <div class="header">
       <h1>알림 내역</h1>
     </div>
+
     <div class="notification-list">
-      <div v-if="isEmpty" class="text-center py-5 text-muted">
+      <div v-if="isEmpty" class="empty-state">
         알림 내역이 없습니다.
       </div>
+
       <div
         v-else
         v-for="notification in notifications"
@@ -16,7 +18,9 @@
         @click="handleNotificationClick(notification)"
       >
         <div class="item-content">
-          <div class="item-title">{{ notification.notificationTtl }}</div>
+          <div class="item-title">
+            {{ notification.notificationTtl }}
+          </div>
           <div class="item-subtitle">
             {{ truncateText(notification.notificationTxt, 15) }}
           </div>
@@ -24,20 +28,15 @@
 
         <div class="item-right-final">
           <div class="info-group">
-            <span class="date-label">{{
-              formatDate(notification.notificationCreatedAtDtm)
-            }}</span>
+            <span class="date-label">
+              {{ formatDate(notification.notificationCreatedAtDtm) }}
+            </span>
+
             <a
               class="btn btn-rounded"
-              :class="
-                notification.notificationIsReadYn === 'N'
-                  ? 'btn-unread'
-                  : 'btn-read'
-              "
+              :class="notification.notificationIsReadYn === 'N' ? 'btn-unread' : 'btn-read'"
             >
-              {{
-                notification.notificationIsReadYn === 'N' ? '읽지않음' : '읽음'
-              }}
+              {{ notification.notificationIsReadYn === 'N' ? '읽지않음' : '읽음' }}
             </a>
           </div>
 
@@ -46,22 +45,38 @@
             @click.stop.prevent="deleteNotification(notification)"
             title="알림 삭제"
           >
-            <svg
-              class="icon-delete"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="icon-delete" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M6 18L18 6M6 6l12 12"
-              ></path>
+              />
             </svg>
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="!isEmpty" class="pagination-wrap">
+      <button class="page-btn" @click="goPrev" :disabled="currentPage === 1">
+        이전
+      </button>
+
+      <button
+        v-for="p in pages"
+        :key="p"
+        class="page-num"
+        :class="{ active: p === currentPage }"
+        @click="goPage(p)"
+      >
+        {{ p }}
+      </button>
+
+      <button class="page-btn" @click="goNext" :disabled="currentPage >= maxKnownPage">
+        다음
+      </button>
     </div>
   </div>
 </template>
@@ -71,143 +86,52 @@ import { api } from '@/axios'
 
 export default {
   name: 'NotificationPage',
+
   data() {
     return {
       notifications: [],
+      size: 10,
+      currentPage: 1,
+
+      /**
+       * 백엔드가 totalPages를 내려주면 그 값을 사용.
+       * totalPages가 없고 hasNext만 있으면, "알려진 페이지"를 page+1로 늘려가며 사용.
+       */
+      maxKnownPage: 1,
+
+      // (옵션) 백엔드가 totalCount를 주면 저장해둘 수 있음
+      totalCount: 0,
     }
   },
+
   computed: {
     isEmpty() {
       return this.notifications.length === 0
     },
+
+    pages() {
+      return Array.from({ length: this.maxKnownPage }, (_, i) => i + 1)
+    },
   },
+
   created() {
-    this.fetchNotifications()
+    this.fetchNotifications(1)
   },
+
   methods: {
+    // =====================
+    // Utils
+    // =====================
     stripHTML(html) {
       if (!html) return ''
       return html.replace(/<[^>]*>/g, '').trim()
     },
+
     truncateText(text, maxlength = 15) {
       if (!text) return ''
       const cleanText = this.stripHTML(text)
-      if (cleanText.length <= maxlength) {
-        return cleanText
-      }
+      if (cleanText.length <= maxlength) return cleanText
       return cleanText.substring(0, maxlength) + '...'
-    },
-    async fetchNotifications() {
-      try {
-        const response = await api.$get(`/notifications/page`)
-        this.notifications = response.output?.notifications || []
-      } catch (error) {
-        console.error('알림 조회 실패 : ', error)
-      }
-    },
-
-    async handleNotificationClick(notification) {
-      console.log('알림 클릭 : ', notification)
-      if (notification.notificationIsReadYn === 'N') {
-        try {
-          await api.$patch(`/notifications/${notification.notificationSq}`, {
-            notificationIsReadYn: 'Y',
-          })
-          notification.notificationIsReadYn = 'Y'
-        } catch (error) {
-          console.error('읽음 상태 변경 실패 :', error)
-        }
-      }
-      this.navigateToTarget(notification)
-    },
-
-    async toggleReadStatus(notification) {
-      try {
-        const newStatus = notification.notificationIsReadYn === 'N' ? 'Y' : 'N'
-
-        await api.$patch(`/notifications/${notification.notificationSq}`, {
-          notificationIsReadYn: newStatus,
-        })
-
-        notification.notificationIsReadYn = newStatus
-      } catch (error) {
-        console.error('읽음 상태 변경 실패 :', error)
-      }
-    },
-
-    async deleteNotification(notification) {
-      try {
-        if (!confirm('이 알림을 삭제하시겠습니까?')) {
-          return
-        }
-        // 디버깅: 토큰 확인
-        const token = localStorage.getItem('accessToken')
-        console.log('AccessToken 존재 여부:', !!token)
-        console.log(
-          '삭제 요청 URL:',
-          `/notifications/${notification.notificationSq}`,
-        )
-
-        await api.$delete(`/notifications/${notification.notificationSq}`)
-
-        // 로컬 목록에서 제거
-        this.notifications = this.notifications.filter(
-          (n) => n.notificationSq !== notification.notificationSq,
-        )
-        alert('알림이 삭제되었습니다.')
-      } catch (error) {
-        console.error('알림 삭제 실패:', error)
-        console.error('에러 응답:', error.response?.data)
-        alert('알림 삭제에 실패했습니다.')
-      }
-    },
-
-    navigateToTarget(notification) {
-      const targetType = notification.notificationTargetTypeCd
-      const targetSq = notification.notificationTargetSq
-      const parentSq = notification.notificationTargetParentSq
-      const title = notification.notificationTtl
-      switch (targetType) {
-        case 2201: //답변
-          this.$router.push({
-            path: `/qna/${parentSq}`,
-            hash: `#answer-${targetSq}`,
-          })
-          break
-        case 2202: //일반게시판댓글
-          this.$router.push({
-            path: `/board/${parentSq}`,
-            hash: `#comment-${targetSq}`,
-          })
-          break
-        case 2204:
-          this.$router.push(`mypage/appliedProjects`)
-          break
-        case 2205:
-          this.$router.push(`/project/spec/user/${targetSq}`)
-          break
-        case 2209: //QnA게시판댓글
-          this.$router.push({
-            path: `/qna/${parentSq}`,
-            hash: `#comment-${targetSq}`,
-          })
-          break
-        case 2207: // 지원 결과
-          if (title.includes('지원')) {
-            // 지원 관련
-            if (targetSq) {
-              this.$router.push(`mypage/appliedProjects`)
-            }
-          } else if (title.includes('스크랩')) {
-            // 스크랩 관련
-            if (targetSq) {
-              this.$router.push(`/projects/${targetSq}`)
-            }
-          }
-          break
-        default:
-          console.log('알 수 없는 타입:', targetType)
-      }
     },
 
     formatDate(dateTime) {
@@ -235,9 +159,170 @@ export default {
 
       return `${month}.${day} ${hour}:${minute.toString().padStart(2, '0')}`
     },
+
+    // =====================
+    // API
+    // =====================
+    async fetchNotifications(page = 1) {
+      try {
+        /**
+         * ✅ 핵심 수정:
+         * 기존: /notifications/page
+         * 변경: /notifications/page-number
+         */
+        const response = await api.$get('/notifications/page-number', {
+          params: {
+            page,
+            size: this.size,
+          },
+        })
+
+        // 공통 응답 형태: { status, message, output }
+        const output = response?.output ?? {}
+
+        // 알림 목록
+        this.notifications = Array.isArray(output.notifications) ? output.notifications : []
+        this.currentPage = page
+
+        // totalCount / totalPages
+        if (typeof output.totalCount === 'number') {
+          this.totalCount = output.totalCount
+        }
+
+        if (typeof output.totalPages === 'number' && output.totalPages > 0) {
+          // ✅ totalPages가 있으면 그 값 사용
+          this.maxKnownPage = output.totalPages
+        } else {
+          // ✅ totalPages가 없으면 hasNext 기반으로 "알려진 페이지"만 늘림
+          if (output.hasNext === true) {
+            this.maxKnownPage = Math.max(this.maxKnownPage, page + 1)
+          } else {
+            this.maxKnownPage = Math.max(this.maxKnownPage, page)
+          }
+        }
+
+        console.log('📦 알림 페이지(번호) 응답:', response)
+      } catch (error) {
+        console.error('알림 조회 실패 : ', error)
+        // 실패 시 화면에 "없습니다"가 뜰 수 있으니, 데이터 초기화
+        this.notifications = []
+        this.maxKnownPage = Math.max(1, this.currentPage)
+      }
+    },
+
+    // =====================
+    // Pagination Actions
+    // =====================
+    goPage(page) {
+      if (page < 1) return
+      if (page > this.maxKnownPage) return
+      if (page === this.currentPage) return
+      this.fetchNotifications(page)
+    },
+
+    goPrev() {
+      if (this.currentPage <= 1) return
+      this.goPage(this.currentPage - 1)
+    },
+
+    goNext() {
+      if (this.currentPage >= this.maxKnownPage) return
+      this.goPage(this.currentPage + 1)
+    },
+
+    // =====================
+    // Item Actions
+    // =====================
+    async handleNotificationClick(notification) {
+      // 읽지 않은 알림이면 읽음 처리
+      if (notification.notificationIsReadYn === 'N') {
+        try {
+          await api.$patch(`/notifications/${notification.notificationSq}`, {
+            notificationIsReadYn: 'Y',
+          })
+          notification.notificationIsReadYn = 'Y'
+        } catch (error) {
+          console.error('읽음 상태 변경 실패 :', error)
+        }
+      }
+
+      // 대상 이동
+      this.navigateToTarget(notification)
+    },
+
+    async deleteNotification(notification) {
+      try {
+        if (!confirm('이 알림을 삭제하시겠습니까?')) return
+
+        await api.$delete(`/notifications/${notification.notificationSq}`)
+        this.notifications = this.notifications.filter(
+          (n) => n.notificationSq !== notification.notificationSq,
+        )
+        alert('알림이 휴지통으로 이동되었습니다.')
+      } catch (error) {
+        console.error('알림 삭제 실패:', error)
+        alert('알림 삭제에 실패했습니다.')
+      }
+    },
+
+    navigateToTarget(notification) {
+      const targetType = notification.notificationTargetTypeCd
+      const targetSq = notification.notificationTargetSq
+      const parentSq = notification.notificationTargetParentSq
+      const title = notification.notificationTtl
+
+      switch (targetType) {
+        case 2201:
+          // Q&A 답변
+          this.$router.push({
+            path: `/qna/${parentSq}`,
+            hash: `#answer-${targetSq}`,
+          })
+          break
+
+        case 2202:
+          // 게시판 댓글
+          this.$router.push({
+            path: `/board/${parentSq}`,
+            hash: `#comment-${targetSq}`,
+          })
+          break
+
+        case 2204:
+          // 지원 내역
+          this.$router.push('mypage/appliedProjects')
+          break
+
+        case 2205:
+          // 프로젝트 상세
+          this.$router.push(`/project/spec/user/${targetSq}`)
+          break
+
+        case 2209:
+          // Q&A 댓글
+          this.$router.push({
+            path: `/qna/${parentSq}`,
+            hash: `#comment-${targetSq}`,
+          })
+          break
+
+        case 2207:
+          // 지원/스크랩 등
+          if (title && title.includes('지원')) {
+            if (targetSq) this.$router.push('mypage/appliedProjects')
+          } else if (title && title.includes('스크랩')) {
+            if (targetSq) this.$router.push(`/projects/${targetSq}`)
+          }
+          break
+
+        default:
+          console.log('알 수 없는 타입:', targetType)
+      }
+    },
   },
 }
 </script>
+
 <style scoped>
 * {
   margin: 0;
@@ -262,9 +347,14 @@ export default {
   font-weight: 600;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+}
+
 .notification-item {
   display: flex;
-  /* align-items: flex-start; 대신 center를 사용해 X 버튼을 수직 중앙에 배치 */
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -281,7 +371,7 @@ export default {
 }
 
 .item-content {
-  flex: 1; /* 남은 공간 모두 차지 */
+  flex: 1;
 }
 
 .item-title {
@@ -296,20 +386,17 @@ export default {
   color: #666;
 }
 
-/* ✅ 새로운 item-right-final 스타일 */
 .item-right-final {
   display: flex;
-  align-items: center; /* 자식 요소들을 수직 중앙에 정렬 */
+  align-items: center;
   margin-left: 12px;
   flex-shrink: 0;
-  /* min-width 제거: 내용물 크기만큼만 공간을 차지하도록 */
 }
 
-/* ✅ 날짜와 읽음 버튼을 감싸는 그룹 (세로 정렬) */
 .info-group {
   display: flex;
-  flex-direction: column; /* 세로 정렬 */
-  align-items: flex-end; /* 그룹 내 요소를 오른쪽 정렬 */
+  flex-direction: column;
+  align-items: flex-end;
   gap: 4px;
 }
 
@@ -318,10 +405,9 @@ export default {
   color: #999;
 }
 
-/* Porto Template Button Styles */
 .btn {
   display: inline-block;
-  padding: 8px 18px; /* 기존 패딩 유지 */
+  padding: 8px 18px;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.42857143;
@@ -336,9 +422,7 @@ export default {
 
 .btn-rounded {
   border-radius: 20px;
-  /* ✅ min-width 제거하여 내용물 크기에 맞게 너비 자동 조정 */
-  /* min-width: 80px; 삭제 */
-  padding: 4px 12px; /* ✅ 패딩을 줄여서 버튼이 글자에 더 가깝게 달라붙도록 조정 */
+  padding: 4px 12px;
 }
 
 .btn-unread {
@@ -347,23 +431,12 @@ export default {
   border-color: #0088cc;
 }
 
-/* .btn-unread:hover {
-  background-color: #c8e6c9;
-  border-color: #a5d6a7;
-} */
-
 .btn-read {
   color: #fff;
   background-color: #dd4238;
   border-color: #dd4238;
 }
 
-/* .btn-read:hover {
-  background-color: #ffb3c1;
-  border-color: #ff9eae;
-} */
-
-/* ✅ 삭제 버튼: 왼쪽 마진을 주어 오른쪽 끝으로 밀어냅니다. */
 .btn-delete {
   background: none;
   border: none;
@@ -374,14 +447,14 @@ export default {
   justify-content: center;
   transition: all 0.2s;
   flex-shrink: 0;
-  margin-left: 8px; /* 날짜 그룹과의 간격 */
-  /* margin-right: -4px; /* 오른쪽 여백을 더 줄이고 싶다면 음수 마진 사용 가능 */
+  margin-left: 8px;
 }
 
 .btn-delete:hover {
   background-color: #ffebee;
   border-radius: 4px;
 }
+
 .icon-delete {
   width: 16px;
   height: 16px;
@@ -390,5 +463,34 @@ export default {
 
 .btn-delete:hover .icon-delete {
   color: #f44336;
+}
+
+/* Pagination */
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 0 40px;
+}
+
+.page-btn,
+.page-num {
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-num.active {
+  border-color: #0088cc;
+  box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.15);
+  font-weight: 700;
 }
 </style>

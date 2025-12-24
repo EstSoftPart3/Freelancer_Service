@@ -4,7 +4,10 @@
 <mapper namespace="com.example.demo.domain.notification.mapper.NotificationMapper">
 
 	<!-- 알림 생성 -->
-	<insert id="insert" parameterType="com.example.demo.domain.notification.dto.NotificationDTO" useGeneratedKeys="true" keyProperty="notificationSq">
+	<insert id="insert"
+	        parameterType="com.example.demo.domain.notification.dto.NotificationDTO"
+	        useGeneratedKeys="true"
+	        keyProperty="notificationSq">
 		INSERT INTO TBL_NOTIFICATION (
 			notification_type_cd,
 			notification_target_type_cd,
@@ -31,28 +34,6 @@
 			#{userSq}
 		)
 	</insert>
-	
-
-	<!-- 알림 단건 조회 -->
-	<select id="findBySq" resultType="com.example.demo.domain.notification.dto.NotificationDTO">
-	    SELECT
-	        notification_sq,
-	        notification_type_cd,
-	        notification_target_type_cd,
-	        notification_target_sq,
-	        notification_target_parent_type_cd,
-	        notification_target_parent_sq,
-	        notification_ttl,
-	        notification_txt,
-	        notification_is_read_yn,
-	        notification_is_deleted_yn,
-	        notification_deleted_at_dtm,
-	        notification_created_at_dtm,
-	        user_sq
-	    FROM TBL_NOTIFICATION
-	    WHERE notification_sq = #{notificationSq}
-	</select>
-
 
 	<insert id="insertBatch" parameterType="java.util.List">
 		INSERT INTO TBL_NOTIFICATION (
@@ -69,22 +50,41 @@
 			notification_created_at_dtm
 		) VALUES
 		<foreach collection="list" item="dto" separator=",">
-		(
-			#{dto.userSq}, 
-			#{dto.notificationTypeCd}, 
-        	#{dto.notificationTargetTypeCd}, 
-        	#{dto.notificationTargetSq}, 
-        	#{dto.notificationTargetParentTypeCd, jdbcType=NUMERIC}, 
-        	#{dto.notificationTargetParentSq, jdbcType=NUMERIC}, 
-        	#{dto.notificationTtl}, 
-        	#{dto.notificationTxt}, 
-        	#{dto.notificationIsReadYn}, 
-        	#{dto.notificationIsDeletedYn}, 
-        	#{dto.notificationCreatedAtDtm}
-		)
+			(
+				#{dto.userSq},
+				#{dto.notificationTypeCd},
+				#{dto.notificationTargetTypeCd},
+				#{dto.notificationTargetSq},
+				#{dto.notificationTargetParentTypeCd, jdbcType=NUMERIC},
+				#{dto.notificationTargetParentSq, jdbcType=NUMERIC},
+				#{dto.notificationTtl},
+				#{dto.notificationTxt},
+				#{dto.notificationIsReadYn},
+				#{dto.notificationIsDeletedYn},
+				#{dto.notificationCreatedAtDtm}
+			)
 		</foreach>
 	</insert>
-	
+
+	<!-- 알림 단건 조회 -->
+	<select id="findBySq" resultType="com.example.demo.domain.notification.dto.NotificationDTO">
+		SELECT
+			notification_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_is_deleted_yn,
+			notification_deleted_at_dtm,
+			notification_created_at_dtm,
+			user_sq
+		FROM TBL_NOTIFICATION
+		WHERE notification_sq = #{notificationSq}
+	</select>
 
 	<!-- 읽음 처리 -->
 	<update id="updateReadStatus">
@@ -92,15 +92,15 @@
 		SET notification_is_read_yn = #{notificationIsReadYn}
 		WHERE notification_sq = #{notificationSq}
 	</update>
-	
-	<!-- 삭제 -->
+
+	<!-- 삭제 (소프트 삭제: 휴지통 이동) -->
 	<update id="updateDeleteStatus">
 		UPDATE TBL_NOTIFICATION
 		SET notification_is_deleted_yn = #{notificationIsDeletedYn},
 			notification_deleted_at_dtm = #{notificationDeletedAtDtm}
 		WHERE notification_sq = #{notificationSq}
 	</update>
-	
+
 	<!-- 모달 알림 조회 -->
 	<select id="findUnreadByUser" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
 		SELECT
@@ -120,7 +120,7 @@
 		  AND notification_is_deleted_yn = 'N'
 		ORDER BY notification_created_at_dtm DESC
 	</select>
-		
+
 	<!-- 페이지 알림 조회 (커서) -->
 	<select id="findAllByUser" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
 		SELECT
@@ -143,7 +143,87 @@
 		ORDER BY notification_sq DESC
 		LIMIT #{size}
 	</select>
-	
 
+	<!-- ====================== 추가: 페이지 번호 기반 Pagination ====================== -->
+
+	<!-- 페이지네이션(페이지번호)용: 총 건수 -->
+	<select id="countByUser" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_deleted_yn = 'N'
+	</select>
+
+	<!-- 페이지네이션(페이지번호)용: 목록 (offset 기반) -->
+	<select id="findAllByUserPage" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
+		SELECT
+			notification_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_created_at_dtm
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_deleted_yn = 'N'
+		ORDER BY notification_sq DESC
+		LIMIT #{offset}, #{size}
+	</select>
+
+	<!-- ====================== ✅ 추가: 휴지통 기능 (삭제됨 알림) ====================== -->
+
+	<!-- 휴지통(삭제됨) 페이지네이션용: 총 건수 -->
+	<select id="countTrashByUser" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_deleted_yn = 'Y'
+	</select>
+
+	<!-- 휴지통(삭제됨) 페이지네이션용: 목록 (offset 기반) -->
+	<select id="findTrashByUserPage" resultType="com.example.demo.domain.notification.dto.response.NotificationResponse">
+		SELECT
+			notification_sq,
+			notification_type_cd,
+			notification_target_type_cd,
+			notification_target_sq,
+			notification_target_parent_type_cd,
+			notification_target_parent_sq,
+			notification_ttl,
+			notification_txt,
+			notification_is_read_yn,
+			notification_created_at_dtm
+		FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_is_deleted_yn = 'Y'
+		ORDER BY notification_sq DESC
+		LIMIT #{offset}, #{size}
+	</select>
+
+	<!-- 선택 복구: 삭제 Y -> N, deleted_at NULL -->
+	<update id="restoreByIds">
+		UPDATE TBL_NOTIFICATION
+		SET notification_is_deleted_yn = 'N',
+		    notification_deleted_at_dtm = NULL
+		WHERE user_sq = #{userSq}
+		  AND notification_sq IN
+		  <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
+			  #{id}
+		  </foreach>
+	</update>
+
+	<!-- 선택 영구삭제: DB에서 실제 삭제 -->
+	<delete id="deleteByIds">
+		DELETE FROM TBL_NOTIFICATION
+		WHERE user_sq = #{userSq}
+		  AND notification_sq IN
+		  <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
+			  #{id}
+		  </foreach>
+	</delete>
 
 </mapper>
