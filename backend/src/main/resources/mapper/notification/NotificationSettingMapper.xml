@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.notification.mapper.NotificationSettingMapper">
+
+  <!-- 1) 내 알림 설정 조회 -->
+  <select id="selectMySetting" parameterType="long"
+          resultType="com.example.demo.domain.notification.dto.response.NotificationSettingResponse">
+    SELECT
+      user_sq AS userSq,
+      notification_setting_project_alarm_yn AS projectAlarmYn,
+      notification_setting_comment_alarm_yn AS commentAlarmYn,
+      notification_setting_result_alarm_yn  AS resultAlarmYn,
+      notification_setting_system_alarm_yn  AS systemAlarmYn
+    FROM TBL_NOTIFICATION_SETTING
+    WHERE user_sq = #{userSq}
+  </select>
+
+  <!-- 2) 없으면 기본값(Y,Y,Y,Y) 생성 -->
+  <insert id="insertDefaultSetting" parameterType="long">
+    INSERT INTO TBL_NOTIFICATION_SETTING (
+      user_sq,
+      notification_setting_project_alarm_yn,
+      notification_setting_comment_alarm_yn,
+      notification_setting_result_alarm_yn,
+      notification_setting_system_alarm_yn
+    ) VALUES (
+      #{userSq},
+      'Y','Y','Y','Y'
+    )
+  </insert>
+
+  <!-- 3) 알림 설정 변경 -->
+  <update id="updateMySetting">
+    UPDATE TBL_NOTIFICATION_SETTING
+    <set>
+      <if test="req.projectAlarmYn != null">
+        notification_setting_project_alarm_yn = #{req.projectAlarmYn},
+      </if>
+      <if test="req.commentAlarmYn != null">
+        notification_setting_comment_alarm_yn = #{req.commentAlarmYn},
+      </if>
+      <if test="req.resultAlarmYn != null">
+        notification_setting_result_alarm_yn = #{req.resultAlarmYn},
+      </if>
+      <if test="req.systemAlarmYn != null">
+        notification_setting_system_alarm_yn = #{req.systemAlarmYn},
+      </if>
+    </set>
+    WHERE user_sq = #{userSq}
+  </update>
+
+  <!-- 4) ✅ 기본값으로 초기화 (Y,Y,Y,Y) -->
+  <update id="resetMySetting" parameterType="long">
+    UPDATE TBL_NOTIFICATION_SETTING
+    SET
+      notification_setting_project_alarm_yn = 'Y',
+      notification_setting_comment_alarm_yn = 'Y',
+      notification_setting_result_alarm_yn  = 'Y',
+      notification_setting_system_alarm_yn  = 'Y'
+    WHERE user_sq = #{userSq}
+  </update>
+
+</mapper>
