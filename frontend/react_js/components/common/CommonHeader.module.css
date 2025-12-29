@@ -35,6 +35,11 @@
   display: none !important;
 }
 
+.bigCheck {
+  transform: scale(1.25);
+  transform-origin: left center;
+}
+
 /* Mobile Menu Dropdown Styles */
 @media (max-width: 991px) {
   .headerNavMain nav .dropdown .dropdownMenu {

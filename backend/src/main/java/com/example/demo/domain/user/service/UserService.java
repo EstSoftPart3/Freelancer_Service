@@ -72,6 +72,12 @@ public class UserService {
 
         userRepository.insertUser(userDTO);
 
+        Long userSq = userDTO.getUserSq();
+        if (userSq == null) {
+            throw new IllegalStateException("회원가입 user_sq 생성에 실패했습니다.");
+        }
+        userRepository.insertNotificationSettingDefault(userSq);
+
         // 5. 기업회원인 경우 기업정보 INSERT
         // 예: userTypeCd가 2이면 기업회원이라 가정
         if (requestDto.getUserTypeCd() != null && requestDto.getUserTypeCd() == 302L) {
@@ -118,6 +124,8 @@ public class UserService {
         dto.setUserCreatedAtDtm(localDateTime);
         dto.setUserType(userTypeName);
 
+
+        
         return dto;
     }
 

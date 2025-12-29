@@ -177,6 +177,33 @@ export default function MyPageLayout({ children, userType: propUserType }) {
             { text: '일정 캘린더' },
           ],
         };
+        case '/mypage/notification/core/page':
+        return {
+          title: '알림',
+          strongText: '알림 내역',
+          breadcrumbs: [
+            { text: '마이페이지', link: '/mypage' },
+            { text: '알림 내역' },
+          ],
+        };
+        case '/mypage/notification/setting/settings':
+        return {
+          title: '알림',
+          strongText: '알림 설정',
+          breadcrumbs: [
+            { text: '마이페이지', link: '/mypage' },
+            { text: '알림 설정' },
+          ],
+        };
+        case '/mypage/notification/core/trash':
+        return {
+          title: '알림',
+          strongText: '휴지통',
+          breadcrumbs: [
+            { text: '마이페이지', link: '/mypage' },
+            { text: '휴지통' },
+          ],
+        };
       default:
         return {
           title: '마이페이지',

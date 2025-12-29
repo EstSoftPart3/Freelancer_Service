@@ -110,6 +110,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        if ("/notifications/subscribe".equals(request.getRequestURI())) {
+        String token = request.getParameter("token");
+        System.out.println("### SSE SUBSCRIBE TOKEN = " + token);
+        return token;
+    }
         return null;
     }
 

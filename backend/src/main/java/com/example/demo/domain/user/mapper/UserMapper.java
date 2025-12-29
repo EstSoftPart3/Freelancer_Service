@@ -50,4 +50,8 @@ public interface UserMapper {
 
     UserDTO findByEmail(@Param("email") String email);
 
-}
+    // 알림 트리거를 위해 추가
+    String findUserNameByUserSq(@Param("userSq") Long userSq);
+    String findBoardTitleByBoardSq(@Param("boardSq") Long boardSq);
+    int insertNotificationSettingDefault(@Param("userSq") Long userSq);
+}   

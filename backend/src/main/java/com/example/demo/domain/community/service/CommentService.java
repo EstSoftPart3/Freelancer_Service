@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import com.example.demo.domain.community.dto.request.*;
 import com.example.demo.domain.community.entity.*;
 import com.example.demo.domain.community.mapper.*;
+import com.example.demo.domain.notification.core.service.NotificationService;
+import com.example.demo.domain.user.dto.request.LoginRequestDTO;
+import com.example.demo.domain.user.mapper.UserMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,10 @@ public class CommentService {
     // 인턴 수정: ReplyMapper 필드 추가
     // 사유: 댓글에 대한 대댓글(답글) 기능 구현을 위한 매퍼 추가
     private final RecommendationMapper recommendationMapper;
+    private final NotificationService notificationService;
+
+    // 알림 트리거를 위한 매퍼 추가
+    private final UserMapper userMapper;
 
     @Transactional
     public Comment getComment(Long commentSq) {
@@ -28,7 +35,7 @@ public class CommentService {
     
     @Transactional
     public void createComment(CommentRequest commentRequest){
-//    	댓글 오류 처리
+    // 댓글 오류 처리
     	if(commentRequest.getDescription() == null) {
     		throw new IllegalArgumentException("내용을 입력해주세요.");
     	} else if(commentRequest.getBoardSq() == null && commentRequest.getAnswerSq() == null) {
@@ -46,18 +53,46 @@ public class CommentService {
         if (comment.getCommentSq() == null) {
             throw new IllegalStateException("댓글 등록 실패: Primary Key가 생성되지 않았습니다.");
         }
-        
-//        댓글수 카운트        
+       
+        // 댓글수 카운트        
         if(comment.getBoardSq() != null) {
         	boardMapper.updateCommentCnt(comment.getBoardSq());
         }
         if(comment.getAnswerSq() != null) {
         	answerMapper.updateCommentCnt(comment.getAnswerSq());
         }
+        
+        // 알림 트리거
+        Long actorUserSq = commentRequest.getUserSq();
 
-        
-        
-		return;
+        if (comment.getBoardSq() != null){
+            Long recieveruserSq = boardMapper.findWriterUserSq(comment.getBoardSq());
+            if (recieveruserSq != null && !recieveruserSq.equals(actorUserSq)){
+                
+                String boardTitle = boardMapper.findBoardTitle(comment.getBoardSq());
+                String ttl = "댓글 알림";
+                String txt = String.format("%s 게시글에 댓글이 등록되었습니다.", boardTitle);
+
+                notificationService.createNotification(
+                    recieveruserSq, 
+                    2202L, 
+                    recieveruserSq, 
+                    ttl, 
+                    txt
+                );
+            }
+        }
+        if (comment.getAnswerSq() != null){
+            Long receiverUserSq = answerMapper.findWriterUserSq(comment.getAnswerSq());
+            if(receiverUserSq != null && !receiverUserSq.equals(actorUserSq)){
+                notificationService.createNotification(
+                    receiverUserSq, 
+                    2201L, 
+                    receiverUserSq, 
+                    "답글 알림", 
+                    "답변에 댓글이 작성되었습니다.");
+            }
+        }
     }
 
     @Transactional
@@ -120,5 +155,6 @@ public class CommentService {
     	commentMapper.updateRecommendCnt(commentSq);
     }
 
+    
 
 }

@@ -37,5 +37,7 @@ public interface BoardMapper {
      BoardAttachment findFile(@Param("fileSq") Long fileSq);
      void deleteBoardFile(@Param("boardSq") Long boardSq, @Param("fileSq") Long fileSq);
      void deleteFile(@Param("fileSq") Long fileSq);
-     
+     // 알림 트리거용
+     Long findWriterUserSq(@Param("boardSq") Long boardSq);
+     String findBoardTitle(@Param("boardSq") Long boardSq);
 }

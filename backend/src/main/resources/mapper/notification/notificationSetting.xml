@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.notification.setting.mapper.NotificationSettingMapper">
+
+  <select id="selectSetting" parameterType="long"
+          resultType="com.example.demo.domain.notification.setting.dto.response.NotificationSettingResponseDTO">
+    SELECT
+      user_sq AS userSq,
+      notification_settings_all_notice_yn AS allNoticeYn,
+      notification_settings_recruit_notice_yn AS recruitNoticeYn,
+      notification_settings_comment_notice_yn AS commentNoticeYn,
+      notification_settings_scrap_company_notice_yn AS scrapCompanyNoticeYn
+    FROM TBL_NOTIFICATION_SETTING_S
+    WHERE user_sq = #{userSq}
+  </select>
+
+  <insert id="insertDefault">
+    INSERT INTO TBL_NOTIFICATION_SETTING_S (
+      user_sq,
+      notification_settings_all_notice_yn,
+      notification_settings_recruit_notice_yn,
+      notification_settings_comment_notice_yn,
+      notification_settings_scrap_company_notice_yn
+    )
+    VALUES (#{userSq}, 'Y','Y','Y','Y')
+    ON DUPLICATE KEY UPDATE user_sq = user_sq
+  </insert>
+
+  <update id="patchSetting">
+    UPDATE TBL_NOTIFICATION_SETTING_S
+    SET
+      notification_settings_all_notice_yn =
+        COALESCE(#{req.allNoticeYn}, notification_settings_all_notice_yn),
+      notification_settings_recruit_notice_yn =
+        COALESCE(#{req.recruitNoticeYn}, notification_settings_recruit_notice_yn),
+      notification_settings_comment_notice_yn =
+        COALESCE(#{req.commentNoticeYn}, notification_settings_comment_notice_yn),
+      notification_settings_scrap_company_notice_yn =
+        COALESCE(#{req.scrapCompanyNoticeYn}, notification_settings_scrap_company_notice_yn)
+    WHERE user_sq = #{userSq}
+  </update>
+
+</mapper>

@@ -89,5 +89,7 @@ public class UserRepository {
     public UserDTO findByEmail(String email) {
         return userMapper.findByEmail(email);
     }
-
+    public int insertNotificationSettingDefault(Long userSq) {
+        return userMapper.insertNotificationSettingDefault(userSq);
+    }
 }

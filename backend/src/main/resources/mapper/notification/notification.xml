@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.notification.core.mapper.NotificationMapper">
+
+  <select id="selectNotifications" resultType="com.example.demo.domain.notification.core.entity.Notification">
+    SELECT
+      notification_sq              AS notificationSq,
+      user_sq                      AS userSq,
+      notification_target_type_cd  AS notificationTargetTypeCd,
+      notification_target_sq       AS notificationTargetSq,
+      notification_ttl             AS notificationTtl,
+      notification_txt             AS notificationTxt,
+      notification_is_read_yn      AS notificationIsReadYn,
+      notification_delete_status   AS notificationDeleteStatus,
+      notification_created_at_dtm  AS notificationCreatedAtDtm
+    FROM TBL_NOTIFICATION_M
+    WHERE user_sq = #{userSq}
+      AND notification_delete_status = #{deleteStatus}
+    ORDER BY notification_created_at_dtm DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countNotifications" resultType="long">
+    SELECT COUNT(*)
+    FROM TBL_NOTIFICATION_M
+    WHERE user_sq = #{userSq}
+      AND notification_delete_status = #{deleteStatus}
+  </select>
+
+  <select id="countUnreadNotifications" resultType="long">
+    SELECT COUNT(*)
+    FROM TBL_NOTIFICATION_M
+    WHERE user_sq = #{userSq}
+      AND notification_is_read_yn = 'N'
+      AND notification_delete_status = #{deleteStatus}
+  </select>
+
+  <select id="countByReadYn" resultType="long">
+    SELECT COUNT(*)
+    FROM TBL_NOTIFICATION_M
+    WHERE user_sq = #{userSq}
+      AND notification_is_read_yn = #{readYn}
+      AND notification_delete_status = #{deleteStatus}
+  </select>
+
+  <select id="selectByReadYn" resultType="com.example.demo.domain.notification.core.entity.Notification">
+    SELECT
+      notification_sq              AS notificationSq,
+      user_sq                      AS userSq,
+      notification_target_type_cd  AS notificationTargetTypeCd,
+      notification_target_sq       AS notificationTargetSq,
+      notification_ttl             AS notificationTtl,
+      notification_txt             AS notificationTxt,
+      notification_is_read_yn      AS notificationIsReadYn,
+      notification_delete_status   AS notificationDeleteStatus,
+      notification_created_at_dtm  AS notificationCreatedAtDtm
+    FROM TBL_NOTIFICATION_M
+    WHERE user_sq = #{userSq}
+      AND notification_is_read_yn = #{readYn}
+      AND notification_delete_status = #{deleteStatus}
+    ORDER BY notification_created_at_dtm DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <update id="updateReadYn">
+    UPDATE TBL_NOTIFICATION_M
+    SET notification_is_read_yn = #{readYn}
+    WHERE user_sq = #{userSq}
+      AND notification_sq IN
+      <foreach collection="sqList" item="sq" open="(" separator="," close=")">
+        #{sq}
+      </foreach>
+  </update>
+
+  <update id="updateDeleteStatus">
+    UPDATE TBL_NOTIFICATION_M
+    SET notification_delete_status = #{deleteStatus}
+    WHERE user_sq = #{userSq}
+    AND notification_sq IN
+    <foreach collection="sqList" item="sq" open="(" separator="," close=")">
+      #{sq}
+    </foreach>
+  </update>
+
+  <insert id="insert"
+          parameterType="com.example.demo.domain.notification.core.entity.Notification"
+          useGeneratedKeys="true"
+          keyProperty="notificationSq">
+    INSERT INTO TBL_NOTIFICATION_M (
+      user_sq,
+      notification_target_type_cd,
+      notification_target_sq,
+      notification_ttl,
+      notification_txt,
+      notification_is_read_yn,
+      notification_delete_status,
+      notification_created_at_dtm
+    )
+    VALUES (
+      #{userSq},
+      #{notificationTargetTypeCd},
+      #{notificationTargetSq},
+      #{notificationTtl},
+      #{notificationTxt},
+      #{notificationIsReadYn},
+      #{notificationDeleteStatus},
+      NOW()
+    )
+  </insert>
+
+</mapper>

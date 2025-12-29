@@ -72,4 +72,5 @@ public interface ProjectMapper {
 	void updateProject(Project project);
 	void updateAddress(@Param("projectSq") Long projectSq, @Param("newAddressSq") Long newAddressSq);
 	void softDeleteProject(@Param("projectSq") Long projectSq);
+	String findProjectTitleBySq(@Param("projectSq") Long projectSq);
 }

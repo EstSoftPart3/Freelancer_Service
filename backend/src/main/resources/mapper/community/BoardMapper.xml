@@ -8,6 +8,20 @@
 		WHERE board_sq = #{boardSq} AND board_type_cd = #{boardTypeCd}
 	</select>
 
+	<select id="findWriterUserSq" resultType="Long">
+    	SELECT user_sq
+    	FROM TBL_BOARD_M
+    	WHERE board_sq = #{boardSq}
+    	AND board_is_deleted_yn = 'N'
+	</select>
+
+	<select id="findBoardTitle" resultType="String">
+    	SELECT board_ttl
+    	FROM TBL_BOARD_M
+    	WHERE board_sq = #{boardSq}
+    	AND board_is_deleted_yn = 'N'
+	</select>
+	
 	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
 		SELECT * FROM TBL_BOARD_M 
 		WHERE board_is_deleted_yn = 'N' AND board_type_cd = #{boardTypeCd}

@@ -1,0 +1,129 @@
+.wrap {
+  max-width: 720px;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subTitle {
+  margin: 6px 0 0 0;
+  color: #666;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.loading {
+  padding: 16px;
+}
+
+.errorBox {
+  padding: 12px;
+  background: #fff3f3;
+  border: 1px solid #ffd0d0;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.section {
+  margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 12px;
+
+  background: #fff;
+}
+
+.cardDisabled {
+  opacity: 0.55;
+}
+
+.cardText {
+  padding-right: 12px;
+}
+
+.cardTitle {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.cardDesc {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Toggle */
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.toggleBtn:disabled {
+  cursor: not-allowed;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  color: #666;
+  min-width: 26px;
+  text-align: right;
+}
+
+.switch {
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  position: relative;
+  transition: 0.2s;
+}
+
+.switchOn {
+  background: #2563eb;
+}
+
+.switchOff {
+  background: #d1d5db;
+}
+
+.knob {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+
+  position: absolute;
+  top: 2px;
+  left: 2px;
+
+  transition: 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.switchOn .knob {
+  left: 20px;
+}

@@ -261,6 +261,38 @@ export default function MyPageSideBar({ onNavigate, userType: propUserType }) {
             </li>
           </ul>
         </li>
+        <li className="nav-item">
+          <span className="nav-link">알림</span>
+          <ul>
+            <li className="nav-item">
+              <Link 
+                href="/mypage/notification/core/page" 
+                className={`nav-link ${isActiveLink('/mypage/notifications/core/page') ? styles.active : ''}`}
+                onClick={handleNavigate}
+              >
+                알림 내역
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link 
+                href="/mypage/notification/setting/settings" 
+                className={`nav-link ${isActiveLink('/mypage/notifications/setting/settings') ? styles.active : ''}`}
+                onClick={handleNavigate}
+              >
+                알림 설정
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link 
+                href="/mypage/notification/core/trash" 
+                className={`nav-link ${isActiveLink('/mypage/notifications/core/trash') ? styles.active : ''}`}
+                onClick={handleNavigate}
+              >
+                휴지통
+              </Link>
+            </li>
+          </ul>
+        </li>
       </ul>
     </aside>
   );

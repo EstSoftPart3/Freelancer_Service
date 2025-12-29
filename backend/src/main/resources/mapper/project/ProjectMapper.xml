@@ -394,6 +394,26 @@
 	<update id="decreaseScrap" parameterType="long"> UPDATE TBL_PROJECT_M SET project_scrap_cnt =
 		project_scrap_cnt - 1 WHERE project_sq = #{projectSq} </update>
 
+	<!--알림 트리거-->
+	<update id="markAsReadIfFirst">
+    	UPDATE TBL_PROJECT_APPLICATION_H SET read_application_dtm = NOW()
+    	WHERE project_application_sq = #{applicationSq} AND read_application_dtm IS NULL
+		</update>
+
+	<select id="findApplicantUserSq" resultType="long">
+    	SELECT r.user_sq FROM TBL_PROJECT_APPLICATION_H pa
+    	JOIN TBL_RESUME_H r ON pa.resume_sq = r.resume_sq WHERE pa.project_application_sq = #{applicationSq}
+	</select>
+
+	<select id="findProjectSqByApplicationSq" resultType="long">
+	    SELECT project_sq FROM TBL_PROJECT_APPLICATION_H
+     	WHERE project_application_sq = #{applicationSq}
+	</select>
+
+	<select id="findProjectTitleBySq" resultType="string">
+    	SELECT project_ttl FROM TBL_PROJECT_H WHERE project_sq = #{projectSq}
+	</select>
+	<!--알림 트리거 종료-->
 
 	<select id="findSkillFormList"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT

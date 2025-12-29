@@ -1,0 +1,37 @@
+.wrap {
+  font-size: 1rem;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pagerWrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pagerInfo {
+  color: #6b7280;
+  font-size: 0.85rem;
+}

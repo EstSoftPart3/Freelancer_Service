@@ -21,5 +21,6 @@ public interface AnswerMapper {
      void insertFile(@Param("answerSq") Long answerSq, @Param("fileSq") Long fileSq);
      List<Long> findFiles(@Param("answerSq") Long answerSq);
      void deleteAnswerFile(@Param("answerSq") Long answerSq, @Param("fileSq") Long fileSq);
-     
+     // 알림 트리거
+     Long findWriterUserSq(@Param("answerSq") Long answerSq);
 }

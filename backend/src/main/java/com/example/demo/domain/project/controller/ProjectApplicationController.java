@@ -130,5 +130,13 @@ public class ProjectApplicationController {
 		return ResponseEntity.ok(
 				ApiResponse.of(HttpStatus.OK, "지원 여부 확인 성공", hasApplied));
 	}
-
+	// 알림 트리거
+	@GetMapping("/{applicationSq}/read")
+	public ResponseEntity<ApiResponse<Void>> markApplicationRead(
+		@PathVariable Long applicationSq,
+		@AuthenticationPrincipal Long userSq
+	){
+		projectApplicationService.markAsReadAndNotification(applicationSq, userSq);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"지원서 열람 처리 성공",null));
+	}
 }

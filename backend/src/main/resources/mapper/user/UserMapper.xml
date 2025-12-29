@@ -107,4 +107,22 @@
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
     parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_type_cd,
     user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
+
+  <!--알림 발생-->
+  <select id="findUserNameByUserSq" parameterType="long" resultType="string">
+    SELECT user_nm
+    FROM TBL_USER_M
+    WHERE user_sq = #{userSq}
+  </select>
+
+  <insert id="insertNotificationSettingDefault" parameterType="long">
+    INSERT INTO TBL_NOTIFICATION_SETTING_S (
+      user_sq,
+      notification_settings_all_notice_yn,
+      notification_settings_recruit_notice_yn,
+      notification_settings_comment_notice_yn
+    )
+    VALUES (#{userSq}, 'Y', 'Y', 'Y')
+    ON DUPLICATE KEY UPDATE user_sq = user_sq
+  </insert>
 </mapper>

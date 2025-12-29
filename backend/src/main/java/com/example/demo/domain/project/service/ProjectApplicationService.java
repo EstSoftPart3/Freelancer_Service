@@ -18,6 +18,8 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
+import com.example.demo.domain.notification.core.dto.response.NotificationResponseDTO;
+import com.example.demo.domain.notification.core.service.NotificationService;
 import com.example.demo.domain.project.dto.CorporateApplicantGroupDTO;
 import com.example.demo.domain.project.dto.PersonalApplicantDTO;
 import com.example.demo.domain.project.dto.request.ApplicationSqRequest;
@@ -44,6 +46,8 @@ public class ProjectApplicationService {
 	private final ResumeSkillMapper resumeSkillMapper;
 	private final CompanyMapper companyMapper;
     private final CalendarService calendarService;
+	private final ProjectApplicationMapper projectApplicationMapper;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public Map<String, Object> fetchProjectApplicationsWithCount(Long userSq, int offset, int size, String searchType,
@@ -252,5 +256,24 @@ public class ProjectApplicationService {
 	public boolean checkIfUserApplied(Long userSq, Long projectSq) {
 		return applicationMapper.hasAppliedProject(userSq, projectSq);
 	}
+	
+	// 알림 트리거
+	@Transactional
+	public void markAsReadAndNotification(Long applicationSq, Long readUserSq){
+		
+		int update = applicationMapper.markAsReadIfFirst(applicationSq);
 
+		if (update != 1) return;
+
+		Long appilcationUserSq = projectApplicationMapper.findApplicantUserSq(applicationSq);
+		Long proejctSq = projectApplicationMapper.findProjectSqByApplicationSq(applicationSq);
+		String projectTitle = projectMapper.findProjectTitleBySq(proejctSq);
+
+		String message = "[" + projectTitle + "] 프로젝트 지원서가 열람되었습니다."; 
+		notificationService.createNotification(appilcationUserSq, 
+											2207L,
+											proejctSq,
+											projectTitle,
+											message);
+	}
 }
