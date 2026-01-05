@@ -47,18 +47,40 @@
                         <i class="fas fa-chevron-down"></i>
                       </router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
+                    <li
+                      class="dropdown"
+                      :class="{ open: isProjectDropdownOpen }"
+                    >
+                      <a
+                        href="#"
                         class="dropdown-item dropdown-toggle"
                         :class="{
                           active: isProjectActive,
                           'current-page-active': true,
                         }"
-                        to="/projectListPage"
+                        @click.prevent="toggleProjectDropdown"
                       >
                         프로젝트
                         <i class="fas fa-chevron-down"></i>
-                      </router-link>
+                      </a>
+                      <ul class="dropdown-menu">
+                        <li>
+                          <router-link
+                            class="dropdown-item"
+                            to="/projectListPage"
+                          >
+                            리스트
+                          </router-link>
+                        </li>
+                        <li>
+                          <router-link
+                            class="dropdown-item"
+                            to="/projectListPage"
+                          >
+                            지도
+                          </router-link>
+                        </li>
+                      </ul>
                     </li>
                     <li
                       class="dropdown"
@@ -329,18 +351,40 @@
                         <i class="fas fa-chevron-down"></i>
                       </router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
+                    <li
+                      class="dropdown"
+                      :class="{ open: isProjectDropdownOpen }"
+                    >
+                      <a
+                        href="#"
                         class="dropdown-item dropdown-toggle"
                         :class="{
                           active: isProjectActive,
                           'current-page-active': true,
                         }"
-                        to="/projectListPage"
+                        @click.prevent="toggleProjectDropdown"
                       >
                         프로젝트
                         <i class="fas fa-chevron-down"></i>
-                      </router-link>
+                      </a>
+                      <ul class="dropdown-menu">
+                        <li>
+                          <router-link
+                            class="dropdown-item"
+                            to="/projectListPage"
+                          >
+                            리스트
+                          </router-link>
+                        </li>
+                        <li>
+                          <router-link
+                            class="dropdown-item"
+                            to="/projectListPage"
+                          >
+                            지도
+                          </router-link>
+                        </li>
+                      </ul>
                     </li>
                     <li
                       class="dropdown"
@@ -592,9 +636,16 @@ const isCommunityActive = computed(() =>
 // Mobile dropdown state
 const isCommunityDropdownOpen = ref(false)
 
-const toggleCommunityDropdown = () => {
-  isCommunityDropdownOpen.value = !isCommunityDropdownOpen.value
-}
+// const toggleCommunityDropdown = () => {
+//   isCommunityDropdownOpen.value = !isCommunityDropdownOpen.value
+// }
+
+// Add dropdown state
+const isProjectDropdownOpen = ref(false)
+
+// const toggleProjectDropdown = () => {
+//   isProjectDropdownOpen.value = !isProjectDropdownOpen.value
+// }
 
 const logout = async () => {
   await api.$post(
