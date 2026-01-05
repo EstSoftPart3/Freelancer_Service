@@ -25,7 +25,9 @@
       </div>
 
       <!-- 리스트 탭과 지도 탭으로 구분하기 -->
-      <button class="btn btn-rounded btn-primary me-2">목록/지도 전환</button>
+      <button class="btn btn-rounded btn-primary me-2">
+        목록/지도 탭 전환
+      </button>
 
       <ProjectCardGroup :projects="projects" />
       <div v-if="projects.length === 0" class="text-center text-muted py-5">
