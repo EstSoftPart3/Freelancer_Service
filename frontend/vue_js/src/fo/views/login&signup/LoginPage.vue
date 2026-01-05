@@ -136,7 +136,7 @@
 
               <!-- 소셜 로그인 -->
               <hr class="my-4" />
-              <p class="text-center mb-3">소셜 계정으로 로그인</p>
+              <p class="text-center mb-3">구글 계정으로 로그인</p>
               <div class="d-flex justify-content-center gap-3">
                 <button
                   v-for="provider in socialProviders"
@@ -297,29 +297,21 @@ watch(loginType, () => {
 
 const socialProviders = [
   {
-    name: 'kakao',
-    title: '카카오 로그인',
-    img: '/img/social/kakao.png',
-  },
-  {
-    name: 'naver',
-    title: '네이버 로그인',
-    img: '/img/social/naver.png',
-  },
-  {
     name: 'google',
     title: '구글 로그인',
     img: '/img/social/google.png',
   },
-  {
-    name: 'apple',
-    title: '애플 로그인',
-    img: '/img/social/apple.png',
-  },
 ]
 
+// 기존 코드
 const handleSocialLogin = (provider) => {
-  alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  if (provider === 'google') {
+    // 백엔드 포트(8080)와 context-path(/api)가 정확히 포함되어야 합니다.
+    window.location.href =
+      'http://localhost:8080/api/oauth2/authorization/google'
+  } else {
+    alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  }
 }
 </script>
 

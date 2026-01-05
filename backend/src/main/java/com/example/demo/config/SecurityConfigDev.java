@@ -66,18 +66,26 @@ public class SecurityConfigDev {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // .cors().and() // 개발용
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 외부 배포 테스트용
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/login","/refresh-token").permitAll()
-                        .requestMatchers("/me","/logout").authenticated() // ✅ 사용자 정보는 인증 필요
+                        // 1. 구글 관련 엔드포인트 허용 (중요!)
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() 
+                        .requestMatchers("/login", "/refresh-token").permitAll()
+                        .requestMatchers("/me", "/logout").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
-                        .anyRequest().permitAll() // 그 외는 자유 접근 (필요시 조정)
+                        .anyRequest().permitAll()
+                )
+                // 2. OAuth2 로그인 기능 활성화 및 경로 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                // Vue에서 호출하는 /api/oauth2/authorization 주소를 처리하기 위한 설정
+                                .baseUri("/oauth2/authorization") 
+                        )
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .logout().disable(); // JWT 기반이므로 로그아웃 무효화
+                .logout().disable();
 
         return http.build();
     }
