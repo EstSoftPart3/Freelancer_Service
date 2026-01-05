@@ -248,6 +248,14 @@
               >지원자순</a
             >
           </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="updateSort('거리순')"
+              >거리순</a
+            >
+          </li>
         </ul>
       </div>
     </div>
