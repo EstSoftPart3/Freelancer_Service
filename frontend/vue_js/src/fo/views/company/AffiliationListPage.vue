@@ -23,6 +23,7 @@
               <option value="view">조회순</option>
               <option value="scrap">스크랩순</option>
               <option value="applicant">지원자순</option>
+              <option value="distance">거리순</option>
             </select>
             <!-- 부모 선택 -->
             <select

@@ -78,7 +78,7 @@
               <div
                 class="d-flex justify-content-between align-items-center mt-2"
               >
-                <div class="post-meta text-4 text-end ms-auto">
+                <div class="post-meta text-4">
                   <span class="text-dark text-uppercase font-weight-semibold"
                     >소속 직원 수</span
                   >
@@ -86,21 +86,33 @@
                 </div>
               </div>
               <!-- 지원자격/개업일자 -->
-              <div
-                class="d-flex justify-content-between align-items-center mt-2"
-              >
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >태그</span
-                  >
-                  | {{ scrap.tags?.join(' / ') }}
-                </div>
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >개업일자</span
-                  >
-                  | {{ scrap.openDt }}
-                </div>
+              <div class="post-meta text-4">
+                <span class="text-dark text-uppercase font-weight-semibold"
+                  >지원자격</span
+                >
+                | {{ scrap.tags?.join(' / ') }}
+              </div>
+
+              <div class="post-meta text-4">
+                <span class="text-dark text-uppercase font-weight-semibold"
+                  >개업일자</span
+                >
+                | {{ scrap.openDt }}
+              </div>
+              <!-- 거리 및 시간 정보 -->
+
+              <div class="post-meta text-4">
+                <span class="text-dark text-uppercase font-weight-semibold">
+                  위치
+                </span>
+                | 서울시 무슨구 아무거리
+              </div>
+
+              <div class="post-meta text-4">
+                <span class="text-dark text-uppercase font-weight-semibold"
+                  >추정 거리
+                </span>
+                | 약 3.3 km
               </div>
             </div>
           </li>

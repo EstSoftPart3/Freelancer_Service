@@ -87,28 +87,11 @@
                 </div>
               </div>
 
-              <!-- 지원자 수 + 등록일 -->
-              <div
-                class="d-flex justify-content-between align-items-center mt-2"
-              >
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >등록일자</span
-                  >
-                  | {{ formatDate(item.createdAt) }}
-                </div>
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >지원자 수</span
-                  >
-                  | {{ item.candidateCnt }}
-                </div>
-              </div>
-
               <!-- 지원 자격 + 기간 -->
-              <div
+              <div class="d-flex flex-column align-items-left mt-2">
+                <!-- <div
                 class="d-flex justify-content-between align-items-center mt-2"
-              >
+              > -->
                 <div
                   class="post-meta text-4 me-3 flex-grow-1"
                   style="min-width: 0"
@@ -117,34 +100,58 @@
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >지원 자격</span
                     >
-                    | {{ item.address.parentSigungu }}
-                    {{ item.address.sigungu }} / {{ item.developerGrade }} /
+                    | 개발등급 : {{ item.developerGrade }} / 학력조건 :
                     {{ item.requiredEducation }}
                   </div>
 
                   <!-- 기술 스택 -->
                   <div class="d-flex flex-wrap gap-2">
-                    <span
-                      v-for="(skill, index) in item.skillTags"
-                      :key="index"
-                      class="badge bg-light text-dark px-2 py-1"
-                    >
-                      <img
-                        v-if="generateIconUrl(skill)"
-                        :src="generateIconUrl(skill)"
-                        width="24"
-                        height="24"
-                      />
-                      {{ skill }}
-                    </span>
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >기술 스택</span
+                    >|
                   </div>
-                </div>
-
-                <div class="post-meta text-4">
-                  <span class="text-dark text-uppercase font-weight-semibold"
-                    >채용기간</span
-                  >
-                  | {{ item.recruitStartDt }} ~ {{ item.recruitEndDt }}
+                  <div class="d-flex flex-wrap gap-2">
+                    <div>
+                      <span
+                        v-for="(skill, index) in item.skillTags"
+                        :key="index"
+                        class="badge bg-light text-dark px-2 py-1"
+                      >
+                        <img
+                          v-if="generateIconUrl(skill)"
+                          :src="generateIconUrl(skill)"
+                          width="24"
+                          height="24"
+                        />
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >위치 및 거리</span
+                    >
+                    | {{ item.address.parentSigungu }}
+                    {{ item.address.sigungu }} / 약 3.3 km
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >채용기간</span
+                    >
+                    | {{ item.recruitStartDt }} ~ {{ item.recruitEndDt }}
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >등록일자</span
+                    >
+                    | {{ formatDate(item.createdAt) }}
+                  </div>
+                  <div class="mb-1">
+                    <span class="text-dark text-uppercase font-weight-semibold"
+                      >지원자 수</span
+                    >
+                    | {{ item.candidateCnt }}
+                  </div>
                 </div>
               </div>
             </div>

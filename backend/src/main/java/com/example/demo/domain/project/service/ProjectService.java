@@ -36,6 +36,7 @@ import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
 import com.example.demo.domain.project.dto.request.SkillInsertRequest;
+import com.example.demo.domain.project.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
 import com.example.demo.domain.project.dto.response.GroupSkillInfoResponse;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
@@ -158,11 +159,25 @@ public class ProjectService {
 	}
 
 	// 주소 문자열로 변환 (ex: "서울 강남구")
-	public String fetchAddressString(Long addressSq) {
+	public String fetchAddressString(Long addressSq) {		
 		AreaInfoResponse subDistrict = addressMapper.findAreaInfoBySq(addressSq);
+		// 안전장치:DB에 없는 addressSq인 경우
+		if (subDistrict == null) {
+			return "주소 미상"; 
+		}
+		
 		AreaInfoResponse parentDistrict = districtMapper.findParentDisctrictByCodeSq(subDistrict.getAreaSq());
-
-		String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
+		
+        String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
+//		String parentName = "";
+//		
+//		// 안전장치2: 부모 지역이 존재할 때에만 이름 추출		
+//		if (parentDistrict != null) {
+//			String originName = parentDistrict.getAreaName(); 
+//			if (originName != null) {
+//				parentName = originName.replace("전체", "").trim(); 
+//			}
+//		}
 		return parentName + " " + subDistrict.getAreaName();
 	}
 
@@ -187,7 +202,28 @@ public class ProjectService {
 					}
 
 					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
+					 
+					AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
+					
+					// 디버깅 코드 //
+					
+//					System.out.println("===========좌표 디버깅==========="); 
+//					System.out.println("프로젝트ID : " + p.getProjectSq()); 
+//					System.out.println("주소 키(AddressSq): " + p.getAddressSq()); 
+//					if (coord == null) {
+//						System.out.println("결과: coord 객체가 NULL 입니다! (SQL 조회 실패)"); 
+//					} else {
+//						System.out.println("결과: 위도=" + coord.getLatitude() + ", 경도 = " + coord.getLongitude()); 
+//					}
+//					System.out.println("=============================="); 
+					
+					// 디버깅 코드 끝 // 					
+					
+					// 좌표 null 대비
+					Double latitude = (coord != null) ? coord.getLatitude() : null; 
+					Double longitude = (coord != null ) ? coord.getLongitude() : null; 
+					
+					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl, latitude, longitude));
 				});
 
 		int page = (request.getOffset() / request.getSize()) + 1;
@@ -277,9 +313,13 @@ public class ProjectService {
 			}
 			userRole = findUserRole(token, p);
 		}
+		
+		AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
+		Double latitude = (coord != null) ? coord.getLatitude() : null; 
+		Double longitude = (coord != null ) ? coord.getLongitude() : null; 
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
-				hasApplied, userRole);
+				hasApplied, userRole, longitude, latitude);
 	}
 
 	public Long fetchScrapCount(Long projectSq) {

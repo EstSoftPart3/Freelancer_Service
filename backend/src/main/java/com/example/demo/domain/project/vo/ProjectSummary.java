@@ -39,6 +39,10 @@ public class ProjectSummary {
 	private List<String> reqSkills;
 
 	private String hasScrapped;
+	
+	// 위도 경도 필드 추가 
+	private Double latitude; 
+	private Double longitude; 
 
 	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
 			String hasScrapped, String companyImageUrl) {
@@ -64,4 +68,32 @@ public class ProjectSummary {
 				.hasScrapped(hasScrapped)
 				.build();
 	}
+
+
+public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
+		String hasScrapped, String companyImageUrl, Double latitude, Double longitude) {
+	return ProjectSummary.builder()
+			.projectSq(project.getProjectSq())
+			.address(address)
+			.projectTtl(project.getProjectTtl())
+			.descrption(project.getProjectDescriptionTxt())
+			.preferContent(project.getProjectPreferenceTxt())
+			.imageUrl(project.getProjectImageUrl())
+			.viewCnt(project.getProjectViewCnt())
+			.applicantCnt(project.getProjectCandidateCnt())
+			.salary(project.getProjectSalary())
+			.companyNm(util.convertCompanySqToName(project.getCompanySq()))
+			.companyImageUrl(companyImageUrl)
+			.projectCreatedDt(project.getProjectCreatedAtDtm().toLocalDate())
+			.recruitStartDt(project.getProjectRecruitStartDt())
+			.recruitEndDt(project.getProjectRecruitEndDt())
+			.reqSkills(util.fetchReqSkillsByProjectSq(project.getProjectSq()))
+			.devGradeNm(util.convertCommonCodeSqToNm(project.getProjectDeveloperGradeCd()))
+			.requiredEduLvl(util.convertCommonCodeSqToNm(project.getProjectRequiredEducationCd()))
+			.recruitStatus(status)
+			.hasScrapped(hasScrapped)
+			.latitude(latitude)
+			.longitude(longitude)
+			.build();
+}
 }

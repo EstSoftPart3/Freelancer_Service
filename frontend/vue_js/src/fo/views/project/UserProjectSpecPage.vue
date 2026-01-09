@@ -214,14 +214,31 @@
             <span>{{ project.projectWorkType?.join(' / ') }}</span>
           </li>
           <li>
+            <strong class="text-color-primary">단가 :</strong>
+            {{ project.projectSalary }}
+          </li>
+          <li>
             <strong class="text-color-primary">근무 지역 :</strong>
             {{ project.projectAddress }}
           </li>
           <li>
-            <strong class="text-color-primary">단가 :</strong>
-            {{ project.projectSalary }}
+            <strong class="text-color-primary">추정 거리 :</strong>
+            약 3.3 km
+          </li>
+          <li>
+            <strong class="text-color-primary">위치 :</strong>
           </li>
         </ul>
+        <div class="d-flex justify-content-center align-items-center">
+          <div class="map-card" v-if="project && project.latitude">
+            <img
+              :src="`/api/map/static?latitude=${project.latitude}&longitude=${project.longitude}`"
+              alt="네이버 정적 지도"
+              style="width: 100%; height: 500px"
+            />
+          </div>
+          <!-- <div class="bg-grey" style="width: 500px; height: 500px"></div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -256,6 +273,7 @@ const fetchProjectDetail = async () => {
     const response = await api.$get(`/projects/${projectSq}/details`, {
       withCredentials: true,
     })
+    console.log('백엔드데이터: ', response.output)
     project.value = response.output
     scrapCount.value = project.value.projectScrapCnt
   } catch (e) {

@@ -25,34 +25,40 @@
       </div>
 
       <!-- 리스트 탭과 지도 탭으로 구분하기 -->
-      <button class="btn btn-rounded btn-primary me-2">
+      <button class="btn btn-rounded btn-primary me-2" @click="toggleMode">
         목록/지도 탭 전환
       </button>
 
-      <ProjectCardGroup :projects="projects" />
-      <div v-if="projects.length === 0" class="text-center text-muted py-5">
-        조건에 맞는 프로젝트가 없습니다.
-      </div>
       <div>
-        <CommonPagination
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          @update:currentPage="currentPage = $event"
-        />
+        <KeepAlive>
+          <component :is="currentViewComponent" :projects="projects" />
+        </KeepAlive>
+        <div v-if="projects.length === 0" class="text-center text-muted py-5">
+          조건에 맞는 프로젝트가 없습니다.
+        </div>
+        <div>
+          <CommonPagination
+            :currentPage="currentPage"
+            :totalPages="totalPages"
+            @update:currentPage="currentPage = $event"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup>
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
-import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
+// import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { api } from '@/axios.js'
 import qs from 'qs'
+import ProjectListView from '@/fo/components/project/ProjectListView.vue'
+import ProjectMapView from '@/fo/components/project/ProjectMapView.vue'
 
 const userStore = useUserStore()
 
@@ -72,6 +78,19 @@ const filters = ref({
 const currentPage = ref(1)
 const totalPages = ref('')
 const projects = ref([])
+
+// 탭 전환용 상태관리 변수
+const isListMode = ref(true)
+
+// 탭 전환용 함수
+const toggleMode = () => {
+  isListMode.value = !isListMode.value
+}
+
+// 조건에 따라 다른 컴포넌트 부르기기 위한 조건에 따라 바뀌는 변수 설정
+const currentViewComponent = computed(() => {
+  return isListMode.value ? ProjectListView : ProjectMapView
+})
 
 onMounted(async () => {
   fetchProjects()

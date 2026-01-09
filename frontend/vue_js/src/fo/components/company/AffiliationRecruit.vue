@@ -52,6 +52,27 @@
         <div class="text-dark" id="companyLocation">
           {{ afltnInfo.address }}
         </div>
+        <div class="d-flex justify-content-center align-items-center">
+          <div class="bg-primary" style="width: 300px; height: 300px">
+            <img
+              :src="`/api/map/static?latitude=${afltnInfo.latitude}&longitude=${afltnInfo.longitude}`"
+              alt="네이버 정적 지도"
+              style="width: 100%; height: 500px"
+            />
+          </div>
+        </div>
+      </div>
+      <!-- 주소지에서의 거리 시간 정보 -->
+      <div class="mb-3">
+        <label
+          for="distanceToCompanyLocation"
+          class="form-label text-primary text-bold"
+          >추정 거리
+        </label>
+        <div class="text-dark" id="companyLocation">
+          <!-- {{ afltnInfo.address }} -->
+          약 3.3 km
+        </div>
       </div>
 
       <!-- 간단한 설명 -->
