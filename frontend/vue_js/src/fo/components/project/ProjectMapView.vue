@@ -2,7 +2,7 @@
   <div class="map-view-layout">
     <div class="map-area">
       <div
-        v-if="mapImageUrl"
+        v-show="mapImageUrl"
         id="naver-map"
         style="width: 100%; height: 100%; background: #eee"
       >
@@ -13,13 +13,17 @@
           style="width: 100%; height: auto"
         />
       </div>
-      <div v-else class="empty-map">
+      <div v-show="!mapImageUrl" class="empty-map">
         <p>표시할 프로젝트 위치가 없습니다.</p>
       </div>
     </div>
 
     <div class="list-area">
-      <ProjectCardGroup :projects="projects" :isSimple="true" />
+      <ProjectCardGroup
+        v-if="projects && projects.length > 0"
+        :projects="projects"
+        :isSimple="true"
+      />
     </div>
   </div>
 </template>

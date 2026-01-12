@@ -1,6 +1,10 @@
 <template>
   <div>
-    <ProjectCardGroup :projects="projects" :isSimple="false" />
+    <ProjectCardGroup
+      :v-if="projects && projects.length > 0"
+      :projects="projects"
+      :isSimple="false"
+    />
   </div>
 </template>
 

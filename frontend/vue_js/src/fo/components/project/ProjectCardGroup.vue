@@ -6,7 +6,7 @@
         :key="project.id"
         class="card position-relative p-4 shadow-sm"
       >
-        <div v-if="!isSimple">
+        <div v-show="!isSimple">
           <!-- 스크랩 아이콘 (카드 우측 상단 고정) -->
           <div class="position-absolute top-0 end-0 m-3">
             <a
@@ -91,7 +91,7 @@
                 class="d-flex justify-content-between align-items-center text-muted fs-6"
               >
                 <div>
-                  {{ project.address }} / 약 3km 내외 /
+                  {{ project?.address }} / 약 3km 내외 /
                   {{ project.devGradeNm }} / {{ project.requiredEduLvl }} /
                   {{ project.salary }}원
                 </div>
@@ -117,7 +117,7 @@
             </div>
           </div>
         </div>
-        <div v-else>
+        <div v-show="isSimple">
           <!-- 스크랩 아이콘 (카드 우측 상단 고정) -->
           <div class="position-absolute top-0 end-0 m-3">
             <a
@@ -184,40 +184,19 @@
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >위치 및 거리</span
                 >
-                | {{ item.address.parentSigungu }} {{ item.address.sigungu }} /
-                약 3.3 km
-              </div>
-              <div class="mb-1">
-                <span class="text-dark text-uppercase font-weight-semibold"
-                  >채용기간</span
-                >
-                | {{ item.recruitStartDt }} ~ {{ item.recruitEndDt }}
-              </div>
-              <div class="mb-1">
-                <span class="text-dark text-uppercase font-weight-semibold"
-                  >등록일자</span
-                >
-                | {{ formatDate(item.createdAt) }}
+                | {{ project.address }} / 거리
               </div>
               <div class="mb-1">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >지원자 수</span
                 >
-                | {{ item.candidateCnt }}
+                | {{ project.applicantCnt }}
               </div>
-              <div class="positon-relative align-items-center text-muted fs-6">
-                <div class="d-flex align-itmes-left">
-                  <p class="text-dark text-decoration-none">위치 |</p>
-                  {{ project.address }}
-                </div>
-                <div>
-                  <p class="text-dark text-decoration-none">지원자 수 |</p>
-                  {{ project.applicantCnt }}
-                </div>
-                <div>
-                  <p class="text-dark text-decoration-none">조회 수 |</p>
-                  {{ project.viewCnt }}
-                </div>
+              <div class="mb-1">
+                <span class="text-dark text-uppercase font-weight-semibold"
+                  >조회 수</span
+                >
+                | {{ project.viewCnt }}
               </div>
             </div>
           </div>
