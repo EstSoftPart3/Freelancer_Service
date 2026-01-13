@@ -43,6 +43,7 @@ public class ProjectSummary {
 	// 위도 경도 필드 추가 
 	private Double latitude; 
 	private Double longitude; 
+	private Double distance; 
 
 	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
 			String hasScrapped, String companyImageUrl) {
@@ -71,7 +72,7 @@ public class ProjectSummary {
 
 
 public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
-		String hasScrapped, String companyImageUrl, Double latitude, Double longitude) {
+		String hasScrapped, String companyImageUrl, Double latitude, Double longitude, Double distance) {
 	return ProjectSummary.builder()
 			.projectSq(project.getProjectSq())
 			.address(address)
@@ -94,6 +95,7 @@ public static ProjectSummary from(Project project, ProjectUtil util, String addr
 			.hasScrapped(hasScrapped)
 			.latitude(latitude)
 			.longitude(longitude)
+			.distance(distance)
 			.build();
 }
 }

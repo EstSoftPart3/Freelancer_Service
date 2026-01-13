@@ -22,6 +22,10 @@
     user_email, user_pw, user_nm, user_gender_cd, user_phone_num, user_birth_dt, user_type_cd,
     user_signup_type_cd ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw}, #{userNm},
     #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd} ) </insert>
+   
+  <!-- 4. 주소순번 조회-->
+  <select
+  id="findAddressSqByUserSq" parameterType="Long" resultType="Long"> SELECT address_sq FROM TBL_USER_M WHERE user_sq = #{userSq} LIMIT 1 </select>
 
   <!-- 기업 프로필 INSERT -->
   <insert

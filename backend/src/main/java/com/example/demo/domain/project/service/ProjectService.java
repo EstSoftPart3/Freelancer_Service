@@ -56,8 +56,10 @@ import com.example.demo.domain.project.mapper.ScrapMapper;
 import com.example.demo.domain.project.mapper.SkillMapper;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
+import com.example.demo.domain.project.vo.ProjectSearchResultWithDistance;
 import com.example.demo.domain.project.vo.ProjectSummary;
 import com.example.demo.domain.user.controller.FindController;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
@@ -80,6 +82,8 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final AffiliationMapper affiliationMapper;
 	private final NotificationService notificationService;
+	//user DB
+	private final UserMapper userMapper; 
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -183,11 +187,35 @@ public class ProjectService {
 
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
-		List<Project> projects = projectMapper.findProjectsBySearch(request);
-		Long totalCount = projectMapper.countProjectsBySearch(request);
-		List<ProjectSummary> responses = new ArrayList<>();
-
+//		List<Project> projects = projectMapper.findProjectsBySearch(request);
 		Long userSq = (token != null) ? token.getUserSq() : null;
+		
+		// 사용자 위도 경도 획득
+		Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+		AreaCoordinateResponse userCoord = addressMapper.findCoordinates(userAddressSq); 
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+		// 디버깅
+		System.out.println(">>> [Debug] Befere Mapper"); 
+		System.out.println(">>> userLatitude: "+userLatitude); 
+		System.out.println(">>> userLongitude: "+userLongitude); 
+		System.out.println(">>> request: "+request); 
+		
+		List<ProjectSearchResultWithDistance> projects = null;
+		
+		try {
+//			List<ProjectSearchResultWithDistance> projects = projectMapper.findProjectBySearchWithDistances(request, userLongitude, userLatitude); 
+			projects = projectMapper.findProjectsBySearchWithDistance(request, userLongitude, userLatitude);
+			System.out.println(">>> [Debug] Mapper Success! List Size : "+projects != null ? projects.size() : "null"); 
+			
+		} catch (Exception e) {
+			System.out.println(">>> Fatal Error] Mapper Error"); 
+			e.printStackTrace();
+			throw e; 
+		}
+		
+		Long totalCount = projectMapper.countProjectsBySearch(request);
+		List<ProjectSummary> responses = new ArrayList<>();		
 
 		projects.forEach(
 				p -> {
@@ -204,6 +232,7 @@ public class ProjectService {
 					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
 					 
 					AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
+					Double distance = p.getDistance(); 
 					
 					// 디버깅 코드 //
 					
@@ -223,7 +252,7 @@ public class ProjectService {
 					Double latitude = (coord != null) ? coord.getLatitude() : null; 
 					Double longitude = (coord != null ) ? coord.getLongitude() : null; 
 					
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl, latitude, longitude));
+					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl, latitude, longitude, distance));
 				});
 
 		int page = (request.getOffset() / request.getSize()) + 1;

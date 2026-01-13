@@ -91,7 +91,8 @@
                 class="d-flex justify-content-between align-items-center text-muted fs-6"
               >
                 <div>
-                  {{ project?.address }} / 약 3km 내외 /
+                  {{ project?.address }} / 약
+                  {{ project?.distance.toFixed(2) }} km /
                   {{ project.devGradeNm }} / {{ project.requiredEduLvl }} /
                   {{ project.salary }}원
                 </div>
