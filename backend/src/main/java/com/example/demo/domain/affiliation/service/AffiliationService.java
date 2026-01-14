@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.affiliation.mapper.*;
+import com.example.demo.domain.map.mapper.MapAddressMapper;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
+import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.amazonaws.services.s3.AmazonS3;
 import com.example.demo.domain.affiliation.dto.response.*;
 import com.example.demo.domain.affiliation.entity.*;
@@ -17,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.demo.domain.user.mapper.UserMapper;
+import com.example.demo.domain.map.mapper.MapAddressMapper;
+
 @Service
 @RequiredArgsConstructor
 public class AffiliationService {
@@ -24,6 +29,8 @@ public class AffiliationService {
 	private final AffiliationMapper affiliationMapper;
 	private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
+	private final UserMapper userMapper;
+	private final MapAddressMapper mapAddressMapper; 
 
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
@@ -51,7 +58,13 @@ public class AffiliationService {
 	// 소속 공고 전체 리스트 조회
 	@Transactional
 	public AffiliationListResponse getAllAffiliations(Long userSq, SearchFilterRequest searchFilter) {
-
+				
+		// 사용자 위도 경도 획득
+		Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+		AreaCoordinateResponse userCoord = mapAddressMapper.findCoordinates(userAddressSq); 
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+		
 		List<Company> affiliations = affiliationMapper.findAll(searchFilter.getSearchType(), searchFilter.getKeyword(),
 				searchFilter.getSortType(), searchFilter.getAddressCd(), searchFilter.getPage(), searchFilter.getSize(),
 				searchFilter.getOffset());

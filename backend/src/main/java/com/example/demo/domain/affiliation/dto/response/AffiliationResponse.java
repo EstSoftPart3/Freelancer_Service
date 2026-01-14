@@ -26,6 +26,7 @@ public class AffiliationResponse{
     private Boolean isApply; // 지원 여부
     private Long memberCnt; // 소속 직원 수
     private String isRecruitingYn;
+    private Double distance; // 사용자로부터의 거리
     
 
 
@@ -48,6 +49,7 @@ public class AffiliationResponse{
         		isScrap,
         		isApply,
         		null,
+        		null, 
         		null
         		
         );
@@ -72,9 +74,35 @@ public class AffiliationResponse{
         		null,
         		isApply,
         		memberCnt,
-        		company.getCompanyIsRecruitingYn()
+        		company.getCompanyIsRecruitingYn(),
+        		null
         		
         );
     	
+    }
+    // 위치 기반 서비스 제공을 위한 DTO 오버로딩
+    public static AffiliationResponse fromEntity(Company company, Address adress, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl, Double distance) {
+    	LocalDate today = LocalDate.now();
+        Period period = Period.between(company.getCompanyOpenDt(), today);
+    	Integer openYear = period.getYears();
+        return new AffiliationResponse(
+        		company.getCompanySq(),
+        		company.getCompanyNm(),
+        		company.getCompanyCeoNm(),
+        		imgUrl,
+        		adress.getAddress(),
+        		company.getCompanyOpenDt(),
+        		openYear,
+        		company.getCompanyGreetingTxt(),
+        		tags,
+        		company.getCompanyViewCnt(),
+        		scrapCnt,
+        		isScrap,
+        		isApply,
+        		null,
+        		null,
+        		distance
+        		
+        );
     }
 }

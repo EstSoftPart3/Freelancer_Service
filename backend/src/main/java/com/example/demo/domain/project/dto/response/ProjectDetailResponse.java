@@ -51,6 +51,7 @@ public class ProjectDetailResponse {
     
     private Double longitude; 
     private Double latitude; 
+    private Double distance; 
     
     public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req, List<GroupSkillInfoResponse> prefer
     		, String address, int hasScrapped, int hasApplied, UserRole userRole) {
@@ -89,7 +90,7 @@ public class ProjectDetailResponse {
     }
     
     public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req, List<GroupSkillInfoResponse> prefer
-    		, String address, int hasScrapped, int hasApplied, UserRole userRole, Double longitude, Double latitude ) {
+    		, String address, int hasScrapped, int hasApplied, UserRole userRole, Double longitude, Double latitude, Double distance ) {
     	Long projectSq = p.getProjectSq();
     	Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
     	return ProjectDetailResponse.builder()
@@ -124,6 +125,7 @@ public class ProjectDetailResponse {
                 
                 .longitude(longitude)
                 .latitude(latitude)
+                .distance(distance)
                 .build();
     }
 }

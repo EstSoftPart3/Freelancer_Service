@@ -223,7 +223,7 @@
           </li>
           <li>
             <strong class="text-color-primary">추정 거리 :</strong>
-            약 3.3 km
+            {{ formatDistance(project.distance) }}
           </li>
           <li>
             <strong class="text-color-primary">위치 :</strong>
@@ -345,6 +345,17 @@ const clickScrap = async () => {
 const getSkillIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
   return skillIconMap[key] || skillIconMap.default
+}
+
+/* 로그인 상태에서만 거리 정보 출력하도록 함수 생성  */
+const formatDistance = (distance) => {
+  if (distance === undefined) {
+    return '위치 정보 불러오는 중...'
+  }
+  if (distance === null) {
+    return '사용자 위치 정보 없음'
+  }
+  return Number(distance).toFixed(2) + ' km'
 }
 </script>
 <style scoped>

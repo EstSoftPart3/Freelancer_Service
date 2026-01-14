@@ -91,8 +91,8 @@
                 class="d-flex justify-content-between align-items-center text-muted fs-6"
               >
                 <div>
-                  {{ project?.address }} / 약
-                  {{ project?.distance.toFixed(2) }} km /
+                  {{ project?.address }}
+                  {{ formatDistance(project.distance) }} /
                   {{ project.devGradeNm }} / {{ project.requiredEduLvl }} /
                   {{ project.salary }}원
                 </div>
@@ -185,7 +185,7 @@
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >위치 및 거리</span
                 >
-                | {{ project.address }} / 거리
+                | {{ project.address }} {{ formatDistance(project.distance) }}
               </div>
               <div class="mb-1">
                 <span class="text-dark text-uppercase font-weight-semibold"
@@ -270,6 +270,16 @@ const clickScrap = async (project) => {
     console.error(error)
     alertStore.show('스크랩에 실패했습니다.', 'danger')
   }
+}
+
+const formatDistance = (distance) => {
+  if (distance === undefined) {
+    return '/ 거리 계산 중... / '
+  }
+  if (distance === null) {
+    return ''
+  }
+  return '/ 약 ' + Number(distance).toFixed(2) + ' km '
 }
 
 console.log('project: ', props)

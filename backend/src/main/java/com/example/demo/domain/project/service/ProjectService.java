@@ -54,6 +54,7 @@ import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.mapper.ScrapMapper;
 import com.example.demo.domain.project.mapper.SkillMapper;
+import com.example.demo.domain.project.util.DistanceUtils;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
 import com.example.demo.domain.project.vo.ProjectSearchResultWithDistance;
@@ -326,6 +327,12 @@ public class ProjectService {
 		int hasScrapped = 0;
 		int hasApplied = 0;
 		UserRole userRole = UserRole.PERSONAL; // 기본값 설정
+		
+		//사용자 위치정보 획득 위한 변수 설정
+		Long userAddressSq = null;
+		AreaCoordinateResponse userCoord = null; 
+		Double userLatitude = null; 		
+		Double userLongitude = null; 
 
 		if (token != null) {
 			Long userSq = token.getUserSq();
@@ -341,14 +348,26 @@ public class ProjectService {
 				hasApplied = projectApplicationMapper.findByProAndUser(projectSq, userSq) != null ? 1 : 0;
 			}
 			userRole = findUserRole(token, p);
+			//위치기반 서비스
+			// 사용자 위도 경도 획득
+			userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+			userCoord = addressMapper.findCoordinates(userAddressSq); 
+			userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+			userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+			// 디버깅
+			System.out.println(">>> [Debug] Befere Mapper"); 
+			System.out.println(">>> userLatitude: "+userLatitude); 
+			System.out.println(">>> userLongitude: "+userLongitude); 		
 		}
 		
 		AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
 		Double latitude = (coord != null) ? coord.getLatitude() : null; 
 		Double longitude = (coord != null ) ? coord.getLongitude() : null; 
+		
+		double distance = DistanceUtils.calculateDistance(userLatitude, userLongitude, latitude, longitude); 
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
-				hasApplied, userRole, longitude, latitude);
+				hasApplied, userRole, longitude, latitude, distance);
 	}
 
 	public Long fetchScrapCount(Long projectSq) {
