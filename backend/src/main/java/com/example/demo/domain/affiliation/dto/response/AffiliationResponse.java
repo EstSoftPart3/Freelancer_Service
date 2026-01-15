@@ -27,10 +27,12 @@ public class AffiliationResponse{
     private Long memberCnt; // 소속 직원 수
     private String isRecruitingYn;
     private Double distance; // 사용자로부터의 거리
+    private Double comLatitude; // 기업 위도
+    private Double comLongitude; // 기업 경도 
     
 
 
-    public static AffiliationResponse fromEntity(Company company, Address adress, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl) {
+    public static AffiliationResponse fromEntity(Company company, Address address, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl) {
     	LocalDate today = LocalDate.now();
         Period period = Period.between(company.getCompanyOpenDt(), today);
     	Integer openYear = period.getYears();
@@ -39,7 +41,7 @@ public class AffiliationResponse{
         		company.getCompanyNm(),
         		company.getCompanyCeoNm(),
         		imgUrl,
-        		adress.getAddress(),
+        		(address != null) ? address.getAddress(): null,
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
@@ -50,12 +52,14 @@ public class AffiliationResponse{
         		isApply,
         		null,
         		null, 
+        		null, 
+        		null, 
         		null
         		
         );
     }
     
-    public static AffiliationResponse fromEntityScrap(Company company, Address adress, List<String> tags, Long memberCnt, Boolean isApply) {
+    public static AffiliationResponse fromEntityScrap(Company company, Address address, List<String> tags, Long memberCnt, Boolean isApply) {
     	LocalDate today = LocalDate.now();
         Period period = Period.between(company.getCompanyOpenDt(), today);
     	Integer openYear = period.getYears();
@@ -64,7 +68,7 @@ public class AffiliationResponse{
         		company.getCompanyNm(),
         		company.getCompanyCeoNm(),
         		company.getCompanyProfileImageUrl(),
-        		adress.getAddress(),
+        		(address != null) ? address.getAddress(): null,
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
@@ -75,13 +79,15 @@ public class AffiliationResponse{
         		isApply,
         		memberCnt,
         		company.getCompanyIsRecruitingYn(),
+        		null,
+        		null,
         		null
         		
         );
     	
     }
     // 위치 기반 서비스 제공을 위한 DTO 오버로딩
-    public static AffiliationResponse fromEntity(Company company, Address adress, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl, Double distance) {
+    public static AffiliationResponse fromEntity(Company company, Address address, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl, Double distance, Double comLatitude, Double comLongitude) {
     	LocalDate today = LocalDate.now();
         Period period = Period.between(company.getCompanyOpenDt(), today);
     	Integer openYear = period.getYears();
@@ -90,7 +96,7 @@ public class AffiliationResponse{
         		company.getCompanyNm(),
         		company.getCompanyCeoNm(),
         		imgUrl,
-        		adress.getAddress(),
+        		(address != null) ? address.getAddress(): null,
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
@@ -101,7 +107,9 @@ public class AffiliationResponse{
         		isApply,
         		null,
         		null,
-        		distance
+        		distance, 
+        		comLatitude, 
+        		comLongitude
         		
         );
     }

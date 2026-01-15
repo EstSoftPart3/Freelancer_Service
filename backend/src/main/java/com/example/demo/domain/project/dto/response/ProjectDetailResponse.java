@@ -124,7 +124,7 @@ public class ProjectDetailResponse {
                 .userRole(userRole)
                 
                 .longitude(longitude)
-                .latitude(latitude)
+                .latitude(latitude)    
                 .distance(distance)
                 .build();
     }
