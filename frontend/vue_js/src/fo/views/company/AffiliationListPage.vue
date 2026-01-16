@@ -23,7 +23,7 @@
               <option value="view">조회순</option>
               <option value="scrap">스크랩순</option>
               <option value="applicant">지원자순</option>
-              <option value="distance">거리순</option>
+              <option v-if="isLoggedIn" value="distance">거리순</option>
             </select>
             <!-- 부모 선택 -->
             <select
@@ -205,6 +205,8 @@ import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { onMounted, ref, watch } from 'vue'
+import { useUserStore } from '@/fo/stores/userStore'
+import { storeToRefs } from 'pinia'
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
@@ -348,6 +350,10 @@ const removeAllTxt = (str) => {
   }
   return str
 }
+
+// 로그인상태 확인
+const userStore = useUserStore()
+const { isLoggedIn } = storeToRefs(userStore)
 
 watch(currentPage, () => {
   getAfltnList()

@@ -88,9 +88,10 @@
 				<choose>
 					<when test="request.sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
 		${request.sortOrder} </when>
-					<when test="request.sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
+					<when test="request.sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${request.sortOrder} </when>
 					<when test="request.sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
 		${request.sortOrder} </when>
+					<when test="request.sortBy == 'distance'"> ORDER BY distance ${request.sortOrder} </when>
 					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
 				</choose>
 			</when>

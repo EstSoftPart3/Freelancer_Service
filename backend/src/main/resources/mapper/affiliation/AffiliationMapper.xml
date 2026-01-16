@@ -71,6 +71,9 @@
 				    WHERE TBL_COMPANY_APPLICATION_H.company_sq = TBL_COMPANY_S.company_sq
 				) DESC
 			</when>
+			<when test="sortType == 'distance'">
+				ORDER BY distance ASC
+			</when>
 
 			<otherwise> ORDER BY board_created_at_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
 		</choose>

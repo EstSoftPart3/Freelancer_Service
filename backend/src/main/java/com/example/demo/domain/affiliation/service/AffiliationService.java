@@ -76,7 +76,7 @@ public class AffiliationService {
 //				searchFilter.getSortType(), searchFilter.getAddressCd(), searchFilter.getPage(), searchFilter.getSize(),
 //				searchFilter.getOffset());
 		  
-			affiliations = affiliationMapper.findAllWithDistance(searchFilter.getSearchType(), searchFilter.getKeyword(),
+		affiliations = affiliationMapper.findAllWithDistance(searchFilter.getSearchType(), searchFilter.getKeyword(),
 				searchFilter.getSortType(), searchFilter.getAddressCd(), searchFilter.getPage(), searchFilter.getSize(),
 				searchFilter.getOffset(), userLatitude, userLongitude);
 		System.out.println(">>> [Success] Mapper Size = "+ (affiliations != null ? affiliations.size() : "null")); 
