@@ -113,4 +113,31 @@ public class AffiliationResponse{
         		
         );
     }
+    
+    public static AffiliationResponse fromEntityScrap(Company company, Address address, List<String> tags, Long memberCnt, Boolean isApply, Double distance) {
+    	LocalDate today = LocalDate.now();
+        Period period = Period.between(company.getCompanyOpenDt(), today);
+    	Integer openYear = period.getYears();
+        return new AffiliationResponse(
+        		company.getCompanySq(),
+        		company.getCompanyNm(),
+        		company.getCompanyCeoNm(),
+        		company.getCompanyProfileImageUrl(),
+        		(address != null) ? address.getAddress(): null,
+        		company.getCompanyOpenDt(),
+        		openYear,
+        		company.getCompanyGreetingTxt(),
+        		tags,
+        		company.getCompanyViewCnt(),
+        		null,
+        		null,
+        		isApply,
+        		memberCnt,
+        		company.getCompanyIsRecruitingYn(),
+        		distance,
+        		(address!=null && address.getLatitude()!=null) ? address.getLatitude().doubleValue() : null,
+        		(address!=null && address.getLongitude()!=null) ? address.getLongitude().doubleValue() :null
+        );
+    	
+    }
 }

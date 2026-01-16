@@ -34,9 +34,5 @@
 				#{sq}
 			</foreach>	
 	</select>
-	<select id="findAddressSq" resultType="Long">
-		SELECT address_sq
-		FROM TBL_PROJECT_M
-    	WHERE project_sq = #{projectSq} 
-    </select>	
+
 </mapper>

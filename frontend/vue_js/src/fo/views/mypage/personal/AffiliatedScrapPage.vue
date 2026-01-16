@@ -105,14 +105,14 @@
                 <span class="text-dark text-uppercase font-weight-semibold">
                   위치
                 </span>
-                | 서울시 무슨구 아무거리
+                | {{ scrap.address }}
               </div>
 
               <div class="post-meta text-4">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >추정 거리
                 </span>
-                | 약 3.3 km
+                | {{ formatDistance(scrap.distance) }}
               </div>
             </div>
           </li>
@@ -200,6 +200,16 @@ const removeScrap = (id) => {
       closeModal()
     },
   })
+}
+
+const formatDistance = (distance) => {
+  if (distance === null) {
+    return '위치 정보를 불러올 수 없습니다'
+  }
+  if (distance === undefined) {
+    return '위치 정보를 불러오는 중입니다.'
+  }
+  return '약 ' + distance.toFixed(2) + ' km'
 }
 onMounted(() => {
   getScrapList()

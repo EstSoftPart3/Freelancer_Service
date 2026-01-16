@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.affiliation.mapper.*;
 import com.example.demo.domain.map.mapper.MapAddressMapper;
+import com.example.demo.domain.map.util.DistanceUtil;
 import com.example.demo.domain.map.vo.CompanyWithDistanceVo;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
@@ -279,7 +280,13 @@ public class AffiliationService {
 		List<Company> companies = affiliationMapper.findScrapAffiliations(userSq, searchType, keyword, page, size,
 				offset);
 		Long totalElements = affiliationMapper.findScrapAffiliationsCnt(userSq, searchType, keyword);
-
+		
+		//사용자 위치 정보 획득
+		Long userAddressSq = userMapper.findAddressSqByUserSq(userSq);
+		AreaCoordinateResponse userCoord = mapAddressMapper.findCoordinates(userAddressSq);
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null) ? userCoord.getLongitude() : null; 		
+				
 		List<AffiliationResponse> affiliations = companies.stream()
 				.filter(Objects::nonNull)
 				.map(company -> {
@@ -292,8 +299,12 @@ public class AffiliationService {
 					if (applyCnt > 0) {
 						isApply = true;
 					}
-
-					return AffiliationResponse.fromEntityScrap(company, address, tags, memberCnt, isApply);
+					//회사 위치 정보 획득 및 거리 계산
+					Double comLatitude = (address != null && address.getLatitude() != null) ? address.getLatitude().doubleValue() : null;
+					Double comLongitude = (address != null && address.getLongitude() != null) ? address.getLongitude().doubleValue() : null; 
+					Double distance = DistanceUtil.calculateDistance(comLatitude, comLongitude, userLatitude, userLongitude);
+					
+					return AffiliationResponse.fromEntityScrap(company, address, tags, memberCnt, isApply, distance);
 
 				}).collect(Collectors.toList());
 

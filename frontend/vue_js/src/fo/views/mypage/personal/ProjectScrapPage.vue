@@ -132,7 +132,8 @@
                       >위치 및 거리</span
                     >
                     | {{ item.address.parentSigungu }}
-                    {{ item.address.sigungu }} / 약 3.3 km
+                    {{ item.address.sigungu }} /
+                    {{ formatDistance(item.distance) }}
                   </div>
                   <div class="mb-1">
                     <span class="text-dark text-uppercase font-weight-semibold"
@@ -295,6 +296,16 @@ function changePage(page) {
 const generateIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
   return skillIconMap[key] || skillIconMap.default
+}
+
+const formatDistance = (distance) => {
+  if (distance === null) {
+    return '위치 정보를 불러올 수 없습니다'
+  }
+  if (distance === undefined) {
+    return '위치 정보를 불러오는 중입니다.'
+  }
+  return '약 ' + distance.toFixed(2) + ' km'
 }
 </script>
 

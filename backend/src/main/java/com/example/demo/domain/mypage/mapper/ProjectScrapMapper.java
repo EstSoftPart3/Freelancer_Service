@@ -42,7 +42,7 @@ public interface ProjectScrapMapper {
 
 	List<Long> getScrapProjectIds(Long userSq);
 	
-	// 위도 경도 
+	// 주소번호 획득
 	Long findAddressSq(Long projectSq); 
 
 }
