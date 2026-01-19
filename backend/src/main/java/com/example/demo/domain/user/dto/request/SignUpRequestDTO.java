@@ -18,6 +18,7 @@ public class SignUpRequestDTO {
     private Long userTypeCd;
     private Long userSignupTypeCd;
     private String userProfileImageUrl;
+    private String socialId;
 
     // 주소 정보
     private String zonecode;

@@ -62,7 +62,11 @@ apiInstance.interceptors.response.use(
     // console.log('_retry:', originalRequest._retry)
 
     // refresh-token 요청에 대해선 인터셉터 로직 skip
-    if (originalRequest.url === '/refresh-token') {
+    if (
+      originalRequest.url === '/refresh-token' ||
+      originalRequest.url.includes('/auth/social/link') ||
+      originalRequest.url.includes('/auth/social/join')
+    ) {
       return Promise.reject(error)
     }
 

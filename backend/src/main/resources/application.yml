@@ -61,6 +61,7 @@ spring:
             scope:
               - email
               - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml

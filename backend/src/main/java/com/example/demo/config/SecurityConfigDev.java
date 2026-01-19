@@ -71,19 +71,20 @@ public class SecurityConfigDev {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 1. 구글 관련 엔드포인트 허용 (중요!)
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() 
+                        .requestMatchers("/api/login/oauth2/code/**").permitAll() 
                         .requestMatchers("/login", "/refresh-token").permitAll()
+                        .requestMatchers("/api/auth/social/**").permitAll()
                         .requestMatchers("/me", "/logout").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                // 2. OAuth2 로그인 기능 활성화 및 경로 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(authorization -> authorization
-                                // Vue에서 호출하는 /api/oauth2/authorization 주소를 처리하기 위한 설정
-                                .baseUri("/oauth2/authorization") 
-                        )
-                )
+//                // 2. OAuth2 로그인 기능 활성화 및 경로 설정
+//                .oauth2Login(oauth2 -> oauth2
+//                        .authorizationEndpoint(authorization -> authorization
+//                                // Vue에서 호출하는 /api/oauth2/authorization 주소를 처리하기 위한 설정
+//                                .baseUri("/oauth2/authorization") 
+//                        )
+//                )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout().disable();
 

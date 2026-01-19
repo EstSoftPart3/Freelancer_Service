@@ -37,10 +37,7 @@ const fetchUserInfo = async () => {
     localStorage.setItem('userNm', data.userNm)
     localStorage.setItem('userTypeCd', data.userTypeCd)
 
-    userStore.setUser({
-      userNm: data.userNm,
-      userTypeCd: data.userTypeCd,
-    })
+    userStore.setUser(data)
   } catch (error) {
     // console.error('자동 로그인 실패:', error)
 

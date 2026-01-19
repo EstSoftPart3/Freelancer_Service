@@ -120,8 +120,10 @@ import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { onMounted } from 'vue'
 
 const isConfirmed = ref(false)
+const isSocialUser = ref(false)
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -183,4 +185,29 @@ const handleSubmit = async (event) => {
     },
   })
 }
+//추가 소셜 유저 탈퇴 페이지
+async function fetchUserInfo() {
+  try {
+    const response = await api.$get('/mypage/edit/info', null)
+    const data = response.output
+
+    if (
+      data.userId?.startsWith('S_') ||
+      Number(data.userSignupTypeCd) === 203
+    ) {
+      isSocialUser.value = true
+      isConfirmed.value = true // 비밀번호 체크창 스킵
+    }
+
+    // 탈퇴 폼에 아이디 미리 채워놓지 않으면 소셜 유저는 탈퇴가 어려움
+    userId.value = data.userId
+    applicantName.value = data.userNm
+  } catch (err) {
+    console.error('정보 조회 실패', err)
+  }
+}
+
+onMounted(() => {
+  fetchUserInfo()
+})
 </script>

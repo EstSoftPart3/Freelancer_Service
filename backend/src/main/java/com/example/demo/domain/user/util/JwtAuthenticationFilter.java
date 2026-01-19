@@ -47,7 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects",
             "/api/projects/*/districts",
             "/api/projects/applications/interviews/*",
-            "/api/mypage/resume"
+            "/api/mypage/resume",
+            "/api/auth/social/link",
+            "/api/auth/social/join"
 
     // 여기에 더 추가 가능
     );
@@ -57,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
-
+        System.out.println("---- 필터 진입! 현재 요청 URI: " + uri);
         String token = resolveToken(request);
 
         // 인증 제외 경로 처리

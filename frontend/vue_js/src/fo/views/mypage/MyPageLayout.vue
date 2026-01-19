@@ -190,6 +190,15 @@ const headerInfo = computed(() => {
           { text: '프로젝트 수정' },
         ],
       }
+    case 'SocialEdit':
+      return {
+        title: '계정',
+        strongText: '관리',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '계정 관리' },
+        ],
+      }
     default:
       return {
         title: '마이페이지',
