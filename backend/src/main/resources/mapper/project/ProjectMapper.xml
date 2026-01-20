@@ -439,4 +439,16 @@
 
 	<update id="softDeleteProject" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_is_deleted_yn = 'Y', project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
+
+	<!-- 메인 페이지용 -->
+	<select id="selectMainPopularProjects" resultMap="projectMap"> SELECT project_sq, company_sq,
+		address_sq, project_ttl, project_developer_grade_cd, project_salary, project_view_cnt,
+		project_scrap_cnt, project_candidate_cnt FROM TBL_PROJECT_M WHERE project_is_deleted_yn =
+		'N' <choose>
+			<when test="sortType == 'views'"> ORDER BY project_view_cnt DESC </when>
+			<when test="sortType == 'scraps'"> ORDER BY project_scrap_cnt DESC </when>
+			<when test="sortType == 'apps'"> ORDER BY project_candidate_cnt DESC </when>
+			<otherwise> ORDER BY project_created_at_dtm DESC </otherwise>
+		</choose> LIMIT
+		#{limit} </select>
 </mapper>

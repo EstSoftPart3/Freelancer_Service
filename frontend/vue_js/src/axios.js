@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-const baseUrl = 'https://job.estsw.co.kr/api'
-// const baseUrl = 'http://localhost:8080/api'
+// const baseUrl = 'https://job.estsw.co.kr/api'
+const baseUrl = 'http://localhost:8080/api'
 // const baseUrl = '/api'
 // const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
 
