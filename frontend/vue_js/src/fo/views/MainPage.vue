@@ -123,24 +123,19 @@
 
               <div class="skillSection mt-auto">
                 <div
-                  v-for="skillGroup in project.projectRequiredSkills"
-                  :key="skillGroup.parentSkillTagNm"
+                  v-for="skillGroup in project.projectSkills"
+                  :key="skillGroup"
                   class="mb-2"
                 >
-                  <div class="d-flex flex-wrap gap-2">
-                    <div
-                      v-for="skill in skillGroup.childSkillTagNms"
-                      :key="skill"
-                      class="skillIconItem"
-                      v-tooltip="skill"
-                    >
+                  <div class="btn btn-rounded btn-3d btn-light btn-xs mb-2">
+                    <div class="skillIconItem" v-tooltip="skillGroup">
                       <img
-                        :src="getSkillIconUrl(skill)"
-                        :alt="skill"
+                        :src="getSkillIconUrl(skillGroup)"
+                        :alt="skillGroup"
                         width="22"
                         height="22"
                       />
-                      <span class="skillName">{{ skill }}</span>
+                      <span class="skillName ms-2">{{ skillGroup }}</span>
                     </div>
                   </div>
                 </div>

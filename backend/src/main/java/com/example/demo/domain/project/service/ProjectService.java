@@ -489,7 +489,6 @@ public class ProjectService {
 			List<String> skillNames = projectMapper.findReqSkillsByProjectSq(sq)
 					.stream()
 					.map(s -> s.getChildSkillTagNm())
-					.limit(3) // 메인에는 최대 3개만 표시
 					.toList();
 
 			return MainProjectResponse.builder()
