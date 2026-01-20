@@ -2,10 +2,14 @@ package com.example.demo.domain.mypage.service;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,7 @@ import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapDTO;
+import com.example.demo.domain.mypage.dto.ProjectScrapSortDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectScrapResponseDTO;
 import com.example.demo.domain.mypage.repository.ProjectScrapRepository;
 import com.example.demo.domain.user.mapper.UserMapper;
@@ -31,22 +36,60 @@ public class ProjectScrapService {
 
     public ProjectScrapResponseDTO getScrappedProjects(Long userSq, String searchType, String searchKeyword, int page,
             int size) {
+    	int pageIndex = (page>0) ? page -1 : 0; 
         int offset = (page - 1) * size;
 
         int totalCount = repository.countScrappedProjects(userSq, searchType, searchKeyword);
         if (totalCount == 0) {
             return new ProjectScrapResponseDTO(Collections.emptyList(), 0);
         }
-
-        List<Long> projectSqs = repository.findScrappedProjects(userSq, searchType, searchKeyword, offset, size);
         
         //user 위치 획득        
        	Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null;
         AreaCoordinateResponse userCoord = (userAddressSq != null) ? addressMapper.findCoordinates(userAddressSq) : null; 
         Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
-        Double userLongitude = (userCoord != null) ? userCoord.getLongitude() : null;         	
+        Double userLongitude = (userCoord != null) ? userCoord.getLongitude() : null;  
+
+//        List<Long> projectSqs = repository.findScrappedProjects(userSq, searchType, searchKeyword, offset, size);
+//        List<Long> projectSqs = repository.getScrapProjectIds(userSq);   
+        List<Long> projectSqs = repository.findScrappedProjectsWithoutPaging(userSq, searchType, searchKeyword); 
         
-        List<ProjectScrapDTO> dtos = projectSqs.stream().map(projectSq -> {
+        //정렬 기준되는 정보만 조회
+        if (projectSqs == null || projectSqs.isEmpty()) {
+        	return new ProjectScrapResponseDTO(Collections.emptyList(), 0);
+        }
+        List<ProjectScrapSortDTO> sortList = repository.findSortInfoBySqs(projectSqs); 
+        System.out.println("1. DB SEARCH RESULT : "+(sortList==null?"NULL":sortList.size())); 
+        
+        if (sortList != null && !sortList.isEmpty()) {
+        	System.out.println(" -> First Data Date : "+sortList.get(0).getCreatedAt()); 
+        }
+        // 정렬 기준 정렬
+        String sortType = "latest"; 
+        Stream<ProjectScrapSortDTO> sortListStream = sortList.stream(); 
+        if("latest".equals(sortType)) {
+        	//최신순
+        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getCreatedAt).reversed()); 
+        } else {
+        	//마감순
+        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getRecruitEndDt).reversed()); 
+        }
+        List<ProjectScrapSortDTO> sortedList = sortListStream.collect(Collectors.toList());
+        
+        // 메모리 페이징
+        int start = pageIndex * size; 
+        System.out.println("2. Paging start point : "+ start + ", size : "+sortedList.size()); 
+        int end = Math.min((pageIndex+1)*size, sortedList.size()); 
+        if (start >= sortedList.size()) {
+        	return new ProjectScrapResponseDTO(Collections.emptyList(), 0); 
+        }
+        List<ProjectScrapSortDTO> pagedList = sortedList.subList(start, end);
+        List<Long> pagedProjectSqs = pagedList.stream()
+        		.map(ProjectScrapSortDTO::getProjectSq)
+        		.collect(Collectors.toList());
+        System.out.println("3. Combination number : " + pagedList.size()); 
+        
+        List<ProjectScrapDTO> dtos = pagedProjectSqs.stream().map(projectSq -> {
             ProjectDTO basic = repository.findBasic(projectSq);
             CompanyDTO company = repository.findCompany(projectSq);
             ProjectScrapAddressDTO address = repository.findAddress(projectSq);

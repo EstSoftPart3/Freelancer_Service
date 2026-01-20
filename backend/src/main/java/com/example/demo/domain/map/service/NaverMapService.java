@@ -81,7 +81,7 @@ public class NaverMapService {
 		//마커 문자열
 		//목표 포맷: "type:d|pos:127.1 37.1, 127.2 37.2..."
 		StringBuilder markerStr = new StringBuilder(); 
-		markerStr.append("type:d|pos:"); 
+		markerStr.append("type:n|pos:"); 
 		
 		//리스트를 돌면서 좌표 추가
 		for (int i = 0; i<latitudes.size(); i++) {
@@ -89,6 +89,8 @@ public class NaverMapService {
 			Double latitude = latitudes.get(i);
 			markerStr.append(longitude).append(" ").append(latitude).append(","); 
 		}
+		
+		markerStr.append("|size:small|color:Blue"); 
 		
 		//헤더
 		HttpHeaders headers = new HttpHeaders();

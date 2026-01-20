@@ -110,9 +110,9 @@ cloud:
     stack:
       auto: false
 
-
 # Naver 지도 API
 naver:
   map:
-    client-id: soeyw6whad
-    client-secret: W1hOx8vv6k6lrn2ycpj5lvL1TDlR6dX0e0QGw0kZ
+    url: https://maps.apigw.ntruss.com/map-static/v2/raster
+    client-id: rtua7en77w
+    client-secret: wxz72SGvAZ33QFCh0Fy6xCsXi5aKRRoOedOFY03O
