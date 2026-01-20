@@ -9,14 +9,19 @@
     SELECT address
     FROM TBL_ADDRESS_S
     WHERE address_sq = #{addressSq}
-	</select>
-	
-	
+	</select>	
 	
 	<select id="findAreaInfoBySq" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
     SELECT area_code_sq, sigungu
     FROM TBL_ADDRESS_S
     WHERE address_sq = #{addressSq}
+	</select>
+	
+	<select id="findCoordinates" resultType="com.example.demo.domain.project.dto.response.AreaCoordinateResponse">
+	SELECT latitude, longitude 
+	FROM TBL_ADDRESS_S
+    WHERE address_sq = #{addressSq} 
+	
 	</select>
 	
 	<insert id="createAddress"

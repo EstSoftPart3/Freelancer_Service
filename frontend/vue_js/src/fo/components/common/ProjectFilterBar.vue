@@ -248,7 +248,7 @@
               >지원자순</a
             >
           </li>
-          <li>
+          <li v-if="isLoggedIn">
             <a
               class="dropdown-item"
               href="#"
@@ -519,6 +519,8 @@
 import { ref, defineEmits, onMounted, computed, watch } from 'vue'
 import { api } from '@/axios.js'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '@/fo/stores/userStore'
+import { storeToRefs } from 'pinia'
 
 const emit = defineEmits(['update'])
 const route = useRoute()
@@ -643,6 +645,10 @@ const fetchFilterOptions = async () => {
   }
 }
 
+//checking loggedIn
+const userStore = useUserStore()
+const { isLoggedIn } = storeToRefs(userStore)
+
 onMounted(fetchFilterOptions)
 
 // Watch for changes and emit update
@@ -674,6 +680,12 @@ watch(
     } else if (selectedSort.value === '지원자순') {
       filters.sortBy = 'applicant_count'
       filters.sortOrder = 'desc'
+    } else if (selectedSort.value === '거리순' && !isLoggedIn.value) {
+      alert('로그인이 필요한 기능입니다.')
+      return
+    } else if (selectedSort.value === '거리순' && isLoggedIn.value) {
+      filters.sortBy = 'distance'
+      filters.sortOrder = 'asc'
     }
     emit('update', filters)
   },

@@ -36,6 +36,7 @@ import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
 import com.example.demo.domain.project.dto.request.SkillInsertRequest;
+import com.example.demo.domain.project.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
 import com.example.demo.domain.project.dto.response.GroupSkillInfoResponse;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
@@ -53,10 +54,13 @@ import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.mapper.ScrapMapper;
 import com.example.demo.domain.project.mapper.SkillMapper;
+import com.example.demo.domain.project.util.DistanceUtils;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
+import com.example.demo.domain.project.vo.ProjectSearchResultWithDistance;
 import com.example.demo.domain.project.vo.ProjectSummary;
 import com.example.demo.domain.user.controller.FindController;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
@@ -79,6 +83,8 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final AffiliationMapper affiliationMapper;
 	private final NotificationService notificationService;
+	//user DB
+	private final UserMapper userMapper; 
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -158,21 +164,59 @@ public class ProjectService {
 	}
 
 	// 주소 문자열로 변환 (ex: "서울 강남구")
-	public String fetchAddressString(Long addressSq) {
+	public String fetchAddressString(Long addressSq) {		
 		AreaInfoResponse subDistrict = addressMapper.findAreaInfoBySq(addressSq);
+		// 안전장치:DB에 없는 addressSq인 경우
+		if (subDistrict == null) {
+			return "주소 미상"; 
+		}
+		
 		AreaInfoResponse parentDistrict = districtMapper.findParentDisctrictByCodeSq(subDistrict.getAreaSq());
-
-		String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
+		
+        String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
+//		String parentName = "";
+//		
+//		// 안전장치2: 부모 지역이 존재할 때에만 이름 추출		
+//		if (parentDistrict != null) {
+//			String originName = parentDistrict.getAreaName(); 
+//			if (originName != null) {
+//				parentName = originName.replace("전체", "").trim(); 
+//			}
+//		}
 		return parentName + " " + subDistrict.getAreaName();
 	}
 
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
-		List<Project> projects = projectMapper.findProjectsBySearch(request);
-		Long totalCount = projectMapper.countProjectsBySearch(request);
-		List<ProjectSummary> responses = new ArrayList<>();
-
+//		List<Project> projects = projectMapper.findProjectsBySearch(request);
 		Long userSq = (token != null) ? token.getUserSq() : null;
+		
+		// 사용자 위도 경도 획득
+		Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+		AreaCoordinateResponse userCoord = addressMapper.findCoordinates(userAddressSq); 
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+		// 디버깅
+		System.out.println(">>> [Debug] Befere Mapper"); 
+		System.out.println(">>> userLatitude: "+userLatitude); 
+		System.out.println(">>> userLongitude: "+userLongitude); 
+		System.out.println(">>> request: "+request); 
+		
+		List<ProjectSearchResultWithDistance> projects = null;
+		
+		try {
+//			List<ProjectSearchResultWithDistance> projects = projectMapper.findProjectBySearchWithDistances(request, userLongitude, userLatitude); 
+			projects = projectMapper.findProjectsBySearchWithDistance(request, userLongitude, userLatitude);
+			System.out.println(">>> [Debug] Mapper Success! List Size : "+projects != null ? projects.size() : "null"); 
+			
+		} catch (Exception e) {
+			System.out.println(">>> Fatal Error] Mapper Error"); 
+			e.printStackTrace();
+			throw e; 
+		}
+		
+		Long totalCount = projectMapper.countProjectsBySearch(request);
+		List<ProjectSummary> responses = new ArrayList<>();		
 
 		projects.forEach(
 				p -> {
@@ -187,7 +231,29 @@ public class ProjectService {
 					}
 
 					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
+					 
+					AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
+					Double distance = p.getDistance(); 
+					
+					// 디버깅 코드 //
+					
+//					System.out.println("===========좌표 디버깅==========="); 
+//					System.out.println("프로젝트ID : " + p.getProjectSq()); 
+//					System.out.println("주소 키(AddressSq): " + p.getAddressSq()); 
+//					if (coord == null) {
+//						System.out.println("결과: coord 객체가 NULL 입니다! (SQL 조회 실패)"); 
+//					} else {
+//						System.out.println("결과: 위도=" + coord.getLatitude() + ", 경도 = " + coord.getLongitude()); 
+//					}
+//					System.out.println("=============================="); 
+					
+					// 디버깅 코드 끝 // 					
+					
+					// 좌표 null 대비
+					Double latitude = (coord != null) ? coord.getLatitude() : null; 
+					Double longitude = (coord != null ) ? coord.getLongitude() : null; 
+					
+					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl, latitude, longitude, distance));
 				});
 
 		int page = (request.getOffset() / request.getSize()) + 1;
@@ -261,6 +327,12 @@ public class ProjectService {
 		int hasScrapped = 0;
 		int hasApplied = 0;
 		UserRole userRole = UserRole.PERSONAL; // 기본값 설정
+		
+		//사용자 위치정보 획득 위한 변수 설정
+		Long userAddressSq = null;
+		AreaCoordinateResponse userCoord = null; 
+		Double userLatitude = null; 		
+		Double userLongitude = null; 
 
 		if (token != null) {
 			Long userSq = token.getUserSq();
@@ -276,10 +348,26 @@ public class ProjectService {
 				hasApplied = projectApplicationMapper.findByProAndUser(projectSq, userSq) != null ? 1 : 0;
 			}
 			userRole = findUserRole(token, p);
+			//위치기반 서비스
+			// 사용자 위도 경도 획득
+			userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+			userCoord = addressMapper.findCoordinates(userAddressSq); 
+			userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+			userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+			// 디버깅
+			System.out.println(">>> [Debug] Befere Mapper"); 
+			System.out.println(">>> userLatitude: "+userLatitude); 
+			System.out.println(">>> userLongitude: "+userLongitude); 		
 		}
+		
+		AreaCoordinateResponse coord = addressMapper.findCoordinates(p.getAddressSq());
+		Double latitude = (coord != null) ? coord.getLatitude() : null; 
+		Double longitude = (coord != null ) ? coord.getLongitude() : null; 
+		
+		double distance = DistanceUtils.calculateDistance(userLatitude, userLongitude, latitude, longitude); 
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
-				hasApplied, userRole);
+				hasApplied, userRole, longitude, latitude, distance);
 	}
 
 	public Long fetchScrapCount(Long projectSq) {

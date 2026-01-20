@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.example.demo.domain.project.entity.ProjectApplicationEntity;
 import com.example.demo.domain.project.vo.ProjectReminderVo;
+import com.example.demo.domain.project.vo.ProjectSearchResultWithDistance;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,10 +24,13 @@ import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectRecruitStatus;
 import com.example.demo.domain.project.dto.response.SingleSkillInfoResponse;
 import com.example.demo.domain.project.entity.Project;
+import com.example.demo.domain.project.vo.ProjectSearchResultWithDistance; 
+
 
 @Mapper
 public interface ProjectMapper {
 	List<Project> findProjectsBySearch(ProjectSearchRequest request);
+	List<ProjectSearchResultWithDistance> findProjectsBySearchWithDistance(@Param("request") ProjectSearchRequest request, @Param("userLongitude") Double userLongitude, @Param("userLatitude") Double userLatitude); 
 	List<Project> findProjectsByCompany(@Param("companySq") Long companySq, @Param("request") CompanyFilterRequest request);
 	SkillInsertRequest findSkillTagInfoByName(@Param("name") String name);
 	long findCompanySqFromProjectSq(long projectSq);

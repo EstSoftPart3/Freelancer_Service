@@ -72,8 +72,9 @@ public class SecurityConfigDev {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/login","/refresh-token").permitAll()
+                        .requestMatchers("/api/map/static").permitAll()
                         .requestMatchers("/me","/logout").authenticated() // ✅ 사용자 정보는 인증 필요
-                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()                        
                         .anyRequest().permitAll() // 그 외는 자유 접근 (필요시 조정)
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

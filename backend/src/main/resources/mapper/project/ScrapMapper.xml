@@ -34,6 +34,5 @@
 				#{sq}
 			</foreach>	
 	</select>
-	
-	
+
 </mapper>

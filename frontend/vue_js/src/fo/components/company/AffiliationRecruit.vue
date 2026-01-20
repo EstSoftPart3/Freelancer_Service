@@ -52,6 +52,34 @@
         <div class="text-dark" id="companyLocation">
           {{ afltnInfo.address }}
         </div>
+        <div class="d-flex justify-content-center align-items-center">
+          <div
+            v-show="afltnInfo"
+            id="naver-map"
+            class="bg-primary"
+            style="width: 300px; height: 300px"
+          >
+            <img
+              :src="`/api/map/static?latitude=${afltnInfo.comLatitude}&longitude=${afltnInfo.comLongitude}`"
+              alt="네이버 정적 지도"
+              style="width: 100%; height: 300px"
+            />
+          </div>
+          <div v-show="!afltnInfo" class="empty-map">
+            <p>회사의 주소 정보가 없습니다.</p>
+          </div>
+        </div>
+      </div>
+      <!-- 주소지에서의 거리 시간 정보 -->
+      <div class="mb-3">
+        <label
+          for="distanceToCompanyLocation"
+          class="form-label text-primary text-bold"
+          >추정 거리
+        </label>
+        <div class="text-dark" id="companyLocation">
+          {{ formatDistance(afltnInfo.distance) }}
+        </div>
       </div>
 
       <!-- 간단한 설명 -->
@@ -225,6 +253,17 @@ const openResumeModal = () => {
     return
   }
   modalStore.openModal(ResumeListModal)
+}
+
+// 거리 정보 방어선
+const formatDistance = (distance) => {
+  if (distance === null) {
+    return ''
+  }
+  if (distance === undefined) {
+    return '거리를 계산 중입니다.'
+  }
+  return distance.toFixed(2) + ' km'
 }
 </script>
 <style>

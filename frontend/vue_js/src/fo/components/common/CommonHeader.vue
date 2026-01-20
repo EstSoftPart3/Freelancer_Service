@@ -67,7 +67,10 @@
                         <li>
                           <router-link
                             class="dropdown-item"
-                            to="/projectListPage"
+                            :to="{
+                              path: '/projectListPage',
+                              query: { mode: 'list' },
+                            }"
                           >
                             리스트
                           </router-link>
@@ -75,7 +78,10 @@
                         <li>
                           <router-link
                             class="dropdown-item"
-                            to="/projectListPage"
+                            :to="{
+                              path: '/projectListPage',
+                              query: { mode: 'map' },
+                            }"
                           >
                             지도
                           </router-link>

@@ -51,5 +51,8 @@ public interface UserMapper {
     int updatePasswordByUserSq(@Param("userSq") Long userSq, @Param("newPassword") String newPassword);
 
     UserDTO findByEmail(@Param("email") String email);
+    
+    // 사용자 주소 순번 획득
+    Long findAddressSqByUserSq(@Param("userSq") Long userSq); 
 
 }

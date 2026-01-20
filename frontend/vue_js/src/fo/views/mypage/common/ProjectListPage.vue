@@ -25,34 +25,52 @@
       </div>
 
       <!-- 리스트 탭과 지도 탭으로 구분하기 -->
-      <button class="btn btn-rounded btn-primary me-2">
-        목록/지도 탭 전환
+      <button
+        class="btn btn-rounded btn-primary me-2"
+        v-if="!isListMode"
+        @click="changeMode('list')"
+      >
+        목록 탭 전환
+      </button>
+      <button
+        class="btn btn-rounded btn-primary me-2"
+        v-if="isListMode"
+        @click="changeMode('map')"
+      >
+        지도 탭 전환
       </button>
 
-      <ProjectCardGroup :projects="projects" />
-      <div v-if="projects.length === 0" class="text-center text-muted py-5">
-        조건에 맞는 프로젝트가 없습니다.
-      </div>
       <div>
-        <CommonPagination
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          @update:currentPage="currentPage = $event"
-        />
+        <KeepAlive>
+          <component :is="currentViewComponent" :projects="projects" />
+        </KeepAlive>
+        <div v-if="projects.length === 0" class="text-center text-muted py-5">
+          조건에 맞는 프로젝트가 없습니다.
+        </div>
+        <div>
+          <CommonPagination
+            :currentPage="currentPage"
+            :totalPages="totalPages"
+            @update:currentPage="currentPage = $event"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup>
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
-import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
+// import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { api } from '@/axios.js'
 import qs from 'qs'
+import ProjectListView from '@/fo/components/project/ProjectListView.vue'
+import ProjectMapView from '@/fo/components/project/ProjectMapView.vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 
@@ -72,6 +90,25 @@ const filters = ref({
 const currentPage = ref(1)
 const totalPages = ref('')
 const projects = ref([])
+
+// URL로 상태관리하기 위한 라우터 객체 가져오기
+const route = useRoute()
+const router = useRouter()
+
+// 탭 전환용 상태관리 변수
+const isListMode = computed(() => {
+  return route.query.mode !== 'map'
+})
+
+// 조건에 따라 다른 컴포넌트 부르기기 위한 조건에 따라 바뀌는 변수 설정
+const currentViewComponent = computed(() => {
+  return isListMode.value ? ProjectListView : ProjectMapView
+})
+
+//모드 변경 함수
+const changeMode = (modeName) => {
+  router.replace({ query: { ...route.query, mode: modeName } })
+}
 
 onMounted(async () => {
   fetchProjects()

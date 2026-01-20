@@ -9,12 +9,16 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
+import com.example.demo.domain.map.mapper.MapAddressMapper;
+import com.example.demo.domain.map.util.DistanceUtil;
 import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectScrapResponseDTO;
 import com.example.demo.domain.mypage.repository.ProjectScrapRepository;
+import com.example.demo.domain.user.mapper.UserMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProjectScrapService {
     private final ProjectScrapRepository repository;
+    private final UserMapper userMapper; 
+    private final MapAddressMapper addressMapper; 
 
     public ProjectScrapResponseDTO getScrappedProjects(Long userSq, String searchType, String searchKeyword, int page,
             int size) {
@@ -33,7 +39,13 @@ public class ProjectScrapService {
         }
 
         List<Long> projectSqs = repository.findScrappedProjects(userSq, searchType, searchKeyword, offset, size);
-
+        
+        //user 위치 획득        
+       	Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null;
+        AreaCoordinateResponse userCoord = (userAddressSq != null) ? addressMapper.findCoordinates(userAddressSq) : null; 
+        Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+        Double userLongitude = (userCoord != null) ? userCoord.getLongitude() : null;         	
+        
         List<ProjectScrapDTO> dtos = projectSqs.stream().map(projectSq -> {
             ProjectDTO basic = repository.findBasic(projectSq);
             CompanyDTO company = repository.findCompany(projectSq);
@@ -42,6 +54,21 @@ public class ProjectScrapService {
             String developer = repository.findDeveloperGradeName(basic.getDeveloperGradeCd());
             List<String> skillTags = repository.findSkillTags(projectSq);
             long dDay = ChronoUnit.DAYS.between(LocalDate.now(), basic.getRecruitEndDt());
+            //거리 정보 추가
+            Long comAddressSq = repository.findAddressSq(projectSq); 
+            
+            Double comLatitude = null;
+            Double comLongitude = null; 
+            
+            if (comAddressSq != null) {
+            	AreaCoordinateResponse comCoord = addressMapper.findCoordinates(comAddressSq);  
+            	
+            	if (comCoord != null) {
+            		comLatitude = comCoord.getLatitude();
+            		comLongitude = comCoord.getLongitude();             		
+            	}
+            }
+            Double distance = DistanceUtil.calculateDistance(userLatitude, userLongitude, comLatitude, comLongitude); 
 
             return ProjectScrapDTO.builder()
                     .projectSq(projectSq)
@@ -56,6 +83,7 @@ public class ProjectScrapService {
                     .developerGrade(developer)
                     .skillTags(skillTags)
                     .dDay(dDay)
+                    .distance(distance)
                     .build();
         }).collect(Collectors.toList());
 

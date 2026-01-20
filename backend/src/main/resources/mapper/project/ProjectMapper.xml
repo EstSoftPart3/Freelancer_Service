@@ -31,6 +31,80 @@
 	    <result property="minTime" column="minTime" javaType="java.time.LocalDateTime"/>
 	    <result property="maxTime" column="maxTime" javaType="java.time.LocalDateTime"/>
 	</resultMap>
+	<resultMap id="distanceResultMap" type="com.example.demo.domain.project.vo.ProjectSearchResultWithDistance" extends="projectMap">
+		<result property="distance" column="distance"/>
+	</resultMap>
+	<!-- 거리정보 추가하면서 기존의 쿼리 보존 -->
+	<sql id="baseProjectSearchFromBody">
+		FROM TBL_PROJECT_M p 
+	</sql>
+	<sql id="baseProjectSearchWhereBody">
+		WHERE p.project_is_deleted_yn = 'N' <if
+			test="request.addressCodeSq != null and request.addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
+		WHERE parent_area_code_sq IN <foreach item="request.item" collection="request.addressCodeSq" open="("
+				separator="," close=")"> #{request.item} </foreach> ) ) </if>
+		<if
+			test="request.projectDeveloperGradeCd != null and request.projectDeveloperGradeCd.size() > 0"> AND
+		p.project_developer_grade_cd IN <foreach item="request.item" collection="request.projectDeveloperGradeCd"
+				open="(" separator=","
+				close=")"> #{request.item} </foreach>
+		</if>
+		<if
+			test="request.educationCd != null and request.educationCd.size() > 0"> AND
+		p.project_required_education_cd IN <foreach item="request.item" collection="request.educationCd" open="("
+				separator="," close=")"> #{request.item} </foreach>
+		</if>
+		<if
+			test="request.jobRoleCd != null and request.jobRoleCd.size() > 0"> AND EXISTS ( SELECT 1 FROM
+		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
+		jr.recruit_job_position_type_cd IN <foreach item="request.item" collection="request.jobRoleCd" open="("
+				separator="," close=")"> #{request.item} </foreach> ) </if>
+		<if
+			test="request.searchKeyword != null and request.searchKeyword != ''">
+			<choose>
+				<when test="request.searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
+		#{request.searchKeyword}, '%') </when>
+				<when test="request.searchType == '작성자명'"> AND EXISTS ( SELECT * FROM TBL_COMPANY_S c JOIN
+		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
+		CONCAT('%', #{request.searchKeyword}, '%') ) </when>
+				<when test="request.searchType == '내용'"> AND ( p.project_preference_txt LIKE CONCAT('%',
+		#{request.searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{request.searchKeyword}, '%')
+		) </when>
+				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
+		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
+		LIKE CONCAT('%', #{request.searchKeyword}, '%') ) </when>
+				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{request.searchKeyword}, '%') OR
+		p.project_description_txt LIKE CONCAT('%', #{request.searchKeyword}, '%') OR
+		p.project_preference_txt LIKE CONCAT('%', #{request.searchKeyword}, '%') OR EXISTS ( SELECT 1 FROM
+		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
+		LIKE CONCAT('%', #{request.searchKeyword}, '%') ) ) </otherwise>
+			</choose>
+		</if>
+	</sql>
+	<sql id="baseProjectSort">
+		<choose>
+			<when test="request.sortBy != null and request.sortOrder != null">
+				<choose>
+					<when test="request.sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
+		${request.sortOrder} </when>
+					<when test="request.sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${request.sortOrder} </when>
+					<when test="request.sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
+		${request.sortOrder} </when>
+					<when test="request.sortBy == 'distance'"> ORDER BY distance ${request.sortOrder} </when>
+					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+				</choose>
+			</when>
+			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+		</choose>
+		<if
+			test="request.size != null and request.offset != null"> LIMIT #{request.size} OFFSET #{request.offset} </if>
+	</sql>
+	<sql id="distanceColumn">
+		, (6371 * acos(cos(radians(#{userLatitude})) * cos(radians(a.latitude)) 
+            * cos(radians(a.longitude) - radians(#{userLongitude})) 
+            + sin(radians(#{userLatitude})) * sin(radians(a.latitude)))) 
+            AS distance</sql>
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
 		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
@@ -91,7 +165,15 @@
 		<if
 			test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
-
+	
+	<!-- 거리정보를 추가한 프로젝트 탐색 -->
+	<select id="findProjectsBySearchWithDistance" resultMap="distanceResultMap">
+		SELECT p.* <include refid="distanceColumn"/>
+		<include refid="baseProjectSearchFromBody"/>
+		LEFT JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq
+		<include refid="baseProjectSearchWhereBody"/>
+		<include refid="baseProjectSort"/>
+	</select>
 
 	<select id="findProjectsByCompany" resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE
 		company_sq = #{companySq} AND project_is_deleted_yn = 'N' <if

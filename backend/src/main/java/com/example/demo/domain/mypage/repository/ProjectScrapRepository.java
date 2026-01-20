@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
@@ -58,5 +59,9 @@ public class ProjectScrapRepository {
 	public List<Long> getScrapProjectIds(Long userSq) {
 		// TODO Auto-generated method stub
 		return mapper.getScrapProjectIds(userSq);
+	}
+	//위치정보 
+	public Long findAddressSq(Long projectSq) {
+		return mapper.findAddressSq(projectSq); 
 	}
 }

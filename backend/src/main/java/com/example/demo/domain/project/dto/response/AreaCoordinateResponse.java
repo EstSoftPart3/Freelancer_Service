@@ -7,8 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
-public class AreaInfoResponse {
-	private Long areaSq;
-	private String areaName;
+public class AreaCoordinateResponse {
+	private Double latitude; 
+	private Double longitude; 
 }
