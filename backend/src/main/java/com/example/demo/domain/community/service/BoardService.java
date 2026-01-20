@@ -30,6 +30,7 @@ public class BoardService {
 	private final BoardMapper boardMapper;
 	private final CmntTagMapper cmntTagMapper;
 	private final CommentMapper commentMapper;
+	private final CommentService commentService; // [추가] 트리 변환 로직 사용을 위해 주입
 	private final AnswerMapper answerMapper;
 	private final NormalTagConverter normalTagConverter;
 	private final SkillTagConverter skillTagConverter;
@@ -105,8 +106,10 @@ public class BoardService {
 
 		List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
 
-		// 게시글의 댓글 조회
-		List<CommentResponse> comments = commentMapper.findByBoardSq(boardSq).stream()
+		// --- [댓글 조회 및 트리 구조 변환 로직 시작] ---
+
+		// 1. 게시글의 모든 댓글 조회 (평면 리스트)
+		List<CommentResponse> flatComments = commentMapper.findByBoardSq(boardSq).stream()
 				.filter(Objects::nonNull)
 				.map(comment -> {
 					UserDTO userDto = communityUserMapper.findById(comment.getUserSq());
@@ -115,6 +118,11 @@ public class BoardService {
 				})
 				.collect(Collectors.toList());
 
+		// 2. [핵심] CommentService의 유틸리티를 사용하여 트리 구조로 변환
+		List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
+
+		// --- [댓글 조회 및 트리 구조 변환 로직 종료] ---
+
 		// 게시글의 첨부파일 조회
 		List<Long> fileSqs = boardMapper.findFiles(boardSq);
 		List<BoardAttachmentResponse> files = fileSqs.stream()
@@ -122,17 +130,18 @@ public class BoardService {
 				.map(fileSq -> {
 					BoardAttachment attachment = boardMapper.findFile(fileSq);
 					if (attachment == null)
-						return null; // null 체크 추가
+						return null;
 					return BoardAttachmentResponse.builder()
 							.fileSq(attachment.getFileSq())
 							.fileOriginalNm(attachment.getFileOriginalNm())
 							.fileSaveNm(attachment.getFileSaveNm())
 							.build();
 				})
-				.filter(Objects::nonNull) // null 결과 제거
+				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 
-		return BoardResponse.fromEntity(board, userNm, normalTags, skillTags, answerListResponses, comments, userSq,
+		// 변환된 commentTree를 넘겨줍니다.
+		return BoardResponse.fromEntity(board, userNm, normalTags, skillTags, answerListResponses, commentTree, userSq,
 				files);
 	}
 
