@@ -32,8 +32,7 @@ public class SecurityConfigDev {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("http://localhost:8504");
         configuration.addAllowedOrigin("http://localhost:3000");
-        configuration.addAllowedOrigin("https://31f05472343a.ngrok-free.app");
-        configuration.addAllowedOrigin("https://test-paulbaeks-projects.vercel.app");
+        configuration.addAllowedOrigin("https://job.estsw.co.kr");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true); // 쿠키 허용

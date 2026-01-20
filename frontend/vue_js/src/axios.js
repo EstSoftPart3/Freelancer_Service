@@ -1,15 +1,16 @@
 import axios from 'axios'
 
-const baseUrl = 'http://localhost:8080/api'
+const baseUrl = 'https://job.estsw.co.kr/api'
+// const baseUrl = 'http://localhost:8080/api'
 // const baseUrl = '/api'
 // const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api'
 
 // axios 인스턴스 생성
 const apiInstance = axios.create({
   baseURL: baseUrl,
-  headers: {
-    'ngrok-skip-browser-warning': '65455',
-  }, // ngrok 무료버전으로 해당 페이지 스킵을 위한 설정
+  // headers: {
+  //   'ngrok-skip-browser-warning': '65455',
+  // }, // ngrok 무료버전으로 해당 페이지 스킵을 위한 설정
 })
 
 // 요청 인터셉터 설정
