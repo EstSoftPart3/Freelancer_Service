@@ -6,7 +6,6 @@
         id="naver-map"
         style="width: 100%; height: 100%; background: #eee"
       >
-        네이버 지도 영역
         <img
           :src="mapImageUrl"
           alt="네이버 정적 지도"
