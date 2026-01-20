@@ -28,6 +28,7 @@ import com.example.demo.domain.project.dto.request.SkillInsertRequest;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
 import com.example.demo.domain.project.dto.response.GroupSkillInfoResponse;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
+import com.example.demo.domain.project.dto.response.MainProjectResponse;
 import com.example.demo.domain.project.dto.response.ProjectDetailResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectListResponse;
@@ -469,5 +470,45 @@ public class ProjectService {
 			return UserRole.COMPANY_MEMBER;
 		}
 		return UserRole.COMPANY_EXTERNAL;
+	}
+
+	// 메인페이지용
+	public List<MainProjectResponse> fetchMainPopularProjects(String sortType) {
+		// 1. 기본 프로젝트 리스트 조회 (5~6개)
+		List<Project> projects = projectMapper.selectMainPopularProjects(sortType, 5);
+
+		return projects.stream().map(p -> {
+			Long sq = p.getProjectSq();
+
+			// 2. 기존 util 및 mapper 메서드 재활용
+			String address = fetchAddressString(p.getAddressSq()); // 기존 메서드
+			String experience = projectUtil.convertCommonCodeSqToNm(p.getProjectDeveloperGradeCd());
+
+			// 3. 기술 스택 가져오기 (상세페이지 로직 활용)
+			// 간단하게 이름 리스트만 추출
+			List<String> skillNames = projectMapper.findReqSkillsByProjectSq(sq)
+					.stream()
+					.map(s -> s.getChildSkillTagNm())
+					.limit(3) // 메인에는 최대 3개만 표시
+					.toList();
+
+			return MainProjectResponse.builder()
+					.projectSq(sq)
+					.projectTtl(p.getProjectTtl())
+					.companyNm(projectUtil.convertCompanySqToName(p.getCompanySq()))
+					.projectAddress(address)
+					.projectExperience(experience)
+					.projectSalary(p.getProjectSalary())
+					.formattedSalary(formatSalary(p.getProjectSalary())) // 단가 가공 로직
+					.projectSkills(skillNames)
+					.build();
+		}).collect(Collectors.toList());
+	}
+
+	// 단가 가공 로직 예시
+	private String formatSalary(Long salary) {
+		if (salary == null || salary == 0)
+			return "단가 협의";
+		return "월 " + (salary / 10000) + "만원";
 	}
 }

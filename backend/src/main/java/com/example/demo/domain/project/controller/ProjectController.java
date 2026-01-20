@@ -24,6 +24,7 @@ import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
 import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
+import com.example.demo.domain.project.dto.response.MainProjectResponse;
 import com.example.demo.domain.project.dto.response.ProjectDetailResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectListResponse;
@@ -133,5 +134,11 @@ public class ProjectController {
 	public ResponseEntity<ApiResponse<List<?>>> getSearchFilterInfos(@RequestParam("type") String type) {
 		return ResponseEntity
 				.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 필터 내용 반환 성공", projectService.fetchFilterInfos(type)));
+	}
+
+	@GetMapping("/popular")
+	public ResponseEntity<List<MainProjectResponse>> getPopularProjects(
+			@RequestParam(defaultValue = "views") String sortType) {
+		return ResponseEntity.ok(projectService.fetchMainPopularProjects(sortType));
 	}
 }
