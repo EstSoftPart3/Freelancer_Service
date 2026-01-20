@@ -16,7 +16,7 @@ public class WithdrawRepository {
         return withdrawMapper.selectUserForWithdraw(userSq);
     }
 
-    public int withdraw(Long userSq) {
-        return withdrawMapper.updateWithdrawUser(userSq);
+    public int withdraw(Long userSq, String emailToUpdate) { 
+        return withdrawMapper.updateWithdrawUser(userSq, emailToUpdate);
     }
 }

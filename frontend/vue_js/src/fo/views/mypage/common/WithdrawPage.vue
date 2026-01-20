@@ -13,7 +13,6 @@
       novalidate
       @keydown.enter.prevent
     >
-      <!-- 탈퇴 유의사항 textarea -->
       <div class="form-group row mb-4">
         <label class="col-lg-3 col-form-label form-control-label text-2"
           >회원 탈퇴 안내</label
@@ -37,25 +36,37 @@
         </div>
       </div>
 
-      <!-- 아이디 입력 -->
       <div class="form-group row">
         <label
           class="col-lg-3 col-form-label form-control-label text-2 required"
-          >아이디</label
         >
+          {{ isSocialUser ? '본인 확인 이메일' : '아이디' }}
+        </label>
         <div class="col-lg-9">
           <input
             class="form-control text-3 h-auto py-2"
             type="text"
-            v-model="userId"
+            v-model="userInput"
+            :placeholder="
+              isSocialUser
+                ? '보안을 위해 가입된 이메일을 입력해 주세요'
+                : '아이디를 입력해 주세요'
+            "
           />
           <div class="invalid-feedback text-danger" v-if="isInvalidUserId">
-            아이디를 입력해 주세요.
+            {{
+              isSocialUser
+                ? '이메일 주소가 일치하지 않습니다.'
+                : '아이디를 올바르게 입력해 주세요.'
+            }}
           </div>
+          <small v-if="isSocialUser" class="text-muted mt-1 d-block">
+            소셜 계정은 아이디 대신 가입된 이메일 주소 인증을 통해 탈퇴가
+            가능합니다.
+          </small>
         </div>
       </div>
 
-      <!-- 탈퇴 신청자 입력 -->
       <div class="form-group row">
         <label
           class="col-lg-3 col-form-label form-control-label text-2 required"
@@ -76,7 +87,6 @@
         </div>
       </div>
 
-      <!-- 체크박스 -->
       <div class="form-group row">
         <div class="col-lg-12">
           <div class="form-check">
@@ -99,7 +109,6 @@
         </div>
       </div>
 
-      <!-- 탈퇴하기 버튼 -->
       <div class="form-group row mt-4">
         <div class="col text-center">
           <button type="submit" class="btn btn-danger btn-modern">
@@ -130,7 +139,9 @@ const alertStore = useAlertStore()
 const userStore = useUserStore()
 const modalStore = useModalStore()
 
-const userId = ref('')
+const userId = ref('') // 서버 전송용 실제 ID (S_...)
+const userEmail = ref('') // 소셜 유저 확인용 이메일
+const userInput = ref('') // 화면 입력값 (ID 또는 이메일)
 const applicantName = ref('')
 const agreeCheck = ref(false)
 
@@ -141,7 +152,10 @@ const isInvalidAgreeCheck = ref(false)
 const handleSubmit = async (event) => {
   event.preventDefault()
 
-  isInvalidUserId.value = !userId.value.trim()
+  // 본인 확인 검증: 소셜 유저는 이메일과 비교, 일반 유저는 아이디와 비교
+  const targetValue = isSocialUser.value ? userEmail.value : userId.value
+  isInvalidUserId.value = userInput.value.trim() !== targetValue
+
   isInvalidApplicantName.value = !applicantName.value.trim()
   isInvalidAgreeCheck.value = !agreeCheck.value
 
@@ -159,7 +173,7 @@ const handleSubmit = async (event) => {
     onConfirm: async () => {
       try {
         const response = await api.$post('/mypage/withdraw', {
-          userId: userId.value,
+          userId: userId.value, // 서버로는 실제 식별자인 S_... 값을 보냄
           userNm: applicantName.value,
         })
 
@@ -185,6 +199,7 @@ const handleSubmit = async (event) => {
     },
   })
 }
+
 //추가 소셜 유저 탈퇴 페이지
 async function fetchUserInfo() {
   try {
@@ -199,9 +214,13 @@ async function fetchUserInfo() {
       isConfirmed.value = true // 비밀번호 체크창 스킵
     }
 
-    // 탈퇴 폼에 아이디 미리 채워놓지 않으면 소셜 유저는 탈퇴가 어려움
+    // 데이터 저장
     userId.value = data.userId
+    userEmail.value = data.userEmail
     applicantName.value = data.userNm
+
+    // [중요] 소셜 유저는 UI에서 S_ 아이디를 보여주지 않기 위해 userInput을 빈 값으로 유지
+    // 일반 유저의 경우 편의상 미리 채워줄 수 있으나, 보안상 비워두는 것을 추천하여 userInput은 초기화 상태 유지
   } catch (err) {
     console.error('정보 조회 실패', err)
   }

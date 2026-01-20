@@ -54,7 +54,7 @@ const alertClass = computed(() => {
   transform: translateX(-50%);
   z-index: 9999;
   pointer-events: none;
-  max-width: 400px;
+  max-width: 500px;
   width: 90%;
 }
 

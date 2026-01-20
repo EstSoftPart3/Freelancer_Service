@@ -5,7 +5,7 @@
       <button type="button" class="btn-close" @click="closeModal"></button>
     </div>
     <div class="modal-body">
-      <p style="white-space: pre-line">{{ message }}</p>
+      <p>{{ message }}</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" @click="onConfirm">

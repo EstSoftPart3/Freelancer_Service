@@ -76,12 +76,20 @@
           <label class="col-lg-2 col-form-label text-2">아이디</label>
           <div class="col-lg-10">
             <input
+              v-if="!isSocialUser"
               class="form-control text-3 h-auto py-2 border-0"
               type="text"
               name="username"
               :value="form.userId"
               readonly
             />
+
+            <div
+              v-else
+              class="form-control text-3 h-auto py-2 border-0 text-muted"
+            >
+              구글 소셜 계정으로 이용 중입니다
+            </div>
           </div>
         </div>
 
