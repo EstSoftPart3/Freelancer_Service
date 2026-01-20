@@ -15,6 +15,7 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentSq;
+    private Long parentCommentSq; // 부모 댓글 번호 추가
     private Long userSq;
     private Long boardSq;
     private Long answerSq;
