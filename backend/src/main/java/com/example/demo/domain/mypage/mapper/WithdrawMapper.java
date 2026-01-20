@@ -9,5 +9,8 @@ import com.example.demo.domain.mypage.dto.UserInfoDTO;
 public interface WithdrawMapper {
     UserInfoDTO selectUserForWithdraw(@Param("userSq") Long userSq);
 
-    int updateWithdrawUser(@Param("userSq") Long userSq);
+    int updateWithdrawUser(
+            @Param("userSq") Long userSq, 
+            @Param("emailToUpdate") String emailToUpdate
+        );
 }

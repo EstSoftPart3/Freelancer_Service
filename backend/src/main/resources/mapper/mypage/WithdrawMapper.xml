@@ -7,6 +7,8 @@
         SELECT user_id, user_nm FROM TBL_USER_M WHERE user_sq = #{userSq} </select>
 
     <update id="updateWithdrawUser"> UPDATE TBL_USER_M SET user_is_deleted_yn = 'Y',
-        user_modified_at_dtm = NOW() WHERE user_sq = #{userSq} </update>
+        user_email = #{emailToUpdate},  user_modified_at_dtm = NOW() 
+        WHERE 
+        user_sq = #{userSq} </update>
 
 </mapper>

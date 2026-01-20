@@ -184,6 +184,14 @@
                 >회원 탈퇴</router-link
               >
             </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/account"
+                @click="handleNavigate"
+                >계정 관리</router-link
+              >
+            </li>
           </ul>
         </li>
       </ul>

@@ -20,9 +20,9 @@
     id="insertUser" parameterType="com.example.demo.domain.user.dto.UserDTO"
     useGeneratedKeys="true" keyProperty="userSq"> INSERT INTO TBL_USER_M ( address_sq, user_id,
     user_email, user_pw, user_nm, user_gender_cd, user_phone_num, user_birth_dt, user_type_cd,
-    user_signup_type_cd ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw}, #{userNm},
-    #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd} ) </insert>
-   
+    user_signup_type_cd, social_id ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw}, #{userNm},
+    #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd}, #{socialId} ) </insert>
+
   <!-- 4. 주소순번 조회-->
   <select
   id="findAddressSqByUserSq" parameterType="Long" resultType="Long"> SELECT address_sq FROM TBL_USER_M WHERE user_sq = #{userSq} LIMIT 1 </select>
@@ -63,7 +63,7 @@
     id="findByUserId" parameterType="string"
     resultType="com.example.demo.domain.user.dto.UserDTO"> SELECT user_sq AS userSq, user_id AS
     userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
-    userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken FROM
+    userTypeCd, social_id AS socialId, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken FROM
     TBL_USER_M WHERE user_id = #{userId} and user_is_deleted_yn = 'N' </select>
 
   <update id="updateRefreshToken"> UPDATE TBL_USER_M SET user_refresh_token = #{refreshToken},
@@ -77,11 +77,10 @@
     user_is_deleted_yn, user_refresh_token FROM TBL_USER_M WHERE user_refresh_token =
     #{refreshToken} AND user_is_deleted_yn = 'N' </select>
 
-  <select
-    id="findUserInfoByUserSq" parameterType="long"
-    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT user_nm AS
-    userNm, user_type_cd AS userTypeCd FROM TBL_USER_M WHERE user_sq = #{userSq} AND
-    user_is_deleted_yn = 'N' </select>
+  <select id="findUserInfoByUserSq" parameterType="long"
+  	resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT user_sq AS userSq, 
+    user_id AS userId, user_nm AS userNm, user_email AS userEmail, social_id AS socialId,  user_type_cd AS userTypeCd 
+  	FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 
   <update id="deleteRefreshTokenByUserSq" parameterType="long"> UPDATE TBL_USER_M SET
     user_refresh_token = NULL WHERE user_sq = #{userSq} </update>
@@ -113,4 +112,24 @@
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
     parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_type_cd,
     user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
+    
+  <select id="findBySocialId" parameterType="string" 
+  resultType="com.example.demo.domain.user.dto.UserDTO"> SELECT user_sq AS userSq, 
+  	user_id AS userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, 
+  	user_type_cd AS userTypeCd, user_signup_type_cd AS userSignupTypeCd, social_id AS socialId, 
+  	user_is_deleted_yn AS userIsDeletedYn FROM TBL_USER_M WHERE social_id
+   	= #{socialId} AND user_is_deleted_yn = 'N' </select>
+
+  <update id="updateSocialId"> UPDATE TBL_USER_M SET social_id = #{socialId}, 
+  	user_modified_at_dtm = NOW() WHERE user_id = #{userId} AND user_is_deleted_yn = 'N' </update>
+  	
+  <update id="updateSocialIdToNull" parameterType="long">
+  	UPDATE TBL_USER_M SET social_id = NULL, user_modified_at_dtm = NOW() WHERE user_sq = #{userSq} 
+    AND user_is_deleted_yn = 'N'</update>
+    
+  <select id="findUserForSocialIntegration" resultType="com.example.demo.domain.user.dto.UserDTO" parameterType="string"> 
+    SELECT user_sq AS userSq, user_id AS userId, user_pw AS userPw, user_nm AS userNm, 
+    user_type_cd AS userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_email AS userEmail 
+    FROM TBL_USER_M WHERE user_email = #{email} AND user_is_deleted_yn = 'N'</select>
+  	
 </mapper>

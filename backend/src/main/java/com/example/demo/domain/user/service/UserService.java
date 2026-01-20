@@ -13,6 +13,7 @@ import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.request.SignUpRequestDTO;
 import com.example.demo.domain.user.dto.response.FindIdResponseDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,22 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public boolean isUserIdExists(String userId) {
         return userRepository.existsByUserId(userId);
+    }
+    
+    @Transactional(readOnly = true)
+    public UserDTO findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+    
+ // --- 추가된 메서드: 소셜 ID로 사용자 조회 ---
+    @Transactional(readOnly = true)
+    public UserDTO findBySocialId(String socialId) {
+        return userRepository.findBySocialId(socialId);
     }
 
     @Transactional
@@ -57,18 +70,26 @@ public class UserService {
         addressDTO.setAreaCodeSq(requestDto.getSigunguCode());
         userRepository.insertAddress(addressDTO);
 
-        // 4. 사용자 INSERT
+     // 4. 사용자 INSERT (소셜 대응 리팩토링)
         UserDTO userDTO = new UserDTO();
         userDTO.setAddressSq(addressDTO.getAddressSq());
         userDTO.setUserId(requestDto.getUserId());
         userDTO.setUserEmail(requestDto.getUserEmail());
-        userDTO.setUserPw(passwordEncoder.encode(requestDto.getUserPw())); // 암호화된 비밀번호
         userDTO.setUserNm(requestDto.getUserNm());
         userDTO.setUserGenderCd(requestDto.getUserGenderCd());
         userDTO.setUserPhoneNum(requestDto.getUserPhoneNum());
         userDTO.setUserBirthDt(requestDto.getUserBirthDt());
         userDTO.setUserTypeCd(requestDto.getUserTypeCd());
         userDTO.setUserSignupTypeCd(requestDto.getUserSignupTypeCd());
+
+        // 소셜 ID가 있다면 세팅, 비밀번호는 소셜 가입 시 암호화하지 않음 (null 허용)
+        if (requestDto.getSocialId() != null && !requestDto.getSocialId().isEmpty()) {
+            userDTO.setSocialId(requestDto.getSocialId());
+            userDTO.setUserPw(null); // 소셜 가입은 비밀번호가 없음
+        } else {
+            // 일반 가입일 때만 비밀번호 암호화
+            userDTO.setUserPw(passwordEncoder.encode(requestDto.getUserPw()));
+        }
 
         userRepository.insertUser(userDTO);
 
@@ -128,5 +149,18 @@ public class UserService {
         int updatedRows = userRepository.updatePassword(userSq, encodedPassword);
         return updatedRows > 0;
     }
-
+    @Transactional
+    public int linkSocialAccount(String userId, String socialId) {
+        // 1. 기존 유저가 있는지 체크 (선택사항이지만 보안상 권장)
+        if (!userRepository.existsByUserId(userId)) {
+            throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
+        }
+        
+        // 2. 리포지토리를 통해 DB의 social_id 컬럼만 업데이트
+        return userRepository.updateSocialId(userId, socialId);
+    }
+    
+    public UserDTO findUserForSocialIntegration(String email) {
+        return userMapper.findUserForSocialIntegration(email);
+    }
 }

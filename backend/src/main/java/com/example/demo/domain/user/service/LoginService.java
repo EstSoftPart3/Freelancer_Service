@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.user.dto.TokenDTO;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.util.JwtProvider;
 
@@ -19,6 +20,7 @@ public class LoginService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Transactional
     public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
@@ -49,7 +51,11 @@ public class LoginService {
 
         TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
         LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+        loginResponseDTO.setUserSq(user.getUserSq());
+        loginResponseDTO.setUserId(user.getUserId());
         loginResponseDTO.setUserNm(user.getUserNm());
+        loginResponseDTO.setUserEmail(user.getUserEmail());
+        loginResponseDTO.setSocialId(user.getSocialId());
         loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 
         return new LoginResultDTO(tokenDTO, loginResponseDTO);
@@ -102,5 +108,33 @@ public class LoginService {
     public void deleteRefreshTokenByUserSq(Long userSq) {
         userRepository.deleteRefreshTokenByUserSq(userSq);
     }
+    
+    @Transactional
+    public LoginResultDTO loginSocial(UserDTO user) {
+    	// 1. JWT 토큰 생성
+    	String accessToken = jwtProvider.createAccessToken(user);
+    	String refreshToken = jwtProvider.createRefreshToken(user);
+    	
+    	userRepository.updateRefreshToken(user.getUserSq(), refreshToken);
+    	
+    	// 3. 결과 전달용 DTO 조립
+    	TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
+    	
+    	LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+    	loginResponseDTO.setUserSq(user.getUserSq());
+        loginResponseDTO.setUserId(user.getUserId());
+        loginResponseDTO.setUserNm(user.getUserNm());
+        loginResponseDTO.setUserEmail(user.getUserEmail());
+        loginResponseDTO.setSocialId(user.getSocialId());
+        loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
+    	
+    	// 기존 LoginResultDTO 구조 사용해서 반환
+    	return new LoginResultDTO(tokenDTO, loginResponseDTO);
+    }
 
+    @Transactional
+    public boolean unlinkSocial(Long userSq) {
+        // 성공 시 1, 실패 시 0 반환
+        return userMapper.updateSocialIdToNull(userSq) > 0;
+    }
 }

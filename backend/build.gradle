@@ -32,6 +32,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글 OAuth2
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

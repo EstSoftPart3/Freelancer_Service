@@ -90,4 +90,13 @@ public class UserRepository {
         return userMapper.findByEmail(email);
     }
 
+ // 1. 소셜 고유 식별값(social_id)으로 유저 정보 조회
+    public UserDTO findBySocialId(String socialId) {
+        return userMapper.findBySocialId(socialId);
+    }
+
+    // 2. 계정 통합(연동)을 위해 social_id 업데이트
+    public int updateSocialId(String userId, String socialId) {
+        return userMapper.updateSocialId(userId, socialId);
+    }
 }

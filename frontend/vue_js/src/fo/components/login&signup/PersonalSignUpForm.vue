@@ -1,7 +1,7 @@
 <template>
   <form @submit.prevent="validateAll">
     <!-- 아이디 -->
-    <div class="row">
+    <div class="row" v-if="!isSocial">
       <div class="form-group col-lg-6">
         <label class="form-label"
           >아이디<i
@@ -21,7 +21,7 @@
     </div>
 
     <!-- 비밀번호 -->
-    <div class="row">
+    <div class="row" v-if="!isSocial">
       <div class="form-group col-lg-6">
         <label class="form-label"
           >비밀번호
@@ -63,7 +63,7 @@
     </div>
 
     <!-- 이름 -->
-    <div class="row">
+    <div class="row" v-if="!isSocial">
       <div class="form-group col-lg-6">
         <label class="form-label"
           >이름
@@ -77,6 +77,8 @@
           type="text"
           v-model="form.name"
           class="form-control form-control-lg"
+          :readonly="isSocial"
+          :class="{ 'bg-light': isSocial }"
           @input="validateName"
         />
         <div v-if="nameError" class="invalid-feedback">{{ nameError }}</div>
@@ -190,7 +192,7 @@
     </div>
 
     <!-- 이메일 -->
-    <div class="row">
+    <div class="row" v-if="!isSocial">
       <div class="form-group col-lg-12">
         <label class="form-label"
           >이메일 주소
@@ -236,6 +238,7 @@
           </select>
 
           <button
+            v-if="!isSocial"
             type="button"
             class="btn btn-primary btn-lg"
             @click="sendVerification"
@@ -248,7 +251,7 @@
     </div>
 
     <!-- 인증번호 -->
-    <div class="row">
+    <div class="row" v-if="!isSocial">
       <div class="form-group col-lg-8">
         <label class="form-label"
           >인증번호
@@ -323,6 +326,10 @@ import { api } from '@/axios'
 import { debounce } from 'lodash'
 
 const emit = defineEmits(['submit'])
+const props = defineProps({
+  isSocial: { type: Boolean, default: false },
+  socialData: { type: Object, default: () => ({}) },
+})
 const inputFormat = ref('yyyy-MM-dd')
 
 const validateAll = async () => {
@@ -340,16 +347,17 @@ const validateAll = async () => {
 
   // 모든 유효성 통과 여부 확인
   const isFormValid =
-    idValid.value &&
-    passwordValid.value &&
-    confirmPasswordValid.value &&
+    (props.isSocial ||
+      (idValid.value &&
+        passwordValid.value &&
+        confirmPasswordValid.value &&
+        verifyCodeValid.value)) &&
     nameValid.value &&
     dobValid.value &&
     genderValid.value &&
     phoneValid.value &&
     addressValid.value &&
     emailValid.value &&
-    verifyCodeValid.value && // 인증번호 유효성 처리 보완 필요
     termsValid.value
 
   if (isFormValid) {
@@ -360,16 +368,16 @@ const validateAll = async () => {
 }
 
 const form = reactive({
-  id: '',
-  password: '',
-  confirmPassword: '',
-  name: '',
+  id: props.socialData?.socialId || '',
+  password: props.isSocial ? 'SOCIAL_LOGIN_TEMP_PW' : '',
+  confirmPassword: props.isSocial ? 'SOCIAL_LOGIN_TEMP_PW' : '',
+  name: props.socialData?.userNm || '',
   dob: '',
   gender: '',
   phone: '',
-  emailId: '',
-  emailDomain: '',
-  verificationCode: '',
+  emailId: props.socialData?.email?.split('@')[0] || '',
+  emailDomain: props.socialData?.email?.split('@')[1] || '',
+  verificationCode: props.isSocial ? 'SOCIAL_VERIFIED' : '',
   terms: false,
   postcode: '',
   sigunguCode: '',
@@ -378,7 +386,7 @@ const form = reactive({
   latitude: '',
   longitude: '',
   typeCode: 301, // 개인
-  signupTypeCode: 204, // 이메일
+  signupTypeCode: props.isSocial ? 203 : 204, // 소셜 203, 이메일 204
 })
 
 const modalStore = useModalStore()
@@ -680,10 +688,12 @@ const validateEmail = () => {
   emailValid.value = false
 
   // 이메일 아이디와 도메인 결합
-  const fullEmail =
-    form.emailId +
-    '@' +
-    (isCustomDomain.value ? form.emailDomain : selectedDomain.value)
+  const domain =
+    props.isSocial || isCustomDomain.value
+      ? form.emailDomain
+      : selectedDomain.value
+
+  const fullEmail = form.emailId + '@' + domain
 
   // 이메일 아이디가 없거나, 이메일 도메인이 없을 경우
   if (!form.emailId) {
@@ -732,6 +742,30 @@ function openTermsModal() {
     },
   })
 }
+
+// [추가] 부모로부터 소셜 데이터가 넘어오면 폼에 주입하고 유효성 검사 실행
+watch(
+  () => props.socialData,
+  (newData) => {
+    if (props.isSocial && newData) {
+      // 1. 데이터 주입
+      if (newData.socialId) form.id = newData.socialId
+      if (newData.userNm) form.name = newData.userNm
+
+      if (newData.email) {
+        const [id, domain] = newData.email.split('@')
+        form.emailId = id
+        form.emailDomain = domain
+      }
+
+      // 2. 주입된 데이터로 유효성 검사 즉시 실행 (Valid -> true)
+      validateName()
+      validateEmail()
+      verifyCodeValid.value = true
+    }
+  },
+  { immediate: true, deep: true },
+)
 </script>
 <style scoped>
 select.form-control,

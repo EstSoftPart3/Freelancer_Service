@@ -42,6 +42,10 @@ import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 // import { compact } from 'lodash'
 import NotificationPage from '../views/mypage/personal/NotificationPage.vue'
 
+import GoogleCallback from '../views/login&signup/GoogleCallback.vue'
+import SocialSignUpPage from '@/fo/views/login&signup/SocialSignUpPage.vue'
+import SocialEditPage from '../views/mypage/common/SocialEditPage.vue'
+
 const routes = [
   {
     path: '/',
@@ -152,6 +156,12 @@ const routes = [
   },
 
   {
+    path: '/socialSignUp',
+    name: 'SocialSignUp',
+    component: SocialSignUpPage,
+    meta: { authRequired: false },
+  },
+  {
     path: '/mypage',
     component: MyPageLayout,
     children: [
@@ -241,6 +251,16 @@ const routes = [
         name: 'ProjectPostPage',
         component: ProjectPostPage,
       },
+      {
+        path: 'api/login/oauth2/code/google',
+        name: 'GoogleCallback',
+        component: GoogleCallback,
+      },
+      {
+        path: 'account',
+        name: 'SocialEdit',
+        component: SocialEditPage,
+      },
     ],
   },
 ]
@@ -259,6 +279,7 @@ router.beforeEach((to, from, next) => {
     'FindAccount',
     'FindIdResult',
     'ResetPassword',
+    'GoogleCallback',
   ]
   const authRequiredPages = [
     'MyPageDefault',

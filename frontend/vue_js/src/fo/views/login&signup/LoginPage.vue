@@ -136,7 +136,7 @@
 
               <!-- 소셜 로그인 -->
               <hr class="my-4" />
-              <p class="text-center mb-3">소셜 계정으로 로그인</p>
+              <p class="text-center mb-3">구글 계정으로 로그인</p>
               <div class="d-flex justify-content-center gap-3">
                 <button
                   v-for="provider in socialProviders"
@@ -167,8 +167,15 @@ import { api } from '@/axios'
 import { useUserStore } from '@/fo/stores/userStore'
 import router from '@/fo/router'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useRoute } from 'vue-router'
+import { useModalStore } from '@/fo/stores/modalStore'
+import SocialIntegrationModal from '@/fo/components/login&signup/SocialIntegrationModal.vue'
+import { useSocialStore } from '@/fo/stores/socialStore'
 
+const route = useRoute()
 const alertStore = useAlertStore()
+const modalStore = useModalStore()
+const socialStore = useSocialStore()
 
 const loginType = ref('PERSONAL')
 const form = ref({
@@ -284,6 +291,29 @@ const loadSavedId = () => {
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
   loadSavedId()
+
+  const { status, email, userNm, socialId } = route.query
+
+  if (status) {
+    socialStore.setTempUser({ email, userNm, socialId })
+
+    if (status === 'NEW') {
+      alertStore.show(
+        '신규 회원으로 판별되어 추가 정보 기입 페이지로 이동합니다.',
+        'info',
+      )
+      router.push('/socialSignUp')
+    } else if (status === 'INTEGRATION') {
+      router.replace({ query: {} })
+      modalStore.openModal(SocialIntegrationModal, {
+        email: socialStore.tempUser.email,
+        socialId: socialStore.tempUser.socialId,
+      })
+    } else if (status === 'SUCCESS') {
+      alertStore.show(`${userNm}님, 환영합니다!`, 'success')
+      router.push('/')
+    }
+  }
 })
 
 // loginType 변경 시 저장된 아이디 변경 반영
@@ -297,29 +327,25 @@ watch(loginType, () => {
 
 const socialProviders = [
   {
-    name: 'kakao',
-    title: '카카오 로그인',
-    img: '/img/social/kakao.png',
-  },
-  {
-    name: 'naver',
-    title: '네이버 로그인',
-    img: '/img/social/naver.png',
-  },
-  {
     name: 'google',
     title: '구글 로그인',
     img: '/img/social/google.png',
   },
-  {
-    name: 'apple',
-    title: '애플 로그인',
-    img: '/img/social/apple.png',
-  },
 ]
 
+// 기존 코드
 const handleSocialLogin = (provider) => {
-  alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  if (provider === 'google') {
+    const client_id =
+      '861271781628-76v5ct3i1qm07u5fgksg0l9in6vkqlfu.apps.googleusercontent.com'
+    // 1. 현재 접속한 프로토콜(http/https)과 호스트(localhost 혹은 AWS IP)를 가져옵니다.
+    // window.location.hostname은 포트 번호를 제외한 주소만 가져옵니다. (예: localhost 또는 3.3.xx.xx)
+    const host = window.location.hostname
+
+    // 2. 백엔드 포트는 8080으로 고정이므로 주소를 조합합니다.
+    const redirect_uri = `http://${host}:8080/api/login/oauth2/code/google`
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code&scope=email profile&prompt=select_account`
+  }
 }
 </script>
 

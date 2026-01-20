@@ -1,13 +1,14 @@
 package com.example.demo.domain.user.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
@@ -17,8 +18,8 @@ import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.service.LoginService;
 import com.example.demo.domain.user.service.LoginService.LoginResultDTO;
 import com.example.demo.domain.user.service.UserService;
+
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -92,10 +93,15 @@ public class LoginController {
 
         @PostMapping("/logout")
         public ResponseEntity<ApiResponse<Void>> logout(
-                        @AuthenticationPrincipal Long userSq) {
+                        @AuthenticationPrincipal Long userSq,
+        				HttpServletResponse response) { // response 객체 추가
 
                 // DB에서 userSq에 해당하는 리프레시 토큰 삭제
                 loginService.deleteRefreshTokenByUserSq(userSq);
+                
+                // 브라우저의 쿠키 강제 만료 처리
+                expireCookie(response, "accessToken");
+                expireCookie(response, "refreshToken");
 
                 return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그아웃 성공", null));
         }
@@ -105,7 +111,31 @@ public class LoginController {
         	cookie.setSecure(false);
         	cookie.setPath("/");
         	cookie.setMaxAge(maxAge);
-        	cookie.setAttribute("SameStie", "Lax");
+        	cookie.setAttribute("SameSite", "Lax");
         	return cookie;
+        }
+        
+        private void expireCookie(HttpServletResponse response, String name) {
+        	Cookie cookie = new Cookie(name, null);
+        	cookie.setHttpOnly(true);
+        	cookie.setSecure(false);
+        	cookie.setPath("/");
+        	cookie.setMaxAge(0);	// 0으로 설정하면 브라우저가 즉시 삭제함
+        	cookie.setAttribute("SameSite", "Lax");
+        	response.addCookie(cookie);
+        }
+        
+        @PatchMapping("/auth/social/unlink")
+        public ResponseEntity<ApiResponse<Void>> unlinkSocial(@RequestBody Map<String, Long> request) {
+            Long userSq = request.get("userSq");
+            
+            boolean result = loginService.unlinkSocial(userSq);
+            
+            if (result) {
+                return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "연동이 성공적으로 해제되었습니다.", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                     .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "연동 해제에 실패했습니다."));
+            }
         }
 }

@@ -16,4 +16,5 @@ public class UserInfoDTO {
     private Long userTypeCd;
     private String userProfileImageUrl;
     private Long addressSq;
+    private String userSignupTypeCd;
 }

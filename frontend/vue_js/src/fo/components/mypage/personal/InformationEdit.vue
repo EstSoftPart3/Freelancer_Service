@@ -1,6 +1,9 @@
 <template>
   <section>
-    <PasswordCheck v-if="!isConfirmed" @confirmed="isConfirmed = true">
+    <PasswordCheck
+      v-if="!isConfirmed && !isSocialUser"
+      @confirmed="isConfirmed = true"
+    >
       <h4 class="mb-3" style="font-size: 24px">회원 정보 수정</h4>
     </PasswordCheck>
     <div v-else>
@@ -73,17 +76,25 @@
           <label class="col-lg-2 col-form-label text-2">아이디</label>
           <div class="col-lg-10">
             <input
+              v-if="!isSocialUser"
               class="form-control text-3 h-auto py-2 border-0"
               type="text"
               name="username"
               :value="form.userId"
               readonly
             />
+
+            <div
+              v-else
+              class="form-control text-3 h-auto py-2 border-0 text-muted"
+            >
+              구글 소셜 계정으로 이용 중입니다
+            </div>
           </div>
         </div>
 
         <!-- 비밀번호 + 수정 버튼 -->
-        <div class="form-group row align-items-center">
+        <div v-if="!isSocialUser" class="form-group row align-items-center">
           <label class="col-lg-2 col-form-label text-2">비밀번호</label>
           <div class="col-lg-7">
             <template v-if="!editing.userPw">
@@ -439,12 +450,14 @@
 
 <script setup>
 import PasswordCheck from '../common/PasswordCheck.vue'
-import { watchEffect, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { api } from '@/axios'
 import { debounce } from 'lodash'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { onMounted } from 'vue'
 
 const alertStore = useAlertStore()
+const isSocialUser = ref(false)
 
 const isConfirmed = ref(false)
 
@@ -829,7 +842,14 @@ async function fetchUserInfo() {
   try {
     const response = await api.$get('/mypage/edit/info', null)
     const data = response.output
-    console.log('data', data)
+
+    const isSocial =
+      Number(data.userSignupTypeCd) === 203 || data.userId?.startsWith('S_')
+
+    if (isSocial) {
+      isSocialUser.value = true
+      isConfirmed.value = true
+    }
 
     Object.assign(originalData, {
       userId: data.userId,
@@ -854,10 +874,9 @@ async function fetchUserInfo() {
   }
 }
 
-watchEffect(() => {
-  if (isConfirmed.value) {
-    fetchUserInfo()
-  }
+onMounted(() => {
+  // 소셜 유저 여부를 판단해 비밀번호 창을 끌지 말지 결정
+  fetchUserInfo()
 })
 </script>
 
