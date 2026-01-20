@@ -64,4 +64,8 @@ public interface UserMapper {
     // 소셜 통합 모달 전용 이메일 일치 확인 메소드
     UserDTO findUserForSocialIntegration(String email);
 
+    // 사용자 주소 순번 획득
+    Long findAddressSqByUserSq(@Param("userSq") Long userSq); 
+
+
 }

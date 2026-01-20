@@ -75,5 +75,10 @@
     WHERE s.user_sq = #{userSq}
       AND s.scrap_type_cd = 601
 	</select>
+	<select id="findAddressSq" resultType="Long">
+		SELECT address_sq
+		FROM TBL_PROJECT_M
+    	WHERE project_sq = #{projectSq} 
+    </select>	
 
 </mapper>

@@ -3,7 +3,88 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.affiliation.mapper.AffiliationMapper">
-	
+	<sql id="baseCompanyFromBody">
+		FROM TBL_COMPANY_S com
+	</sql>
+	<sql id="baseCompanyWhereBody">
+		WHERE com.company_is_recruiting_yn = 'Y'
+	</sql>		
+	<sql id="baseCompnayFilterBody">
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'company'">
+					AND com.company_nm LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+				<when test="searchType == 'content'">
+					AND com.company_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'tag'">
+	                AND com.company_sq IN (
+	                    SELECT DISTINCT company_sq
+	                    FROM TBL_COMPANY_TAG_S ct
+	                    WHERE ct.tag_nm LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						com.company_nm LIKE CONCAT('%', #{keyword}, '%') 
+						OR com.company_greeting_txt LIKE CONCAT('%', #{keyword}, '%') 
+						OR com.company_sq IN (
+                        	SELECT company_sq
+                        	FROM TBL_COMPANY_TAG_S ct
+                        	WHERE ct.tag_nm LIKE CONCAT('%', #{keyword}, '%')
+                		)
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		<!-- 지역 필터 -->
+		<if test="addressCd != null and addressCd != ''">
+		    AND com.address_sq IN (
+		        SELECT address_sq
+		        FROM TBL_ADDRESS_S
+		        WHERE area_code_sq IN (
+		            SELECT area_code_sq
+		            FROM TBL_AREA_C area
+		            WHERE area.parent_area_code_sq = #{addressCd} OR area.area_code_sq = #{addressCd}
+		        )
+		    )
+		</if>
+	</sql>
+	<sql id="baseCompanySortBody">
+		<choose>
+			<when test="sortType == 'latest'"> ORDER BY com.company_recruit_start_dtm DESC </when>
+			<when test="sortType == 'oldest'"> ORDER BY com.company_recruit_start_dtm ASC </when>
+			<when test="sortType == 'view'"> ORDER BY com.company_view_cnt DESC </when>
+			<when test="sortType == 'scrap'">
+				ORDER BY (
+				    SELECT COUNT(*)
+				    FROM TBL_SCRAP_S
+				    WHERE TBL_SCRAP_S.company_sq = TBL_COMPANY_S.company_sq
+				) DESC
+			</when>
+			<when test="sortType == 'applicant'">
+				ORDER BY (
+				    SELECT COUNT(*)
+				    FROM TBL_COMPANY_APPLICATION_H
+				    WHERE TBL_COMPANY_APPLICATION_H.company_sq = TBL_COMPANY_S.company_sq
+				) DESC
+			</when>
+			<when test="sortType == 'distance'">
+				ORDER BY distance ASC
+			</when>
+
+			<otherwise> ORDER BY board_created_at_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
+		</choose>
+		LIMIT #{size} OFFSET #{offset}	
+	</sql>
+	<sql id="distanceColumn">
+		, (6371 * acos(cos(radians(#{userLatitude})) * cos(radians(a.latitude)) 
+            * cos(radians(a.longitude) - radians(#{userLongitude})) 
+            + sin(radians(#{userLatitude})) * sin(radians(a.latitude)))) 
+            AS distance
+    </sql>
 	<select id="findAll" resultType="com.example.demo.domain.affiliation.entity.Company">
 		SELECT * FROM TBL_COMPANY_S 
 		WHERE company_is_recruiting_yn = 'Y'
@@ -121,6 +202,14 @@
 		        )
 		    )
 		</if>
+	</select>
+	<select id="findAllWithDistance" resultType="com.example.demo.domain.map.vo.CompanyWithDistanceVo">
+		SELECT com.* <include refid="distanceColumn"/>
+		<include refid="baseCompanyFromBody"/>
+		LEFT JOIN TBL_ADDRESS_S a ON com.address_sq = a.address_sq
+		<include refid="baseCompnayFilterBody"/>
+		<include refid="baseCompanySortBody"/>
+		
 	</select>
 
     <select id="findAddress" resultType="com.example.demo.domain.affiliation.entity.Address" parameterType="Long">

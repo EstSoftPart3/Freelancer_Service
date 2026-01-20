@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
@@ -40,4 +41,8 @@ public interface ProjectScrapMapper {
             @Param("searchKeyword") String searchKeyword);
 
 	List<Long> getScrapProjectIds(Long userSq);
+	
+	// 주소번호 획득
+	Long findAddressSq(Long projectSq); 
+
 }

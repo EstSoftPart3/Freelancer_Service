@@ -4,8 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.affiliation.mapper.*;
+import com.example.demo.domain.map.mapper.MapAddressMapper;
+import com.example.demo.domain.map.util.DistanceUtil;
+import com.example.demo.domain.map.vo.CompanyWithDistanceVo;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
+import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.amazonaws.services.s3.AmazonS3;
 import com.example.demo.domain.affiliation.dto.response.*;
 import com.example.demo.domain.affiliation.entity.*;
@@ -17,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.demo.domain.user.mapper.UserMapper;
+import com.example.demo.domain.map.mapper.MapAddressMapper;
+
 @Service
 @RequiredArgsConstructor
 public class AffiliationService {
@@ -24,6 +31,8 @@ public class AffiliationService {
 	private final AffiliationMapper affiliationMapper;
 	private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
+	private final UserMapper userMapper;
+	private final MapAddressMapper mapAddressMapper; 
 
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
@@ -51,10 +60,31 @@ public class AffiliationService {
 	// 소속 공고 전체 리스트 조회
 	@Transactional
 	public AffiliationListResponse getAllAffiliations(Long userSq, SearchFilterRequest searchFilter) {
-
-		List<Company> affiliations = affiliationMapper.findAll(searchFilter.getSearchType(), searchFilter.getKeyword(),
+		List<CompanyWithDistanceVo> affiliations = null;	
+		try {
+		// 사용자 위도 경도 획득
+		Long userAddressSq = (userSq != null) ? userMapper.findAddressSqByUserSq(userSq) : null; 
+		AreaCoordinateResponse userCoord = mapAddressMapper.findCoordinates(userAddressSq); 
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null ) ? userCoord.getLongitude() : null; 
+		// 사용자 위도 경도 확인
+		System.out.println(">>> [Debug] Before Mapper"); 
+		System.out.println("userLatitude: "+ userLatitude); 
+		System.out.println("userLongitude: "+ userLongitude); 
+		
+//		List<Company> affiliations = affiliationMapper.findAll(searchFilter.getSearchType(), searchFilter.getKeyword(),
+//				searchFilter.getSortType(), searchFilter.getAddressCd(), searchFilter.getPage(), searchFilter.getSize(),
+//				searchFilter.getOffset());
+		  
+		affiliations = affiliationMapper.findAllWithDistance(searchFilter.getSearchType(), searchFilter.getKeyword(),
 				searchFilter.getSortType(), searchFilter.getAddressCd(), searchFilter.getPage(), searchFilter.getSize(),
-				searchFilter.getOffset());
+				searchFilter.getOffset(), userLatitude, userLongitude);
+		System.out.println(">>> [Success] Mapper Size = "+ (affiliations != null ? affiliations.size() : "null")); 
+		} catch (Throwable e) {
+			System.out.println(">>> [Fatal Error] Mapper Error <<< ");
+			e.printStackTrace();
+			throw e; 
+		}
 		Long totalElements = affiliationMapper.findAllCnt(searchFilter);
 
 		List<AffiliationResponse> companies = affiliations.stream()
@@ -79,8 +109,12 @@ public class AffiliationService {
 							isScrap = true;
 						}
 					}
+					AreaCoordinateResponse comCoord = mapAddressMapper.findCoordinates(company.getAddressSq());
+					Double comLatitude = (comCoord != null) ? comCoord.getLatitude() : null; 
+					Double comLongitude = (comCoord != null) ? comCoord.getLongitude() : null; 
+					Double distance = company.getDistance(); 
 
-					return AffiliationResponse.fromEntity(company, address, tags, scrapCnt, isScrap, isApply, imageUrl);
+					return AffiliationResponse.fromEntity(company, address, tags, scrapCnt, isScrap, isApply, imageUrl, distance, comLatitude, comLongitude);
 
 				}).collect(Collectors.toList());
 
@@ -246,7 +280,13 @@ public class AffiliationService {
 		List<Company> companies = affiliationMapper.findScrapAffiliations(userSq, searchType, keyword, page, size,
 				offset);
 		Long totalElements = affiliationMapper.findScrapAffiliationsCnt(userSq, searchType, keyword);
-
+		
+		//사용자 위치 정보 획득
+		Long userAddressSq = userMapper.findAddressSqByUserSq(userSq);
+		AreaCoordinateResponse userCoord = mapAddressMapper.findCoordinates(userAddressSq);
+		Double userLatitude = (userCoord != null) ? userCoord.getLatitude() : null; 
+		Double userLongitude = (userCoord != null) ? userCoord.getLongitude() : null; 		
+				
 		List<AffiliationResponse> affiliations = companies.stream()
 				.filter(Objects::nonNull)
 				.map(company -> {
@@ -259,8 +299,12 @@ public class AffiliationService {
 					if (applyCnt > 0) {
 						isApply = true;
 					}
-
-					return AffiliationResponse.fromEntityScrap(company, address, tags, memberCnt, isApply);
+					//회사 위치 정보 획득 및 거리 계산
+					Double comLatitude = (address != null && address.getLatitude() != null) ? address.getLatitude().doubleValue() : null;
+					Double comLongitude = (address != null && address.getLongitude() != null) ? address.getLongitude().doubleValue() : null; 
+					Double distance = DistanceUtil.calculateDistance(comLatitude, comLongitude, userLatitude, userLongitude);
+					
+					return AffiliationResponse.fromEntityScrap(company, address, tags, memberCnt, isApply, distance);
 
 				}).collect(Collectors.toList());
 

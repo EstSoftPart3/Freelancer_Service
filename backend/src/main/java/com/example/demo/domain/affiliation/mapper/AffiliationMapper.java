@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.affiliation.entity.*;
+import com.example.demo.domain.map.vo.CompanyWithDistanceVo;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.affiliation.dto.request.SearchFilterRequest;
 import java.util.*;
@@ -16,6 +17,12 @@ public interface AffiliationMapper {
 			@Param("sortType") String sortType,
 			@Param("addressCd") Long addressCd, @Param("page") Long page, @Param("size") Long size,
 			@Param("offset") Long offset);
+	// 소속 공고 목록 조회 + 거리
+	List<CompanyWithDistanceVo> findAllWithDistance(@Param("searchType") String searchType, @Param("keyword") String keyword,
+			@Param("sortType") String sortType,
+			@Param("addressCd") Long addressCd, @Param("page") Long page, @Param("size") Long size,
+			@Param("offset") Long offset, 
+			@Param("userLatitude") Double userLatitude, @Param("userLongitude") Double userLongitude);
 
 	Long findAllCnt(SearchFilterRequest searchFilter);
 

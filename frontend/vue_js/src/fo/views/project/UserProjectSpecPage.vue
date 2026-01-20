@@ -214,14 +214,31 @@
             <span>{{ project.projectWorkType?.join(' / ') }}</span>
           </li>
           <li>
+            <strong class="text-color-primary">단가 :</strong>
+            {{ project.projectSalary }}
+          </li>
+          <li>
             <strong class="text-color-primary">근무 지역 :</strong>
             {{ project.projectAddress }}
           </li>
           <li>
-            <strong class="text-color-primary">단가 :</strong>
-            {{ project.projectSalary }}
+            <strong class="text-color-primary">추정 거리 :</strong>
+            {{ formatDistance(project.distance) }}
+          </li>
+          <li>
+            <strong class="text-color-primary">위치 :</strong>
           </li>
         </ul>
+        <div class="d-flex justify-content-center align-items-center">
+          <div class="map-card" v-if="project && project.latitude">
+            <img
+              :src="`/api/map/static?latitude=${project.latitude}&longitude=${project.longitude}`"
+              alt="네이버 정적 지도"
+              style="width: 100%; height: 500px"
+            />
+          </div>
+          <!-- <div class="bg-grey" style="width: 500px; height: 500px"></div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -256,6 +273,7 @@ const fetchProjectDetail = async () => {
     const response = await api.$get(`/projects/${projectSq}/details`, {
       withCredentials: true,
     })
+    console.log('백엔드데이터: ', response.output)
     project.value = response.output
     scrapCount.value = project.value.projectScrapCnt
   } catch (e) {
@@ -327,6 +345,17 @@ const clickScrap = async () => {
 const getSkillIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
   return skillIconMap[key] || skillIconMap.default
+}
+
+/* 로그인 상태에서만 거리 정보 출력하도록 함수 생성  */
+const formatDistance = (distance) => {
+  if (distance === undefined) {
+    return '위치 정보 불러오는 중...'
+  }
+  if (distance === null) {
+    return '사용자 위치 정보 없음'
+  }
+  return Number(distance).toFixed(2) + ' km'
 }
 </script>
 <style scoped>

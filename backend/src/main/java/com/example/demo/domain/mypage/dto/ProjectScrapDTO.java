@@ -22,4 +22,5 @@ public class ProjectScrapDTO {
     private String developerGrade;
     private List<String> skillTags;
     private long dDay;
+    private Double distance; 
 }

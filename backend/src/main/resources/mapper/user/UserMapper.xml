@@ -23,6 +23,10 @@
     user_signup_type_cd, social_id ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw}, #{userNm},
     #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd}, #{socialId} ) </insert>
 
+  <!-- 4. 주소순번 조회-->
+  <select
+  id="findAddressSqByUserSq" parameterType="Long" resultType="Long"> SELECT address_sq FROM TBL_USER_M WHERE user_sq = #{userSq} LIMIT 1 </select>
+
   <!-- 기업 프로필 INSERT -->
   <insert
     id="insertCompanyProfile"
