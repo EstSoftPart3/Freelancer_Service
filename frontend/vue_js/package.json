@@ -9,6 +9,11 @@
     "prettier": "prettier \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
+    "@fullcalendar/bootstrap5": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@fullcalendar/vue3": "^6.1.20",
     "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",

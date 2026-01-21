@@ -39,6 +39,7 @@ import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
+import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
 
 const routes = [
   {
@@ -166,7 +167,11 @@ const routes = [
         name: 'Withdraw',
         component: WithdrawPage,
       },
-
+      {
+        path: 'calendar',
+        name: 'ScheduleCalendar',
+        component: ScheduleCalendarPage,
+      },
       //personal
       {
         path: 'affiliatedJobApplications',
@@ -259,7 +264,9 @@ router.beforeEach((to, from, next) => {
     'InformationEdit',
     'Withdraw',
     'QnaResisterPage',
-    'BoardResisterPage' /* ... 로그인 필요 페이지들 */,
+    'BoardResisterPage',
+    'ScheduleCalendar',
+    /* ... 로그인 필요 페이지들 */
   ]
 
   const userRolePages = ['UserProjectSpec']

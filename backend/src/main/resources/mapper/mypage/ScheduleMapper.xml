@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.ScheduleMapper">
+
+    <select id="selectScheduleList"
+        parameterType="com.example.demo.domain.mypage.dto.request.ScheduleRequestDTO"
+        resultType="com.example.demo.domain.mypage.dto.response.ScheduleResponseDTO"> SELECT * FROM
+        ( SELECT schedule_sq, user_sq, schedule_ttl, schedule_cnt, schedule_all_day_yn,
+        schedule_type_cd, project_sq, NULL as resumeSq, NULL as applicationSq,
+        DATE_FORMAT(schedule_start_dtm, '%Y-%m-%dT%H:%i') as start, DATE_FORMAT(schedule_end_dtm,
+        '%Y-%m-%dT%H:%i') as end, DATE_FORMAT(schedule_start_dtm, '%Y-%m-%dT%H:%i') as
+        schedule_start_dtm, DATE_FORMAT(schedule_end_dtm, '%Y-%m-%dT%H:%i') as schedule_end_dtm FROM
+        tbl_schedule_m WHERE user_sq = #{userSq} UNION ALL <if test="userType == 'PERSONAL'"> SELECT
+        NULL as schedule_sq, s.user_sq, p.project_ttl as schedule_ttl, p.project_description_txt as
+        schedule_cnt, 'Y' as schedule_all_day_yn, 2403 as schedule_type_cd, p.project_sq, NULL as
+        resumeSq, NULL as applicationSq, DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
+        DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
+        DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_start_dtm,
+        DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_scrap_s s
+        JOIN tbl_project_m p ON s.project_sq = p.project_sq WHERE s.user_sq = #{userSq} AND
+        s.project_sq IS NOT NULL UNION ALL SELECT NULL as schedule_sq, #{userSq} as user_sq,
+        p.project_ttl as schedule_ttl, '지원한 프로젝트의 면접 일정입니다.' as schedule_cnt, 'N' as
+        schedule_all_day_yn, 2402 as schedule_type_cd, p.project_sq, ah.resume_sq as resumeSq,
+        ah.project_application_sq as applicationSq, DATE_FORMAT(ah.selected_interview_dtm,
+        '%Y-%m-%dT%H:%i') as start, DATE_FORMAT(DATE_ADD(ah.selected_interview_dtm, INTERVAL 1
+        HOUR), '%Y-%m-%dT%H:%i') as end, DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as
+        schedule_start_dtm, DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as
+        schedule_end_dtm FROM tbl_project_application_h ah JOIN tbl_project_m p ON ah.project_sq =
+        p.project_sq WHERE ah.selected_interview_dtm IS NOT NULL </if>
+
+        <if
+            test="userType == 'COMPANY'"> SELECT NULL as schedule_sq, #{userSq} as user_sq,
+        p.project_ttl as schedule_ttl, p.project_description_txt as schedule_cnt, 'Y' as
+        schedule_all_day_yn, 2403 as schedule_type_cd, p.project_sq, NULL as resumeSq, NULL as
+        applicationSq, DATE_FORMAT(p.project_recruit_start_dt, '%Y-%m-%d') as start,
+        DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
+        DATE_FORMAT(p.project_recruit_start_dt, '%Y-%m-%d') as schedule_start_dtm,
+        DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_project_m p
+        WHERE p.company_sq = (SELECT c.company_sq FROM tbl_company_s c WHERE c.user_sq = #{userSq})
+        UNION ALL SELECT NULL as schedule_sq, #{userSq} as user_sq, p.project_ttl as schedule_ttl,
+        '지원자와의 면접 일정입니다.' as schedule_cnt, 'N' as schedule_all_day_yn, 2402 as schedule_type_cd,
+        p.project_sq, ah.resume_sq as resumeSq, ah.project_application_sq as applicationSq,
+        DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as start,
+        DATE_FORMAT(DATE_ADD(ah.selected_interview_dtm, INTERVAL 1 HOUR), '%Y-%m-%dT%H:%i') as end,
+        DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_start_dtm,
+        DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_end_dtm FROM
+        tbl_project_application_h ah JOIN tbl_project_m p ON ah.project_sq = p.project_sq WHERE
+        p.company_sq = (SELECT c.company_sq FROM tbl_company_s c WHERE c.user_sq = #{userSq}) AND
+        ah.selected_interview_dtm IS NOT NULL </if> ) AS combined_schedule ORDER BY start ASC </select>
+
+    <insert id="insertSchedule"
+        parameterType="com.example.demo.domain.mypage.dto.request.ScheduleRequestDTO"> INSERT INTO
+        tbl_schedule_m ( user_sq, schedule_ttl, schedule_cnt, schedule_start_dtm, schedule_end_dtm,
+        schedule_all_day_yn, schedule_type_cd, project_sq ) VALUES ( #{userSq}, #{scheduleTtl},
+        #{scheduleCnt}, #{scheduleStartDtm}, #{scheduleEndDtm}, #{scheduleAllDayYn},
+        #{scheduleTypeCd}, #{projectSq} ) </insert>
+
+    <update id="updateSchedule"
+        parameterType="com.example.demo.domain.mypage.dto.request.ScheduleRequestDTO"> UPDATE
+        tbl_schedule_m SET schedule_ttl = #{scheduleTtl}, schedule_cnt = #{scheduleCnt},
+        schedule_start_dtm = #{scheduleStartDtm}, schedule_end_dtm = #{scheduleEndDtm},
+        schedule_all_day_yn = #{scheduleAllDayYn}, schedule_type_cd = #{scheduleTypeCd} WHERE
+        schedule_sq = #{scheduleSq} AND user_sq = #{userSq} </update>
+
+    <delete id="deleteSchedule"> DELETE FROM tbl_schedule_m WHERE schedule_sq = #{scheduleSq} AND
+        user_sq = #{userSq} </delete>
+
+</mapper>
