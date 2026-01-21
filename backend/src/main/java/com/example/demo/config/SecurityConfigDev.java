@@ -73,6 +73,7 @@ public class SecurityConfigDev {
                         .requestMatchers("/api/login/oauth2/code/**").permitAll() 
                         .requestMatchers("/login", "/refresh-token").permitAll()
                         .requestMatchers("/api/map/static").permitAll()
+                        .requestMatchers("/api/map/multi-static").permitAll()
                         .requestMatchers("/api/auth/social/**").permitAll()
                         .requestMatchers("/me", "/logout").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()

@@ -8,6 +8,7 @@ import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
+import com.example.demo.domain.mypage.dto.ProjectScrapSortDTO;
 import com.example.demo.domain.mypage.mapper.ProjectScrapMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -63,5 +64,13 @@ public class ProjectScrapRepository {
 	//위치정보 
 	public Long findAddressSq(Long projectSq) {
 		return mapper.findAddressSq(projectSq); 
+	}
+	//정렬 정보
+	public List<ProjectScrapSortDTO> findSortInfoBySqs(List<Long> projectSqs) {
+		return mapper.findSortInfoBySqs(projectSqs);
+	}
+	//페이징 없는 전체 ID 조회
+	public List<Long> findScrappedProjectsWithoutPaging(Long userSq, String searchType, String searchKeyword) {
+		return mapper.findScrappedProjectSqsByUserSqWithoutPaging(userSq, searchType, searchKeyword);
 	}
 }

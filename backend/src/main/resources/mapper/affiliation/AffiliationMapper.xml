@@ -72,7 +72,7 @@
 				) DESC
 			</when>
 			<when test="sortType == 'distance'">
-				ORDER BY distance ASC
+				ORDER BY (distance IS NULL) ASC, distance ASC
 			</when>
 
 			<otherwise> ORDER BY board_created_at_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
