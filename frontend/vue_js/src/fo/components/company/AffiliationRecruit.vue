@@ -66,7 +66,7 @@
             />
           </div>
           <div v-show="!afltnInfo" class="empty-map">
-            <p>회사의 주소 정보가 없습니다.</p>
+            <p>회사의 주소 정보가 없습니다!</p>
           </div>
         </div>
       </div>
