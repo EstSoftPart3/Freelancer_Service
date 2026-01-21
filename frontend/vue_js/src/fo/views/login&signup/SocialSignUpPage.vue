@@ -76,6 +76,7 @@ async function handleSubmit(rawFormData) {
     user_gender_cd: Number(rawFormData.gender),
     user_birth_dt: rawFormData.dob,
     address_sq: rawFormData.postcode,
+    address: rawFormData.address,
     detail_address: rawFormData.addressDetail,
     sigungu_code: rawFormData.sigunguCode,
     latitude: rawFormData.latitude,
