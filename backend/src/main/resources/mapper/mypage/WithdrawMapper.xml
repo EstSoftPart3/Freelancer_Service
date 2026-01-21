@@ -4,11 +4,20 @@
 <mapper namespace="com.example.demo.domain.mypage.mapper.WithdrawMapper">
 
     <select id="selectUserForWithdraw" resultType="com.example.demo.domain.mypage.dto.UserInfoDTO">
-        SELECT user_id, user_nm FROM TBL_USER_M WHERE user_sq = #{userSq} </select>
+        SELECT user_id, user_nm, user_email, user_signup_type_cd 
+        FROM TBL_USER_M 
+        WHERE user_sq = #{userSq} 
+    </select>
 
-    <update id="updateWithdrawUser"> UPDATE TBL_USER_M SET user_is_deleted_yn = 'Y',
-        user_email = #{emailToUpdate},  user_modified_at_dtm = NOW() 
+    <update id="updateWithdrawUser"> 
+        UPDATE TBL_USER_M 
+        SET 
+            user_is_deleted_yn = 'Y',
+            user_email = CONCAT(user_email, '_DEL_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')),
+            social_id = NULL,
+            user_modified_at_dtm = NOW() 
         WHERE 
-        user_sq = #{userSq} </update>
+            user_sq = #{userSq} 
+    </update>
 
 </mapper>
