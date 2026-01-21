@@ -12,33 +12,39 @@
       @update="updateFilters"
     />
     <div class="container py-4">
-      <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-rounded btn-primary me-2" @click="fetchProjects">
-          검색
-        </button>
-        <a
-          v-if="userStore.userTypeCd === 'COMPANY'"
-          href="/mypage/projectPostPage"
-          class="btn btn-rounded btn-light"
-          >등록하기</a
-        >
+      <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-left mb-3">
+          <!-- 리스트 탭과 지도 탭으로 구분하기 -->
+          <button
+            class="btn btn-rounded btn-primary me-2"
+            v-if="!isListMode"
+            @click="changeMode('list')"
+          >
+            목록 탭 전환
+          </button>
+          <button
+            class="btn btn-rounded btn-primary me-2"
+            v-if="isListMode"
+            @click="changeMode('map')"
+          >
+            지도 탭 전환
+          </button>
+        </div>
+        <div class="d-flex justify-content-end mb-3">
+          <button
+            class="btn btn-rounded btn-primary me-2"
+            @click="fetchProjects"
+          >
+            검색
+          </button>
+          <a
+            v-if="userStore.userTypeCd === 'COMPANY'"
+            href="/mypage/projectPostPage"
+            class="btn btn-rounded btn-light"
+            >등록하기</a
+          >
+        </div>
       </div>
-
-      <!-- 리스트 탭과 지도 탭으로 구분하기 -->
-      <button
-        class="btn btn-rounded btn-primary me-2"
-        v-if="!isListMode"
-        @click="changeMode('list')"
-      >
-        목록 탭 전환
-      </button>
-      <button
-        class="btn btn-rounded btn-primary me-2"
-        v-if="isListMode"
-        @click="changeMode('map')"
-      >
-        지도 탭 전환
-      </button>
 
       <div>
         <KeepAlive>

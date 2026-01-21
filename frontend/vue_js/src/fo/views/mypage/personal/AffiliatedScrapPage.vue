@@ -78,7 +78,7 @@
               <div
                 class="d-flex justify-content-between align-items-center mt-2"
               >
-                <div class="post-meta text-4">
+                <div class="post-meta text-4 mt-2">
                   <span class="text-dark text-uppercase font-weight-semibold"
                     >소속 직원 수</span
                   >
@@ -86,14 +86,14 @@
                 </div>
               </div>
               <!-- 지원자격/개업일자 -->
-              <div class="post-meta text-4">
+              <div class="post-meta text-4 mt-2">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >지원자격</span
                 >
                 | {{ scrap.tags?.join(' / ') }}
               </div>
 
-              <div class="post-meta text-4">
+              <div class="post-meta text-4 mt-2">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >개업일자</span
                 >
@@ -101,14 +101,14 @@
               </div>
               <!-- 거리 및 시간 정보 -->
 
-              <div class="post-meta text-4">
+              <div class="post-meta text-4 mt-2">
                 <span class="text-dark text-uppercase font-weight-semibold">
                   위치
                 </span>
                 | {{ scrap.address }}
               </div>
 
-              <div class="post-meta text-4">
+              <div class="post-meta text-4 mt-2">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >추정 거리
                 </span>

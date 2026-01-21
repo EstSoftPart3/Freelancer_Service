@@ -1,6 +1,7 @@
 package com.example.demo.domain.map.service;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value; 
@@ -47,8 +48,8 @@ public class NaverMapService {
 		
 		//요청 URL 만들기(쿼리 파라미터 조립)
 		URI uri = UriComponentsBuilder.fromHttpUrl(mapUrl)
-				.queryParam("w", 500)
-				.queryParam("h", 500)
+				.queryParam("w", 1000)
+				.queryParam("h", 1000)
 				.queryParam("center", longitude+","+latitude)
 				.queryParam("level", 14)
 				.queryParam("markers", "type:d|pos:"+longitude+" "+latitude)
@@ -79,18 +80,27 @@ public class NaverMapService {
 			throw new IllegalArgumentException("longitudes latitudes list wrong");
 		}
 		//마커 문자열
-		//목표 포맷: "type:d|pos:127.1 37.1, 127.2 37.2..."
-		StringBuilder markerStr = new StringBuilder(); 
-		markerStr.append("type:n|pos:"); 
+		//마커 레이블 붙이려면 list로 만들기
+		List<String> markerValues = new ArrayList<>();
 		
-		//리스트를 돌면서 좌표 추가
-		for (int i = 0; i<latitudes.size(); i++) {
-			Double longitude = longitudes.get(i);
-			Double latitude = latitudes.get(i);
-			markerStr.append(longitude).append(" ").append(latitude).append(","); 
+		for (int i = 0; i < latitudes.size(); i++) {
+			String val = "type:n|pos:" + longitudes.get(i)+" "+latitudes.get(i)+"|size:small|color:Blue|label:"+(i+1); 
+			markerValues.add(val); 
 		}
 		
-		markerStr.append("|size:small|color:Blue"); 
+		
+		//목표 포맷: "type:d|pos:127.1 37.1, 127.2 37.2..."
+//			StringBuilder markerStr = new StringBuilder(); 	
+//		//리스트를 돌면서 좌표 추가
+//		for (int i = 0; i<latitudes.size(); i++) {
+//			Double longitude = longitudes.get(i);
+//			Double latitude = latitudes.get(i);
+//			markerStr.append("&markers=");			
+//			markerStr.append("type:n|pos:"); 
+//			markerStr.append(longitude).append(" ").append(latitude);
+//			markerStr.append("|size:small|color:Blue");
+//			markerStr.append("|label:").append((i+1));
+//		}		 
 		
 		//헤더
 		HttpHeaders headers = new HttpHeaders();
@@ -100,13 +110,13 @@ public class NaverMapService {
 		
 		// 5. URI 생성
         URI uri = UriComponentsBuilder.fromHttpUrl(mapUrl)
-                .queryParam("w", 500)
-                .queryParam("h", 500)
-                .queryParam("markers", markerStr.toString()) // ★ 만든 마커 문자열 넣기
+                .queryParam("w", 1000)
+                .queryParam("h", 1000)
+                .queryParam("markers", markerValues) // ★ 만든 마커 문자열 넣기
                 .build()
                 .toUri();
         
-        System.out.println(">>> 네이버 지도 요청 URL: " + uri.toString()); //로그 확인용
+        System.out.println(">>> NAVER API REQUEST URL: " + uri.toString()); //로그 확인용
         
         try {
 			ResponseEntity<byte[]> responseEntity = restTemplate.exchange(

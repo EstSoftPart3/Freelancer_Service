@@ -69,10 +69,10 @@ public class ProjectScrapService {
         Stream<ProjectScrapSortDTO> sortListStream = sortList.stream(); 
         if("latest".equals(sortType)) {
         	//최신순
-        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getCreatedAt).reversed()); 
+        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))); 
         } else {
         	//마감순
-        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getRecruitEndDt).reversed()); 
+        	sortListStream = sortListStream.sorted(Comparator.comparing(ProjectScrapSortDTO::getRecruitEndDt, Comparator.nullsLast(Comparator.naturalOrder()))); 
         }
         List<ProjectScrapSortDTO> sortedList = sortListStream.collect(Collectors.toList());
         

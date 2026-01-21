@@ -71,7 +71,7 @@
         </div>
       </div>
       <!-- 주소지에서의 거리 시간 정보 -->
-      <div class="mb-3">
+      <div v-if="isLoggedIn" class="mb-3">
         <label
           for="distanceToCompanyLocation"
           class="form-label text-primary text-bold"
@@ -183,6 +183,8 @@ import { useModalStore } from '@/fo/stores/modalStore'
 import { computed, defineProps } from 'vue'
 import CommonConfirmModal from '../common/CommonConfirmModal.vue'
 import ResumeListModal from '../mypage/common/ResumeListModal.vue'
+import { useUserStore } from '@/fo/stores/userStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   afltnInfo: { type: Array, default: () => [] },
@@ -265,6 +267,11 @@ const formatDistance = (distance) => {
   }
   return distance.toFixed(2) + ' km'
 }
+//로그인 상태 확인
+
+// 로그인상태 확인
+const userStore = useUserStore()
+const { isLoggedIn } = storeToRefs(userStore)
 </script>
 <style>
 .text-bold {
