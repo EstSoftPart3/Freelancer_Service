@@ -10,7 +10,7 @@
           <div
             class="carouselSlide"
             :class="{ active: currentSlide === 0 }"
-            @click="goToPage('#')"
+            @click="goToCalendar"
           >
             <div class="centerTextArea text-center cursor-pointer">
               <h1 class="heroTitle">
@@ -193,10 +193,16 @@ import { useUserStore } from '../stores/userStore'
 import { api } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
 import { navigateByUserTypeAndProjectSq } from '../router/userTypeRouter'
+import { useRouter } from 'vue-router'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
 const userType = userStore.getUserType
+const router = useRouter()
+
+const goToCalendar = () => {
+  router.push({ name: 'ScheduleCalendar' })
+}
 
 const goToPage = (path) => {
   if (path === '#') {
