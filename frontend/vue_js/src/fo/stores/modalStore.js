@@ -24,6 +24,12 @@ export const useModalStore = defineStore('modal', () => {
     }
   }
 
+  //  모든 모달 한꺼번에 닫기
+  function closeAllModals() {
+    modalStack.value = []
+    isOpen.value = false
+  }
+
   // 현재 모달 정보를 가져오기
   function getCurrentModal() {
     return modalStack.value[modalStack.value.length - 1]
@@ -34,6 +40,7 @@ export const useModalStore = defineStore('modal', () => {
     isOpen,
     openModal,
     closeModal,
+    closeAllModals,
     getCurrentModal,
   }
 })
