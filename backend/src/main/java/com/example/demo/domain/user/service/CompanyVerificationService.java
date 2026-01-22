@@ -86,8 +86,8 @@ public class CompanyVerificationService {
             }
 
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            System.out.println("상태 코드: " + e.getStatusCode());
-            System.out.println("응답 바디: " + e.getResponseBodyAsString());
+            System.out.println("status code: " + e.getStatusCode());
+            System.out.println("status body: " + e.getResponseBodyAsString());
             return ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "API 호출 실패", false);
         }
 

@@ -207,6 +207,7 @@
 		SELECT com.* <include refid="distanceColumn"/>
 		<include refid="baseCompanyFromBody"/>
 		LEFT JOIN TBL_ADDRESS_S a ON com.address_sq = a.address_sq
+		<include refid="baseCompanyWhereBody"/>
 		<include refid="baseCompnayFilterBody"/>
 		<include refid="baseCompanySortBody"/>
 		
