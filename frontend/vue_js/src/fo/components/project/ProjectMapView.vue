@@ -1,5 +1,5 @@
 <template>
-  <div class="map-view-layout">
+  <div class="map-view-layout" style="height: 80vh">
     <div class="map-area">
       <div
         v-show="mapImageUrl"
@@ -9,7 +9,7 @@
         <img
           :src="mapImageUrl"
           alt="네이버 정적 지도"
-          style="width: 100%; height: auto"
+          class="w-100 h-100 object-fit-cover"
         />
       </div>
       <div v-show="!mapImageUrl" class="empty-map">
@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <div class="list-area">
+    <div class="list-area overflow-y-auto">
       <ProjectCardGroup
         v-if="projects && projects.length > 0"
         :projects="projects"
@@ -78,5 +78,9 @@ const mapImageUrl = computed(() => {
   flex: 1;
   overflow-y: auto;
   background: #fff;
+}
+.object-fit-cover {
+  object-fit: cover;
+  object-position: center;
 }
 </style>

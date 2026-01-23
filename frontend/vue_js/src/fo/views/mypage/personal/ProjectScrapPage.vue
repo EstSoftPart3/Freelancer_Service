@@ -96,7 +96,7 @@
                   class="post-meta text-4 me-3 flex-grow-1"
                   style="min-width: 0"
                 >
-                  <div class="mb-1">
+                  <div class="mb-1 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >지원 자격</span
                     >
@@ -105,7 +105,7 @@
                   </div>
 
                   <!-- 기술 스택 -->
-                  <div class="d-flex flex-wrap gap-2">
+                  <div class="d-flex flex-wrap gap-2 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >기술 스택</span
                     >|
@@ -127,7 +127,7 @@
                       </span>
                     </div>
                   </div>
-                  <div class="mb-1">
+                  <div class="mb-1 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >위치 및 거리</span
                     >
@@ -135,19 +135,19 @@
                     {{ item.address.sigungu }} /
                     {{ formatDistance(item.distance) }}
                   </div>
-                  <div class="mb-1">
+                  <div class="mb-1 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >채용기간</span
                     >
                     | {{ item.recruitStartDt }} ~ {{ item.recruitEndDt }}
                   </div>
-                  <div class="mb-1">
+                  <div class="mb-1 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >등록일자</span
                     >
                     | {{ formatDate(item.createdAt) }}
                   </div>
-                  <div class="mb-1">
+                  <div class="mb-1 mt-2">
                     <span class="text-dark text-uppercase font-weight-semibold"
                       >지원자 수</span
                     >

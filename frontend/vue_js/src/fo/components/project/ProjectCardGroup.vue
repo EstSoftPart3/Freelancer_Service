@@ -2,7 +2,7 @@
   <div class="row mb-4 position-relative">
     <div class="col">
       <div
-        v-for="project in props.projects"
+        v-for="(project, index) in props.projects"
         :key="project.id"
         class="card position-relative p-4 shadow-sm"
       >
@@ -144,7 +144,8 @@
               <div
                 class="d-flex justify-content-between align-items-center mb-2"
               >
-                <h4 class="mb-0 fw-bold d-flex align-items-center">
+                <h4 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                  <span class="badge bg-primary me-2"> {{ index + 1 }} </span>
                   <a
                     href="#"
                     @click.prevent="goToProjectSpec(project)"
@@ -152,6 +153,9 @@
                   >
                     {{ project.projectTtl }}
                   </a>
+                  <span class="mb-0 ms-2 text-muted fs-6">
+                    {{ project.companyNm }}
+                  </span>
                   <span
                     :class="[
                       'btn',
@@ -159,7 +163,8 @@
                         ? 'btn-primary'
                         : 'btn-light',
                       'btn-sm',
-                      'ms-3', // 간격 확보
+                      'ms-3',
+                      'me-3', // 간격 확보
                     ]"
                   >
                     {{ getProjectStatus(project).status }}
@@ -170,30 +175,21 @@
                       {{ getProjectStatus(project).dDay }}
                     </span>
                   </span>
-                  <span>
-                    <p class="mb-2 text-muted fs-6">
-                      {{ project.companyNm }}
-                    </p>
-                  </span>
                 </h4>
               </div>
-
-              <!-- <div
-                class="d-flex justify-content-between align-items-center text-muted fs-6"
-              > -->
-              <div class="mb-1">
+              <div class="mb-0">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >위치 및 거리</span
                 >
                 | {{ project.address }} {{ formatDistance(project.distance) }}
               </div>
-              <div class="mb-1">
+              <div class="mb-0">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >지원자 수</span
                 >
                 | {{ project.applicantCnt }}
               </div>
-              <div class="mb-1">
+              <div class="mb-0">
                 <span class="text-dark text-uppercase font-weight-semibold"
                   >조회 수</span
                 >

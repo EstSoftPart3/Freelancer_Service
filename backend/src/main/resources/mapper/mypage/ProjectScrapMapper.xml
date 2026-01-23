@@ -80,5 +80,30 @@
 		FROM TBL_PROJECT_M
     	WHERE project_sq = #{projectSq} 
     </select>	
+    
+    <!-- 정렬 위한 정보 탐색 -->
+    <select id="findSortInfoBySqs" resultType="com.example.demo.domain.mypage.dto.ProjectScrapSortDTO">
+    	SELECT project_sq AS projectSq, project_created_at_dtm AS createdAt, project_recruit_end_dt As recruitEndDt
+    	FROM TBL_PROJECT_M
+    	WHERE project_sq IN
+    	<foreach collection="projectSqs" item="sq" open="(" separator="," close=")"> #{sq} </foreach>
+    </select> 
+    <!-- 페이징 없는 검색조건 프로젝트 -->
+    <select id="findScrappedProjectSqsByUserSqWithoutPaging" resultType="long">
+    	SELECT s.project_sq
+        FROM TBL_SCRAP_S s JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq =
+        #{userSq} AND s.scrap_type_cd = 601 <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == '전체'"> AND ( LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE c.company_sq =
+        p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%', LOWER(#{searchKeyword}), '%') ) ) </when>
+                <when test="searchType == '제목'"> AND LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') </when>
+                <when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+        c.company_sq = p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') ) </when>
+            </choose>
+        </if> ORDER BY
+        p.project_created_at_dtm DESC </select>
 
 </mapper>

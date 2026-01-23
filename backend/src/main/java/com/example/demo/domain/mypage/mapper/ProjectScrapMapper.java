@@ -9,6 +9,7 @@ import com.example.demo.domain.map.dto.response.AreaCoordinateResponse;
 import com.example.demo.domain.mypage.dto.CompanyDTO;
 import com.example.demo.domain.mypage.dto.ProjectDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
+import com.example.demo.domain.mypage.dto.ProjectScrapSortDTO;
 
 @Mapper
 public interface ProjectScrapMapper {
@@ -44,5 +45,14 @@ public interface ProjectScrapMapper {
 	
 	// 주소번호 획득
 	Long findAddressSq(Long projectSq); 
+	// 정렬 정보 획득
+	List<ProjectScrapSortDTO> findSortInfoBySqs(@Param("projectSqs") List<Long> projectSqs);
+	// 페이징 없는 스크랩 프로젝트
+	List<Long> findScrappedProjectSqsByUserSqWithoutPaging(
+			@Param("userSq") Long userSq,
+			@Param("searchType") String searchType,
+            @Param("searchKeyword") String searchKeyword); 
+	
+	
 
 }
