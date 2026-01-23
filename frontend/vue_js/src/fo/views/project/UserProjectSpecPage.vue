@@ -40,7 +40,13 @@
                 <p class="mb-1 text-color-primary">
                   <i class="fas fa-caret-right me-2"></i
                   ><strong class="text-color-primary">인터뷰 기간 :</strong>
-                  {{ project.interviewStartDt }} ~ {{ project.interviewEndDt }}
+                  <span v-if="project.interviewStartDt">
+                    {{ project.interviewStartDt }} ~
+                    {{ project.interviewEndDt }}
+                  </span>
+                  <span v-if="!project.interviewStartDt">
+                    인터뷰 기간 정보가 없습니다.
+                  </span>
                 </p>
                 <p class="mb-0 text-color-primary">
                   <i class="fas fa-caret-right me-2"></i
