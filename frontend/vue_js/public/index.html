@@ -7,64 +7,68 @@
     <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
     <title><%= htmlWebpackPlugin.options.title %></title>
 
-    <!-- Web Fonts -->
     <link
       href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800%7CShadows+Into+Light&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Vendor CSS -->
-    <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/vendor/fontawesome-free/css/all.min.css" />
-    <link rel="stylesheet" href="/vendor/animate/animate.compat.css" />
     <link
       rel="stylesheet"
-      href="/vendor/simple-line-icons/css/simple-line-icons.min.css"
+      href="<%= BASE_URL %>vendor/bootstrap/css/bootstrap.min.css"
     />
     <link
       rel="stylesheet"
-      href="/vendor/owl.carousel/assets/owl.carousel.min.css"
+      href="<%= BASE_URL %>vendor/fontawesome-free/css/all.min.css"
     />
     <link
       rel="stylesheet"
-      href="/vendor/owl.carousel/assets/owl.theme.default.min.css"
+      href="<%= BASE_URL %>vendor/animate/animate.compat.css"
     />
     <link
       rel="stylesheet"
-      href="/vendor/magnific-popup/magnific-popup.min.css"
+      href="<%= BASE_URL %>vendor/simple-line-icons/css/simple-line-icons.min.css"
     />
-
-    <!-- Theme CSS -->
-    <link rel="stylesheet" href="/css/theme.css" />
-    <link rel="stylesheet" href="/css/theme-elements.css" />
-    <link rel="stylesheet" href="/css/theme-blog.css" />
-    <link rel="stylesheet" href="/css/theme-shop.css" />
-
-    <!-- Current Page CSS -->
     <link
       rel="stylesheet"
-      href="/vendor/circle-flip-slideshow/css/component.css"
+      href="<%= BASE_URL %>vendor/owl.carousel/assets/owl.carousel.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="<%= BASE_URL %>vendor/owl.carousel/assets/owl.theme.default.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="<%= BASE_URL %>vendor/magnific-popup/magnific-popup.min.css"
     />
 
-    <!-- Skin CSS -->
-    <link id="skinCSS" rel="stylesheet" href="/css/skins/default.css" />
+    <link rel="stylesheet" href="<%= BASE_URL %>css/theme.css" />
+    <link rel="stylesheet" href="<%= BASE_URL %>css/theme-elements.css" />
+    <link rel="stylesheet" href="<%= BASE_URL %>css/theme-blog.css" />
+    <link rel="stylesheet" href="<%= BASE_URL %>css/theme-shop.css" />
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/custom.css" />
+    <link
+      rel="stylesheet"
+      href="<%= BASE_URL %>vendor/circle-flip-slideshow/css/component.css"
+    />
 
-    <!-- bootstrap icon -->
+    <link
+      id="skinCSS"
+      rel="stylesheet"
+      href="<%= BASE_URL %>css/skins/default.css"
+    />
+
+    <link rel="stylesheet" href="<%= BASE_URL %>css/custom.css" />
+
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css"
     />
 
-    <!-- quill stylesheet -->
     <link
       href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
       rel="stylesheet"
     />
 
-    <!-- 주소 API -->
     <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   </head>
   <body>
@@ -76,26 +80,20 @@
       >
     </noscript>
     <div id="app"></div>
-    <!-- built files will be auto injected -->
 
-    <!-- Vendor JS -->
-    <script src="/vendor/jquery/jquery.min.js"></script>
-    <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="/vendor/jquery.easing/jquery.easing.min.js"></script>
-    <script src="/vendor/owl.carousel/owl.carousel.min.js"></script>
-    <script src="/vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
-    <script src="/vendor/circle-flip-slideshow/js/jquery.flipshow.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/jquery/jquery.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/jquery.easing/jquery.easing.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/owl.carousel/owl.carousel.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/circle-flip-slideshow/js/jquery.flipshow.min.js"></script>
 
-    <!-- Theme Base, Components and Settings -->
-    <script src="/js/theme.js"></script>
+    <script src="<%= BASE_URL %>js/theme.js"></script>
 
-    <!-- Theme Initialization -->
-    <script src="/js/theme.init.js"></script>
+    <script src="<%= BASE_URL %>js/theme.init.js"></script>
 
-    <!-- quill library -->
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-    <!-- Daum address API -->
     <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=90610faa13d02b09f83a700d0885a872&libraries=services"></script>
   </body>

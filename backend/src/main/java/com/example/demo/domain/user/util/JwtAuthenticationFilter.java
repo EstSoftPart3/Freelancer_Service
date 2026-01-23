@@ -20,6 +20,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
 
     private static final List<String> EXCLUDE_URLS = List.of(
+    		// [추가] 정적 리소스 및 루트 경로 (500 에러 해결 핵심)
+            "/api/",                // 루트 접속
+            "/api/index.html",      // 메인 페이지
+            "/api/static",          // 정적 폴더
+            "/api/css",             // CSS
+            "/api/js",              // JS
+            "/api/img",             // 이미지
+            "/api/vendor",          // 벤더 라이브러리 (문제의 구간)
+            "/api/favicon.ico",     // 아이콘
+            "/api/error",           // 에러 발생 시 리다이렉트되는 경로 (중요)
+    		
             "/api/login",
             "/api/refresh-token",
             "/api/email/send-code",

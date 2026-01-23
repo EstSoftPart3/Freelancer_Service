@@ -329,7 +329,8 @@ const socialProviders = [
   {
     name: 'google',
     title: '구글 로그인',
-    img: '/img/social/google.png',
+    // 배포 환경에 따라 앞에 /api/ 가 자동으로 붙거나 떨어집니다.
+    img: process.env.BASE_URL + 'img/social/google.png',
   },
 ]
 

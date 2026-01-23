@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer; // 정정된 임포트
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -16,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
-@Profile("prod") // 운영 환경일 때만 활성화
+@Profile("prod")
 @RequiredArgsConstructor
 public class SecurityConfigProd {
 
@@ -25,35 +26,44 @@ public class SecurityConfigProd {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors()
-                .and()
-                .csrf().disable()
-                .formLogin().disable()
-                .httpBasic().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .cors(cors -> cors.disable()) // 필요 시 설정 추가
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/login", "/api/refresh-token").permitAll()
+                        // 1. 정적 리소스 및 기본 경로 허용
+                        .requestMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
+                        
+                        // 2. 로그인 및 토큰 관련 허용
+                        .requestMatchers("/login", "/refresh-token").permitAll()
+                        
+                        // 3. [추가] 구글 소셜 로그인 콜백 경로 허용 (401 에러 해결 핵심)
+                        .requestMatchers("/login/oauth2/code/**").permitAll()
+                        .requestMatchers("/api/auth/social/**").permitAll()
+                        
+                        // 4. [추가] 공개 API 경로 허용 (프로젝트 목록, 지도 등)
+                        .requestMatchers("/projects/**").permitAll() // /api/projects, /api/projects/top 모두 포함
+                        .requestMatchers("/map/**").permitAll()
+                        .requestMatchers("/board/**", "/qna/**", "/affiliation/**").permitAll()
+                        .requestMatchers("/email/**", "/signup", "/check-id", "/find-id", "/reset-password/**").permitAll()
                         .anyRequest().authenticated())
-                // 인증 실패(로그인 안된 상태) 시 처리
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            // 로그 남기기
-                            System.out.println("Authentication failed: " + authException.getMessage());
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized - 로그인 필요");
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            // 권한 부족시 처리
-                            System.out.println("Access denied: " + accessDeniedException.getMessage());
-                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden - 권한 부족");
                         }))
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                // ★ 중요: 필터를 @Bean으로 따로 등록하지 않고 여기서 직접 생성해서 넣어야 전역 필터로 작동하는 것을 방지합니다.
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public Filter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider);
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers(
+                "/", "/index.html", "/error", "/favicon.ico",
+                "/css/**", "/js/**", "/img/**", "/vendor/**", "/static/**", "/assets/**" // 폴더 단위로 깔끔하게 수정
+            );
     }
 }

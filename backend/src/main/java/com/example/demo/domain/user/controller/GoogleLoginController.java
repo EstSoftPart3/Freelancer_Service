@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.core.env.Environment; // 추가
+import java.util.Arrays; // 추가
 
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.TokenDTO;
@@ -33,6 +35,9 @@ public class GoogleLoginController {
     @Autowired
     private LoginService loginService;
 
+    @Autowired
+    private Environment env; // 실행 프로필 확인용 추가
+
     // [수정] 배포 환경 대응: 환경 변수가 있으면 쓰고, 없으면 로컬(8504) 사용
     // yml을 수정하지 않아도 작동하며, 배포 시 코드 수정 없이 주소 변경 가능
     @Value("${FRONTEND_URL:http://localhost:8504}")
@@ -51,11 +56,16 @@ public class GoogleLoginController {
             HttpServletRequest request, 
             HttpServletResponse response) {
 
+        // 환경에 따른 리다이렉트 베이스 결정 로직
+        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
+        String targetBase = isProd ? "/api" : frontendUrl;
 
         // 2. 예외 처리: 사용자가 구글 인증창에서 '취소'를 눌렀을 경우
         if (code == null || error != null) {
             try {
-                response.sendRedirect(frontendUrl + "/login");
+                // [수정] prod일 때는 /api/ 로, dev일 때는 frontendUrl/login으로 리다이렉트
+                String errorPath = isProd ? "/" : "/login";
+                response.sendRedirect(targetBase + errorPath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -123,9 +133,14 @@ public class GoogleLoginController {
 
             // [3-5] 프론트엔드로 리다이렉트 (쿼리 스트링에 상태값 포함)
             String encodedName = URLEncoder.encode(userNm, StandardCharsets.UTF_8);
+            
+            // [핵심 수정] prod일 때는 /api/ 루트로 보내어 서버가 index.html을 찾게 하고, 
+            // 파라미터는 Vue가 읽도록 처리합니다. dev는 기존처럼 /login을 유지합니다.
+            String redirectPath = isProd ? "/" : "/login";
+            
             String redirectUrl = String.format(
-                "%s/login?status=%s&email=%s&userNm=%s&socialId=%s&userId=%s", 
-                frontendUrl, status, email, encodedName, googleId, userId
+                "%s" + redirectPath + "?status=%s&email=%s&userNm=%s&socialId=%s&userId=%s", 
+                targetBase, status, email, encodedName, googleId, userId
             );
             
             response.sendRedirect(redirectUrl);
@@ -133,7 +148,9 @@ public class GoogleLoginController {
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                response.sendRedirect(frontendUrl + "/login?error=true");
+                // [수정] 에러 시 리다이렉트 경로도 환경에 맞춰 분기
+                String errorPath = isProd ? "/" : "/login";
+                response.sendRedirect(targetBase + errorPath + "?error=true");
             } catch (IOException ex) { ex.printStackTrace(); }
         }
     }
