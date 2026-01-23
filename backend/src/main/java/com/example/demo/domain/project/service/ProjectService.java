@@ -210,7 +210,7 @@ public class ProjectService {
 			System.out.println(">>> [Debug] Mapper Success! List Size : "+projects != null ? projects.size() : "null"); 
 			
 		} catch (Exception e) {
-			System.out.println(">>> Fatal Error] Mapper Error"); 
+			System.out.println(">>> [Fatal Error] Mapper Error"); 
 			e.printStackTrace();
 			throw e; 
 		}

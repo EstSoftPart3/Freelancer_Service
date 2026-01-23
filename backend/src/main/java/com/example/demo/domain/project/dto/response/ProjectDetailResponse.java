@@ -2,6 +2,7 @@ package com.example.demo.domain.project.dto.response;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +58,8 @@ public class ProjectDetailResponse {
     		, String address, int hasScrapped, int hasApplied, UserRole userRole) {
     	Long projectSq = p.getProjectSq();
     	Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
-    	return ProjectDetailResponse.builder()
+    	
+    		return ProjectDetailResponse.builder()
                 .projectTtl(p.getProjectTtl())
                 .companyNm(util.convertCompanySqToName(p.getCompanySq()))
                 .projectDetail(p.getProjectDescriptionTxt())
@@ -87,13 +89,17 @@ public class ProjectDetailResponse {
                 .isApplied(hasApplied)
                 .userRole(userRole)
                 .build();
+    	
     }
     
     public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req, List<GroupSkillInfoResponse> prefer
     		, String address, int hasScrapped, int hasApplied, UserRole userRole, Double longitude, Double latitude, Double distance ) {
-    	Long projectSq = p.getProjectSq();
-    	Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
-    	return ProjectDetailResponse.builder()
+    	Long projectSq = p.getProjectSq();    	    	
+		Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
+		if(interviewTimes == null) {
+			interviewTimes = Collections.emptyMap(); 
+		}
+			return ProjectDetailResponse.builder()
                 .projectTtl(p.getProjectTtl())
                 .companyNm(util.convertCompanySqToName(p.getCompanySq()))
                 .projectDetail(p.getProjectDescriptionTxt())

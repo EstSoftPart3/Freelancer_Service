@@ -71,7 +71,7 @@
 				<when test="request.searchType == '내용'"> AND ( p.project_preference_txt LIKE CONCAT('%',
 		#{request.searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{request.searchKeyword}, '%')
 		) </when>
-				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
+				<when test="request.searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{request.searchKeyword}, '%') ) </when>
 				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{request.searchKeyword}, '%') OR

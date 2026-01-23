@@ -264,7 +264,7 @@ async function handleVerify() {
       isVerified.value = true
       alertStore.show('기업 인증이 성공했습니다.', 'success')
     } else {
-      isVerified.value = true
+      isVerified.value = false
       alertStore.show(response.message || '기업 인증 실패', 'danger')
     }
   } catch (error) {

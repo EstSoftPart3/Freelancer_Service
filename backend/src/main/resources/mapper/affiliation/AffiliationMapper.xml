@@ -61,14 +61,14 @@
 				ORDER BY (
 				    SELECT COUNT(*)
 				    FROM TBL_SCRAP_S
-				    WHERE TBL_SCRAP_S.company_sq = TBL_COMPANY_S.company_sq
+				    WHERE TBL_SCRAP_S.company_sq = com.company_sq
 				) DESC
 			</when>
 			<when test="sortType == 'applicant'">
 				ORDER BY (
 				    SELECT COUNT(*)
 				    FROM TBL_COMPANY_APPLICATION_H
-				    WHERE TBL_COMPANY_APPLICATION_H.company_sq = TBL_COMPANY_S.company_sq
+				    WHERE TBL_COMPANY_APPLICATION_H.company_sq = com.company_sq
 				) DESC
 			</when>
 			<when test="sortType == 'distance'">
@@ -207,6 +207,7 @@
 		SELECT com.* <include refid="distanceColumn"/>
 		<include refid="baseCompanyFromBody"/>
 		LEFT JOIN TBL_ADDRESS_S a ON com.address_sq = a.address_sq
+		<include refid="baseCompanyWhereBody"/>
 		<include refid="baseCompnayFilterBody"/>
 		<include refid="baseCompanySortBody"/>
 		
