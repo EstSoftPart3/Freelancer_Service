@@ -40,8 +40,15 @@ public class ProjectSummary {
 
 	private String hasScrapped;
 
+	// 추가된 필드들
+	private String formattedSalary;
+	private Double latitude;
+	private Double longitude;
+	private Double distance;
+
+	// [수정] 파라미터에 String formattedSalary를 추가했습니다.
 	public static ProjectSummary from(Project project, ProjectUtil util, String address, String status,
-			String hasScrapped, String companyImageUrl) {
+			String hasScrapped, String companyImageUrl, String formattedSalary) {
 		return ProjectSummary.builder()
 				.projectSq(project.getProjectSq())
 				.address(address)
@@ -62,6 +69,14 @@ public class ProjectSummary {
 				.requiredEduLvl(util.convertCommonCodeSqToNm(project.getProjectRequiredEducationCd()))
 				.recruitStatus(status)
 				.hasScrapped(hasScrapped)
+
+				// 파라미터로 받은 가공된 급여 문자열 매핑
+				.formattedSalary(formattedSalary)
+
+				// Project 엔티티에 @Transient로 추가한 필드들 매핑
+				.latitude(project.getLatitude())
+				.longitude(project.getLongitude())
+				.distance(project.getDistance())
 				.build();
 	}
 }

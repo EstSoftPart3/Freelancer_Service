@@ -27,17 +27,14 @@ const fetchUserInfo = async () => {
     const res = await api.$post('/me')
     const data = res.output
 
-    localStorage.setItem('userNm', data.userNm)
-    localStorage.setItem('userTypeCd', data.userTypeCd)
-
     userStore.setUser({
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
+      address: data.address, // 백엔드에서 넘겨주는 필드명 확인 필요
+      latitude: data.latitude, // 백엔드에서 넘겨주는 필드명 확인 필요
+      longitude: data.longitude, // 백엔드에서 넘겨주는 필드명 확인 필요
     })
   } catch (error) {
-    // console.error('자동 로그인 실패:', error)
-
-    // 리프레시 토큰도 없을 경우까지 포함해서 처리
     clearLoginState()
   }
 }

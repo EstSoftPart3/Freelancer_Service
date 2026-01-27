@@ -115,31 +115,35 @@ public class ProjectService {
 
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
+
 		List<Project> projects = projectMapper.findProjectsBySearch(request);
 		Long totalCount = projectMapper.countProjectsBySearch(request);
 		List<ProjectSummary> responses = new ArrayList<>();
 
 		Long userSq = (token != null) ? token.getUserSq() : null;
 
-		projects.forEach(
-				p -> {
-					String address = fetchAddressString(p.getAddressSq());
-					String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
+		projects.forEach(p -> {
+			String address = fetchAddressString(p.getAddressSq());
+			String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
 
-					String hasScrapped = "N";
-					if (userSq != null) {
-						hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
-								? "Y"
-								: "N";
-					}
+			// [추가] 단가 가공 로직 적용
+			String formattedSalary = formatSalary(p.getProjectSalary());
 
-					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
-				});
+			String hasScrapped = "N";
+			if (userSq != null) {
+				hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
+						? "Y"
+						: "N";
+			}
+
+			String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+
+			// [수정] 가공된 급여(formattedSalary)를 포함하여 VO 생성
+			responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl,
+					formattedSalary));
+		});
 
 		int page = (request.getOffset() / request.getSize()) + 1;
-
-		// TODO: 기본값 1로 수정해야 함.
 		int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
 
 		return new ProjectListResponse(page, request.getSize(), totalCount, totalPages, responses);
@@ -148,37 +152,36 @@ public class ProjectService {
 	// 기업 기준의 프로젝트 목록 조회
 	public ProjectListResponse fetchCompanyProject(CompanyFilterRequest request,
 			JwtAuthenticationToken jwtAuthenticationToken) {
-
 		Long userSq = jwtAuthenticationToken.getUserSq();
 		Long userTypeCd = jwtAuthenticationToken.getUserTypeCd();
-
 		long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
 
 		Long totalCount = projectMapper.countCompanyProjectsBySearch(request, companySq);
-
 		List<Project> projects = projectMapper.findProjectsByCompany(companySq, request);
-
 		List<ProjectSummary> responses = new ArrayList<>();
 
-		projects.forEach(
-				p -> {
-					String address = fetchAddressString(p.getAddressSq());
-					String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
+		projects.forEach(p -> {
+			String address = fetchAddressString(p.getAddressSq());
+			String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
 
-					String hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
-							? "Y"
-							: "N";
-					String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
-					responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl));
-				});
+			// [추가] 기업 목록에서도 단가 가공 적용
+			String formattedSalary = formatSalary(p.getProjectSalary());
+
+			String hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
+					? "Y"
+					: "N";
+
+			String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+
+			// [수정] 가공된 급여 포함
+			responses.add(ProjectSummary.from(p, projectUtil, address, status, hasScrapped, companyImageUrl,
+					formattedSalary));
+		});
 
 		int page = (request.getOffset() / request.getSize()) + 1;
-
-		// TODO: 기본값 1로 수정해야 함.
 		int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
 
 		return new ProjectListResponse(page, request.getSize(), totalCount, totalPages, responses);
-
 	}
 
 	public ProjectRecruitStatus fetchCompanyProjectCount(CompanyFilterRequest request,

@@ -86,31 +86,43 @@ public class Project {
     @Column(name = "project_view_cnt")
     private Integer projectViewCnt;
 
-    public static Project from(ProjectCreateRequest request,  Long companySq, long addressSq, long devgradeCodeSq, long educationLvlSq) {
-    	return Project.builder()
-    			.companySq(companySq)
-				.addressSq(addressSq)
-				.projectTtl(request.projectTitle())
-				.projectImageUrl(request.projectImageUrl())
-				.projectDeveloperGradeCd(devgradeCodeSq)
-				.projectRequiredEducationCd(educationLvlSq)
-				.projectSalary(request.projectSalary())
-				.projectStartDt(request.projectStartDt())
-				.projectEndDt(request.projectEndDt())
-				.projectRecruitStartDt(request.recruitStartDt())
-				.projectRecruitEndDt(request.recruitEndDt())
-				.projectDescriptionTxt(request.description())
-				.projectPreferenceTxt(request.preference())
-				.projectIsNotificationYn(request.isNotification())
-				.build();
+    @Transient
+    private Double latitude; // tbl_address_s에서 Join으로 가져올 위도
+
+    @Transient
+    private Double longitude; // tbl_address_s에서 Join으로 가져올 경도
+
+    @Transient
+    private Double distance; // ST_Distance_Sphere 함수로 계산된 거리(km)
+
+    public static Project from(ProjectCreateRequest request, Long companySq, long addressSq, long devgradeCodeSq,
+            long educationLvlSq) {
+        return Project.builder()
+                .companySq(companySq)
+                .addressSq(addressSq)
+                .projectTtl(request.projectTitle())
+                .projectImageUrl(request.projectImageUrl())
+                .projectDeveloperGradeCd(devgradeCodeSq)
+                .projectRequiredEducationCd(educationLvlSq)
+                .projectSalary(request.projectSalary())
+                .projectStartDt(request.projectStartDt())
+                .projectEndDt(request.projectEndDt())
+                .projectRecruitStartDt(request.recruitStartDt())
+                .projectRecruitEndDt(request.recruitEndDt())
+                .projectDescriptionTxt(request.description())
+                .projectPreferenceTxt(request.preference())
+                .projectIsNotificationYn(request.isNotification())
+                .build();
     }
-    
+
     @PrePersist
     public void prePersist() {
         this.projectCreatedAtDtm = LocalDateTime.now();
         this.projectModifiedAtDtm = LocalDateTime.now();
-        if (this.projectIsNotificationYn == null) this.projectIsNotificationYn = "N";
-        if (this.projectIsDeletedYn == null) this.projectIsDeletedYn = "N";
+        if (this.projectIsNotificationYn == null)
+            this.projectIsNotificationYn = "N";
+        if (this.projectIsDeletedYn == null)
+            this.projectIsDeletedYn = "N";
         this.projectCandidateCnt = 0;
         this.projectScrapCnt = 0;
         this.projectViewCnt = 0;
@@ -120,52 +132,52 @@ public class Project {
     public void preUpdate() {
         this.projectModifiedAtDtm = LocalDateTime.now();
     }
-    
+
     public void update(ProjectCreateRequest request, long devGradeCode, long educationLvlCode) {
-    	this.projectTtl = request.projectTitle();
-    	this.projectImageUrl = request.projectImageUrl();
-    	this.projectDeveloperGradeCd = devGradeCode;
-    	this.projectSalary = request.projectSalary();
-    	this.projectRequiredEducationCd = educationLvlCode;
-    	this.projectStartDt = request.projectStartDt();
-    	this.projectEndDt = request.projectEndDt();
-    	this.projectRecruitStartDt = request.recruitStartDt();
-    	this.projectRecruitEndDt = request.recruitEndDt();
-    	this.projectPreferenceTxt = request.preference();
-    	this.projectDescriptionTxt = request.description();
-    	this.projectIsNotificationYn = request.isNotification();
+        this.projectTtl = request.projectTitle();
+        this.projectImageUrl = request.projectImageUrl();
+        this.projectDeveloperGradeCd = devGradeCode;
+        this.projectSalary = request.projectSalary();
+        this.projectRequiredEducationCd = educationLvlCode;
+        this.projectStartDt = request.projectStartDt();
+        this.projectEndDt = request.projectEndDt();
+        this.projectRecruitStartDt = request.recruitStartDt();
+        this.projectRecruitEndDt = request.recruitEndDt();
+        this.projectPreferenceTxt = request.preference();
+        this.projectDescriptionTxt = request.description();
+        this.projectIsNotificationYn = request.isNotification();
     }
-    
+
     public void updateAddress(long addressSq) {
-    	this.addressSq = addressSq;
+        this.addressSq = addressSq;
     }
-    
+
     public void delete() {
-    	this.projectIsDeletedYn = "Y";
+        this.projectIsDeletedYn = "Y";
     }
-    
+
     public void increaseApplication() {
-    	this.projectCandidateCnt++;
+        this.projectCandidateCnt++;
     }
-    
+
     public void decreaseApplication() {
-    	this.projectCandidateCnt--;
+        this.projectCandidateCnt--;
     }
-    
+
     public void increaseViewCnt() {
-    	this.projectViewCnt++;
+        this.projectViewCnt++;
     }
-    
+
     public void increaseScrap() {
-    	this.projectScrapCnt++;
+        this.projectScrapCnt++;
     }
-    
+
     public void decreaseScrap() {
-    	this.projectScrapCnt--;
+        this.projectScrapCnt--;
     }
-    
+
     public int calcaulateRemainingDay(LocalDate recruitEndDt) {
-		return (int) ChronoUnit.DAYS.between(LocalDate.now(), recruitEndDt);
-	}
-    
+        return (int) ChronoUnit.DAYS.between(LocalDate.now(), recruitEndDt);
+    }
+
 }

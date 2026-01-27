@@ -26,4 +26,9 @@ public class ProjectSearchRequest extends BaseRequest {
     private List<Long> jobRoleCd; // 예: "백엔드 개발자"
     private String searchKeyword; // 예: "AI"
     private String searchType; // 예: "기술", "프로젝트명" 등
+
+    // [추가] 지도 및 거리 필터링용
+    private Double userLat; // 사용자 현재 위도
+    private Double userLng; // 사용자 현재 경도
+    private Integer distance; // 선택한 거리 (3, 5, 10 또는 999)
 }

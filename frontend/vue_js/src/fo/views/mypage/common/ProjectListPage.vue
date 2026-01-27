@@ -5,17 +5,37 @@
       strongText="프로젝트 목록"
       :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '프로젝트' }]"
     />
-    <ProjectFilterBar
-      :localFilters="['서울', '부산', '대구']"
-      :careerFilters="['신입', '경력']"
-      :jobTypeFilters="['백엔드', '프론트엔드', 'PM', '디자이너']"
-      @update="updateFilters"
-    />
+    <ProjectFilterBar @update="updateFilters" @search="fetchProjects" />
+
     <div class="container py-4">
-      <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-rounded btn-primary me-2" @click="fetchProjects">
-          검색
-        </button>
+      <div class="d-flex justify-content-end mb-3 gap-2">
+        <div class="p-1 bg-light rounded-pill d-inline-flex border">
+          <button
+            type="button"
+            class="btn btn-rounded btn-px-4 py-2 text-2 font-weight-semibold transition-3ms border-0"
+            :class="
+              !isMapView
+                ? 'btn-primary text-white shadow-sm'
+                : 'text-dark bg-transparent'
+            "
+            @click="((isMapView = false), $event.target.blur())"
+          >
+            <i class="fas fa-list-ul me-2"></i>목록보기
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-rounded btn-px-4 py-2 text-2 font-weight-semibold transition-3ms border-0"
+            :class="
+              isMapView
+                ? 'btn-primary text-white shadow-sm'
+                : 'text-dark bg-transparent'
+            "
+            @click="((isMapView = true), $event.target.blur())"
+          >
+            <i class="fas fa-map-marked-alt me-2"></i>지도보기
+          </button>
+        </div>
         <a
           v-if="userStore.userTypeCd === 'COMPANY'"
           href="/mypage/projectPostPage"
@@ -23,38 +43,107 @@
           >등록하기</a
         >
       </div>
-      <ProjectCardGroup :projects="projects" />
-      <div v-if="projects.length === 0" class="text-center text-muted py-5">
-        조건에 맞는 프로젝트가 없습니다.
+      <div v-if="!isMapView">
+        <ProjectCardGroup :projects="projects" />
+        <div v-if="projects.length === 0" class="text-center text-muted py-5">
+          조건에 맞는 프로젝트가 없습니다.
+        </div>
+        <div>
+          <CommonPagination
+            :currentPage="currentPage"
+            :totalPages="totalPages"
+            @update:currentPage="currentPage = $event"
+          />
+        </div>
       </div>
-      <div>
-        <CommonPagination
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          @update:currentPage="currentPage = $event"
-        />
+      <div
+        v-else
+        class="row gx-0 border rounded overflow-hidden bg-white shadow-sm"
+        style="height: 750px"
+      >
+        <div
+          class="col-lg-3 col-md-4 bg-light border-end d-flex flex-column h-100"
+        >
+          <div class="p-3 bg-white border-bottom">
+            <h5 class="text-3 mb-0 font-weight-bold">
+              검색 결과 <span class="text-primary">{{ projects.length }}</span
+              >건
+            </h5>
+          </div>
+
+          <div class="flex-grow-1 overflow-auto p-2 custom-scrollbar">
+            <MapProjectCardGroup
+              :projects="projects"
+              @focus-marker="handleFocusMarker"
+            />
+
+            <div
+              v-if="projects.length === 0"
+              class="text-center py-5 text-muted text-2"
+            >
+              조건에 맞는 프로젝트가 없습니다.
+            </div>
+          </div>
+
+          <div class="p-2 border-top bg-white">
+            <CommonPagination
+              :currentPage="currentPage"
+              :totalPages="totalPages"
+              @update:currentPage="currentPage = $event"
+              class="pagination-sm justify-content-center m-0"
+            />
+          </div>
+        </div>
+
+        <div class="col-lg-9 col-md-8 h-100 position-relative">
+          <div
+            ref="mapContainer"
+            id="kakao-map"
+            class="w-100 h-100 bg-soft-light"
+          >
+            <div class="d-flex h-100 align-items-center justify-content-center">
+              <div class="text-center">
+                <div
+                  class="spinner-border text-primary mb-2"
+                  role="status"
+                ></div>
+                <div class="text-muted font-weight-semibold">
+                  지도를 불러오는 중입니다...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup>
+/* global kakao */ // 이 줄을 추가하세요!
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
-import { useUserStore } from '@/fo/stores/userStore'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
+import MapProjectCardGroup from '@/fo/components/project/MapProjectCardGroup.vue'
+import MapProjectSummaryModal from '@/fo/components/project/MapProjectSummaryModal.vue'
 
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { api } from '@/axios.js'
 import qs from 'qs'
+import { useUserStore } from '@/fo/stores/userStore'
+import { useModalStore } from '@/fo/stores/modalStore'
 
 const userStore = useUserStore()
+const modalStore = useModalStore()
+const isMapView = ref(false) // [추가] 지도 보기 상태 변수
+const selectedProjectSq = ref(null)
 
 const filters = ref({
   addressCodeSq: [],
   projectDeveloperGradeCd: [],
   educationCd: [],
   jobRoleCd: [],
+  distance: null,
   sortBy: 'project_start_dt',
   sortOrder: 'desc',
   searchKeyword: '',
@@ -66,24 +155,207 @@ const filters = ref({
 const currentPage = ref(1)
 const totalPages = ref('')
 const projects = ref([])
+const mapContainer = ref(null)
+const mapInstance = ref(null)
+const markers = ref([]) // 지도에 표시된 마커들을 관리할 배열
 
-onMounted(async () => {
-  fetchProjects()
-  console.log('fetchProjects')
+// 1. 지도 초기화 함수
+const initMap = () => {
+  // document.getElementById 대신 ref 변수를 사용합니다.
+  if (!mapContainer.value) return
+
+  const options = {
+    center: new kakao.maps.LatLng(37.5665, 126.978),
+    level: 7,
+  }
+
+  // mapContainer.value가 곧 해당 DOM 엘리먼트입니다.
+  mapInstance.value = new kakao.maps.Map(mapContainer.value, options)
+
+  if (projects.value.length > 0) {
+    displayMarkers()
+  }
+}
+
+// 2. 서버 데이터를 직접 활용
+const displayMarkers = () => {
+  markers.value.forEach((m) => m.setMap(null))
+  markers.value = []
+
+  // 서버에서 받은 좌표 중복 체크용
+  const positionLog = {}
+
+  projects.value.forEach((project, index) => {
+    // 서버에서 내려준 latitude, longitude 사용 (없으면 skip)
+    if (!project.latitude || !project.longitude) return
+
+    let lat = project.latitude
+    let lng = project.longitude
+
+    // 미세 오프셋 로직 (중복 방지)
+    const posKey = `${lat},${lng}`
+    if (positionLog[posKey]) {
+      lat += (Math.random() - 0.5) * 0.0002
+      lng += (Math.random() - 0.5) * 0.0002
+    } else {
+      positionLog[posKey] = true
+    }
+
+    const coords = new kakao.maps.LatLng(lat, lng)
+
+    const content = document.createElement('div')
+    content.className = 'label'
+    content.innerHTML = `
+        <span class="badge rounded-circle bg-primary border border-white shadow-sm" 
+              style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:14px; color:white; cursor:pointer;">
+          ${index + 1}
+        </span>`
+
+    content.onclick = () => {
+      mapInstance.value.panTo(coords)
+      modalStore.openModal(MapProjectSummaryModal, { projectInfo: project })
+    }
+
+    const customOverlay = new kakao.maps.CustomOverlay({
+      position: coords,
+      content: content,
+      zIndex: 3,
+    })
+
+    customOverlay.setMap(mapInstance.value)
+    markers.value.push(customOverlay)
+
+    if (index === 0) mapInstance.value.setCenter(coords)
+  })
+}
+
+// 3. 지도/목록 토글 감시
+watch(isMapView, async (newVal) => {
+  if (newVal) {
+    // 지도 보기로 전환될 때 DOM이 생성된 후 지도 초기화
+    await nextTick()
+    initMap()
+  }
 })
+
+// 4. 검색 결과(projects)가 바뀔 때 지도 업데이트
+watch(projects, () => {
+  if (isMapView.value && mapInstance.value) {
+    displayMarkers()
+  }
+})
+
+const handleFocusMarker = ({ index, project }) => {
+  // [수정] 같은 프로젝트를 다시 눌렀을 때만 모달을 띄웁니다.
+  if (selectedProjectSq.value === project.projectSq) {
+    console.log(`재클릭: ${project.projectTtl} 요약 모달을 엽니다.`)
+    modalStore.openModal(MapProjectSummaryModal, { projectInfo: project })
+    return
+  }
+
+  // [수정] 처음 클릭 시: 상태 저장 및 지도 이동만 수행
+  selectedProjectSq.value = project.projectSq
+  console.log(`첫 클릭: ${index + 1}번 프로젝트로 지도 이동`)
+
+  if (project.latitude && project.longitude) {
+    const moveLatLon = new kakao.maps.LatLng(
+      project.latitude,
+      project.longitude,
+    )
+    mapInstance.value.panTo(moveLatLon)
+  } else {
+    console.warn('좌표 정보가 없어 이동할 수 없습니다.')
+  }
+}
 
 watch(currentPage, (newPage) => {
   filters.value.page = newPage
   fetchProjects()
 })
 
+// 1. 위경도 좌표 감시자 추가
+watch(
+  () => [userStore.userLat, userStore.userLng], // 이 값들이 변하는지 감시
+  ([newLat, newLng]) => {
+    if (newLat && newLng) {
+      console.log(
+        '📍 [WATCH] 스토어 좌표 업데이트 감지! 프로젝트를 다시 불러옵니다.',
+      )
+      fetchProjects()
+    }
+  },
+)
+
+// 2. 초기 로드 로직
+onMounted(() => {
+  // 이미 좌표가 있다면 바로 실행 (예: 새로고침 시 localStorage에서 로드된 경우)
+  if (userStore.userLat && userStore.userLng) {
+    fetchProjects()
+  } else if (!userStore.isLoggedIn) {
+    // 비로그인 상태라면 바로 실행 (함수 내부의 GPS 로직이 작동함)
+    fetchProjects()
+  } else {
+    // 로그인 상태인데 좌표만 없는 경우, 위에서 만든 watch가 해결해 줄 때까지 기다립니다.
+    console.log('⏳ 좌표 로딩을 기다리는 중...')
+  }
+})
+
 const fetchProjects = async () => {
+  console.log('--- [DEBUG] fetchProjects 시작 ---')
+
+  if (userStore.isLoggedIn && !userStore.userLat) {
+    console.log('⏳ 유저 정보를 불러오는 중입니다...')
+    return
+  }
+
   try {
-    const params = { ...filters.value }
+    let finalLat = null
+    let finalLng = null
+
+    // 1. 스토어 상태 먼저 확인
+    console.log('1. 현재 스토어 좌표:', {
+      lat: userStore.userLat,
+      lng: userStore.userLng,
+      isLoggedIn: userStore.isLoggedIn,
+    })
+
+    if (userStore.isLoggedIn && userStore.userLat && userStore.userLng) {
+      console.log('2. 로그인 유저 좌표 사용 결정')
+      finalLat = userStore.userLat
+      finalLng = userStore.userLng
+    } else {
+      console.log('2. 비로그인/좌표없음 -> GPS 시도')
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+            enableHighAccuracy: true,
+          })
+        })
+        finalLat = position.coords.latitude
+        finalLng = position.coords.longitude
+        console.log('3. GPS 좌표 획득 성공:', finalLat, finalLng)
+      } catch (err) {
+        console.error('3. GPS 획득 실패 (권한거부 또는 타임아웃):', err.message)
+      }
+    }
+
+    // 4. 파라미터 조립 (여기서 filters.value와 별도로 명시)
+    const params = {
+      ...filters.value,
+      userLat: finalLat,
+      userLng: finalLng,
+    }
+
+    console.log('4. 서버 전송 직전 Params:', params)
+
+    // 5. API 요청
     const queryString = qs.stringify(params, { arrayFormat: 'repeat' })
     const response = await api.$get(`/projects?${queryString}`)
-    projects.value = response.output.projects
 
+    console.log('5. 서버 응답 결과:', response.output.projects?.length, '건')
+
+    projects.value = response.output.projects
     const totalCount = response.output.totalCount ?? 0
     totalPages.value = Math.max(1, Math.ceil(totalCount / filters.value.size))
   } catch (e) {
@@ -96,4 +368,51 @@ const updateFilters = (updated) => {
   currentPage.value = 1 // 필터 바꾸면 1페이지부터
 }
 </script>
-<style lang=""></style>
+
+<style scoped>
+/* 버튼 전환 시 색상과 위치 변화를 부드럽게 만들기 위한 애니메이션 */
+.transition-3ms {
+  transition: all 0.3s ease;
+}
+
+/* 포르토 라이트 배경 미세 조정 */
+.bg-light {
+  background-color: #f7f7f7 !important;
+}
+
+/* 선택되지 않은 버튼 위로 마우스 올렸을 때 효과 */
+.bg-transparent:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.btn-rounded:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 사이드바 스크롤바 디자인 (Porto 스타일과 매칭) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0088cc; /* Porto Primary */
+}
+
+/* 지도 배경색 살짝 조절 */
+.bg-soft-light {
+  background-color: #f8f9fa;
+}
+
+/* 페이지네이션 크기 미세 조절 */
+:deep(.pagination-sm .page-link) {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+}
+</style>

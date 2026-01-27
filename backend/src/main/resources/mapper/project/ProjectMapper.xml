@@ -29,38 +29,55 @@
 	</resultMap>
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
-			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
-		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
-		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")"> #{item} </foreach> ) ) </if>
-		<if
+		resultMap="projectMap"> SELECT p.*, a.latitude, a.longitude, <choose>
+			<when test="userLat != null and userLng != null"> ST_Distance_Sphere(POINT(#{userLng},
+		#{userLat}), POINT(a.longitude, a.latitude)) / 1000 AS distance </when>
+			<otherwise> NULL AS distance </otherwise>
+		</choose> FROM TBL_PROJECT_M p /* 주소 정보
+		및 좌표를 가져오기 위한 조인 */ INNER JOIN TBL_ADDRESS_S a ON p.address_sq = a.address_sq WHERE
+		p.project_is_deleted_yn = 'N' <if test="addressCodeSq != null and addressCodeSq.size() > 0">
+		AND p.address_sq IN ( SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT
+		area_code_sq FROM TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item"
+				collection="addressCodeSq" open="(" separator="," close=")"> #{item} </foreach> ) ) </if>
+
+    <if
+			test="userLat != null and userLng != null and distance != null">
+			<choose>
+				<when test="distance == 999"> AND ST_Distance_Sphere(POINT(#{userLng}, #{userLat}),
+		POINT(a.longitude, a.latitude)) / 1000 &gt;= 10 </when>
+				<otherwise> AND ST_Distance_Sphere(POINT(#{userLng}, #{userLat}), POINT(a.longitude,
+		a.latitude)) / 1000 &lt;= #{distance} </otherwise>
+			</choose>
+		</if>
+
+    <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
 		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator=","
-				close=")"> #{item} </foreach>
+				open="(" separator="," close=")"> #{item} </foreach>
 		</if>
-		<if
+
+    <if
 			test="educationCd != null and educationCd.size() > 0"> AND
 		p.project_required_education_cd IN <foreach item="item" collection="educationCd" open="("
 				separator="," close=")"> #{item} </foreach>
 		</if>
-		<if
+
+    <if
 			test="jobRoleCd != null and jobRoleCd.size() > 0"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")"> #{item} </foreach> ) </if>
-		<if
+
+    <if
 			test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
-				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT * FROM TBL_COMPANY_S c JOIN
+				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c JOIN
 		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
 		CONCAT('%', #{searchKeyword}, '%') ) </when>
-				<when test="searchType == '내용'"> AND ( p.project_preference_txt LIKE CONCAT('%',
-		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')
-		) </when>
+				<when test="searchType == '내용'"> AND (p.project_preference_txt LIKE CONCAT('%',
+		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
 				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
@@ -71,9 +88,11 @@
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
-		<choose>
+
+    <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
+					<when test="sortBy == 'distance' and userLat != null"> ORDER BY distance ASC </when>
 					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
 		${sortOrder} </when>
 					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
@@ -84,7 +103,8 @@
 			</when>
 			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
 		</choose>
-		<if
+
+    <if
 			test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
 
