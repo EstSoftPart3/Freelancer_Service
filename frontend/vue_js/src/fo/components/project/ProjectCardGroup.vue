@@ -84,7 +84,7 @@
             >
               <div>
                 {{ project.address }} / {{ project.devGradeNm }} /
-                {{ project.requiredEduLvl }} / {{ project.salary }}원
+                {{ project.requiredEduLvl }} / {{ project.formattedSalary }}
               </div>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-2">

@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.user.dto.TokenDTO;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.util.JwtProvider;
 
@@ -19,6 +20,7 @@ public class LoginService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Transactional
     public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
@@ -96,7 +98,14 @@ public class LoginService {
     }
 
     public LoginResponseDTO getUserInfoByUserSq(Long userSq) {
-        return userRepository.getUserInfoByUserSq(userSq);
+        // Mapper에서 작성한 Join 쿼리 호출
+        LoginResponseDTO userInfo = userMapper.findUserInfoByUserSq(userSq);
+
+        if (userInfo == null) {
+            throw new RuntimeException("해당 유저의 정보를 찾을 수 없습니다.");
+        }
+
+        return userInfo;
     }
 
     public void deleteRefreshTokenByUserSq(Long userSq) {

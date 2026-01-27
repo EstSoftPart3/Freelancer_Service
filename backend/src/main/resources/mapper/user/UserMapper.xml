@@ -67,11 +67,11 @@
     user_is_deleted_yn, user_refresh_token FROM TBL_USER_M WHERE user_refresh_token =
     #{refreshToken} AND user_is_deleted_yn = 'N' </select>
 
-  <select
-    id="findUserInfoByUserSq" parameterType="long"
-    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT user_nm AS
-    userNm, user_type_cd AS userTypeCd FROM TBL_USER_M WHERE user_sq = #{userSq} AND
-    user_is_deleted_yn = 'N' </select>
+  <select id="findUserInfoByUserSq"
+    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT u.user_nm AS
+    userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude FROM tbl_user_m u LEFT JOIN
+    tbl_address_s a ON u.address_sq = a.address_sq WHERE u.user_sq = #{userSq} AND
+    u.user_is_deleted_yn = 'N' </select>
 
   <update id="deleteRefreshTokenByUserSq" parameterType="long"> UPDATE TBL_USER_M SET
     user_refresh_token = NULL WHERE user_sq = #{userSq} </update>

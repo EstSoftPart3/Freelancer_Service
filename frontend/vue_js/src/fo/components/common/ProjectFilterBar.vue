@@ -3,7 +3,7 @@
     <!-- Web Layout -->
     <div
       class="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-3 flex-wrap"
-      style="max-width: 880px; margin: 0 auto"
+      style="max-width: 1100px; margin: 0 auto"
     >
       <!-- Region Dropdown -->
       <div class="dropdown">
@@ -148,6 +148,41 @@
         </ul>
       </div>
 
+      <!-- 거리 타입 드랍다운 -->
+
+      <div class="dropdown">
+        <button
+          class="btn btn-outline btn-primary dropdown-toggle text-truncate"
+          type="button"
+          data-bs-toggle="dropdown"
+          style="max-width: 130px"
+        >
+          {{ selectedDistanceText }}
+        </button>
+        <ul class="dropdown-menu" @click.stop>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="clearSelection('distance')"
+              >전체</a
+            >
+          </li>
+          <li v-for="dist in distanceOptions.slice(1)" :key="dist.value">
+            <div class="dropdown-item">
+              <input
+                type="radio"
+                :id="'distance-' + dist.value"
+                :value="dist.value"
+                v-model="selectedDistance"
+                class="form-check-input me-2"
+              />
+              <label :for="'distance-' + dist.value">{{ dist.label }}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <!-- Search Input -->
       <div class="flex-grow-1">
         <input
@@ -250,6 +285,7 @@
           </li>
         </ul>
       </div>
+      <button class="btn btn-primary" @click="$emit('search')">검색</button>
     </div>
 
     <!-- Mobile Layout -->
@@ -402,6 +438,40 @@
         </div>
       </div>
 
+      <div class="dropdown flex-grow-1">
+        <button
+          class="btn btn-outline btn-primary dropdown-toggle w-100"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
+          {{ selectedDistanceTextMobile }}
+        </button>
+        <ul class="dropdown-menu" @click.stop>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="clearSelection('distance')"
+              >전체</a
+            >
+          </li>
+          <li v-for="dist in distanceOptions.slice(1)" :key="dist.value">
+            <div class="dropdown-item">
+              <input
+                type="radio"
+                :id="'distance-mobile-' + dist.value"
+                :value="dist.value"
+                v-model="selectedDistance"
+                class="form-check-input me-2"
+              />
+              <label :for="'distance-mobile-' + dist.value">{{
+                dist.label
+              }}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <div class="d-flex align-items-center gap-2">
         <!-- Search Input -->
         <div class="flex-grow-1">
@@ -512,7 +582,7 @@ import { ref, defineEmits, onMounted, computed, watch } from 'vue'
 import { api } from '@/axios.js'
 import { useRoute } from 'vue-router'
 
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'search']) // search 이벤트 추가
 const route = useRoute()
 
 // Options from API
@@ -571,6 +641,14 @@ const selectedJobTypeText = createSelectedText(
   { id: 'common_code_sq', name: 'common_code_nm' },
 )
 
+const selectedDistanceText = computed(() => {
+  if (selectedDistance.value === null) return '거리 (전체)'
+  const selected = distanceOptions.find(
+    (opt) => opt.value === selectedDistance.value,
+  )
+  return selected ? `거리 (${selected.label})` : '거리 선택'
+})
+
 const createSelectedTextMobile = (
   options,
   selectedIds,
@@ -614,6 +692,24 @@ const selectedJobTypeTextMobile = createSelectedTextMobile(
   { id: 'common_code_sq', name: 'common_code_nm' },
 )
 
+// [수정] Mobile용 텍스트 Computed (기존 패턴 유지)
+const selectedDistanceTextMobile = computed(() => {
+  if (selectedDistance.value === null) return '거리'
+  const selected = distanceOptions.find(
+    (opt) => opt.value === selectedDistance.value,
+  )
+  return selected ? selected.label : '거리'
+})
+// [추가] 거리 옵션 데이터
+const distanceOptions = [
+  { label: '거리 전체', value: null },
+  { label: '3km 이내', value: 3 },
+  { label: '5km 이내', value: 5 },
+  { label: '10km 이내', value: 10 },
+  { label: '10km 이상', value: 999 },
+]
+const selectedDistance = ref(null)
+
 // Fetch options from API
 const basePath = route.path.includes('/affiliation')
   ? '/affiliations'
@@ -644,6 +740,7 @@ watch(
     selectedCareers,
     selectedEducations,
     selectedJobTypes,
+    selectedDistance,
     searchKeyword,
     selectedTargetField,
     selectedSort,
@@ -654,6 +751,7 @@ watch(
       projectDeveloperGradeCd: selectedCareers.value,
       educationCd: selectedEducations.value,
       jobRoleCd: selectedJobTypes.value,
+      distance: selectedDistance.value, // 거리 데이터 추가
       searchKeyword: searchKeyword.value,
       searchType: selectedTargetField.value,
     }
@@ -686,6 +784,7 @@ const clearSelection = (type) => {
   if (type === 'careers') selectedCareers.value = []
   if (type === 'educations') selectedEducations.value = []
   if (type === 'jobTypes') selectedJobTypes.value = []
+  if (type === 'distance') selectedDistance.value = null
 }
 </script>
 
