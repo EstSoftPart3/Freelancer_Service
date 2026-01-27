@@ -34,10 +34,7 @@
             style="cursor: pointer"
           >
             <img
-              :src="
-                project.companyImageUrl ||
-                'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
-              "
+              :src="project.companyImageUrl || '/img/logos/Company_logo.png'"
               alt="프로젝트 이미지"
               class="rounded-circle"
               style="width: 70px; height: 70px; object-fit: cover"

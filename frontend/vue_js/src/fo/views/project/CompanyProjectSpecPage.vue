@@ -13,7 +13,7 @@
             <div class="d-flex align-items-center mb-3">
               <div class="me-4 flex-shrink-0">
                 <img
-                  src="img/blog/medium/blog-2.jpg"
+                  :src="'/img/logos/Company_logo.png'"
                   alt="프로젝트 이미지"
                   class="rounded-circle"
                   style="width: 70px; height: 70px; object-fit: cover"
@@ -265,6 +265,7 @@ onMounted(async () => {
 
     const response = await api.$get(`/projects/${projectSq}/details`, config)
     project.value = response.output
+    console.log(project.value)
     scrapCount.value = response.output.projectScrapCnt
     console.log(project.value)
   } catch (e) {

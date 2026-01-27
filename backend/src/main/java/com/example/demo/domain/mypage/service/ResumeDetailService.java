@@ -7,10 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.example.demo.domain.mypage.dto.request.ResumeDetailViewRequestDTO;
 import com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO;
 import com.example.demo.domain.mypage.repository.ResumeDetailRepository;
@@ -23,10 +21,10 @@ public class ResumeDetailService {
 
     private final ResumeDetailRepository repository;
 
-    private final AmazonS3 amazonS3;
+    // private final AmazonS3 amazonS3;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
+    // @Value("${cloud.aws.s3.bucket}")
+    // private String bucket;
 
     public ResumeDetailResponseDTO getResumeDetail(Long resumeSq) {
         ResumeDetailResponseDTO resume = repository.getResumeBasic(resumeSq);
@@ -37,10 +35,16 @@ public class ResumeDetailService {
 
         // 프로필 이미지
         String photoSaveName = repository.getResumePhotoSaveName(resumeSq);
+        // if (photoSaveName != null) {
+        // String s3Url = amazonS3.getUrl(bucket, photoSaveName).toString();
+        // resume.setResumePhotoUrl(s3Url);
+        // }
+
         if (photoSaveName != null) {
-            String s3Url = amazonS3.getUrl(bucket, photoSaveName).toString();
-            resume.setResumePhotoUrl(s3Url);
+            // S3 URL 대신 로컬 서빙 경로로 변경
+            resume.setResumePhotoUrl("/api/uploads/" + photoSaveName);
         }
+
         // 주소
         resume.setAddress(repository.getAddress(resumeSq));
 
@@ -98,7 +102,28 @@ public class ResumeDetailService {
         // 교육 이력
         resume.setTrainingList(repository.getTrainingList(resumeSq));
 
-        // 첨부파일 리스트 + S3 URL 생성
+        // // 첨부파일 리스트 + S3 URL 생성
+        // List<java.util.Map<String, Object>> attachments =
+        // repository.getAttachmentList(resumeSq);
+
+        // List<ResumeDetailResponseDTO.AttachmentDTO> attachmentDTOs =
+        // attachments.stream()
+        // .map(map -> {
+        // ResumeDetailResponseDTO.AttachmentDTO dto = new
+        // ResumeDetailResponseDTO.AttachmentDTO();
+        // dto.setAttachmentOriginFileNm((String) map.get("file_original_nm"));
+
+        // String fileSaveName = (String) map.get("file_save_nm");
+        // // amazonS3.getUrl(bucket, key)로 URL 생성
+        // String s3Url = amazonS3.getUrl(bucket, fileSaveName).toString();
+        // dto.setAttachmentFileUrl(s3Url);
+
+        // return dto;
+        // }).collect(Collectors.toList());
+
+        // resume.setAttachmentList(attachmentDTOs);
+
+        // 2. 첨부파일 리스트 URL 생성 (로컬 API 경로)
         List<java.util.Map<String, Object>> attachments = repository.getAttachmentList(resumeSq);
 
         List<ResumeDetailResponseDTO.AttachmentDTO> attachmentDTOs = attachments.stream()
@@ -107,9 +132,8 @@ public class ResumeDetailService {
                     dto.setAttachmentOriginFileNm((String) map.get("file_original_nm"));
 
                     String fileSaveName = (String) map.get("file_save_nm");
-                    // amazonS3.getUrl(bucket, key)로 URL 생성
-                    String s3Url = amazonS3.getUrl(bucket, fileSaveName).toString();
-                    dto.setAttachmentFileUrl(s3Url);
+                    // [수정] S3 URL 생성부 제거 -> 로컬 경로 조립
+                    dto.setAttachmentFileUrl("/api/uploads/" + fileSaveName);
 
                     return dto;
                 }).collect(Collectors.toList());
