@@ -1,32 +1,42 @@
 package com.example.demo.domain.affiliation.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
-import com.example.demo.domain.affiliation.mapper.*;
-import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
-import com.example.demo.domain.mypage.repository.ApplicationRepository;
-import com.amazonaws.services.s3.AmazonS3;
-import com.example.demo.domain.affiliation.dto.response.*;
-import com.example.demo.domain.affiliation.entity.*;
 import com.example.demo.domain.affiliation.dto.request.SearchFilterRequest;
+import com.example.demo.domain.affiliation.dto.response.AffiliationListResponse;
+import com.example.demo.domain.affiliation.dto.response.AffiliationResponse;
+import com.example.demo.domain.affiliation.dto.response.ApplicantListResponse;
+import com.example.demo.domain.affiliation.dto.response.ApplicantResponse;
+import com.example.demo.domain.affiliation.dto.response.ApplicationListResponse;
+import com.example.demo.domain.affiliation.dto.response.ApplicationResponse;
+import com.example.demo.domain.affiliation.dto.response.ApplyResponse;
+import com.example.demo.domain.affiliation.entity.Address;
+import com.example.demo.domain.affiliation.entity.AreaCd;
+import com.example.demo.domain.affiliation.entity.Career;
+import com.example.demo.domain.affiliation.entity.Company;
+import com.example.demo.domain.affiliation.entity.CompanyApplication;
+import com.example.demo.domain.affiliation.entity.ResumeSkillTag;
+import com.example.demo.domain.affiliation.entity.Scrap;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.mypage.repository.ApplicationRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AffiliationService {
 
 	private final AffiliationMapper affiliationMapper;
-	private final AmazonS3 amazonS3;
+	// private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
 
-	@Value("${cloud.aws.s3.bucket}")
-	private String bucket;
+	// @Value("${cloud.aws.s3.bucket}")
+	// private String bucket;
 
 	// 소속 신청 내역 하나 조회
 	@Transactional
@@ -64,8 +74,11 @@ public class AffiliationService {
 					List<String> tags = affiliationMapper.findTags(company.getCompanySq());
 					Long scrapCnt = affiliationMapper.findScrapCnt(company.getCompanySq());
 					String imgNm = affiliationMapper.findProfileImg(company.getCompanySq());
-					String imageUrl = (imgNm != null) ? amazonS3.getUrl(bucket, imgNm).toString() : null;
-
+					// S3용
+					// String imageUrl = (imgNm != null) ? amazonS3.getUrl(bucket, imgNm).toString()
+					// : null;
+					// 로컬용
+					String imageUrl = (imgNm != null) ? "/api/uploads/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
 					Boolean isApply = false;
 					if (applyCnt > 0) {

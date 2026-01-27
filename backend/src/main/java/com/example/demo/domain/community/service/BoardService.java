@@ -1,27 +1,45 @@
 package com.example.demo.domain.community.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.domain.community.dto.*;
-import com.example.demo.domain.community.dto.request.*;
-import com.example.demo.domain.community.entity.*;
-import com.example.demo.domain.community.mapper.*;
+import com.example.demo.common.AmazonS3.UploadedFileDTO;
+import com.example.demo.common.FileStorage.FileStorageService;
+import com.example.demo.domain.community.converter.NormalTagConverter;
+import com.example.demo.domain.community.converter.SkillTagConverter;
+import com.example.demo.domain.community.dto.BoardListDTO;
+import com.example.demo.domain.community.dto.SkillTagDTO;
+import com.example.demo.domain.community.dto.request.BoardRequest;
+import com.example.demo.domain.community.dto.response.AnswerListResponse;
+import com.example.demo.domain.community.dto.response.BoardAttachmentResponse;
+import com.example.demo.domain.community.dto.response.BoardListResponse;
+import com.example.demo.domain.community.dto.response.BoardResponse;
+import com.example.demo.domain.community.dto.response.CommentResponse;
+import com.example.demo.domain.community.entity.Board;
+import com.example.demo.domain.community.entity.BoardAttachment;
+import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.community.entity.Recommendation;
+import com.example.demo.domain.community.mapper.AnswerMapper;
+import com.example.demo.domain.community.mapper.BoardMapper;
+import com.example.demo.domain.community.mapper.CmntTagMapper;
+import com.example.demo.domain.community.mapper.CommentMapper;
+import com.example.demo.domain.community.mapper.CommunityUserMapper;
+import com.example.demo.domain.community.mapper.RecommendationMapper;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.mypage.service.InformationEditService;
-import com.example.demo.domain.community.dto.response.*;
-import com.example.demo.common.AmazonS3.AmazonS3Service;
-import com.example.demo.common.AmazonS3.UploadedFileDTO;
-import com.example.demo.domain.community.converter.*;
 import com.example.demo.domain.user.dto.UserDTO;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,12 +55,13 @@ public class BoardService {
 	private final RecommendationMapper recommendationMapper;
 	private final CommunityUserMapper communityUserMapper;
 	private final AnswerService answerService;
-	private final AmazonS3Service amazonS3Service;
+	// private final AmazonS3Service amazonS3Service;
+	private final FileStorageService fileStorageService;
 	private final InformationEditRepository informationEditRepository;
 	private final InformationEditService informationEditService;
 
-	@Value("${cloud.aws.s3.bucket}")
-	private String bucket;
+	// @Value("${cloud.aws.s3.bucket}")
+	// private String bucket;
 
 	@Transactional
 	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
@@ -183,7 +202,7 @@ public class BoardService {
 		if (boardRequest.getFiles() != null) {
 			for (MultipartFile file : boardRequest.getFiles()) {
 
-				UploadedFileDTO uploaded = amazonS3Service.uploadFile(file);
+				UploadedFileDTO uploaded = fileStorageService.uploadFile(file);
 
 				ProfileImageInfoDTO fileInfo = ProfileImageInfoDTO.builder()
 						.originalName(uploaded.getOriginalName())
@@ -257,7 +276,7 @@ public class BoardService {
 		if (boardRequest.getFiles() != null) {
 			for (MultipartFile file : boardRequest.getFiles()) {
 
-				UploadedFileDTO uploaded = amazonS3Service.uploadFile(file);
+				UploadedFileDTO uploaded = fileStorageService.uploadFile(file);
 
 				ProfileImageInfoDTO fileInfo = ProfileImageInfoDTO.builder()
 						.originalName(uploaded.getOriginalName())

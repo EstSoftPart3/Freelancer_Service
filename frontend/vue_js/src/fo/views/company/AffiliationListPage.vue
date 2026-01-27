@@ -97,13 +97,9 @@
                   >
                     <div class="d-block h-100 w-100 position-relative">
                       <img
-                        :src="
-                          afltn.profileImg ||
-                          'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
-                        "
+                        :src="afltn.profileImg || '/img/logos/Company_logo.png'"
                         @error="
-                          $event.target.src =
-                            'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
+                          $event.target.src = '/img/logos/Company_logo.png'
                         "
                         class="img-fluid img-thumbnail img-thumbnail-no-borders rounded-0 h-100 w-100"
                         style="object-fit: cover"
