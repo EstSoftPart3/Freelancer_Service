@@ -27,6 +27,8 @@ const fetchUserInfo = async () => {
     const res = await api.$post('/me')
     const data = res.output
 
+    console.log('✅ 서버 응답 데이터:', data)
+
     userStore.setUser({
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,

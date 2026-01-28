@@ -1,13 +1,27 @@
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
+  // 개발용
+  // state: () => ({
+  //   userNm: localStorage.getItem('userNm') || '',
+  //   userType: localStorage.getItem('userType') || '',
+  //   userAddress: localStorage.getItem('userAddress') || '',
+  //   userLat: localStorage.getItem('userLat') || null,
+  //   userLng: localStorage.getItem('userLng') || null,
+  // }),
+
+  // 배포용
   state: () => ({
     userNm: localStorage.getItem('userNm') || '',
     userType: localStorage.getItem('userType') || '',
-    // [추가] 주소 및 좌표 정보
     userAddress: localStorage.getItem('userAddress') || '',
-    userLat: localStorage.getItem('userLat') || null,
-    userLng: localStorage.getItem('userLng') || null,
+    // 문자열을 숫자로 변환하여 저장
+    userLat: localStorage.getItem('userLat')
+      ? Number(localStorage.getItem('userLat'))
+      : null,
+    userLng: localStorage.getItem('userLng')
+      ? Number(localStorage.getItem('userLng'))
+      : null,
   }),
   getters: {
     isLoggedIn: (state) => !!state.userNm,
@@ -26,15 +40,17 @@ export const useUserStore = defineStore('user', {
       this.userNm = userNm
       this.userType = userType
       this.userAddress = address || ''
-      this.userLat = latitude || null
-      this.userLng = longitude || null
+      this.userLat = latitude
+      this.userLng = longitude
 
       localStorage.setItem('userNm', userNm)
       localStorage.setItem('userType', userType)
       // [추가] 로컬 스토리지 저장 (새로고침 대비)
       if (address) localStorage.setItem('userAddress', address)
-      if (latitude) localStorage.setItem('userLat', latitude)
-      if (longitude) localStorage.setItem('userLng', longitude)
+      if (latitude !== undefined && latitude !== null)
+        localStorage.setItem('userLat', latitude)
+      if (longitude !== undefined && longitude !== null)
+        localStorage.setItem('userLng', longitude)
     },
     clearUser() {
       this.userNm = ''
