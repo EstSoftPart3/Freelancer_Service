@@ -244,14 +244,13 @@ const fetchUserInfo = async () => {
     const data = res.output
     console.log('data', data)
 
-    // 로컬스토리지 저장
-    localStorage.setItem('userNm', data.userNm)
-    localStorage.setItem('userTypeCd', data.userTypeCd)
-
     // Pinia 상태 저장
     userStore.setUser({
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
+      address: data.address, // 추가
+      latitude: data.latitude, // 추가
+      longitude: data.longitude, // 추가
     })
   } catch (error) {
     console.error('유저 정보 불러오기 실패:', error)
