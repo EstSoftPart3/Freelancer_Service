@@ -149,37 +149,38 @@
     <section class="faqSection">
       <div class="faqSectionInner">
         <div class="mb-4">
-          <h2>자주 묻는 질문</h2>
+          <h2 class="font-weight-bold">FAQ</h2>
           <p class="text-muted">궁금한 점이 있으시면 FAQ를 확인해보세요</p>
         </div>
 
-        <div class="faqAccordion">
-          <div class="faqItem">
-            <button class="faqQuestion" @click="toggleFaq(0)">
-              <span>프로젝트 지원은 어떻게 하나요?</span>
-              <i
-                class="bi"
-                :class="activeFaq === 0 ? 'bi-chevron-up' : 'bi-chevron-down'"
-              ></i>
-            </button>
-            <div v-show="activeFaq === 0" class="faqAnswer">
-              상세보기 페이지에서 지원하기 버튼을 클릭하여 포트폴리오와 함께
-              지원하실 수 있습니다.
+        <div class="toggle toggle-primary">
+          <section class="toggle" :class="{ active: activeFaq === 0 }">
+            <a class="toggle-title" @click.prevent="toggleFaq(0)">
+              프로젝트 지원은 어떻게 하나요?
+            </a>
+            <div class="toggle-content-wrapper" v-show="activeFaq === 0">
+              <div class="toggle-content">
+                <p>
+                  상세보기 페이지에서 지원하기 버튼을 클릭하여 포트폴리오와 함께
+                  지원하실 수 있습니다.
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="faqItem">
-            <button class="faqQuestion" @click="toggleFaq(1)">
-              <span>회원가입은 필수인가요?</span>
-              <i
-                class="bi"
-                :class="activeFaq === 1 ? 'bi-chevron-up' : 'bi-chevron-down'"
-              ></i>
-            </button>
-            <div v-show="activeFaq === 1" class="faqAnswer">
-              공고 열람은 비회원도 가능하나, 프로젝트 지원 및 스크랩 기능을
-              이용하시려면 회원가입이 필요합니다.
+          </section>
+
+          <section class="toggle" :class="{ active: activeFaq === 1 }">
+            <a class="toggle-title" @click.prevent="toggleFaq(1)">
+              회원가입은 필수인가요?
+            </a>
+            <div class="toggle-content-wrapper" v-show="activeFaq === 1">
+              <div class="toggle-content">
+                <p>
+                  공고 열람은 비회원도 가능하나, 프로젝트 지원 및 스크랩 기능을
+                  이용하시려면 회원가입이 필요합니다.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </section>
@@ -449,13 +450,18 @@ body {
   font-weight: 700;
   font-size: 1.1rem;
 }
-
-/* FAQ 섹션 */
 .faqSection {
   padding: 50px 0 40px;
   background: white;
   border-top: 1px solid #e9ecef;
 }
+
+.faqSectionInner {
+  padding: 0 140px;
+}
+
+/* FAQ 섹션 */
+/* 
 .faqSectionInner {
   padding: 0 140px;
 }
@@ -483,7 +489,7 @@ body {
   border-top: 1px solid #f8f9fa;
   line-height: 1.8;
   background-color: #fafafa;
-}
+} */
 
 /* 모달 (기본적으로 숨김) */
 .modalOverlay {
