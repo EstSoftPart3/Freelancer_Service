@@ -78,7 +78,7 @@ public class AffiliationService {
 					// String imageUrl = (imgNm != null) ? amazonS3.getUrl(bucket, imgNm).toString()
 					// : null;
 					// 로컬용
-					String imageUrl = (imgNm != null) ? "/api/uploads/" + imgNm : null;
+					String imageUrl = (imgNm != null) ? "/uploads/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
 					Boolean isApply = false;
 					if (applyCnt > 0) {
