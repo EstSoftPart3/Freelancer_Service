@@ -36,12 +36,6 @@
             <i class="fas fa-map-marked-alt me-2"></i>지도보기
           </button>
         </div>
-        <a
-          v-if="userStore.userTypeCd === 'COMPANY'"
-          href="/mypage/projectPostPage"
-          class="btn btn-rounded btn-light"
-          >등록하기</a
-        >
       </div>
       <div v-if="!isMapView">
         <ProjectCardGroup :projects="projects" />
@@ -84,7 +78,13 @@
               조건에 맞는 프로젝트가 없습니다.
             </div>
           </div>
-
+          <button
+            v-if="userStore.userType === 'COMPANY'"
+            href="/mypage/projectPostPage"
+            class="btn btn-rounded btn-primary"
+          >
+            등록하기
+          </button>
           <div class="p-2 border-top bg-white">
             <CommonPagination
               :currentPage="currentPage"

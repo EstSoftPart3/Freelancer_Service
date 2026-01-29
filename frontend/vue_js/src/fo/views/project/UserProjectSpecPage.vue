@@ -1,8 +1,11 @@
 <template lang="">
   <CommonPageHeader
     title=""
-    strongText="프로젝트 상세 정보"
-    :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '프로젝트' }]"
+    strongText="프로젝트 상세 정보(개인)"
+    :breadcrumbs="[
+      { text: '프로젝트', link: '/projectListPage' },
+      { text: project.projectTtl },
+    ]"
   />
   <div class="container py-5 detail-list">
     <div class="row pt-4 mt-2 mb-5">
@@ -13,7 +16,9 @@
             <div class="d-flex align-items-center mb-3">
               <div class="me-4 flex-shrink-0">
                 <img
-                  :src="'/img/logos/Company_logo.png'"
+                  :src="
+                    project.companyImageUrl || '/img/logos/Company_logo.png'
+                  "
                   alt="프로젝트 이미지"
                   class="rounded-circle"
                   style="width: 70px; height: 70px; object-fit: cover"
@@ -219,7 +224,7 @@
           </li>
           <li>
             <strong class="text-color-primary">단가 :</strong>
-            {{ project.projectSalary }}
+            {{ project.formattedSalary }}
           </li>
         </ul>
       </div>

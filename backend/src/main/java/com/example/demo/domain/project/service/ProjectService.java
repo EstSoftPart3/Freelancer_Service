@@ -203,6 +203,12 @@ public class ProjectService {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
 
+		// 1. 단가 가공 (목록 조회와 동일하게 formatSalary 사용)
+		String formattedSalary = formatSalary(p.getProjectSalary());
+
+		// 2. 기업 이미지 URL만 가져오기
+		String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
+
 		List<GroupSkillInfoResponse> reqSkills = groupingSkills(projectMapper.findReqSkillsByProjectSq(projectSq));
 		List<GroupSkillInfoResponse> preferSkills = groupingSkills(
 				projectMapper.findPreferSkillsByProjectSq(projectSq));
@@ -229,7 +235,7 @@ public class ProjectService {
 		}
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
-				hasApplied, userRole);
+				hasApplied, userRole, companyImageUrl, formattedSalary);
 	}
 
 	public Long fetchScrapCount(Long projectSq) {

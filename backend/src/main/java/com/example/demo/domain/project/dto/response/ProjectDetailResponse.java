@@ -18,44 +18,48 @@ import lombok.Getter;
 @Builder
 public class ProjectDetailResponse {
 
-    private String projectTtl;                    
-    private String companyNm;                    
-    private String projectDetail;                 
+    private String projectTtl;
+    private String companyNm;
+    private String projectDetail;
+    private String companyImageUrl;
 
-    private String interviewStartDt;              
-    private String interviewEndDt;                
-    private String projectRecruitStartDt;        
-    private String projectRecruitEndDt;           
-    private String projectStartDt;                
-    private String projectEndDt;                  
+    private String interviewStartDt;
+    private String interviewEndDt;
+    private String projectRecruitStartDt;
+    private String projectRecruitEndDt;
+    private String projectStartDt;
+    private String projectEndDt;
 
-    private Integer projectViewCnt;               
-    private Integer projectScrapCnt;               
+    private Integer projectViewCnt;
+    private Integer projectScrapCnt;
 
-    private String projectAddress;                
-    private String projectExperience;              
-    private String projectEducation;               
+    private String projectAddress;
+    private String projectExperience;
+    private String projectEducation;
 
-    private List<GroupSkillInfoResponse> projectRequiredSkills;    
-    private List<GroupSkillInfoResponse> projectPreferredSkills;   
-    private String projectPreferredEtc;      
+    private List<GroupSkillInfoResponse> projectRequiredSkills;
+    private List<GroupSkillInfoResponse> projectPreferredSkills;
+    private String projectPreferredEtc;
 
-    private Long projectSalary;                   
-    private List<String> projectJobRole;          
-    private List<String> projectWorkType;         
+    private Long projectSalary;
+    private String formattedSalary;
+    private List<String> projectJobRole;
+    private List<String> projectWorkType;
 
-    private int isScrap;    
+    private int isScrap;
     private int isApplied;
 
     private UserRole userRole;
-    
-    public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req, List<GroupSkillInfoResponse> prefer
-    		, String address, int hasScrapped, int hasApplied, UserRole userRole) {
-    	Long projectSq = p.getProjectSq();
-    	Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
-    	return ProjectDetailResponse.builder()
+
+    public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req,
+            List<GroupSkillInfoResponse> prefer, String address, int hasScrapped, int hasApplied, UserRole userRole,
+            String companyImageUrl, String formattedSalary) {
+        Long projectSq = p.getProjectSq();
+        Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
+        return ProjectDetailResponse.builder()
                 .projectTtl(p.getProjectTtl())
                 .companyNm(util.convertCompanySqToName(p.getCompanySq()))
+                .companyImageUrl(companyImageUrl)
                 .projectDetail(p.getProjectDescriptionTxt())
                 .interviewStartDt(DateUtil.formatLocalDate(interviewTimes.get("minTime")))
                 .interviewEndDt(DateUtil.formatLocalDate(interviewTimes.get("maxTime")))
@@ -75,6 +79,7 @@ public class ProjectDetailResponse {
                 .projectPreferredSkills(prefer)
                 .projectPreferredEtc(p.getProjectPreferenceTxt())
 
+                .formattedSalary(formattedSalary)
                 .projectSalary(p.getProjectSalary())
                 .projectJobRole(util.fetchJobsByProjectSq(projectSq))
                 .projectWorkType(util.fetchWorkTypesByProjectSq(projectSq))
