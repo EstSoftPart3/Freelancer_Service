@@ -3,7 +3,7 @@
     <CommonPageHeader
       title=""
       strongText="QnA 게시판"
-      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '커뮤니티' }]"
+      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: 'QnA 게시판' }]"
     />
     <div class="container py-5 mt-3">
       <!-- 검색창 및 필터 영역 -->
