@@ -111,9 +111,7 @@
                   class="spinner-border text-primary mb-2"
                   role="status"
                 ></div>
-                <div class="text-muted font-weight-semibold">
-                  지도를 불러오는 중입니다...
-                </div>
+                <div class="text-muted">지도를 불러오는 중입니다...</div>
               </div>
             </div>
           </div>
@@ -123,7 +121,7 @@
   </div>
 </template>
 <script setup>
-/* global kakao */ // 이 줄을 추가하세요!
+/* global kakao */
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
