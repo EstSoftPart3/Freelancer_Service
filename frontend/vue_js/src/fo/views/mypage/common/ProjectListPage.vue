@@ -8,12 +8,10 @@
     <ProjectFilterBar @update="updateFilters" @search="fetchProjects" />
 
     <div class="container py-4 position-relative" style="min-height: 400px">
-      <div v-if="isLoading" class="loading-overlay">
+      <div v-if="isLoading" class="text-center py-5">
         <div class="text-center">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-2 font-weight-semibold text-dark">
-            데이터를 불러오는 중입니다...
-          </p>
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <p class="text-muted">데이터를 불러오는 중입니다...</p>
         </div>
       </div>
 
@@ -405,19 +403,5 @@ const updateFilters = (updated) => {
 :deep(.pagination-sm .page-link) {
   padding: 5px 10px;
   font-size: 0.75rem;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.7); /* 반투명 흰색 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999; /* 지도보다 위에 뜨도록 설정 */
-  border-radius: 8px;
 }
 </style>
