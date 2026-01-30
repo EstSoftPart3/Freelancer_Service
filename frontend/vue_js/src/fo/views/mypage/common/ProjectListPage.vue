@@ -267,36 +267,6 @@ const handleFocusMarker = ({ index, project }) => {
     console.warn('좌표 정보가 없어 이동할 수 없습니다.')
   }
 }
-
-watch(currentPage, (newPage) => {
-  filters.value.page = newPage
-  fetchProjects()
-})
-
-// 1. 위경도 좌표 감시자 추가
-watch(
-  () => [userStore.userLat, userStore.userLng],
-  ([newLat, newLng]) => {
-    // 하나라도 값이 들어오면 즉시 실행
-    if (newLat && newLng) {
-      console.log('📍 [WATCH] 좌표 감지! 데이터를 불러옵니다.')
-      fetchProjects()
-    }
-  },
-  { immediate: true }, // 컴포넌트 생성 시점에 값이 이미 있다면 즉시 실행
-)
-
-// 2. 초기 로드 로직
-onMounted(() => {
-  // 비로그인 상태면 즉시 실행 (GPS 로직 사용)
-  // 로그인 상태인데 좌표가 이미 있으면 즉시 실행
-  if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng)) {
-    fetchProjects()
-  } else {
-    console.log('⏳ 좌표가 아직 없습니다. 워처가 응답을 기다립니다...')
-  }
-})
-
 const fetchProjects = async () => {
   console.log('--- [DEBUG] fetchProjects 시작 ---')
 
@@ -359,6 +329,35 @@ const fetchProjects = async () => {
     console.error('프로젝트 정보 불러오기 실패', e)
   }
 }
+
+watch(currentPage, (newPage) => {
+  filters.value.page = newPage
+  fetchProjects()
+})
+
+// 1. 위경도 좌표 감시자 추가
+watch(
+  () => [userStore.userLat, userStore.userLng],
+  ([newLat, newLng]) => {
+    // 하나라도 값이 들어오면 즉시 실행
+    if (newLat && newLng) {
+      console.log('📍 [WATCH] 좌표 감지! 데이터를 불러옵니다.')
+      fetchProjects()
+    }
+  },
+  { immediate: true }, // 컴포넌트 생성 시점에 값이 이미 있다면 즉시 실행
+)
+
+// 2. 초기 로드 로직
+onMounted(() => {
+  // 비로그인 상태면 즉시 실행 (GPS 로직 사용)
+  // 로그인 상태인데 좌표가 이미 있으면 즉시 실행
+  if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng)) {
+    fetchProjects()
+  } else {
+    console.log('⏳ 좌표가 아직 없습니다. 워처가 응답을 기다립니다...')
+  }
+})
 
 const updateFilters = (updated) => {
   filters.value = { ...filters.value, ...updated }
