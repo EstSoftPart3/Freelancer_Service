@@ -3,7 +3,10 @@
     <CommonPageHeader
       title=""
       strongText="일반 게시판"
-      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '커뮤니티' }]"
+      :breadcrumbs="[
+        { text: '일반 게시판', link: '/board' },
+        { text: boardInfo.ttl },
+      ]"
     />
     <div class="container py-5 mt-3">
       <div class="post-content ms-0">

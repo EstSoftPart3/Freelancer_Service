@@ -785,14 +785,17 @@ public class ResumeService {
 		// [핵심 수정] 프로필 이미지 URL 세팅 (로컬 API 경로)
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(resumeSq);
 		if (profileImage != null) {
-			profileImage.setUrl("/api/uploads/" + profileImage.getFileSaveNm());
+			// profileImage.setUrl("/uploads/" + profileImage.getFileSaveNm()); // CasaOS 용
+			profileImage.setUrl("/api/uploads/" + profileImage.getFileSaveNm()); // 로컬용
 		}
 		resume.setProfileImage(profileImage);
 
 		// [핵심 수정] 첨부파일 리스트 URL 세팅 (로컬 API 경로)
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository.findAttachmentList(resumeSq);
 		if (attachmentList != null) {
-			attachmentList.forEach(file -> file.setUrl("/api/uploads/" + file.getFileSaveNm()));
+			// attachmentList.forEach(file -> file.setUrl("/uploads/" +
+			// file.getFileSaveNm())); // CasaOS 용
+			attachmentList.forEach(file -> file.setUrl("/api/uploads/" + file.getFileSaveNm())); // 로컬용
 		}
 		resume.setAttachmentList(attachmentList);
 

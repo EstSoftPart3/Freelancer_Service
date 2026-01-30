@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.springframework.security.web.webauthn.api.PublicKeyCose;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.company.dto.CompanyMemberVo;
-import com.example.demo.domain.company.dto.request.BaseRequest;
 import com.example.demo.domain.company.dto.request.CompanyMemberSearchRequest;
 import com.example.demo.domain.company.dto.request.CompanyStatusRequest;
 import com.example.demo.domain.company.dto.response.CompanyMemberResponse;
@@ -19,15 +17,11 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
-import com.example.demo.domain.project.util.ProjectUtil;
-import com.example.demo.domain.project.vo.ResumeNmTtlVo;
 import com.example.demo.domain.project.vo.ResumeSummaryVo;
-import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +29,11 @@ public class CompanyService {
 	private final CompanyMapper companyMapper;
 	private final CommonCodeMapper commonCodeMapper;
 
-	@Value("${cloud.aws.s3.bucket}")
-	private String bucket;
+	// @Value("${cloud.aws.s3.bucket}")
+	// private String bucket;
 
-	@Value("${cloud.aws.region.static}")
-	private String region;
+	// @Value("${cloud.aws.region.static}")
+	// private String region;
 
 	private final ResumeMapper resumeMapper;
 	private final ResumeCareerMapper resumeCareerMapper;
@@ -75,7 +69,8 @@ public class CompanyService {
 		if (fileName == null) {
 			return null;
 		}
-		return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + fileName;
+		// return "/uploads/" + fileName; // CasaOS 용
+		return "/api/uploads/" + fileName; // 로컬용
 	}
 
 	@Transactional

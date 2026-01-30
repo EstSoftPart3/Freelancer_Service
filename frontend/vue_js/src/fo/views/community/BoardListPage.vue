@@ -3,7 +3,7 @@
     <CommonPageHeader
       title=""
       strongText="일반 게시판"
-      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '커뮤니티' }]"
+      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '일반 게시판' }]"
     />
     <div class="container py-5 mt-3">
       <!-- 검색창 및 필터 영역 -->
@@ -47,17 +47,30 @@
       <!-- 게시판 리스트 -->
       <div class="row">
         <div class="col">
-          <BoardTable :boardList="boardList" :isQna="false" />
-          <!-- 등록 버튼 -->
-          <div class="d-flex justify-content-end mb-3">
-            <a href="/board/register" class="btn btn-primary px-4">등록</a>
+          <div v-if="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="text-muted">게시글을 불러오는 중입니다...</p>
           </div>
-          <!-- 페이지네이션: 우측 하단 정렬 -->
-          <CommonPagination
-            :currentPage="currentPage"
-            :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
-          />
+
+          <div v-else>
+            <BoardTable :boardList="boardList" :isQna="false" />
+
+            <div
+              v-if="boardList.length === 0"
+              class="text-center py-5 text-muted"
+            >
+              등록된 게시글이 없습니다.
+            </div>
+            <div class="d-flex justify-content-end mb-3">
+              <a href="/board/register" class="btn btn-primary px-4">등록</a>
+            </div>
+            <!-- 페이지네이션: 우측 하단 정렬 -->
+            <CommonPagination
+              :currentPage="currentPage"
+              :totalPages="totalPages"
+              @update:currentPage="currentPage = $event"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -70,6 +83,8 @@ import { onMounted, ref, watch } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
+
+const isLoading = ref(false)
 
 const alertStore = useAlertStore()
 
@@ -89,6 +104,7 @@ const sortType = ref('latest')
 
 // 게시글 리스트 불러오기
 const getBoardList = async () => {
+  isLoading.value = true
   try {
     const searchFilter =
       keyword.value == null || keyword.value.trim() == ''
@@ -109,6 +125,8 @@ const getBoardList = async () => {
     }
   } catch (error) {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+  } finally {
+    isLoading.value = false
   }
 }
 watch(currentPage, () => {

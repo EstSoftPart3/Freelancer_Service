@@ -41,8 +41,8 @@ public class ResumeDetailService {
         // }
 
         if (photoSaveName != null) {
-            // S3 URL 대신 로컬 서빙 경로로 변경
-            resume.setResumePhotoUrl("/api/uploads/" + photoSaveName);
+            // resume.setResumePhotoUrl("/uploads/" + photoSaveName); CasaOS용
+            resume.setResumePhotoUrl("/api/uploads/" + photoSaveName); // 로컬용
         }
 
         // 주소
@@ -132,8 +132,9 @@ public class ResumeDetailService {
                     dto.setAttachmentOriginFileNm((String) map.get("file_original_nm"));
 
                     String fileSaveName = (String) map.get("file_save_nm");
-                    // [수정] S3 URL 생성부 제거 -> 로컬 경로 조립
-                    dto.setAttachmentFileUrl("/api/uploads/" + fileSaveName);
+
+                    // dto.setAttachmentFileUrl("/uploads/" + fileSaveName); // CasaOS용
+                    dto.setAttachmentFileUrl("/api/uploads/" + fileSaveName); // 로컬용
 
                     return dto;
                 }).collect(Collectors.toList());

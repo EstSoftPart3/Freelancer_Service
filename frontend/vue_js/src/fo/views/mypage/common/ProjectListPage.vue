@@ -36,19 +36,17 @@
             <i class="fas fa-map-marked-alt me-2"></i>지도보기
           </button>
         </div>
-        <a
-          v-if="userStore.userTypeCd === 'COMPANY'"
-          href="/mypage/projectPostPage"
-          class="btn btn-rounded btn-light"
-          >등록하기</a
-        >
       </div>
-      <div v-if="!isMapView">
+      <div v-if="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">프로젝트를 불러오는 중입니다...</p>
+      </div>
+      <div v-else-if="!isMapView">
         <ProjectCardGroup :projects="projects" />
         <div v-if="projects.length === 0" class="text-center text-muted py-5">
           조건에 맞는 프로젝트가 없습니다.
         </div>
-        <div>
+        <div v-if="projects.length > 0">
           <CommonPagination
             :currentPage="currentPage"
             :totalPages="totalPages"
@@ -84,7 +82,13 @@
               조건에 맞는 프로젝트가 없습니다.
             </div>
           </div>
-
+          <button
+            v-if="userStore.userType === 'COMPANY'"
+            href="/mypage/projectPostPage"
+            class="btn btn-rounded btn-primary"
+          >
+            등록하기
+          </button>
           <div class="p-2 border-top bg-white">
             <CommonPagination
               :currentPage="currentPage"
@@ -107,9 +111,7 @@
                   class="spinner-border text-primary mb-2"
                   role="status"
                 ></div>
-                <div class="text-muted font-weight-semibold">
-                  지도를 불러오는 중입니다...
-                </div>
+                <div class="text-muted">지도를 불러오는 중입니다...</div>
               </div>
             </div>
           </div>
@@ -119,7 +121,7 @@
   </div>
 </template>
 <script setup>
-/* global kakao */ // 이 줄을 추가하세요!
+/* global kakao */
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
@@ -137,6 +139,7 @@ const userStore = useUserStore()
 const modalStore = useModalStore()
 const isMapView = ref(false) // [추가] 지도 보기 상태 변수
 const selectedProjectSq = ref(null)
+const isLoading = ref(false)
 
 const filters = ref({
   addressCodeSq: [],
@@ -267,38 +270,9 @@ const handleFocusMarker = ({ index, project }) => {
     console.warn('좌표 정보가 없어 이동할 수 없습니다.')
   }
 }
-
-watch(currentPage, (newPage) => {
-  filters.value.page = newPage
-  fetchProjects()
-})
-
-// 1. 위경도 좌표 감시자 추가
-watch(
-  () => [userStore.userLat, userStore.userLng],
-  ([newLat, newLng]) => {
-    // 하나라도 값이 들어오면 즉시 실행
-    if (newLat && newLng) {
-      console.log('📍 [WATCH] 좌표 감지! 데이터를 불러옵니다.')
-      fetchProjects()
-    }
-  },
-  { immediate: true }, // 컴포넌트 생성 시점에 값이 이미 있다면 즉시 실행
-)
-
-// 2. 초기 로드 로직
-onMounted(() => {
-  // 비로그인 상태면 즉시 실행 (GPS 로직 사용)
-  // 로그인 상태인데 좌표가 이미 있으면 즉시 실행
-  if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng)) {
-    fetchProjects()
-  } else {
-    console.log('⏳ 좌표가 아직 없습니다. 워처가 응답을 기다립니다...')
-  }
-})
-
 const fetchProjects = async () => {
   console.log('--- [DEBUG] fetchProjects 시작 ---')
+  isLoading.value = true // 로딩 시작
 
   if (userStore.isLoggedIn && !userStore.userLat) {
     console.log('⏳ 유저 정보를 불러오는 중입니다...')
@@ -357,8 +331,39 @@ const fetchProjects = async () => {
     totalPages.value = Math.max(1, Math.ceil(totalCount / filters.value.size))
   } catch (e) {
     console.error('프로젝트 정보 불러오기 실패', e)
+  } finally {
+    isLoading.value = false // 로딩 종료
   }
 }
+
+watch(currentPage, (newPage) => {
+  filters.value.page = newPage
+  fetchProjects()
+})
+
+// 1. 위경도 좌표 감시자 추가
+watch(
+  () => [userStore.userLat, userStore.userLng],
+  ([newLat, newLng]) => {
+    // 하나라도 값이 들어오면 즉시 실행
+    if (newLat && newLng) {
+      console.log('📍 [WATCH] 좌표 감지! 데이터를 불러옵니다.')
+      fetchProjects()
+    }
+  },
+  { immediate: true }, // 컴포넌트 생성 시점에 값이 이미 있다면 즉시 실행
+)
+
+// 2. 초기 로드 로직
+onMounted(() => {
+  // 비로그인 상태면 즉시 실행 (GPS 로직 사용)
+  // 로그인 상태인데 좌표가 이미 있으면 즉시 실행
+  if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng)) {
+    fetchProjects()
+  } else {
+    console.log('⏳ 좌표가 아직 없습니다. 워처가 응답을 기다립니다...')
+  }
+})
 
 const updateFilters = (updated) => {
   filters.value = { ...filters.value, ...updated }
