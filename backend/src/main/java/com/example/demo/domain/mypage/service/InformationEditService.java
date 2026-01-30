@@ -149,8 +149,9 @@ public class InformationEditService {
         Long fileSq = informationEditRepository.findFileSqByCompanySq(companyInfo.getCompanySq());
         UploadedFileDTO file = informationEditRepository.findByFileSq(fileSq);
 
-        // [수정] S3 URL 대신 로컬 API 경로 구성
-        String imageUrl = (file != null) ? "/uploads/" + file.getSavedName() : null;
+        // String imageUrl = (file != null) ? "/uploads/" + file.getSavedName() : null;
+        // // CasaOS 용
+        String imageUrl = (file != null) ? "/api/uploads/" + file.getSavedName() : null; // 로컬용
 
         return AffiliationInfoResponseDTO.of(companyInfo, userInfo, addressInfo, tagList, imageUrl);
     }
@@ -249,7 +250,8 @@ public class InformationEditService {
             return null;
 
         // /api/uploads/파일명 형태로 반환 (WebConfig 매핑 기준)
-        return "/uploads/" + file.getSavedName();
+        // return "/uploads/" + file.getSavedName(); // CasaOS 용
+        return "/api/uploads/" + file.getSavedName(); // 로컬용
     }
 
     /**
