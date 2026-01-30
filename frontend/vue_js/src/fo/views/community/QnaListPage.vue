@@ -58,17 +58,31 @@
       <!-- 게시판 리스트 -->
       <div class="row">
         <div class="col">
-          <BoardTable :boardList="boardList" :isQna="true" />
-          <!-- 등록 버튼 -->
-          <div class="d-flex justify-content-end mb-3">
-            <a href="/qna/register" class="btn btn-primary px-4">등록</a>
+          <div v-if="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="text-muted">게시글을 불러오는 중입니다...</p>
           </div>
-          <!-- 페이지네이션 -->
-          <CommonPagination
-            :currentPage="currentPage"
-            :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
-          />
+
+          <div v-else>
+            <BoardTable :boardList="boardList" :isQna="true" />
+
+            <div
+              v-if="boardList.length === 0"
+              class="text-center py-5 text-muted"
+            >
+              등록된 게시글이 없습니다.
+            </div>
+            <!-- 등록 버튼 -->
+            <div class="d-flex justify-content-end mb-3">
+              <a href="/qna/register" class="btn btn-primary px-4">등록</a>
+            </div>
+            <!-- 페이지네이션 -->
+            <CommonPagination
+              :currentPage="currentPage"
+              :totalPages="totalPages"
+              @update:currentPage="currentPage = $event"
+            />
+          </div>
         </div>
       </div>
     </div>

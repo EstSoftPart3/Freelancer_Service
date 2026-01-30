@@ -37,6 +37,10 @@
           </button>
         </div>
       </div>
+      <div v-if="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">프로젝트를 불러오는 중입니다...</p>
+      </div>
       <div v-if="!isMapView">
         <ProjectCardGroup :projects="projects" />
         <div v-if="projects.length === 0" class="text-center text-muted py-5">
@@ -137,6 +141,7 @@ const userStore = useUserStore()
 const modalStore = useModalStore()
 const isMapView = ref(false) // [추가] 지도 보기 상태 변수
 const selectedProjectSq = ref(null)
+const isLoading = ref(false)
 
 const filters = ref({
   addressCodeSq: [],
@@ -269,6 +274,7 @@ const handleFocusMarker = ({ index, project }) => {
 }
 const fetchProjects = async () => {
   console.log('--- [DEBUG] fetchProjects 시작 ---')
+  isLoading.value = true // 로딩 시작
 
   if (userStore.isLoggedIn && !userStore.userLat) {
     console.log('⏳ 유저 정보를 불러오는 중입니다...')
@@ -327,6 +333,8 @@ const fetchProjects = async () => {
     totalPages.value = Math.max(1, Math.ceil(totalCount / filters.value.size))
   } catch (e) {
     console.error('프로젝트 정보 불러오기 실패', e)
+  } finally {
+    isLoading.value = false // 로딩 종료
   }
 }
 
