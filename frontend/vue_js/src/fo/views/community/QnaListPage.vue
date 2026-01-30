@@ -96,6 +96,8 @@ import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
+const isLoading = ref(false)
+
 const alertStore = useAlertStore()
 
 const boardList = ref([])
@@ -114,6 +116,8 @@ const boardAdoptStatusCd = ref('all')
 
 // 게시글 리스트 불러오기
 const getBoardList = async () => {
+  isLoading.value = true
+
   try {
     const searchFilter =
       keyword.value == null || keyword.value.trim() == ''
@@ -141,6 +145,8 @@ const getBoardList = async () => {
     }
   } catch (error) {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+  } finally {
+    isLoading.value = false
   }
 }
 

@@ -41,12 +41,12 @@
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-2">프로젝트를 불러오는 중입니다...</p>
       </div>
-      <div v-if="!isMapView">
+      <div v-else-if="!isMapView">
         <ProjectCardGroup :projects="projects" />
         <div v-if="projects.length === 0" class="text-center text-muted py-5">
           조건에 맞는 프로젝트가 없습니다.
         </div>
-        <div>
+        <div v-if="projects.length > 0">
           <CommonPagination
             :currentPage="currentPage"
             :totalPages="totalPages"

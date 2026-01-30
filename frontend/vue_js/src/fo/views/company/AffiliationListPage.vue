@@ -82,9 +82,7 @@
           <div class="blog-posts">
             <div v-if="isLoading" class="text-center py-5">
               <div class="spinner-border text-primary mb-3" role="status"></div>
-              <p class="text-muted font-weight-semibold">
-                공고 목록을 불러오는 중입니다...
-              </p>
+              <p class="text-muted">공고 목록을 불러오는 중입니다...</p>
             </div>
             <template v-else>
               <div class="row" v-if="afltnList.length > 0">
