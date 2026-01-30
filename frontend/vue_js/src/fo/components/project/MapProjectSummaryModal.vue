@@ -80,7 +80,8 @@ const openNavigation = () => {
   const startLng = userStore.userLng
 
   // 2. 목적지 정보 (프로젝트 위치)
-  const destName = encodeURIComponent(props.projectInfo.projectTtl)
+  const cleanTitle = props.projectInfo.projectTtl.replace(/,/g, ' ')
+  const destName = encodeURIComponent(cleanTitle)
   const destLat = props.projectInfo.latitude
   const destLng = props.projectInfo.longitude
 
@@ -95,6 +96,7 @@ const openNavigation = () => {
    * https://map.kakao.com/link/from/출발지명,위도,경도/to/목적지명,위도,경도
    */
   const url = `https://map.kakao.com/link/from/${startName},${startLat},${startLng}/to/${destName},${destLat},${destLng}`
+  console.log('url' + url.value)
 
   // 새창으로 열기
   window.open(url, '_blank')
