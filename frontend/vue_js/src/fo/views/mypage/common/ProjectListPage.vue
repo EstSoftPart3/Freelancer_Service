@@ -7,7 +7,16 @@
     />
     <ProjectFilterBar @update="updateFilters" @search="fetchProjects" />
 
-    <div class="container py-4">
+    <div class="container py-4 position-relative" style="min-height: 400px">
+      <div v-if="isLoading" class="loading-overlay">
+        <div class="text-center">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 font-weight-semibold text-dark">
+            데이터를 불러오는 중입니다...
+          </p>
+        </div>
+      </div>
+
       <div class="d-flex justify-content-end mb-3 gap-2">
         <div class="p-1 bg-light rounded-pill d-inline-flex border">
           <button
@@ -37,13 +46,14 @@
           </button>
         </div>
       </div>
-      <div v-if="isLoading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2">프로젝트를 불러오는 중입니다...</p>
-      </div>
-      <div v-else-if="!isMapView">
+
+      <div v-show="!isMapView">
         <ProjectCardGroup :projects="projects" />
-        <div v-if="projects.length === 0" class="text-center text-muted py-5">
+        <div
+          v-if="!isLoading && projects.length === 0"
+          class="text-center text-muted py-5 border rounded bg-light"
+        >
+          <i class="fas fa-search mb-3 d-block text-5"></i>
           조건에 맞는 프로젝트가 없습니다.
         </div>
         <div v-if="projects.length > 0">
@@ -54,8 +64,9 @@
           />
         </div>
       </div>
+
       <div
-        v-else
+        v-show="isMapView"
         class="row gx-0 border rounded overflow-hidden bg-white shadow-sm"
         style="height: 750px"
       >
@@ -74,21 +85,22 @@
               :projects="projects"
               @focus-marker="handleFocusMarker"
             />
-
             <div
-              v-if="projects.length === 0"
+              v-if="!isLoading && projects.length === 0"
               class="text-center py-5 text-muted text-2"
             >
               조건에 맞는 프로젝트가 없습니다.
             </div>
           </div>
+
           <button
             v-if="userStore.userType === 'COMPANY'"
-            href="/mypage/projectPostPage"
-            class="btn btn-rounded btn-primary"
+            @click="router.push('/mypage/projectPostPage')"
+            class="btn btn-rounded btn-primary m-2"
           >
             등록하기
           </button>
+
           <div class="p-2 border-top bg-white">
             <CommonPagination
               :currentPage="currentPage"
@@ -105,13 +117,16 @@
             id="kakao-map"
             class="w-100 h-100 bg-soft-light"
           >
-            <div class="d-flex h-100 align-items-center justify-content-center">
+            <div
+              v-if="!mapInstance"
+              class="d-flex h-100 align-items-center justify-content-center"
+            >
               <div class="text-center">
                 <div
                   class="spinner-border text-primary mb-2"
                   role="status"
                 ></div>
-                <div class="text-muted">지도를 불러오는 중입니다...</div>
+                <div class="text-muted">지도를 초기화하는 중입니다...</div>
               </div>
             </div>
           </div>
@@ -164,15 +179,13 @@ const markers = ref([]) // 지도에 표시된 마커들을 관리할 배열
 
 // 1. 지도 초기화 함수
 const initMap = () => {
-  // document.getElementById 대신 ref 변수를 사용합니다.
-  if (!mapContainer.value) return
+  if (!mapContainer.value || mapInstance.value) return
 
   const options = {
     center: new kakao.maps.LatLng(37.5665, 126.978),
     level: 7,
   }
 
-  // mapContainer.value가 곧 해당 DOM 엘리먼트입니다.
   mapInstance.value = new kakao.maps.Map(mapContainer.value, options)
 
   if (projects.value.length > 0) {
@@ -182,20 +195,19 @@ const initMap = () => {
 
 // 2. 서버 데이터를 직접 활용
 const displayMarkers = () => {
+  if (!mapInstance.value) return
+
   markers.value.forEach((m) => m.setMap(null))
   markers.value = []
 
-  // 서버에서 받은 좌표 중복 체크용
   const positionLog = {}
 
   projects.value.forEach((project, index) => {
-    // 서버에서 내려준 latitude, longitude 사용 (없으면 skip)
     if (!project.latitude || !project.longitude) return
 
     let lat = project.latitude
     let lng = project.longitude
 
-    // 미세 오프셋 로직 (중복 방지)
     const posKey = `${lat},${lng}`
     if (positionLog[posKey]) {
       lat += (Math.random() - 0.5) * 0.0002
@@ -205,7 +217,6 @@ const displayMarkers = () => {
     }
 
     const coords = new kakao.maps.LatLng(lat, lng)
-
     const content = document.createElement('div')
     content.className = 'label'
     content.innerHTML = `
@@ -271,68 +282,46 @@ const handleFocusMarker = ({ index, project }) => {
   }
 }
 const fetchProjects = async () => {
-  console.log('--- [DEBUG] fetchProjects 시작 ---')
-  isLoading.value = true // 로딩 시작
-
+  isLoading.value = true
   if (userStore.isLoggedIn && !userStore.userLat) {
-    console.log('⏳ 유저 정보를 불러오는 중입니다...')
+    isLoading.value = false
     return
   }
 
   try {
-    let finalLat = null
-    let finalLng = null
+    let finalLat = userStore.userLat
+    let finalLng = userStore.userLng
 
-    // 1. 스토어 상태 먼저 확인
-    console.log('1. 현재 스토어 좌표:', {
-      lat: userStore.userLat,
-      lng: userStore.userLng,
-      isLoggedIn: userStore.isLoggedIn,
-    })
-
-    if (userStore.isLoggedIn && userStore.userLat && userStore.userLng) {
-      console.log('2. 로그인 유저 좌표 사용 결정')
-      finalLat = userStore.userLat
-      finalLng = userStore.userLng
-    } else {
-      console.log('2. 비로그인/좌표없음 -> GPS 시도')
+    if (!userStore.isLoggedIn || !finalLat) {
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             timeout: 5000,
-            enableHighAccuracy: true,
           })
         })
         finalLat = position.coords.latitude
         finalLng = position.coords.longitude
-        console.log('3. GPS 좌표 획득 성공:', finalLat, finalLng)
       } catch (err) {
-        console.error('3. GPS 획득 실패 (권한거부 또는 타임아웃):', err.message)
+        console.error('GPS 실패:', err.message)
       }
     }
 
-    // 4. 파라미터 조립 (여기서 filters.value와 별도로 명시)
-    const params = {
-      ...filters.value,
-      userLat: finalLat,
-      userLng: finalLng,
-    }
-
-    console.log('4. 서버 전송 직전 Params:', params)
-
-    // 5. API 요청
+    const params = { ...filters.value, userLat: finalLat, userLng: finalLng }
     const queryString = qs.stringify(params, { arrayFormat: 'repeat' })
     const response = await api.$get(`/projects?${queryString}`)
-
-    console.log('5. 서버 응답 결과:', response.output.projects?.length, '건')
 
     projects.value = response.output.projects
     const totalCount = response.output.totalCount ?? 0
     totalPages.value = Math.max(1, Math.ceil(totalCount / filters.value.size))
+
+    // [중요] 데이터 로딩 후 지도 모드라면 마커 갱신
+    if (isMapView.value) {
+      nextTick(() => displayMarkers())
+    }
   } catch (e) {
-    console.error('프로젝트 정보 불러오기 실패', e)
+    console.error('로드 실패', e)
   } finally {
-    isLoading.value = false // 로딩 종료
+    isLoading.value = false
   }
 }
 
@@ -416,5 +405,19 @@ const updateFilters = (updated) => {
 :deep(.pagination-sm .page-link) {
   padding: 5px 10px;
   font-size: 0.75rem;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7); /* 반투명 흰색 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999; /* 지도보다 위에 뜨도록 설정 */
+  border-radius: 8px;
 }
 </style>
