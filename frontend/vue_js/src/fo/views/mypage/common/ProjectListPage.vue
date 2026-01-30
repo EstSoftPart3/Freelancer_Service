@@ -15,7 +15,7 @@
         </div>
       </div>
 
-      <div class="d-flex justify-content-end mb-3 gap-2">
+      <div v-if="!isLoading" class="d-flex justify-content-end mb-3 gap-2">
         <div class="p-1 bg-light rounded-pill d-inline-flex border">
           <button
             type="button"
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <div v-show="!isMapView">
+      <div v-show="!isLoading & !isMapView">
         <ProjectCardGroup :projects="projects" />
         <div
           v-if="!isLoading && projects.length === 0"
@@ -64,7 +64,7 @@
       </div>
 
       <div
-        v-show="isMapView"
+        v-show="!isLoading & isMapView"
         class="row gx-0 border rounded overflow-hidden bg-white shadow-sm"
         style="height: 750px"
       >
