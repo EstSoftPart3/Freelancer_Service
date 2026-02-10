@@ -246,6 +246,16 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  // [추가] 페이지 이동 시 스크롤 제어 로직
+  scrollBehavior(to, from, savedPosition) {
+    // 1. 브라우저 뒤로가기/앞으로가기 시 이전 스크롤 위치 복원
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      // 2. 새로운 페이지 이동 시 무조건 최상단(y=0)으로 이동
+      return { top: 0 }
+    }
+  },
 })
 
 router.beforeEach((to, from, next) => {
