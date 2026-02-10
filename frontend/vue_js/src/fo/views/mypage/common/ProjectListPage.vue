@@ -54,6 +54,17 @@
           <i class="fas fa-search mb-3 d-block text-5"></i>
           조건에 맞는 프로젝트가 없습니다.
         </div>
+        <div
+          v-if="userStore.userType === 'COMPANY'"
+          class="d-flex justify-content-end mt-3"
+        >
+          <button
+            @click="router.push('/mypage/projectPostPage')"
+            class="btn btn-rounded btn-primary px-4 py-2 shadow-sm"
+          >
+            등록하기
+          </button>
+        </div>
         <div v-if="projects.length > 0">
           <CommonPagination
             :currentPage="currentPage"
@@ -147,9 +158,11 @@ import { api } from '@/axios.js'
 import qs from 'qs'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 const modalStore = useModalStore()
+const router = useRouter()
 const isMapView = ref(false) // [추가] 지도 보기 상태 변수
 const selectedProjectSq = ref(null)
 const isLoading = ref(false)
