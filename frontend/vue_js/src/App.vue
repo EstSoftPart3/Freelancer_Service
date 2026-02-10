@@ -59,7 +59,16 @@ function clearLoginStateFunc() {
 setClearLoginState(clearLoginStateFunc)
 
 onMounted(() => {
-  fetchUserInfo()
+  const token = localStorage.getItem('accessToken')
+
+  // 토큰이 있을 때만 유저 정보를 가져옵니다.
+  if (token) {
+    fetchUserInfo()
+  } else {
+    // 토큰이 없으면 비로그인 상태이므로 아무것도 하지 않거나
+    // 필요한 초기화만 수행합니다.
+    userStore.clearUser()
+  }
 })
 </script>
 
