@@ -34,7 +34,7 @@
   <!-- 아이디 중복 확인 -->
   <select id="existsByUserId"
     parameterType="string" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_USER_M WHERE
-    user_id = #{userId} AND user_is_deleted_yn = 'N' ) </select>
+    user_id = #{userId} ) </select>
 
   <!-- 이메일 중복 확인 -->
   <select id="existsByUserEmail"
