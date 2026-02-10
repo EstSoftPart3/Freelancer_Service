@@ -32,9 +32,10 @@ const fetchUserInfo = async () => {
     userStore.setUser({
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
-      address: data.address, // 백엔드에서 넘겨주는 필드명 확인 필요
-      latitude: data.latitude, // 백엔드에서 넘겨주는 필드명 확인 필요
-      longitude: data.longitude, // 백엔드에서 넘겨주는 필드명 확인 필요
+      address: data.address,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      isAffiliated: data.isAffiliated,
     })
   } catch (error) {
     clearLoginState()

@@ -8,6 +8,7 @@ export const useUserStore = defineStore('user', {
   //   userAddress: localStorage.getItem('userAddress') || '',
   //   userLat: localStorage.getItem('userLat') || null,
   //   userLng: localStorage.getItem('userLng') || null,
+  // isAffiliated: localStorage.getItem('isAffiliated') || 'N',
   // }),
 
   // 배포용
@@ -22,6 +23,7 @@ export const useUserStore = defineStore('user', {
     userLng: localStorage.getItem('userLng')
       ? Number(localStorage.getItem('userLng'))
       : null,
+    isAffiliated: localStorage.getItem('isAffiliated') || 'N',
   }),
   getters: {
     isLoggedIn: (state) => !!state.userNm,
@@ -33,7 +35,14 @@ export const useUserStore = defineStore('user', {
         : null,
   },
   actions: {
-    setUser({ userNm, userTypeCd, address, latitude, longitude }) {
+    setUser({
+      userNm,
+      userTypeCd,
+      address,
+      latitude,
+      longitude,
+      isAffiliated,
+    }) {
       const userType =
         userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
 
@@ -42,6 +51,7 @@ export const useUserStore = defineStore('user', {
       this.userAddress = address || ''
       this.userLat = latitude
       this.userLng = longitude
+      this.isAffiliated = isAffiliated || 'N'
 
       localStorage.setItem('userNm', userNm)
       localStorage.setItem('userType', userType)
@@ -51,6 +61,7 @@ export const useUserStore = defineStore('user', {
         localStorage.setItem('userLat', latitude)
       if (longitude !== undefined && longitude !== null)
         localStorage.setItem('userLng', longitude)
+      localStorage.setItem('isAffiliated', this.isAffiliated)
     },
     clearUser() {
       this.userNm = ''
@@ -58,12 +69,14 @@ export const useUserStore = defineStore('user', {
       this.userAddress = ''
       this.userLat = null
       this.userLng = null
+      this.isAffiliated = 'N'
 
       localStorage.removeItem('userNm')
       localStorage.removeItem('userType')
       localStorage.removeItem('userAddress')
       localStorage.removeItem('userLat')
       localStorage.removeItem('userLng')
+      localStorage.removeItem('isAffiliated')
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')

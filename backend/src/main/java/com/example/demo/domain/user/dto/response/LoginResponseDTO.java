@@ -20,4 +20,7 @@ public class LoginResponseDTO {
     // [추가] 프론트엔드에서 거리 계산의 기준이 될 좌표
     private Double latitude;
     private Double longitude;
+
+    // [추가] 유저의 소속 여부 ('Y' 또는 'N')
+    private String isAffiliated;
 }

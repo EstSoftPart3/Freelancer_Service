@@ -251,6 +251,7 @@ const fetchUserInfo = async () => {
       address: data.address, // 추가
       latitude: data.latitude, // 추가
       longitude: data.longitude, // 추가
+      isAffiliated: data.isAffiliated, // 추가
     })
   } catch (error) {
     console.error('유저 정보 불러오기 실패:', error)
