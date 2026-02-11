@@ -123,7 +123,7 @@
         :key="normal_tag"
         href="#"
         class="btn btn-rounded btn-light me-2 my-2"
-        >{{ normal_tag }}</a
+        >#{{ normal_tag }}</a
       >
     </div>
     <div class="post-admin mt-4 text-end">
