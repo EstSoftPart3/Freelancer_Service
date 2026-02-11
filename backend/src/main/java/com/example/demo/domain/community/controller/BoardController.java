@@ -1,7 +1,7 @@
 package com.example.demo.domain.community.controller;
 
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.List;
 import javax.lang.model.type.NullType;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriUtils;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.File.FileCryptoUtil;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
@@ -42,7 +43,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/board")
 @RequiredArgsConstructor
@@ -50,6 +53,7 @@ public class BoardController {
 	private final BoardService boardService;
 	private final BoardMapper boardMapper;
 	// private final AmazonS3 amazonS3;
+	private final FileCryptoUtil fileCryptoUtil;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -187,7 +191,7 @@ public class BoardController {
 	@GetMapping("/download/{fileSq}")
 	public ResponseEntity<Resource> downloadFile(@PathVariable("fileSq") Long fileSq) {
 
-		// 1. DB에서 파일 정보 조회 (BoardAttachment 엔티티 활용)
+		// 1. DB에서 파일 정보 조회
 		BoardAttachment attachment = boardMapper.findFile(fileSq);
 
 		if (attachment == null) {
@@ -195,25 +199,34 @@ public class BoardController {
 		}
 
 		try {
-			// 2. 물리적 파일 경로 확보
+			// 2. 물리적 파일 경로 확보 및 암호화된 데이터 읽기
 			Path filePath = Paths.get(uploadDir).resolve(attachment.getFileSaveNm()).normalize();
-			Resource resource = new UrlResource(filePath.toUri());
-
-			if (!resource.exists() || !resource.isReadable()) {
+			if (!Files.exists(filePath)) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "실제 파일을 찾을 수 없습니다.");
 			}
+
+			// [수정 포인트] 파일을 바이트 배열로 읽어옵니다.
+			byte[] encryptedBytes = Files.readAllBytes(filePath);
+
+			// [수정 포인트] 암호화된 바이트를 복호화합니다.
+			byte[] decryptedBytes = fileCryptoUtil.decrypt(encryptedBytes);
+
+			// [수정 포인트] 복호화된 데이터를 리소스로 변환합니다.
+			Resource resource = new ByteArrayResource(decryptedBytes);
 
 			// 3. 한글 파일명 깨짐 방지 인코딩
 			String encodedFileName = UriUtils.encode(attachment.getFileOriginalNm(), StandardCharsets.UTF_8);
 
-			// 4. 다운로드 응답 헤더 설정 (attachment 설정이 있어야 브라우저에서 저장창이 뜸)
+			// 4. 다운로드 응답 헤더 설정
 			return ResponseEntity.ok()
 					.contentType(MediaType.APPLICATION_OCTET_STREAM)
 					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+					.header(HttpHeaders.CONTENT_LENGTH, String.valueOf(decryptedBytes.length)) // 실제 데이터 길이 설정
 					.body(resource);
 
-		} catch (MalformedURLException e) {
-			throw new RuntimeException("파일 경로가 잘못되었습니다.", e);
+		} catch (Exception e) { // 복호화 예외 처리를 위해 Exception으로 포괄
+			log.error("파일 다운로드 중 복호화 오류 발생: {}", fileSq, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 다운로드 중 오류가 발생했습니다.");
 		}
 	}
 

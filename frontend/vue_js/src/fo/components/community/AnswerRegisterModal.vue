@@ -83,11 +83,26 @@ const isHtmlEmpty = (htmlString) => {
   return textOnly === ''
 }
 
+// 용량 제한 상수 (100MB)
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
 // 등록 함수
 const registerFunc = async () => {
   try {
     const reqData = registerRef.value.sendData()
     reqData.append('boardSq', Number(boardSq))
+
+    const files = reqData.getAll('files')
+
+    for (const file of files) {
+      if (file instanceof File) {
+        // 1. 개별 파일 용량 체크
+        if (file.size > MAX_FILE_SIZE) {
+          alertStore.show(`${file.name}의 크기가 100MB를 초과합니다.`, 'danger')
+          return
+        }
+      }
+    }
 
     if (reqData.get('ttl') == null || reqData.get('ttl').trim() == '') {
       alertStore.show('제목을 입력해주세요.', 'danger')

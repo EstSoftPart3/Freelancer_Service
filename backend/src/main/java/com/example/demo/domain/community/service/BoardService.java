@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
-import com.example.demo.common.FileStorage.FileStorageService;
+import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.BoardListDTO;

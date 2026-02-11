@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
-import com.example.demo.common.FileStorage.FileStorageService;
+import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
@@ -148,10 +148,10 @@ public class InformationEditService {
         // 파일 정보 조회
         Long fileSq = informationEditRepository.findFileSqByCompanySq(companyInfo.getCompanySq());
         UploadedFileDTO file = informationEditRepository.findByFileSq(fileSq);
-
-        // String imageUrl = (file != null) ? "/uploads/" + file.getSavedName() : null;
-        // // CasaOS 용
-        String imageUrl = (file != null) ? "/api/uploads/" + file.getSavedName() : null; // 로컬용
+        // CasaOS 용
+        // String imageUrl = (file != null) ? "/files/" + file.getSavedName() : null;
+        // 로컬용
+        String imageUrl = (file != null) ? "/api/files/" + file.getSavedName() : null;
 
         return AffiliationInfoResponseDTO.of(companyInfo, userInfo, addressInfo, tagList, imageUrl);
     }
@@ -249,9 +249,9 @@ public class InformationEditService {
         if (file == null)
             return null;
 
-        // /api/uploads/파일명 형태로 반환 (WebConfig 매핑 기준)
-        // return "/uploads/" + file.getSavedName(); // CasaOS 용
-        return "/api/uploads/" + file.getSavedName(); // 로컬용
+        // /api/files/파일명 형태로 반환 (WebConfig 매핑 기준)
+        // return "/files/" + file.getSavedName(); // CasaOS 용
+        return "/api/files/" + file.getSavedName(); // 로컬용
     }
 
     /**

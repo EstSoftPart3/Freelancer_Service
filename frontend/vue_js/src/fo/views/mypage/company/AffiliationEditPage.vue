@@ -487,10 +487,19 @@ const editing = reactive({
   tagNm: false,
 })
 
+// 파일 사이즈 정의 변수
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
 // 파일 변경 이벤트 핸들러
 const onFileChange = async (event) => {
   const file = event.target.files[0]
   if (!file) return
+
+  if (file.size > MAX_FILE_SIZE) {
+    alertStore.show('파일 크기는 100MB를 초과할 수 없습니다.', 'danger')
+    event.target.value = ''
+    return
+  }
 
   try {
     const formData = new FormData()
@@ -516,7 +525,7 @@ const onFileChange = async (event) => {
       alertStore.show('프로필 이미지 업데이트에 실패했습니다.', 'danger')
     }
   } catch (error) {
-    alertStore('프로필 이미지 업데이트 중 오류가 발생했습니다.', 'danger')
+    alertStore.show('프로필 이미지 업데이트 중 오류가 발생했습니다.', 'danger')
     console.error(error)
   }
 }
@@ -529,7 +538,7 @@ const removeProfileImage = async () => {
       companyProfileImageUrl.value = null
     }
   } catch (error) {
-    alertStore('프로필 이미지 삭제에 실패하였습니다.', 'danger')
+    alertStore.show('프로필 이미지 삭제에 실패하였습니다.', 'danger')
     console.err(error)
   }
 }
