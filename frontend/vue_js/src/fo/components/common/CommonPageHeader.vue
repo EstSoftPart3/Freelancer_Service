@@ -5,7 +5,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-8 order-2 order-md-1 align-self-center p-static">
-          <h1 class="text-dark">
+          <h1 class="text-dark fs-5">
             {{ title }}
             <strong>{{ strongText }}</strong>
           </h1>
@@ -57,5 +57,9 @@ defineProps({
   z-index: 99; /* 컨텐츠보다는 높고, 모달보다는 낮게 설정 */
   border-bottom: 1px solid #ddd; /* 고정되었을 때 구분선 (선택 사항) */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* 입체감 (선택 사항) */
+}
+
+.page-header.page-header-sm {
+  padding: 20px 0;
 }
 </style>
