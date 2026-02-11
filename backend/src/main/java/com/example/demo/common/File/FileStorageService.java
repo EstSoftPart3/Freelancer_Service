@@ -43,38 +43,46 @@ public class FileStorageService {
                 Files.createDirectories(uploadPath);
             }
 
-            // [수정 포인트] 1. 파일의 원본 바이트를 가져옴
+            // 1. 파일의 원본 바이트를 가져옴
             byte[] fileBytes = multipartFile.getBytes();
             String contentType = multipartFile.getContentType();
-            // [최적화 추가] 이미지 파일인 경우 압축 진행
+
+            // [최적화] 이미지 파일인 경우 압축 진행
             if (contentType != null && contentType.startsWith("image")) {
+                // SVG는 벡터 방식이므로 Thumbnailator 처리 제외
                 if (!contentType.equals("image/svg+xml")) {
                     log.info("비트맵 이미지 최적화 시작: {}", contentType);
 
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    // 가로 해상도 최대 1920px로 제한, 화질 80%로 압축
                     try {
-                        Thumbnails.of(multipartFile.getInputStream())
+                        var builder = Thumbnails.of(multipartFile.getInputStream())
                                 .size(1920, 1920)
-                                .outputQuality(0.8)
-                                .outputFormat("jpg")
-                                .toOutputStream(outputStream);
+                                .outputQuality(0.8);
+
+                        // [핵심 수정] PNG나 WebP 등 투명도가 중요한 포맷은 jpg로 강제 변환하지 않음
+                        if (contentType.equals("image/png") || contentType.equals("image/webp")) {
+                            log.info("투명도 유지를 위해 원본 포맷으로 최적화합니다.");
+                            builder.toOutputStream(outputStream);
+                        } else {
+                            // 그 외 일반 이미지는 jpg로 변환하여 용량 최소화
+                            builder.outputFormat("jpg").toOutputStream(outputStream);
+                        }
+
                         fileBytes = outputStream.toByteArray();
                         log.info("이미지 최적화 완료: {} -> {} bytes", multipartFile.getSize(), fileBytes.length);
                     } catch (Exception e) {
-                        // 압축 도중 에러가 나면 원본 바이트를 그대로 사용 (안전장치)
                         log.warn("이미지 최적화 실패, 원본으로 저장합니다: {}", e.getMessage());
                         fileBytes = multipartFile.getBytes();
                     }
-
                 }
             } else {
-                log.info("SVG 파일 감지: 최적화 없이 암호화 단계로 진행합니다.");
+                log.info("이미지가 아니거나 SVG 파일임: 최적화 없이 진행합니다.");
             }
-            // [수정 포인트] 2. AES 암호화 진행
+
+            // 2. AES 암호화 진행
             byte[] encryptedBytes = fileCryptoUtil.encrypt(fileBytes);
 
-            // [수정 포인트] 3. 암호화된 바이트를 파일로 저장
+            // 3. 암호화된 바이트를 파일로 저장
             Path filePath = uploadPath.resolve(savedName);
             Files.write(filePath, encryptedBytes);
 
@@ -82,7 +90,7 @@ public class FileStorageService {
             uploadedFileDTO.setOriginalName(originalName);
             uploadedFileDTO.setSavedName(savedName);
             uploadedFileDTO.setContentType(multipartFile.getContentType());
-            uploadedFileDTO.setSize((long) encryptedBytes.length); // 암호화 후 사이즈로 저장
+            uploadedFileDTO.setSize((long) encryptedBytes.length);
 
             log.info("CasaOS 업로드 성공: {}", savedName);
             return uploadedFileDTO;
