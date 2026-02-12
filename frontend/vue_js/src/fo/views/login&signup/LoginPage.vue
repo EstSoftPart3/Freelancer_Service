@@ -231,6 +231,7 @@ const login = async () => {
     }
 
     alertStore.show(userStore.userNm + '님 안녕하세요.', 'success')
+
     router.push('/') // 메인 페이지로 이동
   } catch (error) {
     console.error(error)
@@ -252,6 +253,7 @@ const fetchUserInfo = async () => {
       latitude: data.latitude, // 추가
       longitude: data.longitude, // 추가
       isAffiliated: data.isAffiliated, // 추가
+      companyAuthStatusCd: data.companyAuthStatusCd, // 이제 데이터가 여기 실려옵니다!
     })
   } catch (error) {
     console.error('유저 정보 불러오기 실패:', error)

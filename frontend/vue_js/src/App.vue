@@ -27,7 +27,7 @@ const fetchUserInfo = async () => {
     const res = await api.$post('/me')
     const data = res.output
 
-    console.log('✅ 서버 응답 데이터:', data)
+    // console.log('✅ 서버 응답 데이터:', data)
 
     userStore.setUser({
       userNm: data.userNm,
@@ -36,6 +36,7 @@ const fetchUserInfo = async () => {
       latitude: data.latitude,
       longitude: data.longitude,
       isAffiliated: data.isAffiliated,
+      companyAuthStatusCd: data.companyAuthStatusCd, // 이제 데이터가 여기 실려옵니다!
     })
   } catch (error) {
     clearLoginState()
@@ -43,17 +44,10 @@ const fetchUserInfo = async () => {
 }
 
 const clearLoginState = () => {
-  localStorage.removeItem('userNm')
-  localStorage.removeItem('userTypeCd')
-  localStorage.removeItem('autoLogin')
-
   userStore.clearUser()
 }
 
 function clearLoginStateFunc() {
-  localStorage.removeItem('userNm')
-  localStorage.removeItem('userTypeCd')
-  localStorage.removeItem('autoLogin')
   userStore.clearUser() // store에 로그인 정보 초기화 메서드가 있어야 합니다.
 }
 

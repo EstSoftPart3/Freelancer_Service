@@ -1,12 +1,26 @@
 package com.example.demo.domain.mypage.service;
 
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.example.demo.common.ApiResponse;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
@@ -15,9 +29,12 @@ import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 import com.example.demo.domain.mypage.dto.request.AffiliationInfoUpdateRequestDTO;
 import com.example.demo.domain.mypage.dto.request.CompanyUserInfoUpdateRequestDTO;
+import com.example.demo.domain.mypage.dto.request.CompanyVerifyRequestDTO;
 import com.example.demo.domain.mypage.dto.request.PersonalUserInfoUpdateRequestDTO;
 import com.example.demo.domain.mypage.dto.response.AffiliationInfoResponseDTO;
+import com.example.demo.domain.mypage.mapper.InformationEditMapper;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
+import com.example.demo.domain.user.repository.CompanyVerificationRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +45,10 @@ import lombok.extern.slf4j.Slf4j;
 public class InformationEditService {
 
     private final InformationEditRepository informationEditRepository;
+    private final InformationEditMapper informationEditMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final CompanyVerificationRepository companyVerificationRepository;
 
     public boolean checkPassword(Long userSq, String rawPassword) {
         String encodedPw = informationEditRepository.getEncodedPasswordByUserSq(userSq);
@@ -503,4 +523,74 @@ public class InformationEditService {
     // informationEditRepository.deleteAffiliationProfileImageByUserSq(companySq);
     // }
 
+    @Transactional
+    public ApiResponse<Boolean> updateCompanyVerification(Long userSq, CompanyVerifyRequestDTO requestDto) {
+
+        // 1. 사업자 번호 중복 검사 (본인 제외 혹은 전체)
+        // 기존에 등록된 번호인지 확인하는 로직 (필요시 추가)
+        boolean exists = companyVerificationRepository.existsByBizNum(requestDto.getCompanyBizNum());
+        if (exists) {
+            return ApiResponse.of(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다.", false);
+        }
+
+        // 2. 외부 API(공공데이터포털) 호출 설정
+        URI uri;
+        try {
+            uri = UriComponentsBuilder.fromHttpUrl("http://api.odcloud.kr/api/nts-businessman/v1/validate")
+                    .queryParam("serviceKey",
+                            "oo7Cptu%2Fmuq0VdvJOvEZ816dEyBChjhrqLIM0HqL2%2BeJeZXKg46MztkspSRsh3HBX%2FlyqoXbNCWB4OydznQ%2Bmg%3D%3D")
+                    .build(true).toUri();
+        } catch (Exception e) {
+            return ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "URI 생성 실패", false);
+        }
+
+        // 3. API 요청 바디 구성 (외부 API 규격: b_no, start_dt, p_nm, b_nm)
+        Map<String, Object> requestBody = new HashMap<>();
+        Map<String, String> business = new HashMap<>();
+        business.put("b_no", requestDto.getCompanyBizNum());
+        business.put("start_dt", requestDto.getCompanyOpenDt().replace("-", "")); // 하이픈 제거
+        business.put("p_nm", requestDto.getCompanyCeoNm());
+        business.put("b_nm", requestDto.getCompanyNm());
+        requestBody.put("businesses", Collections.singletonList(business));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        // 4. API 호출 및 검증
+        try {
+            ResponseEntity<Map> resultMap = restTemplate.exchange(uri, HttpMethod.POST, entity, Map.class);
+            Map<String, Object> body = resultMap.getBody();
+            List<Map<String, Object>> dataList = (List<Map<String, Object>>) body.get("data");
+
+            if (dataList != null && !dataList.isEmpty()) {
+                Map<String, Object> result = dataList.get(0);
+                String valid = (String) result.get("valid");
+
+                // "01" 이면 유효한 사업자
+                if ("01".equals(valid)) {
+                    // 5. [핵심] 검증 성공 시 DB 업데이트 실행
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("userSq", userSq);
+                    params.put("companyNm", requestDto.getCompanyNm());
+                    params.put("companyCeoNm", requestDto.getCompanyCeoNm());
+                    params.put("companyBizNum", requestDto.getCompanyBizNum());
+                    // DB 저장을 위해 LocalDate로 변환 (형식: yyyy-MM-dd)
+                    params.put("companyOpenDt", LocalDate.parse(requestDto.getCompanyOpenDt()));
+                    params.put("statusCd", 2502L); // 인증완료 코드
+
+                    informationEditMapper.updateCompanyVerification(params);
+
+                    return ApiResponse.of(HttpStatus.OK, "인증 및 정보 업데이트 성공", true);
+                } else {
+                    String validMsg = (String) result.getOrDefault("valid_msg", "사업자 정보 불일치");
+                    return ApiResponse.of(HttpStatus.BAD_REQUEST, validMsg, false);
+                }
+            }
+        } catch (Exception e) {
+            return ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "인증 API 호출 중 오류 발생", false);
+        }
+
+        return ApiResponse.of(HttpStatus.BAD_REQUEST, "인증 실패", false);
+    }
 }

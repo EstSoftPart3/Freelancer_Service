@@ -4,10 +4,37 @@
       <h4 class="mb-3" style="font-size: 24px">소속 정보 수정</h4>
     </div>
 
+    <div
+      v-if="userStore.companyAuthStatusCd === 2501"
+      class="auth-banner p-4 mb-4 text-center border rounded shadow-sm"
+    >
+      <div class="d-flex align-items-center justify-content-center flex-column">
+        <i
+          class="fas fa-exclamation-circle text-primary mb-2"
+          style="font-size: 40px"
+        ></i>
+        <h5 class="font-weight-bold mb-1">기업 인증이 완료되지 않았습니다.</h5>
+        <p class="text-muted small mb-3">
+          소속 모집 공고를 등록하시려면 기업 실명 인증이 필수입니다.
+        </p>
+        <button
+          type="button"
+          class="btn btn-primary btn-lg px-5 shadow animate-pulse"
+          @click="openVerification"
+        >
+          지금 바로 기업 인증하기
+        </button>
+      </div>
+    </div>
+
     <!-- 프로필 이미지 (사람 아이콘으로 대체) -->
     <div
       class="text-center mb-4"
-      :class="{ 'disabled-form': form.companyIsRecruitingYn !== 'Y' }"
+      :class="{
+        'disabled-form':
+          userStore.companyAuthStatusCd === 2501 ||
+          form.companyIsRecruitingYn !== 'Y',
+      }"
     >
       <div
         class="position-relative d-inline-block"
@@ -57,7 +84,10 @@
       </div>
     </div>
     <!-- 소속 모집 여부 체크박스 -->
-    <div class="form-group row align-items-center">
+    <div
+      class="form-group row align-items-center"
+      :class="{ 'disabled-form': userStore.companyAuthStatusCd === 2501 }"
+    >
       <label class="col-lg-2 col-form-label text-2">소속 모집 여부</label>
       <div class="col-lg-10">
         <input
@@ -65,7 +95,7 @@
           name="recruiting"
           id="recruiting"
           class="form-check-input"
-          :checked="form.companyIsRecruitingYn === 'Y'"
+          :disabled="userStore.companyAuthStatusCd === 2501"
           @change="onCheckboxChange"
         />
         <label for="recruiting" class="form-check-label text-dark text-3"
@@ -79,7 +109,11 @@
       novalidate="novalidate"
       @submit.prevent="saveAll"
       @keydown.enter.prevent
-      :class="{ 'disabled-form': form.companyIsRecruitingYn !== 'Y' }"
+      :class="{
+        'disabled-form':
+          userStore.companyAuthStatusCd === 2501 ||
+          form.companyIsRecruitingYn !== 'Y',
+      }"
     >
       <!-- 대표자 이름 (변경 불가) -->
       <div class="form-group row align-items-center">
@@ -446,9 +480,14 @@
 import { reactive, ref, onMounted } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useUserStore } from '@/fo/stores/userStore'
+import { useModalStore } from '@/fo/stores/modalStore'
+import CompanyVerificationModal from '@/fo/components/login&signup/CompanyVerificationModal.vue'
 import _ from 'lodash'
 
 const alertStore = useAlertStore()
+const userStore = useUserStore()
+const modalStore = useModalStore()
 
 const companyProfileImageUrl = ref(null)
 const profileImageInput = ref(null)
@@ -487,6 +526,23 @@ const editing = reactive({
   tagNm: false,
 })
 
+const openVerification = () => {
+  modalStore.openModal(CompanyVerificationModal, {
+    title: '기업 실명 인증',
+    onSuccess: async () => {
+      // 1. 전역 유저 스토어 상태 즉시 변경 (배너 제거)
+      userStore.setUser({
+        ...userStore.$state,
+        companyAuthStatusCd: 2502,
+      })
+      localStorage.setItem('companyAuthStatusCd', 2502)
+
+      // 2. 소속 정보 데이터 다시 불러오기 (사업자번호 등 채우기)
+      await fetchAffiliationInfo()
+      alertStore.show('인증 정보가 동기화되었습니다.', 'info')
+    },
+  })
+}
 // 파일 사이즈 정의 변수
 const MAX_FILE_SIZE = 100 * 1024 * 1024
 
@@ -891,6 +947,40 @@ input[readonly] {
 }
 
 .form-check-input[disabled] {
+  pointer-events: none;
+}
+.auth-banner {
+  background-color: #f8faff;
+  border-color: #0088cc !important;
+  border-width: 2px !important;
+  position: relative;
+  z-index: 5; /* 폼보다 위에 위치 */
+}
+
+/* 버튼 애니메이션 (사용자 주목 유도) */
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 136, 204, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(0, 136, 204, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 136, 204, 0);
+  }
+}
+
+/* 미인증 상태일 때 폼 전체를 살짝 흐리게 하고 싶다면 추가 (선택사항) */
+.unverified-overlay {
+  opacity: 0.7;
+  filter: grayscale(0.5);
   pointer-events: none;
 }
 </style>

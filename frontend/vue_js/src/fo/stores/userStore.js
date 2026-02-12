@@ -1,17 +1,6 @@
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
-  // 개발용
-  // state: () => ({
-  //   userNm: localStorage.getItem('userNm') || '',
-  //   userType: localStorage.getItem('userType') || '',
-  //   userAddress: localStorage.getItem('userAddress') || '',
-  //   userLat: localStorage.getItem('userLat') || null,
-  //   userLng: localStorage.getItem('userLng') || null,
-  // isAffiliated: localStorage.getItem('isAffiliated') || 'N',
-  // }),
-
-  // 배포용
   state: () => ({
     userNm: localStorage.getItem('userNm') || '',
     userType: localStorage.getItem('userType') || '',
@@ -24,6 +13,10 @@ export const useUserStore = defineStore('user', {
       ? Number(localStorage.getItem('userLng'))
       : null,
     isAffiliated: localStorage.getItem('isAffiliated') || 'N',
+    // [추가] 기업 인증 상태 (기본값 null)
+    companyAuthStatusCd: localStorage.getItem('companyAuthStatusCd')
+      ? Number(localStorage.getItem('companyAuthStatusCd'))
+      : null,
   }),
   getters: {
     isLoggedIn: (state) => !!state.userNm,
@@ -42,6 +35,7 @@ export const useUserStore = defineStore('user', {
       latitude,
       longitude,
       isAffiliated,
+      companyAuthStatusCd, // [추가]
     }) {
       const userType =
         userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
@@ -52,6 +46,7 @@ export const useUserStore = defineStore('user', {
       this.userLat = latitude
       this.userLng = longitude
       this.isAffiliated = isAffiliated || 'N'
+      this.companyAuthStatusCd = companyAuthStatusCd // [추가]
 
       localStorage.setItem('userNm', userNm)
       localStorage.setItem('userType', userType)
@@ -62,6 +57,9 @@ export const useUserStore = defineStore('user', {
       if (longitude !== undefined && longitude !== null)
         localStorage.setItem('userLng', longitude)
       localStorage.setItem('isAffiliated', this.isAffiliated)
+      // [추가] 로컬 스토리지 저장
+      if (companyAuthStatusCd)
+        localStorage.setItem('companyAuthStatusCd', companyAuthStatusCd)
     },
     clearUser() {
       this.userNm = ''
@@ -70,6 +68,7 @@ export const useUserStore = defineStore('user', {
       this.userLat = null
       this.userLng = null
       this.isAffiliated = 'N'
+      this.companyAuthStatusCd = null
 
       localStorage.removeItem('userNm')
       localStorage.removeItem('userType')
@@ -80,6 +79,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')
+      localStorage.removeItem('companyAuthStatusCd')
     },
   },
 })

@@ -18,7 +18,6 @@
     </div>
 
     <div class="modal-body">
-      <!-- 기업명 & 대표자명 -->
       <div class="row mb-3">
         <div class="col">
           <label class="form-label">
@@ -56,7 +55,6 @@
         </div>
       </div>
 
-      <!-- 개업일자 -->
       <div class="mb-3">
         <label class="form-label">
           개업일자
@@ -85,7 +83,6 @@
         <div v-if="dateError" class="invalid-feedback">{{ dateError }}</div>
       </div>
 
-      <!-- 사업자번호 + 인증 -->
       <div class="mb-3">
         <label class="form-label">
           사업자 번호
@@ -109,11 +106,10 @@
         <div v-if="bizError" class="invalid-feedback">{{ bizError }}</div>
       </div>
 
-      <!-- 약관 동의 -->
       <div class="form-check mb-4">
         <input
           type="checkbox"
-          v-model="companyPorfileStore.termsAgreed"
+          v-model="termsAgreed"
           id="agreeTerms"
           class="form-check-input"
         />
@@ -123,7 +119,6 @@
         <a class="font-primary" @click="openTermsModal">이용약관</a>
       </div>
 
-      <!-- 인증 완료 버튼 -->
       <div class="d-grid">
         <button
           type="button"
@@ -148,26 +143,25 @@ import Datepicker from 'vue3-datepicker'
 import { ko } from 'date-fns/locale'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
-import { useCompanyProfileStore } from '@/fo/stores/companyProfileStore'
 import TermsAgreementModal from './TermsAgreementModal.vue'
 import { companyAgreementText } from '@/assets/terms'
 import { api } from '@/axios'
 
 const props = defineProps({
-  onConfirm: Function,
+  onSuccess: Function, // 변경: 부모의 fetchUserInfo를 실행할 콜백
 })
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
-const companyPorfileStore = useCompanyProfileStore()
 const termsText = companyAgreementText
 
 // 입력값 ref
 const companyName = ref('')
 const ceoName = ref('')
-const openDate = ref('')
+const openDate = ref(null)
 const bizNumber = ref('')
 const inputFormat = ref('yyyy-MM-dd')
 const datepickerKey = ref(0)
+const termsAgreed = ref(false) // CompanyProfileStore 대신 로컬 상태 사용
 
 // 에러 및 유효성 ref
 const nameError = ref('')
@@ -180,7 +174,6 @@ const ceoValid = ref(false)
 const dateValid = ref(false)
 const bizValid = ref(false)
 
-// 인증 상태
 const isVerified = ref(false)
 
 // validation 함수
@@ -224,7 +217,6 @@ const validateBiz = () => {
   }
 }
 
-// 전체 유효성 체크 (인증하기 눌렀을 때)
 const verifyAllInputs = () => {
   validateName()
   validateCeo()
@@ -233,58 +225,52 @@ const verifyAllInputs = () => {
   return nameValid.value && ceoValid.value && dateValid.value && bizValid.value
 }
 
-function formatDate(date) {
+// 백엔드 LocalDate 규격에 맞춘 날짜 포맷팅 (yyyy-MM-dd)
+function formatDateForBackend(date) {
   if (!date) return ''
-
-  // date가 문자열로 들어오든 객체로 들어오든 Date 객체로 생성
   const d = new Date(date)
-
-  // 유효하지 않은 날짜인 경우 빈 값 반환
   if (isNaN(d.getTime())) return ''
-
   const year = d.getFullYear()
-  // 월은 0부터 시작하므로 +1, 두 자리 유지를 위해 padStart 사용
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-
-  return `${year}${month}${day}`
+  return `${year}-${month}-${day}`
 }
 
-// 인증하기 버튼 클릭 시
+// 인증하기 버튼 클릭 시 (백엔드 통합 API 호출)
 async function handleVerify() {
   if (!verifyAllInputs()) {
     alertStore.show('모든 정보를 정확히 입력 후 인증해주세요.', 'danger')
     return
   }
 
-  const formattedOpenDate = formatDate(openDate.value)
+  // 백엔드 CompanyVerifyRequestDTO 규격에 맞춘 데이터 구성
+  const payload = {
+    companyNm: companyName.value,
+    companyCeoNm: ceoName.value,
+    companyBizNum: bizNumber.value,
+    companyOpenDt: formatDateForBackend(openDate.value),
+  }
 
   try {
-    const response = await api.$post('/company/verify', {
-      b_no: bizNumber.value,
-      start_dt: formattedOpenDate,
-      p_nm: ceoName.value,
-      b_nm: companyName.value,
-    })
+    const response = await api.$post('/mypage/edit/verify-enterprise', payload)
 
-    if (response.output === true) {
+    if (response.status === 'OK' || response.output === true) {
       isVerified.value = true
-      alertStore.show('기업 인증이 성공했습니다.', 'success')
+      alertStore.show('기업 실명 인증이 성공했습니다.', 'success')
     } else {
       isVerified.value = false
       alertStore.show(response.message || '기업 인증 실패', 'danger')
     }
   } catch (error) {
     isVerified.value = false
-    alertStore.show('서버 오류로 인증에 실패했습니다.', 'danger')
-    console.error(error)
+    const msg =
+      error.response?.data?.message || '서버 오류로 인증에 실패했습니다.'
+    alertStore.show(msg, 'danger')
   }
 }
 
-// 입력값 변경 시 (인증 상태 초기화 및 해당 필드 재검증)
 function handleInputChange(field) {
   isVerified.value = false
-
   switch (field) {
     case 'name':
       validateName()
@@ -296,19 +282,20 @@ function handleInputChange(field) {
       validateDate()
       break
     case 'biz':
+      // [요청사항] 특수문자 제거 로직 삽입
+      bizNumber.value = bizNumber.value.replace(/[^0-9]/g, '')
       validateBiz()
       break
   }
 }
 
-// 약관 모달 열기
 function openTermsModal() {
   modalStore.openModal(TermsAgreementModal, {
     title: '기업정보 수집 및 이용 동의서',
     body: termsText,
     onConfirm: () => {
       alertStore.show('약관 동의 처리되었습니다.', 'success')
-      companyPorfileStore.termsAgreed = true
+      termsAgreed.value = true
       modalStore.closeModal()
     },
   })
@@ -318,28 +305,16 @@ function closeModal() {
   modalStore.closeModal()
 }
 
-// 인증 완료 버튼 활성 조건
-const canConfirm = computed(() => {
-  return isVerified.value && companyPorfileStore.termsAgreed
-})
+const canConfirm = computed(() => isVerified.value && termsAgreed.value)
 
-// 인증 완료 버튼 클릭 시
+// 최종 확인 버튼 클릭 시 (스토어 저장 없이 부모 콜백만 실행)
 function handleConfirm() {
   if (!canConfirm.value) {
     alertStore.show('약관 동의와 기업인증이 모두 완료되어야 합니다.', 'danger')
     return
   }
 
-  // store에 정보 저장
-  companyPorfileStore.setProfile({
-    companyName: companyName.value,
-    ceoName: ceoName.value,
-    openDate: formatDate(openDate.value),
-    bizNumber: bizNumber.value,
-    termsAgreed: true,
-  })
-
-  props.onConfirm()
+  if (props.onSuccess) props.onSuccess()
   alertStore.show('기업 인증 완료되었습니다.', 'success')
   closeModal()
 }
@@ -350,7 +325,6 @@ function handleConfirm() {
   color: #007bff;
   display: block;
 }
-
 .datepicker-wrapper {
   position: relative;
   --vdp-hover-bg-color: #007bff;
@@ -358,14 +332,12 @@ function handleConfirm() {
   --vdp-hover-color: #ffffff;
   --vdp-selected-color: #ffffff;
 }
-
 .datepicker-wrapper :deep(.form-control) {
-  padding-right: 3rem; /* 아이콘 공간 확보 */
+  padding-right: 3rem;
   height: auto;
   padding-top: 8px;
   padding-bottom: 8px;
 }
-
 .datepicker-icon {
   position: absolute;
   top: 50%;

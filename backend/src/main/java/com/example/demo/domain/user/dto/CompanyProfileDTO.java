@@ -19,4 +19,5 @@ public class CompanyProfileDTO {
     private String companyIsRecruitingYn; // 모집 여부 (Y/N)
     private String companyProfileImageUrl; // 프로필 이미지 URL (선택)
     private String companyGreetingTxt; // 인사말 (선택)
+    private Long CompanyAuthStatusCd;
 }

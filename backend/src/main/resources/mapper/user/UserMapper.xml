@@ -24,12 +24,10 @@
     #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd} ) </insert>
 
   <!-- 기업 프로필 INSERT -->
-  <insert
-    id="insertCompanyProfile"
+  <insert id="insertCompanyProfile"
     parameterType="com.example.demo.domain.user.dto.CompanyProfileDTO"> INSERT INTO TBL_COMPANY_S (
-    user_sq, address_sq, company_nm, company_ceo_nm, company_open_dt, company_biz_num,
-    company_greeting_txt ) VALUES ( #{userSq}, #{addressSq}, #{companyNm}, #{companyCeoNm},
-    #{companyOpenDt}, #{companyBizNum}, #{companyGreetingTxt} ) </insert>
+    user_sq, address_sq, company_nm, company_auth_status_cd, company_agreed_terms_yn ) VALUES (
+    #{userSq}, #{addressSq}, #{companyNm}, #{companyAuthStatusCd}, 'Y' ) </insert>
 
   <!-- 아이디 중복 확인 -->
   <select id="existsByUserId"
@@ -69,10 +67,12 @@
 
   <select id="findUserInfoByUserSq"
     resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT u.user_nm AS
-    userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude, (SELECT CASE WHEN COUNT(*) > 0
-    THEN 'Y' ELSE 'N' END FROM tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND
-    cm.company_member_leave_dt IS NULL) AS isAffiliated FROM tbl_user_m u LEFT JOIN tbl_address_s a
-    ON u.address_sq = a.address_sq WHERE u.user_sq = #{userSq} AND u.user_is_deleted_yn = 'N' </select>
+    userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude, c.company_auth_status_cd AS
+    companyAuthStatusCd, (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM
+    tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt IS NULL) AS
+    isAffiliated FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq = a.address_sq LEFT
+    JOIN tbl_company_s c ON u.user_sq = c.user_sq WHERE u.user_sq = #{userSq} AND
+    u.user_is_deleted_yn = 'N' </select>
 
   <update id="deleteRefreshTokenByUserSq" parameterType="long"> UPDATE TBL_USER_M SET
     user_refresh_token = NULL WHERE user_sq = #{userSq} </update>

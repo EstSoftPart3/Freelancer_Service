@@ -59,7 +59,7 @@
           class="d-flex justify-content-end mt-3"
         >
           <button
-            @click="router.push('/mypage/projectPostPage')"
+            @click="handleRegisterClick()"
             class="btn btn-rounded btn-primary px-4 py-2 shadow-sm"
           >
             등록하기
@@ -104,7 +104,7 @@
 
           <button
             v-if="userStore.userType === 'COMPANY'"
-            @click="router.push('/mypage/projectPostPage')"
+            @click="handleRegisterClick()"
             class="btn btn-rounded btn-primary m-2"
           >
             등록하기
@@ -152,6 +152,7 @@ import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import MapProjectCardGroup from '@/fo/components/project/MapProjectCardGroup.vue'
 import MapProjectSummaryModal from '@/fo/components/project/MapProjectSummaryModal.vue'
+import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 
 import { ref, watch, onMounted, nextTick } from 'vue'
 import { api } from '@/axios.js'
@@ -368,6 +369,27 @@ onMounted(() => {
 const updateFilters = (updated) => {
   filters.value = { ...filters.value, ...updated }
   currentPage.value = 1 // 필터 바꾸면 1페이지부터
+}
+
+const handleRegisterClick = () => {
+  // 기업 회원(302)이고 미인증(2501) 상태인 경우
+  if (userStore.companyAuthStatusCd === 2501) {
+    modalStore.openModal(CommonConfirmModal, {
+      title: '기업 인증 필요',
+      message:
+        '공고 등록을 위해 기업 인증이 필요합니다. 인증 페이지로 이동하시겠습니까?',
+      confirmText: '이동하기',
+      cancelText: '나중에',
+      onConfirm: () => {
+        modalStore.closeModal()
+        router.push('/mypage/affiliationEdit') // 소속 정보 수정 페이지 경로
+      },
+    })
+    return
+  }
+
+  // 인증 완료 상태라면 등록 페이지로 이동
+  router.push('/mypage/projectPostPage')
 }
 </script>
 
