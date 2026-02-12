@@ -65,6 +65,7 @@ public class BoardService {
 
 	@Transactional
 	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
+			String tag,
 			List<Long> searchSkillTags, String sortType, Long page, Long size) {
 		if (page < 1)
 			page = 1L;
@@ -72,10 +73,11 @@ public class BoardService {
 		if (sortType == null || sortType.isEmpty())
 			sortType = "latest";
 
-		List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, searchSkillTags,
+		List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+				searchSkillTags,
 				sortType, size, offset);
-		Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword,
-				searchSkillTags, sortType, size, offset);
+		Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+				searchSkillTags);
 
 		List<BoardListDTO> responses = boards.stream()
 				.filter(Objects::nonNull)

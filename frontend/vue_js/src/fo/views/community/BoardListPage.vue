@@ -2,8 +2,8 @@
   <section>
     <CommonPageHeader
       title=""
-      strongText="일반 게시판"
-      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '일반 게시판' }]"
+      :strongText="dynamicStrongText"
+      :breadcrumbs="dynamicBreadcrumbs"
     />
     <div class="container py-5 mt-3">
       <!-- 검색창 및 필터 영역 -->
@@ -79,10 +79,13 @@
 <script setup>
 import BoardTable from '@/fo/components/community/BoardTable.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useRoute } from 'vue-router'
 import { api } from '@/axios'
+
+const route = useRoute()
 
 const isLoading = ref(false)
 
@@ -102,25 +105,33 @@ const searchType = ref('all')
 const keyword = ref(null)
 const sortType = ref('latest')
 
+const selectedTag = ref(route.query.tag || '')
+
 // 게시글 리스트 불러오기
 const getBoardList = async () => {
   isLoading.value = true
   try {
+    // 키워드 필터 (인코딩 추가)
     const searchFilter =
-      keyword.value == null || keyword.value.trim() == ''
+      !keyword.value || keyword.value.trim() === ''
         ? ''
-        : `&searchType=${searchType.value}&keyword=${keyword.value}`
+        : `&searchType=${searchType.value}&keyword=${encodeURIComponent(keyword.value.trim())}`
+
+    // 태그 필터 (인코딩 추가)
+    const tagFilter = selectedTag.value
+      ? `&tag=${encodeURIComponent(selectedTag.value)}`
+      : ''
+
+    // API 호출 (현재 경로 기반)
     const res = await api.$get(
-      `/board?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}`,
+      `${route.path}?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${tagFilter}`,
     )
-    if (res) {
-      if (res.output.totalElements == 0) {
-        totalPages.value = 1
-      } else {
-        totalPages.value = Math.floor(
-          (res.output.totalElements + size - 1) / size,
-        )
-      }
+
+    if (res && res.output) {
+      totalPages.value =
+        res.output.totalElements === 0
+          ? 1
+          : Math.floor((res.output.totalElements + size - 1) / size)
       boardList.value = res.output.boards
     }
   } catch (error) {
@@ -129,10 +140,39 @@ const getBoardList = async () => {
     isLoading.value = false
   }
 }
+
+const dynamicBreadcrumbs = computed(() => {
+  // 태그 검색 중일 때: 'Home'을 빼고 '일반 게시판'을 최상위로
+  if (selectedTag.value) {
+    return [
+      { text: '일반 게시판', link: '/board' },
+      { text: `#${selectedTag.value}` },
+    ]
+  }
+
+  // 기본 상태: 원래대로 Home > 일반 게시판
+  return [{ text: 'Home', link: '/' }, { text: '일반 게시판' }]
+})
+
+// 헤더 굵은 텍스트 동적 계산
+const dynamicStrongText = computed(() => {
+  return selectedTag.value
+    ? `일반 게시판 (#${selectedTag.value})`
+    : '일반 게시판'
+})
+
 watch(currentPage, () => {
   getBoardList()
 })
 
+watch(
+  () => route.query.tag,
+  (newTag) => {
+    selectedTag.value = newTag || ''
+    currentPage.value = 1
+    getBoardList()
+  },
+)
 onMounted(() => {
   getBoardList()
 })

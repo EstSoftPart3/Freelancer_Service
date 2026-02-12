@@ -67,11 +67,14 @@ public class BoardController {
 	public ResponseEntity<ApiResponse<BoardListResponse>> getAllBoards(
 			@RequestParam(value = "searchType", required = false) String searchType,
 			@RequestParam(value = "keyword", required = false) String keyword,
+			@RequestParam(value = "tag", required = false) String tag, // [추가] 태그 파라미터
 			@RequestParam(value = "sortType", defaultValue = "latest") String sortType,
 			@RequestParam(value = "page", defaultValue = "1") Long page,
 			@RequestParam(value = "size", defaultValue = "10") Long size) {
+
+		// 서비스 호출: (1401L, null, 검색타입, 키워드, 태그, null(스킬태그), 정렬, 페이지, 사이즈)
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공",
-				boardService.getAllBoards(1401L, null, searchType, keyword, null, sortType, page, size)));
+				boardService.getAllBoards(1401L, null, searchType, keyword, tag, null, sortType, page, size)));
 	}
 
 	// 게시글 하나 조회
