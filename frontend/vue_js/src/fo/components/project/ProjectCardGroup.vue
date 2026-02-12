@@ -37,7 +37,12 @@
               :src="project.companyImageUrl || '/img/logos/Company_logo.png'"
               alt="프로젝트 이미지"
               class="rounded-circle"
-              style="width: 70px; height: 70px; object-fit: cover"
+              style="
+                width: 70px;
+                height: 70px;
+                object-fit: contain;
+                background-color: #f8f9fa;
+              "
             />
           </div>
 
