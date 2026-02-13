@@ -376,4 +376,25 @@
 		'unread' AS type, COUNT(*) FROM TBL_PROJECT_APPLICATION_H a WHERE a.company_sq =
 		#{companySq} AND a.read_application_dtm IS NULL </select>
 
+	<select id="findApplicationNotificationInfo" resultType="map"> SELECT r.user_sq as "userSq",
+		p.project_ttl as "projectTtl", p.project_sq as "projectSq" FROM tbl_project_application_h h
+		JOIN tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_project_m p ON h.project_sq =
+		p.project_sq WHERE h.project_application_sq = #{applicationSq} </select>
+
+	<select id="findCancelNotificationInfo" resultType="map"> SELECT c.user_sq as "companyUserSq",
+		u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as "projectSq",
+		h.project_application_member_type_cd as "memberTypeCd" FROM tbl_project_application_h h JOIN
+		tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_user_m u ON r.user_sq = u.user_sq JOIN
+		tbl_project_m p ON h.project_sq = p.project_sq JOIN tbl_company_s c ON p.company_sq =
+		c.company_sq WHERE h.project_application_sq = #{applicationSq} </select>
+
+	<select id="findInterviewConfirmationInfo" resultType="map"> SELECT c.user_sq as
+		"companyUserSq", u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as
+		"projectSq", h.project_application_member_type_cd as "memberTypeCd",
+		t.interview_available_dtm as "interviewDtm" FROM tbl_project_application_h h JOIN
+		tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_user_m u ON r.user_sq = u.user_sq JOIN
+		tbl_project_m p ON h.project_sq = p.project_sq JOIN tbl_company_s c ON p.company_sq =
+		c.company_sq JOIN tbl_project_interview_time_slot_s t ON t.interview_sq = #{interviewTimeSq}
+		WHERE h.project_application_sq = #{applicationSq} </select>
+
 </mapper>

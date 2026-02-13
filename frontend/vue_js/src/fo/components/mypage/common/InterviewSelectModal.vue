@@ -318,6 +318,7 @@ const sendInterviewTimeRequest = async (interviewTimeSq, applicationSq) => {
     console.log('✅ 인터뷰 시간 선택 성공', response)
     useModalStore().closeModal()
   } catch (e) {
+    alertStore.show('인터뷰 시간 선택에 실패하였습니다.', 'danger')
     console.error('❌ 인터뷰 시간 선택 실패', e)
   }
 }

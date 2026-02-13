@@ -115,4 +115,9 @@ public interface ProjectMapper {
 	List<Project> selectMainPopularProjects(
 			@Param("sortType") String sortType,
 			@Param("limit") int limit);
+
+	// 프로젝트 번호로 해당 기업의 유저 번호 조회
+	Long findUserSqByProjectSq(@Param("projectSq") Long projectSq);
+
+	Long findMemberTypeByApplicationSq(@Param("applicationSq") Long applicationSq);
 }

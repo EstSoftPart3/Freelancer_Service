@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.management.Notification;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,7 @@ import com.example.demo.domain.project.mapper.SkillMapper;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
 import com.example.demo.domain.project.vo.ProjectSummary;
+import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
@@ -61,6 +64,7 @@ public class ProjectService {
 	private final ProjectApplicationMapper projectApplicationMapper;
 	private final ScrapMapper scrapMapper;
 	private final CompanyService companyService;
+	private final NotificationService notificationService;
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -310,16 +314,39 @@ public class ProjectService {
 		projectMapper.softDeleteProject(projectSq);
 	}
 
+	@Transactional
 	public void createProjectApplication(long projectSq, ProjectApplyRequest request, Long userSq) {
 		Optional<Long> userCompanySq = Optional.ofNullable(companyService.fetchCompanySq(userSq));
 
-		request.getResumeSq().forEach(
-				rSq -> {
-					ProjectApplicationEntity projectApplicationEntity = ProjectApplicationEntity.from(projectSq,
-							projectMapper, rSq, request.getProjectApplicationTyp(), commonCodeMapper, userCompanySq);
-					projectMapper.insertProjectApplication(projectApplicationEntity);
-					projectMapper.increaseApplication(projectSq);
-				});
+		request.getResumeSq().forEach(rSq -> {
+			ProjectApplicationEntity projectApplicationEntity = ProjectApplicationEntity.from(projectSq,
+					projectMapper, rSq, request.getProjectApplicationTyp(), commonCodeMapper, userCompanySq);
+			projectMapper.insertProjectApplication(projectApplicationEntity);
+			projectMapper.increaseApplication(projectSq);
+		});
+
+		// ================= [ 알림 발송 추가 ] =================
+		// 1. 프로젝트 등록자(기업 담당자)의 UserSq 조회
+		Long companyUserSq = projectMapper.findUserSqByProjectSq(projectSq);
+
+		// 2. 알림 발송 (등록자가 존재하고, 본인 프로젝트에 본인이 지원한 게 아닐 때)
+		if (companyUserSq != null && !companyUserSq.equals(userSq)) {
+			// 리퀘스트 타입에 따른 프론트엔드 파라미터 매핑
+			// PERSONAL -> personal / COMPANY -> corporate
+			String rawType = request.getProjectApplicationTyp();
+			String appTyp = "personal";
+
+			if ("COMPANY".equals(rawType)) {
+				appTyp = "corporate";
+			}
+			// 프로젝트 제목 추후 추가 & 제목 조회 쿼리를 결합
+			notificationService.send(
+					companyUserSq,
+					userSq,
+					2602L, // 프로젝트 지원 결과 코드
+					"새로운 프로젝트 지원자가 있습니다. 지원 현황을 확인해 주세요.",
+					"/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp);
+		}
 	}
 
 	@Transactional

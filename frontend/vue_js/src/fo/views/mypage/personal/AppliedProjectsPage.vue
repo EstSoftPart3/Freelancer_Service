@@ -328,7 +328,7 @@ const updateCounts = (counts) => {
 
 // 검색
 const handleSearch = () => {
-  console.log('검색 클릭이여ㅑ')
+  // console.log('검색 클릭이여ㅑ')
   currentPage.value = 1
   appliedSearchType.value = searchType.value
   appliedSearchKeyword.value = searchKeyword.value

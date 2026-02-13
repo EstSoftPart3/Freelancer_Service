@@ -1,5 +1,8 @@
 package com.example.demo.domain.project.service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +30,7 @@ import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
 import com.example.demo.domain.project.vo.ApplicationSummary;
 import com.example.demo.domain.project.vo.ResumeNmTtlVo;
+import com.example.demo.domain.user.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +44,7 @@ public class ProjectApplicationService {
 	private final ResumeCareerMapper resumeCareerMapper;
 	private final ResumeSkillMapper resumeSkillMapper;
 	private final CompanyMapper companyMapper;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public Map<String, Object> fetchProjectApplicationsWithCount(Long userSq, int offset, int size, String searchType,
@@ -101,6 +106,7 @@ public class ProjectApplicationService {
 		return result;
 	}
 
+	@Transactional
 	public void updateApplicantResult(ApplicationStatusRequest request, Long applicationSq) {
 		Long statusCd = commonCodeMapper.findCommonCodeSqByName(request.getStatus(),
 				ParentCodeEnum.PRO_APPLICATION.getCode());
@@ -110,14 +116,97 @@ public class ProjectApplicationService {
 			Long projectSq = applicationMapper.findProjectBySq(applicationSq);
 			projectMapper.decreaseApplication(projectSq);
 		}
+		// ================= [ 알림 발송 로직 ] =================
+
+		// 시나리오 1 & 2: 회사가 지원 상태 변경 (지원자에게 알림)
+		if (statusCd.equals(802L) || statusCd.equals(804L)) {
+			Map<String, Object> info = applicationMapper.findApplicationNotificationInfo(applicationSq);
+			if (info != null) {
+				Long receiverSq = (Long) info.get("userSq");
+				String projectTtl = (String) info.get("projectTtl");
+				String message = "";
+
+				if (statusCd.equals(802L)) { // 불합격
+					message = "[" + projectTtl + "] 프로젝트의 지원 결과가 발표되었습니다. (불합격)";
+				} else if (statusCd.equals(804L)) { // 합격 (인터뷰 등)
+					message = "축하합니다! [" + projectTtl + "] 프로젝트에 합격(인터뷰 요청)하셨습니다.";
+				}
+
+				notificationService.send(receiverSq, null, 2602L, message, "/mypage/appliedProjects");
+			}
+		}
+
+		// 시나리오 3: 지원자가 지원을 취소함 (회사 담당자에게 알림)
+		else if (statusCd.equals(806L)) {
+			Map<String, Object> cancelInfo = applicationMapper.findCancelNotificationInfo(applicationSq);
+			if (cancelInfo != null) {
+				Long companyUserSq = (Long) cancelInfo.get("companyUserSq");
+				String applicantNm = (String) cancelInfo.get("applicantNm");
+				String projectTtl = (String) cancelInfo.get("projectTtl");
+				Long projectSq = (Long) cancelInfo.get("projectSq");
+				Long typeCd = (Long) cancelInfo.get("memberTypeCd");
+
+				// 타입 코드에 따른 모달 파라미터 매핑 (301: personal, 302: corporate)
+				String appTyp = (typeCd != null && typeCd.equals(302L)) ? "corporate" : "personal";
+
+				String message = "[" + projectTtl + "] 프로젝트의 지원자(" + applicantNm + "님)가 지원을 취소했습니다.";
+				String targetUrl = "/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp;
+
+				notificationService.send(companyUserSq, null, 2602L, message, targetUrl);
+			}
+		}
 	}
 
+	@Transactional
 	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request) {
 		applicationMapper.updateInterviewTimeSelected(interviewTimeSq);
 		applicationMapper.updateApplicationInterviewTimeAndStatus(request.getApplicationSq(),
 				applicationMapper.findInterviewTimeBySq(interviewTimeSq));
+
+		// ================= [ 알림 발송 ] =================
+
+		// 2. 알림에 필요한 정보 조회
+		Map<String, Object> info = applicationMapper.findInterviewConfirmationInfo(
+				request.getApplicationSq(), interviewTimeSq);
+
+		if (info != null) {
+			Long companyUserSq = (Long) info.get("companyUserSq");
+			String applicantNm = (String) info.get("applicantNm");
+			String projectTtl = (String) info.get("projectTtl");
+			Long projectSq = (Long) info.get("projectSq");
+			Long typeCd = (Long) info.get("memberTypeCd");
+
+			// [오류 해결] java.sql.Timestamp 형변환 처리
+			Object dtmObj = info.get("interviewDtm");
+			LocalDateTime dtm = null;
+
+			if (dtmObj instanceof Timestamp) {
+				dtm = ((Timestamp) dtmObj).toLocalDateTime();
+			} else if (dtmObj instanceof LocalDateTime) {
+				dtm = (LocalDateTime) dtmObj;
+			}
+
+			if (dtm != null) {
+				// 날짜 포맷팅
+				String formattedDate = dtm.format(DateTimeFormatter.ofPattern("M월 d일 H시 m분"));
+
+				// 지원 유형 매핑 (301: personal, 302: corporate)
+				String appTyp = (typeCd != null && typeCd.equals(302L)) ? "corporate" : "personal";
+
+				// 메시지 구성
+				String message = String.format("[%s] 프로젝트의 지원자(%s님)가 인터뷰 시간을 확정했습니다. (일시: %s)",
+						projectTtl, applicantNm, formattedDate);
+
+				// 모달 오픈용 URL
+				String targetUrl = "/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp;
+
+				// 알림 발송
+				notificationService.send(companyUserSq, null, 2602L, message, targetUrl);
+			}
+		}
 	}
 
+	@Transactional
 	public List<ApplicationStatusList> fetchProjectApplicationsByProject(Long projectSq) {
 		List<Long> applicationSqs = applicationMapper.findAllSqByProjectSq(projectSq);
 		List<ApplicationStatusResponse> responses = new ArrayList<>();
@@ -144,6 +233,7 @@ public class ProjectApplicationService {
 
 	}
 
+	@Transactional
 	public List<ApplicationStatusList> groupByMemberType(List<ApplicationStatusResponse> responses) {
 		return responses.stream()
 				.collect(Collectors.groupingBy(
@@ -159,6 +249,7 @@ public class ProjectApplicationService {
 				.collect(Collectors.toList());
 	}
 
+	@Transactional
 	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
 			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
 
@@ -195,6 +286,7 @@ public class ProjectApplicationService {
 		return responseDTO;
 	}
 
+	@Transactional
 	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
 			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
 
@@ -242,6 +334,7 @@ public class ProjectApplicationService {
 		return responseDTO;
 	}
 
+	@Transactional
 	public boolean checkIfUserApplied(Long userSq, Long projectSq) {
 		return applicationMapper.hasAppliedProject(userSq, projectSq);
 	}

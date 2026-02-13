@@ -471,4 +471,13 @@
 			<otherwise> ORDER BY project_created_at_dtm DESC </otherwise>
 		</choose> LIMIT
 		#{limit} </select>
+
+
+	<select id="findUserSqByProjectSq" resultType="Long"> SELECT c.user_sq FROM tbl_project_m p JOIN
+		tbl_company_s c ON p.company_sq = c.company_sq WHERE p.project_sq = #{projectSq} AND
+		p.project_is_deleted_yn = 'N' </select>
+
+	<select id="findMemberTypeByApplicationSq" resultType="Long"> SELECT
+		project_application_member_type_cd FROM tbl_project_application_h WHERE
+		project_application_sq = #{applicationSq} </select>
 </mapper>
