@@ -80,9 +80,9 @@ const fetchSchedules = async () => {
         let color = portoPrimary
         let prefix = ''
 
-        // [기능 추가] 일정 유형별 말머리 및 색상 지정
+        // [기능 수정/추가] 일정 유형별 말머리 및 색상 지정
         if (event.scheduleTypeCd === 2401) {
-          prefix = '[일정] ' // 일반 일정 말머리 추가
+          prefix = '[일정] '
           color = portoPrimary
         } else if (event.scheduleTypeCd === 2402) {
           color = '#e36159' // 면접 (Red)
@@ -94,6 +94,10 @@ const fetchSchedules = async () => {
             userStore.userType === 'PERSONAL'
               ? '[스크랩 마감] '
               : '[공고 모집] '
+        } else if (event.scheduleTypeCd === 2404) {
+          // [추가] 관심 기업 공고 (Success Green 계열)
+          color = '#7aa93c'
+          prefix = `[관심 기업 공고 마감] `
         }
 
         return {
@@ -101,7 +105,7 @@ const fetchSchedules = async () => {
           id:
             event.scheduleSq ||
             `temp-${event.scheduleTypeCd}-${event.projectSq || index}`,
-          title: prefix + event.scheduleTtl, // 말머리 + 제목 결합
+          title: prefix + event.scheduleTtl,
           start: event.start,
           end: event.end,
           allDay: event.scheduleAllDayYn === 'Y',
@@ -171,15 +175,14 @@ const handleEventClick = (info) => {
     return
   }
 
-  // 스크랩/공고 일정 클릭 -> 공통 컨펌 모달 후 권한별 상세 페이지 이동
-  if (typeCd === 2403) {
+  // [기능 통합] 스크랩/공고(2403) 및 관심기업공고(2404) 클릭 시 상세 페이지 이동
+  if (typeCd === 2403 || typeCd === 2404) {
     modalStore.openModal(CommonConfirmModal, {
       title: '페이지 이동',
       message: `'${event.title}' 상세 페이지로 이동하시겠습니까?`,
       confirmText: '이동',
       cancelText: '취소',
       onConfirm: () => {
-        // [1번 과제] 계정 타입에 따른 라우트 분기
         const routeName =
           userStore.userType === 'PERSONAL'
             ? 'UserProjectSpec'
