@@ -190,7 +190,8 @@
                               white-space: nowrap;
                             "
                           >
-                            {{ formatDate(applicant.appStatusVo.interviewDt) }}
+                            {{ applicant.appStatusVo.interviewDt }}
+                            <!-- {{ formatDate(applicant.appStatusVo.interviewDt) }} -->
                           </div>
 
                           <!-- 인터뷰 확정 버튼 -->
