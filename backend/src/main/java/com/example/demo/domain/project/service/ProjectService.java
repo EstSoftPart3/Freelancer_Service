@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.management.Notification;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +15,6 @@ import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
-
 import com.example.demo.domain.project.dto.UserRole;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
@@ -69,6 +66,7 @@ public class ProjectService {
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
 
+	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
 		long devgradeCodeSq = commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
@@ -121,12 +119,14 @@ public class ProjectService {
 		}
 	}
 
+	@Transactional
 	public long registerAddress(ProjectCreateRequest request) {
 		AddressInsertDto addressInsertDto = AddressInsertDto.from(request);
 		addressMapper.createAddress(addressInsertDto);
 		return addressInsertDto.getAddressSq();
 	}
 
+	@Transactional
 	// 계약/직무/기술스택/인터뷰 시간 등 하위 항목 등록
 	public void registerSubEntities(Project project, ProjectCreateRequest request) {
 		createContracts(project.getProjectSq(), request.workType());
@@ -136,16 +136,19 @@ public class ProjectService {
 		createInterviewTimes(project.getProjectSq(), request.interviewTime());
 	}
 
+	@Transactional
 	// 주소코드 기반으로 하위 행정구역 정보 조회
 	public AreaInfoResponse fetchSubDistrictInfoByProjectSq(Long addressSq) {
 		return addressMapper.findAreaInfoBySq(addressSq);
 	}
 
+	@Transactional
 	// 주소코드 기반으로 상위 행정구역 정보 조회
 	public AreaInfoResponse fetchParentDistrictInfoByCd(Long areaCode) {
 		return districtMapper.findParentDisctrictByCodeSq(areaCode);
 	}
 
+	@Transactional
 	// 주소 문자열로 변환 (ex: "서울 강남구")
 	public String fetchAddressString(Long addressSq) {
 		AreaInfoResponse subDistrict = addressMapper.findAreaInfoBySq(addressSq);
@@ -155,6 +158,7 @@ public class ProjectService {
 		return parentName + " " + subDistrict.getAreaName();
 	}
 
+	@Transactional
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
 
@@ -191,6 +195,7 @@ public class ProjectService {
 		return new ProjectListResponse(page, request.getSize(), totalCount, totalPages, responses);
 	}
 
+	@Transactional
 	// 기업 기준의 프로젝트 목록 조회
 	public ProjectListResponse fetchCompanyProject(CompanyFilterRequest request,
 			JwtAuthenticationToken jwtAuthenticationToken) {
@@ -226,6 +231,7 @@ public class ProjectService {
 		return new ProjectListResponse(page, request.getSize(), totalCount, totalPages, responses);
 	}
 
+	@Transactional
 	public ProjectRecruitStatus fetchCompanyProjectCount(CompanyFilterRequest request,
 			JwtAuthenticationToken jwtAuthenticationToken) {
 
@@ -237,6 +243,7 @@ public class ProjectService {
 		return projectMapper.countCompanyProjectsByStatus(request, companySq);
 	}
 
+	@Transactional
 	public ProjectDetailResponse fetchProject(Long projectSq, JwtAuthenticationToken token) {
 		projectMapper.updateViewCnt(projectSq);
 		Project p = projectMapper.findBySq(projectSq);
@@ -443,6 +450,7 @@ public class ProjectService {
 		return requests;
 	}
 
+	@Transactional
 	public List<ContractInsertRequest> fillContractInsertRequest(Long projectSq, List<String> contracts) {
 		List<ContractInsertRequest> requests = new ArrayList<>();
 		contracts.forEach(contractName -> {
@@ -453,6 +461,7 @@ public class ProjectService {
 		return requests;
 	}
 
+	@Transactional
 	public List<JobInsertRequest> fillJobInsertRequest(Long projectSq, List<String> recruitJobs) {
 		List<JobInsertRequest> requests = new ArrayList<>();
 		recruitJobs.forEach(jobName -> {
@@ -463,6 +472,7 @@ public class ProjectService {
 		return requests;
 	}
 
+	@Transactional
 	public ProjectFormDataResponse fetchProjectFormDatas(long projectSq) {
 		List<GroupSkillInfoResponse> skills = groupingSkills(projectMapper.findSkillFormList());
 		if (projectSq != 0L) {
@@ -479,6 +489,7 @@ public class ProjectService {
 		return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills);
 	}
 
+	@Transactional
 	// fetch 해온 기술들을 상위 분류에 따라 분류.
 	public List<GroupSkillInfoResponse> groupingSkills(List<SingleSkillInfoResponse> responses) {
 		Map<String, List<String>> grouped = responses.stream()
@@ -493,10 +504,12 @@ public class ProjectService {
 		return result;
 	}
 
+	@Transactional
 	public List<AreaInfoResponse> fetchDistricts(Long areaCodeSq) {
 		return districtMapper.findAllDistrictByParent(areaCodeSq);
 	}
 
+	@Transactional
 	// 검색 필터에 들어갈 내용을 DB에서 조회
 	public List<?> fetchFilterInfos(String type) {
 		switch (type) {
@@ -513,10 +526,12 @@ public class ProjectService {
 		}
 	}
 
+	@Transactional
 	public List<InterviewTimeInfoResponse> fetchProjectAvailableTimes(Long projectSq) {
 		return projectMapper.findInterviewSqTmByProjectSq(projectSq);
 	}
 
+	@Transactional
 	public UserRole findUserRole(JwtAuthenticationToken token, Project project) {
 		Long userSq = token.getUserSq();
 		Long userTypeCd = token.getUserTypeCd();
@@ -546,6 +561,7 @@ public class ProjectService {
 		return UserRole.COMPANY_EXTERNAL;
 	}
 
+	@Transactional
 	// 메인페이지용
 	public List<MainProjectResponse> fetchMainPopularProjects(String sortType) {
 		// 1. 기본 프로젝트 리스트 조회 (5~6개)

@@ -686,6 +686,7 @@ const submitProject = async () => {
     }
     router.push({ name: 'ProjectListPage' })
   } catch (error) {
+    alertStore.show('프로젝트 등록에 실패하였습니다.', 'danger')
     console.error('프로젝트 등록 실패: ', error)
   }
 }
