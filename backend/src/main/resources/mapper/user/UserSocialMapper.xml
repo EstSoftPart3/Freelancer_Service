@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.user.mapper.UserSocialMapper">
+
+	<!--사용자 존재 여부 확인-->
+	<select id="findUserBySocialIdAndProvider" resultType="com.example.demo.domain.user.dto.UserDTO">
+		SELECT
+			u.user_sq,
+			u.user_nm,
+			u.user_email,
+			u.user_type_cd,
+			u.user_signup_type_cd
+		FROM tbl_user_social_account usa
+		JOIN tbl_user_m u ON usa.user_sq = u.user_sq
+		WHERE usa.social_id = #{socialId}
+			AND usa.social_provider_cd = #{providerCd}
+			AND u.user_is_deleted_yn = 'N'
+	</select>
+	
+	<!-- 신규 유저 user 테이블 INSERT -->
+	<insert id="insertUser" parameterType="com.example.demo.domain.user.dto.UserDTO" useGeneratedKeys="true" keyProperty="userSq">
+		INSERT INTO tbl_user_m (
+			user_email,
+			user_nm,
+			user_id,
+			user_phone_num,
+			user_type_cd,
+			user_signup_type_cd,
+			user_agreed_privacy_policy_yn,
+			user_is_deleted_yn,
+			user_created_at_dtm
+		) VALUES (
+			#{userEmail},
+			#{userNm},
+			#{userId},
+			#{userPhoneNum},
+			#{userTypeCd},
+			#{userSignupTypeCd},
+			'Y',
+			'N',
+			NOW()
+		)
+	</insert>
+	
+	<!-- user_social_account 테이블 INSERT-->
+	<insert id="insertUserSocialAccount" parameterType="com.example.demo.domain.user.dto.UserSocialDTO">
+		INSERT INTO tbl_user_social_account (
+			user_sq,
+			social_provider_cd,
+			social_id,
+			social_email,
+			social_refresh_token,
+			social_token_expired_at_dtm,
+			social_created_at_dtm
+		) VALUES (
+			#{userSq},
+			#{socialProviderCd},
+			#{socialId},
+			#{socialEmail},
+			#{socialRefreshToken},
+			#{socialTokenExpiredAtDtm},
+			NOW()
+		)
+	</insert>
+</mapper>

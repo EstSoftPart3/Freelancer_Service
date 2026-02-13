@@ -37,17 +37,19 @@ const fetchUserInfo = async () => {
       longitude: data.longitude, // 백엔드에서 넘겨주는 필드명 확인 필요
     })
   } catch (error) {
-    clearLoginState()
+    console.error('사용자 조회 실패 : ', error)
   }
 }
 
-const clearLoginState = () => {
-  localStorage.removeItem('userNm')
-  localStorage.removeItem('userTypeCd')
-  localStorage.removeItem('autoLogin')
+// const clearLoginState = () => {
+//   localStorage.removeItem('accessToken')
+//   localStorage.removeItem('refreshToken')
+//   localStorage.removeItem('userNm')
+//   localStorage.removeItem('userTypeCd')
+//   localStorage.removeItem('autoLogin')
 
-  userStore.clearUser()
-}
+//   userStore.clearUser()
+// }
 
 function clearLoginStateFunc() {
   localStorage.removeItem('userNm')
@@ -58,8 +60,12 @@ function clearLoginStateFunc() {
 
 setClearLoginState(clearLoginStateFunc)
 
-onMounted(() => {
-  fetchUserInfo()
+onMounted(async () => {
+  const hasAccessToken = localStorage.getItem('accessToken')
+  const hasRefreshToken = localStorage.getItem('refreshToken')
+  if (hasAccessToken || hasRefreshToken) {
+    await fetchUserInfo()
+  }
 })
 </script>
 

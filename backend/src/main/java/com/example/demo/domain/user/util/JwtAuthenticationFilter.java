@@ -48,7 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects/applications/interviews/*",
             "/api/mypage/resume",
             "/api/uploads",
-            "/api/download"
+            "/api/download",
+            "/api/auth/kakao",
+            "/api/auth/kakao/callback",
+            "/api/auth/naver",
+            "/api/auth/naver/callback",
+            "/api/auth/google",
+            "/api/auth/google/callback"
 
     // 여기에 더 추가 가능
     );

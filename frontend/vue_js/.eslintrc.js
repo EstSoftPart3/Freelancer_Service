@@ -11,6 +11,12 @@ module.exports = {
     parser: '@babel/eslint-parser',
     requireConfigFile: false,
   },
+  globals: {
+    defineProps: 'readonly',
+    defineEmits: 'readonly',
+    defineExpose: 'readonly',
+    withDefaults: 'readonly',
+  },
   plugins: ['vue'],
   rules: {
     // 원하는 룰 추가

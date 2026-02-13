@@ -12,7 +12,10 @@ import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.util.JwtProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoginService {
@@ -23,7 +26,7 @@ public class LoginService {
     private final UserMapper userMapper;
 
     @Transactional
-    public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
+    public LoginResultDTO login(String userId, String userPw, Long userTypeCd, boolean autoLogin) {
         UserDTO user = userRepository.findByUserId(userId);
 
         if (user == null) {
@@ -45,8 +48,11 @@ public class LoginService {
         }
 
         String accessToken = jwtProvider.createAccessToken(user);
-        String refreshToken = jwtProvider.createRefreshToken(user);
+        String refreshToken = jwtProvider.createRefreshToken(user, autoLogin);
 
+
+        
+        
         userRepository.updateRefreshToken(user.getUserSq(), refreshToken);
 
         TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
@@ -69,10 +75,15 @@ public class LoginService {
             throw new IllegalArgumentException("리프레시 토큰과 일치하는 사용자가 없습니다.");
         }
 
+        boolean autoLogin = jwtProvider.getAutoLoginFromToken(refreshToken);
+        
         // 새로운 액세스 토큰과 리프레시 토큰 발급
         String newAccessToken = jwtProvider.createAccessToken(user);
-        String newRefreshToken = jwtProvider.createRefreshToken(user);
+        String newRefreshToken = jwtProvider.createRefreshToken(user, autoLogin);
 
+        log.info("================== 새로운 토큰 발급 ==================");
+        log.info("autoLogin: {}", autoLogin);
+        
         // DB에 리프레시 토큰 갱신
         userRepository.updateRefreshToken(user.getUserSq(), newRefreshToken);
 

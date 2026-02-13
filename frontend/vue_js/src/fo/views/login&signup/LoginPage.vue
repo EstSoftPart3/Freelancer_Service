@@ -310,15 +310,27 @@ const socialProviders = [
     title: '구글 로그인',
     img: '/img/social/google.png',
   },
-  {
-    name: 'apple',
-    title: '애플 로그인',
-    img: '/img/social/apple.png',
-  },
+  // {
+  //   name: 'apple',
+  //   title: '애플 로그인',
+  //   img: '/img/social/apple.png',
+  // },
 ]
 
-const handleSocialLogin = (provider) => {
-  alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+const handleSocialLogin = async (provider) => {
+  try {
+    if (provider === 'kakao') {
+      const res = await api.$get('/auth/kakao')
+
+      console.log('로그인 url을 가져왔습니다.', res.url)
+      window.location.href = res.url
+    } else {
+      alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+    }
+  } catch (error) {
+    console.error('소셜 로그인 오류 : ', error)
+    alertStore.show('소셜 로그인에 실패했습니다.', 'danger')
+  }
 }
 </script>
 

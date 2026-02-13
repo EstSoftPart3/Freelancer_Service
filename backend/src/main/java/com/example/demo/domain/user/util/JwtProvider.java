@@ -5,12 +5,15 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
@@ -24,6 +27,8 @@ public class JwtProvider {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration; // 예: 14일 = 1000L * 60 * 60 * 24 * 14
 
+    private static final long AUTO_LOGIN_REFRESH_TOKEN_VALIDITY = 30 * 24 * 60 * 60 * 1000L; // 예: 30일 = 1000 * 60 * 60 * 24 *30
+    
     private Key secretKey;
 
     @PostConstruct
@@ -32,17 +37,36 @@ public class JwtProvider {
     }
 
     public String createAccessToken(UserDTO user) {
+    	
+    	log.info("========== access token 생성 ============");
         return createToken(
                 user.getUserSq(),
                 user.getUserTypeCd(),
                 accessTokenExpiration);
     }
 
-    public String createRefreshToken(UserDTO user) {
-        return createToken(
-                user.getUserSq(),
-                user.getUserTypeCd(),
-                refreshTokenExpiration);
+//    public String createRefreshToken(UserDTO user) {
+//        return createToken(
+//                user.getUserSq(),
+//                user.getUserTypeCd(),
+//                refreshTokenExpiration);
+//    }
+    
+    public String createRefreshToken(UserDTO user, boolean autoLogin) {
+    	long validity = autoLogin ? AUTO_LOGIN_REFRESH_TOKEN_VALIDITY : refreshTokenExpiration;
+    	
+    	Date now = new Date();
+    	Date expiry = new Date(now.getTime() + validity);
+    	
+    	log.info("========== refresh token 생성 ============");
+    	return Jwts.builder()
+    			.setSubject(String.valueOf(user.getUserSq()))
+                .claim("userTypeCd", user.getUserTypeCd())
+                .claim("autoLogin", autoLogin)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
     }
 
     private String createToken(Long userSq, Long userTypeCd, long expirationTime) {
@@ -115,5 +139,11 @@ public class JwtProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+    
+    public boolean getAutoLoginFromToken(String token) {
+    	Claims claims = parseClaims(token);
+    	Boolean autoLogin = claims.get("autoLogin", Boolean.class);
+    	return autoLogin != null && autoLogin;
     }
 }
