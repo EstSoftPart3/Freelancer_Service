@@ -141,8 +141,7 @@
 	      AND NOW() > project_recruit_end_dt
 	    ]]>
 	  </if>
-    
-    <if
+		ORDER BY p.project_sq DESC <if
 			test="request.size != null and request.offset != null"> LIMIT #{request.size} OFFSET
 		#{request.offset} </if>
 
