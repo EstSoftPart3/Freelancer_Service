@@ -83,7 +83,7 @@
 
                 <!-- 오른쪽: 상태 버튼들 -->
                 <div class="d-flex gap-2">
-                  <template v-if="item.applicantType === '지원중'">
+                  <template v-if="item.applicationStatus === '지원중'">
                     <span class="btn btn-primary btn-sm">지원중</span>
                     <span
                       class="btn btn-primary btn-outline btn-sm"
@@ -95,11 +95,11 @@
                     </span>
                   </template>
 
-                  <template v-else-if="item.applicantType === '합격'">
+                  <template v-else-if="item.applicationStatus === '합격'">
                     <span class="btn btn-light btn-sm">합격</span>
                   </template>
 
-                  <template v-else-if="item.applicantType === '인터뷰확정'">
+                  <template v-else-if="item.applicationStatus === '인터뷰확정'">
                     <div
                       class="interview-wrapper position-relative d-inline-block"
                     >
@@ -120,14 +120,16 @@
                     </div>
                   </template>
 
-                  <template v-else-if="item.applicantType === '불합격'">
+                  <template v-else-if="item.applicationStatus === '불합격'">
                     <span class="btn btn-light btn-sm">불합격</span>
                   </template>
-                  <template v-else-if="item.applicantType === '지원취소'">
+                  <template v-else-if="item.applicationStatus === '지원취소'">
                     <span class="btn btn-light btn-sm">지원 취소됨</span>
                   </template>
 
-                  <template v-else-if="item.applicantType === '인터뷰요청중'">
+                  <template
+                    v-else-if="item.applicationStatus === '인터뷰요청중'"
+                  >
                     <a
                       @click.prevent="
                         fetchAvailableInterviewTimes(
