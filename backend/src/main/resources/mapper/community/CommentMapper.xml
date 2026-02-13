@@ -32,4 +32,8 @@
         UPDATE TBL_BOARD_COMMENT_S SET comment_recommend_cnt = ( SELECT COUNT(*) FROM
         TBL_RECOMMENDATION_S WHERE comment_sq = #{commentSq} ) WHERE comment_sq = #{commentSq} </update>
 
+    <select id="selectCommentDetail" resultType="com.example.demo.domain.community.entity.Comment">
+        SELECT comment_sq, user_sq, board_sq, answer_sq FROM tbl_board_comment_s WHERE comment_sq =
+        #{commentSq} </select>
+
 </mapper>

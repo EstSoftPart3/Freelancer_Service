@@ -120,8 +120,8 @@
                   >
                     <i class="bi bi-bell fs-5"></i>
 
-                    <!-- 알림 배지 -->
                     <span
+                      v-if="unreadCount > 0"
                       class="position-absolute border border-light rounded-circle"
                       style="
                         top: -1px;
@@ -135,35 +135,82 @@
                     </span>
                   </a>
 
-                  <!-- <div
-                  class="dropdown-menu dropdown-menu-end p-2 shadow"
-                  aria-labelledby="notificationDropdown"
-                  style="min-width: 250px; max-height: 300px; overflow-y: auto"
-                >
-                  <h6 class="dropdown-header">알림</h6>
-                  <div class="dropdown-item small text-muted">
-                    📌 새로운 댓글이 달렸어요 <br /><small>2분 전</small>
-                  </div>
-                  <div class="dropdown-item small text-muted">
-                    ✅ 프로젝트가 승인되었어요 <br /><small>10분 전</small>
-                  </div>
-                  <div class="dropdown-item small text-muted">
-                    🔔 시스템 점검 예정 <br /><small>1시간 전</small>
-                  </div>
-                  <div class="dropdown-divider"></div>
-                  <a
-                    class="dropdown-item text-center small text-primary"
-                    href="/notifications"
-                    >전체 보기</a
-                  >
-                </div> -->
                   <div
-                    class="dropdown-menu dropdown-menu-end p-2 shadow"
+                    class="dropdown-menu dropdown-menu-end p-0 shadow border-0"
                     aria-labelledby="notificationDropdown"
-                    style="min-width: 250px"
+                    style="
+                      min-width: 300px;
+                      max-height: 400px;
+                      overflow-y: auto;
+                    "
                   >
-                    <div class="dropdown-item small text-muted">
-                      🔧 준비 중입니다.
+                    <div
+                      class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light"
+                    >
+                      <h6 class="m-0 fw-bold">알림</h6>
+                      <span v-if="unreadCount > 0" class="badge bg-primary">{{
+                        unreadCount
+                      }}</span>
+                    </div>
+
+                    <div v-if="notifications && notifications.length > 0">
+                      <div
+                        v-for="noti in notifications"
+                        :key="noti.notificationSq"
+                        class="dropdown-item p-3 border-bottom position-relative notification-item"
+                        :class="{
+                          unread: noti.notificationReadYn === 'N',
+                          read: noti.notificationReadYn === 'Y',
+                        }"
+                        @click="markAsRead(noti)"
+                      >
+                        <router-link
+                          :to="noti.notificationTargetUrl || '#'"
+                          class="text-decoration-none d-block"
+                        >
+                          <div
+                            class="d-flex justify-content-between align-items-start"
+                          >
+                            <p
+                              class="mb-1 text-wrap noti-content"
+                              :class="
+                                noti.notificationReadYn === 'N'
+                                  ? 'fw-bold text-dark'
+                                  : 'text-muted'
+                              "
+                            >
+                              {{ noti.notificationContentTxt }}
+                            </p>
+                            <button
+                              @click.prevent.stop="
+                                deleteNoti(noti.notificationSq)
+                              "
+                              class="btn-close"
+                              style="font-size: 0.5rem"
+                            ></button>
+                          </div>
+                          <small class="text-muted" style="font-size: 0.7rem">
+                            {{
+                              noti.notificationCreatedAtDtm
+                                ? noti.notificationCreatedAtDtm.split('T')[0]
+                                : ''
+                            }}
+                          </small>
+                        </router-link>
+                      </div>
+                    </div>
+
+                    <div v-else class="p-4 text-center text-muted">
+                      <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                      <small>새로운 알림이 없습니다.</small>
+                    </div>
+
+                    <div class="p-2 border-top text-center bg-light">
+                      <router-link
+                        to="/mypage/notifications"
+                        class="small text-primary text-decoration-none fw-bold"
+                        >전체보기</router-link
+                      >
                     </div>
                   </div>
                 </div>
@@ -335,6 +382,8 @@ const route = useRoute()
 const headerRef = ref(null)
 const notificationDropdownRef = ref(null)
 const userDropdownRef = ref(null)
+const notifications = ref([])
+const unreadCount = ref(0)
 
 const closeMenu = () => {
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
@@ -396,7 +445,61 @@ const logout = async () => {
   router.push('/')
 }
 
+// 알림 목록 가져오기
+const fetchNotifications = async () => {
+  if (!isLoggedIn.value) return
+  try {
+    const res = await api.$get(`/notifications/${userStore.userSq}`)
+    notifications.value = res
+  } catch (error) {
+    console.error('알림 목록 조회 실패:', error)
+  }
+}
+
+// 안 읽은 알림 수 가져오기
+const fetchUnreadCount = async () => {
+  if (!isLoggedIn.value) return
+  try {
+    const res = await api.$get(
+      `/notifications/unread-count/${userStore.userSq}`,
+    )
+    unreadCount.value = res
+  } catch (error) {
+    console.error('알림 개수 조회 실패:', error)
+  }
+}
+
+// 알림 읽음 처리
+const markAsRead = async (notification) => {
+  if (notification.notificationReadYn === 'Y') return
+  try {
+    await api.$patch(`/notifications/${notification.notificationSq}/read`)
+    // 서버 응답을 기다리지 않고 즉시 UI 반영 (Optimistic UI)
+    notification.notificationReadYn = 'Y'
+    await fetchUnreadCount() // 배지 카운트 갱신
+  } catch (error) {
+    console.error('알림 읽음 처리 실패:', error)
+  }
+}
+
+// 알림 삭제
+const deleteNoti = async (sq) => {
+  try {
+    await api.$delete(`/notifications/${sq}`)
+    notifications.value = notifications.value.filter(
+      (n) => n.notificationSq !== sq,
+    )
+    await fetchUnreadCount()
+  } catch (error) {
+    console.error('알림 삭제 실패:', error)
+  }
+}
+
 onMounted(() => {
+  if (isLoggedIn.value) {
+    fetchNotifications()
+    fetchUnreadCount()
+  }
   document.addEventListener('mousedown', handleClickOutside)
   if (notificationDropdownRef.value) {
     notificationDropdownRef.value.addEventListener(
@@ -406,6 +509,17 @@ onMounted(() => {
   }
   if (userDropdownRef.value) {
     userDropdownRef.value.addEventListener('show.bs.dropdown', closeMenu)
+  }
+})
+
+// 로그인 시 데이터 다시 불러오기
+watch(isLoggedIn, (newVal) => {
+  if (newVal) {
+    fetchNotifications()
+    fetchUnreadCount()
+  } else {
+    notifications.value = []
+    unreadCount.value = 0
   }
 })
 
@@ -452,6 +566,40 @@ onBeforeUnmount(() => {
 /* dropdown-toggle 클래스의 화살표 제거 */
 #notificationDropdown::after {
   display: none !important;
+}
+
+/* 읽지 않은 알림: 연한 파란색 배경 + 왼쪽 강조선 */
+.notification-item.unread {
+  background-color: #f0f7ff !important;
+  border-left: 3px solid var(--bs-primary);
+  transition: background-color 0.3s ease;
+}
+
+/* 읽은 알림: 흰색 배경 + 흐릿한 텍스트 */
+.notification-item.read {
+  background-color: #ffffff !important;
+  opacity: 0.8;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa !important;
+}
+
+.noti-content {
+  font-size: 0.8rem !important; /* 기존보다 확연히 크게 설정 */
+  line-height: 1.5; /* 줄 간격을 넓혀서 가독성 향상 */
+  margin-bottom: 4px;
+  word-break: break-all; /* 긴 단어 줄바꿈 */
+}
+
+/* 안 읽은 알림의 텍스트는 좀 더 진하게 */
+.unread .noti-content {
+  color: #212529 !important;
+}
+
+/* 읽은 알림의 텍스트는 연하게 */
+.read .noti-content {
+  color: #6c757d !important;
 }
 
 /* Mobile Menu Dropdown Styles */

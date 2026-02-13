@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
+    userSq: localStorage.getItem('userSq')
+      ? Number(localStorage.getItem('userSq'))
+      : null,
     userNm: localStorage.getItem('userNm') || '',
     userType: localStorage.getItem('userType') || '',
     userAddress: localStorage.getItem('userAddress') || '',
@@ -29,6 +32,7 @@ export const useUserStore = defineStore('user', {
   },
   actions: {
     setUser({
+      userSq,
       userNm,
       userTypeCd,
       address,
@@ -40,6 +44,7 @@ export const useUserStore = defineStore('user', {
       const userType =
         userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
 
+      this.userSq = userSq
       this.userNm = userNm
       this.userType = userType
       this.userAddress = address || ''
@@ -48,6 +53,7 @@ export const useUserStore = defineStore('user', {
       this.isAffiliated = isAffiliated || 'N'
       this.companyAuthStatusCd = companyAuthStatusCd // [추가]
 
+      localStorage.setItem('userSq', userSq)
       localStorage.setItem('userNm', userNm)
       localStorage.setItem('userType', userType)
       // [추가] 로컬 스토리지 저장 (새로고침 대비)
@@ -62,6 +68,7 @@ export const useUserStore = defineStore('user', {
         localStorage.setItem('companyAuthStatusCd', companyAuthStatusCd)
     },
     clearUser() {
+      this.userSq = null
       this.userNm = ''
       this.userType = ''
       this.userAddress = ''
@@ -70,6 +77,7 @@ export const useUserStore = defineStore('user', {
       this.isAffiliated = 'N'
       this.companyAuthStatusCd = null
 
+      localStorage.removeItem('userSq')
       localStorage.removeItem('userNm')
       localStorage.removeItem('userType')
       localStorage.removeItem('userAddress')

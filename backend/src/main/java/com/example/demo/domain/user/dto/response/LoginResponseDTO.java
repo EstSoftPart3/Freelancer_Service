@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponseDTO {
+    private Long userSq;
     private String userNm;
     private Long userTypeCd;
 

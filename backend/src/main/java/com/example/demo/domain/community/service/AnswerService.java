@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.management.Notification;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +36,7 @@ import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.mypage.service.InformationEditService;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +58,7 @@ public class AnswerService {
 	private final FileStorageService fileStorageService;
 	private final InformationEditRepository informationEditRepository;
 	private final InformationEditService informationEditService;
+	private final NotificationService notificationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -150,6 +154,26 @@ public class AnswerService {
 				.answerTtl(answerRequest.getTtl())
 				.answerDescriptionEdt(answerRequest.getDescription()).build();
 		answerMapper.insert(answer);
+
+		// ================= [ 알림 발송 로직 추가 ] =================
+		// 원본 Q&A 게시글 정보를 조회하여 질문자(수신자)를 찾습니다.
+		Board board = boardMapper.findByIdOnly(answer.getBoardSq());
+
+		if (board != null) {
+			Long questionerSq = board.getUserSq(); // 질문자 SQ
+
+			// 본인 질문에 본인이 답변을 단 경우가 아니라면 알림 발송
+			if (!questionerSq.equals(answer.getUserSq())) {
+				notificationService.send(
+						questionerSq, // 수신자: 질문자
+						answer.getUserSq(), // 발신자: 답변자
+						2605L, // 타입: Q&A 답변 등록 (새로운 공통코드 권장)
+						"내 질문에 새로운 답변이 등록되었습니다.", // 알림 문구
+						"/qna/" + board.getBoardSq() + "?answerSq=" + answer.getAnswerSq() // 클릭 시 답변 모달 자동 오픈
+				);
+			}
+		}
+		// =======================================================
 
 		if (answer.getAnswerSq() == null) {
 			throw new IllegalStateException("게시글 등록 실패하였습니다.");

@@ -30,15 +30,17 @@ const fetchUserInfo = async () => {
     // console.log('✅ 서버 응답 데이터:', data)
 
     userStore.setUser({
+      userSq: data.userSq,
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
       address: data.address,
       latitude: data.latitude,
       longitude: data.longitude,
       isAffiliated: data.isAffiliated,
-      companyAuthStatusCd: data.companyAuthStatusCd, // 이제 데이터가 여기 실려옵니다!
+      companyAuthStatusCd: data.companyAuthStatusCd,
     })
   } catch (error) {
+    console.error('유저 정보 불러오기 실패:', error)
     clearLoginState()
   }
 }
