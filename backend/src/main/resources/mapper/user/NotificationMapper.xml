@@ -28,4 +28,10 @@
   <update id="deleteNotification"> UPDATE tbl_notification_m SET notification_is_deleted_yn = 'Y'
     WHERE notification_sq = #{notificationSq} </update>
 
+  <insert id="insertNotificationBatch"> INSERT INTO tbl_notification_m ( receiver_user_sq,
+    sender_user_sq, notification_type_cd, notification_content_txt, notification_target_url ) VALUES <foreach
+      collection="list" item="item" separator=","> ( #{item.receiverSq}, #{item.senderSq},
+    #{item.typeCd}, #{item.content}, #{item.targetUrl} ) </foreach>
+  </insert>
+
 </mapper>

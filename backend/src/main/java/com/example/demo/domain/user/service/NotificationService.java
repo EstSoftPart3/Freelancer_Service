@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.dto.request.NotificationRequestDTO;
 import com.example.demo.domain.user.dto.response.NotificationResponseDTO;
 import com.example.demo.domain.user.mapper.NotificationMapper;
@@ -51,4 +52,11 @@ public class NotificationService {
     public void removeNotification(Long notificationSq) {
         notificationMapper.deleteNotification(notificationSq);
     }
+
+    // 알림 대량 등록 (Batch Insert)\
+    @Transactional
+    public void insertNotificationBatch(List<NotificationBatchRequestDTO> list) {
+        notificationMapper.insertNotificationBatch(list);
+    }
+
 }

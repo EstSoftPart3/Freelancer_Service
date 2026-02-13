@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 
@@ -47,6 +48,7 @@ import com.example.demo.domain.project.mapper.SkillMapper;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
 import com.example.demo.domain.project.vo.ProjectSummary;
+import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
@@ -65,6 +67,7 @@ public class ProjectService {
 	private final ScrapMapper scrapMapper;
 	private final CompanyService companyService;
 	private final NotificationService notificationService;
+	private final AffiliationMapper affiliationMapper;
 
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
@@ -81,6 +84,41 @@ public class ProjectService {
 		projectMapper.insertProject(project);
 
 		registerSubEntities(project, request);
+		// ================= [ 스크랩 유저 배치 알림 발송 ] =================
+
+		// 2. 해당 기업을 즐겨찾기(602)한 유저 및 타입 정보 조회
+		List<Map<String, Object>> scrapUserInfos = affiliationMapper.findScrapUserInfos(companySq);
+
+		if (scrapUserInfos != null && !scrapUserInfos.isEmpty()) {
+			String companyNm = affiliationMapper.findCompanyNameBySq(companySq);
+			String projectTitle = request.projectTitle(); // Record 필드명 적용
+			String message = String.format("즐겨찾기한 [%s]에서 새 공고가 등록되었습니다: %s", companyNm, projectTitle);
+			Long projectSq = project.getProjectSq();
+
+			// 대량 발송용 리스트 생성
+			List<NotificationBatchRequestDTO> batchList = new ArrayList<>();
+
+			for (Map<String, Object> userInfo : scrapUserInfos) {
+				Long receiverSq = Long.valueOf(userInfo.get("userSq").toString());
+				Long receiverTypeCd = Long.valueOf(userInfo.get("userTypeCd").toString());
+
+				// 수신자 타입에 따른 상세 페이지 경로 분기 (302L: 기업)
+				String targetUrl = (receiverTypeCd.equals(302L))
+						? "/project/spec/company/" + projectSq
+						: "/project/spec/user/" + projectSq;
+
+				// DTO 리스트에 추가
+				batchList.add(new NotificationBatchRequestDTO(
+						receiverSq,
+						userSq,
+						2604L, // 알림 코드: 스크랩 소속 새 공고
+						message,
+						targetUrl));
+			}
+
+			// 3. 알림 매퍼를 통해 한 번에 INSERT
+			notificationService.insertNotificationBatch(batchList);
+		}
 	}
 
 	public long registerAddress(ProjectCreateRequest request) {

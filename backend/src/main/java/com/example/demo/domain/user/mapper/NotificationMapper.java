@@ -3,7 +3,9 @@ package com.example.demo.domain.user.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.dto.request.NotificationRequestDTO;
 import com.example.demo.domain.user.dto.response.NotificationResponseDTO;
 
@@ -24,4 +26,7 @@ public interface NotificationMapper {
 
     // 5. 알림 삭제 (논리 삭제)
     int deleteNotification(Long notificationSq);
+
+    // 알림 대량 등록 (Batch Insert)
+    void insertNotificationBatch(@Param("list") List<NotificationBatchRequestDTO> list);
 }

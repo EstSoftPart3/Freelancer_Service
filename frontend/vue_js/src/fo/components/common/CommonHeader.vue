@@ -205,13 +205,13 @@
                       <small>새로운 알림이 없습니다.</small>
                     </div>
 
-                    <div class="p-2 border-top text-center bg-light">
+                    <!-- <div class="p-2 border-top text-center bg-light">
                       <router-link
                         to="/mypage/notifications"
                         class="small text-primary text-decoration-none fw-bold"
                         >전체보기</router-link
                       >
-                    </div>
+                    </div> -->
                   </div>
                 </div>
 
@@ -371,14 +371,14 @@
 import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
-import router from '@/fo/router'
 import { api } from '@/axios'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const route = useRoute()
+const router = useRouter()
 const headerRef = ref(null)
 const notificationDropdownRef = ref(null)
 const userDropdownRef = ref(null)
@@ -425,24 +425,21 @@ const toggleCommunityDropdown = () => {
 const logout = async () => {
   await api.$post('/logout', {}) // 서버 로그아웃 API 호출
 
-  // 1. 아이디 저장값(개인/기업 아이디, 로그인 타입)만 따로 저장해둠
-  const savedPersonalId = localStorage.getItem('savedPersonalId')
-  const savedCompanyId = localStorage.getItem('savedCompanyId')
-  const savedLoginType = localStorage.getItem('savedLoginType')
+  // 유지할 값만 추출
+  const backup = {
+    pId: localStorage.getItem('savedPersonalId'),
+    cId: localStorage.getItem('savedCompanyId'),
+    type: localStorage.getItem('savedLoginType'),
+  }
 
-  // 2. 로컬스토리지 전체 초기화
   localStorage.clear()
 
-  // 3. 아이디 저장값 복원
-  if (savedPersonalId) localStorage.setItem('savedPersonalId', savedPersonalId)
-  if (savedCompanyId) localStorage.setItem('savedCompanyId', savedCompanyId)
-  if (savedLoginType) localStorage.setItem('savedLoginType', savedLoginType)
+  // 복원
+  if (backup.pId) localStorage.setItem('savedPersonalId', backup.pId)
+  if (backup.cId) localStorage.setItem('savedCompanyId', backup.cId)
+  if (backup.type) localStorage.setItem('savedLoginType', backup.type)
 
-  // 4. Pinia 상태 초기화
-  userStore.$reset() // userStore가 Pinia store라면 $reset() 으로 초기화 가
-  alertStore.show('로그아웃되었습니다.', 'success')
-  // 5. 메인 페이지로 이동
-  router.push('/')
+  window.location.href = '/?logout=true'
 }
 
 // 알림 목록 가져오기
@@ -509,6 +506,15 @@ onMounted(() => {
   }
   if (userDropdownRef.value) {
     userDropdownRef.value.addEventListener('show.bs.dropdown', closeMenu)
+  }
+})
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.get('logout') === 'true') {
+    alertStore.show('로그아웃되었습니다.', 'success')
+    // URL에서 파라미터 제거 (선택 사항: 깔끔한 주소창을 위해)
+    router.replace('/')
   }
 })
 

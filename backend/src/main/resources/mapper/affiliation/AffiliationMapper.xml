@@ -583,4 +583,36 @@
         SELECT * FROM TBL_AREA_C
     </select>
 
+	<select id="findCompanyOwnerUserSq" resultType="long">
+		SELECT user_sq 
+		FROM tbl_company_s 
+		WHERE company_sq = #{companySq}
+	</select>
+
+	<select id="findAffiliationNotificationInfo" resultType="map">
+		SELECT 
+			a.user_sq as "userSq",
+			c.company_nm as "companyNm"
+		FROM tbl_company_application_h a
+		JOIN tbl_company_s c ON a.company_sq = c.company_sq
+		WHERE a.company_application_sq = #{companyApplicationSq}
+	</select>
+
+
+<select id="findScrapUserInfos" resultType="map">
+    SELECT 
+        s.user_sq as "userSq",
+        u.user_type_cd as "userTypeCd"
+    FROM tbl_scrap_s s
+    JOIN tbl_user_m u ON s.user_sq = u.user_sq
+    WHERE s.company_sq = #{companySq} 
+      AND s.scrap_type_cd = 602
+</select>
+
+<select id="findCompanyNameBySq" resultType="string">
+    SELECT company_nm 
+    FROM tbl_company_s 
+    WHERE company_sq = #{companySq}
+</select>
+	
 </mapper>
