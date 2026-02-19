@@ -17,24 +17,30 @@
 			AND usa.social_provider_cd = #{providerCd}
 			AND u.user_is_deleted_yn = 'N'
 	</select>
-	
+
 	<!-- 신규 유저 user 테이블 INSERT -->
 	<insert id="insertUser" parameterType="com.example.demo.domain.user.dto.UserDTO" useGeneratedKeys="true" keyProperty="userSq">
 		INSERT INTO tbl_user_m (
+			address_sq,
 			user_email,
 			user_nm,
 			user_id,
 			user_phone_num,
+			user_gender_cd,
+			user_birth_dt,
 			user_type_cd,
 			user_signup_type_cd,
 			user_agreed_privacy_policy_yn,
 			user_is_deleted_yn,
 			user_created_at_dtm
 		) VALUES (
+			#{addressSq},
 			#{userEmail},
 			#{userNm},
 			#{userId},
 			#{userPhoneNum},
+			#{userGenderCd},
+			#{userBirthDt},
 			#{userTypeCd},
 			#{userSignupTypeCd},
 			'Y',
@@ -42,7 +48,7 @@
 			NOW()
 		)
 	</insert>
-	
+
 	<!-- user_social_account 테이블 INSERT-->
 	<insert id="insertUserSocialAccount" parameterType="com.example.demo.domain.user.dto.UserSocialDTO">
 		INSERT INTO tbl_user_social_account (
@@ -50,17 +56,28 @@
 			social_provider_cd,
 			social_id,
 			social_email,
-			social_refresh_token,
-			social_token_expired_at_dtm,
 			social_created_at_dtm
 		) VALUES (
 			#{userSq},
 			#{socialProviderCd},
 			#{socialId},
 			#{socialEmail},
-			#{socialRefreshToken},
-			#{socialTokenExpiredAtDtm},
 			NOW()
 		)
 	</insert>
+
+	<!-- 주소 INSERT -->
+	<insert id="insertAddress" parameterType="com.example.demo.domain.user.dto.AddressDTO" useGeneratedKeys="true" keyProperty="addressSq">
+		INSERT INTO TBL_ADDRESS_S (
+			zonecode, address, detail_address, sigungu, latitude, longitude, area_code_sq
+		) VALUES (
+			#{zonecode}, #{address}, #{detailAddress}, #{sigungu}, #{latitude}, #{longitude}, #{areaCodeSq}
+		)
+	</insert>
+
+	<!-- 지역코드 조회 -->
+	<select id="selectSigunguByAreaCode" parameterType="Long" resultType="String">
+		SELECT area_sigungu FROM TBL_AREA_C WHERE area_code_sq = #{areaCodeSq} LIMIT 1
+	</select>
+
 </mapper>

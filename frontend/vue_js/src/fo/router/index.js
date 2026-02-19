@@ -20,6 +20,8 @@ import FindAccountPage from '../views/login&signup/FindAccountPage.vue'
 import FindIdResultPage from '../views/login&signup/FindIdResultPage.vue'
 import ResetPasswordPage from '../views/login&signup/ResetPasswordPage.vue'
 import SignUpPage from '../views/login&signup/SignUpPage.vue'
+import SocialCallbackPage from '../views/login&signup/SocialCallbackPage.vue'
+import AddInfoPage from '../views/login&signup/AddInfoPage.vue'
 
 import AffiliationListPage from '../views/company/AffiliationListPage.vue'
 import QnaListPage from '../views/community/QnaListPage.vue'
@@ -141,6 +143,18 @@ const routes = [
   },
 
   {
+    path: '/kakao/callback',
+    component: SocialCallbackPage,
+    name: 'SocialCallback',
+  },
+
+  {
+    path: '/social/addinfo',
+    component: AddInfoPage,
+    name: 'SocialAddInfo',
+  },
+
+  {
     path: '/projectListPage',
     name: 'ProjectListPage',
     component: ProjectListPage,
@@ -258,6 +272,8 @@ router.beforeEach((to, from, next) => {
     'FindAccount',
     'FindIdResult',
     'ResetPassword',
+    'SocialCallback',
+    'SocialAddInfo',
   ]
   const authRequiredPages = [
     'MyPageDefault',
