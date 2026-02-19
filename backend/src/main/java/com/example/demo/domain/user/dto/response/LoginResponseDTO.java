@@ -20,4 +20,8 @@ public class LoginResponseDTO {
     // [추가] 프론트엔드에서 거리 계산의 기준이 될 좌표
     private Double latitude;
     private Double longitude;
+
+    // 소셜 로그인 신규 사용자 여부
+    private Boolean isNewUser;
+    private String tempToken;
 }
