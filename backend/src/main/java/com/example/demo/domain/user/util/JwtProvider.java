@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -145,5 +146,37 @@ public class JwtProvider {
     	Claims claims = parseClaims(token);
     	Boolean autoLogin = claims.get("autoLogin", Boolean.class);
     	return autoLogin != null && autoLogin;
+    }
+
+    public String createSocialSignupToken(String socialId, String providerCd) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + 10 * 60 * 1000); // 10분 유효
+
+        return Jwts.builder()
+                .setSubject(socialId)
+                .claim("providerCd", providerCd)
+                .claim("purpose", "social-signup")
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public Map<String, String> validateSocialSignupToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        String purpose = claims.get("purpose", String.class);
+        if (!"social-signup".equals(purpose)) {
+            throw new JwtException("유효하지 않은 토큰입니다.");
+        }
+
+        Map<String, String> result = new java.util.HashMap<>();
+        result.put("socialId", claims.getSubject());
+        result.put("providerCd", claims.get("providerCd", String.class));
+        return result;
     }
 }
