@@ -2,8 +2,10 @@ package com.example.demo.domain.user.dto;
 
 import java.time.LocalDateTime;
 
+import lombok.Builder;
 import lombok.Data;
 
+@Builder
 @Data
 public class UserSocialDTO {
 	private Long socialSq;
