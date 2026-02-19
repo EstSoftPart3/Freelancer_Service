@@ -54,7 +54,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/naver",
             "/api/auth/naver/callback",
             "/api/auth/google",
-            "/api/auth/google/callback"
+            "/api/auth/google/callback",
+            "/api/auth/social/signup"
 
     // 여기에 더 추가 가능
     );
