@@ -1,34 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.project.mapper.DistrictMapper">
 
-	
-	<select id="findAllParentDistrict" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
-    SELECT area_code_sq, area_sigungu
-    FROM TBL_AREA_C
-    WHERE PARENT_AREA_CODE_SQ IS NULL
-	</select>
-	
-    <select id="findAllDistrictByParent" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
-    SELECT area_code_sq, area_sigungu
-    FROM TBL_AREA_C
-    WHERE PARENT_AREA_CODE_SQ = #{parentCodeSq}
-	</select>
-	
-	<select id="findParentDisctrictByCodeSq" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
-    SELECT parent.area_code_sq, parent.area_sigungu
-    FROM TBL_AREA_C child
-    JOIN TBL_AREA_C parent
-      ON child.parent_area_code_sq = parent.area_code_sq
-    WHERE child.area_code_sq = #{codeSq}
-	</select>
-	
-	<select id="findParentDisctrictSq" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
-    SELECT area_code_sq, area_sigungu
-    FROM TBL_AREA_C
-    WHERE PARENT_AREA_CODE_SQ = #{parentCodeSq}
-	</select>
+
+    <select id="findAllParentDistrict"
+        resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
+        area_code_sq, area_sigungu FROM TBL_AREA_C WHERE PARENT_AREA_CODE_SQ IS NULL </select>
+
+    <select id="findAllDistrictByParent" parameterType="Long"
+        resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
+        area_code_sq, area_sigungu FROM TBL_AREA_C WHERE PARENT_AREA_CODE_SQ = #{parentCodeSq} </select>
+
+    <select id="findParentDisctrictByCodeSq" parameterType="Long"
+        resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
+        parent.area_code_sq, parent.area_sigungu FROM TBL_AREA_C child JOIN TBL_AREA_C parent ON
+        child.parent_area_code_sq = parent.area_code_sq WHERE child.area_code_sq = #{codeSq} </select>
+
+    <select id="findParentDisctrictSq" parameterType="Long"
+        resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
+        area_code_sq, area_sigungu FROM TBL_AREA_C WHERE PARENT_AREA_CODE_SQ = #{parentCodeSq} </select>
+
+    <select id="findAreaCodeBySigunguName" parameterType="String" resultType="Long"> SELECT
+        area_code_sq FROM TBL_AREA_C WHERE area_sigungu = #{sigunguName} LIMIT 1 </select>
+
+    <select id="findSigunguByCode" resultType="String"> SELECT area_sigungu FROM tbl_area_c WHERE
+        area_code_sq = #{areaCodeSq} </select>
 </mapper>

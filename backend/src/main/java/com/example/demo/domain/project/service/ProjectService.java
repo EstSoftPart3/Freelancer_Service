@@ -78,7 +78,29 @@ public class ProjectService {
 		long userTypeCd = token.getUserTypeCd();
 
 		long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
-		Project project = Project.from(request, companySq, registerAddress(request), devgradeCodeSq, educationLvlSq);
+
+		Long detailedAddressSq = null;
+		if (request.detailedAddressName() != null && !request.detailedAddressName().isBlank()) {
+			detailedAddressSq = registerAddressWithDbCheck(
+					request.detailedSigunguCode(),
+					AddressInsertDto.forDetailed(request));
+		}
+
+		Long subwayAddressSq = null;
+		if (request.subwayAddressName() != null && !request.subwayAddressName().isBlank()) {
+			subwayAddressSq = registerAddressWithDbCheck(
+					request.subwaySigunguCode(),
+					AddressInsertDto.forSubway(request));
+		}
+
+		// 3. 프로젝트 엔티티 생성 및 저장 (수정된 from 메서드 사용)
+		Project project = Project.from(
+				request,
+				companySq,
+				detailedAddressSq,
+				subwayAddressSq,
+				devgradeCodeSq,
+				educationLvlSq);
 		projectMapper.insertProject(project);
 
 		registerSubEntities(project, request);
@@ -120,10 +142,55 @@ public class ProjectService {
 	}
 
 	@Transactional
-	public long registerAddress(ProjectCreateRequest request) {
-		AddressInsertDto addressInsertDto = AddressInsertDto.from(request);
-		addressMapper.createAddress(addressInsertDto);
-		return addressInsertDto.getAddressSq();
+	public void createProject(ProjectCreateRequest request) {
+		// ... 기존 로직 ...
+
+		// 1. 상세 주소 등록
+		Long detailedAddressSq = null;
+		if (request.detailedAddressName() != null && !request.detailedAddressName().isBlank()) {
+			detailedAddressSq = registerAddressWithDbCheck(
+					request.detailedSigunguCode(),
+					AddressInsertDto.forDetailed(request));
+		}
+
+		// 2. 지하철 주소 등록
+		Long subwayAddressSq = null;
+		if (request.subwayAddressName() != null && !request.subwayAddressName().isBlank()) {
+			subwayAddressSq = registerAddressWithDbCheck(
+					request.subwaySigunguCode(),
+					AddressInsertDto.forSubway(request));
+		}
+
+		// ... 이후 insertProject 진행 ...
+	}
+
+	// [공통] DB에서 명칭을 찾아 DTO에 세팅 후 저장하는 프라이빗 메서드
+	private Long registerAddressWithDbCheck(String codeStr, AddressInsertDto dto) {
+		if (codeStr != null && !codeStr.isBlank()) {
+			Long code = Long.parseLong(codeStr);
+			// DB에서 해당 코드의 정확한 명칭 조회
+			String sigunguName = districtMapper.findSigunguByCode(code);
+
+			// 조회된 명칭을 DTO에 강제 세팅 (setter가 없다면 DTO에 추가 필요)
+			dto.setSigungu(sigunguName);
+		}
+
+		addressMapper.createAddress(dto);
+		return dto.getAddressSq();
+	}
+
+	// [신규] 상세 주소 등록 메서드
+	private Long registerDetailedAddress(ProjectCreateRequest request) {
+		AddressInsertDto addressDto = AddressInsertDto.forDetailed(request);
+		addressMapper.createAddress(addressDto);
+		return addressDto.getAddressSq();
+	}
+
+	// [신규] 지하철 주소 등록 메서드
+	private Long registerSubwayAddress(ProjectCreateRequest request) {
+		AddressInsertDto addressDto = AddressInsertDto.forSubway(request);
+		addressMapper.createAddress(addressDto);
+		return addressDto.getAddressSq();
 	}
 
 	@Transactional
@@ -320,17 +387,34 @@ public class ProjectService {
 		createInterviewTimes(projectSq, request.interviewTime());
 	}
 
+	@Transactional
 	public void updateAddress(Project project, ProjectCreateRequest request) {
-		projectMapper.deleteProjectAddress(project.getAddressSq()); // 기존 주소 삭제
-		long newAddressSq = registerAddress(request); // 새 주소 insert
-		projectMapper.updateAddress(project.getProjectSq(), newAddressSq); // 바로 갱신
+		// 1. 상세 주소 처리 (기존 주소가 있으면 삭제 후 새로 등록)
+		if (project.getAddressSq() != null) {
+			projectMapper.deleteProjectAddress(project.getAddressSq());
+		}
+		Long newAddressSq = (request.detailedAddressName() != null && !request.detailedAddressName().isBlank())
+				? registerDetailedAddress(request)
+				: null;
+
+		// 2. 지하철 주소 처리 (기존 주소가 있으면 삭제 후 새로 등록)
+		if (project.getSubwayAddressSq() != null) {
+			// 동일한 삭제 매퍼를 사용하되, subwayAddressSq를 전달합니다.
+			projectMapper.deleteProjectAddress(project.getSubwayAddressSq());
+		}
+		Long newSubwaySq = (request.subwayAddressName() != null && !request.subwayAddressName().isBlank())
+				? registerSubwayAddress(request)
+				: null;
+
+		// 3. 엔티티 상태 갱신 (addressSq, subwayAddressSq, addressTypeCd 자동 설정)
+		project.updateAddressInfo(newAddressSq, newSubwaySq);
+
 	}
 
 	@Transactional
 	public void updateProject(ProjectCreateRequest request) {
-
-		Project p = projectMapper.findBySq(request.projectId());
-		if (p.getProjectIsDeletedYn().equals("Y")) {
+		Project project = projectMapper.findBySq(request.projectId());
+		if (project.getProjectIsDeletedYn().equals("Y")) {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
 
@@ -339,11 +423,14 @@ public class ProjectService {
 		long educationLvlSq = commonCodeMapper.findCommonCodeSqByName(request.educationLvl(),
 				ParentCodeEnum.EDUCATION.getCode());
 
-		Project project = projectMapper.findBySq(request.projectId());
+		// 1. 객체 정보 업데이트 (메모리 상에서만 변경)
 		project.update(request, devGradeCodeSq, educationLvlSq);
-		projectMapper.updateProject(project);
 
+		// 2. 주소 및 하위 엔티티 업데이트 (여기서 주소 SQ들이 project 객체에 새로 세팅됨)
 		updateSubEntities(project, request);
+
+		// 3. 최종 저장 (중요! 주소까지 다 바뀐 최종 객체를 이때 DB에 딱 한 번만 쏜다)
+		projectMapper.updateProject(project);
 	}
 
 	@Transactional

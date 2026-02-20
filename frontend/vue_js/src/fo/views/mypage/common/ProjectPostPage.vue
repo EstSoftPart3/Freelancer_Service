@@ -31,45 +31,49 @@
 
             <!-- 프로젝트 장소 -->
             <div class="row">
-              <div class="form-group col-lg-6">
+              <div class="form-group col-lg-7">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >시</label
+                  >근무지 주소</label
                 >
-                <select
-                  class="form-select form-control h-auto"
-                  name="city"
-                  v-model="selectedCity"
-                  required=""
-                >
-                  <option value="">선택</option>
-                  <option
-                    v-for="city in cities"
-                    :key="city.code"
-                    :value="city.code"
-                  >
-                    {{ city.name }}
-                  </option>
-                </select>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control text-2"
+                    v-model="form.address"
+                    readonly
+                    placeholder="주소 검색을 이용해주세요"
+                    @click="openPostcode"
+                  />
+                </div>
               </div>
-              <div class="form-group col-lg-6">
+              <div class="form-group col-lg-5">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >구</label
+                  >상세 주소</label
                 >
-                <select
-                  class="form-select form-control h-auto"
-                  name="district"
-                  v-model="selectedDistrict"
-                  required=""
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control text-2"
+                    v-model="form.detailAddress"
+                    placeholder="상세 주소를 입력하세요."
+                  />
+                </div>
+              </div>
+
+              <div class="form-group col-lg-12">
+                <label class="form-label mb-1 text-2" style="font-weight: bold"
+                  >지하철역 주소</label
                 >
-                  <option value="">선택</option>
-                  <option
-                    v-for="district in districts"
-                    :key="district.code"
-                    :value="district.code"
-                  >
-                    {{ district.name }}
-                  </option>
-                </select>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control text-2"
+                    v-model="form.subwayAddressName"
+                    readonly
+                    placeholder="지하철역을 검색해주세요."
+                    @click="openSubwaySearch"
+                  />
+                </div>
               </div>
             </div>
             <!-- 개발자 등급 / 학력 -->
@@ -163,6 +167,35 @@
               </div>
             </div>
             <!-- 근무형태 / 모집직군 -->
+
+            <div class="form-group mb-3">
+              <label class="form-label mb-1 text-2" style="font-weight: bold"
+                >단가</label
+              >
+              <div class="d-flex align-items-center gap-2">
+                <input
+                  type="text"
+                  class="form-control text-3 h-auto py-2"
+                  v-model="projectSalary"
+                  placeholder="예: 5000000"
+                />
+                <div class="form-check form-check-inline mb-0 text-nowrap">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="salaryNeg"
+                    v-model="isSalaryNegotiable"
+                    true-value="Y"
+                    false-value="N"
+                  />
+                  <label
+                    class="form-check-label text-2 font-weight-bold"
+                    for="salaryNeg"
+                    >단가 협의</label
+                  >
+                </div>
+              </div>
+            </div>
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
                 근무 형태
@@ -184,15 +217,6 @@
                   :selectedJobs="selectedWorkTypes"
                 />
               </div>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label fw-bold">단가</label>
-              <input
-                type="text"
-                class="form-control"
-                v-model="projectSalary"
-                placeholder="예: 1500000"
-              />
             </div>
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
@@ -376,6 +400,7 @@ import SkillSelectModal from '@/fo/components/project/SkillSelectModal.vue'
 import WorkTypeModal from '@/fo/components/project/WorkTypeModal.vue'
 import JobModal from '@/fo/components/project/JobModal.vue'
 import InterviewTimeModal from '@/fo/components/project/InterviewTimeModal.vue'
+import SubwaySearchModal from '@/fo/components/project/SubwaySearchModal.vue'
 import ProjectJobButtonGroup from '@/fo/components/project/ProjectJobButtonGroup.vue'
 import ProjectSkillButtonGroup from '@/fo/components/project/ProjectSkillButtonGroup.vue'
 import ProjectInverviewTimeButtonGroupVue from '@/fo/components/project/ProjectInverviewTimeButtonGroup.vue'
@@ -399,6 +424,7 @@ const educationLevels = ref([])
 const recruitJobs = ref([])
 const workTypes = ref([])
 const skills = ref([])
+const isSalaryNegotiable = ref('N') // 단가 협의 상태
 
 const projectTitle = ref('')
 const projectSalary = ref('')
@@ -441,12 +467,19 @@ const isOpen = computed(() => modalStore.isOpen)
 let prevScrollY = 0
 
 const form = reactive({
+  // 상세 주소 (다음 API)
   postcode: '',
   address: '',
   detailAddress: '',
-  sigungu: '',
   latitude: null,
   longitude: null,
+  sigunguCode: null,
+
+  // 지하철 주소 (카카오 API)
+  subwayAddressName: '',
+  subwayLat: null,
+  subwayLon: null,
+  subwaySigunguCode: null,
 })
 
 const loadKakao = () => {
@@ -476,6 +509,49 @@ const loadKakao = () => {
 
       script.onerror = () => reject('❌ Kakao 지도 API 스크립트 로드 실패')
     }
+  })
+}
+
+// 1. 다음 주소 API 실행 (상세 주소)
+const openPostcode = () => {
+  new window.daum.Postcode({
+    oncomplete: (data) => {
+      form.address =
+        data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
+      form.postcode = data.zonecode
+      form.sigunguCode = data.sigunguCode // 다음 API 제공 5자리 코드
+
+      // 좌표 변환
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      geocoder.addressSearch(form.address, (result, status) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          form.latitude = result[0].y
+          form.longitude = result[0].x
+        }
+      })
+    },
+  }).open()
+}
+
+// 지하철역 검색 모달 표시 로직
+const openSubwaySearch = () => {
+  modalStore.openModal(SubwaySearchModal, {
+    onSubwaySelected: (subway) => {
+      // 1. 기본 정보 매핑
+      form.subwayAddressName = subway.place_name
+      form.subwayLat = subway.y
+      form.subwayLon = subway.x
+
+      // 2. 주소 정보를 바탕으로 시군구 코드 추출 (Geocoder)
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      geocoder.addressSearch(subway.address_name, (result, status) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          const bCode = result[0].address.b_code // 10자리 법정동 코드
+          form.subwaySigunguCode = bCode.substring(0, 5) // 앞 5자리 시군구 코드
+          console.log('추출된 시군구 코드:', form.subwaySigunguCode)
+        }
+      })
+    },
   })
 }
 
@@ -628,13 +704,22 @@ const submitProject = async () => {
     projectId: projectSq ?? null,
     projectTitle: projectTitle.value,
     projectSalary: projectSalary.value,
+    projectSalaryNegotiableYn: isSalaryNegotiable.value,
     projectImageUrl: '',
 
-    subDistrictCode: selectedDistrict.value,
-    subDistrictName: selectedDistrictName.value,
+    // [고도화] 상세 주소 데이터
+    detailedAddressName: form.address,
+    detailedAddressDetail: form.detailAddress,
+    detailedZonecode: form.postcode,
+    detailedLat: form.latitude,
+    detailedLon: form.longitude,
+    detailedSigunguCode: form.sigunguCode,
 
-    districtLat: form.latitude,
-    districtLon: form.longitude,
+    // [고도화] 지하철 주소 데이터
+    subwayAddressName: form.subwayAddressName,
+    subwayLat: form.subwayLat,
+    subwayLon: form.subwayLon,
+    subwaySigunguCode: form.subwaySigunguCode,
 
     devGrade: selectedDevGrade.value,
     educationLvl: selectedEducation.value,
