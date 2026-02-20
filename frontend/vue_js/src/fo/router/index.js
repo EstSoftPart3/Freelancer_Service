@@ -145,7 +145,13 @@ const routes = [
   {
     path: '/kakao/callback',
     component: SocialCallbackPage,
-    name: 'SocialCallback',
+    name: 'KakaoCallback',
+  },
+
+  {
+    path: '/naver/callback',
+    component: SocialCallbackPage,
+    name: 'NaverCallback',
   },
 
   {
@@ -272,7 +278,8 @@ router.beforeEach((to, from, next) => {
     'FindAccount',
     'FindIdResult',
     'ResetPassword',
-    'SocialCallback',
+    'KakaoCallback',
+    'NaverCallback',
     'SocialAddInfo',
   ]
   const authRequiredPages = [

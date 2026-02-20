@@ -38,6 +38,7 @@ const errorMsg = ref('')
 
 onMounted(async () => {
   const code = route.query.code
+  const state = route.query.state
 
   if (!code) {
     errorMsg.value = '인증 코드가 없습니다. 다시 로그인해주세요.'
@@ -45,14 +46,18 @@ onMounted(async () => {
     return
   }
 
+  const provider = route.path.includes('naver') ? 'naver' : 'kakao'
+  const providerCd = provider.toUpperCase()
+
   try {
     // 백엔드에 인증 코드 전달 (provider별 엔드포인트)
-    const response = await api.$post(`/auth/kakao/login`, { code })
+    const body = provider === 'naver' ? { code, state } : { code }
+    const response = await api.$post(`/auth/${provider}/login`, body)
 
     if (response.isNewUser) {
       // 신규 사용자 → 추가정보 입력 페이지로 이동
       sessionStorage.setItem('tempToken', response.tempToken)
-      sessionStorage.setItem('providerCd', 'KAKAO')
+      sessionStorage.setItem('providerCd', providerCd)
       router.push('/social/addinfo')
     } else {
       // 기존 사용자 → 토큰 저장 후 홈으로 이동

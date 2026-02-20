@@ -23,4 +23,18 @@ public class RedisRepository {
     public void deleteCode(String email) {
         redisTemplate.delete("email:" + email);
     }
+
+    public void saveNaverState(String state) {
+        redisTemplate.opsForValue().set("naver:state:" + state, "valid", 5, TimeUnit.MINUTES);
+    }
+
+    public boolean validateAndDeleteNaverState(String state) {
+        String key = "naver:state:" + state;
+        String value = redisTemplate.opsForValue().get(key);
+        if (!"valid".equals(value)) {
+            return false;
+        }
+        redisTemplate.delete(key);
+        return true;
+    }
 }

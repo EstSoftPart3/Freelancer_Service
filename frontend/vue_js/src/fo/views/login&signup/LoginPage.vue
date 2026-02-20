@@ -319,10 +319,9 @@ const socialProviders = [
 
 const handleSocialLogin = async (provider) => {
   try {
-    if (provider === 'kakao') {
-      const res = await api.$get('/auth/kakao')
+    if (provider === 'kakao' || provider === 'naver') {
+      const res = await api.$get(`/auth/${provider}`)
 
-      console.log('로그인 url을 가져왔습니다.', res.url)
       window.location.href = res.url
     } else {
       alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
