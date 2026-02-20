@@ -15,6 +15,7 @@ import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
+import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.UserRole;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
@@ -754,10 +755,17 @@ public class ProjectService {
 		}).collect(Collectors.toList());
 	}
 
+	@Transactional(readOnly = true)
+	public List<ProjectRegionGroupDTO> fetchProjectRegionGroups(ProjectSearchRequest request) {
+		// 쿼리에서 GROUP BY를 통해 시군구별 데이터 집계
+		return projectMapper.findProjectGroupsByRegion(request);
+	}
+
 	// 단가 가공 로직 예시
 	private String formatSalary(Long salary) {
 		if (salary == null || salary == 0)
 			return "단가 협의";
 		return "월 " + (salary / 10000) + "만원";
 	}
+
 }

@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.company.dto.request.BaseRequest;
+import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
@@ -120,4 +121,7 @@ public interface ProjectMapper {
 	Long findUserSqByProjectSq(@Param("projectSq") Long projectSq);
 
 	Long findMemberTypeByApplicationSq(@Param("applicationSq") Long applicationSq);
+
+	// ProjectMapper.java 내부
+	List<ProjectRegionGroupDTO> findProjectGroupsByRegion(ProjectSearchRequest request);
 }

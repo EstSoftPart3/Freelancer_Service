@@ -34,4 +34,10 @@ public class ProjectSearchRequest extends BaseRequest {
 
     // [추가] 단가 필터링용
     private Long minPrice; // 선택한 최소 단가 (만원 혹은 원 단위)
+
+    // [추가] 지도 영역(Bounds) 필터링용
+    private Double minLat; // 남서쪽 위도
+    private Double maxLat; // 북동쪽 위도
+    private Double minLng; // 남서쪽 경도
+    private Double maxLng; // 북동쪽 경도
 }
