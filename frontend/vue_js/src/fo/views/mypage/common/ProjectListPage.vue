@@ -173,6 +173,7 @@ const filters = ref({
   projectDeveloperGradeCd: [],
   educationCd: [],
   jobRoleCd: [],
+  minPrice: null,
   distance: null,
   sortBy: 'project_start_dt',
   sortOrder: 'desc',

@@ -3,7 +3,7 @@
     <!-- Web Layout -->
     <div
       class="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-3 flex-wrap"
-      style="max-width: 1100px; margin: 0 auto"
+      style="max-width: 1300px; margin: 0 auto"
     >
       <!-- Region Dropdown -->
       <div class="dropdown">
@@ -183,6 +183,39 @@
         </ul>
       </div>
 
+      <!-- 단가 드랍다운 -->
+      <div class="dropdown">
+        <button
+          class="btn btn-outline btn-primary dropdown-toggle text-truncate"
+          type="button"
+          data-bs-toggle="dropdown"
+          style="max-width: 130px"
+        >
+          {{ selectedPriceText }}
+        </button>
+        <ul class="dropdown-menu" @click.stop>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="clearSelection('price')"
+              >전체</a
+            >
+          </li>
+          <li v-for="price in priceOptions.slice(1)" :key="price.value">
+            <div class="dropdown-item">
+              <input
+                type="radio"
+                :id="'price-' + price.value"
+                :value="price.value"
+                v-model="selectedPrice"
+                class="form-check-input me-2"
+              />
+              <label :for="'price-' + price.value">{{ price.label }}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
       <!-- Search Input -->
       <div class="flex-grow-1">
         <input
@@ -472,6 +505,40 @@
         </ul>
       </div>
 
+      <div class="dropdown flex-grow-1">
+        <button
+          class="btn btn-outline btn-primary dropdown-toggle w-100"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
+          {{ selectedPriceTextMobile }}
+        </button>
+        <ul class="dropdown-menu" @click.stop>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="clearSelection('price')"
+              >전체</a
+            >
+          </li>
+          <li v-for="price in priceOptions.slice(1)" :key="price.value">
+            <div class="dropdown-item">
+              <input
+                type="radio"
+                :id="'price-mobile-' + price.value"
+                :value="price.value"
+                v-model="selectedPrice"
+                class="form-check-input me-2"
+              />
+              <label :for="'price-mobile-' + price.value">{{
+                price.label
+              }}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <div class="d-flex align-items-center gap-2">
         <!-- Search Input -->
         <div class="flex-grow-1">
@@ -730,7 +797,27 @@ const fetchFilterOptions = async () => {
     console.error('필터 데이터 불러오기 실패', e)
   }
 }
+const selectedPrice = ref(null)
+const priceOptions = [
+  { label: '단가 전체', value: null },
+  { label: '200만원 이상', value: 2000000 },
+  { label: '300만원 이상', value: 3000000 },
+  { label: '400만원 이상', value: 4000000 },
+  { label: '500만원 이상', value: 5000000 },
+]
 
+// --- [추가] 단가 텍스트 Computed ---
+const selectedPriceText = computed(() => {
+  if (selectedPrice.value === null) return '단가 (전체)'
+  const selected = priceOptions.find((opt) => opt.value === selectedPrice.value)
+  return selected ? `단가 (${selected.label})` : '단가 선택'
+})
+
+const selectedPriceTextMobile = computed(() => {
+  if (selectedPrice.value === null) return '단가'
+  const selected = priceOptions.find((opt) => opt.value === selectedPrice.value)
+  return selected ? selected.label : '단가'
+})
 onMounted(fetchFilterOptions)
 
 // Watch for changes and emit update
@@ -741,6 +828,7 @@ watch(
     selectedEducations,
     selectedJobTypes,
     selectedDistance,
+    selectedPrice,
     searchKeyword,
     selectedTargetField,
     selectedSort,
@@ -751,6 +839,7 @@ watch(
       projectDeveloperGradeCd: selectedCareers.value,
       educationCd: selectedEducations.value,
       jobRoleCd: selectedJobTypes.value,
+      minPrice: selectedPrice.value,
       distance: selectedDistance.value, // 거리 데이터 추가
       searchKeyword: searchKeyword.value,
       searchType: selectedTargetField.value,
@@ -785,6 +874,7 @@ const clearSelection = (type) => {
   if (type === 'educations') selectedEducations.value = []
   if (type === 'jobTypes') selectedJobTypes.value = []
   if (type === 'distance') selectedDistance.value = null
+  if (type === 'price') selectedPrice.value = null
 }
 </script>
 

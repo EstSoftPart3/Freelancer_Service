@@ -1,9 +1,9 @@
 package com.example.demo.domain.project.dto.request;
 
+import java.util.List;
+
 import com.example.demo.domain.company.dto.request.BaseRequest;
 
-import java.util.List;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,4 +31,7 @@ public class ProjectSearchRequest extends BaseRequest {
     private Double userLat; // 사용자 현재 위도
     private Double userLng; // 사용자 현재 경도
     private Integer distance; // 선택한 거리 (3, 5, 10 또는 999)
+
+    // [추가] 단가 필터링용
+    private Long minPrice; // 선택한 최소 단가 (만원 혹은 원 단위)
 }
