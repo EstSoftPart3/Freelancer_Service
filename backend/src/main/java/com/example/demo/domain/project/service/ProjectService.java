@@ -218,8 +218,23 @@ public class ProjectService {
 	@Transactional
 	// 주소 문자열로 변환 (ex: "서울 강남구")
 	public String fetchAddressString(Long addressSq) {
+		// [수정] addressSq가 null이면 빈 문자열 반환 (지하철 전용 공고 등)
+		if (addressSq == null) {
+			return "";
+		}
+
 		AreaInfoResponse subDistrict = addressMapper.findAreaInfoBySq(addressSq);
+
+		// [추가] subDistrict 조회 결과가 없을 경우 대비
+		if (subDistrict == null) {
+			return "";
+		}
+
 		AreaInfoResponse parentDistrict = districtMapper.findParentDisctrictByCodeSq(subDistrict.getAreaSq());
+
+		if (parentDistrict == null) {
+			return subDistrict.getAreaName(); // 부모 정보 없으면 구 이름만이라도 반환
+		}
 
 		String parentName = parentDistrict.getAreaName().replace("전체", "").trim();
 		return parentName + " " + subDistrict.getAreaName();
@@ -387,28 +402,35 @@ public class ProjectService {
 		createInterviewTimes(projectSq, request.interviewTime());
 	}
 
-	@Transactional
-	public void updateAddress(Project project, ProjectCreateRequest request) {
-		// 1. 상세 주소 처리 (기존 주소가 있으면 삭제 후 새로 등록)
+	private void updateAddress(Project project, ProjectCreateRequest request) {
+		// 1. 기존 주소 삭제 (기존에 주소가 있었다면 삭제 후 새로 등록하는 방식)
 		if (project.getAddressSq() != null) {
 			projectMapper.deleteProjectAddress(project.getAddressSq());
 		}
-		Long newAddressSq = (request.detailedAddressName() != null && !request.detailedAddressName().isBlank())
-				? registerDetailedAddress(request)
-				: null;
-
-		// 2. 지하철 주소 처리 (기존 주소가 있으면 삭제 후 새로 등록)
 		if (project.getSubwayAddressSq() != null) {
-			// 동일한 삭제 매퍼를 사용하되, subwayAddressSq를 전달합니다.
 			projectMapper.deleteProjectAddress(project.getSubwayAddressSq());
 		}
-		Long newSubwaySq = (request.subwayAddressName() != null && !request.subwayAddressName().isBlank())
-				? registerSubwayAddress(request)
-				: null;
 
-		// 3. 엔티티 상태 갱신 (addressSq, subwayAddressSq, addressTypeCd 자동 설정)
-		project.updateAddressInfo(newAddressSq, newSubwaySq);
+		// 2. 상세 주소 등록 (DB 체크 로직 포함)
+		Long newAddressSq = null;
+		if (request.detailedAddressName() != null && !request.detailedAddressName().isBlank()) {
+			AddressInsertDto dto = AddressInsertDto.forDetailed(request);
+			// [중요] 코드로 시군구 명칭을 조회하여 DTO에 채워주는 로직 호출
+			newAddressSq = registerAddressWithDbCheck(request.detailedSigunguCode(), dto);
+		}
 
+		// 3. 지하철 주소 등록 (DB 체크 로직 포함)
+		Long newSubwaySq = null;
+		if (request.subwayAddressName() != null && !request.subwayAddressName().isBlank()) {
+			AddressInsertDto dto = AddressInsertDto.forSubway(request);
+			// [중요] 지하철용 시군구 명칭 조회 및 세팅
+			newSubwaySq = registerAddressWithDbCheck(request.subwaySigunguCode(), dto);
+		}
+
+		// 4. 프로젝트 객체에 새로운 주소 PK 세팅
+		// 이 값들이 세팅되어야 나중에 projectMapper.updateProject(project) 시 반영됩니다.
+		project.setAddressSq(newAddressSq);
+		project.setSubwayAddressSq(newSubwaySq);
 	}
 
 	@Transactional
@@ -442,8 +464,41 @@ public class ProjectService {
 		updateAddress(project, request);
 	}
 
-	public void softDeleteProject(long projectSq) {
+	@Transactional
+	public void softDeleteProject(long projectSq, JwtAuthenticationToken token) {
+		// 1. 프로젝트 조회
+		Project project = projectMapper.findBySq(projectSq);
+		if (project == null) {
+			throw new RuntimeException("존재하지 않는 프로젝트입니다.");
+		}
+
+		// 2. 권한 체크 (추가된 메서드 호출)
+		validateProjectOwner(project, token);
+
+		// 3. 주소 데이터 분기 삭제 (Hard Delete)
+		if (project.getAddressSq() != null) {
+			projectMapper.deleteProjectAddress(project.getAddressSq());
+		}
+		if (project.getSubwayAddressSq() != null) {
+			projectMapper.deleteProjectAddress(project.getSubwayAddressSq());
+		}
+
+		// 4. 프로젝트 본체 소프트 딜리트
 		projectMapper.softDeleteProject(projectSq);
+	}
+
+	// 1. 권한 검증 헬퍼 메서드
+	private void validateProjectOwner(Project project, JwtAuthenticationToken token) {
+		long userSq = token.getUserSq();
+		long userTypeCd = token.getUserTypeCd();
+
+		// 기업 회원 전용 서비스이므로 기업 번호를 가져옴
+		Long loginCompanySq = companyService.fetchCompanySq(userSq, userTypeCd);
+
+		if (project.getCompanySq() == null || !project.getCompanySq().equals(loginCompanySq)) {
+			// CustomException이 없다면 RuntimeException으로 대체 가능
+			throw new RuntimeException("해당 프로젝트에 대한 권한이 없습니다.");
+		}
 	}
 
 	@Transactional
@@ -562,17 +617,35 @@ public class ProjectService {
 	@Transactional
 	public ProjectFormDataResponse fetchProjectFormDatas(long projectSq) {
 		List<GroupSkillInfoResponse> skills = groupingSkills(projectMapper.findSkillFormList());
+
 		if (projectSq != 0L) {
 			Project project = projectMapper.findBySq(projectSq);
-			AreaInfoResponse areaInfoResponse = fetchSubDistrictInfoByProjectSq(project.getAddressSq());
-			ExistProjectVo existProjectVo = ExistProjectVo.from(project,
+
+			// 초기값 null 세팅
+			AreaInfoResponse areaInfoResponse = null;
+			AreaInfoResponse parentInfo = null;
+
+			// [수정] 상세 주소(addressSq)가 있을 때만 DB 조회 실행
+			if (project.getAddressSq() != null) {
+				areaInfoResponse = fetchSubDistrictInfoByProjectSq(project.getAddressSq());
+				if (areaInfoResponse != null) {
+					parentInfo = fetchParentDistrictInfoByCd(areaInfoResponse.getAreaSq());
+				}
+			}
+
+			// [수정] ExistProjectVo.from 호출 시 null이 넘어가도 에러 안 나게 처리됨
+			ExistProjectVo existProjectVo = ExistProjectVo.from(
+					project,
 					projectUtil,
 					skillMapper.findAllReqSkillsByProjectSq(projectSq),
 					skillMapper.findAllPreferSkillsByProjectSq(projectSq).reversed(),
-					fetchParentDistrictInfoByCd(areaInfoResponse.getAreaSq()),
-					areaInfoResponse);
+					parentInfo, // 상세 주소 없으면 null
+					areaInfoResponse // 상세 주소 없으면 null
+			);
+
 			return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills, existProjectVo);
 		}
+
 		return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills);
 	}
 

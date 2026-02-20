@@ -16,8 +16,12 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >프로젝트 제목</label
-                >
+                  >프로젝트 제목
+                  <i
+                    v-if="valids.title"
+                    class="bi bi-check-circle-fill ms-1 text-primary"
+                  ></i
+                ></label>
                 <input
                   type="text"
                   class="form-control text-3 h-auto py-2"
@@ -26,6 +30,9 @@
                   v-model="projectTitle"
                   required=""
                 />
+                <div v-if="errors.title" class="text-primary small mt-1">
+                  {{ errors.title }}
+                </div>
               </div>
             </div>
 
@@ -33,9 +40,13 @@
             <div class="row">
               <div class="form-group col-lg-7">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >근무지 주소</label
-                >
-                <div class="input-group">
+                  >근무지 주소
+                  <i
+                    v-if="valids.address"
+                    class="bi bi-check-circle-fill ms-1 text-primary"
+                  ></i
+                ></label>
+                <div class="input-group position-relative">
                   <input
                     type="text"
                     class="form-control text-2"
@@ -43,20 +54,46 @@
                     readonly
                     placeholder="주소 검색을 이용해주세요"
                     @click="openPostcode"
+                    style="padding-right: 30px"
                   />
+                  <button
+                    v-if="form.address"
+                    class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-2"
+                    style="z-index: 10"
+                    type="button"
+                    @click="clearDetailedAddress"
+                  >
+                    <i
+                      class="bi bi-x-lg text-muted"
+                      style="font-size: 0.8rem"
+                    ></i>
+                  </button>
                 </div>
               </div>
               <div class="form-group col-lg-5">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
                   >상세 주소</label
                 >
-                <div class="input-group">
+                <div class="input-group position-relative">
                   <input
                     type="text"
                     class="form-control text-2"
                     v-model="form.detailAddress"
                     placeholder="상세 주소를 입력하세요."
+                    style="padding-right: 30px"
                   />
+                  <button
+                    v-if="form.detailAddress"
+                    class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-2"
+                    style="z-index: 10"
+                    type="button"
+                    @click="form.detailAddress = ''"
+                  >
+                    <i
+                      class="bi bi-x-lg text-muted"
+                      style="font-size: 0.8rem"
+                    ></i>
+                  </button>
                 </div>
               </div>
 
@@ -64,7 +101,7 @@
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
                   >지하철역 주소</label
                 >
-                <div class="input-group">
+                <div class="input-group position-relative">
                   <input
                     type="text"
                     class="form-control text-2"
@@ -72,7 +109,23 @@
                     readonly
                     placeholder="지하철역을 검색해주세요."
                     @click="openSubwaySearch"
+                    style="padding-right: 30px"
                   />
+                  <button
+                    v-if="form.subwayAddressName"
+                    class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-2"
+                    style="z-index: 10"
+                    type="button"
+                    @click="clearSubwayAddress"
+                  >
+                    <i
+                      class="bi bi-x-lg text-muted"
+                      style="font-size: 0.8rem"
+                    ></i>
+                  </button>
+                </div>
+                <div v-if="errors.address" class="text-primary small mt-1">
+                  {{ errors.address }}
                 </div>
               </div>
             </div>
@@ -80,8 +133,12 @@
             <div class="row">
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >개발자 등급(경력)</label
-                >
+                  >개발자 등급(경력)
+                  <i
+                    v-if="valids.devGrade"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <select
                   class="form-select form-control h-auto"
                   name="career"
@@ -97,11 +154,18 @@
                     {{ grade }}
                   </option>
                 </select>
+                <div v-if="errors.devGrade" class="text-primary small mt-1">
+                  {{ errors.devGrade }}
+                </div>
               </div>
               <div class="form-group col-lg-6">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >학력</label
-                >
+                  >학력
+                  <i
+                    v-if="valids.education"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <select
                   class="form-select form-control h-auto"
                   name="education"
@@ -117,14 +181,21 @@
                     {{ education }}
                   </option>
                 </select>
+                <div v-if="errors.education" class="text-primary small mt-1">
+                  {{ errors.education }}
+                </div>
               </div>
             </div>
             <!-- 프로젝트 기간 -->
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >프로젝트 기간</label
-                >
+                  >프로젝트 기간
+                  <i
+                    v-if="valids.projectPeriod"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <a
                   href="#"
                   @click.prevent="openProjectCalenderModal"
@@ -140,6 +211,12 @@
                   required=""
                   readonly
                 />
+                <div
+                  v-if="errors.projectPeriod"
+                  class="text-primary small mt-1"
+                >
+                  {{ errors.description }}
+                </div>
               </div>
             </div>
 
@@ -147,8 +224,12 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >모집 기간</label
-                >
+                  >모집 기간
+                  <i
+                    v-if="valids.recruitPeriod"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <a
                   href="#"
                   @click.prevent="openRecruitCalenderModal"
@@ -164,14 +245,24 @@
                   required=""
                   readonly
                 />
+                <div
+                  v-if="errors.recruitPeriod"
+                  class="text-primary small mt-1"
+                >
+                  {{ errors.description }}
+                </div>
               </div>
             </div>
             <!-- 근무형태 / 모집직군 -->
 
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold"
-                >단가</label
-              >
+                >단가
+                <i
+                  v-if="valids.salary"
+                  class="bi bi-check-circle-fill text-primary"
+                ></i
+              ></label>
               <div class="d-flex align-items-center gap-2">
                 <input
                   type="text"
@@ -195,10 +286,17 @@
                   >
                 </div>
               </div>
+              <div v-if="errors.salary" class="text-primary small mt-1">
+                {{ errors.description }}
+              </div>
             </div>
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
                 근무 형태
+                <i
+                  v-if="valids.workType"
+                  class="bi bi-check-circle-fill text-primary"
+                ></i>
                 <a
                   href="#"
                   @click.prevent="openWorkTypeModal"
@@ -217,10 +315,17 @@
                   :selectedJobs="selectedWorkTypes"
                 />
               </div>
+              <div v-if="errors.workType" class="text-primary small mt-1">
+                {{ errors.description }}
+              </div>
             </div>
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold">
                 모집 직군
+                <i
+                  v-if="valids.job"
+                  class="bi bi-check-circle-fill text-primary"
+                ></i>
                 <a
                   href="#"
                   @click.prevent="openJobModal"
@@ -239,12 +344,21 @@
                   :selectedJobs="selectedJobs"
                 />
               </div>
+              <div v-if="errors.job" class="text-primary small mt-1">
+                {{ errors.job }}
+              </div>
             </div>
 
             <!-- 기술 -->
             <div class="form-group mb-3">
               <div class="d-flex align-items-center mb-1">
-                <label class="form-label text-2 fw-bold mb-0">사용 기술</label>
+                <label class="form-label text-2 fw-bold mb-0"
+                  >사용 기술
+                  <i
+                    v-if="valids.skills"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <a
                   href="#"
                   @click.prevent="openSkillModal"
@@ -264,11 +378,18 @@
                   @remove="removeSkill"
                 />
               </div>
+              <div v-if="errors.skills" class="text-primary small mt-1">
+                {{ errors.description }}
+              </div>
             </div>
 
             <div class="form-group mb-3">
               <label class="form-label mb-1 text-2" style="font-weight: bold"
                 >우대 기술
+                <i
+                  v-if="valids.preference"
+                  class="bi bi-check-circle-fill text-primary"
+                ></i>
                 <a
                   href="#"
                   @click.prevent="openPreferSkillModal"
@@ -285,6 +406,9 @@
                   v-if="selectedPreferSkills.length > 0"
                   :selectedSkills="selectedPreferSkills"
                 />
+              </div>
+              <div v-if="errors.preference" class="text-primary small mt-1">
+                {{ errors.description }}
               </div>
             </div>
 
@@ -327,8 +451,12 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >상세 내용</label
-                >
+                  >상세 내용
+                  <i
+                    v-if="valids.description"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i
+                ></label>
                 <textarea
                   maxlength="5000"
                   rows="6"
@@ -337,6 +465,9 @@
                   v-model="description"
                   required=""
                 ></textarea>
+                <div v-if="errors.description" class="text-primary small mt-1">
+                  {{ errors.description }}
+                </div>
               </div>
             </div>
 
@@ -346,6 +477,10 @@
                 style="font-weight: bold; position: relative"
               >
                 인터뷰 가능 시간
+                <i
+                  v-if="valids.interview"
+                  class="bi bi-check-circle-fill text-primary"
+                ></i>
                 <a
                   href="#"
                   @click.prevent="openInterviewTimeModal"
@@ -362,6 +497,9 @@
                   @remove="removeInterviewTime"
                   :interviewTimes="selectedInterviewTimes"
                 />
+              </div>
+              <div v-if="errors.interview" class="text-primary small mt-1">
+                {{ errors.description }}
               </div>
             </div>
 
@@ -577,7 +715,8 @@ const loadEditFormData = async (projectSq) => {
     const { output } = await api.$get(`/projects/forms`, {
       params: { projectSq },
     })
-    console.log(output)
+
+    // 기초 데이터 로드
     cities.value = output.cities.map((city) => ({
       code: city.areaSq,
       name: city.areaName,
@@ -587,15 +726,34 @@ const loadEditFormData = async (projectSq) => {
     recruitJobs.value = output.recruitJobs
     workTypes.value = output.workTypes
     skills.value = output.skills
+
     const exist = output.existProjectVo
     if (!exist) return
 
-    // 이후 프로젝트 상세값 덮어쓰기
+    // 1. 기본 정보 덮어쓰기
     projectTitle.value = exist.projectTtl
     projectSalary.value = exist.projectSalary
-    selectedCity.value = exist.parentDistrict.areaSq
-    await fetchDistricts(exist.parentDistrict.areaSq)
-    selectedDistrict.value = exist.subDistrict.areaSq
+    isSalaryNegotiable.value = exist.salaryNegotiableYn || 'N' // 단가 협의 여부 추가
+
+    // 2. [수정] 상세 주소 정보 덮어쓰기 (Null 체크 적용)
+    if (exist.parentDistrict && exist.parentDistrict.areaSq) {
+      selectedCity.value = exist.parentDistrict.areaSq
+      await fetchDistricts(exist.parentDistrict.areaSq) // 구 목록 로드
+      selectedDistrict.value = exist.subDistrict?.areaSq || ''
+    }
+
+    // 3. [추가] 상세 주소 문자열 및 좌표 폼에 세팅
+    form.address = exist.detailedAddress || ''
+    form.detailAddress = exist.detailedAddressDetail || ''
+
+    // 4. [추가] 지하철 주소 정보 세팅
+    form.subwayAddressName = exist.subwayAddress || ''
+
+    // 5. [추가] 좌표 정보 (상세 or 지하철 우선순위에 따른 값)
+    form.latitude = exist.latitude
+    form.longitude = exist.longitude
+
+    // 기타 정보 덮어쓰기 (기존 동일)
     selectedDevGrade.value = exist.devGrade
     selectedEducation.value = exist.educationLvl
     projectStartDt.value = exist.projectStartDt
@@ -606,6 +764,7 @@ const loadEditFormData = async (projectSq) => {
     selectedJobs.value = [...exist.jobs]
     selectedSkills.value = [...exist.reqSkills]
     selectedPreferSkills.value = [...exist.preferSkills]
+
     preferList.value = exist.preferredEtc
       ? exist.preferredEtc
           .split(',')
@@ -614,19 +773,18 @@ const loadEditFormData = async (projectSq) => {
       : []
     preferContent.value = ''
     description.value = exist.description
+
     selectedInterviewTimes.value = Object.entries(exist.interviewTimes).map(
-      ([date, times]) => ({
-        date,
-        times,
-      }),
+      ([date, times]) => ({ date, times }),
     )
+
     isInitialLoad.value = false
   } catch (e) {
     console.error('프로젝트 상세 조회 실패 (수정)', e)
-
-    let message = '프로젝트 정보를 불러오는 중 오류가 발생했습니다.'
-
-    alertStore.show(message, 'danger')
+    alertStore.show(
+      '프로젝트 정보를 불러오는 중 오류가 발생했습니다.',
+      'danger',
+    )
     router.push({ name: 'ProjectListPage' })
   }
 }
@@ -695,9 +853,163 @@ watch(selectedCity, async (newCityCode) => {
     selectedDistrict.value = ''
   }
 })
+
+// --- 유효성 검사 상태 변수 ---
+const errors = reactive({
+  title: '',
+  address: '',
+  devGrade: '',
+  education: '',
+  projectPeriod: '',
+  recruitPeriod: '',
+  salary: '',
+  workType: '',
+  job: '',
+  skills: '',
+  preference: '',
+  description: '',
+  interview: '',
+})
+
+const valids = reactive({
+  title: false,
+  address: false,
+  devGrade: false,
+  education: false,
+  projectPeriod: false,
+  recruitPeriod: false,
+  salary: false,
+  workType: false,
+  job: false,
+  skills: false,
+  preference: false,
+  description: false,
+  interview: false,
+})
+
+// --- 개별 검증 함수들 ---
+
+const validateTitle = () => {
+  valids.title = projectTitle.value.trim().length >= 5
+  errors.title = valids.title ? '' : '프로젝트 제목을 5자 이상 입력해주세요.'
+}
+
+// 주소 검증 (둘 중 하나라도 있으면 OK)
+const validateAddressInfo = () => {
+  valids.address = !!(form.address || form.subwayAddressName)
+  errors.address = valids.address
+    ? ''
+    : '근무지 주소 또는 지하철역 중 하나는 필수입니다.'
+}
+
+const validateDevGrade = () => {
+  valids.devGrade = !!selectedDevGrade.value
+  errors.devGrade = valids.devGrade ? '' : '개발자 등급을 선택해주세요.'
+}
+
+const validateEducation = () => {
+  valids.education = !!selectedEducation.value
+  errors.education = valids.education ? '' : '학력을 선택해주세요.'
+}
+
+const validateProjectPeriod = () => {
+  valids.projectPeriod = !!(projectStartDt.value && projectEndDt.value)
+  errors.projectPeriod = valids.projectPeriod
+    ? ''
+    : '프로젝트 기간을 설정해주세요.'
+}
+
+const validateRecruitPeriod = () => {
+  valids.recruitPeriod = !!(recruitStartDt.value && recruitEndDt.value)
+  errors.recruitPeriod = valids.recruitPeriod ? '' : '모집 기간을 설정해주세요.'
+}
+
+const validateSalary = () => {
+  // 숫자가 아닌 문자 제거 (입력 시 숫지만 남기기 위함)
+  const salaryValue = projectSalary.value?.toString().replace(/,/g, '') || ''
+  const salaryNum = Number(salaryValue)
+
+  // 1. 비어있거나 0 이하인 경우
+  if (!salaryValue || isNaN(salaryNum) || salaryNum <= 0) {
+    valids.salary = false
+    errors.salary = '올바른 단가(숫자)를 입력해주세요.'
+  }
+  // 2. 너무 큰 금액이 들어올 경우를 대비한 가이드 (선택 사항)
+  else if (salaryNum > 100000000) {
+    valids.salary = false
+    errors.salary = '단가는 1억 원 이하로 입력해주세요.'
+  } else {
+    valids.salary = true
+    errors.salary = ''
+  }
+}
+const validateWorkType = () => {
+  valids.workType = selectedWorkTypes.value.length > 0
+  errors.workType = valids.workType ? '' : '근무 형태를 최소 하나 선택해주세요.'
+}
+
+const validateJob = () => {
+  valids.job = selectedJobs.value.length > 0
+  errors.job = valids.job ? '' : '모집 직군을 최소 하나 선택해주세요.'
+}
+
+const validateSkills = () => {
+  valids.skills = selectedSkills.value.length > 0
+  errors.skills = valids.skills ? '' : '사용 기술을 최소 하나 선택해주세요.'
+}
+
+const validatePreference = () => {
+  valids.preference =
+    preferList.value.length > 0 || preferContent.value.trim() !== ''
+  errors.preference = valids.preference ? '' : '우대 사항을 입력해주세요.'
+}
+
+const validateDescription = () => {
+  valids.description = description.value.trim().length > 0
+  errors.description = valids.description ? '' : '상세 내용을 작성해주세요.'
+}
+
+const validateInterview = () => {
+  valids.interview = selectedInterviewTimes.value.length > 0
+  errors.interview = valids.interview ? '' : '인터뷰 가능 시간을 설정해주세요.'
+}
+
+// --- 감시자(Watch) 설정 (실시간 유효성 체크) ---
+watch(projectTitle, validateTitle)
+watch([() => form.address, () => form.subwayAddressName], validateAddressInfo)
+watch(selectedDevGrade, validateDevGrade)
+watch(selectedEducation, validateEducation)
+watch([projectStartDt, projectEndDt], validateProjectPeriod)
+watch([recruitStartDt, recruitEndDt], validateRecruitPeriod)
+watch(selectedWorkTypes, validateWorkType, { deep: true })
+watch(selectedJobs, validateJob, { deep: true })
+watch(selectedSkills, validateSkills, { deep: true })
+watch([preferList, preferContent], validatePreference, { deep: true })
+watch(description, validateDescription)
+watch(selectedInterviewTimes, validateInterview, { deep: true })
+watch(projectSalary, validateSalary)
+
+// --- 최종 제출 시 전체 검증 ---
+const validateAll = () => {
+  validateTitle()
+  validateAddressInfo()
+  validateDevGrade()
+  validateEducation()
+  validateProjectPeriod()
+  validateRecruitPeriod()
+  validateWorkType()
+  validateJob()
+  validateSkills()
+  validatePreference()
+  validateDescription()
+  validateInterview()
+  validateSalary()
+
+  return Object.values(valids).every((v) => v === true)
+}
 const submitProject = async () => {
-  if (preferList.value.length === 0 && preferContent.value.trim() === '') {
-    alertStore.show('우대 사항을 한 개 이상 입력해주세요.', 'danger')
+  if (!validateAll()) {
+    alertStore.show('입력 항목을 다시 확인해주세요.', 'danger')
     return
   }
   const requestBody = {
@@ -960,6 +1272,28 @@ const recruitPeriodDisplay = computed({
     }
   },
 })
+
+// 1. 근무지 주소 전체 초기화
+const clearDetailedAddress = () => {
+  form.address = ''
+  form.detailAddress = ''
+  form.postcode = ''
+  form.latitude = null
+  form.longitude = null
+  form.sigunguCode = ''
+
+  // 만약 시/구 셀렉트 박스도 초기화하고 싶다면 아래 주석 해제
+  // selectedCity.value = '';
+  // selectedDistrict.value = '';
+}
+
+// 2. 지하철 주소 전체 초기화
+const clearSubwayAddress = () => {
+  form.subwayAddressName = ''
+  form.subwayLat = null
+  form.subwayLon = null
+  form.subwaySigunguCode = ''
+}
 </script>
 <style scoped>
 .layout-wrapper {

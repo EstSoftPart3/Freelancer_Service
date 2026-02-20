@@ -34,6 +34,11 @@ public class ProjectDetailResponse {
     private Integer projectScrapCnt;
 
     private String projectAddress;
+    private String detailedAddress;
+    private String detailedAddressDetail;
+    private String subwayAddress;
+    private Long addressTypeCd;
+    private String salaryNegotiableYn; // 단가협의 여부도 함께 추가
     private String projectExperience;
     private String projectEducation;
 
@@ -72,6 +77,11 @@ public class ProjectDetailResponse {
                 .projectScrapCnt(p.getProjectScrapCnt())
 
                 .projectAddress(address)
+                .detailedAddress(p.getDetailedAddress())
+                .detailedAddressDetail(p.getDetailedAddressDetail())
+                .subwayAddress(p.getSubwayAddress())
+                .addressTypeCd(p.getAddressTypeCd())
+                .salaryNegotiableYn(p.getProjectSalaryNegotiableYn())
                 .projectExperience(util.convertCommonCodeSqToNm(p.getProjectDeveloperGradeCd()))
                 .projectEducation(util.convertCommonCodeSqToNm(p.getProjectRequiredEducationCd()))
 

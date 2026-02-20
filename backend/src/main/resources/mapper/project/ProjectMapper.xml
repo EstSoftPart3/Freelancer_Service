@@ -309,9 +309,12 @@
 		company_sq FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} AND project_is_deleted_yn =
 		'N' </select>
 
-	<select id="findBySq" parameterType="Long"
-		resultType="com.example.demo.domain.project.entity.Project"> SELECT * FROM TBL_PROJECT_M
-		WHERE project_sq = #{projectSq} AND project_is_deleted_yn = 'N' </select>
+	<select id="findBySq" resultMap="projectMap"> SELECT p.*, a1.address AS detailedAddress,
+		a1.detail_address AS detailedAddressDetail, a1.zonecode AS detailedZonecode, a2.address AS
+		subwayAddress, IFNULL(a1.latitude, a2.latitude) AS latitude, IFNULL(a1.longitude,
+		a2.longitude) AS longitude FROM TBL_PROJECT_M p LEFT JOIN TBL_ADDRESS_S a1 ON p.address_sq =
+		a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq = a2.address_sq WHERE
+		p.project_sq = #{projectSq} </select>
 
 	<select id="findAddressSqByProjectSq" parameterType="Long" resultType="Long"> SELECT address_sq
 		FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} </select>

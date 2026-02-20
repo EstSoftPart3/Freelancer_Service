@@ -89,9 +89,14 @@ public class ProjectController {
 
 	@DeleteMapping("/{projectSq}")
 	public ResponseEntity<ApiResponse<Void>> deleteProject(
-			Authentication authentication,
+			Authentication authentication, // 또는 @AuthenticationPrincipal JwtAuthenticationToken token
 			@PathVariable("projectSq") Long projectSq) {
-		projectService.softDeleteProject(projectSq);
+
+		// Authentication을 JwtAuthenticationToken으로 캐스팅해서 전달
+		JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+
+		projectService.softDeleteProject(projectSq, token);
+
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 삭제 성공", null));
 	}
 
