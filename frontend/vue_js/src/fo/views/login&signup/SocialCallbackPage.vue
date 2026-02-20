@@ -46,12 +46,14 @@ onMounted(async () => {
     return
   }
 
-  const provider = route.path.includes('naver') ? 'naver' : 'kakao'
+  const providers = ['naver', 'kakao', 'google']
+  const provider = providers.find((p) => route.path.includes(p)) ?? 'unknown'
   const providerCd = provider.toUpperCase()
 
   try {
     // 백엔드에 인증 코드 전달 (provider별 엔드포인트)
-    const body = provider === 'naver' ? { code, state } : { code }
+    const body =
+      provider === 'naver' || provider === 'google' ? { code, state } : { code }
     const response = await api.$post(`/auth/${provider}/login`, body)
 
     if (response.isNewUser) {

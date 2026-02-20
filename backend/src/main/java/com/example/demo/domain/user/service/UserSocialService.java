@@ -1,5 +1,6 @@
 package com.example.demo.domain.user.service;
 
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ public class UserSocialService {
 	private final RedisRepository redisRepository;
 	private final RestTemplate restTemplate = new RestTemplate();
 
+//	Kakao
     @Value("${kakao.client-id}")
     private String kakaoClientId;
 
@@ -47,6 +49,13 @@ public class UserSocialService {
     @Value("${kakao.redirect-uri}")
     private String kakaoRedirectUri;
     
+    @Value("${kakao.token-uri}")
+    private String kakaoTokenUri;
+    
+    @Value("${kakao.user-info-uri}")
+    private String kakaoUserInfoUri;
+    
+//    Naver
     @Value("${naver.client-id}")
     private String naverClientId;
     
@@ -61,6 +70,22 @@ public class UserSocialService {
     
     @Value("${naver.user-info-uri}")
     private String naverUserInfoUri;
+    
+//    Google
+    @Value("${google.client-id}")
+    private String googleClientId;
+    
+    @Value("${google.client-secret}")
+    private String googleClientSecret;
+    
+    @Value("${google.redirect-uri}")
+    private String googleRedirectUri;
+    
+    @Value("${google.token-uri}")
+    private String googleTokenUri;
+    
+    @Value("${google.user-info-uri}")
+    private String googleUserInfoUri;
 
 
 	public Map<String, String> getKakaoLoginUrl() {
@@ -152,7 +177,7 @@ public class UserSocialService {
 	
 	public Map<String, String> getNaverLoginUrl() {
 		String state = "NAVER_" + UUID.randomUUID();
-		redisRepository.saveNaverState(state);
+		redisRepository.saveSocialState(state);
 
 		String naverAuthUrl = "https://nid.naver.com/oauth2.0/authorize?" +
 		"client_id=" + naverClientId +
@@ -166,7 +191,7 @@ public class UserSocialService {
 	public LoginResponseDTO naverLogin(String code, String state) {
 
 		// 1. state 검증 (CSRF 방어)
-		if (state == null || !redisRepository.validateAndDeleteNaverState(state)) {
+		if (state == null || !redisRepository.validateAndDeleteSocialState(state)) {
 			log.warn("네이버 로그인 state 검증 실패. state: {}", state);
 			throw new RuntimeException("유효하지 않은 요청입니다. 다시 로그인해주세요.");
 		}
@@ -244,6 +269,104 @@ public class UserSocialService {
 		} catch(Exception e) {
 			log.error("네이버 사용자 정보 요청 중 예외 발생", e);
 			throw new RuntimeException("네이버 사용자 정보 요청 중 오류 발생");
+		}
+	}
+	
+	
+	/**
+	 * 구글 로직 
+	  */
+	public Map<String, String> getGoogleLoginUrl() {
+		String state = "GOOGLE_" + UUID.randomUUID();
+		redisRepository.saveSocialState(state);
+		
+		String googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
+				"client_id=" + googleClientId +
+				"&redirect_uri=" + googleRedirectUri +
+				"&response_type=code" + 
+				"&scope=openid" +
+				"&state=" + state;
+		return Map.of("url", googleAuthUrl);
+	}
+	
+	public LoginResponseDTO googleLogin(String code, String state) {
+		// 1. state 검증 (CSRF 방어)
+		if(state == null || !redisRepository.validateAndDeleteSocialState(state)) {
+			log.warn("구글 로그인 state 검증 실패. state: {}", state);
+			throw new RuntimeException("유효하지 않은 요청입니다. 다시 로그인해주세요.");
+		}
+		
+		// 2. 구글에서 액세스 토큰 받기
+		String googleAccessToken = getGoogleAccessToken(code, state);
+		log.info("구글 액세스 토큰 획득 성공");
+		
+		// 3. 구글에서 사용자 정보 찾기
+		String googleId = getGoogleUserInfo(googleAccessToken);
+		log.info("구글 사용자 정보 획득 성공, ID: {}", googleId);
+		
+		// 4. 소셜 로그인 처리
+		return socialLogin(googleId, "GOOGLE");
+	}
+	
+	private String getGoogleAccessToken(String code, String state) {
+		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+			
+			MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+			params.add("grant_type", "authorization_code");
+			params.add("client_id", googleClientId);
+			params.add("client_secret", googleClientSecret);
+			params.add("redirect_uri", googleRedirectUri);
+			params.add("code", code);
+			params.add("state", state);
+			
+			HttpEntity<MultiValueMap<String, String>> request =
+					new HttpEntity<>(params, headers);
+			
+			ResponseEntity<Map> response = restTemplate.postForEntity(
+					googleTokenUri,
+					request,
+					Map.class
+			);
+			
+			if(response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+				return (String) response.getBody().get("access_token");
+			} else {
+				log.error("구글 토큰 요청 실패, 상태: {}, 응답: {}", response.getStatusCode(), response.getBody());
+				throw new RuntimeException("구글 토큰 요청 중 오류 발생");
+			}
+		} catch (Exception e) {
+			log.error("구글 액세스 토큰 요청 중 예외 발생", e);
+			throw new RuntimeException("네이버 토큰 요청 중 오류 발생");
+		}
+	}
+	
+	private String getGoogleUserInfo(String accessToken) {
+		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setBearerAuth(accessToken);
+			
+			HttpEntity<String> request = new HttpEntity<>(headers);
+			
+			ResponseEntity<Map> response = restTemplate.exchange(
+					googleUserInfoUri,
+					HttpMethod.GET,
+					request,
+					Map.class
+			);
+			
+			if(response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+				String id = (String) response.getBody().get("sub");
+				log.info("구글 사용자 정보 획득 ID: {}", id);
+				return id;
+			} else {
+				log.error("구글 사용자 정보 요청 실패, 상태:{}, 응답:{}", response.getStatusCode(), response.getBody());
+				throw new RuntimeException("구글 사용자 정보 요청 실패");
+			}
+		} catch(Exception e) {
+			log.error("구글 사용자 정보 요청 중 예외 발생", e);
+			throw new RuntimeException("구글 사용자 정보 요청 중 오류 발생");
 		}
 	}
 

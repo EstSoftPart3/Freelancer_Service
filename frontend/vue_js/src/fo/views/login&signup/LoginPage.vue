@@ -321,7 +321,7 @@ const socialProviders = [
 
 const handleSocialLogin = async (provider) => {
   try {
-    if (provider === 'kakao' || provider === 'naver') {
+    if (provider === 'kakao' || provider === 'naver' || provider === 'google') {
       const res = await api.$get(`/auth/${provider}`)
 
       window.location.href = res.url

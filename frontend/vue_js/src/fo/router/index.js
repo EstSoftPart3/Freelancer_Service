@@ -155,6 +155,12 @@ const routes = [
   },
 
   {
+    path: '/google/callback',
+    component: SocialCallbackPage,
+    name: 'GoogleCallback',
+  },
+
+  {
     path: '/social/addinfo',
     component: AddInfoPage,
     name: 'SocialAddInfo',

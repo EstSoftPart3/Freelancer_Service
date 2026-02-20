@@ -24,12 +24,12 @@ public class RedisRepository {
         redisTemplate.delete("email:" + email);
     }
 
-    public void saveNaverState(String state) {
-        redisTemplate.opsForValue().set("naver:state:" + state, "valid", 5, TimeUnit.MINUTES);
+    public void saveSocialState(String state) {
+        redisTemplate.opsForValue().set("social:state:" + state, "valid", 5, TimeUnit.MINUTES);
     }
 
-    public boolean validateAndDeleteNaverState(String state) {
-        String key = "naver:state:" + state;
+    public boolean validateAndDeleteSocialState(String state) {
+        String key = "social:state:" + state;
         String value = redisTemplate.opsForValue().get(key);
         if (!"valid".equals(value)) {
             return false;

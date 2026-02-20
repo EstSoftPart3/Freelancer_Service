@@ -55,6 +55,21 @@ public class UserSocialController {
 		LoginResponseDTO response = userSocialService.naverLogin(code, state);
 		return ResponseEntity.ok(response);
 	}
+	
+	@GetMapping("/google")
+	public ResponseEntity<Map<String, String>> getGoogleLoginUrl() {
+		Map<String, String> result = userSocialService.getGoogleLoginUrl();
+		return ResponseEntity.ok(result);
+	}
+	
+	@PostMapping("/google/login")
+	public ResponseEntity<LoginResponseDTO> googleLogin(@RequestBody Map<String, String> request) {
+		String code = request.get("code");
+		String state = request.get("state");
+		
+		LoginResponseDTO response = userSocialService.googleLogin(code, state);
+		return ResponseEntity.ok(response);
+	}
 
 	// 소셜 회원가입 완료 (추가정보 입력)
 	@PostMapping("/social/signup")
