@@ -87,26 +87,68 @@ const pageGroup = computed(() => {
 const fetchSubways = () => {
   if (!search.value.trim()) return
 
-  // 카카오 장소 검색 객체 생성
   const ps = new window.kakao.maps.services.Places()
+  const originalKeyword = search.value.trim()
 
-  // '지하철역' 키워드를 붙여 검색 정확도 향상
+  // 1. 사용자가 '역'을 안 붙였다면 내부적으로 붙여서 검색 (정확도 향상)
+  const searchKeyword = originalKeyword.endsWith('역')
+    ? originalKeyword
+    : `${originalKeyword}역`
+
+  const options = {
+    page: page.value,
+    category_group_code: 'SW8', // 지하철역 카테고리 고정
+    // sort: window.kakao.maps.services.SortBy.ACCURACY // 정확도순 (기본값)
+  }
+
   ps.keywordSearch(
-    `${search.value} 지하철역`,
+    searchKeyword,
     (data, status, pagination) => {
       if (status === window.kakao.maps.services.Status.OK) {
-        subways.value = data
+        // 2. 검색어와 실제 역 명칭을 대조하여 관련성 높은 순으로 재정렬
+        const sortedData = data.sort((a, b) => {
+          // '서울역', '가좌역' 처럼 검색어와 딱 맞는 것을 최우선
+          const isExactA = a.place_name === searchKeyword ? 0 : 1
+          const isExactB = b.place_name === searchKeyword ? 0 : 1
+
+          if (isExactA !== isExactB) return isExactA - isExactB
+
+          // 그다음은 이름에 검색어가 포함된 순서 (예: '경의중앙선 가좌역')
+          const hasA = a.place_name.includes(originalKeyword) ? 0 : 1
+          const hasB = b.place_name.includes(originalKeyword) ? 0 : 1
+
+          return hasA - hasB
+        })
+
+        subways.value = sortedData
         totalPages.value = pagination.last
         kakaoPagination.value = pagination
       } else {
-        subways.value = []
-        totalPages.value = 1
+        // '가좌역'으로 검색했는데 결과가 없으면 원본 키워드로 재검색 시도 (방어 로직)
+        if (searchKeyword !== originalKeyword) {
+          ps.keywordSearch(
+            originalKeyword,
+            (d, s, p) => {
+              if (s === window.kakao.maps.services.Status.OK) {
+                subways.value = d
+                totalPages.value = p.last
+                kakaoPagination.value = p
+              } else {
+                subways.value = []
+                totalPages.value = 1
+              }
+            },
+            options,
+          )
+        } else {
+          subways.value = []
+          totalPages.value = 1
+        }
       }
     },
-    { page: page.value },
+    options,
   )
 }
-
 const searchAndResetPage = () => {
   page.value = 1
   fetchSubways()
