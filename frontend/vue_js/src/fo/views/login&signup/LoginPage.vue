@@ -135,23 +135,25 @@
               </form>
 
               <!-- 소셜 로그인 -->
-              <hr class="my-4" />
-              <p class="text-center mb-3">소셜 계정으로 로그인</p>
-              <div class="d-flex justify-content-center gap-3">
-                <button
-                  v-for="provider in socialProviders"
-                  :key="provider.name"
-                  class="btn btn-icon rounded-circle border"
-                  :title="provider.title"
-                  @click="handleSocialLogin(provider.name)"
-                >
-                  <img
-                    :src="provider.img"
-                    alt=""
-                    class="w-100 h-100 object-fit-cover rounded-circle"
-                  />
-                </button>
-              </div>
+              <template v-if="loginType === 'PERSONAL'">
+                <hr class="my-4" />
+                <p class="text-center mb-3">소셜 계정으로 로그인</p>
+                <div class="d-flex justify-content-center gap-3">
+                  <button
+                    v-for="provider in socialProviders"
+                    :key="provider.name"
+                    class="btn btn-icon rounded-circle border"
+                    :title="provider.title"
+                    @click="handleSocialLogin(provider.name)"
+                  >
+                    <img
+                      :src="provider.img"
+                      alt=""
+                      class="w-100 h-100 object-fit-cover rounded-circle"
+                    />
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
         </div>
