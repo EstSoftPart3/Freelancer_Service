@@ -22,6 +22,7 @@ export const useUserStore = defineStore('user', {
     userLng: localStorage.getItem('userLng')
       ? Number(localStorage.getItem('userLng'))
       : null,
+    isSocialUser: localStorage.getItem('isSocialUser') === 'true',
   }),
   getters: {
     isLoggedIn: (state) => !!state.userNm,
@@ -33,7 +34,14 @@ export const useUserStore = defineStore('user', {
         : null,
   },
   actions: {
-    setUser({ userNm, userTypeCd, address, latitude, longitude }) {
+    setUser({
+      userNm,
+      userTypeCd,
+      address,
+      latitude,
+      longitude,
+      isSocialUser,
+    }) {
       const userType =
         userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
 
@@ -42,9 +50,11 @@ export const useUserStore = defineStore('user', {
       this.userAddress = address || ''
       this.userLat = latitude
       this.userLng = longitude
+      this.isSocialUser = isSocialUser ?? false
 
       localStorage.setItem('userNm', userNm)
       localStorage.setItem('userType', userType)
+      localStorage.setItem('isSocialUser', isSocialUser ? 'true' : 'false')
       // [추가] 로컬 스토리지 저장 (새로고침 대비)
       if (address) localStorage.setItem('userAddress', address)
       if (latitude !== undefined && latitude !== null)
@@ -58,6 +68,7 @@ export const useUserStore = defineStore('user', {
       this.userAddress = ''
       this.userLat = null
       this.userLng = null
+      this.isSocialUser = false
 
       localStorage.removeItem('userNm')
       localStorage.removeItem('userType')
@@ -67,6 +78,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')
+      localStorage.removeItem('isSocialUser')
     },
   },
 })

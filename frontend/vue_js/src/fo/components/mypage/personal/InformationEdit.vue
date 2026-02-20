@@ -1,6 +1,16 @@
 <template>
   <section>
-    <PasswordCheck v-if="!isConfirmed" @confirmed="isConfirmed = true">
+    <!-- 소셜 유저: 이메일 인증 / 일반 유저: 비밀번호 인증 -->
+    <EmailVerifyCheck
+      v-if="!isConfirmed && isSocialUser"
+      @confirmed="isConfirmed = true"
+    >
+      <h4 class="mb-3" style="font-size: 24px">회원 정보 수정</h4>
+    </EmailVerifyCheck>
+    <PasswordCheck
+      v-else-if="!isConfirmed && !isSocialUser"
+      @confirmed="isConfirmed = true"
+    >
       <h4 class="mb-3" style="font-size: 24px">회원 정보 수정</h4>
     </PasswordCheck>
     <div v-else>
@@ -439,18 +449,20 @@
 
 <script setup>
 import PasswordCheck from '../common/PasswordCheck.vue'
-import { watchEffect, reactive, ref } from 'vue'
+import { watchEffect, reactive, ref, computed } from 'vue'
 import { api } from '@/axios'
 import { debounce } from 'lodash'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import EmailVerifyCheck from '../common/EmailVerifyCheck.vue'
+import { useUserStore } from '@/fo/stores/userStore'
 
 const alertStore = useAlertStore()
-
 const isConfirmed = ref(false)
-
 const userProfileImageUrl = ref(null)
 const profileImageInput = ref(null)
 const hovering = ref(false)
+const userStore = useUserStore()
+const isSocialUser = computed(() => userStore.isSocialUser)
 
 // 상태 변수들
 const error = ref(null)

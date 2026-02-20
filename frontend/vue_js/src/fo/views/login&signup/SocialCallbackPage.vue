@@ -76,6 +76,7 @@ onMounted(async () => {
         address: data.address,
         latitude: data.latitude,
         longitude: data.longitude,
+        isSocialUser: true,
       })
 
       alertStore.show(data.userNm + '님 안녕하세요.', 'success')
