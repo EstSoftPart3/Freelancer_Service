@@ -1,70 +1,119 @@
-# Getting Started with Create React App
+# Shadcn Admin Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Admin Dashboard UI crafted with Shadcn and Vite. Built with responsiveness and accessibility in mind.
 
-## Available Scripts
+![alt text](public/images/shadcn-admin.png)
 
-In the project directory, you can run:
+[![Sponsored by Clerk](https://img.shields.io/badge/Sponsored%20by-Clerk-5b6ee1?logo=clerk)](https://go.clerk.com/GttUAaK)
 
-### `npm start`
+I've been creating dashboard UIs at work and for my personal projects. I always wanted to make a reusable collection of dashboard UI for future projects; and here it is now. While I've created a few custom components, some of the code is directly adapted from ShadcnUI examples.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+> This is not a starter project (template) though. I'll probably make one in the future.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Features
 
-### `npm test`
+- Light/dark mode
+- Responsive
+- Accessible
+- With built-in Sidebar component
+- Global search command
+- 10+ pages
+- Extra custom components
+- RTL support
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<details>
+<summary>Customized Components (click to expand)</summary>
 
-### `npm run build`
+This project uses Shadcn UI components, but some have been slightly modified for better RTL (Right-to-Left) support and other improvements. These customized components differ from the original Shadcn UI versions.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest add <component>`), it's generally safe for non-customized components. For the listed customized ones, you may need to manually merge changes to preserve the project's modifications and avoid overwriting RTL support or other updates.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+> If you don't require RTL support, you can safely update the 'RTL Updated Components' via the Shadcn CLI, as these changes are primarily for RTL compatibility. The 'Modified Components' may have other customizations to consider.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Modified Components
 
-### `npm run eject`
+- scroll-area
+- sonner
+- separator
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### RTL Updated Components
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- alert-dialog
+- calendar
+- command
+- dialog
+- dropdown-menu
+- select
+- table
+- sheet
+- sidebar
+- switch
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+**Notes:**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Modified Components**: These have general updates, potentially including RTL adjustments.
+- **RTL Updated Components**: These have specific changes for RTL language support (e.g., layout, positioning).
+- For implementation details, check the source files in `src/components/ui/`.
+- All other Shadcn UI components in the project are standard and can be safely updated via the CLI.
 
-## Learn More
+</details>
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Tech Stack
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**UI:** [ShadcnUI](https://ui.shadcn.com) (TailwindCSS + RadixUI)
 
-### Code Splitting
+**Build Tool:** [Vite](https://vitejs.dev/)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**Routing:** [TanStack Router](https://tanstack.com/router/latest)
 
-### Analyzing the Bundle Size
+**Type Checking:** [TypeScript](https://www.typescriptlang.org/)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+**Linting/Formatting:** [ESLint](https://eslint.org/) & [Prettier](https://prettier.io/)
 
-### Making a Progressive Web App
+**Icons:** [Lucide Icons](https://lucide.dev/icons/), [Tabler Icons](https://tabler.io/icons) (Brand icons only)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+**Auth (partial):** [Clerk](https://go.clerk.com/GttUAaK)
 
-### Advanced Configuration
+## Run Locally
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Clone the project
 
-### Deployment
+```bash
+  git clone https://github.com/satnaing/shadcn-admin.git
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Go to the project directory
 
-### `npm run build` fails to minify
+```bash
+  cd shadcn-admin
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Install dependencies
+
+```bash
+  pnpm install
+```
+
+Start the server
+
+```bash
+  pnpm run dev
+```
+
+## Sponsoring this project ❤️
+
+If you find this project helpful or use this in your own work, consider [sponsoring me](https://github.com/sponsors/satnaing) to support development and maintenance. You can [buy me a coffee](https://buymeacoffee.com/satnaing) as well. Don’t worry, every penny helps. Thank you! 🙏
+
+For questions or sponsorship inquiries, feel free to reach out at [satnaingdev@gmail.com](mailto:satnaingdev@gmail.com).
+
+### Current Sponsor
+
+- [Clerk](https://go.clerk.com/GttUAaK) - authentication and user management for the modern web
+
+## Author
+
+Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
+
+## License
+
+Licensed under the [MIT License](https://choosealicense.com/licenses/mit/)
