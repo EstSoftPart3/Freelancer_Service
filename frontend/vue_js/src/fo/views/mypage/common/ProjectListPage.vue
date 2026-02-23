@@ -7,7 +7,7 @@
     />
 
     <div class="bg-white border-bottom py-1">
-      <div class="container">
+      <div class="container-fluid">
         <ProjectFilterBar @update="updateFilters" @search="fetchProjects" />
       </div>
     </div>
