@@ -93,7 +93,7 @@
         </div>
 
         <!-- 비밀번호 + 수정 버튼 -->
-        <div class="form-group row align-items-center">
+        <div class="form-group row align-items-center" v-if="!isSocialUser">
           <label class="col-lg-2 col-form-label text-2">비밀번호</label>
           <div class="col-lg-7">
             <template v-if="!editing.userPw">
@@ -183,7 +183,7 @@
             <input
               class="form-control text-3 h-auto py-2 border-0"
               name="gender"
-              value="남성"
+              type="text"
               v-model="form.userGenderNm"
               readonly
             />
