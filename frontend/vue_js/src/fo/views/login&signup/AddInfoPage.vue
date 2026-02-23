@@ -381,7 +381,7 @@ const sendVerification = async () => {
 
   const email = `${form.value.emailId}@${form.value.emailDomain}`
   try {
-    const response = await api.$post('/email/send-code', { email })
+    const response = await api.$post('/email/send-social-code', { email })
     alertStore.show(
       '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
       'info',

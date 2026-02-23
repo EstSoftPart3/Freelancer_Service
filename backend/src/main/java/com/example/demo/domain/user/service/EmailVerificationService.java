@@ -5,6 +5,7 @@ import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.domain.user.dto.AccountLinkInfoDTO;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.repository.RedisRepository;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -34,7 +35,26 @@ public class EmailVerificationService {
     // "</h2>";
     // emailSender.send(email, subject, body);
     // }
+    
+//    public AccountLinkInfoDTO sendLinkVerificationCode(String email) throws MessagingException{
+//    	UserDTO existedUser = userRepository.findByEmail(email);
+//    	
+//
+//    }
+    
 
+    // 소셜 회원가입 추가정보 페이지용 - 중복 이메일 체크 없이 인증코드 발송
+    public String sendLinkVerificationCode(String email) throws MessagingException {
+    	String code = generateCode();
+    	redisRepository.saveVerificationCode(email, code);
+    	
+    	String subject = "이메일 인증 코드입니다.";
+        String body = "<h3>이메일 인증 코드</h3><p>아래 코드를 입력해 주세요.</p><h2>" + code + "</h2>";
+        emailSender.send(email, subject, body);
+
+        return code;
+    }
+    
     // 테스트용
     public String sendVerificationCode(String email) throws MessagingException {
         UserDTO existingUser = userRepository.findByEmail(email);

@@ -22,6 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/login",
             "/api/refresh-token",
             "/api/email/send-code",
+            "/api/email/send-social-code",
             "/api/email/find/send-code",
             "/api/email/verify-code",
             "/api/find-id",
