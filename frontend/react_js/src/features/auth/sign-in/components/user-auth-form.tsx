@@ -1,13 +1,17 @@
+// [Freelancer_Service] 로그인 관련
 import { useState } from 'react'
 import { z } from 'zod'
+import type { AxiosError } from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+// import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
-import { IconFacebook, IconGithub } from '@/assets/brand-icons'
+// import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -21,14 +25,34 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 
 const formSchema = z.object({
-  email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email' : undefined),
-  }),
+  id: z.string().min(1, '아이디를 입력해주세요.'),
   password: z
     .string()
-    .min(1, 'Please enter your password')
-    .min(7, 'Password must be at least 7 characters long'),
+    .min(1, '비밀번호를 입력해주세요.')
+    .min(7, '비밀번호는 최소 7자 이상이어야 합니다.'),
 })
+
+interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
+  redirectTo?: string
+}
+
+interface LoginResponse {
+  status: string
+  message: string
+  output: {
+    userSq: number
+    userNm: string
+    userTypeCd: number
+    token: {
+      accessToken: string
+      refreshToken: string
+    }
+    latitude: number | null
+    longitude: number | null
+    isAffiliated: string | null
+    companyAuthStatusCd: number | null
+  }
+}
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
   redirectTo?: string
@@ -46,39 +70,59 @@ export function UserAuthForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      id: '',
       password: '',
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
+    try {
+      // 2. API 호출 (제네릭에 LoginResponse 적용)
+      const response = await api.$post<LoginResponse>('/login', {
+        userId: data.id,
+        userPw: data.password,
+        userTypeCd: 303,
+        autoLogin: false, // DTO에 있는 필드 추가 (필요시)
+      })
 
-        // Mock successful authentication with expiry computed at success time
-        const mockUser = {
-          accountNo: 'ACC001',
-          email: data.email,
-          role: ['user'],
-          exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
-        }
+      // 3. 데이터 추출 로직 수정
+      // api.$post가 이미 바디({status, message, output})를 반환하므로
+      // response.output에서 바로 꺼내야 합니다.
+      const { output } = response
 
-        // Set user and access token
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
+      if (!output) {
+        throw new Error('응답 데이터가 비어있습니다.')
+      }
 
-        // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/'
-        navigate({ to: targetPath, replace: true })
+      const { token, ...userInfo } = output
 
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+      // 4. 상태 저장
+      auth.setAccessToken(token.accessToken)
+
+      auth.setUser({
+        accountNo: String(userInfo.userSq || ''), // userSq가 null일 경우 대비
+        userId: data.id,
+        userName: userInfo.userNm,
+        role: ['ADMIN'],
+        exp: Date.now() + 24 * 60 * 60 * 1000,
+      })
+
+      localStorage.setItem('refreshToken', token.refreshToken)
+      toast.success(`반가워요, ${userInfo.userNm} 관리자님!`)
+
+      const targetPath = redirectTo || '/'
+      navigate({ to: targetPath, replace: true })
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>
+      // 백엔드 에러 메시지 우선 출력
+      const errorMessage =
+        axiosError.response?.data?.message || '로그인 중 오류가 발생했습니다.'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -90,12 +134,12 @@ export function UserAuthForm({
       >
         <FormField
           control={form.control}
-          name='email'
+          name='id'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>ID</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input placeholder='관리자 아이디를 입력하세요' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -111,21 +155,21 @@ export function UserAuthForm({
                 <PasswordInput placeholder='********' {...field} />
               </FormControl>
               <FormMessage />
-              <Link
+              {/* <Link
                 to='/forgot-password'
                 className='absolute end-0 -top-0.5 text-sm font-medium text-muted-foreground hover:opacity-75'
               >
                 Forgot password?
-              </Link>
+              </Link> */}
             </FormItem>
           )}
         />
         <Button className='mt-2' disabled={isLoading}>
           {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
-          Sign in
+          로그인
         </Button>
 
-        <div className='relative my-2'>
+        {/* <div className='relative my-2'>
           <div className='absolute inset-0 flex items-center'>
             <span className='w-full border-t' />
           </div>
@@ -134,16 +178,16 @@ export function UserAuthForm({
               Or continue with
             </span>
           </div>
-        </div>
+        </div> */}
 
-        <div className='grid grid-cols-2 gap-2'>
+        {/* <div className='grid grid-cols-2 gap-2'>
           <Button variant='outline' type='button' disabled={isLoading}>
             <IconGithub className='h-4 w-4' /> GitHub
           </Button>
           <Button variant='outline' type='button' disabled={isLoading}>
             <IconFacebook className='h-4 w-4' /> Facebook
           </Button>
-        </div>
+        </div> */}
       </form>
     </Form>
   )

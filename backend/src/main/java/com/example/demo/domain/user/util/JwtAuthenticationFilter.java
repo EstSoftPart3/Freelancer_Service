@@ -49,7 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/mypage/resume",
             "/api/uploads",
             "/api/download",
-            "/api/files"
+            "/api/files",
+            // ---------------- [추가] 관리자용 경로 ----------------
+            "/api/admin/login",
+            "/api/admin/refresh-token"
 
     // 여기에 더 추가 가능
     );
