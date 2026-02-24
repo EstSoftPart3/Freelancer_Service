@@ -1,3 +1,5 @@
+//  [Freelancer Service] 사이드바
+import { useAuthStore } from '@/stores/auth-store'
 import { useLayout } from '@/context/layout-provider'
 import {
   Sidebar,
@@ -14,6 +16,14 @@ import { TeamSwitcher } from './team-switcher'
 
 export function AppSidebar() {
   const { collapsible, variant } = useLayout()
+
+  const { auth } = useAuthStore()
+
+  const loginUser = {
+    name: auth.user?.userName ?? '최고관리자',
+    id: auth.user?.userId ?? 'admin',
+    avatar: sidebarData.user.avatar,
+  }
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
       <SidebarHeader>
@@ -29,7 +39,7 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={sidebarData.user} />
+        <NavUser user={loginUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
