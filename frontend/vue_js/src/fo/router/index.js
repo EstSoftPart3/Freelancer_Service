@@ -40,6 +40,8 @@ import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
 import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
+import NoticeListPage from '../views/notice/NoticeListPage.vue'
+import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
 
 const routes = [
   {
@@ -101,6 +103,19 @@ const routes = [
     path: '/qna/:board_sq',
     component: QnaDetailPage,
     name: 'QnaDetailPage',
+    props: true,
+  },
+
+  {
+    path: '/notice',
+    name: 'NoticeListPage',
+    component: NoticeListPage,
+  },
+
+  {
+    path: '/notice/:board_sq',
+    component: NoticeDetailPage,
+    name: 'NoticeDetailPage',
     props: true,
   },
 

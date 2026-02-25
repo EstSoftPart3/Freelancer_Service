@@ -45,9 +45,13 @@ public class AdminAuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<TokenDTO>> refreshToken(@RequestBody TokenDTO tokenRequest) {
-        // 프론트에서 보낸 리프레시 토큰으로 새 토큰 세트를 발급받습니다.
-        TokenDTO newTokens = loginService.refreshToken(tokenRequest.getRefreshToken());
-
-        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "토큰 재발급 성공", newTokens));
+        try {
+            TokenDTO newTokens = loginService.refreshToken(tokenRequest.getRefreshToken());
+            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "토큰 재발급 성공", newTokens));
+        } catch (Exception e) {
+            // 여기서 401을 명시적으로 던져야 프론트가 '인증 만료'로 인식합니다.
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.of(HttpStatus.UNAUTHORIZED, "리프레시 토큰 만료. 다시 로그인하세요.", null));
+        }
     }
 }

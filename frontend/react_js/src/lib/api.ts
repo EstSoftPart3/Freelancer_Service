@@ -102,9 +102,14 @@ apiInstance.interceptors.response.use(
       originalRequest.headers.Authorization = `Bearer ${accessToken}`
       return apiInstance(originalRequest)
     } catch (err) {
+      // 갱신 요청 자체가 실패했을 때 (RT 만료 등)
       processQueue(err, null)
-      auth.reset()
-      localStorage.removeItem('refreshToken') // 실패 시 완전 로그아웃 처리
+      auth.reset() // Zustand/Redux 스토어 초기화
+      localStorage.removeItem('refreshToken')
+
+      // ✅ 이 줄이 핵심입니다! 강제로 로그인 페이지로 보냅니다.
+      window.location.href = '/sign-in'
+
       return Promise.reject(err)
     } finally {
       isRefreshing = false

@@ -37,6 +37,8 @@ import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.mypage.service.InformationEditService;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
+import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,7 @@ public class BoardService {
 	private final FileStorageService fileStorageService;
 	private final InformationEditRepository informationEditRepository;
 	private final InformationEditService informationEditService;
+	private final NotificationService notificationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -175,29 +178,37 @@ public class BoardService {
 			throw new IllegalArgumentException("내용을 입력해주세요.");
 		}
 
+		String typeStr = "normal";
+		if (BoardTypeCd == 1402L) {
+			typeStr = "qna";
+		} else if (BoardTypeCd == 1403L) {
+			typeStr = "notice";
+		}
+
 		Board board = Board.builder()
 				.userSq(boardRequest.getUserSq())
 				.boardTtl(boardRequest.getTtl())
 				.boardDescriptionEdt(boardRequest.getDescription())
-				.boardTyp(BoardTypeCd == 1401L ? "normal" : "qna")
+				.boardTyp(typeStr)
 				.boardTypeCd(BoardTypeCd).build();
+
 		boardMapper.insert(board);
 
 		if (board.getBoardSq() == null) {
 			throw new IllegalStateException("게시글 생성 실패: Primary Key가 생성되지 않았습니다.");
 		}
 
-		// 일반 태그 추가
-		if (boardRequest.getNormalTags().size() > 0) {
-			cmntTagMapper.insertNT(normalTagConverter.convertStringsToNormalTags(board.getBoardSq(), null,
-					boardRequest.getNormalTags()));
+		// 1. 일반 태그 처리 수정
+		if (boardRequest.getNormalTags() != null && !boardRequest.getNormalTags().isEmpty()) {
+			cmntTagMapper.insertNT(normalTagConverter.convertStringsToNormalTags(
+					board.getBoardSq(), null, boardRequest.getNormalTags()));
 		}
 
-		// 스킬태그 추가
-		if (board.getBoardTypeCd() == 1402 && boardRequest.getSkillTags() != null
-				&& boardRequest.getSkillTags().size() > 0) {
-			cmntTagMapper.insertST(
-					skillTagConverter.convertStringsToSkillTags(board.getBoardSq(), null, boardRequest.getSkillTags()));
+		// 2. 스킬 태그 처리 수정 (updateBoard 포함)
+		if (board.getBoardTypeCd() == 1402 &&
+				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
+			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
+					board.getBoardSq(), null, boardRequest.getSkillTags()));
 		}
 
 		// 첨부파일 업로드
@@ -215,6 +226,28 @@ public class BoardService {
 
 				informationEditRepository.saveFile(fileInfo);
 				boardMapper.insertFile(board.getBoardSq(), fileInfo.getFileSq());
+			}
+		}
+
+		if (BoardTypeCd == 1403L) {
+			// 모든 활성 사용자의 SQ 리스트를 조회합니다.
+			// (communityUserMapper에 해당 메서드가 없다면 추가가 필요합니다)
+			List<Long> allUserSqs = communityUserMapper.findAllUserSqs();
+
+			if (allUserSqs != null && !allUserSqs.isEmpty()) {
+				List<NotificationBatchRequestDTO> batchList = allUserSqs.stream()
+						.filter(receiverSq -> !receiverSq.equals(board.getUserSq())) // 본인 제외
+						.map(receiverSq -> new NotificationBatchRequestDTO(
+								receiverSq, // receiverSq
+								board.getUserSq(), // senderSq
+								2606L, // typeCd (공지사항 알림 코드)
+								"새로운 공지사항이 등록되었습니다: " + board.getBoardTtl(), // content
+								"/notice/" + board.getBoardSq() // targetUrl
+						))
+						.collect(Collectors.toList());
+
+				// 대량 등록 메서드 호출
+				notificationService.insertNotificationBatch(batchList);
 			}
 		}
 
@@ -249,22 +282,26 @@ public class BoardService {
 		cmntTagMapper.deleteNT(board.getBoardSq(), null);
 		cmntTagMapper.deleteST(board.getBoardSq(), null);
 
-		// 일반 태그 추가
-		if (boardRequest.getNormalTags().size() > 0) {
-			cmntTagMapper.insertNT(normalTagConverter.convertStringsToNormalTags(board.getBoardSq(), null,
-					boardRequest.getNormalTags()));
+		// 1. 일반 태그 처리 수정
+		if (boardRequest.getNormalTags() != null && !boardRequest.getNormalTags().isEmpty()) {
+			cmntTagMapper.insertNT(normalTagConverter.convertStringsToNormalTags(
+					board.getBoardSq(), null, boardRequest.getNormalTags()));
 		}
 
-		// 스킬태그 추가
-		if (board.getBoardTypeCd() == 1402 && boardRequest.getSkillTags().size() > 0) {
-			cmntTagMapper.insertST(
-					skillTagConverter.convertStringsToSkillTags(board.getBoardSq(), null, boardRequest.getSkillTags()));
+		// 2. 스킬 태그 처리 수정
+		if (board.getBoardTypeCd() == 1402 &&
+				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
+			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
+					board.getBoardSq(), null, boardRequest.getSkillTags()));
 		}
 
 		// 첨부파일
 		// 기존 첨부파일 변동 여부 확인
 		List<Long> fileSqs = boardMapper.findFiles(boardSq);
-		List<Long> clientFileSqs = boardRequest.getAttachments();
+		List<Long> clientFileSqs = boardRequest.getAttachments() != null
+				? boardRequest.getAttachments()
+				: new ArrayList<>();
+
 		Set<Long> clientFileSqSet = new HashSet<>(clientFileSqs);
 		List<Long> deletedFileSqs = fileSqs.stream()
 				.filter(fileSq -> !clientFileSqSet.contains(fileSq))

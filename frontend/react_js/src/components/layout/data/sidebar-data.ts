@@ -76,7 +76,7 @@ export const sidebarData: SidebarData = {
           icon: ClipboardPen,
           items: [
             {
-              title: '전체 게시글 관리',
+              title: '게시글 관리',
               url: '/contents/posts',
               icon: ClipboardList,
             },

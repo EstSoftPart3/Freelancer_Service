@@ -90,6 +90,18 @@
                         </li>
                       </ul>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isNoticeActive,
+                          'current-page-active': true,
+                        }"
+                        to="/notice"
+                      >
+                        공지사항
+                      </router-link>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -338,6 +350,18 @@
                         </li>
                       </ul>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isNoticeActive,
+                          'current-page-active': true,
+                        }"
+                        to="/notice"
+                      >
+                        공지사항
+                      </router-link>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -414,6 +438,7 @@ const isProjectActive = computed(() =>
 const isCommunityActive = computed(() =>
   ['/board', '/qna'].some((path) => currentPath.value.startsWith(path)),
 )
+const isNoticeActive = computed(() => currentPath.value.startsWith('/notice'))
 
 // Mobile dropdown state
 const isCommunityDropdownOpen = ref(false)
