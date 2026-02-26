@@ -1,8 +1,11 @@
 package com.example.demo.domain.affiliation.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import javax.management.Notification;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,7 @@ import com.example.demo.domain.affiliation.entity.ResumeSkillTag;
 import com.example.demo.domain.affiliation.entity.Scrap;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
+import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class AffiliationService {
 	private final AffiliationMapper affiliationMapper;
 	// private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
+	private final NotificationService notificationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -78,9 +83,9 @@ public class AffiliationService {
 					// String imageUrl = (imgNm != null) ? amazonS3.getUrl(bucket, imgNm).toString()
 					// : null;
 					// 로컬용
-					String imageUrl = (imgNm != null) ? "/api//uploads/" + imgNm : null;
+					String imageUrl = (imgNm != null) ? "/api//files/" + imgNm : null;
 					// CasoOS용
-					// String imageUrl = (imgNm != null) ? "/uploads/" + imgNm : null;
+					// String imageUrl = (imgNm != null) ? "/files/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
 					Boolean isApply = false;
 					if (applyCnt > 0) {
@@ -131,19 +136,30 @@ public class AffiliationService {
 	}
 
 	// 소속 신청
+	@Transactional
 	public void addApply(CompanyApplication companyApplication) {
 		if (companyApplication.getUserSq() == null) {
 			throw new IllegalArgumentException("사용자 정보가 없습니다.");
 		}
 
 		Long isApply = affiliationMapper.findIsApply(companyApplication.getUserSq(), companyApplication.getCompanySq());
-
 		if (isApply > 0) {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
 		}
 
+		// 1. 소속 신청 저장
 		affiliationMapper.insertApplication(companyApplication);
-		return;
+
+		// 2. [알림] 기업 담당자에게 발송
+		Long companyOwnerSq = affiliationMapper.findCompanyOwnerUserSq(companyApplication.getCompanySq());
+		if (companyOwnerSq != null) {
+			notificationService.send(
+					companyOwnerSq,
+					companyApplication.getUserSq(), // 발신자: 지원자
+					2603L, // 소속 지원 결과 카테고리 코드 (2603)
+					"우리 소속에 새로운 가입 신청이 도착했습니다.",
+					"/mypage/affiliationApplicantList");
+		}
 	}
 
 	// 소속 신청 내용 수정
@@ -201,11 +217,34 @@ public class AffiliationService {
 	}
 
 	// 합격 또는 불합격 변경
+	@Transactional
 	public void updateApplicationStatus(Long companyApplicationSq, Long companyApplicationStatusCd) {
+		// 1. 상태 업데이트
 		CompanyApplication application = getApply(companyApplicationSq);
 		application.setCompanyApplicationStatusCd(companyApplicationStatusCd);
-
 		affiliationMapper.updateApplication(application);
+
+		// 2. [알림] 지원자(개인)에게 발송
+		Map<String, Object> info = affiliationMapper.findAffiliationNotificationInfo(companyApplicationSq);
+		if (info != null) {
+			Long receiverSq = (Long) info.get("userSq");
+			String companyNm = (String) info.get("companyNm");
+			String message = "";
+
+			// 상태 코드에 따른 메시지 분기 (예: 702 합격, 703 불합격 등 실제 코드에 맞춰 수정)
+			if (companyApplicationStatusCd.equals(502L)) {
+				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
+			} else {
+				message = "아쉽게도 [" + companyNm + "] 소속 가입 신청 결과가 발표되었습니다. (불합격)";
+			}
+
+			notificationService.send(
+					receiverSq,
+					null,
+					2603L, // 소속 지원 결과 카테고리 코드 (2603)
+					message,
+					"/mypage/affiliatedJobApplications");
+		}
 	}
 
 	// 회원별 소속 신청 내용 전체 조회

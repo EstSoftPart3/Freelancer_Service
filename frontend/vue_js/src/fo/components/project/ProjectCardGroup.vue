@@ -37,7 +37,12 @@
               :src="project.companyImageUrl || '/img/logos/Company_logo.png'"
               alt="프로젝트 이미지"
               class="rounded-circle"
-              style="width: 70px; height: 70px; object-fit: cover"
+              style="
+                width: 70px;
+                height: 70px;
+                object-fit: contain;
+                background-color: #f8f9fa;
+              "
             />
           </div>
 
@@ -73,21 +78,54 @@
               </h4>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center">
               <p class="mb-2 text-muted fs-6">
-                <i class="bi bi-buildings"></i> {{ project.companyNm }}
+                <i class="bi bi-building text-primary"></i>
+                {{ project.companyNm }}
               </p>
             </div>
 
-            <div
-              class="d-flex justify-content-between align-items-center text-muted fs-6"
-            >
-              <div>
-                {{ project.address }} / {{ project.devGradeNm }} /
-                {{ project.requiredEduLvl }} / {{ project.formattedSalary }}
+            <div class="d-flex flex-column text-muted fs-6">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <span
+                  v-if="project.addressTypeCd === 2701"
+                  class="d-flex align-items-center"
+                >
+                  <i class="bi bi-geo-alt me-1 text-primary"></i>
+                  {{ project.detailedAddress }}
+                  {{ project.detailedAddressDetail }}
+                </span>
+                <span
+                  v-else-if="project.addressTypeCd === 2702"
+                  class="d-flex align-items-center"
+                >
+                  <i class="bi bi-train-front me-1 text-primary"></i>
+                  {{ project.subwayAddress }}
+                </span>
+
+                <span class="text-light-grey">|</span>
+                <span>{{ project.devGradeNm }}</span>
+                <span class="text-light-grey">|</span>
+                <span>{{ project.requiredEduLvl }}</span>
+              </div>
+
+              <div class="d-flex align-items-center mt-2">
+                <!-- <span class="text-dark fw-bold text-4 me-2">{{
+                  project.formattedSalary
+                }}</span> -->
+                <div class="projectPrice text-primary">
+                  {{ project.formattedSalary }}
+                </div>
+                <span
+                  v-if="project.salaryNegotiableYn === 'Y'"
+                  class="badge badge-outline badge-primary text-1 px-2 py-1"
+                  style="border-radius: 4px"
+                >
+                  단가협의 가능
+                </span>
               </div>
             </div>
-            <div class="d-flex flex-wrap gap-2 mt-2">
+            <div class="d-flex flex-wrap gap-2 mt-3">
               <button
                 v-for="skill in project.reqSkills"
                 :key="skill.id"
@@ -176,3 +214,14 @@ const clickScrap = async (project) => {
 
 console.log('project: ', props)
 </script>
+
+<style scoped>
+.projectPrice {
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: #f0f7ff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+</style>

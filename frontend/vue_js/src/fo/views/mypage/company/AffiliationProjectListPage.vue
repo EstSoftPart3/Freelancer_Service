@@ -225,7 +225,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useModalStore } from '../../../stores/modalStore.js'
 import { useUserStore } from '../../../stores/userStore.js'
 import PersonalApplyStatusModal from '@/fo/components/mypage/personal/PersonalApplyStatusModal.vue'
@@ -235,10 +235,12 @@ import { navigateCompanyPageWithProjectSq } from '@/fo/router/userTypeRouter.js'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 import { api } from '@/axios.js'
+import { useRoute } from 'vue-router'
 
 const modalStore = useModalStore()
 const userStore = useUserStore()
 const userType = userStore.getUserType
+const route = useRoute()
 
 const currentPage = ref(1)
 const totalPages = ref(1)
@@ -316,6 +318,28 @@ const fetchCompanyProjectList = async () => {
     fetchStatusCounts()
 
     projects.value = response.output.projects
+
+    // 🚀 [추가] 알림을 통해 들어온 경우 자동 모달 팝업 로직
+    const targetProjectSq = route.query.projectSq
+    const appTyp = route.query.appTyp // 'personal' 또는 'corporate'
+
+    if (targetProjectSq) {
+      // 리스트에서 해당 프로젝트 객체를 찾습니다 (제목을 가져오기 위함)
+      const targetProject = projects.value.find(
+        (p) => p.projectSq === Number(targetProjectSq),
+      )
+
+      if (targetProject) {
+        // 백엔드에서 보낸 appTyp에 따라 모달을 다르게 띄워줍니다.
+        if (appTyp === 'corporate') {
+          // 기업 모달 먼저 오픈
+          openCorporateModal(targetProject.projectSq, targetProject.projectTtl)
+        } else {
+          // 개인 모달 먼저 오픈 (기본값)
+          openPersonalModal(targetProject.projectSq, targetProject.projectTtl)
+        }
+      }
+    }
 
     const pages = response.output.totalPages
     totalPages.value = pages > 0 ? pages : 1
@@ -406,28 +430,57 @@ function resetModal(component, props = {}) {
   modalStore.openModal(component, props)
 }
 
+const openPersonalModal = (projSq, projTtl) => {
+  resetModal(PersonalApplyStatusModal, {
+    size: 'modal-xl',
+    projectSq: projSq,
+    projectTitle: projTtl,
+    onToggle: (pSq) => openCorporateModal(pSq, projTtl),
+  })
+}
+
+const openCorporateModal = (projSq, projTtl) => {
+  resetModal(CompanyApplyStatusModal, {
+    size: 'modal-xl',
+    projectSq: projSq,
+    projectTitle: projTtl,
+    onToggle: (pSq) => openPersonalModal(pSq, projTtl),
+  })
+}
+
+// 기존 함수는 이 분리된 함수들을 호출하도록 수정 (코드 중복 방지)
 const openUserApplyModal = (projectSq, projectTtl) => {
-  // 더 이상 API 호출하지 않음. 모달 컴포넌트 내에서 호출하도록 변경
-  const openPersonalModal = (projSq, projTtl) => {
-    resetModal(PersonalApplyStatusModal, {
-      size: 'modal-xl',
-      projectSq: projSq,
-      projectTitle: projTtl,
-      onToggle: (pSq) => openCorporateModal(pSq, projTtl),
-    })
-  }
-
-  const openCorporateModal = (projSq, projTtl) => {
-    resetModal(CompanyApplyStatusModal, {
-      size: 'modal-xl',
-      projectSq: projSq,
-      projectTitle: projTtl,
-      onToggle: (pSq) => openPersonalModal(pSq, projTtl),
-    })
-  }
-
   openPersonalModal(projectSq, projectTtl)
 }
+
+watch(
+  () => route.query,
+  (newQuery) => {
+    const targetProjectSq = newQuery.projectSq
+    const appTyp = newQuery.appTyp
+
+    if (targetProjectSq) {
+      // 1. 현재 불러와진 프로젝트 목록에서 해당 프로젝트 객체를 찾음
+      const targetProject = projects.value.find(
+        (p) => p.projectSq === Number(targetProjectSq),
+      )
+
+      if (targetProject) {
+        // 2. 모달 오픈 로직 실행
+        if (appTyp === 'corporate') {
+          openCorporateModal(targetProject.projectSq, targetProject.projectTtl)
+        } else {
+          openPersonalModal(targetProject.projectSq, targetProject.projectTtl)
+        }
+      } else {
+        // 3. 만약 리스트에 없다면(페이지가 다르거나 등) 목록을 새로 불러온 후 처리
+        // (필요 시 호출, 보통은 find 결과가 없을 때 fetch를 다시 시도하도록 구현 가능)
+        fetchCompanyProjectList()
+      }
+    }
+  },
+  { deep: true }, // 쿼리 객체
+)
 </script>
 
 <style scoped>

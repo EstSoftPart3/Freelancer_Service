@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.community.mapper.CommunityUserMapper">
 
     <select id="findById" resultType="com.example.demo.domain.user.dto.UserDTO" parameterType="Long">
-        SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N'
-    </select>
+        SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
+
+    <select id="findAllUserSqs" resultType="Long"> SELECT user_sq FROM TBL_USER_M WHERE
+        user_is_activate_yn = 'N' </select>
 
 </mapper>

@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
@@ -175,5 +176,9 @@ public class InformationEditRepository {
 
     public ProfileImageInfoDTO findAffiliationFileByUserSq(Long companySq) {
         return informationEditMapper.findAffiliationFileByUserSq(companySq);
+    }
+
+    public void updateCompanyVerification(Map<String, Object> params) {
+        informationEditMapper.updateCompanyVerification(params);
     }
 }

@@ -45,7 +45,21 @@
       </div>
     </div>
 
-    <div class="row" v-if="applicants.length > 0">
+    <div class="row">
+      <div class="col pt-2 mt-1">
+        <hr class="my-2" />
+      </div>
+    </div>
+
+    <div class="row" v-if="applicants.length === 0">
+      <div class="col">
+        <div class="text-muted py-3" style="font-size: 14px">
+          지원한 프로젝트가 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="row" v-else>
       <div class="col">
         <ul class="simple-post-list m-0 my-2 position-relative">
           <li

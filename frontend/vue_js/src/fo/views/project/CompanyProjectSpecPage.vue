@@ -21,7 +21,12 @@
                   "
                   alt="프로젝트 이미지"
                   class="rounded-circle"
-                  style="width: 70px; height: 70px; object-fit: cover"
+                  style="
+                    width: 70px;
+                    height: 70px;
+                    object-fit: contain;
+                    background-color: #f8f9fa;
+                  "
                 />
               </div>
               <div>
@@ -220,11 +225,13 @@
           </li>
           <li>
             <strong class="text-color-primary">근무 지역 :</strong>
-            {{ project.projectAddress }}
+            <i :class="['bi', addressIcon]"></i>
+            {{ displayAddress }}
           </li>
           <li>
             <strong class="text-color-primary">단가 :</strong>
             {{ project.formattedSalary }}
+            <span v-if="project.salaryNegotiableYn === 'Y'"> / 단가 협의 </span>
           </li>
         </ul>
       </div>
@@ -319,6 +326,30 @@ const goToProjectPost = (project) => {
     },
   })
 }
+
+const displayAddress = computed(() => {
+  const p = project.value
+  if (!p) return '정보 없음'
+
+  // 타입 2701: 상세 주소 우선
+  if (p.addressTypeCd === 2701) {
+    return p.detailedAddress
+      ? `${p.detailedAddress} ${p.detailedAddressDetail || ''}`
+      : p.projectAddress
+  }
+  // 타입 2702: 지하철 주소 우선
+  else if (p.addressTypeCd === 2702) {
+    return p.subwayAddress || p.projectAddress
+  }
+
+  // 기본값
+  return p.projectAddress || '정보 없음'
+})
+
+// 주소 타입에 따른 아이콘 (선택 사항 - UX 향상)
+const addressIcon = computed(() => {
+  return project.value.addressTypeCd === 2702 ? 'bi-train-front' : 'bi-geo-alt'
+})
 
 const deleteProject = () => {
   modalStore.openModal(CommonConfirmModal, {

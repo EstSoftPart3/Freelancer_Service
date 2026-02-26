@@ -86,21 +86,21 @@
             </div>
             <template v-else>
               <div class="row" v-if="afltnList.length > 0">
-                <!-- 카드 -->
                 <div
                   v-for="afltn in afltnList"
-                  :key="afltn"
-                  class="col-md-4 col-lg-3"
+                  :key="afltn.sq"
+                  class="col-md-4 col-lg-3 mb-4"
                 >
                   <article
-                    class="post post-medium border-0 pb-0 mb-5 shadow-sm rounded overflow-hidden bg-white"
+                    class="post post-medium border-0 pb-0 mb-0 shadow-sm rounded overflow-hidden bg-white d-flex flex-column h-100"
                   >
-                    <!-- 이미지 영역 -->
                     <div
-                      class="post-image position-relative"
-                      style="height: 160px"
+                      class="post-image position-relative d-flex align-items-center justify-content-center bg-light"
+                      style="height: 160px; padding: 10px"
                     >
-                      <div class="d-block h-100 w-100 position-relative">
+                      <div
+                        class="d-block h-100 w-100 position-relative d-flex align-items-center justify-content-center"
+                      >
                         <img
                           :src="
                             afltn.profileImg || '/img/logos/Company_logo.png'
@@ -108,16 +108,19 @@
                           @error="
                             $event.target.src = '/img/logos/Company_logo.png'
                           "
-                          class="img-fluid img-thumbnail img-thumbnail-no-borders rounded-0 h-100 w-100"
-                          style="object-fit: cover"
+                          class="img-fluid rounded-0"
+                          style="
+                            max-height: 100%;
+                            max-width: 100%;
+                            object-fit: contain;
+                          "
                           alt="기업 이미지"
                         />
-                        <!-- 조회수 뱃지 -->
                         <div
                           class="position-absolute top-0 end-0 m-2 px-2 py-1 text-white rounded d-flex align-items-center gap-1"
                           style="
                             background-color: rgba(0, 0, 0, 0.5);
-                            font-size: 0.85rem;
+                            font-size: 0.8rem;
                           "
                         >
                           <i class="bi bi-eye"></i>
@@ -125,18 +128,20 @@
                         </div>
                       </div>
                     </div>
-                    <!-- 내용 영역 -->
-                    <div class="post-content p-3 bg-white">
+
+                    <div
+                      class="post-content p-3 bg-white d-flex flex-column flex-grow-1"
+                    >
                       <div
-                        class="d-flex justify-content-between align-items-center mb-2"
+                        class="d-flex justify-content-between align-items-start mb-2"
                       >
                         <h2
-                          class="font-weight-semibold text-5 line-height-6 mb-0"
-                          style="font-size: 1.1rem"
+                          class="font-weight-bold line-height-2 mb-0 text-truncate"
+                          style="font-size: 1rem; max-width: 85%"
                         >
                           <button
                             type="button"
-                            class="text-primary fw-bold text-decoration-none"
+                            class="text-primary fw-bold text-decoration-none border-0 bg-transparent p-0 text-start"
                             @click="clickApplication(afltn)"
                           >
                             {{ afltn.companyNm }}
@@ -144,8 +149,7 @@
                         </h2>
                         <button
                           type="button"
-                          class="text-muted"
-                          style="text-decoration: none"
+                          class="text-muted border-0 bg-transparent p-0"
                           @click="clickScrap(afltn.sq)"
                         >
                           <i
@@ -154,29 +158,45 @@
                           ></i>
                         </button>
                       </div>
-                      <!-- 키워드 태그 뱃지 -->
-                      <div class="d-flex flex-wrap gap-2 mb-3">
+
+                      <div
+                        class="d-flex flex-wrap gap-1 mb-2 overflow-hidden"
+                        style="height: 25px"
+                      >
                         <span
                           v-for="tag in afltn.tags"
                           :key="tag"
-                          class="badge bg-light text-grey border"
+                          class="badge bg-light text-grey border fw-normal"
+                          style="font-size: 0.7rem"
                           >{{ tag }}</span
                         >
                       </div>
-                      <!-- 설명 영역 -->
+
                       <div
-                        class="description p-3 mb-3 rounded bg-color-grey"
-                        v-if="afltn.greeting && afltn.greeting.trim() != ''"
+                        class="description p-2 mb-3 rounded bg-color-grey flex-grow-1"
+                        style="min-height: 70px"
                       >
-                        <p class="mb-0 text-dark">
-                          {{ afltn.greeting }}
+                        <p
+                          class="mb-0 text-dark line-clamp-3"
+                          style="font-size: 0.85rem; line-height: 1.4"
+                        >
+                          {{
+                            afltn.greeting && afltn.greeting.trim() !== ''
+                              ? afltn.greeting
+                              : '등록된 소개 문구가 없습니다.'
+                          }}
                         </p>
                       </div>
-                      <div class="d-grid">
+
+                      <div class="d-grid mt-auto">
                         <button
                           type="button"
-                          class="btn btn-sm btn-light"
-                          :class="{ 'text-primary': !afltn.isApply }"
+                          class="btn btn-sm"
+                          :class="
+                            afltn.isApply
+                              ? 'btn-light disabled'
+                              : 'btn-outline-primary'
+                          "
                           @click="clickApplication(afltn)"
                         >
                           {{
@@ -372,10 +392,24 @@ onMounted(() => {
 })
 </script>
 <style>
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* 보여줄 줄 수 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
 .bi.bi-heart-fill {
-  color: pink;
+  color: lightgray;
 }
 .bi.bi-heart-fill.active {
   color: red;
+}
+
+article.post:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

@@ -108,4 +108,13 @@ public interface ProjectApplicationMapper {
 
 	List<Map<String, Object>> countCorporateApplicationsByReadStatus(@Param("companySq") Long companySq);
 
+	// 지원자 정보 조회 (수신자: 지원자)
+	Map<String, Object> findApplicationNotificationInfo(@Param("applicationSq") Long applicationSq);
+
+	// 취소 정보 조회 (수신자: 회사 담당자)
+	Map<String, Object> findCancelNotificationInfo(@Param("applicationSq") Long applicationSq);
+
+	Map<String, Object> findInterviewConfirmationInfo(@Param("applicationSq") Long applicationSq,
+			@Param("interviewTimeSq") Long interviewTimeSq);
+
 }

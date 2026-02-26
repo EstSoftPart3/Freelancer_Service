@@ -1,43 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.project.mapper.AddressMapper">
 
-	<select id="findAddressBySq" parameterType="Long" resultType="String">
-    SELECT address
-    FROM TBL_ADDRESS_S
-    WHERE address_sq = #{addressSq}
-	</select>
-	
-	
-	
-	<select id="findAreaInfoBySq" parameterType="Long" resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse">
-    SELECT area_code_sq, sigungu
-    FROM TBL_ADDRESS_S
-    WHERE address_sq = #{addressSq}
-	</select>
-	
-	<insert id="createAddress"
+    <select id="findAddressBySq" parameterType="Long" resultType="String"> SELECT address FROM
+        TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
+
+    <select id="findAreaInfoBySq" parameterType="Long"
+        resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
+        area_code_sq, sigungu FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
+
+    <insert id="createAddress"
         parameterType="com.example.demo.domain.project.dto.AddressInsertDto"
         useGeneratedKeys="true"
-        keyProperty="addressSq">
-    INSERT INTO TBL_ADDRESS_S (
-        sigungu,
-        area_code_sq,
-        latitude,
-        longitude
-    ) VALUES (
-        #{districtName},
-        #{districtCode},
-        #{districtLat},
-        #{districtLon}
-    )
-	</insert>
-
-
-
-
+        keyProperty="addressSq"> INSERT INTO TBL_ADDRESS_S ( zonecode, address, detail_address,
+        sigungu, latitude, longitude, area_code_sq ) VALUES ( #{zonecode}, #{address},
+        #{detailAddress}, #{sigungu}, #{latitude}, #{longitude}, #{areaCodeSq} ) </insert>
 
 </mapper>

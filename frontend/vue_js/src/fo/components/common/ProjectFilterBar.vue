@@ -3,7 +3,7 @@
     <!-- Web Layout -->
     <div
       class="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-3 flex-wrap"
-      style="max-width: 1100px; margin: 0 auto"
+      style="max-width: 1300px; margin: 0 auto"
     >
       <!-- Region Dropdown -->
       <div class="dropdown">
@@ -183,6 +183,39 @@
         </ul>
       </div>
 
+      <!-- 단가 드랍다운 -->
+      <div class="dropdown">
+        <button
+          class="btn btn-outline btn-primary dropdown-toggle text-truncate"
+          type="button"
+          data-bs-toggle="dropdown"
+          style="max-width: 130px"
+        >
+          {{ selectedPriceText }}
+        </button>
+        <ul class="dropdown-menu" @click.stop>
+          <li>
+            <a
+              class="dropdown-item"
+              href="#"
+              @click.prevent="clearSelection('price')"
+              >전체</a
+            >
+          </li>
+          <li v-for="price in priceOptions.slice(1)" :key="price.value">
+            <div class="dropdown-item">
+              <input
+                type="radio"
+                :id="'price-' + price.value"
+                :value="price.value"
+                v-model="selectedPrice"
+                class="form-check-input me-2"
+              />
+              <label :for="'price-' + price.value">{{ price.label }}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
       <!-- Search Input -->
       <div class="flex-grow-1">
         <input
@@ -291,286 +324,331 @@
     <!-- Mobile Layout -->
     <div
       class="filter-bar border rounded p-3 d-lg-none"
-      style="max-width: 880px; margin: 0 auto"
+      style="max-width: 100%; margin: 0 auto"
     >
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <!-- Region Dropdown -->
-        <div class="dropdown flex-grow-1">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle w-100"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedRegionTextMobile }}
-          </button>
-          <ul class="dropdown-menu" @click.stop>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="clearSelection('regions')"
-                >전체</a
-              >
-            </li>
-            <li v-for="local in localOptions" :key="local.areaSq">
-              <div class="dropdown-item">
-                <input
-                  type="checkbox"
-                  :id="'region-mobile-' + local.areaSq"
-                  :value="local.areaSq"
-                  v-model="selectedRegions"
-                  class="form-check-input me-2"
-                />
-                <label :for="'region-mobile-' + local.areaSq">{{
-                  local.areaName
-                }}</label>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Career Dropdown -->
-        <div class="dropdown flex-grow-1">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle w-100"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedCareerTextMobile }}
-          </button>
-          <ul class="dropdown-menu" @click.stop>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="clearSelection('careers')"
-                >전체</a
-              >
-            </li>
-            <li v-for="career in careerOptions" :key="career.common_code_sq">
-              <div class="dropdown-item">
-                <input
-                  type="checkbox"
-                  :id="'career-mobile-' + career.common_code_sq"
-                  :value="career.common_code_sq"
-                  v-model="selectedCareers"
-                  class="form-check-input me-2"
-                />
-                <label :for="'career-mobile-' + career.common_code_sq">{{
-                  career.common_code_nm
-                }}</label>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Education Dropdown -->
-        <div class="dropdown flex-grow-1">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle w-100"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedEducationTextMobile }}
-          </button>
-          <ul class="dropdown-menu" @click.stop>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="clearSelection('educations')"
-                >전체</a
-              >
-            </li>
-            <li
-              v-for="education in educationOptions"
-              :key="education.common_code_sq"
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
             >
-              <div class="dropdown-item">
-                <input
-                  type="checkbox"
-                  :id="'education-mobile-' + education.common_code_sq"
-                  :value="education.common_code_sq"
-                  v-model="selectedEducations"
-                  class="form-check-input me-2"
-                />
-                <label :for="'education-mobile-' + education.common_code_sq">{{
-                  education.common_code_nm
-                }}</label>
-              </div>
-            </li>
-          </ul>
+              {{ selectedRegionTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('regions')"
+                  >전체</a
+                >
+              </li>
+              <li v-for="local in localOptions" :key="local.areaSq">
+                <div class="dropdown-item">
+                  <input
+                    type="checkbox"
+                    :id="'region-mobile-' + local.areaSq"
+                    :value="local.areaSq"
+                    v-model="selectedRegions"
+                    class="form-check-input me-2"
+                  />
+                  <label :for="'region-mobile-' + local.areaSq">{{
+                    local.areaName
+                  }}</label>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <!-- Job Type Dropdown -->
-        <div class="dropdown flex-grow-1">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle w-100"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedJobTypeTextMobile }}
-          </button>
-          <ul class="dropdown-menu" @click.stop>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="clearSelection('jobTypes')"
-                >전체</a
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ selectedCareerTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('careers')"
+                  >전체</a
+                >
+              </li>
+              <li v-for="career in careerOptions" :key="career.common_code_sq">
+                <div class="dropdown-item">
+                  <input
+                    type="checkbox"
+                    :id="'career-mobile-' + career.common_code_sq"
+                    :value="career.common_code_sq"
+                    v-model="selectedCareers"
+                    class="form-check-input me-2"
+                  />
+                  <label :for="'career-mobile-' + career.common_code_sq">{{
+                    career.common_code_nm
+                  }}</label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ selectedEducationTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('educations')"
+                  >전체</a
+                >
+              </li>
+              <li
+                v-for="education in educationOptions"
+                :key="education.common_code_sq"
               >
-            </li>
-            <li v-for="job in jobTypeOptions" :key="job.common_code_sq">
-              <div class="dropdown-item">
-                <input
-                  type="checkbox"
-                  :id="'job-mobile-' + job.common_code_sq"
-                  :value="job.common_code_sq"
-                  v-model="selectedJobTypes"
-                  class="form-check-input me-2"
-                />
-                <label :for="'job-mobile-' + job.common_code_sq">{{
-                  job.common_code_nm
-                }}</label>
-              </div>
-            </li>
-          </ul>
+                <div class="dropdown-item">
+                  <input
+                    type="checkbox"
+                    :id="'education-mobile-' + education.common_code_sq"
+                    :value="education.common_code_sq"
+                    v-model="selectedEducations"
+                    class="form-check-input me-2"
+                  />
+                  <label
+                    :for="'education-mobile-' + education.common_code_sq"
+                    >{{ education.common_code_nm }}</label
+                  >
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ selectedJobTypeTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('jobTypes')"
+                  >전체</a
+                >
+              </li>
+              <li v-for="job in jobTypeOptions" :key="job.common_code_sq">
+                <div class="dropdown-item">
+                  <input
+                    type="checkbox"
+                    :id="'job-mobile-' + job.common_code_sq"
+                    :value="job.common_code_sq"
+                    v-model="selectedJobTypes"
+                    class="form-check-input me-2"
+                  />
+                  <label :for="'job-mobile-' + job.common_code_sq">{{
+                    job.common_code_nm
+                  }}</label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ selectedDistanceTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('distance')"
+                  >전체</a
+                >
+              </li>
+              <li v-for="dist in distanceOptions.slice(1)" :key="dist.value">
+                <div class="dropdown-item">
+                  <input
+                    type="radio"
+                    :id="'distance-mobile-' + dist.value"
+                    :value="dist.value"
+                    v-model="selectedDistance"
+                    class="form-check-input me-2"
+                  />
+                  <label :for="'distance-mobile-' + dist.value">{{
+                    dist.label
+                  }}</label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100 text-truncate"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ selectedPriceTextMobile }}
+            </button>
+            <ul class="dropdown-menu" @click.stop>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="clearSelection('price')"
+                  >전체</a
+                >
+              </li>
+              <li v-for="price in priceOptions.slice(1)" :key="price.value">
+                <div class="dropdown-item">
+                  <input
+                    type="radio"
+                    :id="'price-mobile-' + price.value"
+                    :value="price.value"
+                    v-model="selectedPrice"
+                    class="form-check-input me-2"
+                  />
+                  <label :for="'price-mobile-' + price.value">{{
+                    price.label
+                  }}</label>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      <div class="dropdown flex-grow-1">
-        <button
-          class="btn btn-outline btn-primary dropdown-toggle w-100"
-          type="button"
-          data-bs-toggle="dropdown"
-        >
-          {{ selectedDistanceTextMobile }}
-        </button>
-        <ul class="dropdown-menu" @click.stop>
-          <li>
-            <a
-              class="dropdown-item"
-              href="#"
-              @click.prevent="clearSelection('distance')"
-              >전체</a
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex gap-2">
+          <div class="dropdown flex-shrink-0">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle h-100"
+              type="button"
+              data-bs-toggle="dropdown"
             >
-          </li>
-          <li v-for="dist in distanceOptions.slice(1)" :key="dist.value">
-            <div class="dropdown-item">
-              <input
-                type="radio"
-                :id="'distance-mobile-' + dist.value"
-                :value="dist.value"
-                v-model="selectedDistance"
-                class="form-check-input me-2"
-              />
-              <label :for="'distance-mobile-' + dist.value">{{
-                dist.label
-              }}</label>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div class="d-flex align-items-center gap-2">
-        <!-- Search Input -->
-        <div class="flex-grow-1">
+              {{ selectedTargetField }}
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateTargetField('전체')"
+                  >전체</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateTargetField('제목')"
+                  >제목</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateTargetField('작성자명')"
+                  >작성자명</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateTargetField('내용')"
+                  >내용</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateTargetField('태그')"
+                  >태그</a
+                >
+              </li>
+            </ul>
+          </div>
           <input
             type="text"
             class="form-control"
-            placeholder="검색어를 입력하세요..."
+            placeholder="검색어 입력..."
             v-model="searchKeyword"
+            @keyup.enter="$emit('search')"
           />
         </div>
 
-        <!-- Search Type Dropdown -->
-        <div class="dropdown">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedTargetField }}
+        <div class="d-flex gap-2">
+          <div class="dropdown flex-grow-1">
+            <button
+              class="btn btn-outline btn-primary dropdown-toggle w-100"
+              type="button"
+              data-bs-toggle="dropdown"
+            >
+              <i class="bi bi-sort-down me-1"></i> {{ selectedSort }}
+            </button>
+            <ul class="dropdown-menu w-100">
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateSort('최신순')"
+                  >최신순</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateSort('조회순')"
+                  >조회순</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="updateSort('지원자순')"
+                  >지원자순</a
+                >
+              </li>
+            </ul>
+          </div>
+          <button class="btn btn-primary px-4" @click="$emit('search')">
+            검색
           </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateTargetField('전체')"
-                >전체</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateTargetField('제목')"
-                >제목</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateTargetField('작성자명')"
-                >작성자명</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateTargetField('내용')"
-                >내용</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateTargetField('태그')"
-                >태그</a
-              >
-            </li>
-          </ul>
-        </div>
-
-        <!-- Sort Dropdown -->
-        <div class="dropdown">
-          <button
-            class="btn btn-outline btn-primary dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            {{ selectedSort }}
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateSort('최신순')"
-                >최신순</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateSort('조회순')"
-                >조회순</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click.prevent="updateSort('지원자순')"
-                >지원자순</a
-              >
-            </li>
-          </ul>
         </div>
       </div>
     </div>
@@ -730,7 +808,27 @@ const fetchFilterOptions = async () => {
     console.error('필터 데이터 불러오기 실패', e)
   }
 }
+const selectedPrice = ref(null)
+const priceOptions = [
+  { label: '단가 전체', value: null },
+  { label: '200만원 이상', value: 2000000 },
+  { label: '300만원 이상', value: 3000000 },
+  { label: '400만원 이상', value: 4000000 },
+  { label: '500만원 이상', value: 5000000 },
+]
 
+// --- [추가] 단가 텍스트 Computed ---
+const selectedPriceText = computed(() => {
+  if (selectedPrice.value === null) return '단가 (전체)'
+  const selected = priceOptions.find((opt) => opt.value === selectedPrice.value)
+  return selected ? `단가 (${selected.label})` : '단가 선택'
+})
+
+const selectedPriceTextMobile = computed(() => {
+  if (selectedPrice.value === null) return '단가'
+  const selected = priceOptions.find((opt) => opt.value === selectedPrice.value)
+  return selected ? selected.label : '단가'
+})
 onMounted(fetchFilterOptions)
 
 // Watch for changes and emit update
@@ -741,6 +839,7 @@ watch(
     selectedEducations,
     selectedJobTypes,
     selectedDistance,
+    selectedPrice,
     searchKeyword,
     selectedTargetField,
     selectedSort,
@@ -751,6 +850,7 @@ watch(
       projectDeveloperGradeCd: selectedCareers.value,
       educationCd: selectedEducations.value,
       jobRoleCd: selectedJobTypes.value,
+      minPrice: selectedPrice.value,
       distance: selectedDistance.value, // 거리 데이터 추가
       searchKeyword: searchKeyword.value,
       searchType: selectedTargetField.value,
@@ -785,6 +885,7 @@ const clearSelection = (type) => {
   if (type === 'educations') selectedEducations.value = []
   if (type === 'jobTypes') selectedJobTypes.value = []
   if (type === 'distance') selectedDistance.value = null
+  if (type === 'price') selectedPrice.value = null
 }
 </script>
 

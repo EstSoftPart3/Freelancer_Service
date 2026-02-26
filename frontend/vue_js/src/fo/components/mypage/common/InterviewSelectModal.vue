@@ -309,15 +309,17 @@ const sendInterviewTimeRequest = async (interviewTimeSq, applicationSq) => {
       applicationSq,
     }
 
-    const response = await api.$patch(
+    await api.$patch(
       `/projects/applications/interviews/${interviewTimeSq}`,
       payload,
       config,
     )
 
-    console.log('✅ 인터뷰 시간 선택 성공', response)
+    alertStore.show('인터뷰 시간 선택에 성공하였습니다.', 'success')
+    // console.log('✅ 인터뷰 시간 선택 성공', response)
     useModalStore().closeModal()
   } catch (e) {
+    alertStore.show('인터뷰 시간 선택에 실패하였습니다.', 'danger')
     console.error('❌ 인터뷰 시간 선택 실패', e)
   }
 }

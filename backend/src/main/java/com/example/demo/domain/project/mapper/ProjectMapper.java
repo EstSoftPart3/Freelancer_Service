@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.company.dto.request.BaseRequest;
+import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
@@ -115,4 +116,12 @@ public interface ProjectMapper {
 	List<Project> selectMainPopularProjects(
 			@Param("sortType") String sortType,
 			@Param("limit") int limit);
+
+	// 프로젝트 번호로 해당 기업의 유저 번호 조회
+	Long findUserSqByProjectSq(@Param("projectSq") Long projectSq);
+
+	Long findMemberTypeByApplicationSq(@Param("applicationSq") Long applicationSq);
+
+	// ProjectMapper.java 내부
+	List<ProjectRegionGroupDTO> findProjectGroupsByRegion(ProjectSearchRequest request);
 }

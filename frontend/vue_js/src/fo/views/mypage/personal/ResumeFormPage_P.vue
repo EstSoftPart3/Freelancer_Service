@@ -1180,6 +1180,9 @@ onMounted(async () => {
   }
 })
 
+// 용량 제한 상수 (100MB)
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
 async function submitResume() {
   if (!resumeForm.resumeTtl || !resumeForm.resumeTtl.trim()) {
     return alertStore.show('이력서 제목을 입력하세요.', 'danger')
@@ -1216,6 +1219,27 @@ async function submitResume() {
 
   if (!resumeForm.resumeGreetingTxt || !resumeForm.resumeGreetingTxt.trim()) {
     return alertStore.show('자기소개를 입력하세요.', 'danger')
+  }
+
+  // [추가] 파일 용량 체크 로직
+  // 1. 프로필 이미지 체크
+  for (const file of profileImages.value) {
+    if (file.size > MAX_FILE_SIZE) {
+      return alertStore.show(
+        `프로필 이미지(${file.name})가 100MB를 초과합니다.`,
+        'danger',
+      )
+    }
+  }
+
+  // 2. 첨부파일 체크
+  for (const file of attachments.value) {
+    if (file.size > MAX_FILE_SIZE) {
+      return alertStore.show(
+        `첨부파일(${file.name})이 100MB를 초과합니다.`,
+        'danger',
+      )
+    }
   }
 
   // 정리된 프로젝트 리스트

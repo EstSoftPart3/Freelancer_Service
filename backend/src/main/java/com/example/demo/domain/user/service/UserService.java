@@ -79,10 +79,7 @@ public class UserService {
             companyProfileDTO.setUserSq(userDTO.getUserSq()); // user insert 후 자동 생성된 PK 필요
             companyProfileDTO.setAddressSq(addressDTO.getAddressSq());
             companyProfileDTO.setCompanyNm(requestDto.getCompanyNm());
-            companyProfileDTO.setCompanyCeoNm(requestDto.getCompanyCeoNm());
-            companyProfileDTO.setCompanyOpenDt(requestDto.getCompanyOpenDt());
-            companyProfileDTO.setCompanyBizNum(requestDto.getCompanyBizNum());
-
+            companyProfileDTO.setCompanyAuthStatusCd(2501L);
             userRepository.insertCompanyProfile(companyProfileDTO);
         }
     }
@@ -109,7 +106,7 @@ public class UserService {
         FindIdResponseDTO dto = new FindIdResponseDTO();
         dto.setUserId((String) userInfo.get("userId"));
         dto.setUserNm((String) userInfo.get("userNm"));
-     // 날짜 타입 안전하게 변환
+        // 날짜 타입 안전하게 변환
         Object createdAtObj = userInfo.get("userCreatedAtDtm");
         if (createdAtObj instanceof java.sql.Timestamp) {
             dto.setUserCreatedAtDtm(((java.sql.Timestamp) createdAtObj).toLocalDateTime());

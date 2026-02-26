@@ -19,7 +19,10 @@ public class ProjectSummary {
 	private String projectTtl;
 	private String companyNm;
 	private String companyImageUrl;
-	private String address;
+	private String detailedAddress; // 상세 주소 (시/구 포함)
+	private String detailedAddressDetail; // 상세 주소 (사용자 입력 상세)
+	private String subwayAddress; // 지하철역 주소/명칭
+	private Long addressTypeCd;
 	private String descrption;
 	private String preferContent;
 	private String imageUrl;
@@ -36,6 +39,7 @@ public class ProjectSummary {
 	private String recruitStatus;
 
 	private Long salary;
+	private String salaryNegotiableYn;
 	private List<String> reqSkills;
 
 	private String hasScrapped;
@@ -51,7 +55,10 @@ public class ProjectSummary {
 			String hasScrapped, String companyImageUrl, String formattedSalary) {
 		return ProjectSummary.builder()
 				.projectSq(project.getProjectSq())
-				.address(address)
+				.detailedAddress(project.getDetailedAddress())
+				.detailedAddressDetail(project.getDetailedAddressDetail())
+				.subwayAddress(project.getSubwayAddress())
+				.addressTypeCd(project.getAddressTypeCd())
 				.projectTtl(project.getProjectTtl())
 				.descrption(project.getProjectDescriptionTxt())
 				.preferContent(project.getProjectPreferenceTxt())
@@ -59,6 +66,8 @@ public class ProjectSummary {
 				.viewCnt(project.getProjectViewCnt())
 				.applicantCnt(project.getProjectCandidateCnt())
 				.salary(project.getProjectSalary())
+				.salaryNegotiableYn(project.getProjectSalaryNegotiableYn())
+				.formattedSalary(formattedSalary)
 				.companyNm(util.convertCompanySqToName(project.getCompanySq()))
 				.companyImageUrl(companyImageUrl)
 				.projectCreatedDt(project.getProjectCreatedAtDtm().toLocalDate())

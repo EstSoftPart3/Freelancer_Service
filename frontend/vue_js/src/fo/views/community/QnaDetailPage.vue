@@ -75,10 +75,12 @@ import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { onMounted } from 'vue'
 import { useBoardStore } from '@/fo/stores/boardStore'
+import { useRoute } from 'vue-router'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
 const boardStore = useBoardStore()
+const route = useRoute()
 
 const props = defineProps({ board_sq: String })
 
@@ -110,6 +112,13 @@ const getBoard = async () => {
     if (res) {
       boardInfo.value = res.output
       boardStore.viewerSq = res.output.viewerSq
+
+      // [추가] URL에 answerSq 파라미터가 있으면 자동으로 모달 오픈
+      const targetAnswerSq = route.query.answerSq
+      if (targetAnswerSq) {
+        // 문자열로 올 수 있으므로 숫자로 변환하여 비교하거나 처리
+        clickApplication(Number(targetAnswerSq))
+      }
     }
   } catch (error) {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')

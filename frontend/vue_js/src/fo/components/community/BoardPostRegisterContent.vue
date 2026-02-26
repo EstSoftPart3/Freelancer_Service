@@ -72,7 +72,7 @@
           href="#"
           class="btn btn-rounded btn-3d btn-light btn-sm d-flex align-items-center px-3 py-2"
         >
-          {{ tag }}
+          #{{ tag }}
           <i class="fas fa-times ms-2" @click.prevent="removeNTag(tag)"></i>
         </a>
       </div>

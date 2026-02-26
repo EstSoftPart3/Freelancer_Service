@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import com.example.demo.domain.mypage.dto.AddressDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 import com.example.demo.domain.mypage.dto.request.AffiliationInfoUpdateRequestDTO;
+import com.example.demo.domain.mypage.dto.request.CompanyVerifyRequestDTO;
 import com.example.demo.domain.mypage.dto.request.PasswordCheckRequestDTO;
 import com.example.demo.domain.mypage.dto.request.UserInfoUpdateRequestDTO;
 import com.example.demo.domain.mypage.dto.response.AffiliationInfoResponseDTO;
@@ -223,5 +225,19 @@ public class InformationEditController {
         } catch (Exception e) {
             return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "프로필 이미지 삭제에 실패했습니다.");
         }
+    }
+
+    @PostMapping("/verify-enterprise")
+    public ApiResponse<Void> verifyEnterprise(
+            @RequestBody CompanyVerifyRequestDTO requestDto,
+            @AuthenticationPrincipal Long userSq) {
+
+        try {
+            informationEditService.updateCompanyVerification(userSq, requestDto);
+            return ApiResponse.of(HttpStatus.OK, "기업 인증에 성공하였습니다.", null);
+        } catch (Exception e) {
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "기업 인증에 실패했습니다.");
+        }
+
     }
 }

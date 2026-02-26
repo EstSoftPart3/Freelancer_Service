@@ -17,15 +17,16 @@
         <tr v-for="board in boardList" :key="board.sq">
           <td>{{ board.sq }}</td>
           <td class="text-start px-3">
-            <a :href="`/${isQna ? 'qna' : 'board'}/${board.sq}`"
-              >{{ board.ttl
-              }}<span
+            <router-link :to="`/${detailPath}/${board.sq}`">
+              {{ board.ttl }}
+              <span
                 class="text-grey ml-1 px-2"
                 v-show="isQna && board.answerCnt > 0"
-                ><i class="fas fa-comment-dots me-1"></i>답변
-                {{ board.answerCnt }}</span
-              ></a
-            >
+              >
+                <i class="fas fa-comment-dots me-1"></i>답변
+                {{ board.answerCnt }}
+              </span>
+            </router-link>
             <BoardTags
               :skillTags="board.skillTags"
               :normalTags="board.normalTags"
@@ -77,10 +78,17 @@ import BoardTags from './BoardTags.vue'
 const props = defineProps({
   boardList: { type: Array, default: () => [] },
   isQna: { type: Boolean, default: false },
+  isNotice: { type: Boolean, default: false },
 })
 
 const boardList = computed(() => props.boardList)
 const isQna = computed(() => props.isQna)
+
+const detailPath = computed(() => {
+  if (props.isQna) return 'qna'
+  if (props.isNotice) return 'notice'
+  return 'board'
+})
 
 const formatTime = (createdAt) => {
   const date = new Date(createdAt)
