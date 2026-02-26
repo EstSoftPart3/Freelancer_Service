@@ -1,4 +1,4 @@
-package com.example.demo.domain.admin;
+package com.example.demo.domain.admin.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

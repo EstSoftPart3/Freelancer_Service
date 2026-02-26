@@ -47,12 +47,18 @@ export const noticeApi = {
    */
   getNotices: async (
     page: number = 1,
-    size: number = 10
+    size: number = 10,
+    keyword?: string, // 추가
+    sortField?: string, // 추가
+    sortOrder?: string // 추가
   ): Promise<ApiResponse<NoticeListResponse>> => {
-    // any 대신 정의한 NoticeListResponse를 사용하여 타입을 안전하게 만듭니다.
-    return await api.$get<ApiResponse<NoticeListResponse>>(
-      `/notice?page=${page}&size=${size}`
-    )
+    // 쿼리 스트링 조립
+    let url = `/notice?page=${page}&size=${size}`
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`
+    if (sortField) url += `&sortField=${sortField}`
+    if (sortOrder) url += `&sortOrder=${sortOrder}`
+
+    return await api.$get<ApiResponse<NoticeListResponse>>(url)
   },
 
   // 공지사항 삭제
@@ -64,7 +70,32 @@ export const noticeApi = {
    * 공지사항 상세 조회 (수정 폼 데이터 채우기용)
    */
   getNoticeDetail: async (boardSq: number) => {
-    // ApiResponse<BoardResponse> 형태로 데이터가 옵니다.
     return await api.$get<ApiResponse<Notice>>(`/notice/${boardSq}`)
+  },
+
+  // 댓글 삭제 메서드
+  deleteComment: async (commentSq: number) => {
+    return await api.$delete(`/notice/comments/${commentSq}`)
+  },
+
+  /** * [추가] 공지사항 댓글 등록
+   */
+  createNoticeComment: async (data: {
+    boardSq: number
+    description: string
+    parentCommentSq: number | null
+  }) => {
+    return await api.$post('/notice/comments', data)
+  },
+
+  /** * [추가] 공지사항 댓글 수정
+   */
+  updateNoticeComment: async (
+    commentSq: number,
+    data: {
+      description: string
+    }
+  ) => {
+    return await api.$put(`/notice/comments/${commentSq}`, data)
   },
 }

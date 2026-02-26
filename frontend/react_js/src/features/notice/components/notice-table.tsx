@@ -6,11 +6,7 @@ import {
   type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
@@ -26,37 +22,40 @@ import {
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { type Notice } from '../data/schema'
 import { DataTableBulkActions } from './data-table-bulk-actions'
-// noticeColumns로 임포트 (파일 이름에 맞춰 확인 필요)
 import { noticeColumns as columns } from './notice-columns'
 
-// 1. 경로 수정: 우리가 만든 공지사항 라우트 경로와 일치해야 합니다.
 const route = getRouteApi('/_authenticated/contents/notice/')
 
+// 부모로부터 받는 Props 정의 (TypeScript 에러 해결)
 type DataTableProps = {
   data: Notice[]
+  keyword: string
+  setKeyword: (val: string) => void
+  setPage: (page: number) => void
+  setSortField: (field: string) => void
+  setSortOrder: (order: string) => void
 }
 
-export function NoticeTable({ data }: DataTableProps) {
+export function NoticeTable({
+  data,
+  keyword,
+  setKeyword,
+  setPage,
+  setSortField,
+  setSortOrder,
+}: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'createdAt', desc: true },
+  ])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
-  // 2. URL 상태 동기화 설정 수정
-  const {
-    globalFilter,
-    onGlobalFilterChange,
-    columnFilters,
-    onColumnFiltersChange,
-    pagination,
-    onPaginationChange,
-    ensurePageInRange,
-  } = useTableUrlState({
-    search: route.useSearch(),
-    navigate: route.useNavigate(),
-    pagination: { defaultPage: 1, defaultPageSize: 10 },
-    globalFilter: { enabled: true, key: 'filter' },
-    columnFilters: [], // 공지사항은 일단 상태/우선순위 필터가 없으므로 비워둡니다.
-  })
+  const { pagination, onPaginationChange, ensurePageInRange } =
+    useTableUrlState({
+      search: route.useSearch(),
+      navigate: route.useNavigate(),
+      pagination: { defaultPage: 1, defaultPageSize: 10 },
+    })
 
   const table = useReactTable({
     data,
@@ -65,33 +64,48 @@ export function NoticeTable({ data }: DataTableProps) {
       sorting,
       columnVisibility,
       rowSelection,
-      columnFilters,
-      globalFilter,
+      globalFilter: keyword,
       pagination,
     },
+    // 서버 사이드 처리를 위한 핵심 설정
+    manualSorting: true,
+    manualFiltering: true,
+    manualPagination: true,
+
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
-    // 3. 검색 로직 수정 (ID 대신 SQ로 검색)
-    globalFilterFn: (row, _columnId, filterValue) => {
-      const sq = String(row.getValue('sq')).toLowerCase()
-      const title = String(row.getValue('title')).toLowerCase()
-      const searchValue = String(filterValue).toLowerCase()
 
-      return sq.includes(searchValue) || title.includes(searchValue)
+    // 정렬 클릭 시 실행
+    onSortingChange: (updater) => {
+      const nextSorting =
+        typeof updater === 'function' ? updater(sorting) : updater
+      setSorting(nextSorting)
+      if (nextSorting.length > 0) {
+        setSortField(nextSorting[0].id)
+        setSortOrder(nextSorting[0].desc ? 'DESC' : 'ASC')
+        setPage(1)
+      }
     },
+
+    onColumnVisibilityChange: setColumnVisibility,
+
+    // 검색어 입력 시 실행
+    onGlobalFilterChange: (val) => {
+      setKeyword(String(val))
+      setPage(1)
+    },
+
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    onPaginationChange,
-    onGlobalFilterChange,
-    onColumnFiltersChange,
+    getPaginationRowModel: getPaginationRowModel(), // 페이징 인터페이스 유지를 위해 필요
+    onPaginationChange: (updater) => {
+      onPaginationChange(updater)
+      const nextState =
+        typeof updater === 'function' ? updater(pagination) : updater
+      setPage(nextState.pageIndex + 1)
+    },
   })
 
+  // URL 상태 동기화 (기존 로직 유지)
   const pageCount = table.getPageCount()
   useEffect(() => {
     ensurePageInRange(pageCount)
@@ -99,11 +113,10 @@ export function NoticeTable({ data }: DataTableProps) {
 
   return (
     <div className={cn('flex flex-1 flex-col gap-4')}>
-      {/* 4. 툴바 수정: 불필요한 필터 제거 */}
       <DataTableToolbar
         table={table}
-        searchPlaceholder='제목 또는 번호로 검색...'
-        filters={[]} // 공지사항용 카테고리 필터는 나중에 추가합시다!
+        searchPlaceholder='제목으로 검색...'
+        filters={[]}
       />
       <div className='overflow-hidden rounded-md border'>
         <Table className='min-w-xl'>
@@ -111,14 +124,7 @@ export function NoticeTable({ data }: DataTableProps) {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    className={cn(
-                      header.column.columnDef.meta?.className,
-                      header.column.columnDef.meta?.thClassName
-                    )}
-                  >
+                  <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -133,18 +139,9 @@ export function NoticeTable({ data }: DataTableProps) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        cell.column.columnDef.meta?.className,
-                        cell.column.columnDef.meta?.tdClassName
-                      )}
-                    >
+                    <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

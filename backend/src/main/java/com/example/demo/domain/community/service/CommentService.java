@@ -5,14 +5,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.Notification;
-
 import org.springframework.stereotype.Service;
 
-import com.example.demo.domain.community.dto.request.*;
+import com.example.demo.domain.community.dto.request.CommentRequest;
 import com.example.demo.domain.community.dto.response.CommentResponse;
-import com.example.demo.domain.community.entity.*;
-import com.example.demo.domain.community.mapper.*;
+import com.example.demo.domain.community.entity.Answer;
+import com.example.demo.domain.community.entity.Board;
+import com.example.demo.domain.community.entity.Comment;
+import com.example.demo.domain.community.entity.Recommendation;
+import com.example.demo.domain.community.mapper.AnswerMapper;
+import com.example.demo.domain.community.mapper.BoardMapper;
+import com.example.demo.domain.community.mapper.CommentMapper;
+import com.example.demo.domain.community.mapper.RecommendationMapper;
 import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
