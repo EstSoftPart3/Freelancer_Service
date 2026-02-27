@@ -18,6 +18,9 @@ const apiInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: {
+    indexes: null,
+  },
 })
 
 apiInstance.interceptors.request.use(
