@@ -1,3 +1,4 @@
+// src/components/data-table/data-table-toolbar.tsx
 import { Cross2Icon } from '@radix-ui/react-icons'
 import { type Table } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
@@ -27,30 +28,28 @@ export function DataTableToolbar<TData>({
   filters = [],
 }: DataTableToolbarProps<TData>) {
   const isFiltered =
-    table.getState().columnFilters.length > 0 || table.getState().globalFilter
+    table.getState().columnFilters.length > 0 || !!table.getState().globalFilter
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        {searchKey ? (
-          <Input
-            placeholder={searchPlaceholder}
-            value={
-              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ''
-            }
-            onChange={(event) =>
+        <Input
+          placeholder={searchPlaceholder}
+          value={
+            searchKey
+              ? ((table.getColumn(searchKey)?.getFilterValue() as string) ?? '')
+              : ((table.getState().globalFilter as string) ?? '')
+          }
+          onChange={(event) => {
+            if (searchKey) {
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
+            } else {
+              table.setGlobalFilter(event.target.value)
             }
-            className='h-8 w-[150px] lg:w-[250px]'
-          />
-        ) : (
-          <Input
-            placeholder={searchPlaceholder}
-            value={table.getState().globalFilter ?? ''}
-            onChange={(event) => table.setGlobalFilter(event.target.value)}
-            className='h-8 w-[150px] lg:w-[250px]'
-          />
-        )}
+          }}
+          className='h-8 w-[150px] lg:w-[250px]'
+        />
+
         <div className='flex gap-x-2'>
           {filters.map((filter) => {
             const column = table.getColumn(filter.columnId)
@@ -65,6 +64,7 @@ export function DataTableToolbar<TData>({
             )
           })}
         </div>
+
         {isFiltered && (
           <Button
             variant='ghost'

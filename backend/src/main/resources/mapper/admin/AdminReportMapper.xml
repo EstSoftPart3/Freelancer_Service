@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminReportMapper">
+
+    <sql id="reportColumns"> r.report_sq AS reportSq, r.report_user_sq AS reporterSq, u.user_nm AS
+        reporterNm, r.report_target_type_cd AS targetTypeCd, CASE WHEN r.report_target_type_cd =
+        2001 THEN b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1404 WHEN
+        r.report_target_type_cd IN (2003, 2004) THEN 1405 ELSE NULL END AS originTypeCd, CASE WHEN
+        r.report_target_type_cd = 2001 AND b.board_type_cd = 1401 THEN '일반 게시글' WHEN
+        r.report_target_type_cd = 2001 AND b.board_type_cd = 1402 THEN 'Q&amp;A 질문' WHEN
+        r.report_target_type_cd = 2002 THEN '답변' WHEN r.report_target_type_cd = 2003 THEN '댓글' WHEN
+        r.report_target_type_cd = 2004 THEN '대댓글' ELSE c1.common_code_nm END AS targetTypeNm,
+        r.report_target_sq AS targetSq, CASE WHEN r.report_target_type_cd = 2001 THEN b.board_ttl
+        WHEN r.report_target_type_cd = 2002 THEN a.answer_ttl WHEN r.report_target_type_cd IN (2003,
+        2004) THEN LEFT(cmt.comment_description_txt, 30) ELSE '알 수 없는 대상' END AS targetTtl, CASE
+        WHEN r.report_target_type_cd = 2001 THEN b.board_description_edt WHEN
+        r.report_target_type_cd = 2002 THEN a.answer_description_edt WHEN r.report_target_type_cd IN
+        (2003, 2004) THEN cmt.comment_description_txt ELSE NULL END AS targetDescription,
+        r.report_reason_cd AS reasonCd, c2.common_code_nm AS reasonNm, r.report_content_txt AS
+        content, r.report_process_status_cd AS statusCd, c3.common_code_nm AS statusNm,
+        r.report_process_desc_edt AS processDesc, u2.user_nm AS processorNm, r.report_created_at_dtm
+        AS createdAt, r.report_processed_at_dtm AS processedAt </sql>
+
+    <sql id="reportJoins"> FROM tbl_report_s r JOIN tbl_user_m u ON r.report_user_sq = u.user_sq
+        LEFT JOIN tbl_user_m u2 ON r.report_process_user_sq = u2.user_sq LEFT JOIN tbl_common_code_c
+        c1 ON r.report_target_type_cd = c1.common_code_sq LEFT JOIN tbl_common_code_c c2 ON
+        r.report_reason_cd = c2.common_code_sq LEFT JOIN tbl_common_code_c c3 ON
+        r.report_process_status_cd = c3.common_code_sq LEFT JOIN tbl_board_m b ON r.report_target_sq
+        = b.board_sq AND r.report_target_type_cd = 2001 LEFT JOIN tbl_board_answer_s a ON
+        r.report_target_sq = a.answer_sq AND r.report_target_type_cd = 2002 LEFT JOIN
+        tbl_board_comment_s cmt ON r.report_target_sq = cmt.comment_sq AND r.report_target_type_cd
+        IN (2003, 2004) </sql>
+
+    <sql id="reportWhere">
+        <if test="statusCds != null and statusCds.size > 0"> AND r.report_process_status_cd IN <foreach
+                item="s" collection="statusCds" open="(" separator="," close=")">#{s}</foreach>
+        </if>
+        <if
+            test="keyword != null and keyword != ''"> AND ( u.user_nm LIKE CONCAT('%', #{keyword},
+        '%') OR r.report_content_txt LIKE CONCAT('%', #{keyword}, '%') OR b.board_ttl LIKE
+        CONCAT('%', #{keyword}, '%') OR a.answer_ttl LIKE CONCAT('%', #{keyword}, '%') OR
+        cmt.comment_description_txt LIKE CONCAT('%', #{keyword}, '%') ) </if>
+    </sql>
+
+    <select id="findAllReports" resultType="com.example.demo.domain.admin.dto.AdminReportListDTO">
+        SELECT <include refid="reportColumns" />
+        <include refid="reportJoins" /> WHERE 1=1 <include
+            refid="reportWhere" /> ORDER BY <choose>
+            <when test="sortField == 'reporterNm'"> u.user_nm </when>
+            <when test="sortField == 'targetTtl'"> (CASE WHEN r.report_target_type_cd = 2001 THEN
+        b.board_ttl WHEN r.report_target_type_cd = 2002 THEN a.answer_ttl ELSE
+        cmt.comment_description_txt END) </when>
+            <when test="sortField == 'reasonNm'"> c2.common_code_nm </when>
+            <when test="sortField == 'statusCd'"> r.report_process_status_cd </when>
+            <when test="sortField == 'originTypeCd'"> (CASE WHEN r.report_target_type_cd = 2001 THEN
+        b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1404 ELSE 1405 END) </when>
+            <otherwise> r.report_created_at_dtm </otherwise>
+        </choose> ${sortOrder} LIMIT
+        #{size} OFFSET #{offset} </select>
+
+    <select id="findById" resultType="com.example.demo.domain.admin.dto.AdminReportListDTO"> SELECT <include
+            refid="reportColumns" />
+        <include refid="reportJoins" /> WHERE r.report_sq = #{reportSq} </select>
+
+    <select id="countReports" resultType="Long"> SELECT COUNT(*) <include refid="reportJoins" />
+        WHERE 1=1 <include refid="reportWhere" />
+    </select>
+
+    <update id="updateReportStatus"> UPDATE tbl_report_s SET report_process_status_cd = #{statusCd},
+        report_process_desc_edt = #{processDesc}, report_process_user_sq = #{adminSq},
+        report_processed_at_dtm = NOW() WHERE report_sq = #{reportSq} </update>
+
+</mapper>
