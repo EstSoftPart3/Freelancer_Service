@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminDashBoardMapper">
+	
+ 	<select id="getWeeklyConnectedUserCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">                    
+ 		SELECT count(distinct u.user_sq) AS count, DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d") AS date 
+ 		FROM TBL_USER_ONLINE_S u 
+ 		WHERE u.access_log_connected_at_dtm >= DATE_SUB(NOW(), INTERVAL 7 DAY)                         
+  		GROUP BY DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d")
+    </select>
+    
+     <select id="getDayConnectedUserCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">                    
+ 		SELECT count(distinct u.user_sq) AS count, DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d") AS date 
+ 		FROM TBL_USER_ONLINE_S u 
+ 		WHERE u.access_log_connected_at_dtm >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+ 		GROUP BY DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d")                   
+    </select>
+	
+	<select id="getWeeklyProjectCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_PROJECT_M t 
+		WHERE t.project_created_at_dtm >= DATE_SUB(NOW(), INTERVAL 7 DAY) 
+		GROUP BY DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayProjectCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_PROJECT_M t
+		WHERE t.project_created_at_dtm >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getWeeklyJobCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_COMPANY_APPLICATION_H t
+		WHERE t.company_application_created_at_dtm >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayJobCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_COMPANY_APPLICATION_H t
+		WHERE t.company_application_created_at_dtm >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getWeeklyPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_BOARD_M t
+		WHERE t.board_created_at_dtm >=  DATE_SUB(NOW(), INTERVAL 7 DAY)
+		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_BOARD_M t
+		WHERE t.board_created_at_dtm >=  DATE_SUB(NOW(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
+	</select>
+
+	<select id="getWeeklyCommentCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.comment_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_BOARD_COMMENT_S t 
+		WHERE t.comment_created_at_dtm >=  DATE_SUB(NOW(), INTERVAL 7 DAY)
+		GROUP BY DATE_FORMAT(t.comment_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayCommentCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.comment_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_BOARD_COMMENT_S t 
+		WHERE t.comment_created_at_dtm >=  DATE_SUB(NOW(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.comment_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<insert id="insertConnectedUser">
+		INSERT INTO TBL_USER_ONLINE_S (access_log_connected_at_dtm, user_sq)
+		VALUES (NOW(), #{user_sq})
+	</insert>
+	
+	<select id="getLatestPosts" resultType="com.example.demo.domain.admin.dto.response.LatestPostsDTO">
+		SELECT t.board_sq AS id, t.board_ttl AS title, m.user_nm AS name, t.board_comment_cnt AS comments, DATE_FORMAT(t.board_created_at_dtm, "%H:%i") AS time
+		FROM TBL_BOARD_M t 
+		LEFT JOIN TBL_USER_M m ON t.user_sq = m.user_sq
+		ORDER BY t.board_created_at_dtm DESC
+		LIMIT 5
+	</select>
+</mapper>
