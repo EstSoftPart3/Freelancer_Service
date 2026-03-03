@@ -1,5 +1,5 @@
 // src/features/board/components/board-primary-buttons.tsx
-import { Download, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useBoard } from './board-provider'
 
@@ -8,13 +8,13 @@ export function BoardPrimaryButtons() {
 
   return (
     <div className='flex gap-2'>
-      <Button
+      {/* <Button
         variant='outline'
         className='space-x-1'
         onClick={() => setOpen('import')}
       >
         <span>가져오기</span> <Download size={18} />
-      </Button>
+      </Button> */}
       <Button
         className='space-x-1'
         onClick={() => {

@@ -87,7 +87,7 @@ export const sidebarData: SidebarData = {
             },
             {
               title: '신고 내역 관리',
-              url: '/contents/reports',
+              url: '/contents/report',
               icon: ShieldAlert,
             },
           ],
