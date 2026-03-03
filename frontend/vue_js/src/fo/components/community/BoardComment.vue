@@ -172,7 +172,7 @@
                           >
                         </button>
                         <button
-                          class="text-danger font-size-10"
+                          class="text-primary font-size-10"
                           @click="clickReportApplication(reply.sq)"
                         >
                           신고
