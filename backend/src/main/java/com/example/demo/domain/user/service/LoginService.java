@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.admin.mapper.AdminDashBoardMapper;
 import com.example.demo.domain.user.dto.TokenDTO;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
@@ -21,6 +22,7 @@ public class LoginService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final AdminDashBoardMapper adminDashBoardMapper;
 
     @Transactional
     public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
@@ -54,6 +56,8 @@ public class LoginService {
         loginResponseDTO.setUserNm(user.getUserNm());
         loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 
+        adminDashBoardMapper.insertConnectedUser(user.getUserSq());
+        
         return new LoginResultDTO(tokenDTO, loginResponseDTO);
     }
 
