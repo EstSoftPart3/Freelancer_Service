@@ -131,7 +131,7 @@ export function StatisticsLogs() {
       }
     }
     fetchAll()
-  }, [selectedFilterKey])
+  }, [selectedKey, selectedFilterKey])
 
   useEffect(() => {
     const fetchStatic = async () => {
@@ -149,7 +149,7 @@ export function StatisticsLogs() {
       }
     }
     fetchStatic()
-  }, [])
+  }, [selectedKey, selectedFilterKey])
 
   return (
     <div className='space-y-4'>
