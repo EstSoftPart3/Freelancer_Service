@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -36,26 +35,27 @@ export function Dashboard() {
       {/* ===== Main ===== */}
       <Main>
         <div className='mb-2 flex items-center justify-between space-y-2'>
-          <h1 className='text-2xl font-bold tracking-tight'>Dashboard</h1>
-          <div className='flex items-center space-x-2'>
-            <Button>Download</Button>
-          </div>
+          <h1 className='text-2xl font-bold tracking-tight'>대시보드</h1>
         </div>
         <Tabs
           orientation='vertical'
-          defaultValue='overview'
+          defaultValue='statisticslogs'
           className='space-y-4'
         >
           <div className='w-full overflow-x-auto pb-2'>
             <TabsList>
-              <TabsTrigger value='overview'>Overview</TabsTrigger>
-              <TabsTrigger value='analytics'>Analytics</TabsTrigger>
-              <TabsTrigger value='statisticslogs'>Statistics & Logs</TabsTrigger>
+              <TabsTrigger value='statisticslogs'>통계 및 로그</TabsTrigger>
+              <TabsTrigger value='overview' disabled>
+                개요
+              </TabsTrigger>
+              <TabsTrigger value='analytics' disabled>
+                분석
+              </TabsTrigger>
               <TabsTrigger value='reports' disabled>
-                Reports
+                보고서
               </TabsTrigger>
               <TabsTrigger value='notifications' disabled>
-                Notifications
+                공지
               </TabsTrigger>
             </TabsList>
           </div>
