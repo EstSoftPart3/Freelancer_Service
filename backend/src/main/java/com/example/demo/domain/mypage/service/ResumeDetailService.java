@@ -41,8 +41,8 @@ public class ResumeDetailService {
         // }
 
         if (photoSaveName != null) {
-            // resume.setResumePhotoUrl("/files/" + photoSaveName); CasaOS용
-            resume.setResumePhotoUrl("/api/files/" + photoSaveName); // 로컬용
+            resume.setResumePhotoUrl("/files/" + photoSaveName); // CasaOS용
+            // resume.setResumePhotoUrl("/api/files/" + photoSaveName); // 로컬용
         }
 
         // 주소
@@ -133,8 +133,8 @@ public class ResumeDetailService {
 
                     String fileSaveName = (String) map.get("file_save_nm");
 
-                    // dto.setAttachmentFileUrl("/files/" + fileSaveName); // CasaOS용
-                    dto.setAttachmentFileUrl("/api/files/" + fileSaveName); // 로컬용
+                    dto.setAttachmentFileUrl("/files/" + fileSaveName); // CasaOS용
+                    // dto.setAttachmentFileUrl("/api/files/" + fileSaveName); // 로컬용
 
                     return dto;
                 }).collect(Collectors.toList());
