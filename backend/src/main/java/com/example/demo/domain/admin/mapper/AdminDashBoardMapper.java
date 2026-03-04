@@ -3,6 +3,7 @@ package com.example.demo.domain.admin.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.admin.dto.DateCountDTO;
 import com.example.demo.domain.admin.dto.response.LatestPostsDTO;
@@ -10,21 +11,25 @@ import com.example.demo.domain.admin.dto.response.LatestPostsDTO;
 @Mapper
 public interface AdminDashBoardMapper {
 	
-	List<DateCountDTO> getWeeklyConnectedUserCount();
+	List<DateCountDTO> getChartConnectedUserCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
 	
-	List<DateCountDTO> getWeeklyProjectCount();
+	List<DateCountDTO> getChartProjectCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
 	
-	List<DateCountDTO> getWeeklyJobCount();
+	List<DateCountDTO> getChartProjectApplicationCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
 	
-	List<DateCountDTO> getWeeklyPostCount();
+	List<DateCountDTO> getChartCompanyApplicationCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
 	
-	List<DateCountDTO> getWeeklyCommentCount();
+	List<DateCountDTO> getChartPostCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
+	
+	List<DateCountDTO> getChartCommentCount(@Param("startDate") String startDate,@Param("endDate") String endDate);
 	
 	List<DateCountDTO> getDayConnectedUserCount();
 	
 	List<DateCountDTO> getDayProjectCount();
 	
-	List<DateCountDTO> getDayJobCount();
+	List<DateCountDTO> getDayProjectApplicationCount();
+	
+	List<DateCountDTO> getDayCompanyApplicationCount();
 	
 	List<DateCountDTO> getDayPostCount();
 	
