@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
@@ -23,11 +25,11 @@ import lombok.RequiredArgsConstructor;
 public class AdminDashBoardController {
 	private final AdminDashBoardService adminDashBoardService;
 	
-	@GetMapping("/weekly")
-	public ResponseEntity<ApiResponse<List<DayStatsDTO>>> getWeeklyData(){
-		List<DayStatsDTO> weeklyStats = adminDashBoardService.getWeeklyStats();
+	@GetMapping("/chart")
+	public ResponseEntity<ApiResponse<List<DayStatsDTO>>> getChartData(@RequestParam String startDate, @RequestParam String endDate){
+		List<DayStatsDTO> chartStats = adminDashBoardService.getChartStats(startDate, endDate);
 		
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "최근 7일간 목록 조회 성공", weeklyStats));
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "차트 목록 조회 성공", chartStats));
 	}
 	
 	@GetMapping("/summary")
