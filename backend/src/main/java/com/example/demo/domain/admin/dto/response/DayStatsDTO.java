@@ -15,7 +15,8 @@ public class DayStatsDTO {
 	private String day;
 	private Long visitors;
 	private Long projects;
-	private Long jobs;
+	private Long projectApplications;
+	private Long companyApplications;
 	private Long posts;
 	private Long comments;
 }
