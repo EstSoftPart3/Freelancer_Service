@@ -145,7 +145,7 @@ public class AdminDashBoardService {
 	    }
 
 	    Double percent = yesterdayCount == 0 ? 0.0d
-	            : Math.round((todayCount - yesterdayCount) / (double) yesterdayCount * 1d);
+	            : Math.round((todayCount - yesterdayCount) / (double) yesterdayCount * 100);
 
 	    return SummaryDTO.builder()
 	            .title(title)
