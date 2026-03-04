@@ -3,7 +3,7 @@ import { useAlertStore } from '../stores/alertStore'
 
 export function navigateByUserTypeAndProjectSq(userType, projectSq) {
   const alertStore = useAlertStore()
-  console.log(userType)
+  // console.log(userType)
   if (userType === 'PERSONAL') {
     router.push(`/project/spec/user/${projectSq}`)
   } else if (userType === 'COMPANY') {

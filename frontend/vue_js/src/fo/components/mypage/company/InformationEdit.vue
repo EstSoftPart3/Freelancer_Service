@@ -690,13 +690,15 @@ const sendVerification = async () => {
   error.value = ''
   try {
     const email = editEmail.emailId + '@' + editEmail.emailDomain
-    const response = await api.$post('/email/send-code', { email })
+    // const response =
+    await api.$post('/email/send-code', { email })
 
-    console.log('인증 이메일 전송 완료', response)
-    alertStore.show(
-      '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
-      'success',
-    )
+    // console.log('인증 이메일 전송 완료', response)
+    // alertStore.show(
+    //   '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
+    //   'success',
+    // )
+    alertStore.show('인증 코드를 전송했습니다. 인증 코드 : ', 'success')
     isVerified.value = false
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error)
@@ -713,11 +715,12 @@ const verifyCode = async () => {
   error.value = ''
   try {
     const email = editEmail.emailId + '@' + editEmail.emailDomain
-    const response = await api.$post('/email/verify-code', {
+    // const response =
+    await api.$post('/email/verify-code', {
       email,
       code: editEmail.verificationCode,
     })
-    console.log('인증 성공', response)
+    // console.log('인증 성공', response)
     alertStore.show('이메일 인증에 성공하였습니다.', 'info')
     isVerified.value = true
   } catch (error) {
@@ -772,7 +775,7 @@ function saveField(field) {
   }
 
   editing[field] = false
-  console.log('form', form)
+  // console.log('form', form)
 }
 
 function cancelEdit(field) {
@@ -848,7 +851,7 @@ const saveAll = async () => {
     },
   }
 
-  console.log('requestBody', requestBody)
+  // console.log('requestBody', requestBody)
   try {
     const response = await api.$post('/mypage/edit/update', requestBody)
 

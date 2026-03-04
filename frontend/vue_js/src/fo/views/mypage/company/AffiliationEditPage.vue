@@ -602,7 +602,7 @@ const removeProfileImage = async () => {
 function onCheckboxChange(event) {
   const isChecked = event.target.checked
   form.companyIsRecruitingYn = isChecked ? 'Y' : 'N'
-  console.log('form.companyIsRecruitingYn', form.companyIsRecruitingYn)
+  // console.log('form.companyIsRecruitingYn', form.companyIsRecruitingYn)
 
   if (!isChecked) {
     api
@@ -717,7 +717,7 @@ function saveField(field) {
   if (field === 'phone' && !phoneValid.value) return
 
   editing[field] = false
-  console.log('form', form)
+  // console.log('form', form)
 }
 
 function cancelEdit(field) {
@@ -788,7 +788,7 @@ const saveAll = async () => {
     companyIsRecruitingYn: form.companyIsRecruitingYn,
   }
 
-  console.log('requestBody', requestBody)
+  // console.log('requestBody', requestBody)
   try {
     const response = await api.$post(
       '/mypage/edit/affiliation/update',
@@ -824,7 +824,7 @@ async function fetchAffiliationInfo() {
   try {
     const response = await api.$get('/mypage/edit/affiliation/info', null)
     const data = response.output
-    console.log('data', data)
+    // console.log('data', data)
 
     Object.assign(originalData, {
       companyIsRecruitingYn: data.companyIsRecruitingYn,

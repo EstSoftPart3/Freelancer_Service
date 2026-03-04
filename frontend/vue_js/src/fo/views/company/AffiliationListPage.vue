@@ -321,7 +321,7 @@ const getAfltnList = async () => {
     const res = await api.$get(
       `/affiliation?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${addressFilter}`,
     )
-    console.log(res.output)
+    // console.log(res.output)
     if (res) {
       if (res.output.totalElements == 0) {
         totalPages.value = 1

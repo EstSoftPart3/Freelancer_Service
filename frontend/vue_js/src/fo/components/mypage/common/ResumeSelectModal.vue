@@ -114,9 +114,9 @@ const getResumes = async () => {
   if (props.role === 'PERSONAL') {
     try {
       const res = await api.$get('/mypage/resume/select-list')
-      console.log('이력서 목록 응답:', res)
+      // console.log('이력서 목록 응답:', res)
       if (Array.isArray(res.output)) {
-        console.log(res.output)
+        // console.log(res.output)
         resumes.value = res.output
       } else {
         console.error('이력서 목록이 배열이 아닙니다:', res)

@@ -277,9 +277,9 @@ onMounted(async () => {
 
     const response = await api.$get(`/projects/${projectSq}/details`, config)
     project.value = response.output
-    console.log(project.value)
+    // console.log(project.value)
     scrapCount.value = response.output.projectScrapCnt
-    console.log(project.value)
+    // console.log(project.value)
   } catch (e) {
     console.error('❌ [catch 블록 진입]', e)
 
@@ -357,7 +357,7 @@ const deleteProject = () => {
     message: '한 번 삭제한 프로젝트는 복구할 수 없습니다. 삭제하시겠습니까?',
     onConfirm: async () => {
       try {
-        console.log('삭제 확정됨')
+        // console.log('삭제 확정됨')
         const res = await api.$delete(`/projects/${projectSq}`, {
           withCredentials: true,
         })
