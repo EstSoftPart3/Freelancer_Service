@@ -1,0 +1,20 @@
+package com.example.demo.domain.admin.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class LatestPostsDTO {
+	private Long id;
+	private String title;
+	private String name;
+	private Long comments;
+	private String time;
+}
