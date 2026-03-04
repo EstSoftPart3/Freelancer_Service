@@ -1,25 +1,27 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 
 interface StatisticLogsChartProps {
-  weeklyData: weeklyDataProps[]
+  chartData: chartDataProps[]
   selectedKey: string
 }
 
-interface weeklyDataProps {
+interface chartDataProps {
   day: string
   visitors: number
   projects: number
-  jobs: number
+  projectApplications: number
+  companyApplications: number
   posts: number
+  comments: number
 }
 
 export function StatisticLogsChart({
-  weeklyData,
+  chartData,
   selectedKey,
 }: StatisticLogsChartProps) {
   return (
     <ResponsiveContainer width='100%' height={350}>
-      <BarChart data={weeklyData}>
+      <BarChart data={chartData}>
         <XAxis
           dataKey='day'
           stroke='#888888'
@@ -33,6 +35,7 @@ export function StatisticLogsChart({
           fontSize={12}
           tickLine={false}
           axisLine={false}
+          allowDecimals={false}
           tickFormatter={(value) => `${value}`}
         />
         <Bar
