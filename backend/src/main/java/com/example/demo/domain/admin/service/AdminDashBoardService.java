@@ -24,15 +24,16 @@ public class AdminDashBoardService {
 	private final AdminDashBoardMapper adminDashBoardMapper;
 	
 	
-	public List<DayStatsDTO> getWeeklyStats() {
-		List<DateCountDTO> connectUserList = adminDashBoardMapper.getWeeklyConnectedUserCount();
-		List<DateCountDTO> projectList = adminDashBoardMapper.getWeeklyProjectCount();
-		List<DateCountDTO> jobList = adminDashBoardMapper.getWeeklyJobCount();
-		List<DateCountDTO> postList = adminDashBoardMapper.getWeeklyPostCount();
-		List<DateCountDTO> commentList = adminDashBoardMapper.getWeeklyCommentCount();
-		
+	public List<DayStatsDTO> getChartStats(String startDate, String endDate) {
+		List<DateCountDTO> connectUserList = adminDashBoardMapper.getChartConnectedUserCount(startDate, endDate);
+		List<DateCountDTO> projectList = adminDashBoardMapper.getChartProjectCount(startDate, endDate);
+		List<DateCountDTO> projectApplicationList = adminDashBoardMapper.getChartProjectApplicationCount(startDate, endDate);
+		List<DateCountDTO> companyApplicationList = adminDashBoardMapper.getChartCompanyApplicationCount(startDate, endDate);
+		List<DateCountDTO> postList = adminDashBoardMapper.getChartPostCount(startDate, endDate);
+		List<DateCountDTO> commentList = adminDashBoardMapper.getChartCommentCount(startDate, endDate);
+
 		Map<String, DayStatsDTO> map = new HashMap<>();
-		
+
 		for(DateCountDTO d : connectUserList) {
 			map.put(d.getDate(), new DayStatsDTO());
 			map.get(d.getDate()).setDay(d.getDate());
@@ -46,16 +47,25 @@ public class AdminDashBoardService {
 				dto.setDay(d.getDate());
 				dto.setProjects(d.getCount());
 				map.put(d.getDate(), dto);
-				
 			}
 		}
-		for(DateCountDTO d : jobList) {
+		for(DateCountDTO d : projectApplicationList) {
 			if(map.containsKey(d.getDate())) {
-				map.get(d.getDate()).setJobs(d.getCount());
+				map.get(d.getDate()).setProjectApplications(d.getCount());
 			} else {
 				DayStatsDTO dto = new DayStatsDTO();
 				dto.setDay(d.getDate());
-				dto.setJobs(d.getCount());
+				dto.setProjectApplications(d.getCount());
+				map.put(d.getDate(), dto);
+			}
+		}
+		for(DateCountDTO d : companyApplicationList) {
+			if(map.containsKey(d.getDate())) {
+				map.get(d.getDate()).setCompanyApplications(d.getCount());
+			} else {
+				DayStatsDTO dto = new DayStatsDTO();
+				dto.setDay(d.getDate());
+				dto.setCompanyApplications(d.getCount());
 				map.put(d.getDate(), dto);
 			}
 		}
@@ -79,26 +89,30 @@ public class AdminDashBoardService {
 				map.put(d.getDate(), dto);
 			}
 		}
-		
-		for(int i = 0; i <= 6; i++) {
-			LocalDate date = LocalDate.now().minusDays(i);
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-			String str = date.format(formatter);
-			
-			if(!map.containsKey(str)) {
-				map.put(str, new DayStatsDTO());
-				map.get(str).setDay(str);
-				map.get(str).setVisitors(0L);
-				map.get(str).setProjects(0L);
-				map.get(str).setJobs(0L);
-				map.get(str).setPosts(0L);
-				map.get(str).setComments(0L);
-			}
+
+		LocalDate start = LocalDate.parse(startDate);
+		LocalDate end = LocalDate.parse(endDate);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+		for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+		    String str = date.format(formatter);
+
+		    if (!map.containsKey(str)) {
+		        DayStatsDTO dto = new DayStatsDTO();
+		        dto.setDay(str);
+		        dto.setVisitors(0L);
+		        dto.setProjects(0L);
+		        dto.setProjectApplications(0L);
+		        dto.setCompanyApplications(0L);
+		        dto.setPosts(0L);
+		        dto.setComments(0L);
+		        map.put(str, dto);
+		    }
 		}
-		
+
 		List<DayStatsDTO> result = new ArrayList<>(map.values());
 		result.sort(Comparator.comparing(DayStatsDTO::getDay));
-		
+
 		return result;
 	}
 	
@@ -107,7 +121,8 @@ public class AdminDashBoardService {
 
 	    result.add(toSummaryDTO("접속자", adminDashBoardMapper.getDayConnectedUserCount()));
 	    result.add(toSummaryDTO("프로젝트", adminDashBoardMapper.getDayProjectCount()));
-	    result.add(toSummaryDTO("채용", adminDashBoardMapper.getDayJobCount()));
+	    result.add(toSummaryDTO("프로젝트 지원", adminDashBoardMapper.getDayProjectApplicationCount()));
+	    result.add(toSummaryDTO("소속 지원", adminDashBoardMapper.getDayCompanyApplicationCount()));
 	    result.add(toSummaryDTO("게시글", adminDashBoardMapper.getDayPostCount()));
 	    result.add(toSummaryDTO("댓글", adminDashBoardMapper.getDayCommentCount()));
 
@@ -130,7 +145,7 @@ public class AdminDashBoardService {
 	    }
 
 	    Double percent = yesterdayCount == 0 ? 0.0d
-	            : (todayCount - yesterdayCount) / (double) yesterdayCount * 100d;
+	            : Math.round((todayCount - yesterdayCount) / (double) yesterdayCount * 1d);
 
 	    return SummaryDTO.builder()
 	            .title(title)
