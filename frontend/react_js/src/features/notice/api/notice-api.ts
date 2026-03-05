@@ -23,7 +23,7 @@ export const noticeApi = {
    * 공지사항 등록
    */
   createNotice: async (formData: FormData) => {
-    return await api.$post('/notice', formData, {
+    return await api.$post('/admin/notice', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -35,7 +35,7 @@ export const noticeApi = {
    */
   updateNotice: async (boardSq: number, formData: FormData) => {
     // 사용자님의 api.$put에 config가 없다면 $patch를 사용하거나 api.ts를 수정하세요.
-    return await api.$patch(`/notice/${boardSq}`, formData, {
+    return await api.$patch(`/admin/notice/${boardSq}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -63,19 +63,19 @@ export const noticeApi = {
 
   // 공지사항 삭제
   deleteNotice: async (boardSq: number) => {
-    return await api.$delete(`/notice/${boardSq}`)
+    return await api.$delete(`/admin/notice/${boardSq}`)
   },
 
   /**
    * 공지사항 상세 조회 (수정 폼 데이터 채우기용)
    */
   getNoticeDetail: async (boardSq: number) => {
-    return await api.$get<ApiResponse<Notice>>(`/notice/${boardSq}`)
+    return await api.$get<ApiResponse<Notice>>(`/admin/notice/${boardSq}`)
   },
 
   // 댓글 삭제 메서드
   deleteComment: async (commentSq: number) => {
-    return await api.$delete(`/notice/comments/${commentSq}`)
+    return await api.$delete(`/admin/notice/comments/${commentSq}`)
   },
 
   /** * [추가] 공지사항 댓글 등록
@@ -85,7 +85,7 @@ export const noticeApi = {
     description: string
     parentCommentSq: number | null
   }) => {
-    return await api.$post('/notice/comments', data)
+    return await api.$post('/admin/notice/comments', data)
   },
 
   /** * [추가] 공지사항 댓글 수정
@@ -96,6 +96,6 @@ export const noticeApi = {
       description: string
     }
   ) => {
-    return await api.$put(`/notice/comments/${commentSq}`, data)
+    return await api.$put(`/admin/notice/comments/${commentSq}`, data)
   },
 }
