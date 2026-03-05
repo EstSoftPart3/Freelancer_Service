@@ -10,11 +10,11 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { type User } from '../data/schema'
+import { type AdminUser } from '../data/schema'
 import { useUsers } from './users-provider'
 
 type DataTableRowActionsProps = {
-  row: Row<User>
+  row: Row<AdminUser>
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
