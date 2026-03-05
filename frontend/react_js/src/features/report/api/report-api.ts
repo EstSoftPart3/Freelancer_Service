@@ -50,7 +50,7 @@ export const reportApi = {
    */
   getReports: async (params: ReportQueryParams) => {
     return await api.$get<AdminReportListResponse>(
-      '/report',
+      '/admin/report',
       params as Record<string, unknown>
     )
   },
@@ -59,7 +59,7 @@ export const reportApi = {
    * GET /admin/report/{reportSq} (실제 경로는 API 인스턴스 설정에 따라 '/report/{reportSq}')
    */
   getReportDetail: async (reportSq: number) => {
-    return await api.$get<AdminReport>(`/report/${reportSq}`)
+    return await api.$get<AdminReport>(`/admin/report/${reportSq}`)
   },
 
   /**
@@ -74,6 +74,8 @@ export const reportApi = {
     params.append('statusCd', statusCd.toString())
     if (processDesc) params.append('processDesc', processDesc)
 
-    return await api.$patch(`/report/${reportSq}/process?${params.toString()}`)
+    return await api.$patch(
+      `/admin/report/${reportSq}/process?${params.toString()}`
+    )
   },
 }
