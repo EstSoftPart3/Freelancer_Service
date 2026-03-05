@@ -1,18 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  type SortingState,
-  type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { cn } from '@/lib/utils'
-import { type NavigateFn, useTableUrlState } from '@/hooks/use-table-url-state'
 import {
   Table,
   TableBody,
@@ -22,102 +13,125 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { roles } from '../data/data'
-import { type User } from '../data/schema'
-import { DataTableBulkActions } from './data-table-bulk-actions'
+// import { roles } from '../data/data'
+import { type AdminUser } from '../data/schema'
 import { usersColumns as columns } from './users-columns'
 
-type DataTableProps = {
-  data: User[]
-  search: Record<string, unknown>
-  navigate: NavigateFn
+type UserTableProps = {
+  data: AdminUser[]
+  totalCount: number
+  page: number
+  typeCds: number[]
+  keyword: string
+  sortField: string
+  sortOrder: string
+  setKeyword: (val: string) => void
+  setPage: (page: number) => void
+  onSort: (field: string, order: string) => void
+  onFilterType: (types: number[]) => void
+  setTagKeyword: (val: string) => void
 }
 
-export function UsersTable({ data, search, navigate }: DataTableProps) {
-  // Local UI-only states
+export function UsersTable({
+  data,
+  totalCount,
+  page,
+  typeCds,
+  keyword,
+  sortField,
+  sortOrder,
+  setKeyword,
+  setPage,
+  onSort,
+  onFilterType,
+  setTagKeyword: _setTagKeyword,
+}: UserTableProps) {
   const [rowSelection, setRowSelection] = useState({})
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [sorting, setSorting] = useState<SortingState>([])
+  const sorting = useMemo(
+    () => [{ id: sortField, desc: sortOrder === 'DESC' }],
+    [sortField, sortOrder]
+  )
 
-  // Local state management for table (uncomment to use local-only state, not synced with URL)
-  // const [columnFilters, onColumnFiltersChange] = useState<ColumnFiltersState>([])
-  // const [pagination, onPaginationChange] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
-
-  // Synced with URL states (keys/defaults mirror users route search schema)
-  const {
-    columnFilters,
-    onColumnFiltersChange,
-    pagination,
-    onPaginationChange,
-    ensurePageInRange,
-  } = useTableUrlState({
-    search,
-    navigate,
-    pagination: { defaultPage: 1, defaultPageSize: 10 },
-    globalFilter: { enabled: false },
-    columnFilters: [
-      // username per-column text filter
-      { columnId: 'username', searchKey: 'username', type: 'string' },
-      { columnId: 'status', searchKey: 'status', type: 'array' },
-      { columnId: 'role', searchKey: 'role', type: 'array' },
-    ],
-  })
-
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
     state: {
-      sorting,
-      pagination,
+      sorting, // [해결] 이제 정의한 sorting을 사용합니다.
+      globalFilter: keyword,
       rowSelection,
-      columnFilters,
-      columnVisibility,
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: 10,
+      },
+      columnFilters: typeCds.length
+        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+        : [],
     },
-    enableRowSelection: true,
-    onPaginationChange,
-    onColumnFiltersChange,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
-    getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: true, // 행 선택 기능 활성화
+    onRowSelectionChange: setRowSelection, // [연결] 행 선택 변경 함수 연결
+    onGlobalFilterChange: setKeyword, // [연결] 사용하지 않던 setKeyword 연결
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    pageCount: Math.ceil(totalCount / 10),
+    enableMultiSort: false,
+
+    onSortingChange: (updater) => {
+      // 현재 sorting 상태를 넘겨서 다음 정렬 상태를 계산합니다.
+      const nextSorting =
+        typeof updater === 'function' ? updater(sorting) : updater
+
+      if (nextSorting.length > 0) {
+        const newField = nextSorting[0].id
+        const newOrder = nextSorting[0].desc ? 'DESC' : 'ASC'
+
+        onSort(newField, newOrder)
+      } else {
+        onSort('createdAt', 'DESC')
+      }
+    },
+
+    onPaginationChange: (updater) => {
+      const nextState =
+        typeof updater === 'function'
+          ? updater({ pageIndex: page - 1, pageSize: 10 })
+          : updater
+      setPage(nextState.pageIndex + 1)
+    },
+
+    onColumnFiltersChange: (updater) => {
+      const currentFilters = typeCds.length
+        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+        : []
+      const nextFilters =
+        typeof updater === 'function' ? updater(currentFilters) : updater
+
+      const typeFilter = nextFilters.find((f) => f.id === 'userTypeCd')
+      if (typeFilter) {
+        onFilterType((typeFilter.value as string[]).map(Number))
+      } else {
+        onFilterType([])
+      }
+    },
+
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  useEffect(() => {
-    ensurePageInRange(table.getPageCount())
-  }, [table, ensurePageInRange])
+  const typeOptions = [
+    { label: '일반 회원', value: '301' },
+    { label: '기업 회원', value: '302' },
+  ]
 
   return (
-    <div
-      className={cn(
-        'max-sm:has-[div[role="toolbar"]]:mb-16', // Add margin bottom to the table on mobile when the toolbar is visible
-        'flex flex-1 flex-col gap-4'
-      )}
-    >
+    <div className='space-y-4'>
       <DataTableToolbar
         table={table}
-        searchPlaceholder='Filter users...'
-        searchKey='username'
+        searchPlaceholder='유저명을 입력해주세요'
         filters={[
           {
-            columnId: 'status',
-            title: 'Status',
-            options: [
-              { label: 'Active', value: 'active' },
-              { label: 'Inactive', value: 'inactive' },
-              { label: 'Invited', value: 'invited' },
-              { label: 'Suspended', value: 'suspended' },
-            ],
-          },
-          {
-            columnId: 'role',
-            title: 'Role',
-            options: roles.map((role) => ({ ...role })),
+            columnId: 'userTypeCd',
+            title: '유저 유형',
+            options: typeOptions,
           },
         ]}
       />
@@ -126,46 +140,24 @@ export function UsersTable({ data, search, navigate }: DataTableProps) {
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='group/row'>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      className={cn(
-                        'bg-background group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted',
-                        header.column.columnDef.meta?.className,
-                        header.column.columnDef.meta?.thClassName
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {!header.isPlaceholder &&
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
                       )}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className='group/row'
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        'bg-background group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted',
-                        cell.column.columnDef.meta?.className,
-                        cell.column.columnDef.meta?.tdClassName
-                      )}
-                    >
+                    <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -180,7 +172,7 @@ export function UsersTable({ data, search, navigate }: DataTableProps) {
                   colSpan={columns.length}
                   className='h-24 text-center'
                 >
-                  No results.
+                  데이터가 없습니다.
                 </TableCell>
               </TableRow>
             )}
@@ -188,7 +180,6 @@ export function UsersTable({ data, search, navigate }: DataTableProps) {
         </Table>
       </div>
       <DataTablePagination table={table} className='mt-auto' />
-      <DataTableBulkActions table={table} />
     </div>
   )
 }
