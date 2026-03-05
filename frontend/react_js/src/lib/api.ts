@@ -6,7 +6,7 @@ import axios, {
 } from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
 
-export const baseUrl = 'http://localhost:8080/api/admin'
+export const baseUrl = 'http://localhost:8080/api'
 
 // axios 내부 설정 타입에 _retry 속성을 추가하기 위한 인터페이스 확장
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
@@ -17,6 +17,9 @@ const apiInstance = axios.create({
   baseURL: baseUrl,
   headers: {
     'Content-Type': 'application/json',
+  },
+  paramsSerializer: {
+    indexes: null,
   },
 })
 
