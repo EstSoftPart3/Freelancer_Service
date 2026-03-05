@@ -77,7 +77,7 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: '게시글 관리',
-              url: '/contents/posts',
+              url: '/contents/board',
               icon: ClipboardList,
             },
             {
@@ -87,7 +87,7 @@ export const sidebarData: SidebarData = {
             },
             {
               title: '신고 내역 관리',
-              url: '/contents/reports',
+              url: '/contents/report',
               icon: ShieldAlert,
             },
           ],

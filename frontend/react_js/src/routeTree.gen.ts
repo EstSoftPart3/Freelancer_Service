@@ -33,7 +33,9 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
+import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -162,10 +164,22 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsReportIndexRoute =
+  AuthenticatedContentsReportIndexRouteImport.update({
+    id: '/contents/report/',
+    path: '/contents/report/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsNoticeIndexRoute =
   AuthenticatedContentsNoticeIndexRouteImport.update({
     id: '/contents/notice/',
     path: '/contents/notice/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContentsBoardIndexRoute =
+  AuthenticatedContentsBoardIndexRouteImport.update({
+    id: '/contents/board/',
+    path: '/contents/board/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -193,7 +207,9 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
+  '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -218,7 +234,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
+  '/contents/report': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,7 +264,9 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
+  '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -274,7 +294,9 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/tasks/'
     | '/users/'
+    | '/contents/board/'
     | '/contents/notice/'
+    | '/contents/report/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -299,7 +321,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/users'
+    | '/contents/board'
     | '/contents/notice'
+    | '/contents/report'
   id:
     | '__root__'
     | '/_authenticated'
@@ -326,7 +350,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
+    | '/_authenticated/contents/board/'
     | '/_authenticated/contents/notice/'
+    | '/_authenticated/contents/report/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -513,11 +539,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/report/': {
+      id: '/_authenticated/contents/report/'
+      path: '/contents/report'
+      fullPath: '/contents/report/'
+      preLoaderRoute: typeof AuthenticatedContentsReportIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/notice/': {
       id: '/_authenticated/contents/notice/'
       path: '/contents/notice'
       fullPath: '/contents/notice/'
       preLoaderRoute: typeof AuthenticatedContentsNoticeIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contents/board/': {
+      id: '/_authenticated/contents/board/'
+      path: '/contents/board'
+      fullPath: '/contents/board/'
+      preLoaderRoute: typeof AuthenticatedContentsBoardIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -555,7 +595,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
+  AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
+  AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -567,7 +609,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
+  AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
+  AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -68,6 +68,25 @@
   animation: slideUp 300ms ease-out;
 }
 
+/* App.css 또는 해당 컴포넌트 스타일 */
+.quill-content p {
+  margin-bottom: 0.5rem;
+}
+.quill-content strong {
+  font-weight: bold;
+}
+.quill-content ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+}
+.quill-content ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+}
+.quill-content li {
+  margin-bottom: 0.25rem;
+}
+
 @keyframes slideDown {
   from {
     height: 0;

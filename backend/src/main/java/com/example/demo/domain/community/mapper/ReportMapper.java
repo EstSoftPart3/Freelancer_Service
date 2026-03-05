@@ -1,17 +1,15 @@
 package com.example.demo.domain.community.mapper;
 
-
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-import com.example.demo.domain.community.entity.*;
-
-import java.util.*;
+import com.example.demo.domain.community.dto.CommonCodeDTO;
+import com.example.demo.domain.community.entity.Report;
 
 @Mapper
 public interface ReportMapper {
-//	신고 조회
-    List<Report> findAll();
-//	신고 등록
-    void insert(Report report);
-     
+    void insertReport(Report report);
+
+    List<CommonCodeDTO> findCodesByParent(@Param("parentSq") Long parentSq);
 }

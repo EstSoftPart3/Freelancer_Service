@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminBoardMapper">
+
+    <sql id="adminBoardWhere">
+        <if test="keyword != null and keyword != ''"> AND ( ttl LIKE CONCAT('%', #{keyword}, '%') OR
+        description LIKE CONCAT('%', #{keyword}, '%') OR userNm LIKE CONCAT('%', #{keyword}, '%') ) </if>
+    </sql>
+
+    <select id="findAllUnified" resultType="com.example.demo.domain.admin.dto.AdminBoardListDTO">
+        SELECT * FROM ( SELECT b.board_sq AS sq, b.board_ttl AS ttl, u.user_nm AS userNm,
+        b.board_type_cd AS boardTypeCd, b.board_created_at_dtm AS createdAt, b.board_view_cnt AS
+        viewCnt, b.board_comment_cnt AS commentCnt, b.board_recommend_cnt AS recommendCnt, CASE WHEN
+        b.board_type_cd = 1401 THEN NULL ELSE b.board_adopt_status_cd END AS boardAdoptStatusCd,
+        b.board_description_edt AS description, 'BOARD' AS mainType FROM TBL_BOARD_M b JOIN
+        TBL_USER_M u ON b.user_sq = u.user_sq WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd
+        != 1403 UNION ALL SELECT a.answer_sq AS sq, a.answer_ttl AS ttl, u.user_nm AS userNm, 1404
+        AS boardTypeCd, a.answer_created_at_dtm AS createdAt, a.answer_view_cnt AS viewCnt,
+        a.answer_comment_cnt AS commentCnt, a.answer_recommend_cnt AS recommendCnt, CASE WHEN
+        a.answer_is_adopted_yn = 'Y' THEN 1502 ELSE 1504 END AS boardAdoptStatusCd,
+        a.answer_description_edt AS description, 'ANSWER' AS mainType FROM TBL_BOARD_ANSWER_S a JOIN
+        TBL_USER_M u ON a.user_sq = u.user_sq WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE
+        1=1 <if
+            test="typeCds != null and typeCds.size > 0"> AND boardTypeCd IN <foreach item="t"
+                collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <include
+            refid="adminBoardWhere" /> ORDER BY <choose>
+            <when test="sortField == 'boardTypeCd'"> boardTypeCd </when>
+            <when test="sortField == 'ttl'"> ttl </when>
+            <when test="sortField == 'userNm'"> userNm </when>
+            <when test="sortField == 'boardAdoptStatusCd'"> boardAdoptStatusCd </when>
+            <when test="sortField == 'viewCnt'"> viewCnt </when>
+            <when test="sortField == 'recommendCnt'"> recommendCnt </when>
+            <otherwise> createdAt </otherwise>
+        </choose> ${sortOrder} LIMIT #{size} OFFSET
+        #{offset} </select>
+
+    <select id="findAllUnifiedCnt" resultType="Long"> SELECT COUNT(*) FROM ( SELECT b.board_sq AS
+        sq, b.board_ttl AS ttl, b.board_description_edt AS description, u.user_nm AS userNm,
+        b.board_type_cd AS boardTypeCd FROM TBL_BOARD_M b JOIN TBL_USER_M u ON b.user_sq = u.user_sq
+        WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd != 1403 UNION ALL SELECT a.answer_sq
+        AS sq, a.answer_ttl AS ttl, a.answer_description_edt AS description, u.user_nm AS userNm,
+        1404 AS boardTypeCd FROM TBL_BOARD_ANSWER_S a JOIN TBL_USER_M u ON a.user_sq = u.user_sq
+        WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE 1=1 <if
+            test="typeCds != null and typeCds.size > 0"> AND boardTypeCd IN <foreach item="t"
+                collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <include
+            refid="adminBoardWhere" />
+    </select>
+
+    <update id="deleteBoardMaster"> UPDATE TBL_BOARD_M SET board_is_deleted_yn = 'Y' WHERE board_sq
+        = #{sq} </update>
+
+    <update id="deleteAnswerMaster"> UPDATE TBL_BOARD_ANSWER_S SET answer_is_deleted_yn = 'Y' WHERE
+        answer_sq = #{sq} </update>
+
+    <delete id="deleteRelatedTags"> /* 태그 삭제 로직 (FO와 동일하게 구현) */ </delete>
+
+    <select id="findCommentById" resultType="com.example.demo.domain.community.entity.Comment">
+        SELECT comment_sq AS commentSq, board_sq AS boardSq, user_sq AS userSq,
+        comment_description_txt AS commentDescriptionTxt FROM TBL_BOARD_COMMENT_S WHERE comment_sq =
+        #{commentSq} </select>
+
+    <update id="deleteCommentByAdmin"> UPDATE TBL_BOARD_COMMENT_S SET comment_is_deleted_yn = 'Y',
+        comment_modified_at_dtm = NOW() WHERE comment_sq = #{commentSq} </update>
+</mapper>

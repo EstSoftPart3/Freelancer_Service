@@ -29,7 +29,7 @@ export const boardApi = {
    */
   getBoards: async (params: BoardQueryParams) => {
     return await api.$get<ApiResponse<AdminBoardListResponse>>(
-      '/admin/board',
+      '/board',
       params as Record<string, unknown>
     )
   },
@@ -38,20 +38,16 @@ export const boardApi = {
    */
   getBoardDetail: async (boardSq: number, boardTypeCd: number) => {
     return await api.$get<ApiResponse<AdminBoard>>(
-      `/admin/board/${boardSq}?boardTypeCd=${boardTypeCd}`
+      `/board/${boardSq}?boardTypeCd=${boardTypeCd}`
     )
   },
 
   /** * 게시글 등록
    */
   createBoard: async (boardTypeCd: number, formData: FormData) => {
-    return await api.$post(
-      `/admin/board?boardTypeCd=${boardTypeCd}`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
-    )
+    return await api.$post(`/board?boardTypeCd=${boardTypeCd}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
   },
 
   /** * 게시글 수정
@@ -62,7 +58,7 @@ export const boardApi = {
     formData: FormData
   ) => {
     return await api.$patch(
-      `/admin/board/${boardSq}?boardTypeCd=${boardTypeCd}`,
+      `/board/${boardSq}?boardTypeCd=${boardTypeCd}`,
       formData,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -73,7 +69,7 @@ export const boardApi = {
   /** * 게시글 삭제
    */
   deleteBoard: async (boardSq: number, mainType: string) => {
-    return await api.$delete(`/admin/board/${boardSq}?mainType=${mainType}`)
+    return await api.$delete(`/board/${boardSq}?mainType=${mainType}`)
   },
 
   // board-api.ts 에 추가
@@ -91,7 +87,7 @@ export const boardApi = {
     if (parentCommentSq)
       params.append('parentCommentSq', parentCommentSq.toString())
 
-    return await api.$post(`/admin/board/comment?${params.toString()}`)
+    return await api.$post(`/board/comment?${params.toString()}`)
   },
 
   /** * 댓글 수정 (관리자 권한)
@@ -100,14 +96,12 @@ export const boardApi = {
     const params = new URLSearchParams()
     params.append('description', description)
 
-    return await api.$patch(
-      `/admin/board/comment/${commentSq}?${params.toString()}`
-    )
+    return await api.$patch(`/board/comment/${commentSq}?${params.toString()}`)
   },
 
   /** * 댓글 삭제 (관리자 권한)
    */
   deleteComment: async (commentSq: number) => {
-    return await api.$delete(`/admin/board/comment/${commentSq}`)
+    return await api.$delete(`/board/comment/${commentSq}`)
   },
 }
