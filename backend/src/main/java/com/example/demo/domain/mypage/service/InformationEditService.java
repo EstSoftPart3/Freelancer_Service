@@ -168,11 +168,7 @@ public class InformationEditService {
         // 파일 정보 조회
         Long fileSq = informationEditRepository.findFileSqByCompanySq(companyInfo.getCompanySq());
         UploadedFileDTO file = informationEditRepository.findByFileSq(fileSq);
-        // CasaOS 용
-        String imageUrl = (file != null) ? "/files/" + file.getSavedName() : null;
-        // 로컬용
-        // String imageUrl = (file != null) ? "/api/files/" + file.getSavedName() :
-        // null;
+        String imageUrl = (file != null) ? "/api/files/" + file.getSavedName() : null;
 
         return AffiliationInfoResponseDTO.of(companyInfo, userInfo, addressInfo, tagList, imageUrl);
     }
@@ -270,9 +266,7 @@ public class InformationEditService {
         if (file == null)
             return null;
 
-        // /api/files/파일명 형태로 반환 (WebConfig 매핑 기준)
-        return "/files/" + file.getSavedName(); // CasaOS 용
-        // return "/api/files/" + file.getSavedName(); // 로컬용
+        return "/api/files/" + file.getSavedName();
     }
 
     /**

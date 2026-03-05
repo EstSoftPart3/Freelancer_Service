@@ -6,7 +6,10 @@ import axios, {
 } from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
 
-export const baseUrl = 'http://localhost:8080/api/admin'
+// 로컬용
+// export const baseUrl = 'http://localhost:8080/api'
+// 배포용
+export const baseUrl = 'https://job.estsw.co.kr/api'
 
 // axios 내부 설정 타입에 _retry 속성을 추가하기 위한 인터페이스 확장
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
@@ -58,7 +61,7 @@ apiInstance.interceptors.response.use(
 
     if (
       !originalRequest ||
-      originalRequest.url === '/refresh-token' ||
+      originalRequest.url === '/admin/refresh-token' ||
       error.response?.status !== 401 ||
       originalRequest._retry
     ) {
@@ -86,7 +89,7 @@ apiInstance.interceptors.response.use(
       // 2. 백엔드 호출 (Body에 TokenDTO 구조로 전달)
       // 사용자님의 백엔드 ApiResponse 구조: { status, message, output: { token: { accessToken, refreshToken } } }
       const response = await axios.post(
-        `${baseUrl}/refresh-token`,
+        `${baseUrl}/admin/refresh-token`,
         { refreshToken: storedRefreshToken }, // Body에 담아서 전송
         {
           headers: { 'Content-Type': 'application/json' },

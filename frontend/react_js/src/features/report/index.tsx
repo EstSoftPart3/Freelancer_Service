@@ -9,10 +9,11 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { reportApi, type AdminReport } from './api/report-api'
+import { reportApi } from './api/report-api'
 import { ReportDialogs } from './components/report-dialogs'
 import { ReportProvider } from './components/report-provider'
 import { ReportTable } from './components/report-table'
+import { type AdminReport } from './data/schema'
 
 // [참고] 라우트 경로는 프로젝트 설정에 맞춰 수정하세요 (예: /_authenticated/contents/report/)
 const routeApi = getRouteApi('/_authenticated/contents/report/')
