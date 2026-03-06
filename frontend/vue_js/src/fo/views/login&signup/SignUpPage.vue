@@ -57,7 +57,7 @@ onMounted(() => {
 
     router.replace({ path: route.path })
   }
-  console.log('signUpType.value', signUpType.value)
+  // console.log('signUpType.value', signUpType.value)
 })
 
 async function handleSubmit(rawFormData) {
@@ -96,7 +96,7 @@ async function handleSubmit(rawFormData) {
     companyOpenDt: formatDate(rawFormData.companyOpenDate),
     companyBizNum: rawFormData.companyBizNumber,
   }
-  console.log('formData', formData)
+  // console.log('formData', formData)
   try {
     const response = await api.$post('/signup', formData)
     if (response.status === 'OK') {

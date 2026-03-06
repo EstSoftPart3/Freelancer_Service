@@ -53,7 +53,7 @@ export const noticeApi = {
     sortOrder?: string // 추가
   ): Promise<ApiResponse<NoticeListResponse>> => {
     // 쿼리 스트링 조립
-    let url = `/notice?page=${page}&size=${size}`
+    let url = `/admin/notice?page=${page}&size=${size}`
     if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`
     if (sortField) url += `&sortField=${sortField}`
     if (sortOrder) url += `&sortOrder=${sortOrder}`

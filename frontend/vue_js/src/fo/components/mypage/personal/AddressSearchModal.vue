@@ -56,14 +56,14 @@ onMounted(() => {
             longitude,
           })
 
-          console.log('[주소 선택 완료]', {
-            zonecode: data.zonecode,
-            address: addr,
-            sido,
-            sigungu,
-            latitude,
-            longitude,
-          })
+          // console.log('[주소 선택 완료]', {
+          //   zonecode: data.zonecode,
+          //   address: addr,
+          //   sido,
+          //   sigungu,
+          //   latitude,
+          //   longitude,
+          // })
 
           modalStore.closeModal()
         } else {

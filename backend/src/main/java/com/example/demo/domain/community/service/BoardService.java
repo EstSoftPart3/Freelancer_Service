@@ -42,9 +42,11 @@ import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardService {
 
 	private final BoardMapper boardMapper;
@@ -230,24 +232,23 @@ public class BoardService {
 		}
 
 		if (BoardTypeCd == 1403L) {
-			// 모든 활성 사용자의 SQ 리스트를 조회합니다.
-			// (communityUserMapper에 해당 메서드가 없다면 추가가 필요합니다)
 			List<Long> allUserSqs = communityUserMapper.findAllUserSqs();
 
 			if (allUserSqs != null && !allUserSqs.isEmpty()) {
-				List<NotificationBatchRequestDTO> batchList = allUserSqs.stream()
-						.filter(receiverSq -> !receiverSq.equals(board.getUserSq())) // 본인 제외
-						.map(receiverSq -> new NotificationBatchRequestDTO(
-								receiverSq, // receiverSq
-								board.getUserSq(), // senderSq
-								2606L, // typeCd (공지사항 알림 코드)
-								"새로운 공지사항이 등록되었습니다: " + board.getBoardTtl(), // content
-								"/notice/" + board.getBoardSq() // targetUrl
-						))
-						.collect(Collectors.toList());
+				try {
+					List<NotificationBatchRequestDTO> batchList = allUserSqs.stream()
+							.filter(receiverSq -> !receiverSq.equals(board.getUserSq()))
+							.map(receiverSq -> new NotificationBatchRequestDTO(
+									receiverSq,
+									board.getUserSq(),
+									2606L,
+									"새로운 공지사항이 등록되었습니다: " + board.getBoardTtl(),
+									"/notice/" + board.getBoardSq()))
+							.collect(Collectors.toList());
 
-				// 대량 등록 메서드 호출
-				notificationService.insertNotificationBatch(batchList);
+					notificationService.insertNotificationBatch(batchList);
+				} catch (Exception e) {
+				}
 			}
 		}
 

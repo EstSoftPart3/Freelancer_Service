@@ -96,7 +96,7 @@ const openNavigation = () => {
    * https://map.kakao.com/link/from/출발지명,위도,경도/to/목적지명,위도,경도
    */
   const url = `https://map.kakao.com/link/from/${startName},${startLat},${startLng}/to/${destName},${destLat},${destLng}`
-  console.log('url' + url.value)
+  // console.log('url' + url.value)
 
   // 새창으로 열기
   window.open(url, '_blank')

@@ -22,7 +22,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import { reportApi, type AdminReport } from '../api/report-api'
+import { reportApi } from '../api/report-api'
+import { type AdminReport } from '../data/schema'
 import { useReport } from './report-provider'
 
 interface Props {

@@ -143,9 +143,9 @@ const getResume = async () => {
   const res = await api.$get(
     `/mypage/resume/list?currentPage=${currentPage.value}&size=${size}`,
   )
-  console.log('이력서 목록 응답:', res)
+  // console.log('이력서 목록 응답:', res)
   if (Array.isArray(res.output.output)) {
-    console.log(res.output.output)
+    // console.log(res.output.output)
     resumeList.value = res.output.output
     if (res.output.totalCount) {
       totalPages.value = Math.ceil(res.output.totalCount / size)
@@ -259,7 +259,7 @@ function setMainResume(resumeSq) {
 }
 
 function openResumeDetail(resumeSq) {
-  console.log('resumeSq', resumeSq)
+  // console.log('resumeSq', resumeSq)
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',

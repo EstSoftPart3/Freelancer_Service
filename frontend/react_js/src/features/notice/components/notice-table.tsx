@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { type Notice } from '../data/schema'
-import { DataTableBulkActions } from './data-table-bulk-actions'
+// import { DataTableBulkActions } from './data-table-bulk-actions'
 import { noticeColumns as columns } from './notice-columns'
 
 const route = getRouteApi('/_authenticated/contents/notice/')
@@ -164,7 +164,7 @@ export function NoticeTable({
         </Table>
       </div>
       <DataTablePagination table={table} className='mt-auto' />
-      <DataTableBulkActions table={table} />
+      {/* <DataTableBulkActions table={table} /> */}
     </div>
   )
 }

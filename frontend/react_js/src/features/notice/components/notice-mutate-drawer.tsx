@@ -293,12 +293,12 @@ export function NoticeMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               </div>
 
               <SheetFooter className='mt-8'>
-                <SheetClose asChild>
-                  <Button variant='outline'>취소</Button>
-                </SheetClose>
                 <Button type='submit'>
                   {isUpdate ? '수정완료' : '등록하기'}
                 </Button>
+                <SheetClose asChild>
+                  <Button variant='outline'>취소</Button>
+                </SheetClose>
               </SheetFooter>
             </form>
           </>

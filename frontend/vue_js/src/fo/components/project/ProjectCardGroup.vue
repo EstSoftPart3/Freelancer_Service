@@ -212,7 +212,7 @@ const clickScrap = async (project) => {
   }
 }
 
-console.log('project: ', props)
+// console.log('project: ', props)
 </script>
 
 <style scoped>

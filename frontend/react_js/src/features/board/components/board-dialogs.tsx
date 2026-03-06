@@ -29,9 +29,9 @@ export function BoardDialogs() {
 
       // 목록 새로고침
       setTimeout(() => window.location.reload(), 500)
-    } catch (error) {
+    } catch (_) {
       // eslint-disable-next-line no-console
-      console.error('삭제 API 호출 중 실제 에러 발생:', error)
+      // console.error('삭제 API 호출 중 실제 에러 발생:', error)
       toast.error('삭제 중 오류가 발생했습니다.')
     }
   }

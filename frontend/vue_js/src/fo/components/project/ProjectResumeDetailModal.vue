@@ -437,8 +437,8 @@ const closeModal = () => {
 
 // 이력서 상세조회
 watchEffect(async () => {
-  console.log(props)
-  console.log('props.resumeSq', props.resumeSq)
+  // console.log(props)
+  // console.log('props.resumeSq', props.resumeSq)
   if (!props.resumeSq) return
   try {
     const res = await api.$get(`/mypage/resume/${props.resumeSq}`)

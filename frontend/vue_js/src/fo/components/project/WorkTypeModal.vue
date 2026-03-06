@@ -57,7 +57,7 @@ const toggleType = (type) => {
 const isSelected = (type) => selectedTypes.value.includes(type)
 
 const confirmSelection = () => {
-  console.log(selectedTypes.value)
+  // console.log(selectedTypes.value)
   emit('confirm', selectedTypes.value)
   modalStore.closeModal()
 }

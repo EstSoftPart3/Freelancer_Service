@@ -1,29 +1,30 @@
 // [Freelancer Service]
 import { api } from '@/lib/api'
+import { type AdminReport } from '../data/schema'
 
-// 1. 신고 상세 및 리스트 아이템 타입 정의
-export interface AdminReport {
-  reportSq: number
-  reporterSq: number
-  reporterNm: string
-  targetTypeCd: number
-  targetTypeNm: string
-  targetSq: number
-  targetTtl: string
+// // 1. 신고 상세 및 리스트 아이템 타입 정의
+// export interface AdminReport {
+//   reportSq: number
+//   reporterSq: number
+//   reporterNm: string
+//   targetTypeCd: number
+//   targetTypeNm: string
+//   targetSq: number
+//   targetTtl: string
 
-  targetDescription?: string // 신고 대상의 실제 본문 내용
-  processDesc?: string | null // 관리자가 작성한 처리 메모
+//   targetDescription?: string // 신고 대상의 실제 본문 내용
+//   processDesc?: string | null // 관리자가 작성한 처리 메모
 
-  originTypeCd?: number
-  reasonCd: number
-  reasonNm: string
-  content?: string | null
-  statusCd: number
-  statusNm: string
-  processorNm?: string | null
-  createdAt: string
-  processedAt?: string | null
-}
+//   originTypeCd?: number
+//   reasonCd: number
+//   reasonNm: string
+//   content?: string | null
+//   statusCd: number
+//   statusNm: string
+//   processorNm?: string | null
+//   createdAt: string
+//   processedAt?: string | null
+// }
 
 // 2. 신고 목록 응답 인터페이스
 export interface AdminReportListResponse {

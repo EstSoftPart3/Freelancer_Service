@@ -40,7 +40,7 @@ const fetchUserInfo = async () => {
       companyAuthStatusCd: data.companyAuthStatusCd,
     })
   } catch (error) {
-    console.error('유저 정보 불러오기 실패:', error)
+    // console.error('유저 정보 불러오기 실패:', error)
     clearLoginState()
   }
 }

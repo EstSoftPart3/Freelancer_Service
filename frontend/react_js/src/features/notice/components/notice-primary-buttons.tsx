@@ -1,5 +1,5 @@
 // [Freelancer Service] 공지사항 관련
-import { Download, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotice } from './notice-provider'
 
