@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.example.demo.domain.user.dto.AddressDTO;
 import com.example.demo.domain.user.dto.CompanyProfileDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.mapper.UserMapper;
 
@@ -48,6 +49,10 @@ public class UserRepository {
 
     public UserDTO findByUserId(String userId) {
         return userMapper.findByUserId(userId);
+    }
+    
+    public UsersDTO findUserByUserId(String userId) {
+    	return userMapper.findUserByUserId(userId);
     }
 
     public void updateRefreshToken(Long userSq, String refreshToken) {
