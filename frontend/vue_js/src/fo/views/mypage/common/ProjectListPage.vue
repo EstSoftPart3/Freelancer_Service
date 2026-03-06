@@ -102,15 +102,6 @@
               @focus-marker="handleFocusMarker"
             />
           </div>
-
-          <div class="p-1 border-top bg-white">
-            <CommonPagination
-              :currentPage="currentPage"
-              :totalPages="totalPages"
-              @update:currentPage="currentPage = $event"
-              class="pagination-sm justify-content-center m-0"
-            />
-          </div>
         </div>
 
         <div class="col-lg-9 col-md-8 h-100 position-relative">
@@ -276,20 +267,39 @@ const displayMarkers = () => {
 const fetchProjects = async () => {
   isLoading.value = true
   try {
+    // [수정] 지도 모드와 목록 모드에 따라 요청 파라미터 분기
+    const isMap = isMapView.value
+
     const params = {
       ...filters.value,
+      // 지도 모드일 때는 대량(예: 1000개)으로 요청하여 페이징을 무력화, 목록은 기존 5개 유지
+      size: isMap ? 1000 : 5,
+      // 지도 모드일 때는 항상 1페이지 전체를 가져옴
+      page: isMap ? 1 : currentPage.value,
       userLat: userStore.userLat,
       userLng: userStore.userLng,
+      // 백엔드에서 지도용 요청임을 인지할 수 있도록 플래그 추가
+      isMapView: isMap,
     }
+
     const response = await api.$get(
       `/projects?${qs.stringify(params, { arrayFormat: 'repeat' })}`,
     )
+
     projects.value = response.output.projects
-    totalPages.value = Math.max(
-      1,
-      Math.ceil((response.output.totalCount ?? 0) / filters.value.size),
-    )
-    if (isMapView.value) fetchRegionGroups()
+
+    // [수정] 페이지네이션 계산 분기
+    if (!isMap) {
+      // 목록 모드: 기존처럼 5개 기준으로 전체 페이지 계산
+      totalPages.value = Math.max(
+        1,
+        Math.ceil((response.output.totalCount ?? 0) / 5),
+      )
+    } else {
+      // 지도 모드: 페이지네이션이 필요 없으므로 1로 고정
+      totalPages.value = 1
+      fetchRegionGroups()
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -322,9 +332,14 @@ const handleSearchInArea = () => {
   updateBounds()
 }
 watch(isMapView, async (val) => {
+  // 1. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
+  await fetchProjects()
+
+  // 2. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
   if (val) {
     await nextTick()
     initMap()
+    // 지도 모드로 진입 시 현재 지도 영역(Bounds) 기준으로 한 번 더 필터링하고 싶다면 유지
     updateBounds()
   }
 })
