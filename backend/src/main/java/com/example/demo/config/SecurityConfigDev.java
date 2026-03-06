@@ -26,13 +26,13 @@ public class SecurityConfigDev {
 
     private final JwtProvider jwtProvider;
 
-    // 개발용
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:8504");
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedOrigin("http://localhost:8504"); // Vue(FO)
+        configuration.addAllowedOrigin("http://localhost:5173"); // React(BO)
         configuration.addAllowedOrigin("https://job.estsw.co.kr");
+        configuration.addAllowedOrigin("https://admin-job.estsw.co.kr");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true); // 쿠키 허용
@@ -42,39 +42,23 @@ public class SecurityConfigDev {
         return source;
     }
 
-    // 외부 배포 테스트용
-    // @Bean
-    // public CorsConfigurationSource corsConfigurationSource() {
-    // CorsConfiguration configuration = new CorsConfiguration();
-    // configuration.setAllowedOrigins(List.of(
-    // "http://localhost:8504",
-    // "http://localhost:3000",
-    // "https://e4f5e44bf928.ngrok-free.app",
-    // "https://test-eight-tau-87.vercel.app/"));
-    // configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE",
-    // "OPTIONS", "PATCH"));
-    // configuration.setAllowedHeaders(List.of("*"));
-    // configuration.setAllowCredentials(true);
-
-    // UrlBasedCorsConfigurationSource source = new
-    // UrlBasedCorsConfigurationSource();
-    // source.registerCorsConfiguration("/**", configuration);
-    // return source;
-    // }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // .cors().and() // 개발용
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 외부 배포 테스트용
-                .csrf().disable()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/me").authenticated() // ✅ 사용자 정보는 인증 필요
-                        .anyRequest().permitAll() // 그 외는 자유 접근 (필요시 조정)
-                )
+                        // 1. 관리자 로그인 및 토큰 재발급은 누구나 접근 가능
+                        .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
+                        // 2. /api/admin으로 시작하는 모든 경로는 'ADMIN' 권한 필요
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                        // 3. 사용자 정보 조회 등은 인증 필요
+                        .requestMatchers("/me").authenticated()
+                        // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
+                        .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .logout().disable(); // JWT 기반이므로 로그아웃 무효화
+                .logout(logout -> logout.disable());
 
         return http.build();
     }

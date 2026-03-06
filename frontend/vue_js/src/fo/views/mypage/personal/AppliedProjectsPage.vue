@@ -74,7 +74,7 @@
                 <!-- 왼쪽: 제목 / 회사명 -->
                 <div class="d-flex gap-2">
                   <a
-                    @click.prevent="goToProjectSpec(item)"
+                    @click.prevent="goToProjectSpec(item.projectSq)"
                     href="#"
                     class="text-5 m-0"
                     >{{ item.projectTitle }} / {{ item.companyTitle }}</a
@@ -328,7 +328,7 @@ const updateCounts = (counts) => {
 
 // 검색
 const handleSearch = () => {
-  console.log('검색 클릭이여ㅑ')
+  // console.log('검색 클릭이여ㅑ')
   currentPage.value = 1
   appliedSearchType.value = searchType.value
   appliedSearchKeyword.value = searchKeyword.value
@@ -350,8 +350,8 @@ const changePage = (page) => {
 }
 
 // 프로젝트 상세 이동
-const goToProjectSpec = (project) => {
-  navigateByUserTypeAndProjectSq(userType, project.projectSq)
+const goToProjectSpec = (projectSq) => {
+  navigateByUserTypeAndProjectSq(userType, projectSq)
 }
 
 // 상태 변경

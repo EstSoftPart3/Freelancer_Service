@@ -1,12 +1,12 @@
 package com.example.demo.domain.mypage.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
-import com.example.demo.domain.mypage.dto.AddressDTO;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
@@ -120,4 +120,6 @@ public interface InformationEditMapper {
         int deleteAffiliationProfileImageByUserSq(@Param("companySq") Long companySq);
 
         ProfileImageInfoDTO findAffiliationFileByUserSq(@Param("companySq") Long companySq);
+
+        void updateCompanyVerification(Map<String, Object> params);
 }

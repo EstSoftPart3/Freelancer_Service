@@ -6,8 +6,8 @@
 
 	<resultMap id="projectMap" type="com.example.demo.domain.project.entity.Project">
 		<id property="projectSq" column="project_sq" />
+
 		<result property="companySq" column="company_sq" />
-		<result property="addressSq" column="address_sq" />
 		<result property="projectTtl" column="project_ttl" />
 		<result property="projectImageUrl" column="project_image_url" />
 		<result property="projectDeveloperGradeCd" column="project_developer_grade_cd" />
@@ -26,41 +26,80 @@
 		<result property="projectIsNotificationYn" column="project_is_notification_yn" />
 		<result property="projectIsDeletedYn" column="project_is_deleted_yn" />
 		<result property="projectViewCnt" column="project_view_cnt" />
+
+		<result property="addressSq" column="address_sq" />
+		<result property="subwayAddressSq" column="subway_address_sq" />
+		<result property="addressTypeCd" column="address_type_cd" />
+		<result property="projectSalaryNegotiableYn" column="project_salary_negotiable_yn" />
+
+		<result property="detailedAddress" column="detailedAddress" />
+		<result property="detailedAddressDetail" column="detailedAddressDetail" />
+		<result property="subwayAddress" column="subwayAddress" />
+		<result property="latitude" column="latitude" />
+		<result property="longitude" column="longitude" />
+		<result property="distance" column="distance" />
 	</resultMap>
+
+
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
-			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
-		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
-		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")"> #{item} </foreach> ) ) </if>
-		<if
+		resultMap="projectMap"> SELECT p.*, /* 1. 상세 주소 정보 */ a1.address AS detailedAddress,
+		a1.detail_address AS detailedAddressDetail, /* 2. 지하철 주소 정보 */ a2.address AS subwayAddress,
+		/* 3. 대표 좌표 결정 */ CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END
+		AS latitude, CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END AS
+		longitude, /* 4. 거리 계산 */ <choose>
+			<when test="userLat != null and userLng != null"> ST_Distance_Sphere( POINT(#{userLng},
+		#{userLat}), POINT( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
+		END, CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END ) ) / 1000 AS
+		distance </when>
+			<otherwise>NULL AS distance</otherwise>
+		</choose> FROM TBL_PROJECT_M p LEFT JOIN
+		TBL_ADDRESS_S a1 ON p.address_sq = a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON
+		p.subway_address_sq = a2.address_sq WHERE p.project_is_deleted_yn = 'N' /* [필터 1] 지역 검색 */ <if
+			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND ( p.address_sq IN (
+		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM
+		TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq"
+				open="(" separator="," close=")">#{item}</foreach> ) ) OR p.subway_address_sq IN (
+		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM
+		TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq"
+				open="(" separator="," close=")">#{item}</foreach> ) ) ) </if> /* [필터 2] 거리 내 검색 */ <if
+			test="userLat != null and userLng != null and distance != null">
+			<choose>
+				<when test="distance == 999"> AND ST_Distance_Sphere( POINT(#{userLng}, #{userLat}),
+		POINT( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END ) ) / 1000 &gt;= 10 </when>
+				<otherwise> AND ST_Distance_Sphere( POINT(#{userLng}, #{userLat}), POINT( CASE WHEN
+		p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END ) ) / 1000 &lt;= #{distance} </otherwise>
+			</choose>
+		</if>
+		/* [필터 3] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
 		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator=","
-				close=")"> #{item} </foreach>
+				open="(" separator="," close=")">#{item}</foreach>
 		</if>
-		<if
+
+    <if
 			test="educationCd != null and educationCd.size() > 0"> AND
 		p.project_required_education_cd IN <foreach item="item" collection="educationCd" open="("
-				separator="," close=")"> #{item} </foreach>
+				separator="," close=")">#{item}</foreach>
 		</if>
-		<if
+
+    <if
 			test="jobRoleCd != null and jobRoleCd.size() > 0"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
-				separator="," close=")"> #{item} </foreach> ) </if>
-		<if
-			test="searchKeyword != null and searchKeyword != ''">
+				separator="," close=")">#{item}</foreach> ) </if> /* [추가 필터] 단가 검색 (선택한 금액 이상) */ <if
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 4] 키워드 검색
+		*/ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
-				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT * FROM TBL_COMPANY_S c JOIN
+				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c JOIN
 		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
 		CONCAT('%', #{searchKeyword}, '%') ) </when>
-				<when test="searchType == '내용'"> AND ( p.project_preference_txt LIKE CONCAT('%',
-		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')
-		) </when>
+				<when test="searchType == '내용'"> AND (p.project_preference_txt LIKE CONCAT('%',
+		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
 				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
@@ -71,9 +110,14 @@
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
-		<choose>
+		/* [필터 5] 지도 영역(Bounds) 내 검색 */ <if
+			test="minLat != null and maxLat != null and minLng != null and maxLng != null"> AND (
+		CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END BETWEEN #{minLat}
+		AND #{maxLat} ) AND ( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
+		END BETWEEN #{minLng} AND #{maxLng} ) </if> /* 정렬 */ <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
+					<when test="sortBy == 'distance' and userLat != null"> ORDER BY distance ASC </when>
 					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
 		${sortOrder} </when>
 					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
@@ -83,10 +127,77 @@
 				</choose>
 			</when>
 			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
-		</choose>
-		<if
-			test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
+		</choose> /* [6]
+		페이징 */ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
+
+	<select id="findProjectGroupsByRegion"
+		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
+		resultType="com.example.demo.domain.project.dto.ProjectRegionGroupDTO"> SELECT /* 주소
+		타입(2701:상세, 2702:지하철)에 따른 시군구 결정 */ CASE WHEN p.address_type_cd = 2701 THEN a1.sigungu ELSE
+		a2.sigungu END AS sigungu, /* 시군구별 프로젝트 수 합산 */ COUNT(p.project_sq) AS projectCount, /* 해당
+		시군구 프로젝트들의 평균 좌표 (핀 노출 위치) */ AVG(CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE
+		a2.latitude END) AS latitude, AVG(CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE
+		a2.longitude END) AS longitude FROM TBL_PROJECT_M p LEFT JOIN TBL_ADDRESS_S a1 ON
+		p.address_sq = a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq =
+		a2.address_sq WHERE p.project_is_deleted_yn = 'N' /* [필터 1] 지역 검색 */ <if
+			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND ( p.address_sq IN (SELECT
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (SELECT area_code_sq FROM TBL_AREA_C
+		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
+				separator="," close=")">#{item}</foreach>)) OR p.subway_address_sq IN (SELECT
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (SELECT area_code_sq FROM TBL_AREA_C
+		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
+				separator="," close=")">#{item}</foreach>)) ) </if> /* [필터 2] 거리 내 검색 */ <if
+			test="userLat != null and userLng != null and distance != null">
+			<choose>
+				<when test="distance == 999"> AND ST_Distance_Sphere(POINT(#{userLng}, #{userLat}),
+		POINT(CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END)) / 1000 &gt;= 10 </when>
+				<otherwise> AND ST_Distance_Sphere(POINT(#{userLng}, #{userLat}), POINT(CASE WHEN
+		p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END)) / 1000 &lt;= #{distance} </otherwise>
+			</choose>
+		</if>
+		/* [필터 3] 공통 조건 (등급, 학력, 직군) */ <if
+			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
+		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+				open="(" separator="," close=")">#{item}</foreach>
+		</if>
+    <if
+			test="educationCd != null and educationCd.size() > 0"> AND
+		p.project_required_education_cd IN <foreach item="item" collection="educationCd" open="("
+				separator="," close=")">#{item}</foreach>
+		</if>
+    <if
+			test="jobRoleCd != null and jobRoleCd.size() > 0"> AND EXISTS (SELECT 1 FROM
+		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
+		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
+				separator="," close=")">#{item}</foreach>) </if> /* [필터 4] 단가 검색 */ <if
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 5] 키워드 검색
+		(제목, 작성자, 내용, 태그) */ <if test="searchKeyword != null and searchKeyword != ''">
+			<choose>
+				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
+		#{searchKeyword}, '%') </when>
+				<when test="searchType == '작성자명'"> AND EXISTS (SELECT 1 FROM TBL_COMPANY_S c JOIN
+		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
+		CONCAT('%', #{searchKeyword}, '%')) </when>
+				<when test="searchType == '내용'"> AND (p.project_preference_txt LIKE CONCAT('%',
+		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
+				<when test="searchType == '태그'"> AND EXISTS (SELECT 1 FROM
+		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
+		LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
+				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
+		p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR
+		p.project_preference_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR EXISTS (SELECT 1 FROM
+		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
+		LIKE CONCAT('%', #{searchKeyword}, '%')) ) </otherwise>
+			</choose>
+		</if> /*
+		[필터 6] 지도 영역(Bounds) 내 검색 */ <if
+			test="minLat != null and maxLat != null and minLng != null and maxLng != null"> AND (
+		CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END BETWEEN #{minLat}
+		AND #{maxLat} ) AND ( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
+		END BETWEEN #{minLng} AND #{maxLng} ) </if>/* 시군구 기준으로 그룹화 */ GROUP BY sigungu </select>
 
 
 	<select id="findProjectsByCompany" resultMap="projectMap"> SELECT * FROM TBL_PROJECT_M p WHERE
@@ -121,8 +232,7 @@
 	      AND NOW() > project_recruit_end_dt
 	    ]]>
 	  </if>
-    
-    <if
+		ORDER BY p.project_sq DESC <if
 			test="request.size != null and request.offset != null"> LIMIT #{request.size} OFFSET
 		#{request.offset} </if>
 
@@ -130,29 +240,30 @@
 
 	<select id="countProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N' <if
-			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND p.address_sq IN ( SELECT
-		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM TBL_AREA_C
-		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")"> #{item} </foreach> ) ) </if>
-		<if
+		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N'
+		/* [필터 1] 지역 검색 */ <if test="addressCodeSq != null and addressCodeSq.size() > 0"> AND
+		p.address_sq IN ( SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT
+		area_code_sq FROM TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item"
+				collection="addressCodeSq" open="(" separator="," close=")"> #{item} </foreach> ) ) </if>
+		/* [필터 2] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
 		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator=","
-				close=")"> #{item} </foreach>
+				open="(" separator="," close=")"> #{item} </foreach>
 		</if>
-		<if
+    
+    <if
 			test="educationCd != null and educationCd.size() > 0"> AND
 		p.project_required_education_cd IN <foreach item="item" collection="educationCd" open="("
 				separator="," close=")"> #{item} </foreach>
 		</if>
-		<if
+    
+    <if
 			test="jobRoleCd != null and jobRoleCd.size() > 0"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
-				separator="," close=")"> #{item} </foreach> ) </if>
-		<if
-			test="searchKeyword != null and searchKeyword != ''">
+				separator="," close=")"> #{item} </foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 3] 키워드 검색
+		*/ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
@@ -270,25 +381,29 @@
 		company_sq FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} AND project_is_deleted_yn =
 		'N' </select>
 
-	<select id="findBySq" parameterType="Long"
-		resultType="com.example.demo.domain.project.entity.Project"> SELECT * FROM TBL_PROJECT_M
-		WHERE project_sq = #{projectSq} AND project_is_deleted_yn = 'N' </select>
+	<select id="findBySq" resultMap="projectMap"> SELECT p.*, a1.address AS detailedAddress,
+		a1.detail_address AS detailedAddressDetail, a1.zonecode AS detailedZonecode, a2.address AS
+		subwayAddress, IFNULL(a1.latitude, a2.latitude) AS latitude, IFNULL(a1.longitude,
+		a2.longitude) AS longitude FROM TBL_PROJECT_M p LEFT JOIN TBL_ADDRESS_S a1 ON p.address_sq =
+		a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq = a2.address_sq WHERE
+		p.project_sq = #{projectSq} </select>
 
 	<select id="findAddressSqByProjectSq" parameterType="Long" resultType="Long"> SELECT address_sq
 		FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} </select>
 
 	<insert id="insertProject" parameterType="com.example.demo.domain.project.entity.Project"
 		useGeneratedKeys="true" keyProperty="projectSq"> INSERT INTO TBL_PROJECT_M ( company_sq,
-		address_sq, project_ttl, project_image_url, project_developer_grade_cd,
-		project_required_education_cd, project_salary, project_start_dt, project_end_dt,
-		project_recruit_start_dt, project_recruit_end_dt, project_preference_txt,
-		project_description_txt, project_created_at_dtm, project_modified_at_dtm,
-		project_candidate_cnt, project_scrap_cnt, project_is_notification_yn, project_is_deleted_yn,
-		project_view_cnt ) VALUES ( #{companySq}, #{addressSq}, #{projectTtl}, #{projectImageUrl},
+		address_sq, subway_address_sq, address_type_cd, project_ttl, project_image_url,
+		project_developer_grade_cd, project_required_education_cd, project_salary,
+		project_salary_negotiable_yn, project_start_dt, project_end_dt, project_recruit_start_dt,
+		project_recruit_end_dt, project_preference_txt, project_description_txt,
+		project_created_at_dtm, project_modified_at_dtm, project_candidate_cnt, project_scrap_cnt,
+		project_is_notification_yn, project_is_deleted_yn, project_view_cnt ) VALUES ( #{companySq},
+		#{addressSq}, #{subwayAddressSq}, #{addressTypeCd}, #{projectTtl}, #{projectImageUrl},
 		#{projectDeveloperGradeCd}, #{projectRequiredEducationCd}, #{projectSalary},
-		#{projectStartDt}, #{projectEndDt}, #{projectRecruitStartDt}, #{projectRecruitEndDt},
-		#{projectPreferenceTxt}, #{projectDescriptionTxt}, NOW(), NOW(), 0, 0,
-		#{projectIsNotificationYn}, "N", 0 ) </insert>
+		#{projectSalaryNegotiableYn}, #{projectStartDt}, #{projectEndDt}, #{projectRecruitStartDt},
+		#{projectRecruitEndDt}, #{projectPreferenceTxt}, #{projectDescriptionTxt}, NOW(), NOW(), 0,
+		0, #{projectIsNotificationYn}, "N", 0 ) </insert>
 
 	<insert id="insertScrap"
 		parameterType="com.example.demo.domain.project.dto.request.ScrapInsertRequest"> INSERT INTO
@@ -424,19 +539,43 @@
 	<delete id="deleteProjectAddress"> DELETE FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </delete>
 	<update id="updateViewCnt" parameterType="long"> UPDATE TBL_PROJECT_M SET project_view_cnt =
 		project_view_cnt + 1 WHERE project_sq = #{projectSq} </update>
+
 	<update id="updateProject" parameterType="com.example.demo.domain.project.entity.Project">
 		UPDATE TBL_PROJECT_M SET project_ttl = #{projectTtl}, project_description_txt =
 		#{projectDescriptionTxt}, project_start_dt = #{projectStartDt}, project_end_dt =
 		#{projectEndDt}, project_recruit_start_dt = #{projectRecruitStartDt}, project_recruit_end_dt
 		= #{projectRecruitEndDt}, project_preference_txt = #{projectPreferenceTxt}, project_salary =
-		#{projectSalary}, project_image_url = #{projectImageUrl}, address_sq = #{addressSq},
-		company_sq = #{companySq}, project_developer_grade_cd = #{projectDeveloperGradeCd},
-		project_required_education_cd = #{projectRequiredEducationCd}, project_is_notification_yn =
-		#{projectIsNotificationYn}, project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
+		#{projectSalary}, project_salary_negotiable_yn = #{projectSalaryNegotiableYn},
+		project_image_url = #{projectImageUrl}, address_sq = #{addressSq}, subway_address_sq =
+		#{subwayAddressSq}, address_type_cd = #{addressTypeCd}, company_sq = #{companySq},
+		project_developer_grade_cd = #{projectDeveloperGradeCd}, project_required_education_cd =
+		#{projectRequiredEducationCd}, project_is_notification_yn = #{projectIsNotificationYn},
+		project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
 
 	<update id="updateAddress" parameterType="map"> UPDATE TBL_PROJECT_M SET address_sq =
 		#{newAddressSq} WHERE project_sq = #{projectSq} </update>
 
 	<update id="softDeleteProject" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_is_deleted_yn = 'Y', project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
+
+	<!-- 메인 페이지용 -->
+	<select id="selectMainPopularProjects" resultMap="projectMap"> SELECT project_sq, company_sq,
+		address_sq, project_ttl, project_developer_grade_cd, project_salary, project_view_cnt,
+		project_scrap_cnt, project_candidate_cnt FROM TBL_PROJECT_M WHERE project_is_deleted_yn =
+		'N' <choose>
+			<when test="sortType == 'views'"> ORDER BY project_view_cnt DESC </when>
+			<when test="sortType == 'scraps'"> ORDER BY project_scrap_cnt DESC </when>
+			<when test="sortType == 'apps'"> ORDER BY project_candidate_cnt DESC </when>
+			<otherwise> ORDER BY project_created_at_dtm DESC </otherwise>
+		</choose> LIMIT
+		#{limit} </select>
+
+
+	<select id="findUserSqByProjectSq" resultType="Long"> SELECT c.user_sq FROM tbl_project_m p JOIN
+		tbl_company_s c ON p.company_sq = c.company_sq WHERE p.project_sq = #{projectSq} AND
+		p.project_is_deleted_yn = 'N' </select>
+
+	<select id="findMemberTypeByApplicationSq" resultType="Long"> SELECT
+		project_application_member_type_cd FROM tbl_project_application_h WHERE
+		project_application_sq = #{applicationSq} </select>
 </mapper>

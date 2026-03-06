@@ -171,5 +171,11 @@
         contentType, f.file_size AS size FROM TBL_COMMON_FILE_S f JOIN TBL_COMPANY_PROFILE_IMAGE_S
         cp ON cp.file_sq = f.file_sq WHERE cp.company_sq = #{companySq} </select>
 
+    <!-- 기업 인증  -->
+    <update id="updateCompanyVerification" parameterType="map"> UPDATE tbl_company_s SET company_nm
+        = #{companyNm}, company_ceo_nm = #{companyCeoNm}, company_biz_num = #{companyBizNum},
+        company_open_dt = #{companyOpenDt}, company_auth_status_cd = #{statusCd},
+        company_agreed_terms_yn = 'Y' WHERE user_sq = #{userSq} </update>
+
 
 </mapper>

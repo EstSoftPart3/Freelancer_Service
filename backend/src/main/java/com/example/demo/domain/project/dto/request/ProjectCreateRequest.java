@@ -1,79 +1,64 @@
 package com.example.demo.domain.project.dto.request;
 
-import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
 
 public record ProjectCreateRequest(
 		long projectId,
-		@NotBlank(message = "프로젝트 제목은 필수입니다.")
-	    String projectTitle,
+		@NotBlank(message = "프로젝트 제목은 필수입니다.") String projectTitle,
 
-	    String projectImageUrl,
-	    
-	    @NotNull(message = "단가 필수입니다.")
-	    Long projectSalary,
+		String projectImageUrl,
 
-	    @NotBlank(message = "하위 행정구역 코드는 필수입니다.")
-	    Long subDistrictCode,
-	    
-	    @NotBlank(message = "하위 행정구역 이름은 필수입니다.")
-	    String subDistrictName,
-	    
+		@NotNull(message = "단가는 필수입니다.") Long projectSalary,
 
-	    @NotBlank(message = "하위 행정구역 위도는 필수입니다.")
-	    Double districtLat,
-	    
-	    @NotBlank(message = "하위 행정구역 경도는 필수입니다.")
-	    Double districtLon,
-	    
+		// [추가] 단가 협의 여부 (Y/N)
+		@NotBlank(message = "단가 협의 여부는 필수입니다.") String projectSalaryNegotiableYn,
 
-	    @NotBlank(message = "개발자 등급은 필수입니다.")
-	    String devGrade,
+		// --- 상세 주소 관련 필드 (Optional) ---
+		String detailedAddressName, // 전체 주소 (도로명/지번)
+		String detailedAddressDetail, // 고객 입력 상세 주소
+		Long detailedZonecode, // 우편번호
+		Double detailedLat, // 위도
+		Double detailedLon, // 경도
+		String detailedSigunguCode, // 시군구 명칭 (대조용)
 
-	    @NotBlank(message = "학력은 필수입니다.")
-	    String educationLvl,
+		// --- 지하철역 주소 관련 필드 (Optional) ---
+		String subwayAddressName, // 지하철역 명칭 또는 주소
+		Double subwayLat, // 위도
+		Double subwayLon, // 경도
+		String subwaySigunguCode, // 카카오 Places API 후 정제된 시군구 명칭 (대조용)
 
-	    @NotNull(message = "프로젝트 시작일은 필수입니다.")
-	    LocalDate projectStartDt,
+		@NotBlank(message = "개발자 등급은 필수입니다.") String devGrade,
 
-	    @NotNull(message = "프로젝트 종료일은 필수입니다.")
-		LocalDate projectEndDt,
+		@NotBlank(message = "학력은 필수입니다.") String educationLvl,
 
-		@NotNull(message = "모집 시작일은 필수입니다.")
-		LocalDate recruitStartDt,
+		@NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate projectStartDt,
 
-		@NotNull(message = "모집 종료일은 필수입니다.")
-		LocalDate recruitEndDt,
+		@NotNull(message = "프로젝트 종료일은 필수입니다.") LocalDate projectEndDt,
 
-	    @NotEmpty(message = "근무 형태는 필수입니다.")
-	    List<String> workType,
+		@NotNull(message = "모집 시작일은 필수입니다.") LocalDate recruitStartDt,
 
-	    @NotEmpty(message = "모집 직군은 필수입니다.")
-	    List<String> recruitJob,
+		@NotNull(message = "모집 종료일은 필수입니다.") LocalDate recruitEndDt,
 
-	    @NotEmpty(message = "사용 기술은 필수입니다.")
-	    List<String> usingSkills,
+		@NotEmpty(message = "근무 형태는 필수입니다.") List<String> workType,
 
-	    @NotEmpty(message = "우대 기술은 필수입니다.")
-	    List<String> preferSkills,
+		@NotEmpty(message = "모집 직군은 필수입니다.") List<String> recruitJob,
 
-	    @Size(max = 255, message = "우대 사항은 255자를 초과할 수 없습니다.")
-	    String preference,
+		@NotEmpty(message = "사용 기술은 필수입니다.") List<String> usingSkills,
 
-	    @Size(max = 1000, message = "상세 설명은 1000자를 초과할 수 없습니다.")
-	    String description,
+		@NotEmpty(message = "우대 기술은 필수입니다.") List<String> preferSkills,
 
-	    @NotNull(message = "인터뷰 가능 시간은 필수입니다.")
-	    List<LocalDateTime> interviewTime,
+		@Size(max = 255, message = "우대 사항은 255자를 초과할 수 없습니다.") String preference,
 
-	    @NotNull(message = "알림 여부는 필수입니다.")
-	    String isNotification
-) {
+		@Size(max = 1000, message = "상세 설명은 1000자를 초과할 수 없습니다.") String description,
+
+		@NotNull(message = "인터뷰 가능 시간은 필수입니다.") List<LocalDateTime> interviewTime,
+
+		@NotNull(message = "알림 여부는 필수입니다.") String isNotification) {
 }

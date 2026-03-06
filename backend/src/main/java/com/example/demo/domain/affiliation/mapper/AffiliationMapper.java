@@ -105,4 +105,14 @@ public interface AffiliationMapper {
 	// 주소 리스트 조회
 	List<AreaCd> findAddressCds();
 
+	// 소속 신청 시: 해당 기업의 소유자 UserSq 조회
+	Long findCompanyOwnerUserSq(@Param("companySq") Long companySq);
+
+	// 합격/불합격 시: 지원자 UserSq 및 기업명 조회
+	Map<String, Object> findAffiliationNotificationInfo(@Param("companyApplicationSq") Long companyApplicationSq);
+
+	// 수신자 SQ와 유저 타입 코드를 함께 조회
+	List<Map<String, Object>> findScrapUserInfos(@Param("companySq") Long companySq);
+
+	String findCompanyNameBySq(@Param("companySq") Long companySq);
 }

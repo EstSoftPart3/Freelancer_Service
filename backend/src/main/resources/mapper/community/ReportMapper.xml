@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.community.mapper.ReportMapper">
-     
-     <resultMap id="ReportResultMap" type="com.example.demo.domain.community.entity.Report">
-        <result column="report_sq" property="reportSq"/>
-        <result column="user_sq" property="userSq"/>
-	    <result column="board_sq" property="boardSq"/>
-        <result column="answer_sq" property="answerSq"/>
-        <result column="comment_sq" property="commentSq"/>
-        <result column="report_reason_txt" property="reportReasonTxt"/>
-        <result column="report_type_cd" property="reportTypeCd"/>
-	  </resultMap>
 
-    <select id="findAll" resultMap="ReportResultMap">
-        SELECT * FROM TBL_REPORT_S
-    </select>
+    <insert id="insertReport" parameterType="com.example.demo.domain.community.entity.Report">
+        INSERT INTO tbl_report_s ( report_user_sq, report_target_type_cd, report_target_sq,
+        report_reason_cd, report_content_txt, report_process_status_cd, report_created_at_dtm )
+        VALUES ( #{reportUserSq}, #{reportTargetTypeCd}, #{reportTargetSq}, #{reportReasonCd},
+        #{reportContentTxt}, 2901, NOW() ) </insert>
 
-    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Report" useGeneratedKeys="true" keyProperty="reportSq">
-        INSERT INTO TBL_REPORT_S (user_sq, board_sq, answer_sq, comment_sq, report_reason_txt, report_type_cd) 
-        VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentSq}, #{reportReasonTxt}, #{reportTypeCd})
-    </insert>
+    <select id="findCodesByParent"
+        resultType="com.example.demo.domain.community.dto.CommonCodeDTO"> SELECT common_code_sq AS
+        commonCodeSq, common_code_nm AS commonCodeNm, parent_common_code_sq AS parentCommonCodeSq
+        FROM tbl_common_code_c WHERE parent_common_code_sq = #{parentSq} AND
+        common_code_is_active_yn = 'Y' ORDER BY common_code_sq ASC </select>
 
 </mapper>

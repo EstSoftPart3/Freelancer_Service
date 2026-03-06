@@ -404,12 +404,14 @@ const sendVerification = async () => {
   const email = `${form.emailId}@${form.emailDomain}`
 
   try {
-    const response = await api.$post('/email/send-code', { email })
-    console.log('인증 이메일 전송 완료', response)
-    alertStore.show(
-      '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
-      'info',
-    )
+    // const response =
+    await api.$post('/email/send-code', { email })
+    // console.log('인증 이메일 전송 완료', response)
+    // alertStore.show(
+    //   '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
+    //   'info',
+    // )
+    alertStore.show('인증 코드를 전송했습니다. 인증 코드 : ', 'info')
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error)
 
@@ -435,8 +437,9 @@ const verifyCode = async () => {
   }
 
   try {
-    const response = await api.$post('/email/verify-code', { email, code })
-    console.log('인증 성공', response)
+    // const response =
+    await api.$post('/email/verify-code', { email, code })
+    // console.log('인증 성공', response)
     alertStore.show('이메일 인증에 성공하였습니다.', 'info')
     verifyCodeValid.value = true
   } catch (error) {
@@ -624,7 +627,7 @@ onMounted(() => {
   if (!window.daum) {
     console.warn('❌ Daum 우편번호 API (postcode.v2.js)가 로드되지 않았습니다.')
   } else {
-    console.log('✅ Daum 우편번호 API 로드됨')
+    // console.log('✅ Daum 우편번호 API 로드됨')
   }
 
   // 2. Kakao 지도 API 확인 및 동적 로드
@@ -638,12 +641,12 @@ onMounted(() => {
       'https://dapi.kakao.com/v2/maps/sdk.js?appkey=90610faa13d02b09f83a700d0885a872&libraries=services'
     kakaoScript.async = true
 
-    console.log('📦 Kakao 지도 API 스크립트를 추가합니다:', kakaoScript.src)
+    // console.log('📦 Kakao 지도 API 스크립트를 추가합니다:', kakaoScript.src)
 
     kakaoScript.onload = () => {
-      console.log('✅ Kakao 지도 API 스크립트 onload 실행됨')
+      // console.log('✅ Kakao 지도 API 스크립트 onload 실행됨')
       if (window.kakao && window.kakao.maps) {
-        console.log('✅ Kakao 지도 API가 동적으로 로드되었습니다.')
+        // console.log('✅ Kakao 지도 API가 동적으로 로드되었습니다.')
       } else {
         console.error(
           '❌ Kakao 지도 API 로드 실패: maps 객체가 여전히 존재하지 않습니다.',
@@ -657,7 +660,7 @@ onMounted(() => {
 
     document.head.appendChild(kakaoScript)
   } else {
-    console.log('✅ Kakao 지도 API가 이미 로드되어 있습니다.')
+    // console.log('✅ Kakao 지도 API가 이미 로드되어 있습니다.')
   }
 })
 

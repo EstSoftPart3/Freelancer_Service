@@ -2,7 +2,7 @@
   <div>
     <div class="modal-header">
       <h4 class="modal-title text-bold" id="schoolSearchModalLabel">
-        {{ afltnInfo.isApply ? '소속 정보' : '소속 신청하기' }}
+        {{ info.isApply ? '소속 정보' : '소속 신청하기' }}
       </h4>
       <button
         type="button"
@@ -21,7 +21,7 @@
           >회사명</label
         >
         <div class="text-dark" id="companyName">
-          {{ afltnInfo.companyNm }}
+          {{ info.companyNm }}
         </div>
       </div>
 
@@ -30,7 +30,7 @@
         <label for="ceoName" class="form-label text-primary text-bold"
           >대표자명</label
         >
-        <div class="text-dark" id="ceoName">{{ afltnInfo.ceoNm }}</div>
+        <div class="text-dark" id="ceoName">{{ info.ceoNm }}</div>
       </div>
 
       <!-- 개업년수 -->
@@ -40,7 +40,7 @@
         >
         <!-- [수정] 오픈일자부터 개업일수 계산 -->
         <div class="text-dark" id="yearsInBusiness">
-          {{ afltnInfo.openYear }}년차
+          {{ info.openYear }}년차
         </div>
       </div>
 
@@ -50,7 +50,7 @@
           >회사위치</label
         >
         <div class="text-dark" id="companyLocation">
-          {{ afltnInfo.address }}
+          {{ info.address }}
         </div>
       </div>
 
@@ -62,7 +62,7 @@
           >회사 설명</label
         >
         <div class="text-dark" id="companyDescription">
-          {{ afltnInfo.greeting }}
+          {{ info.greeting }}
         </div>
       </div>
 
@@ -152,19 +152,22 @@ import { api } from '@/axios'
 import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useUserStore } from '@/fo/stores/userStore'
 import { computed, defineProps } from 'vue'
 import CommonConfirmModal from '../common/CommonConfirmModal.vue'
 import ResumeListModal from '../mypage/common/ResumeListModal.vue'
 
 const props = defineProps({
-  afltnInfo: { type: Array, default: () => [] },
+  afltnInfo: { type: Object, default: () => ({}) },
   onConfirm: { type: Function, default: () => {} },
 })
-const afltnInfo = computed(() => props.afltnInfo)
+// [수정] 변수명 충돌 방지를 위해 info로 명칭 변경
+const info = computed(() => props.afltnInfo)
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 const affiliationStore = useAffiliationStore()
+const userStore = useUserStore()
 
 const closeModal = () => {
   affiliationStore.resetGreeting()
@@ -178,42 +181,60 @@ const clickRecruit = async () => {
     alertStore.show('로그인 후 이용해주세요.', 'danger')
     return
   }
+
   modalStore.openModal(CommonConfirmModal, {
     title: '소속 신청',
-    message: `${afltnInfo.value.companyNm} 소속 신청하시겠습니까?`,
+    message: `${info.value.companyNm} 소속 신청하시겠습니까?`,
     onConfirm: async () => {
-      //  기업 회원 지원 불가
+      // 1. 권한 체크
       if (localStorage.getItem('userType') == 'COMPANY') {
         alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
-        closeModal()
+        modalStore.closeModal() // 컨펌창만 닫기
         return
       }
-      // [추가] 이력서 미선택시 리턴
+
+      if (userStore.isAffiliated === 'Y') {
+        alertStore.show(
+          '이미 소속이 되어있어 추가로 소속 신청을 할 수 없습니다.',
+          'danger',
+        )
+        return
+      }
+
+      // 2. 이력서 선택 체크
       if (
-        affiliationStore.resume.resumeSq == null ||
+        !affiliationStore.resume.resumeSq ||
         affiliationStore.resume.resumeSq == 0
       ) {
         alertStore.show('이력서를 선택해주세요.', 'danger')
-        closeModal()
+        modalStore.closeModal() // 컨펌창만 닫기
         return
       }
+
       try {
         const res = await api.$post(`/affiliation/apply`, {
-          companySq: afltnInfo.value.sq,
+          companySq: info.value.sq,
           resumeSq: affiliationStore.resume.resumeSq,
           companyApplicationGreetingTxt: affiliationStore.greeting,
         })
+
         if (res.status == 'CREATED') {
+          // [성공 시 시나리오]
           alertStore.show(res.message, 'success')
-          closeModal()
+
+          // 부모 리스트 갱신 (onConfirm 실행)
+          if (props.onConfirm) props.onConfirm()
+
+          // [핵심] 모든 모달창을 닫아버림 (컨펌창 + 신청창 동시 제거)
+          modalStore.closeAllModals()
         } else {
           alertStore.show(res.message, 'danger')
-          props.onConfirm()
+          modalStore.closeModal() // 실패 시 컨펌창만 닫기
         }
       } catch (error) {
         alertStore.show('소속 신청에 실패했습니다.', 'danger')
+        modalStore.closeModal() // 에러 시 컨펌창만 닫기
       }
-      closeModal()
     },
   })
 }

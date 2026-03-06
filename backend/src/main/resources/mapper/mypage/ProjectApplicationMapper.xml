@@ -319,14 +319,14 @@
 		) AND (a.project_application_status_cd IS NULL OR a.project_application_status_cd != 806) ) </select>
 
 	<select id="findCorporateApplications" parameterType="map" resultType="map"> SELECT
-		a.project_application_sq AS applicationSq, p.project_ttl AS projectTitle, (SELECT
-		c.company_nm FROM TBL_COMPANY_S c WHERE c.company_sq = p.company_sq) AS companyTitle,
-		p.project_candidate_cnt AS applicantCnt, u.user_nm AS applicantName, r.resume_sq AS
-		resumeSq, r.resume_ttl AS resumeTitle, a.project_application_created_at_dtm AS appliedDt,
-		a.selected_interview_dtm AS interviewDt, a.read_application_dtm AS readApplicationDt,
-		cc.common_code_nm AS applicationStatus FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_PROJECT_M p
-		ON a.project_sq = p.project_sq JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq JOIN
-		TBL_USER_M u ON r.user_sq = u.user_sq JOIN TBL_COMMON_CODE_C cc ON
+		a.project_application_sq AS applicationSq, p.project_sq AS projectSq, p.project_ttl AS
+		projectTitle, (SELECT c.company_nm FROM TBL_COMPANY_S c WHERE c.company_sq = p.company_sq)
+		AS companyTitle, p.project_candidate_cnt AS applicantCnt, u.user_nm AS applicantName,
+		r.resume_sq AS resumeSq, r.resume_ttl AS resumeTitle, a.project_application_created_at_dtm
+		AS appliedDt, a.selected_interview_dtm AS interviewDt, a.read_application_dtm AS
+		readApplicationDt, cc.common_code_nm AS applicationStatus FROM TBL_PROJECT_APPLICATION_H a
+		JOIN TBL_PROJECT_M p ON a.project_sq = p.project_sq JOIN TBL_RESUME_M r ON a.resume_sq =
+		r.resume_sq JOIN TBL_USER_M u ON r.user_sq = u.user_sq JOIN TBL_COMMON_CODE_C cc ON
 		a.project_application_status_cd = cc.common_code_sq WHERE a.company_sq = #{companySq} <if
 			test="keyword != null and keyword != ''">
 			<choose>
@@ -338,7 +338,7 @@
 		CONCAT('%', #{keyword}, '%')) </otherwise>
 			</choose>
 		</if>
-		<if
+    <if
 			test="readType != null and readType != 'all'">
 			<choose>
 				<when test="readType == 'read'"> AND a.read_application_dtm IS NOT NULL </when>
@@ -375,5 +375,26 @@
 		WHERE a.company_sq = #{companySq} AND a.read_application_dtm IS NOT NULL UNION ALL SELECT
 		'unread' AS type, COUNT(*) FROM TBL_PROJECT_APPLICATION_H a WHERE a.company_sq =
 		#{companySq} AND a.read_application_dtm IS NULL </select>
+
+	<select id="findApplicationNotificationInfo" resultType="map"> SELECT r.user_sq as "userSq",
+		p.project_ttl as "projectTtl", p.project_sq as "projectSq" FROM tbl_project_application_h h
+		JOIN tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_project_m p ON h.project_sq =
+		p.project_sq WHERE h.project_application_sq = #{applicationSq} </select>
+
+	<select id="findCancelNotificationInfo" resultType="map"> SELECT c.user_sq as "companyUserSq",
+		u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as "projectSq",
+		h.project_application_member_type_cd as "memberTypeCd" FROM tbl_project_application_h h JOIN
+		tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_user_m u ON r.user_sq = u.user_sq JOIN
+		tbl_project_m p ON h.project_sq = p.project_sq JOIN tbl_company_s c ON p.company_sq =
+		c.company_sq WHERE h.project_application_sq = #{applicationSq} </select>
+
+	<select id="findInterviewConfirmationInfo" resultType="map"> SELECT c.user_sq as
+		"companyUserSq", u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as
+		"projectSq", h.project_application_member_type_cd as "memberTypeCd",
+		t.interview_available_dtm as "interviewDtm" FROM tbl_project_application_h h JOIN
+		tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_user_m u ON r.user_sq = u.user_sq JOIN
+		tbl_project_m p ON h.project_sq = p.project_sq JOIN tbl_company_s c ON p.company_sq =
+		c.company_sq JOIN tbl_project_interview_time_slot_s t ON t.interview_sq = #{interviewTimeSq}
+		WHERE h.project_application_sq = #{applicationSq} </select>
 
 </mapper>

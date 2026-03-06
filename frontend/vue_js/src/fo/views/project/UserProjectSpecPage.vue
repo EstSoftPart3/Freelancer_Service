@@ -1,8 +1,11 @@
 <template lang="">
   <CommonPageHeader
     title=""
-    strongText="프로젝트 상세 정보"
-    :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '프로젝트' }]"
+    strongText="프로젝트 상세 정보(개인)"
+    :breadcrumbs="[
+      { text: '프로젝트', link: '/projectListPage' },
+      { text: project.projectTtl },
+    ]"
   />
   <div class="container py-5 detail-list">
     <div class="row pt-4 mt-2 mb-5">
@@ -13,10 +16,17 @@
             <div class="d-flex align-items-center mb-3">
               <div class="me-4 flex-shrink-0">
                 <img
-                  src="img/blog/medium/blog-2.jpg"
+                  :src="
+                    project.companyImageUrl || '/img/logos/Company_logo.png'
+                  "
                   alt="프로젝트 이미지"
                   class="rounded-circle"
-                  style="width: 70px; height: 70px; object-fit: cover"
+                  style="
+                    width: 70px;
+                    height: 70px;
+                    object-fit: contain;
+                    background-color: #f8f9fa;
+                  "
                 />
               </div>
               <div>
@@ -215,11 +225,13 @@
           </li>
           <li>
             <strong class="text-color-primary">근무 지역 :</strong>
-            {{ project.projectAddress }}
+            <i :class="['bi', addressIcon]"></i>
+            {{ displayAddress }}
           </li>
           <li>
             <strong class="text-color-primary">단가 :</strong>
-            {{ project.projectSalary }}
+            {{ project.formattedSalary }}
+            <span v-if="project.salaryNegotiableYn === 'Y'"> / 단가 협의 </span>
           </li>
         </ul>
       </div>
@@ -328,6 +340,31 @@ const getSkillIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')
   return skillIconMap[key] || skillIconMap.default
 }
+
+// 근무 지역 노출 로직 (주소 타입에 따른 우선순위)
+const displayAddress = computed(() => {
+  const p = project.value
+  if (!p) return '정보 없음'
+
+  // 타입 2701: 상세 주소 우선
+  if (p.addressTypeCd === 2701) {
+    return p.detailedAddress
+      ? `${p.detailedAddress} ${p.detailedAddressDetail || ''}`
+      : p.projectAddress
+  }
+  // 타입 2702: 지하철 주소 우선
+  else if (p.addressTypeCd === 2702) {
+    return p.subwayAddress || p.projectAddress
+  }
+
+  // 기본값
+  return p.projectAddress || '정보 없음'
+})
+
+// 주소 타입에 따른 아이콘 (선택 사항 - UX 향상)
+const addressIcon = computed(() => {
+  return project.value.addressTypeCd === 2702 ? 'bi-train-front' : 'bi-geo-alt'
+})
 </script>
 <style scoped>
 .child-skill-list {

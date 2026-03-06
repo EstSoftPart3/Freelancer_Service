@@ -1,11 +1,11 @@
 package com.example.demo.domain.mypage.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
-import com.example.demo.domain.mypage.dto.AddressDTO;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
@@ -176,5 +176,9 @@ public class InformationEditRepository {
 
     public ProfileImageInfoDTO findAffiliationFileByUserSq(Long companySq) {
         return informationEditMapper.findAffiliationFileByUserSq(companySq);
+    }
+
+    public void updateCompanyVerification(Map<String, Object> params) {
+        informationEditMapper.updateCompanyVerification(params);
     }
 }

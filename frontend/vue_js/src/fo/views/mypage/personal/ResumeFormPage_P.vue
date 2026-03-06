@@ -710,8 +710,8 @@
             ></textarea>
           </div>
 
-          <!-- 동의 -->
-          <div class="form-group mb-3">
+          <!-- 추후 사용 -->
+          <!-- <div class="form-group mb-3">
             <div class="form-check">
               <input
                 v-model="resumeForm.resumeIsNotificationYn"
@@ -725,7 +725,7 @@
                 >알림 발신 여부</label
               >
             </div>
-          </div>
+          </div> -->
 
           <!-- 제출 버튼 -->
           <div class="form-group mt-4">
@@ -777,7 +777,7 @@ const resumeForm = reactive({
   resumePhoneNum: '',
   resumeEmail: '',
   resumeGreetingTxt: '',
-  resumeIsNotificationYn: 'N',
+  resumeIsNotificationYn: 'Y',
   resumeIsRepresentativeYn: 'N',
   address: {
     zonecode: '',
@@ -976,7 +976,7 @@ function onAttachmentChange(event) {
   if (hasInvalid) {
     event.target.value = ''
   }
-  console.log('resumeForm.attachments', resumeForm.attachments)
+  // console.log('resumeForm.attachments', resumeForm.attachments)
 }
 
 // 학력 입력 폼 표시 로직
@@ -1088,7 +1088,7 @@ const showSkillsForm = () => {
   modalStore.openModal(SkillTagModal, {
     skillTags: resumeForm.skillTagList,
     onConfirm: (skills) => {
-      console.log(skills)
+      // console.log(skills)
       resumeForm.skillTagList = skills
     },
   })
@@ -1176,9 +1176,12 @@ onMounted(async () => {
     })
 
     setExistingAttachments(resumeForm.attachmentList)
-    console.log('resumeForm', resumeForm)
+    // console.log('resumeForm', resumeForm)
   }
 })
+
+// 용량 제한 상수 (100MB)
+const MAX_FILE_SIZE = 100 * 1024 * 1024
 
 async function submitResume() {
   if (!resumeForm.resumeTtl || !resumeForm.resumeTtl.trim()) {
@@ -1216,6 +1219,27 @@ async function submitResume() {
 
   if (!resumeForm.resumeGreetingTxt || !resumeForm.resumeGreetingTxt.trim()) {
     return alertStore.show('자기소개를 입력하세요.', 'danger')
+  }
+
+  // [추가] 파일 용량 체크 로직
+  // 1. 프로필 이미지 체크
+  for (const file of profileImages.value) {
+    if (file.size > MAX_FILE_SIZE) {
+      return alertStore.show(
+        `프로필 이미지(${file.name})가 100MB를 초과합니다.`,
+        'danger',
+      )
+    }
+  }
+
+  // 2. 첨부파일 체크
+  for (const file of attachments.value) {
+    if (file.size > MAX_FILE_SIZE) {
+      return alertStore.show(
+        `첨부파일(${file.name})이 100MB를 초과합니다.`,
+        'danger',
+      )
+    }
   }
 
   // 정리된 프로젝트 리스트
@@ -1282,16 +1306,16 @@ async function submitResume() {
       })
     }
 
-    console.log('폼데이터 내용:')
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof Blob) {
-        value.text().then((text) => {
-          console.log(`${key} (Blob):`, text)
-        })
-      } else {
-        console.log(`${key}:`, value)
-      }
-    }
+    // console.log('폼데이터 내용:')
+    // for (let [key, value] of formData.entries()) {
+    //   if (value instanceof Blob) {
+    //     value.text().then((text) => {
+    //       console.log(`${key} (Blob):`, text)
+    //     })
+    //   } else {
+    //     console.log(`${key}:`, value)
+    //   }
+    // }
 
     alertStore.show('이력서가 등록되었습니다.', 'success')
     router.push('/mypage/resumeList')

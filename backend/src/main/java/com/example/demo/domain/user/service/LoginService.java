@@ -4,9 +4,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.admin.mapper.AdminDashBoardMapper;
 import com.example.demo.domain.user.dto.TokenDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
+import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.util.JwtProvider;
 
@@ -19,11 +22,14 @@ public class LoginService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final AdminDashBoardMapper adminDashBoardMapper;
 
     @Transactional
     public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
         UserDTO user = userRepository.findByUserId(userId);
-
+        UsersDTO users = userRepository.findUserByUserId(userId);
+        
         if (user == null) {
             throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
@@ -31,6 +37,11 @@ public class LoginService {
         // 탈퇴 여부 확인
         if ("Y".equalsIgnoreCase(user.getUserIsDeletedYn())) {
             throw new IllegalArgumentException("탈퇴한 사용자입니다.");
+        }
+        
+        // 계정 활성화 여부 확인
+        if ("N".equalsIgnoreCase(users.getUserIsActivateYn())) {
+        	throw new IllegalArgumentException("비활성화된 사용자입니다.");
         }
 
         if (!user.getUserTypeCd().equals(userTypeCd)) {
@@ -52,6 +63,8 @@ public class LoginService {
         loginResponseDTO.setUserNm(user.getUserNm());
         loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 
+        adminDashBoardMapper.insertConnectedUser(user.getUserSq());
+        
         return new LoginResultDTO(tokenDTO, loginResponseDTO);
     }
 
@@ -96,7 +109,14 @@ public class LoginService {
     }
 
     public LoginResponseDTO getUserInfoByUserSq(Long userSq) {
-        return userRepository.getUserInfoByUserSq(userSq);
+        // Mapper에서 작성한 Join 쿼리 호출
+        LoginResponseDTO userInfo = userMapper.findUserInfoByUserSq(userSq);
+
+        if (userInfo == null) {
+            throw new RuntimeException("해당 유저의 정보를 찾을 수 없습니다.");
+        }
+
+        return userInfo;
     }
 
     public void deleteRefreshTokenByUserSq(Long userSq) {

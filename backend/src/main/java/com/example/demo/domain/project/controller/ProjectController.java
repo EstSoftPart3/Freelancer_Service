@@ -19,11 +19,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
 import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
+import com.example.demo.domain.project.dto.response.MainProjectResponse;
 import com.example.demo.domain.project.dto.response.ProjectDetailResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectListResponse;
@@ -50,7 +52,6 @@ public class ProjectController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 생성 성공", null));
 	}
 
-	// TODO : 지원 및 스크랩 여부를 반환하는 API를 따로 만들어 그걸로 토큰을 받고, 여기선 토큰 제거.
 	@GetMapping
 	public ResponseEntity<ApiResponse<ProjectListResponse>> getProjectList(Authentication authentication,
 			@ModelAttribute ProjectSearchRequest request) {
@@ -88,9 +89,14 @@ public class ProjectController {
 
 	@DeleteMapping("/{projectSq}")
 	public ResponseEntity<ApiResponse<Void>> deleteProject(
-			Authentication authentication,
+			Authentication authentication, // 또는 @AuthenticationPrincipal JwtAuthenticationToken token
 			@PathVariable("projectSq") Long projectSq) {
-		projectService.softDeleteProject(projectSq);
+
+		// Authentication을 JwtAuthenticationToken으로 캐스팅해서 전달
+		JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+
+		projectService.softDeleteProject(projectSq, token);
+
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 삭제 성공", null));
 	}
 
@@ -133,5 +139,20 @@ public class ProjectController {
 	public ResponseEntity<ApiResponse<List<?>>> getSearchFilterInfos(@RequestParam("type") String type) {
 		return ResponseEntity
 				.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 필터 내용 반환 성공", projectService.fetchFilterInfos(type)));
+	}
+
+	@GetMapping("/popular")
+	public ResponseEntity<List<MainProjectResponse>> getPopularProjects(
+			@RequestParam(defaultValue = "views") String sortType) {
+		return ResponseEntity.ok(projectService.fetchMainPopularProjects(sortType));
+	}
+
+	@GetMapping("/regions")
+	public ResponseEntity<ApiResponse<List<ProjectRegionGroupDTO>>> getProjectRegionGroups(
+			@ModelAttribute ProjectSearchRequest request) {
+
+		return ResponseEntity.ok(
+				ApiResponse.of(HttpStatus.OK, "지역별 프로젝트 그룹 조회 성공",
+						projectService.fetchProjectRegionGroups(request)));
 	}
 }

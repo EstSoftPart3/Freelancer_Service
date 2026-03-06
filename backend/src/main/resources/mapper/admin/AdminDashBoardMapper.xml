@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminDashBoardMapper">
+	
+ 	<select id="getChartConnectedUserCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">                    
+ 		SELECT count(distinct u.user_sq) AS count, DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d") AS date 
+ 		FROM TBL_USER_ONLINE_S u 
+ 		WHERE DATE(u.access_log_connected_at_dtm) BETWEEN #{startDate} AND #{endDate}                         
+  		GROUP BY DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d")
+    </select>
+	
+	<select id="getChartProjectCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_PROJECT_M t 
+		WHERE DATE(t.project_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		GROUP BY DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getChartProjectApplicationCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_PROJECT_APPLICATION_H t
+		WHERE DATE(t.project_application_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		GROUP BY DATE_FORMAT(t.project_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getChartCompanyApplicationCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_COMPANY_APPLICATION_H t
+		WHERE DATE(t.company_application_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getChartPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_BOARD_M t
+		WHERE DATE(t.board_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
+	</select>
+
+	<select id="getChartCommentCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.comment_created_at_dtm, "%Y-%m-%d") AS date 
+		FROM TBL_BOARD_COMMENT_S t 
+		WHERE DATE(t.comment_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		GROUP BY DATE_FORMAT(t.comment_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayConnectedUserCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">                    
+ 		SELECT count(distinct u.user_sq) AS count, DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d") AS date 
+ 		FROM TBL_USER_ONLINE_S u 
+ 		WHERE u.access_log_connected_at_dtm >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+ 		GROUP BY DATE_FORMAT(u.access_log_connected_at_dtm, "%Y-%m-%d")                   
+    </select>
+    
+	<select id="getDayProjectCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_PROJECT_M t
+		WHERE t.project_created_at_dtm >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.project_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayProjectApplicationCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.project_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_PROJECT_APPLICATION_H t
+		WHERE t.project_application_created_at_dtm >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.project_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayCompanyApplicationCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_COMPANY_APPLICATION_H t
+		WHERE t.company_application_created_at_dtm >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_BOARD_M t
+		WHERE t.board_created_at_dtm >=  DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<select id="getDayCommentCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
+		SELECT count(*) AS count, DATE_FORMAT(t.comment_created_at_dtm, "%Y-%m-%d") AS date
+		FROM TBL_BOARD_COMMENT_S t 
+		WHERE t.comment_created_at_dtm >=  DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY DATE_FORMAT(t.comment_created_at_dtm,  "%Y-%m-%d")
+	</select>
+	
+	<insert id="insertConnectedUser">
+		INSERT INTO TBL_USER_ONLINE_S (access_log_connected_at_dtm, user_sq)
+		VALUES (NOW(), #{user_sq})
+	</insert>
+	
+	<select id="getLatestPosts" resultType="com.example.demo.domain.admin.dto.response.LatestPostsDTO">
+		SELECT t.board_sq AS id, t.board_ttl AS title, m.user_nm AS name, t.board_comment_cnt AS comments, DATE_FORMAT(t.board_created_at_dtm, "%H:%i") AS time
+		FROM TBL_BOARD_M t 
+		LEFT JOIN TBL_USER_M m ON t.user_sq = m.user_sq
+		ORDER BY t.board_created_at_dtm DESC
+		LIMIT 5
+	</select>
+</mapper>

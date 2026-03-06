@@ -35,8 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/board/*/increment-view",
             "/api/qna",
             "/api/qna/*/increment-view",
-            "/api/answer/*",
+            "/api/answer",
             "/api/answer/*/increment-view",
+            "/api/notice",
+            "/api/notice/*/increment-view\"",
             "/api/affiliation",
             "/api/affiliation/*/increment-view",
             "/api/affiliation/address",
@@ -46,7 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects",
             "/api/projects/*/districts",
             "/api/projects/applications/interviews/*",
-            "/api/mypage/resume"
+            "/api/mypage/resume",
+            "/api/uploads",
+            "/api/download",
+            "/api/files",
+            // ---------------- [추가] 관리자용 경로 ----------------
+            "/api/admin/login",
+            "/api/admin/refresh-token"
 
     // 여기에 더 추가 가능
     );

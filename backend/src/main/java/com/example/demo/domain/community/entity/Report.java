@@ -1,22 +1,22 @@
 package com.example.demo.domain.community.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class Report {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportSq;
-    private Long userSq;
-    private Long boardSq;
-    private Long answerSq;
-    private Long commentSq;
-    private String reportReasonTxt;
-    private Long reportTypeCd;
+    private Long reportUserSq;
+    private Long reportTargetTypeCd;
+    private Long reportTargetSq;
+    private Long reportReasonCd;
+    private String reportContentTxt;
+    private Long reportProcessStatusCd;
 }

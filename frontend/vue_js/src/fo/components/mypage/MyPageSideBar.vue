@@ -5,6 +5,20 @@
       <h5 class="font-weight-semi-bold">마이 페이지</h5>
       <ul class="nav nav-list flex-column mb-5">
         <li class="nav-item">
+          <span class="nav-link">일정 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/calendar"
+                @click="handleNavigate"
+              >
+                캘린더 보기
+              </router-link>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
           <span class="nav-link">소속 공고 관리</span>
           <ul>
             <li class="nav-item">
@@ -96,6 +110,20 @@
     <aside v-else>
       <h5 class="font-weight-semi-bold">마이 페이지</h5>
       <ul class="nav nav-list flex-column mb-5">
+        <li class="nav-item">
+          <span class="nav-link">일정 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/calendar"
+                @click="handleNavigate"
+              >
+                캘린더 보기
+              </router-link>
+            </li>
+          </ul>
+        </li>
         <li class="nav-item">
           <span class="nav-link">이력서 관리</span>
           <ul>

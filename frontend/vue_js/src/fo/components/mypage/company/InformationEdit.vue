@@ -512,11 +512,19 @@ const editing = reactive({
   address: false,
   userPw: false,
 })
+// 파일 사이즈 정의 변수
+const MAX_FILE_SIZE = 100 * 1024 * 1024
 
 // 파일 변경 이벤트 핸들러
 const onFileChange = async (event) => {
   const file = event.target.files[0]
   if (!file) return
+
+  if (file.size > MAX_FILE_SIZE) {
+    alertStore.show('파일 크기는 100MB를 초과할 수 없습니다.', 'danger')
+    event.target.value = ''
+    return
+  }
 
   try {
     const formData = new FormData()
@@ -542,7 +550,7 @@ const onFileChange = async (event) => {
       alertStore.show('프로필 이미지 업데이트에 실패했습니다.', 'danger')
     }
   } catch (error) {
-    alertStore('프로필 이미지 업데이트 중 오류가 발생했습니다.', 'danger')
+    alertStore.show('프로필 이미지 업데이트 중 오류가 발생했습니다.', 'danger')
     console.error(error)
   }
 }
@@ -555,7 +563,7 @@ const removeProfileImage = async () => {
       userProfileImageUrl.value = null
     }
   } catch (error) {
-    alertStore('프로필 이미지 삭제에 실패하였습니다.', 'danger')
+    alertStore.show('프로필 이미지 삭제에 실패하였습니다.', 'danger')
     console.err(error)
   }
 }
@@ -682,13 +690,15 @@ const sendVerification = async () => {
   error.value = ''
   try {
     const email = editEmail.emailId + '@' + editEmail.emailDomain
-    const response = await api.$post('/email/send-code', { email })
+    // const response =
+    await api.$post('/email/send-code', { email })
 
-    console.log('인증 이메일 전송 완료', response)
-    alertStore.show(
-      '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
-      'success',
-    )
+    // console.log('인증 이메일 전송 완료', response)
+    // alertStore.show(
+    //   '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
+    //   'success',
+    // )
+    alertStore.show('인증 코드를 전송했습니다. 인증 코드 : ', 'success')
     isVerified.value = false
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error)
@@ -705,11 +715,12 @@ const verifyCode = async () => {
   error.value = ''
   try {
     const email = editEmail.emailId + '@' + editEmail.emailDomain
-    const response = await api.$post('/email/verify-code', {
+    // const response =
+    await api.$post('/email/verify-code', {
       email,
       code: editEmail.verificationCode,
     })
-    console.log('인증 성공', response)
+    // console.log('인증 성공', response)
     alertStore.show('이메일 인증에 성공하였습니다.', 'info')
     isVerified.value = true
   } catch (error) {
@@ -764,7 +775,7 @@ function saveField(field) {
   }
 
   editing[field] = false
-  console.log('form', form)
+  // console.log('form', form)
 }
 
 function cancelEdit(field) {
@@ -840,7 +851,7 @@ const saveAll = async () => {
     },
   }
 
-  console.log('requestBody', requestBody)
+  // console.log('requestBody', requestBody)
   try {
     const response = await api.$post('/mypage/edit/update', requestBody)
 

@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 import com.example.demo.domain.user.dto.AddressDTO;
 import com.example.demo.domain.user.dto.CompanyProfileDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 
 @Mapper
@@ -28,6 +29,8 @@ public interface UserMapper {
     int insertCompanyProfile(CompanyProfileDTO dto);
 
     UserDTO findByUserId(@Param("userId") String userId);
+    
+    UsersDTO findUserByUserId(@Param("userId") String userId);
 
     int updateRefreshToken(@Param("userSq") Long userSq, @Param("refreshToken") String refreshToken);
 

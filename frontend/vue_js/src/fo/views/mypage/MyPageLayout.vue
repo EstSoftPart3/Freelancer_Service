@@ -75,16 +75,16 @@ const headerInfo = computed(() => {
       }
     case 'AffiliatedJobApplications':
       return {
-        title: '기업',
-        strongText: '지원자 관리',
+        title: '소속',
+        strongText: '공고 지원 현황',
         breadcrumbs: [
           { text: '마이페이지', link: '/mypage' },
-          { text: '지원자 관리' },
+          { text: '공고 지원 현황' },
         ],
       }
     case 'AffiliatedScrap':
       return {
-        title: '기업',
+        title: '소속',
         strongText: '스크랩',
         breadcrumbs: [
           { text: '마이페이지', link: '/mypage' },

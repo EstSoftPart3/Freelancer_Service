@@ -231,6 +231,7 @@ const login = async () => {
     }
 
     alertStore.show(userStore.userNm + '님 안녕하세요.', 'success')
+
     router.push('/') // 메인 페이지로 이동
   } catch (error) {
     console.error(error)
@@ -244,14 +245,16 @@ const fetchUserInfo = async () => {
     const data = res.output
     console.log('data', data)
 
-    // 로컬스토리지 저장
-    localStorage.setItem('userNm', data.userNm)
-    localStorage.setItem('userTypeCd', data.userTypeCd)
-
     // Pinia 상태 저장
     userStore.setUser({
+      userSq: data.userSq,
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
+      address: data.address,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      isAffiliated: data.isAffiliated,
+      companyAuthStatusCd: data.companyAuthStatusCd,
     })
   } catch (error) {
     console.error('유저 정보 불러오기 실패:', error)

@@ -1,45 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.community.mapper.CommentMapper">
 
-    <select id="findById" resultType="com.example.demo.domain.community.entity.Comment">
-        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_sq = #{commentSq} AND comment_is_deleted_yn = "N"
-    </select>
+    <select id="findById" resultType="com.example.demo.domain.community.entity.Comment"> SELECT *
+        FROM TBL_BOARD_COMMENT_S WHERE comment_sq = #{commentSq} AND comment_is_deleted_yn = "N" </select>
 
-    <select id="findByBoardSq" resultType="com.example.demo.domain.community.entity.Comment">
-        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_is_deleted_yn = 'N' AND board_sq = #{boardSq}
-    </select>
+    <select id="findByBoardSq" resultType="com.example.demo.domain.community.entity.Comment"> SELECT
+        * FROM TBL_BOARD_COMMENT_S WHERE comment_is_deleted_yn = 'N' AND board_sq = #{boardSq} ORDER
+        BY comment_sq ASC </select>
 
     <select id="findByAnswerSq" resultType="com.example.demo.domain.community.entity.Comment">
-        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_is_deleted_yn = 'N' AND answer_sq = #{answerSq}
-    </select>
+        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_is_deleted_yn = 'N' AND answer_sq =
+        #{answerSq} ORDER BY comment_sq ASC </select>
 
-    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Comment" useGeneratedKeys="true" keyProperty="commentSq" keyColumn="comment_sq">
-        INSERT INTO TBL_BOARD_COMMENT_S (user_sq, board_sq, answer_sq, comment_description_txt, comment_type_cd) VALUES (#{userSq}, #{boardSq}, #{answerSq}, #{commentDescriptionTxt}, #{commentTypeCd})
-    </insert>
+    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Comment"
+        useGeneratedKeys="true" keyProperty="commentSq" keyColumn="comment_sq"> INSERT INTO
+        TBL_BOARD_COMMENT_S (user_sq, parent_comment_sq, board_sq, answer_sq,
+        comment_description_txt, comment_type_cd) VALUES (#{userSq}, #{parentCommentSq}, #{boardSq},
+        #{answerSq}, #{commentDescriptionTxt}, #{commentTypeCd}) </insert>
 
-    <update id="update" parameterType="com.example.demo.domain.community.entity.Comment">
-        UPDATE TBL_BOARD_COMMENT_S
-        SET comment_description_txt = #{commentDescriptionTxt}
-        WHERE comment_sq = #{commentSq}
-    </update>
+    <update id="update" parameterType="com.example.demo.domain.community.entity.Comment"> UPDATE
+        TBL_BOARD_COMMENT_S SET comment_description_txt = #{commentDescriptionTxt},
+        comment_modified_at_dtm = NOW() WHERE comment_sq = #{commentSq} </update>
 
-    <update id="delete" parameterType="com.example.demo.domain.community.entity.Comment">
-        UPDATE TBL_BOARD_COMMENT_S
-        SET comment_is_deleted_yn = 'Y'
-        WHERE comment_sq = #{commentSq} AND user_sq = #{userSq}
-    </update>
+    <update id="delete" parameterType="com.example.demo.domain.community.entity.Comment"> UPDATE
+        TBL_BOARD_COMMENT_S SET comment_is_deleted_yn = 'Y' WHERE comment_sq = #{commentSq} AND
+        user_sq = #{userSq} </update>
 
     <update id="updateRecommendCnt" parameterType="com.example.demo.domain.community.entity.Comment">
-        UPDATE TBL_BOARD_COMMENT_S
-        SET comment_recommend_cnt = (
-	        SELECT COUNT(*) 
-	        FROM TBL_RECOMMENDATION_S 
-	        WHERE comment_sq = #{commentSq}
-	    )
-        WHERE comment_sq = #{commentSq}
-    </update>
+        UPDATE TBL_BOARD_COMMENT_S SET comment_recommend_cnt = ( SELECT COUNT(*) FROM
+        TBL_RECOMMENDATION_S WHERE comment_sq = #{commentSq} ) WHERE comment_sq = #{commentSq} </update>
+
+    <select id="selectCommentDetail" resultType="com.example.demo.domain.community.entity.Comment">
+        SELECT comment_sq, user_sq, board_sq, answer_sq FROM tbl_board_comment_s WHERE comment_sq =
+        #{commentSq} </select>
 
 </mapper>

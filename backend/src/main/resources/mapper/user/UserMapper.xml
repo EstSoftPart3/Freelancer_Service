@@ -24,17 +24,15 @@
     #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd} ) </insert>
 
   <!-- 기업 프로필 INSERT -->
-  <insert
-    id="insertCompanyProfile"
+  <insert id="insertCompanyProfile"
     parameterType="com.example.demo.domain.user.dto.CompanyProfileDTO"> INSERT INTO TBL_COMPANY_S (
-    user_sq, address_sq, company_nm, company_ceo_nm, company_open_dt, company_biz_num,
-    company_greeting_txt ) VALUES ( #{userSq}, #{addressSq}, #{companyNm}, #{companyCeoNm},
-    #{companyOpenDt}, #{companyBizNum}, #{companyGreetingTxt} ) </insert>
+    user_sq, address_sq, company_nm, company_auth_status_cd, company_agreed_terms_yn ) VALUES (
+    #{userSq}, #{addressSq}, #{companyNm}, #{companyAuthStatusCd}, 'Y' ) </insert>
 
   <!-- 아이디 중복 확인 -->
   <select id="existsByUserId"
     parameterType="string" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_USER_M WHERE
-    user_id = #{userId} AND user_is_deleted_yn = 'N' ) </select>
+    user_id = #{userId} ) </select>
 
   <!-- 이메일 중복 확인 -->
   <select id="existsByUserEmail"
@@ -55,6 +53,15 @@
     userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
     userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken FROM
     TBL_USER_M WHERE user_id = #{userId} </select>
+    
+   <select
+		id="findUserByUserId" parameterType="string"
+		resultType="com.example.demo.domain.user.dto.UsersDTO"> SELECT user_sq AS userSq, user_id AS
+		userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
+		userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken, user_is_activate_yn AS userIsActivateYn FROM
+		TBL_USER_M WHERE user_id = #{userId} 
+   </select> 
+   
 
   <update id="updateRefreshToken"> UPDATE TBL_USER_M SET user_refresh_token = #{refreshToken},
     user_modified_at_dtm = NOW() WHERE user_sq = #{userSq} </update>
@@ -67,11 +74,14 @@
     user_is_deleted_yn, user_refresh_token FROM TBL_USER_M WHERE user_refresh_token =
     #{refreshToken} AND user_is_deleted_yn = 'N' </select>
 
-  <select
-    id="findUserInfoByUserSq" parameterType="long"
-    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT user_nm AS
-    userNm, user_type_cd AS userTypeCd FROM TBL_USER_M WHERE user_sq = #{userSq} AND
-    user_is_deleted_yn = 'N' </select>
+  <select id="findUserInfoByUserSq"
+    resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT u.user_sq AS
+    userSq, u.user_nm AS userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude,
+    c.company_auth_status_cd AS companyAuthStatusCd, (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE
+    'N' END FROM tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt
+    IS NULL) AS isAffiliated FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq =
+    a.address_sq LEFT JOIN tbl_company_s c ON u.user_sq = c.user_sq WHERE u.user_sq = #{userSq} AND
+    u.user_is_deleted_yn = 'N' </select>
 
   <update id="deleteRefreshTokenByUserSq" parameterType="long"> UPDATE TBL_USER_M SET
     user_refresh_token = NULL WHERE user_sq = #{userSq} </update>

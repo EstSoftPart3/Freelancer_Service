@@ -6,17 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.example.demo.common.AmazonS3.AmazonS3Service;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
+import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
@@ -26,9 +23,6 @@ import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupRe
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.repository.ResumeRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,22 +32,28 @@ public class ResumeService {
 
 	private final ResumeMapper resumeMapper;
 	private final ResumeRepository resumeRepository;
-	private final AmazonS3Service amazonS3Service;
+	private final FileStorageService fileStorageService; // S3Service 대신 주입
+	// private final AmazonS3Service amazonS3Service;
 	// private final ResumeSkillMapper resumeSkillMapper;
 	// private final AddressRepository addressRepository;
 	// private final MypageAddressMapper addressMapper;
-	private final AmazonS3 amazonS3;
+	// private final AmazonS3 amazonS3;
 
-	@Value("${cloud.aws.s3.bucket}")
-	private String bucket;
+	// @Value("${cloud.aws.s3.bucket}")
+	// private String bucket;
 
-	public int createResume(Long userSq, ResumeRequestDTO dto, List<MultipartFile> profileImages,
+	// S3 용
+
+	public int createResume(Long userSq, ResumeRequestDTO dto,
+			List<MultipartFile> profileImages,
 			List<MultipartFile> attachments) {
 
 		// 프로필 이미지 업로드
 		UploadedFileDTO profileImageDTO = null;
 		if (profileImages != null && !profileImages.isEmpty()) {
-			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+			// profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+
+			profileImageDTO = fileStorageService.uploadFile(profileImages.get(0));
 			if (profileImageDTO == null) {
 				throw new IllegalArgumentException("프로필 이미지 업로드 실패");
 			}
@@ -64,7 +64,8 @@ public class ResumeService {
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
 		if (attachments != null) {
 			for (MultipartFile file : attachments) {
-				UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				// UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				UploadedFileDTO fileDTO = fileStorageService.uploadFile(file);
 				if (fileDTO == null) {
 					throw new IllegalArgumentException("첨부파일 업로드 실패");
 				}
@@ -163,7 +164,8 @@ public class ResumeService {
 			if (resumeRepository.insertProfileImage(image) <= 0) {
 				throw new IllegalArgumentException("프로필 이미지 저장 실패");
 			}
-			if (resumeRepository.insertResumeProfileImageMapping(resumeSq, image.getFileSq()) <= 0) {
+			if (resumeRepository.insertResumeProfileImageMapping(resumeSq,
+					image.getFileSq()) <= 0) {
 				throw new IllegalArgumentException("프로필 이미지 매핑 실패");
 			}
 		}
@@ -174,7 +176,8 @@ public class ResumeService {
 				if (resumeRepository.insertAttachmentFile(file) <= 0) {
 					throw new IllegalArgumentException("첨부파일 저장 실패");
 				}
-				if (resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq()) <= 0) {
+				if (resumeRepository.insertResumeAttachmentMapping(resumeSq,
+						file.getFileSq()) <= 0) {
 					throw new IllegalArgumentException("첨부파일 매핑 실패");
 				}
 			}
@@ -496,7 +499,8 @@ public class ResumeService {
 					// 실제 파일 논리 삭제
 					resumeRepository.deleteProfileImage(fileSq);
 					// S3 원본 삭제
-					amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+					// amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+					fileStorageService.deleteFile(dbProfileImage.getFileSaveNm());
 				} else {
 					// 다른 곳에서 사용 중이라면 매핑만 삭제
 					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
@@ -507,7 +511,8 @@ public class ResumeService {
 		// 프로필 이미지 업로드
 		UploadedFileDTO profileImageDTO = null;
 		if (profileImages != null && !profileImages.isEmpty()) {
-			profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+			// profileImageDTO = amazonS3Service.uploadFile(profileImages.get(0));
+			profileImageDTO = fileStorageService.uploadFile(profileImages.get(0));
 			if (profileImageDTO == null) {
 				throw new IllegalArgumentException("프로필 이미지 업로드 실패");
 			}
@@ -529,7 +534,8 @@ public class ResumeService {
 					// 실제 파일 논리 삭제
 					resumeRepository.deleteProfileImage(fileSq);
 					// S3 원본 삭제
-					amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+					// amazonS3Service.deleteFile(dbProfileImage.getFileSaveNm());
+					fileStorageService.deleteFile(dbProfileImage.getFileSaveNm());
 				} else {
 					// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
 					resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
@@ -565,7 +571,8 @@ public class ResumeService {
 					// 실제 파일 논리 삭제
 					resumeRepository.deleteAttachmentFile(fileSq);
 					// S3 원본 삭제
-					amazonS3Service.deleteFile(dbFile.getFileSaveNm());
+					// amazonS3Service.deleteFile(dbFile.getFileSaveNm());
+					fileStorageService.deleteFile(dbFile.getFileSaveNm());
 				} else {
 					// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
 					resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
@@ -577,7 +584,9 @@ public class ResumeService {
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentFileDTOs = new ArrayList<>();
 		if (attachments != null) {
 			for (MultipartFile file : attachments) {
-				UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				// UploadedFileDTO fileDTO = amazonS3Service.uploadFile(file);
+				UploadedFileDTO fileDTO = fileStorageService.uploadFile(file);
+
 				if (fileDTO == null) {
 					throw new IllegalArgumentException("첨부파일 업로드 실패");
 				}
@@ -644,54 +653,77 @@ public class ResumeService {
 		return resumeMapper.selectAllResumes(userSq);
 	}
 
+	// 로컬용
 	@Transactional
 	public void softDeleteResume(Long resumeSq) {
-		// 1. 이력서 삭제 처리 (논리삭제)
 		resumeMapper.updateDeleteYn(resumeSq);
 
-		// 2. 해당 이력서 프로필 이미지 조회
+		// 프로필 이미지 정리
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.selectProfileImageForUpdateByResumeSq(resumeSq);
 		if (profileImage != null) {
-			Long fileSq = profileImage.getFileSq();
-
-			// 다른 이력서에서 사용중인지 확인 (프로필 이미지)
-			int profileCount = resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
-
-			if (profileCount == 0) {
-				// 매핑 삭제
-				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
-				// 실제 파일 논리 삭제
-				resumeRepository.deleteProfileImage(fileSq);
-				// S3 원본 삭제
-				amazonS3Service.deleteFile(profileImage.getFileSaveNm());
-			} else {
-				// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
-				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
-			}
+			cleanupPhysicalFile(resumeSq, profileImage, "PROFILE");
 		}
 
-		// 3. 해당 이력서 첨부파일 목록 조회
+		// 첨부파일 정리
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository
 				.selectAttachmentListForUpdateByResumeSq(resumeSq);
 		for (ResumeRequestDTO.ResumeFileDTO attachment : attachmentList) {
-			Long fileSq = attachment.getFileSq();
-
-			// 다른 이력서에서 사용중인지 확인 (첨부파일)
-			int attachmentCount = resumeRepository.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
-
-			if (attachmentCount == 0) {
-				// 매핑 삭제
-				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
-				// 실제 파일 논리 삭제
-				resumeRepository.deleteAttachmentFile(fileSq);
-				// S3 원본 삭제
-				amazonS3Service.deleteFile(attachment.getFileSaveNm());
-			} else {
-				// 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
-				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
-			}
+			cleanupPhysicalFile(resumeSq, attachment, "ATTACHMENT");
 		}
 	}
+
+	// // S3용
+	// @Transactional
+	// public void softDeleteResume(Long resumeSq) {
+	// // 1. 이력서 삭제 처리 (논리삭제)
+	// resumeMapper.updateDeleteYn(resumeSq);
+
+	// // 2. 해당 이력서 프로필 이미지 조회
+	// ResumeRequestDTO.ResumeFileDTO profileImage =
+	// resumeRepository.selectProfileImageForUpdateByResumeSq(resumeSq);
+	// if (profileImage != null) {
+	// Long fileSq = profileImage.getFileSq();
+
+	// // 다른 이력서에서 사용중인지 확인 (프로필 이미지)
+	// int profileCount =
+	// resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq);
+
+	// if (profileCount == 0) {
+	// // 매핑 삭제
+	// resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+	// // 실제 파일 논리 삭제
+	// resumeRepository.deleteProfileImage(fileSq);
+	// // S3 원본 삭제
+	// amazonS3Service.deleteFile(profileImage.getFileSaveNm());
+	// } else {
+	// // 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+	// resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+	// }
+	// }
+
+	// // 3. 해당 이력서 첨부파일 목록 조회
+	// List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository
+	// .selectAttachmentListForUpdateByResumeSq(resumeSq);
+	// for (ResumeRequestDTO.ResumeFileDTO attachment : attachmentList) {
+	// Long fileSq = attachment.getFileSq();
+
+	// // 다른 이력서에서 사용중인지 확인 (첨부파일)
+	// int attachmentCount =
+	// resumeRepository.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
+
+	// if (attachmentCount == 0) {
+	// // 매핑 삭제
+	// resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+	// // 실제 파일 논리 삭제
+	// resumeRepository.deleteAttachmentFile(fileSq);
+	// // S3 원본 삭제
+	// amazonS3Service.deleteFile(attachment.getFileSaveNm());
+	// } else {
+	// // 다른 곳에서 쓰고 있으므로 매핑만 삭제, 파일은 보존
+	// resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+	// }
+	// }
+	// }
 
 	// 전체 스킬 태그 리스트 조회
 	@Transactional
@@ -706,21 +738,11 @@ public class ResumeService {
 
 	}
 
+	// 로컬용
 	public ResumeRequestDTO getResumeDetail(Long resumeSq) {
 		ResumeRequestDTO resume = resumeRepository.findByResumeSq(resumeSq);
-		if (resume == null) {
-			throw new IllegalArgumentException("이력서를 찾을 수 없습니다. resumeSq=" + resumeSq);
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JavaTimeModule());
-
-		try {
-			String json = mapper.writeValueAsString(resume);
-			System.out.println("이력서정보" + json);
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		if (resume == null)
+			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
 
 		// 주소 조회
 		if (resume.getAddress() != null && resume.getAddress().getAddressSq() != null) {
@@ -760,26 +782,109 @@ public class ResumeService {
 		List<ResumeRequestDTO.SkillTagDTO> skillTagList = resumeRepository.findSkillTagList(resumeSq);
 		resume.setSkillTagList(skillTagList);
 
-		// 프로필 이미지 조회 및 URL 세팅
+		// [핵심 수정] 프로필 이미지 URL 세팅 (로컬 API 경로)
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(resumeSq);
 		if (profileImage != null) {
-			String s3Url = amazonS3.getUrl(bucket, profileImage.getFileSaveNm()).toString();
-			profileImage.setUrl(s3Url);
+			profileImage.setUrl("/api/files/" + profileImage.getFileSaveNm());
 		}
 		resume.setProfileImage(profileImage);
 
-		// 첨부파일 리스트 조회 및 각각 URL 세팅
+		// [핵심 수정] 첨부파일 리스트 URL 세팅 (로컬 API 경로)
 		List<ResumeRequestDTO.ResumeFileDTO> attachmentList = resumeRepository.findAttachmentList(resumeSq);
-		if (attachmentList != null && !attachmentList.isEmpty()) {
-			attachmentList.forEach(file -> {
-				String s3Url = amazonS3.getUrl(bucket, file.getFileSaveNm()).toString();
-				file.setUrl(s3Url);
-			});
+		if (attachmentList != null) {
+			attachmentList.forEach(file -> file.setUrl("/api/files/" +
+					file.getFileSaveNm()));
 		}
 		resume.setAttachmentList(attachmentList);
 
 		return resume;
 	}
+
+	// S3용
+	// public ResumeRequestDTO getResumeDetail(Long resumeSq) {
+	// ResumeRequestDTO resume = resumeRepository.findByResumeSq(resumeSq);
+	// if (resume == null) {
+	// throw new IllegalArgumentException("이력서를 찾을 수 없습니다. resumeSq=" + resumeSq);
+	// }
+	// ObjectMapper mapper = new ObjectMapper();
+	// mapper.registerModule(new JavaTimeModule());
+
+	// try {
+	// String json = mapper.writeValueAsString(resume);
+	// System.out.println("이력서정보" + json);
+	// } catch (JsonProcessingException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+
+	// // 주소 조회
+	// if (resume.getAddress() != null && resume.getAddress().getAddressSq() !=
+	// null) {
+	// ResumeRequestDTO.AddressDTO address = resumeRepository
+	// .findAddressByAddressSq(resume.getAddress().getAddressSq());
+	// resume.setAddress(address);
+	// }
+
+	// // 학력
+	// List<ResumeRequestDTO.EducationDTO> educationList =
+	// resumeRepository.findEducationList(resumeSq);
+	// resume.setEducationList(educationList);
+
+	// // 경력
+	// List<ResumeRequestDTO.CareerDTO> careerList =
+	// resumeRepository.findCareerList(resumeSq);
+	// resume.setCareerList(careerList);
+
+	// // 프로젝트 이력
+	// List<ResumeRequestDTO.ProjectHistoryDTO> projectHistoryList =
+	// resumeRepository.findProjectHistoryList(resumeSq);
+	// // 프로젝트별 기술 태그 조회
+	// for (ResumeRequestDTO.ProjectHistoryDTO ph : projectHistoryList) {
+	// List<ResumeRequestDTO.ProjectHistorySkillTagDTO> skillTags = resumeRepository
+	// .findProjectHistorySkillTagList(ph.getProjectHistorySq());
+	// ph.setSkillTagList(skillTags);
+	// }
+	// resume.setProjectHistoryList(projectHistoryList);
+
+	// // 자격증
+	// List<ResumeRequestDTO.CertificationDTO> certificationList =
+	// resumeRepository.findCertificationList(resumeSq);
+	// resume.setCertificationList(certificationList);
+
+	// // 교육 이력
+	// List<ResumeRequestDTO.TrainingHistoryDTO> trainingHistoryList =
+	// resumeRepository
+	// .findTrainingHistoryList(resumeSq);
+	// resume.setTrainingHistoryList(trainingHistoryList);
+
+	// // 보유 기술 태그
+	// List<ResumeRequestDTO.SkillTagDTO> skillTagList =
+	// resumeRepository.findSkillTagList(resumeSq);
+	// resume.setSkillTagList(skillTagList);
+
+	// // 프로필 이미지 조회 및 URL 세팅
+	// ResumeRequestDTO.ResumeFileDTO profileImage =
+	// resumeRepository.findProfileImage(resumeSq);
+	// if (profileImage != null) {
+	// String s3Url = amazonS3.getUrl(bucket,
+	// profileImage.getFileSaveNm()).toString();
+	// profileImage.setUrl(s3Url);
+	// }
+	// resume.setProfileImage(profileImage);
+
+	// // 첨부파일 리스트 조회 및 각각 URL 세팅
+	// List<ResumeRequestDTO.ResumeFileDTO> attachmentList =
+	// resumeRepository.findAttachmentList(resumeSq);
+	// if (attachmentList != null && !attachmentList.isEmpty()) {
+	// attachmentList.forEach(file -> {
+	// String s3Url = amazonS3.getUrl(bucket, file.getFileSaveNm()).toString();
+	// file.setUrl(s3Url);
+	// });
+	// }
+	// resume.setAttachmentList(attachmentList);
+
+	// return resume;
+	// }
 
 	public List<ParentSkillTagDTO> getParentSkillTags() {
 		return resumeRepository.getParentSkillTags();
@@ -873,6 +978,32 @@ public class ResumeService {
 		}
 
 		return newResumeSq;
+	}
+
+	private void cleanupPhysicalFile(Long resumeSq, ResumeRequestDTO.ResumeFileDTO file, String type) {
+		Long fileSq = file.getFileSq();
+		int usageCount = "PROFILE".equals(type)
+				? resumeRepository.countFileUsageInProfileImageExceptResume(fileSq, resumeSq)
+				: resumeRepository.countFileUsageInAttachmentExceptResume(fileSq, resumeSq);
+
+		if (usageCount == 0) {
+			// 다른 곳에서 안 쓰면 물리 파일 삭제
+			fileStorageService.deleteFile(file.getFileSaveNm());
+			if ("PROFILE".equals(type)) {
+				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+				resumeRepository.deleteProfileImage(fileSq);
+			} else {
+				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+				resumeRepository.deleteAttachmentFile(fileSq);
+			}
+		} else {
+			// 매핑만 삭제
+			if ("PROFILE".equals(type)) {
+				resumeRepository.deleteResumeProfileImageMapping(resumeSq, fileSq);
+			} else {
+				resumeRepository.deleteResumeAttachmentMapping(resumeSq, fileSq);
+			}
+		}
 	}
 
 }

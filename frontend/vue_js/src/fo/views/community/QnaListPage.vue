@@ -2,8 +2,8 @@
   <section>
     <CommonPageHeader
       title=""
-      strongText="QnA 게시판"
-      :breadcrumbs="[{ text: 'Home', link: '/' }, { text: '커뮤니티' }]"
+      :strongText="dynamicStrongText"
+      :breadcrumbs="dynamicBreadcrumbs"
     />
     <div class="container py-5 mt-3">
       <!-- 검색창 및 필터 영역 -->
@@ -58,17 +58,31 @@
       <!-- 게시판 리스트 -->
       <div class="row">
         <div class="col">
-          <BoardTable :boardList="boardList" :isQna="true" />
-          <!-- 등록 버튼 -->
-          <div class="d-flex justify-content-end mb-3">
-            <a href="/qna/register" class="btn btn-primary px-4">등록</a>
+          <div v-if="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="text-muted">게시글을 불러오는 중입니다...</p>
           </div>
-          <!-- 페이지네이션 -->
-          <CommonPagination
-            :currentPage="currentPage"
-            :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
-          />
+
+          <div v-else>
+            <BoardTable :boardList="boardList" :isQna="true" />
+
+            <div
+              v-if="boardList.length === 0"
+              class="text-center py-5 text-muted"
+            >
+              등록된 게시글이 없습니다.
+            </div>
+            <!-- 등록 버튼 -->
+            <div class="d-flex justify-content-end mb-3">
+              <a href="/qna/register" class="btn btn-primary px-4">등록</a>
+            </div>
+            <!-- 페이지네이션 -->
+            <CommonPagination
+              :currentPage="currentPage"
+              :totalPages="totalPages"
+              @update:currentPage="currentPage = $event"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -77,10 +91,15 @@
 <script setup>
 import BoardTable from '@/fo/components/community/BoardTable.vue'
 import CommonPagination from '@/fo/components/common/CommonPagination.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+const isLoading = ref(false)
 
 const alertStore = useAlertStore()
 
@@ -97,40 +116,72 @@ const searchType = ref('all')
 const keyword = ref('')
 const sortType = ref('latest')
 const boardAdoptStatusCd = ref('all')
+const selectedTag = ref(route.query.tag || '') // [추가] 태그 상태
 
-// 게시글 리스트 불러오기
 const getBoardList = async () => {
+  isLoading.value = true
   try {
     const searchFilter =
-      keyword.value == null || keyword.value.trim() == ''
+      !keyword.value || keyword.value.trim() === ''
         ? ''
-        : `&searchType=${searchType.value}&keyword=${keyword.value}`
+        : `&searchType=${searchType.value}&keyword=${encodeURIComponent(keyword.value.trim())}`
 
     const adoptFilter =
-      boardAdoptStatusCd.value == null ||
-      boardAdoptStatusCd.value.trim() == 'all'
+      boardAdoptStatusCd.value === 'all'
         ? ''
         : `&boardAdoptStatusCd=${boardAdoptStatusCd.value}`
 
+    // [추가] 태그 필터 구성
+    const tagFilter = selectedTag.value
+      ? `&tag=${encodeURIComponent(selectedTag.value)}`
+      : ''
+
+    // API 호출 (경로 동적 처리)
     const res = await api.$get(
-      `/qna?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${adoptFilter}`,
+      `${route.path}?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${adoptFilter}${tagFilter}`,
     )
-    if (res) {
-      if (res.output.totalElements == 0) {
-        totalPages.value = 1
-      } else {
-        totalPages.value = Math.floor(
-          (res.output.totalElements + size - 1) / size,
-        )
-      }
+
+    if (res && res.output) {
+      totalPages.value =
+        res.output.totalElements === 0
+          ? 1
+          : Math.floor((res.output.totalElements + size - 1) / size)
       boardList.value = res.output.boards
     }
   } catch (error) {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+  } finally {
+    isLoading.value = false
   }
 }
 
-// 검색 또는 채택 상태 변경 시 전체 페이지 수가 변경되므로 현재 페이지를 1페이지로 초기화 후 리스트 갱신
+const dynamicBreadcrumbs = computed(() => {
+  // 태그 검색 중일 때: 'Home'을 빼고 'QnA 게시판'을 최상위로
+  if (selectedTag.value) {
+    return [
+      { text: 'QnA 게시판', link: '/qna' },
+      { text: `#${selectedTag.value}` },
+    ]
+  }
+
+  // 기본 상태: 원래대로 Home > QnA 게시판
+  return [{ text: 'Home', link: '/' }, { text: 'QnA 게시판' }]
+})
+
+// 헤더 굵은 텍스트 동적 계산
+const dynamicStrongText = computed(() => {
+  return selectedTag.value ? `QnA 게시판 (#${selectedTag.value})` : 'QnA 게시판'
+})
+
+// [추가] URL 태그 파라미터 감시
+watch(
+  () => route.query.tag,
+  (newTag) => {
+    selectedTag.value = newTag || ''
+    currentPage.value = 1
+    getBoardList()
+  },
+)
 const changeFilter = () => {
   currentPage.value = 1
   getBoardList()

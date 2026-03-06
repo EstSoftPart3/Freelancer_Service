@@ -80,115 +80,144 @@
       <div class="row">
         <div class="col">
           <div class="blog-posts">
-            <div class="row" v-if="afltnList.length > 0">
-              <!-- 카드 -->
-              <div
-                v-for="afltn in afltnList"
-                :key="afltn"
-                class="col-md-4 col-lg-3"
-              >
-                <article
-                  class="post post-medium border-0 pb-0 mb-5 shadow-sm rounded overflow-hidden bg-white"
+            <div v-if="isLoading" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3" role="status"></div>
+              <p class="text-muted">공고 목록을 불러오는 중입니다...</p>
+            </div>
+            <template v-else>
+              <div class="row" v-if="afltnList.length > 0">
+                <div
+                  v-for="afltn in afltnList"
+                  :key="afltn.sq"
+                  class="col-md-4 col-lg-3 mb-4"
                 >
-                  <!-- 이미지 영역 -->
-                  <div
-                    class="post-image position-relative"
-                    style="height: 160px"
+                  <article
+                    class="post post-medium border-0 pb-0 mb-0 shadow-sm rounded overflow-hidden bg-white d-flex flex-column h-100"
                   >
-                    <div class="d-block h-100 w-100 position-relative">
-                      <img
-                        :src="
-                          afltn.profileImg ||
-                          'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
-                        "
-                        @error="
-                          $event.target.src =
-                            'https://freelancer-service.s3.ap-northeast-2.amazonaws.com/12461_3.png'
-                        "
-                        class="img-fluid img-thumbnail img-thumbnail-no-borders rounded-0 h-100 w-100"
-                        style="object-fit: cover"
-                        alt="기업 이미지"
-                      />
-                      <!-- 조회수 뱃지 -->
+                    <div
+                      class="post-image position-relative d-flex align-items-center justify-content-center bg-light"
+                      style="height: 160px; padding: 10px"
+                    >
                       <div
-                        class="position-absolute top-0 end-0 m-2 px-2 py-1 text-white rounded d-flex align-items-center gap-1"
-                        style="
-                          background-color: rgba(0, 0, 0, 0.5);
-                          font-size: 0.85rem;
-                        "
+                        class="d-block h-100 w-100 position-relative d-flex align-items-center justify-content-center"
                       >
-                        <i class="bi bi-eye"></i>
-                        <span>{{ formatNum(afltn.viewCnt) }}</span>
+                        <img
+                          :src="
+                            afltn.profileImg || '/img/logos/Company_logo.png'
+                          "
+                          @error="
+                            $event.target.src = '/img/logos/Company_logo.png'
+                          "
+                          class="img-fluid rounded-0"
+                          style="
+                            max-height: 100%;
+                            max-width: 100%;
+                            object-fit: contain;
+                          "
+                          alt="기업 이미지"
+                        />
+                        <div
+                          class="position-absolute top-0 end-0 m-2 px-2 py-1 text-white rounded d-flex align-items-center gap-1"
+                          style="
+                            background-color: rgba(0, 0, 0, 0.5);
+                            font-size: 0.8rem;
+                          "
+                        >
+                          <i class="bi bi-eye"></i>
+                          <span>{{ formatNum(afltn.viewCnt) }}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <!-- 내용 영역 -->
-                  <div class="post-content p-3 bg-white">
+
                     <div
-                      class="d-flex justify-content-between align-items-center mb-2"
+                      class="post-content p-3 bg-white d-flex flex-column flex-grow-1"
                     >
-                      <h2
-                        class="font-weight-semibold text-5 line-height-6 mb-0"
-                        style="font-size: 1.1rem"
+                      <div
+                        class="d-flex justify-content-between align-items-start mb-2"
                       >
+                        <h2
+                          class="font-weight-bold line-height-2 mb-0 text-truncate"
+                          style="font-size: 1rem; max-width: 85%"
+                        >
+                          <button
+                            type="button"
+                            class="text-primary fw-bold text-decoration-none border-0 bg-transparent p-0 text-start"
+                            @click="clickApplication(afltn)"
+                          >
+                            {{ afltn.companyNm }}
+                          </button>
+                        </h2>
                         <button
                           type="button"
-                          class="text-primary fw-bold text-decoration-none"
+                          class="text-muted border-0 bg-transparent p-0"
+                          @click="clickScrap(afltn.sq)"
+                        >
+                          <i
+                            class="bi bi-heart-fill"
+                            :class="{ active: afltn.isScrap }"
+                          ></i>
+                        </button>
+                      </div>
+
+                      <div
+                        class="d-flex flex-wrap gap-1 mb-2 overflow-hidden"
+                        style="height: 25px"
+                      >
+                        <span
+                          v-for="tag in afltn.tags"
+                          :key="tag"
+                          class="badge bg-light text-grey border fw-normal"
+                          style="font-size: 0.7rem"
+                          >{{ tag }}</span
+                        >
+                      </div>
+
+                      <div
+                        class="description p-2 mb-3 rounded bg-color-grey flex-grow-1"
+                        style="min-height: 70px"
+                      >
+                        <p
+                          class="mb-0 text-dark line-clamp-3"
+                          style="font-size: 0.85rem; line-height: 1.4"
+                        >
+                          {{
+                            afltn.greeting && afltn.greeting.trim() !== ''
+                              ? afltn.greeting
+                              : '등록된 소개 문구가 없습니다.'
+                          }}
+                        </p>
+                      </div>
+
+                      <div class="d-grid mt-auto">
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          :class="
+                            afltn.isApply
+                              ? 'btn-light disabled'
+                              : 'btn-outline-primary'
+                          "
                           @click="clickApplication(afltn)"
                         >
-                          {{ afltn.companyNm }}
+                          {{
+                            afltn.isApply ? '소속 신청 완료' : '소속 신청하기'
+                          }}
                         </button>
-                      </h2>
-                      <button
-                        type="button"
-                        class="text-muted"
-                        style="text-decoration: none"
-                        @click="clickScrap(afltn.sq)"
-                      >
-                        <i
-                          class="bi bi-heart-fill"
-                          :class="{ active: afltn.isScrap }"
-                        ></i>
-                      </button>
+                      </div>
                     </div>
-                    <!-- 키워드 태그 뱃지 -->
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                      <span
-                        v-for="tag in afltn.tags"
-                        :key="tag"
-                        class="badge bg-light text-grey border"
-                        >{{ tag }}</span
-                      >
-                    </div>
-                    <!-- 설명 영역 -->
-                    <div
-                      class="description p-3 mb-3 rounded bg-color-grey"
-                      v-if="afltn.greeting && afltn.greeting.trim() != ''"
-                    >
-                      <p class="mb-0 text-dark">
-                        {{ afltn.greeting }}
-                      </p>
-                    </div>
-                    <div class="d-grid">
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-light"
-                        :class="{ 'text-primary': !afltn.isApply }"
-                        @click="clickApplication(afltn)"
-                      >
-                        {{ afltn.isApply ? '소속 신청 완료' : '소속 신청하기' }}
-                      </button>
-                    </div>
-                  </div>
-                </article>
+                  </article>
+                </div>
               </div>
-            </div>
-            <div v-else>소속 공고가 없습니다.</div>
-            <CommonPagination
-              :currentPage="currentPage"
-              :totalPages="totalPages"
-              @update:currentPage="currentPage = $event"
-            />
+              <div v-else class="text-center py-5 border rounded bg-light">
+                <i class="bi bi-info-circle text-muted fs-1 mb-3"></i>
+                <p class="mb-0 text-muted">등록된 소속 공고가 없습니다.</p>
+              </div>
+              <CommonPagination
+                :currentPage="currentPage"
+                :totalPages="totalPages"
+                @update:currentPage="currentPage = $event"
+              />
+            </template>
           </div>
         </div>
       </div>
@@ -204,6 +233,8 @@ import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { onMounted, ref, watch } from 'vue'
+
+const isLoading = ref(false)
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
@@ -275,6 +306,7 @@ const getAllAddress = async () => {
 
 // 공고 목록 가져오기
 const getAfltnList = async () => {
+  isLoading.value = true
   try {
     const searchKeyword = keyword.value.trim()
     const searchFilter =
@@ -289,7 +321,7 @@ const getAfltnList = async () => {
     const res = await api.$get(
       `/affiliation?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${addressFilter}`,
     )
-    console.log(res.output)
+    // console.log(res.output)
     if (res) {
       if (res.output.totalElements == 0) {
         totalPages.value = 1
@@ -303,6 +335,8 @@ const getAfltnList = async () => {
     }
   } catch (error) {
     alertStore.show('소속 공고를 불러올 수 없습니다.', 'danger')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -358,10 +392,24 @@ onMounted(() => {
 })
 </script>
 <style>
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* 보여줄 줄 수 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
 .bi.bi-heart-fill {
-  color: pink;
+  color: lightgray;
 }
 .bi.bi-heart-fill.active {
   color: red;
+}
+
+article.post:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

@@ -45,7 +45,21 @@
       </div>
     </div>
 
-    <div class="row" v-if="applicants.length > 0">
+    <div class="row">
+      <div class="col pt-2 mt-1">
+        <hr class="my-2" />
+      </div>
+    </div>
+
+    <div class="row" v-if="applicants.length === 0">
+      <div class="col">
+        <div class="text-muted py-3" style="font-size: 14px">
+          지원한 프로젝트가 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="row" v-else>
       <div class="col">
         <ul class="simple-post-list m-0 my-2 position-relative">
           <li
@@ -279,9 +293,16 @@ const handlePassClick = (applicant, cd) => {
           getApplicants()
         }
       } catch (error) {
-        alertStore.show('지원 상태 변경에 실패했습니다.', 'danger')
+        // [수정] 서버에서 보낸 에러 메시지가 있으면 우선적으로 사용, 없으면 기본 메시지 노출
+        const errorMessage =
+          error.response?.data?.message || '지원 상태 변경에 실패했습니다.'
+
+        alertStore.show(errorMessage, 'danger')
+        console.error('지원 상태 변경 에러 상세:', error)
+      } finally {
+        // 성공하든 실패하든 모달은 닫아주는 것이 일반적입니다.
+        modalStore.closeModal()
       }
-      modalStore.closeModal()
     },
   })
 }

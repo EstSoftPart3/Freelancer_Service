@@ -119,27 +119,10 @@
           type="text"
           v-model="form.companyName"
           class="form-control form-control-lg"
-          readonly
-          @click="openCompanyModal"
           @change="validateCompany"
         />
       </div>
       <div v-if="companyError" class="invalid-feedback">{{ companyError }}</div>
-      <div class="form-group col-lg-6">
-        <label class="form-label"
-          >사업자 번호
-          <i
-            v-if="companyValid"
-            class="bi bi-check-circle-fill ms-1"
-            style="color: #007bff"
-          ></i
-        ></label>
-        <input
-          type="text"
-          v-model="form.companyBizNumber"
-          class="form-control form-control-lg"
-        />
-      </div>
     </div>
 
     <!-- 회사 주소 -->
@@ -306,13 +289,9 @@ import { reactive, ref, onMounted, defineEmits, watch } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { personalAgreementText } from '@/assets/terms'
 import TermsAgreementModal from '@/fo/components/login&signup/TermsAgreementModal.vue'
-import CompanyVerificationModal from './CompanyVerificationModal.vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
-import { useCompanyProfileStore } from '@/fo/stores/companyProfileStore'
 import { debounce } from 'lodash'
-
-const companyProfileStore = useCompanyProfileStore()
 
 const emit = defineEmits(['submit'])
 
@@ -321,6 +300,7 @@ const validateAll = async () => {
   validatePassword()
   validateConfirmPassword()
   validateName()
+  validateCompany()
   validatePhone()
   validateAddress()
   validateEmail()
@@ -333,6 +313,7 @@ const validateAll = async () => {
     passwordValid.value &&
     confirmPasswordValid.value &&
     nameValid.value &&
+    companyValid.value &&
     phoneValid.value &&
     addressValid.value &&
     emailValid.value &&
@@ -356,10 +337,10 @@ const form = reactive({
   emailDomain: '',
   verificationCode: '',
   terms: false,
-  companyName: companyProfileStore.companyData.companyName,
-  companyCeoName: companyProfileStore.companyData.ceoName,
-  companyBizNumber: companyProfileStore.companyData.bizNumber,
-  companyOpenDate: companyProfileStore.companyData.openDate,
+  companyName: '',
+  companyCeoName: null,
+  companyBizNumber: null,
+  companyOpenDate: null,
   sigunguCode: '',
   address: '',
   addressDetail: '',
@@ -368,17 +349,6 @@ const form = reactive({
   typeCode: 302, // 기업
   signupTypeCode: 204, // 이메일
 })
-
-watch(
-  () => companyProfileStore.companyData,
-  (newVal) => {
-    form.companyName = newVal.companyName
-    form.companyCeoName = newVal.ceoName
-    form.companyBizNumber = newVal.bizNumber
-    form.companyOpenDate = newVal.openDate
-  },
-  { immediate: true, deep: true }, // 컴포넌트 진입 시 즉시 반영 + 객체 내부까지 감시
-)
 
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
@@ -402,12 +372,14 @@ const sendVerification = async () => {
   const email = `${form.emailId}@${form.emailDomain}`
 
   try {
-    const response = await api.$post('/email/send-code', { email })
-    console.log('인증 이메일 전송 완료', response)
-    alertStore.show(
-      '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
-      'info',
-    )
+    // const response =
+    await api.$post('/email/send-code', { email })
+    // console.log('인증 이메일 전송 완료', response)
+    // alertStore.show(
+    //   '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
+    //   'info',
+    // )
+    alertStore.show('인증 코드를 전송했습니다. ', 'info')
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error)
 
@@ -433,8 +405,9 @@ const verifyCode = async () => {
   }
 
   try {
-    const response = await api.$post('/email/verify-code', { email, code })
-    console.log('인증 성공', response)
+    // const response =
+    await api.$post('/email/verify-code', { email, code })
+    // console.log('인증 성공', response)
     alertStore.show('이메일 인증에 성공하였습니다.', 'info')
     verifyCodeValid.value = true
   } catch (error) {
@@ -460,7 +433,7 @@ const passwordValid = ref(false)
 const confirmPasswordValid = ref(false)
 const nameValid = ref(false)
 const phoneValid = ref(false)
-const companyValid = ref(companyProfileStore.termsAgreed)
+const companyValid = ref(false)
 const addressValid = ref(false)
 const emailValid = ref(false)
 const verifyCodeValid = ref('')
@@ -570,20 +543,6 @@ const validateCompany = () => {
   }
 }
 
-// 기업 API 모달을 열기 위한 함수
-function openCompanyModal() {
-  companyProfileStore.resetProfile()
-  companyValid.value = false
-  modalStore.openModal(CompanyVerificationModal, {
-    title: '기업 인증',
-    onConfirm: () => {
-      modalStore.closeModal()
-      companyValid.value = true
-      console.log('companyValid', companyValid)
-    },
-  })
-}
-
 // 다음 주소 API
 function openPostcode() {
   new window.daum.Postcode({
@@ -622,7 +581,7 @@ onMounted(() => {
   if (!window.daum) {
     console.warn('❌ Daum 우편번호 API (postcode.v2.js)가 로드되지 않았습니다.')
   } else {
-    console.log('✅ Daum 우편번호 API 로드됨')
+    // console.log('✅ Daum 우편번호 API 로드됨')
   }
 
   // 2. Kakao 지도 API 확인 및 동적 로드
@@ -636,12 +595,12 @@ onMounted(() => {
       'https://dapi.kakao.com/v2/maps/sdk.js?appkey=90610faa13d02b09f83a700d0885a872&libraries=services'
     kakaoScript.async = true
 
-    console.log('📦 Kakao 지도 API 스크립트를 추가합니다:', kakaoScript.src)
+    // console.log('📦 Kakao 지도 API 스크립트를 추가합니다:', kakaoScript.src)
 
     kakaoScript.onload = () => {
-      console.log('✅ Kakao 지도 API 스크립트 onload 실행됨')
+      // console.log('✅ Kakao 지도 API 스크립트 onload 실행됨')
       if (window.kakao && window.kakao.maps) {
-        console.log('✅ Kakao 지도 API가 동적으로 로드되었습니다.')
+        // console.log('✅ Kakao 지도 API가 동적으로 로드되었습니다.')
       } else {
         console.error(
           '❌ Kakao 지도 API 로드 실패: maps 객체가 여전히 존재하지 않습니다.',
@@ -655,7 +614,7 @@ onMounted(() => {
 
     document.head.appendChild(kakaoScript)
   } else {
-    console.log('✅ Kakao 지도 API가 이미 로드되어 있습니다.')
+    // console.log('✅ Kakao 지도 API가 이미 로드되어 있습니다.')
   }
 })
 

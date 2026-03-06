@@ -27,40 +27,45 @@ const fetchUserInfo = async () => {
     const res = await api.$post('/me')
     const data = res.output
 
-    localStorage.setItem('userNm', data.userNm)
-    localStorage.setItem('userTypeCd', data.userTypeCd)
+    // console.log('✅ 서버 응답 데이터:', data)
 
     userStore.setUser({
+      userSq: data.userSq,
       userNm: data.userNm,
       userTypeCd: data.userTypeCd,
+      address: data.address,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      isAffiliated: data.isAffiliated,
+      companyAuthStatusCd: data.companyAuthStatusCd,
     })
   } catch (error) {
-    // console.error('자동 로그인 실패:', error)
-
-    // 리프레시 토큰도 없을 경우까지 포함해서 처리
+    // console.error('유저 정보 불러오기 실패:', error)
     clearLoginState()
   }
 }
 
 const clearLoginState = () => {
-  localStorage.removeItem('userNm')
-  localStorage.removeItem('userTypeCd')
-  localStorage.removeItem('autoLogin')
-
   userStore.clearUser()
 }
 
 function clearLoginStateFunc() {
-  localStorage.removeItem('userNm')
-  localStorage.removeItem('userTypeCd')
-  localStorage.removeItem('autoLogin')
   userStore.clearUser() // store에 로그인 정보 초기화 메서드가 있어야 합니다.
 }
 
 setClearLoginState(clearLoginStateFunc)
 
 onMounted(() => {
-  fetchUserInfo()
+  const token = localStorage.getItem('accessToken')
+
+  // 토큰이 있을 때만 유저 정보를 가져옵니다.
+  if (token) {
+    fetchUserInfo()
+  } else {
+    // 토큰이 없으면 비로그인 상태이므로 아무것도 하지 않거나
+    // 필요한 초기화만 수행합니다.
+    userStore.clearUser()
+  }
 })
 </script>
 
