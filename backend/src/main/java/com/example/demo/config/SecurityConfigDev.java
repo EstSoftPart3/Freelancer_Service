@@ -26,7 +26,6 @@ public class SecurityConfigDev {
 
     private final JwtProvider jwtProvider;
 
-    // 개발용
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -42,26 +41,6 @@ public class SecurityConfigDev {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-    // 외부 배포 테스트용
-    // @Bean
-    // public CorsConfigurationSource corsConfigurationSource() {
-    // CorsConfiguration configuration = new CorsConfiguration();
-    // configuration.setAllowedOrigins(List.of(
-    // "http://localhost:8504",
-    // "http://localhost:3000",
-    // "https://e4f5e44bf928.ngrok-free.app",
-    // "https://test-eight-tau-87.vercel.app/"));
-    // configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE",
-    // "OPTIONS", "PATCH"));
-    // configuration.setAllowedHeaders(List.of("*"));
-    // configuration.setAllowCredentials(true);
-
-    // UrlBasedCorsConfigurationSource source = new
-    // UrlBasedCorsConfigurationSource();
-    // source.registerCorsConfiguration("/**", configuration);
-    // return source;
-    // }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

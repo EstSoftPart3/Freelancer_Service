@@ -710,8 +710,8 @@
             ></textarea>
           </div>
 
-          <!-- 동의 -->
-          <div class="form-group mb-3">
+          <!-- 추후 사용 -->
+          <!-- <div class="form-group mb-3">
             <div class="form-check">
               <input
                 v-model="resumeForm.resumeIsNotificationYn"
@@ -725,7 +725,7 @@
                 >알림 발신 여부</label
               >
             </div>
-          </div>
+          </div> -->
 
           <!-- 제출 버튼 -->
           <div class="form-group mt-4">
@@ -777,7 +777,7 @@ const resumeForm = reactive({
   resumePhoneNum: '',
   resumeEmail: '',
   resumeGreetingTxt: '',
-  resumeIsNotificationYn: 'N',
+  resumeIsNotificationYn: 'Y',
   resumeIsRepresentativeYn: 'N',
   address: {
     zonecode: '',

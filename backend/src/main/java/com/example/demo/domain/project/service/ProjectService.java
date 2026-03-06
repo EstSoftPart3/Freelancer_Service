@@ -108,37 +108,36 @@ public class ProjectService {
 		// ================= [ 스크랩 유저 배치 알림 발송 ] =================
 
 		// 2. 해당 기업을 즐겨찾기(602)한 유저 및 타입 정보 조회
-		List<Map<String, Object>> scrapUserInfos = affiliationMapper.findScrapUserInfos(companySq);
+		if ("Y".equals(request.isNotification())) {
 
-		if (scrapUserInfos != null && !scrapUserInfos.isEmpty()) {
-			String companyNm = affiliationMapper.findCompanyNameBySq(companySq);
-			String projectTitle = request.projectTitle(); // Record 필드명 적용
-			String message = String.format("즐겨찾기한 [%s]에서 새 공고가 등록되었습니다: %s", companyNm, projectTitle);
-			Long projectSq = project.getProjectSq();
+			List<Map<String, Object>> scrapUserInfos = affiliationMapper.findScrapUserInfos(companySq);
 
-			// 대량 발송용 리스트 생성
-			List<NotificationBatchRequestDTO> batchList = new ArrayList<>();
+			if (scrapUserInfos != null && !scrapUserInfos.isEmpty()) {
+				String companyNm = affiliationMapper.findCompanyNameBySq(companySq);
+				String projectTitle = request.projectTitle();
+				String message = String.format("즐겨찾기한 [%s]에서 새 공고가 등록되었습니다: %s", companyNm, projectTitle);
+				Long projectSq = project.getProjectSq();
 
-			for (Map<String, Object> userInfo : scrapUserInfos) {
-				Long receiverSq = Long.valueOf(userInfo.get("userSq").toString());
-				Long receiverTypeCd = Long.valueOf(userInfo.get("userTypeCd").toString());
+				List<NotificationBatchRequestDTO> batchList = new ArrayList<>();
 
-				// 수신자 타입에 따른 상세 페이지 경로 분기 (302L: 기업)
-				String targetUrl = (receiverTypeCd.equals(302L))
-						? "/project/spec/company/" + projectSq
-						: "/project/spec/user/" + projectSq;
+				for (Map<String, Object> userInfo : scrapUserInfos) {
+					Long receiverSq = Long.valueOf(userInfo.get("userSq").toString());
+					Long receiverTypeCd = Long.valueOf(userInfo.get("userTypeCd").toString());
 
-				// DTO 리스트에 추가
-				batchList.add(new NotificationBatchRequestDTO(
-						receiverSq,
-						userSq,
-						2604L, // 알림 코드: 스크랩 소속 새 공고
-						message,
-						targetUrl));
+					String targetUrl = (receiverTypeCd.equals(302L))
+							? "/project/spec/company/" + projectSq
+							: "/project/spec/user/" + projectSq;
+
+					batchList.add(new NotificationBatchRequestDTO(
+							receiverSq,
+							userSq,
+							2604L,
+							message,
+							targetUrl));
+				}
+
+				notificationService.insertNotificationBatch(batchList);
 			}
-
-			// 3. 알림 매퍼를 통해 한 번에 INSERT
-			notificationService.insertNotificationBatch(batchList);
 		}
 	}
 

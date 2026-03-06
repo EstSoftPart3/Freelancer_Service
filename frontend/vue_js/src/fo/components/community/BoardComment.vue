@@ -111,7 +111,33 @@
               </span>
             </div>
           </div>
-
+          <div
+            v-if="replySq == comment.sq"
+            class="reply-input-wrapper mt-2 ms-5"
+          >
+            <form @submit.prevent="registerReply(comment.sq)">
+              <div class="input-group">
+                <span class="input-group-text font-size-10">답글</span>
+                <input
+                  v-model="replyDescription"
+                  type="text"
+                  class="form-control"
+                  placeholder="답글을 입력하세요"
+                  required
+                />
+                <button type="submit" class="btn btn-primary btn-sm">
+                  등록
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light btn-sm"
+                  @click="replySq = null"
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          </div>
           <ul
             v-if="comment.childComments && comment.childComments.length > 0"
             class="comments reply-list ms-5 mt-2"
@@ -208,34 +234,6 @@
               </div>
             </li>
           </ul>
-
-          <div
-            v-if="replySq == comment.sq"
-            class="reply-input-wrapper mt-2 ms-5"
-          >
-            <form @submit.prevent="registerReply(comment.sq)">
-              <div class="input-group">
-                <span class="input-group-text font-size-10">답글</span>
-                <input
-                  v-model="replyDescription"
-                  type="text"
-                  class="form-control"
-                  placeholder="답글을 입력하세요"
-                  required
-                />
-                <button type="submit" class="btn btn-primary btn-sm">
-                  등록
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-light btn-sm"
-                  @click="replySq = null"
-                >
-                  취소
-                </button>
-              </div>
-            </form>
-          </div>
         </li>
       </ul>
     </div>

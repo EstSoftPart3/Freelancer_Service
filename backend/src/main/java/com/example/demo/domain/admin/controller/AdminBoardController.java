@@ -113,11 +113,13 @@ public class AdminBoardController {
     @PostMapping("/comment")
     public ResponseEntity<ApiResponse<Void>> createComment(
             @AuthenticationPrincipal Long userSq,
-            @RequestParam("boardSq") Long boardSq,
+            @RequestParam(value = "boardSq", required = false) Long boardSq, // 선택항목으로 변경
+            @RequestParam(value = "answerSq", required = false) Long answerSq, // [추가] 답변 순번
             @RequestParam(value = "parentCommentSq", required = false) Long parentCommentSq,
             @RequestParam("description") String description) {
 
-        adminBoardService.createCommentMaster(boardSq, parentCommentSq, userSq, description);
+        // 서비스 호출 시 answerSq 추가 전달
+        adminBoardService.createCommentMaster(boardSq, answerSq, parentCommentSq, userSq, description);
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED, "댓글이 등록되었습니다.", null));
     }

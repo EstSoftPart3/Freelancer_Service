@@ -316,7 +316,7 @@
                 />
               </div>
               <div v-if="errors.workType" class="text-primary small mt-1">
-                {{ errors.description }}
+                {{ errors.workType }}
               </div>
             </div>
             <div class="form-group mb-3">
@@ -379,7 +379,7 @@
                 />
               </div>
               <div v-if="errors.skills" class="text-primary small mt-1">
-                {{ errors.description }}
+                {{ errors.skills }}
               </div>
             </div>
 
@@ -387,7 +387,7 @@
               <label class="form-label mb-1 text-2" style="font-weight: bold"
                 >우대 기술
                 <i
-                  v-if="valids.preference"
+                  v-if="valids.preferSkills"
                   class="bi bi-check-circle-fill text-primary"
                 ></i>
                 <a
@@ -407,8 +407,8 @@
                   :selectedSkills="selectedPreferSkills"
                 />
               </div>
-              <div v-if="errors.preference" class="text-primary small mt-1">
-                {{ errors.description }}
+              <div v-if="errors.preferSkills" class="text-primary small mt-1">
+                {{ errors.preferSkills }}
               </div>
             </div>
 
@@ -416,8 +416,12 @@
             <div class="row">
               <div class="form-group col">
                 <label class="form-label mb-1 text-2" style="font-weight: bold"
-                  >우대 사항</label
-                >
+                  >우대 사항
+                  <i
+                    v-if="valids.preference"
+                    class="bi bi-check-circle-fill text-primary"
+                  ></i>
+                </label>
 
                 <!-- 태그 리스트 -->
                 <div class="mb-2">
@@ -444,6 +448,9 @@
                   placeholder="쉼표(,)로 구분하여 입력"
                   name="qualification"
                 />
+                <div v-if="errors.preference" class="text-primary small mt-1">
+                  {{ errors.preference }}
+                </div>
               </div>
             </div>
 
@@ -499,7 +506,7 @@
                 />
               </div>
               <div v-if="errors.interview" class="text-primary small mt-1">
-                {{ errors.description }}
+                {{ errors.interview }}
               </div>
             </div>
 
@@ -866,6 +873,7 @@ const errors = reactive({
   workType: '',
   job: '',
   skills: '',
+  preferSkills: '',
   preference: '',
   description: '',
   interview: '',
@@ -882,6 +890,7 @@ const valids = reactive({
   workType: false,
   job: false,
   skills: false,
+  preferSkills: false,
   preference: false,
   description: false,
   interview: false,
@@ -958,10 +967,36 @@ const validateSkills = () => {
   errors.skills = valids.skills ? '' : '사용 기술을 최소 하나 선택해주세요.'
 }
 
+const validatePreferSkills = () => {
+  valids.preferSkills = selectedPreferSkills.value.length > 0
+  errors.preferSkills = valids.preferSkills
+    ? ''
+    : '우대 기술을 최소 하나 선택해주세요.'
+}
+
 const validatePreference = () => {
-  valids.preference =
-    preferList.value.length > 0 || preferContent.value.trim() !== ''
-  errors.preference = valids.preference ? '' : '우대 사항을 입력해주세요.'
+  // 1. 모든 항목을 하나의 배열로 합치기
+  const allItems = [...preferList.value]
+
+  // 직접 입력한 내용이 있으면 추가
+  const contentText = preferContent.value.trim()
+  if (contentText) {
+    allItems.push(contentText)
+  }
+
+  // 2. 콤마로 연결했을 때의 최종 문자열 생성 시뮬레이션
+  const finalString = allItems.join(', ')
+  const totalLength = finalString.length
+
+  // 3. 검증 로직: 비어있어도 OK, 하지만 255자를 넘으면 안 됨
+  if (totalLength > 255) {
+    valids.preference = false
+    errors.preference = `우대 사항이 너무 깁니다. (최대 255자 / 현재: ${totalLength}자)`
+  } else {
+    // 비어있거나(0자) 255자 이내면 모두 통과
+    valids.preference = true
+    errors.preference = ''
+  }
 }
 
 const validateDescription = () => {
@@ -980,10 +1015,32 @@ watch([() => form.address, () => form.subwayAddressName], validateAddressInfo)
 watch(selectedDevGrade, validateDevGrade)
 watch(selectedEducation, validateEducation)
 watch([projectStartDt, projectEndDt], validateProjectPeriod)
-watch([recruitStartDt, recruitEndDt], validateRecruitPeriod)
+// 모집 기간이 변경될 때: 1) 유효성 검사 실행 + 2) 인터뷰 시간 자동 필터링
+watch([recruitStartDt, recruitEndDt], ([newStart, newEnd]) => {
+  // 1. 기존 유효성 검사 함수 호출
+  validateRecruitPeriod()
+
+  // 2. 인터뷰 시간 자동 필터링 로직 (데이터 정합성 유지)
+  if (newStart && newEnd && selectedInterviewTimes.value.length > 0) {
+    const filteredTimes = selectedInterviewTimes.value.filter((item) => {
+      // 새로운 모집 기간(시작일~종료일) 사이에 있는 날짜만 남김
+      return item.date >= newStart && item.date <= newEnd
+    })
+
+    // 범위를 벗어난 날짜가 있어 필터링된 경우
+    if (filteredTimes.length !== selectedInterviewTimes.value.length) {
+      selectedInterviewTimes.value = filteredTimes
+      alertStore.show(
+        '모집 기간 변경으로 인해 범위를 벗어난 인터뷰 시간이 제외되었습니다.',
+        'warning',
+      )
+    }
+  }
+})
 watch(selectedWorkTypes, validateWorkType, { deep: true })
 watch(selectedJobs, validateJob, { deep: true })
 watch(selectedSkills, validateSkills, { deep: true })
+watch(selectedPreferSkills, validatePreferSkills, { deep: true })
 watch([preferList, preferContent], validatePreference, { deep: true })
 watch(description, validateDescription)
 watch(selectedInterviewTimes, validateInterview, { deep: true })
@@ -1000,6 +1057,7 @@ const validateAll = () => {
   validateWorkType()
   validateJob()
   validateSkills()
+  validatePreferSkills()
   validatePreference()
   validateDescription()
   validateInterview()
@@ -1076,10 +1134,10 @@ const submitProject = async () => {
     }
     if (projectSq) {
       await api.$patch('/projects', requestBody, config)
-      alertStore.show('수정 성공')
+      alertStore.show('프로젝트 수정에 성공하였습니다.')
     } else {
       await api.$post('/projects', requestBody, config)
-      alertStore.show('등록 성공')
+      alertStore.show('프로젝트 등록에 성공하였습니다.')
     }
     router.push({ name: 'ProjectListPage' })
   } catch (error) {
@@ -1164,9 +1222,18 @@ const openJobModal = () => {
 }
 
 const openInterviewTimeModal = () => {
+  // 1. 모집 기간 설정 여부 체크
+  if (!recruitStartDt.value || !recruitEndDt.value) {
+    alertStore.show('모집 기간을 먼저 설정해주세요.', 'danger')
+    return
+  }
+
   modalStore.openModal(InterviewTimeModal, {
     onConfirm: onInterviewTimeConfirmed,
     interviewTimes: selectedInterviewTimes.value,
+    // 2. 모집 기간을 제한 조건으로 전달
+    minDate: recruitStartDt.value,
+    maxDate: recruitEndDt.value,
   })
 }
 

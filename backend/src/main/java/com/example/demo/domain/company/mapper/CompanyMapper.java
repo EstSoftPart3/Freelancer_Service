@@ -25,15 +25,19 @@ public interface CompanyMapper {
 
     Long findUserSqByCompanySq(@Param("companySq") Long companySq);
 
-    Long findCompanyMemberStatus(@Param("userSq") Long userSq);
+    Long findCompanyMemberStatus(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
 
     List<Long> findUserSqsByCompanySqAndSearch(@Param("companySq") Long companySq,
             @Param("request") CompanyMemberSearchRequest request);
 
-    LocalDate findCompanyJoinDt(@Param("userSq") Long userSq);
+    LocalDate findCompanyJoinDt(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
 
-    LocalDate findCompanyLeaveDt(@Param("userSq") Long userSq);
+    LocalDate findCompanyLeaveDt(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
 
-    void updateMemberStatus(@Param("userSq") Long userSq, @Param("memberStatusCd") Long memberStatusCd);
+    void updateMemberStatus(@Param("companySq") Long companySq, @Param("userSq") Long userSq,
+            @Param("memberStatusCd") Long memberStatusCd);
+
+    void updateMemberToResigned(@Param("companySq") Long companySq, @Param("userSq") Long userSq,
+            @Param("memberStatusCd") Long memberStatusCd, @Param("leaveDt") LocalDate leaveDt);
 
 }
