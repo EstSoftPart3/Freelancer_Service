@@ -1076,10 +1076,10 @@ const submitProject = async () => {
     }
     if (projectSq) {
       await api.$patch('/projects', requestBody, config)
-      alertStore.show('수정 성공')
+      alertStore.show('프로젝트 수정에 성공하였습니다.')
     } else {
       await api.$post('/projects', requestBody, config)
-      alertStore.show('등록 성공')
+      alertStore.show('프로젝트 등록에 성공하였습니다.')
     }
     router.push({ name: 'ProjectListPage' })
   } catch (error) {
