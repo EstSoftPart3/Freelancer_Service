@@ -10,7 +10,7 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { userApi } from './api/users-api'
 import { UsersDialogs } from './components/users-dialogs'
-import { UsersPrimaryButtons } from './components/users-primary-buttons'
+// import { UsersPrimaryButtons } from './components/users-primary-buttons'
 import { UsersProvider } from './components/users-provider'
 import { UsersTable } from './components/users-table'
 import { type AdminUser } from './data/schema'
@@ -115,7 +115,7 @@ export function Users() {
               전체적인 유저 정보를 관리합니다.
             </p>
           </div>
-          <UsersPrimaryButtons />
+          {/* <UsersPrimaryButtons /> */}
         </div>
 
         {isLoading ? (
