@@ -4,10 +4,11 @@ export const adminUserSchema = z.object({
   userTypeCd: z.number(),
   userId: z.string(),
   profileImageUrl: z.string().nullable(),
+  profileImageSq: z.number().nullable().optional(),
   userNm: z.string(),
   userEmail: z.string(),
   userPhoneNum: z.string(),
-  userBirthDt: z.coerce.date(),
+  userBirthDt: z.coerce.date().optional(),
   userGenderCd: z.number(),
   userCreatedDtm: z.coerce.date(),
   userModifiedDtm: z.coerce.date(),
@@ -17,6 +18,7 @@ export const adminUserSchema = z.object({
   userIsActivateYn: z.string(),
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
+  companySq: z.number().nullable().optional(),
 })
 
 export type AdminUser = z.infer<typeof adminUserSchema>
