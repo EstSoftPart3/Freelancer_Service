@@ -293,9 +293,16 @@ const handlePassClick = (applicant, cd) => {
           getApplicants()
         }
       } catch (error) {
-        alertStore.show('지원 상태 변경에 실패했습니다.', 'danger')
+        // [수정] 서버에서 보낸 에러 메시지가 있으면 우선적으로 사용, 없으면 기본 메시지 노출
+        const errorMessage =
+          error.response?.data?.message || '지원 상태 변경에 실패했습니다.'
+
+        alertStore.show(errorMessage, 'danger')
+        console.error('지원 상태 변경 에러 상세:', error)
+      } finally {
+        // 성공하든 실패하든 모달은 닫아주는 것이 일반적입니다.
+        modalStore.closeModal()
       }
-      modalStore.closeModal()
     },
   })
 }
