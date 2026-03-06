@@ -36,6 +36,7 @@ import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.mypage.service.InformationEditService;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -56,6 +57,7 @@ public class AdminBoardService {
         private final InformationEditService informationEditService;
         private final CommentService commentService;
         private final AnswerService answerService;
+        private final NotificationService notificationService;
 
         @Transactional(readOnly = true)
         public AdminBoardListResponseDTO getAdminBoards(List<Long> typeCds, String keyword, String tagKeyword,
@@ -372,24 +374,78 @@ public class AdminBoardService {
          * 4. [마스터 권한] 댓글/대댓글 등록
          */
         @Transactional
-        public void createCommentMaster(Long boardSq, Long parentCommentSq, Long userSq, String description) {
+        public void createCommentMaster(Long boardSq, Long answerSq, Long parentCommentSq, Long userSq,
+                        String description) {
                 if (description == null || description.trim().isEmpty()) {
                         throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
                 }
 
+                // 1. 엔티티 빌드 및 저장 (기존 로직 그대로 이식)
                 Comment comment = Comment.builder()
                                 .boardSq(boardSq)
+                                .answerSq(answerSq)
                                 .parentCommentSq(parentCommentSq)
                                 .userSq(userSq)
                                 .commentDescriptionTxt(description)
-                                .commentTypeCd(1601L) // 커뮤니티 댓글 타입
+                                .commentTypeCd(boardSq == null ? 1602L : 1601L) // answerSq가 있으면 1602
                                 .build();
 
                 commentMapper.insert(comment);
 
-                // 게시글 테이블의 comment_cnt 동기화
-                boardMapper.updateCommentCnt(boardSq);
+                // 2. 카운트 업데이트 및 알림 발송
+                if (comment.getCommentSq() != null) {
+                        sendCommentNotification(comment);
+                }
+        }
 
+        private void sendCommentNotification(Comment comment) {
+                Long receiverSq = null;
+                String targetUrl = "";
+                String notiContent = "";
+
+                // [알림 로직 A] 일반 게시판 또는 Q&A 게시글 직접 댓글
+                if (comment.getBoardSq() != null) {
+                        boardMapper.updateCommentCnt(comment.getBoardSq());
+                        Board board = boardMapper.findByIdOnly(comment.getBoardSq());
+
+                        if (board != null) {
+                                receiverSq = board.getUserSq();
+                                String pathPrefix = "normal".equals(board.getBoardTyp()) ? "/board/" : "/qna/";
+                                targetUrl = pathPrefix + board.getBoardSq();
+                                notiContent = "관리자가 내 게시글에 댓글을 남겼습니다."; // 관리자용 문구로 살짝 수정
+                        }
+                }
+                // [알림 로직 B] Q&A 답변(Answer)에 달린 댓글 (그대로 이식)
+                else if (comment.getAnswerSq() != null) {
+                        answerMapper.updateCommentCnt(comment.getAnswerSq());
+                        Answer answer = answerMapper.findById(comment.getAnswerSq());
+
+                        if (answer != null) {
+                                receiverSq = answer.getUserSq();
+                                // 상세 페이지 URL 뒤에 answerSq 파라미터를 붙여 모달 띄우기 대응
+                                targetUrl = "/qna/" + answer.getBoardSq() + "?answerSq=" + comment.getAnswerSq();
+                                notiContent = "관리자가 내 Q&A 답변에 댓글을 남겼습니다.";
+                        }
+                }
+
+                // [알림 발송 1] 원글/답변 작성자 발송
+                if (receiverSq != null && !receiverSq.equals(comment.getUserSq())) {
+                        notificationService.send(receiverSq, comment.getUserSq(), 2601L, notiContent, targetUrl);
+                }
+
+                // [알림 발송 2] 대댓글인 경우 부모 댓글 작성자 발송
+                if (comment.getParentCommentSq() != null) {
+                        Comment parentComment = adminBoardMapper.findCommentById(comment.getParentCommentSq());
+                        if (parentComment != null) {
+                                Long parentWriterSq = parentComment.getUserSq();
+
+                                if (parentWriterSq != null && !parentWriterSq.equals(comment.getUserSq())
+                                                && !parentWriterSq.equals(receiverSq)) {
+                                        notificationService.send(parentWriterSq, comment.getUserSq(), 2601L,
+                                                        "내 댓글에 관리자가 답글을 남겼습니다.", targetUrl);
+                                }
+                        }
+                }
         }
 
         /**
