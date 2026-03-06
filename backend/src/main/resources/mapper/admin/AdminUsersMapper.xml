@@ -85,4 +85,90 @@
 	          	AND (u.user_nm   LIKE CONCAT('%', #{keyword}, '%'))
 	      	</if>
 	  </select>
+	  
+	  <update id="updateUser">
+	  		UPDATE
+	  			TBL_USER_M
+	  		<set>
+	  			user_nm					= #{dto.userNm},
+	  			user_email				= #{dto.userEmail},
+	  			user_phone_num			= #{dto.userPhoneNum},
+	  			user_type_cd			= #{dto.userTypeCd},
+	  			user_gender_cd			= #{dto.userGenderCd},
+	  			user_is_activate_yn		= #{dto.userIsActivateYn},
+	  			user_is_deleted_yn		= #{dto.userIsDeletedYn},
+	  			user_agreed_privacy_policy_yn = #{dto.userAgreedPrivacyPolicyYn},
+	  			<if test="encodePw != null">
+	  				user_pw = #{encodePw},
+	  			</if>
+	  			user_modified_at_dtm	= NOW()
+	  		</set>
+	  		WHERE 
+	  			user_sq = #{userSq}
+	  </update>
+	  
+	  <select id="findFileSqByUserSq" resultType="Long">
+	  		SELECT
+	  			file_sq
+	  		FROM
+	  			TBL_USER_PROFILE_IMAGE_S
+	  		WHERE
+	  			user_sq = #{userSq} LIMIT 1
+	  </select>
+	  
+	  <select id="findFileSaveNmByFileSq" resultType="String">
+	  		SELECT
+	  			file_save_nm
+	  		FROM
+	  			TBL_COMMON_FILE_S
+	  		WHERE
+	  			file_sq = #{fileSq}
+	  </select>
+	  
+	  <update id="updateFileSaveNm">
+	  		UPDATE
+	  			TBL_COMMON_FILE_S
+	  		SET
+	  			file_save_nm = #{savedNm}
+	  		WHERE
+	  			file_sq = #{fileSq}
+	  </update>
+	  
+	  <update id="updateCompanyNm">
+	  		UPDATE
+	  			TBL_COMPANY_S c
+	  		INNER JOIN (
+				SELECT company_sq FROM TBL_COMPANY_S WHERE user_sq = #{userSq}
+				UNION
+				SELECT company_sq FROM TBL_COMPANY_MEMBER_R
+				WHERE user_sq = #{userSq} AND company_member_status_cd = 401
+			) target ON c.company_sq = target.company_sq
+	  		SET
+	  			c.company_nm = #{companyNm}
+	  </update>
+	  
+	  <insert id="insertFile">
+	  		INSERT INTO
+	  			TBL_COMMON_FILE_S 
+	  			(file_original_nm, file_save_nm, file_typ, file_size)
+	  		VALUES
+	  			(#{uploaded.originalName}, #{uploaded.savedName}, #{uploaded.contentType}, #{uploaded.size})
+	  </insert>
+	  
+	  <select id="findFileSqBySavedNm" resultType="Long">
+	  		SELECT
+	  			file_sq
+	  		FROM
+	  			TBL_COMMON_FILE_S
+	  		WHERE
+	  			file_save_nm = #{savedNm}
+	  </select>
+	  
+	  <insert id="insertUserProfileImage">
+	  		INSERT INTO
+	  			TBL_USER_PROFILE_IMAGE_S
+	  			(user_sq, file_sq)
+	  		VALUES
+	  			(#{userSq}, #{fileSq})
+	  </insert>
 </mapper>
