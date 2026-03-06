@@ -1,7 +1,7 @@
-import { AvatarImage } from '@radix-ui/react-avatar'
 import { type ColumnDef } from '@tanstack/react-table'
+import { baseUrl } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { Avatar } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 // import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -70,16 +70,27 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
         : Number(value) === rowValue
     },
   },
-  //     <LongText className='max-w-36 ps-3'>{row.getValue('username')}</LongText>
-  //   ),
-  //   meta: {
-  //     className: cn(
-  //       'drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)]',
-  //       'ps-0.5 max-md:sticky start-6 @4xl/content:table-cell @4xl/content:drop-shadow-none'
-  //     ),
-  //   },
-  //   enableHiding: false,
-  // },
+  {
+    accessorKey: 'profileImageUrl',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='프로필 이미지' />
+    ),
+    cell: ({ row }) => {
+      const { profileImageUrl } = row.original
+      const { userNm } = row.original
+      const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
+      return (
+        <Avatar className='h-8 w-8'>
+          <AvatarImage
+            src={profileImageUrl ? `${serverRoot}${profileImageUrl}` : ''}
+          />
+          <AvatarFallback className='text-sm'>
+            {userNm?.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+      )
+    },
+  },
   {
     accessorKey: 'userId',
     header: ({ column }) => (
@@ -90,23 +101,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
       return <LongText className='max-w-36'>{userId}</LongText>
     },
   },
-  {
-    accessorKey: 'profileImageUrl',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='프로필 이미지' />
-    ),
-    cell: ({ row }) => {
-      const { profileImageUrl } = row.original
 
-      if (!profileImageUrl)
-        return <LongText className='max-w-36'>미지정</LongText>
-      return (
-        <Avatar className='h-8 w-8'>
-          <AvatarImage src={profileImageUrl ?? ''} />
-        </Avatar>
-      )
-    },
-  },
   {
     accessorKey: 'userNm',
     header: ({ column }) => (
@@ -144,9 +139,12 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
     ),
     cell: ({ row }) => {
       const { userPhoneNum } = row.original
-      return (
-        <LongText className='w-fit ps-2 text-nowrap'>{userPhoneNum}</LongText>
+      const formatted = userPhoneNum?.replace(
+        /(\d{3})(\d{4})(\d{4})/,
+        '$1-$2-$3'
       )
+
+      return <LongText className='w-fit ps-2 text-nowrap'>{formatted}</LongText>
     },
   },
   {
@@ -198,21 +196,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
     },
   },
   {
-    accessorKey: 'userIsDeletedYn',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='탈퇴 여부' />
-    ),
-    cell: ({ row }) => {
-      const { userIsDeletedYn } = row.original
-
-      return (
-        <LongText className='w-fit ps-2 text-nowrap'>
-          {userIsDeletedYn}
-        </LongText>
-      )
-    },
-  },
-  {
     accessorKey: 'userSignupTypeCd',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='로그인 유형' />
@@ -247,6 +230,21 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
     },
   },
   {
+    accessorKey: 'userIsDeletedYn',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='탈퇴 여부' />
+    ),
+    cell: ({ row }) => {
+      const { userIsDeletedYn } = row.original
+
+      return (
+        <LongText className='w-fit ps-2 text-nowrap'>
+          {userIsDeletedYn}
+        </LongText>
+      )
+    },
+  },
+  {
     accessorKey: 'userAgreedPrivacyPolicyYn',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='개인정보 이용 동의 여부' />
@@ -260,56 +258,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
       )
     },
   },
-  // {
-  //   accessorKey: 'status',
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title='Status' />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const { status } = row.original
-  //     const badgeColor = callTypes.get(status)
-  //     return (
-  //       <div className='flex space-x-2'>
-  //         <Badge variant='outline' className={cn('capitalize', badgeColor)}>
-  //           {row.getValue('status')}
-  //         </Badge>
-  //       </div>
-  //     )
-  //   },
-  //   filterFn: (row, id, value) => {
-  //     return value.includes(row.getValue(id))
-  //   },
-  //   enableHiding: false,
-  //   enableSorting: false,
-  // },
-  // {
-  //   accessorKey: 'role',
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title='Role' />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const { role } = row.original
-  //     const userType = roles.find(({ value }) => value === role)
-
-  //     if (!userType) {
-  //       return null
-  //     }
-
-  //     return (
-  //       <div className='flex items-center gap-x-2'>
-  //         {userType.icon && (
-  //           <userType.icon size={16} className='text-muted-foreground' />
-  //         )}
-  //         <span className='text-sm capitalize'>{row.getValue('role')}</span>
-  //       </div>
-  //     )
-  //   },
-  //   filterFn: (row, id, value) => {
-  //     return value.includes(row.getValue(id))
-  //   },
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
   {
     id: 'actions',
     cell: DataTableRowActions,
