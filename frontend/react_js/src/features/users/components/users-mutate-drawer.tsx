@@ -1,0 +1,337 @@
+// [Freelancer Service]
+// eslint-disable react-hooks/exhaustive-deps
+import { useEffect, useRef, useState } from 'react'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Camera } from 'lucide-react'
+import { baseUrl } from '@/lib/api'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
+import { type AdminUser } from '../data/schema'
+import { useUsers } from './users-provider'
+
+const schema = z.object({
+  userNm: z.string().min(1, '이름을 입력해주세요.'),
+  userEmail: z.string(),
+  userPw: z.string(),
+  userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
+  userTypeCd: z.number(),
+  userGenderCd: z.number(),
+  userIsActivateYn: z.string(),
+  userIsDeletedYn: z.string(),
+  userAgreedPrivacyPolicyYn: z.string(),
+  companyNm: z.string().nullable(),
+})
+
+type UserMutateForm = z.infer<typeof schema>
+
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentRow?: AdminUser
+}
+
+export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
+  const isUpdate = !!currentRow
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null
+  )
+  const { setOpen, setPendingFormData } = useUsers()
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<UserMutateForm>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      userNm: '',
+      userEmail: '',
+      userPw: '',
+      userPhoneNum: '',
+      companyNm: null,
+      userTypeCd: 301,
+      userGenderCd: 101,
+      userIsActivateYn: 'Y',
+      userIsDeletedYn: 'N',
+      userAgreedPrivacyPolicyYn: 'Y',
+    },
+  })
+
+  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
+  useEffect(() => {
+    if (open) {
+      if (isUpdate && currentRow) {
+        reset({
+          userNm: currentRow.userNm,
+          userEmail: currentRow.userEmail,
+          userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
+          userPhoneNum: currentRow.userPhoneNum,
+          companyNm: currentRow.companyNm,
+          userTypeCd: currentRow.userTypeCd,
+          userGenderCd: currentRow.userGenderCd,
+          userIsActivateYn: currentRow.userIsActivateYn,
+          userIsDeletedYn: currentRow.userIsDeletedYn,
+          userAgreedPrivacyPolicyYn: currentRow.userAgreedPrivacyPolicyYn,
+        })
+        setProfileImagePreview(
+          currentRow.profileImageUrl
+            ? `${serverRoot}${currentRow.profileImageUrl}`
+            : null
+        )
+      } else {
+        reset({
+          userNm: '',
+          userEmail: '',
+          userPw: '',
+          userPhoneNum: '',
+          companyNm: null,
+          userTypeCd: 301,
+          userGenderCd: 101,
+          userIsActivateYn: 'Y',
+          userIsDeletedYn: 'N',
+          userAgreedPrivacyPolicyYn: 'Y',
+        })
+        setProfileImagePreview(null)
+      }
+      setProfileImageFile(null)
+    }
+  }, [open, isUpdate, currentRow, reset])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProfileImageFile(file)
+    setProfileImagePreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  const onSubmit = async (data: UserMutateForm) => {
+    if (!currentRow) return
+
+    const formData = new FormData()
+    formData.append('userNm', data.userNm)
+    formData.append('userEmail', data.userEmail)
+    formData.append('userPhoneNum', data.userPhoneNum)
+    formData.append('userTypeCd', String(data.userTypeCd))
+    formData.append('userGenderCd', String(data.userGenderCd))
+    formData.append('userIsActivateYn', data.userIsActivateYn)
+    formData.append('userIsDeletedYn', data.userIsDeletedYn)
+    formData.append('userAgreedPrivacyPolicyYn', data.userAgreedPrivacyPolicyYn)
+    if (data.companyNm) formData.append('companyNm', data.companyNm)
+    if (data.userPw) formData.append('userPw', data.userPw)
+    if (profileImageFile) formData.append('profileImage', profileImageFile)
+
+    setPendingFormData({ userSq: currentRow.userSq, formData })
+    setOpen('master-pw')
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className='overflow-y-auto sm:max-w-xl'>
+        <SheetHeader className='text-left'>
+          <SheetTitle>{isUpdate ? '유저 수정' : '유저 추가'}</SheetTitle>
+          <SheetDescription>유저 정보를 입력하고 저장하세요.</SheetDescription>
+        </SheetHeader>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className='mt-6 space-y-6 px-4 sm:px-8'
+        >
+          <div
+            className='relative cursor-pointer'
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Avatar className='h-24 w-24'>
+              <AvatarImage src={profileImagePreview ?? ''} />
+              <AvatarFallback className='text-2xl'>
+                {watch('userNm')?.[0] ?? '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div className='absolute right-0 bottom-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow'>
+              <Camera size={14} />
+            </div>
+          </div>
+          <p className='text-xs text-muted-foreground'>
+            이미지를 클릭해서 변경하세요.
+          </p>
+          <input
+            type='file'
+            ref={fileInputRef}
+            accept='image/*'
+            className='hidden'
+            onChange={handleImageChange}
+          />
+          <div className='space-y-2'>
+            <Label htmlFor='userNm'>이름</Label>
+            <Input id='userNm' autoComplete='off' {...register('userNm')} />
+            {errors.userNm && (
+              <p className='text-sm text-destructive'>
+                {errors.userNm.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='userEmail'>이메일</Label>
+            <Input
+              id='userEmail'
+              autoComplete='off'
+              {...register('userEmail')}
+            />
+            {errors.userEmail && (
+              <p className='text-sm text-destructive'>
+                {errors.userEmail.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='userPw'>비밀번호</Label>
+            <Input
+              id='userPw'
+              type='password'
+              autoComplete='off'
+              {...register('userPw')}
+            />
+            {errors.userPw && (
+              <p className='text-sm text-destructive'>
+                {errors.userPw.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='userPhoneNum'>휴대폰</Label>
+            <Input
+              id='userPhoneNum'
+              autoComplete='off'
+              {...register('userPhoneNum')}
+            />
+            {errors.userPhoneNum && (
+              <p className='text-sm text-destructive'>
+                {errors.userPhoneNum.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='companyNm'>소속</Label>
+            <Input
+              id='companyNm'
+              autoComplete='off'
+              placeholder='소속 회사'
+              {...register('companyNm')}
+              readOnly
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label>유저 유형</Label>
+            <Select
+              value={String(watch('userTypeCd'))}
+              onValueChange={(val) => setValue('userTypeCd', Number(val))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='301'>일반</SelectItem>
+                <SelectItem value='302'>기업</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className='space-y-2'>
+            <Label>성별</Label>
+            <Select
+              value={String(watch('userGenderCd'))}
+              onValueChange={(val) => setValue('userGenderCd', Number(val))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='101'>남자</SelectItem>
+                <SelectItem value='102'>여자</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className='flex items-center justify-between rounded-lg border p-3'>
+            <div className='space-y-0.5'>
+              <Label>계정 활성화</Label>
+              <p className='text-sm text-muted-foreground'>
+                비활성화 시 로그인이 제한됩니다.
+              </p>
+            </div>
+            <Switch
+              checked={watch('userIsActivateYn') === 'Y'}
+              onCheckedChange={(checked) =>
+                setValue('userIsActivateYn', checked ? 'Y' : 'N')
+              }
+            />
+          </div>
+
+          <div className='flex items-center justify-between rounded-lg border p-3'>
+            <div className='space-y-0.5'>
+              <Label>탈퇴 처리</Label>
+              <p className='text-sm text-muted-foreground'>
+                활성화 시 탈퇴 처리된 계정으로 변경됩니다.
+              </p>
+            </div>
+            <Switch
+              checked={watch('userIsDeletedYn') === 'Y'}
+              onCheckedChange={(checked) =>
+                setValue('userIsDeletedYn', checked ? 'Y' : 'N')
+              }
+            />
+          </div>
+
+          <div className='flex items-center justify-between rounded-lg border p-3'>
+            <div className='space-y-0.5'>
+              <Label>개인정보 이용 동의</Label>
+              <p className='text-sm text-muted-foreground'>
+                개인정보 처리방침 동의 여부입니다.
+              </p>
+            </div>
+            <Switch
+              checked={watch('userAgreedPrivacyPolicyYn') === 'Y'}
+              onCheckedChange={(checked) =>
+                setValue('userAgreedPrivacyPolicyYn', checked ? 'Y' : 'N')
+              }
+            />
+          </div>
+
+          <SheetFooter>
+            <Button type='submit'>{isUpdate ? '수정완료' : '등록하기'}</Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  )
+}
