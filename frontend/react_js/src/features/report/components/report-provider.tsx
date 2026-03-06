@@ -1,6 +1,6 @@
 // src/features/report/components/report-provider.tsx
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import type { AdminReport } from '../api/report-api'
+import { type AdminReport } from '../data/schema'
 
 // 아까 만든 API 타입 참조
 

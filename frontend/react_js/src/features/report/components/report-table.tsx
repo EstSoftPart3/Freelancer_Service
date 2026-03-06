@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { type AdminReport } from '../api/report-api'
+import { type AdminReport } from '../data/schema'
 import { reportColumns as columns } from './report-columns'
 
 interface ReportTableProps {

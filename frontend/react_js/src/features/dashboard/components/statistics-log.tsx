@@ -121,7 +121,7 @@ export function StatisticsLogs() {
         const { startDate, endDate } = getDateRange(selectedFilterKey)
 
         const chartData = await api.$get<ApiResponse<chartDataProps[]>>(
-          '/dashboard/chart',
+          '/admin/dashboard/chart',
           { startDate, endDate }
         )
 
@@ -137,9 +137,9 @@ export function StatisticsLogs() {
     const fetchStatic = async () => {
       try {
         const [summaryData, latestPostsData] = await Promise.all([
-          api.$get<ApiResponse<summaryDataProps[]>>('/dashboard/summary'),
+          api.$get<ApiResponse<summaryDataProps[]>>('/admin/dashboard/summary'),
           api.$get<ApiResponse<latestPostsDataProps[]>>(
-            '/dashboard/latestpost'
+            '/admin/dashboard/latestpost'
           ),
         ])
         setSummaryData(summaryData.output)

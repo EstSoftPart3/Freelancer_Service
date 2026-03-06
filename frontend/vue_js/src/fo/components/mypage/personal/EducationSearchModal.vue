@@ -215,7 +215,7 @@ const fetchSchools = async () => {
     }))
 
     const totalCount = content.length > 0 ? parseInt(content[0].totalCount) : 0
-    console.log('res.data.dataSearch', res.data.dataSearch)
+    // console.log('res.data.dataSearch', res.data.dataSearch)
     totalPages.value = Math.ceil(totalCount / perPage)
   } catch (error) {
     console.error('학교 검색 오류:', error)

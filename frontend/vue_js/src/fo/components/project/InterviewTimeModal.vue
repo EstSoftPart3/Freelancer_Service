@@ -148,7 +148,7 @@ const rightMonth = ref({
   year: today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear(),
 })
 
-console.log(selectedTimes.value)
+// console.log(selectedTimes.value)
 
 const emit = defineEmits(['confirm'])
 

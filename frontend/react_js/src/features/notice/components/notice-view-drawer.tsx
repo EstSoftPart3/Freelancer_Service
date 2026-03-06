@@ -14,6 +14,7 @@ import {
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.bubble.css'
 import { toast } from 'sonner'
+import { baseUrl } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -290,6 +291,14 @@ export function NoticeViewDrawer() {
     }
   }
 
+  // 다운로드 URL 생성 헬퍼 함수
+  const getDownloadUrl = (fileSq: number) => {
+    // baseUrl이 'https://job.estsw.co.kr/api' 라면
+    // 결과는 'https://job.estsw.co.kr/api/board/download/123' 이 됩니다.
+    const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+    return `${base}/board/download/${fileSq}`
+  }
+
   return (
     <Sheet open={open === 'view'} onOpenChange={() => setOpen(null)}>
       <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
@@ -342,7 +351,12 @@ export function NoticeViewDrawer() {
                       className='w-full justify-start truncate'
                       asChild
                     >
-                      <a href={`/api/files/download/${file.fileSq}`} download>
+                      <a
+                        href={getDownloadUrl(file.fileSq)}
+                        download={file.fileOriginalNm} // 원본 파일명 제안
+                        target='_blank' // 새 탭에서 열기 (브라우저 다운로드 처리)
+                        rel='noopener noreferrer'
+                      >
                         {file.fileOriginalNm}
                       </a>
                     </Button>

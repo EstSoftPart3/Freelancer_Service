@@ -138,7 +138,7 @@ const resetPassword = async () => {
       }
     } catch (error) {
       console.error('에러 발생:', error)
-      console.log('알러트 호출 직전') // 이게 콘솔에 찍히는지 확인
+      // console.log('알러트 호출 직전') // 이게 콘솔에 찍히는지 확인
       console.error(error)
       alertStore.show('서버 요청 중 오류가 발생했습니다.', 'danger')
     }

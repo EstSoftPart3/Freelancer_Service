@@ -1,4 +1,4 @@
-// [Freelancer_Service] 로그인 관련
+// [Freelancer_Service] 로그인 관련 수정본
 import axios, {
   type AxiosError,
   type AxiosRequestConfig,
@@ -6,9 +6,8 @@ import axios, {
 } from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
 
-export const baseUrl = 'http://localhost:8080/api/admin'
+export const baseUrl = 'http://localhost:8080/api'
 
-// axios 내부 설정 타입에 _retry 속성을 추가하기 위한 인터페이스 확장
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
 }
@@ -58,7 +57,7 @@ apiInstance.interceptors.response.use(
 
     if (
       !originalRequest ||
-      originalRequest.url === '/refresh-token' ||
+      originalRequest.url === '/admin/refresh-token' ||
       error.response?.status !== 401 ||
       originalRequest._retry
     ) {
@@ -80,37 +79,54 @@ apiInstance.interceptors.response.use(
     isRefreshing = true
 
     try {
-      // 1. 로컬 스토리지에서 리프레시 토큰 꺼내기
       const storedRefreshToken = localStorage.getItem('refreshToken')
 
-      // 2. 백엔드 호출 (Body에 TokenDTO 구조로 전달)
-      // 사용자님의 백엔드 ApiResponse 구조: { status, message, output: { token: { accessToken, refreshToken } } }
+      if (!storedRefreshToken) {
+        throw new Error('No refresh token available')
+      }
+
       const response = await axios.post(
-        `${baseUrl}/refresh-token`,
-        { refreshToken: storedRefreshToken }, // Body에 담아서 전송
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
+        `${baseUrl}/admin/refresh-token`,
+        { refreshToken: storedRefreshToken },
+        { headers: { 'Content-Type': 'application/json' } }
       )
 
-      // 3. 응답 구조에 맞춰 데이터 추출 (output -> token)
-      const { token } = response.data.output
-      const { accessToken, refreshToken } = token
+      // eslint-disable-next-line no-console
+      console.log('재발급 응답 성공:', response.data.output)
 
-      // 4. 스토어 및 로컬스토리지 갱신
+      // ✅ [중요 수정] 백엔드 AdminAuthController.refreshToken은 output에 TokenDTO를 바로 담습니다.
+      // 따라서 response.data.output.token 이 아니라 response.data.output 에서 바로 꺼내야 합니다.
+      const data = response.data.output
+
+      // 혹시 모를 구조 차이에 대비해 안전하게 추출합니다.
+      const accessToken = data.token ? data.token.accessToken : data.accessToken
+      const refreshToken = data.token
+        ? data.token.refreshToken
+        : data.refreshToken
+
+      if (!accessToken) {
+        throw new Error('새로운 액세스 토큰이 응답에 없습니다.')
+      }
+
+      // 2. 스토어 및 로컬스토리지 업데이트
       auth.setAccessToken(accessToken)
       localStorage.setItem('refreshToken', refreshToken)
 
+      // 3. 대기 중이던 요청들에게 새 토큰 전달
       processQueue(null, accessToken)
+
+      // 4. 현재 실패했던 원래 요청 재시도
       originalRequest.headers.Authorization = `Bearer ${accessToken}`
       return apiInstance(originalRequest)
     } catch (err) {
-      // 갱신 요청 자체가 실패했을 때 (RT 만료 등)
-      processQueue(err, null)
-      auth.reset() // Zustand/Redux 스토어 초기화
-      localStorage.removeItem('refreshToken')
+      // eslint-disable-next-line no-console
+      console.error('토큰 재발급 과정 실패:', err)
 
-      // ✅ 이 줄이 핵심입니다! 강제로 로그인 페이지로 보냅니다.
+      processQueue(err, null)
+
+      // 재발급 실패 시 상태 초기화 및 이동
+      auth.reset()
+      localStorage.removeItem('refreshToken')
       window.location.href = '/sign-in'
 
       return Promise.reject(err)

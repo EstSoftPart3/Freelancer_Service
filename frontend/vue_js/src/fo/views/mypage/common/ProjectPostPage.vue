@@ -553,7 +553,7 @@ import { useAlertStore } from '../../../stores/alertStore.js'
 const route = useRoute()
 const router = useRouter()
 const projectSq = route.params.project_sq || null // 등록이면 NULL, 수정이면 숫자
-console.log(projectSq)
+// console.log(projectSq)
 
 const cities = ref([])
 const districts = ref([])
@@ -686,7 +686,7 @@ const openSubwaySearch = () => {
         if (status === window.kakao.maps.services.Status.OK) {
           const bCode = result[0].address.b_code // 10자리 법정동 코드
           form.subwaySigunguCode = bCode.substring(0, 5) // 앞 5자리 시군구 코드
-          console.log('추출된 시군구 코드:', form.subwaySigunguCode)
+          // console.log('추출된 시군구 코드:', form.subwaySigunguCode)
         }
       })
     },
@@ -828,7 +828,7 @@ watch([selectedCity, selectedDistrict], async () => {
       if (status === window.kakao.maps.services.Status.OK) {
         form.latitude = result[0].y
         form.longitude = result[0].x
-        console.log('📍 좌표 변환 완료:', result[0])
+        // console.log('📍 좌표 변환 완료:', result[0])
       } else {
         console.warn('❌ 좌표 변환 실패:', fullAddr)
       }
@@ -1065,7 +1065,7 @@ const submitProject = async () => {
 
     isNotification: notifyEnabled.value ? 'Y' : 'N',
   }
-  console.log(requestBody)
+  // console.log(requestBody)
   try {
     const token = getAccessTokenFromCookie()
 
@@ -1156,7 +1156,7 @@ const openWorkTypeModal = () => {
 }
 
 const openJobModal = () => {
-  console.log(selectedJobs.value)
+  // console.log(selectedJobs.value)
   modalStore.openModal(JobModal, {
     onConfirm: onJobConfirmed,
     jobs: recruitJobs.value,
@@ -1172,7 +1172,7 @@ const openInterviewTimeModal = () => {
 
 const onSkillsConfirmed = (skills) => {
   selectedSkills.value = skills
-  console.log(selectedSkills.value)
+  // console.log(selectedSkills.value)
 }
 
 const onPreferSkillsConfirmed = (skills) => {
@@ -1191,35 +1191,35 @@ const onRecruitTimeConfirmed = ({ start, end }) => {
 
 const onInterviewTimeConfirmed = (times) => {
   selectedInterviewTimes.value = times
-  console.log(selectedInterviewTimes.value)
+  // console.log(selectedInterviewTimes.value)
 }
 
 const onWorkTypeConfirmed = (workTypes) => {
-  console.log(workTypes)
+  // console.log(workTypes)
   selectedWorkTypes.value = workTypes
 }
 
 const onJobConfirmed = (jobs) => {
-  console.log(jobs)
+  // console.log(jobs)
   selectedJobs.value = jobs
 }
 
 const removeWorkType = (name) => {
-  console.log('삭제 대상:', name)
+  // console.log('삭제 대상:', name)
 
   selectedWorkTypes.value = selectedWorkTypes.value.filter(
     (work) => work !== name,
   )
 
-  console.log('삭제 후:', selectedWorkTypes.value)
+  // console.log('삭제 후:', selectedWorkTypes.value)
 }
 
 const removeJob = (name) => {
-  console.log('삭제 대상:', name)
+  // console.log('삭제 대상:', name)
 
   selectedJobs.value = selectedJobs.value.filter((job) => job !== name)
 
-  console.log('삭제 후:', selectedJobs.value)
+  // console.log('삭제 후:', selectedJobs.value)
 }
 
 const removeSkill = (name) => {

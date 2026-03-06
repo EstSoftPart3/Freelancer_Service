@@ -33,6 +33,7 @@ public class SecurityConfigDev {
         configuration.addAllowedOrigin("http://localhost:8504"); // Vue(FO)
         configuration.addAllowedOrigin("http://localhost:5173"); // React(BO)
         configuration.addAllowedOrigin("https://job.estsw.co.kr");
+        configuration.addAllowedOrigin("https://admin-job.estsw.co.kr");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true); // 쿠키 허용

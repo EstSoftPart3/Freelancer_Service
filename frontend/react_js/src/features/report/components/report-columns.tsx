@@ -5,7 +5,7 @@ import { type ColumnDef, type Row } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
-import { type AdminReport } from '../api/report-api'
+import { type AdminReport } from '../data/schema'
 import { DataTableRowActions } from './data-table-row-actions'
 import { useReport } from './report-provider'
 

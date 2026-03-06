@@ -976,7 +976,7 @@ function onAttachmentChange(event) {
   if (hasInvalid) {
     event.target.value = ''
   }
-  console.log('resumeForm.attachments', resumeForm.attachments)
+  // console.log('resumeForm.attachments', resumeForm.attachments)
 }
 
 // 학력 입력 폼 표시 로직
@@ -1088,7 +1088,7 @@ const showSkillsForm = () => {
   modalStore.openModal(SkillTagModal, {
     skillTags: resumeForm.skillTagList,
     onConfirm: (skills) => {
-      console.log(skills)
+      // console.log(skills)
       resumeForm.skillTagList = skills
     },
   })
@@ -1176,7 +1176,7 @@ onMounted(async () => {
     })
 
     setExistingAttachments(resumeForm.attachmentList)
-    console.log('resumeForm', resumeForm)
+    // console.log('resumeForm', resumeForm)
   }
 })
 
@@ -1306,16 +1306,16 @@ async function submitResume() {
       })
     }
 
-    console.log('폼데이터 내용:')
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof Blob) {
-        value.text().then((text) => {
-          console.log(`${key} (Blob):`, text)
-        })
-      } else {
-        console.log(`${key}:`, value)
-      }
-    }
+    // console.log('폼데이터 내용:')
+    // for (let [key, value] of formData.entries()) {
+    //   if (value instanceof Blob) {
+    //     value.text().then((text) => {
+    //       console.log(`${key} (Blob):`, text)
+    //     })
+    //   } else {
+    //     console.log(`${key}:`, value)
+    //   }
+    // }
 
     alertStore.show('이력서가 등록되었습니다.', 'success')
     router.push('/mypage/resumeList')

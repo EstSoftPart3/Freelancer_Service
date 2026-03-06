@@ -216,12 +216,12 @@ const fetchAffiliationMemberList = async () => {
     })
 
     const output = response.output
-    console.log('output', output)
+    // console.log('output', output)
     members.value = output.members
     currentPage.value = output.page
     totalPages.value = Math.max(1, output.totalPages)
   } catch (e) {
-    console.log(e)
+    // console.log(e)
   }
 }
 
@@ -237,7 +237,7 @@ const openResumeSelectModal = (memberSq) => {
 }
 
 function openResumeDetail(resumeSq) {
-  console.log('resumeSq', resumeSq)
+  // console.log('resumeSq', resumeSq)
   modalStore.openModal(ResumeDetailModal, {
     title: '이력서 상세보기',
     size: 'modal-lg',

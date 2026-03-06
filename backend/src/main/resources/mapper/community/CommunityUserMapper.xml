@@ -7,6 +7,6 @@
         SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 
     <select id="findAllUserSqs" resultType="Long"> SELECT user_sq FROM TBL_USER_M WHERE
-        user_is_activate_yn = 'N' </select>
+        user_is_activate_yn = 'Y' </select>
 
 </mapper>

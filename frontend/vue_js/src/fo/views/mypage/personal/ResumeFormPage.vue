@@ -639,7 +639,7 @@ const modalStore = useModalStore()
 const route = useRoute()
 const resumeSq = route.params.resumeSq
 const skillList = ref([])
-console.log('resumeSq:', resumeSq) // 값이 잘 들어오는지 확인
+// console.log('resumeSq:', resumeSq) // 값이 잘 들어오는지 확인
 
 // 이력서 데이터
 const resumeData = reactive({
@@ -713,9 +713,10 @@ const deletePhoto = () => {
 
 // 파일 업로드 처리
 const handleFileUpload = (event) => {
-  const file = event.target.files[0]
+  // const file =
+  event.target.files[0]
   // 파일 처리 로직 구현
-  console.log(file)
+  // console.log(file)
 }
 
 const formatPhoneNumber = (event) => {
@@ -795,7 +796,7 @@ const showSkillsForm = () => {
   modalStore.openModal(SkillTagModal, {
     skillTags: resumeData.skills,
     onConfirm: (skills) => {
-      console.log(skills)
+      // console.log(skills)
       resumeData.skills = skills
     },
   })
@@ -865,10 +866,10 @@ onMounted(async () => {
   if (resumeSq) {
     try {
       const res = await api.$get(`/mypage/resume/detail/${resumeSq}`)
-      console.log('api 응답:', res)
+      // console.log('api 응답:', res)
 
       const data = res.output
-      console.log('data:', data)
+      // console.log('data:', data)
 
       // 1. 각 필드를 직접 할당 (반응형 보장)
       if (data) {
@@ -915,9 +916,9 @@ onMounted(async () => {
           }
         }
       }
-      console.log('폼에 할당된 resumeData:', resumeData)
+      // console.log('폼에 할당된 resumeData:', resumeData)
     } catch (e) {
-      console.log('이력서 상세 불러오기 실패:', e)
+      // console.log('이력서 상세 불러오기 실패:', e)
     }
   }
 })
@@ -979,7 +980,7 @@ const submitResume = async () => {
     resumeIsRepresentativeYn: resumeData.resumeIsRepresentativeYn ? 'Y' : 'N',
   }
 
-  console.log('[최종 전송 데이터]', payload)
+  // console.log('[최종 전송 데이터]', payload)
 
   try {
     if (resumeSq) {

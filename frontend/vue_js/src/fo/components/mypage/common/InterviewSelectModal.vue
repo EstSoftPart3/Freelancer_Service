@@ -200,8 +200,8 @@ function formatDate(d) {
 
 const handleConfirm = () => {
   const interviewTimeSq = getSelectedInterviewTimeSq()
-  console.log(interviewTimeSq)
-  console.log(props.applicationSq)
+  // console.log(interviewTimeSq)
+  // console.log(props.applicationSq)
   if (!interviewTimeSq || !props.applicationSq) {
     alertStore.show('날짜와 시간을 선택해주세요.', 'danger')
     return

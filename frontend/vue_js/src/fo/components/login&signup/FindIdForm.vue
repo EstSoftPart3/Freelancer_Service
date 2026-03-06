@@ -216,7 +216,7 @@ const handleFindId = async () => {
   validateVerifycode()
 
   if (nameValid.value && emailValid.value && verifyCodeValid.value) {
-    console.log('✅ 유효성 통과. 아이디 찾기 실행')
+    // console.log('✅ 유효성 통과. 아이디 찾기 실행')
 
     const domain =
       emailDomain.value === 'custom' ? customDomain.value : emailDomain.value

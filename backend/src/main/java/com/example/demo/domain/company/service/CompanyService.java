@@ -69,7 +69,6 @@ public class CompanyService {
 		if (fileName == null) {
 			return null;
 		}
-		// return "/files/" + fileName; // CasaOS 용
 		return "/api/files/" + fileName; // 로컬용
 	}
 

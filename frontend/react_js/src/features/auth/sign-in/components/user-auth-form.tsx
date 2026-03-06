@@ -80,7 +80,7 @@ export function UserAuthForm({
 
     try {
       // 2. API 호출 (제네릭에 LoginResponse 적용)
-      const response = await api.$post<LoginResponse>('/login', {
+      const response = await api.$post<LoginResponse>('/admin/login', {
         userId: data.id,
         userPw: data.password,
         userTypeCd: 303,
