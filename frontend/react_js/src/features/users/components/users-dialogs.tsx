@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { userApi } from '../api/users-api'
-import { UsersInviteDialog } from './users-invite-dialog'
+// import { UsersInviteDialog } from './users-invite-dialog'
 import { UsersMasterPasswordDialog } from './users-master-password-dialog'
 import { UsersMutateDrawer } from './users-mutate-drawer'
 import { useUsers } from './users-provider'
@@ -33,11 +33,11 @@ export function UsersDialogs() {
         onOpenChange={() => setOpen(null)}
       />
 
-      <UsersInviteDialog
+      {/* <UsersInviteDialog
         key='user-invite'
         open={open === 'invite'}
         onOpenChange={() => setOpen(null)}
-      />
+      /> */}
 
       {currentRow && (
         <>
