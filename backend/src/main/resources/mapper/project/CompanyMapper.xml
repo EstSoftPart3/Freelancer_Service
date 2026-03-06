@@ -7,7 +7,7 @@
     FROM TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
 
   <select id="findCompanyImageUrlBySq" parameterType="Long" resultType="String"> SELECT
-    f.file_save_nm FROM TBL_COMPANY_PROFILE_IMAGE_S p JOIN TBL_COMMON_FILE_S f ON p.file_sq =
+    f.file_original_nm FROM TBL_COMPANY_PROFILE_IMAGE_S p JOIN TBL_COMMON_FILE_S f ON p.file_sq =
     f.file_sq WHERE p.company_sq = #{companySq} </select>
 
   <select id="findCompanySqByUserSq" parameterType="Long" resultType="Long"> SELECT company_sq FROM
