@@ -6,8 +6,8 @@
 
 	<!-- 지원자 기존 소속 여부 확인 -->
 	<select id="existsCompanyAffiliation" parameterType="long" resultType="boolean"> SELECT EXISTS(
-		SELECT 1 FROM TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} AND company_member_status_cd !=
-		401 ) </select>
+		SELECT 1 FROM TBL_COMPANY_MEMBER_R WHERE user_sq = #{userSq} AND company_member_status_cd =
+		401 AND company_member_leave_dt IS NULL ) </select>
 
 	<!-- TBL_COMPANY_APPLICATION_H에서 지원자 정보 가져오기 -->
 	<select id="findApplicationDetail" parameterType="long"

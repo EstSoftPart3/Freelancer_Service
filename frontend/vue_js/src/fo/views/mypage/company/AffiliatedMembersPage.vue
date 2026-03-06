@@ -82,7 +82,7 @@ ew
                 v-if="member.leavedYn === 401"
                 class="btn btn-primary btn-outline btn-lg"
                 style="font-size: 14px; padding: 8px 12px"
-                @click="confirmFire(6, member.userSq)"
+                @click="confirmFire(member.userSq)"
                 >퇴사 처리</span
               >
               <span
@@ -248,24 +248,27 @@ function openResumeDetail(resumeSq) {
   })
 }
 
-const fireMember = async (companySq, userSq) => {
+const fireMember = async (userSq) => {
   try {
-    await api.$patch(`/companies/${companySq}`, {
-      withCredentials: true,
-      userSq: userSq,
-      newStatus: '퇴사',
-    })
+    await api.$patch(
+      `/companies`,
+      {
+        userSq: userSq,
+        newStatus: '퇴사',
+      },
+      { withCredentials: true },
+    )
   } catch (e) {
     console.error(e)
   }
 }
 
-const confirmFire = (companySq, userSq) => {
+const confirmFire = (userSq) => {
   modalStore.openModal(CommonConfirmModal, {
     title: '소속 인원 퇴사 처리',
     message: '해당 인원을 퇴사처리 하겠습니까?',
     onConfirm: async () => {
-      await fireMember(companySq, userSq)
+      await fireMember(userSq)
       await fetchAffiliationMemberList()
       modalStore.closeModal()
     },

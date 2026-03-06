@@ -94,16 +94,14 @@ public class CompanyService {
 						resumeSummaryVo = resumeMapper.findRepResumeNmTtlByUserSq(sq);
 
 					}
-					List<Long> resumeSqs = resumeMapper.findResumesByUserSq(sq);
+					// List<Long> resumeSqs = resumeMapper.findResumesByUserSq(sq);
 
-					LocalDate joinDt = companyMapper.findCompanyJoinDt(sq);
-					LocalDate leaveDt = companyMapper.findCompanyLeaveDt(sq);
+					LocalDate joinDt = companyMapper.findCompanyJoinDt(sq, companySq);
+					LocalDate leaveDt = companyMapper.findCompanyLeaveDt(sq, companySq);
+					Long leavedYn = companyMapper.findCompanyMemberStatus(sq, companySq);
 
 					Integer careerYr = calculateTotalCareer(repResumeSq);
-
 					List<String> skillTags = resumeSkillMapper.findAllNmBySq(repResumeSq);
-
-					Long leavedYn = companyMapper.findCompanyMemberStatus(sq);
 
 					responses.add(
 							CompanyMemberVo.from(sq, resumeSummaryVo, joinDt, leaveDt, skillTags, careerYr, leavedYn));
@@ -115,10 +113,21 @@ public class CompanyService {
 		return new CompanyMemberResponse(page, request.getSize(), totalCount, totalPages, responses);
 	}
 
-	public void updateMemberStatus(Long companySq, CompanyStatusRequest request) {
+	@Transactional
+	public void updateMemberStatus(JwtAuthenticationToken token, CompanyStatusRequest request) {
+		// 1. 토큰 정보를 기반으로 로그인한 유저의 진짜 기업 번호(companySq)를 조회합니다. (보안 핵심)
+		Long realCompanySq = fetchCompanySq(token.getUserSq(), token.getUserTypeCd());
+
+		// 2. '퇴사'에 해당하는 공통 코드 SQ를 가져옵니다 (예: 402)
 		Long memberStatusCd = commonCodeMapper.findCommonCodeSqByName(request.getNewStatus(),
 				ParentCodeEnum.EMPLOYMENT.getCode());
-		companyMapper.updateMemberStatus(request.getUserSq(), memberStatusCd);
+
+		if ("퇴사".equals(request.getNewStatus())) {
+			// 3. 검증된 realCompanySq를 사용하여 해당 기업의 멤버만 퇴사 처리합니다.
+			companyMapper.updateMemberToResigned(realCompanySq, request.getUserSq(), memberStatusCd, LocalDate.now());
+		} else {
+			companyMapper.updateMemberStatus(realCompanySq, request.getUserSq(), memberStatusCd);
+		}
 	}
 
 	public Integer calculateTotalCareer(Long repResumeSq) {
