@@ -44,12 +44,26 @@
 
       <div v-show="!isMapView">
         <ProjectCardGroup :projects="projects" />
+
+        <div
+          v-if="userStore.userType === 'COMPANY' && projects.length > 0"
+          class="d-flex justify-content-center my-4"
+        >
+          <button
+            @click="handleRegisterClick"
+            class="btn btn-primary btn-px-5 py-2 font-weight-bold shadow-sm rounded-pill"
+          >
+            <i class="fas fa-plus me-2"></i> 프로젝트 등록하기
+          </button>
+        </div>
+
         <div
           v-if="projects.length === 0 && !isLoading"
           class="text-center py-4 border rounded bg-light text-2"
         >
           검색 결과가 없습니다.
         </div>
+
         <div v-if="projects.length > 0" class="mt-2">
           <CommonPagination
             :currentPage="currentPage"
