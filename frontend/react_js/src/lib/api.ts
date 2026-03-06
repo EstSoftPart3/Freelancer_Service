@@ -7,7 +7,7 @@ import axios, {
 import { useAuthStore } from '@/stores/auth-store'
 
 // export const baseUrl = 'http://localhost:8080/api'
-export const baseUrl = 'http://job.estsw.co.kr/api'
+export const baseUrl = 'https://job.estsw.co.kr/api'
 
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
