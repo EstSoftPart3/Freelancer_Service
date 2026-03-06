@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.admin.mapper.AdminDashBoardMapper;
 import com.example.demo.domain.user.dto.TokenDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
@@ -27,7 +28,8 @@ public class LoginService {
     @Transactional
     public LoginResultDTO login(String userId, String userPw, Long userTypeCd) {
         UserDTO user = userRepository.findByUserId(userId);
-
+        UsersDTO users = userRepository.findUserByUserId(userId);
+        
         if (user == null) {
             throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
@@ -35,6 +37,11 @@ public class LoginService {
         // 탈퇴 여부 확인
         if ("Y".equalsIgnoreCase(user.getUserIsDeletedYn())) {
             throw new IllegalArgumentException("탈퇴한 사용자입니다.");
+        }
+        
+        // 계정 활성화 여부 확인
+        if ("N".equalsIgnoreCase(users.getUserIsActivateYn())) {
+        	throw new IllegalArgumentException("비활성화된 사용자입니다.");
         }
 
         if (!user.getUserTypeCd().equals(userTypeCd)) {
