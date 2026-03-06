@@ -32,13 +32,10 @@ export const userApi = {
     )
   },
 
-  /** * 유저 상세 조회
-   */
-
   /** * 유저 수정
    */
   updateUser: async (userSq: number, formData: FormData) => {
-    return await api.$patch(`/admin/user/${userSq}`, formData, {
+    return await api.$patch(`/admin/users/${userSq}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
@@ -49,21 +46,11 @@ export const userApi = {
     return await api.$delete(`/admin/user/${userSq}`)
   },
 
-  /** * 프로필 이미지 수정
+  /** 마스터 패스워드 검증
    */
-  updateProfileImage: async (profileImageSq: number, formData: FormData) => {
-    return await api.$patch(`/admin/user/profile/${profileImageSq}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+  verifyPassword: async (password: string) => {
+    return await api.$post('/admin/users/verify-password', {
+      masterPassword: password,
     })
-  },
-
-  updateCompany: async (companySq: number, formData: FormData) => {
-    return await api.$patch(`/admin/user/company/${companySq}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-  },
-
-  resetPassword: async (userSq: number) => {
-    return await api.$patch(`/admin/user/reset/${userSq}`)
   },
 }
