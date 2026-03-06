@@ -1,33 +1,23 @@
 import { faker } from '@faker-js/faker'
 
-// Set a fixed seed for consistent data generation
 faker.seed(67890)
 
 export const users = Array.from({ length: 500 }, () => {
-  const firstName = faker.person.firstName()
-  const lastName = faker.person.lastName()
   return {
-    id: faker.string.uuid(),
-    firstName,
-    lastName,
-    username: faker.internet
-      .username({ firstName, lastName })
-      .toLocaleLowerCase(),
-    email: faker.internet.email({ firstName }).toLocaleLowerCase(),
-    phoneNumber: faker.phone.number({ style: 'international' }),
-    status: faker.helpers.arrayElement([
-      'active',
-      'inactive',
-      'invited',
-      'suspended',
-    ]),
-    role: faker.helpers.arrayElement([
-      'superadmin',
-      'admin',
-      'cashier',
-      'manager',
-    ]),
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.recent(),
+    userTypeCd: faker.helpers.arrayElement([301, 302]),
+    userId: faker.string.uuid(),
+    profileImageSq: faker.number.int({ min: 1, max: 100 }),
+    userNm: faker.person.fullName(),
+    userEmail: faker.internet.email().toLocaleLowerCase(),
+    userPhoneNum: faker.phone.number({ style: 'international' }),
+    userBirthDt: faker.date.birthdate(),
+    userPw: faker.internet.password(),
+    userGenderCd: faker.helpers.arrayElement([101, 102]),
+    userCreatedDtm: faker.date.past(),
+    userModifiedDtm: faker.date.recent(),
+    userIsDeletedYn: faker.helpers.arrayElement(['Y', 'N']),
+    userIsActivateYn: faker.helpers.arrayElement(['Y', 'N']),
+    userAgreedPrivacyPolicyYn: faker.helpers.arrayElement(['Y', 'N']),
+    companySq: faker.number.int({ min: 1, max: 100 }),
   }
 })

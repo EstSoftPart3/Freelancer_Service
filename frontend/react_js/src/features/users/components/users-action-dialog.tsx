@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { roles } from '../data/data'
-import { type User } from '../data/schema'
+import { type AdminUser } from '../data/schema'
 
 const formSchema = z
   .object({
@@ -94,7 +94,7 @@ const formSchema = z
 type UserForm = z.infer<typeof formSchema>
 
 type UserActionDialogProps = {
-  currentRow?: User
+  currentRow?: AdminUser
   open: boolean
   onOpenChange: (open: boolean) => void
 }

@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
-import { type User } from '../data/schema'
+import { type AdminUser } from '../data/schema'
 import { UsersMultiDeleteDialog } from './users-multi-delete-dialog'
 
 type DataTableBulkActionsProps<TData> = {
@@ -24,7 +24,7 @@ export function DataTableBulkActions<TData>({
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
   const handleBulkStatusChange = (status: 'active' | 'inactive') => {
-    const selectedUsers = selectedRows.map((row) => row.original as User)
+    const selectedUsers = selectedRows.map((row) => row.original as AdminUser)
     toast.promise(sleep(2000), {
       loading: `${status === 'active' ? 'Activating' : 'Deactivating'} users...`,
       success: () => {
@@ -37,7 +37,7 @@ export function DataTableBulkActions<TData>({
   }
 
   const handleBulkInvite = () => {
-    const selectedUsers = selectedRows.map((row) => row.original as User)
+    const selectedUsers = selectedRows.map((row) => row.original as AdminUser)
     toast.promise(sleep(2000), {
       loading: 'Inviting users...',
       success: () => {

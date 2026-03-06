@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import { endOfMonth, format, startOfMonth, subDays } from 'date-fns'
 import { toast } from 'sonner'
-import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -10,101 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  fetchChartData,
+  fetchSummaryData,
+  fetchLatestPostsData,
+} from '../api/statistics-api'
+import { btnTitle, btnFilter, getDateRange } from '../data/constants'
+import type {
+  summaryDataProps,
+  chartDataProps,
+  latestPostsDataProps,
+} from '../data/types'
 import { LatestPosts } from './latest-posts'
 import { StatisticLogsChart } from './statistic-logs-chart'
-
-interface summaryDataProps {
-  title: string
-  icon: React.ReactNode
-  count: number
-  percent: string
-}
-
-interface chartDataProps {
-  day: string
-  visitors: number
-  projects: number
-  projectApplications: number
-  companyApplications: number
-  posts: number
-  comments: number
-}
-
-interface latestPostsDataProps {
-  id: number
-  title: string
-  name: string
-  comments: number
-  time: string
-}
-
-type ApiResponse<T> = {
-  status: string
-  message: string
-  output: T
-}
-const btnTitle = [
-  {
-    ko: '접속자',
-    en: 'visitors',
-  },
-  {
-    ko: '프로젝트',
-    en: 'projects',
-  },
-  {
-    ko: '프로젝트 지원',
-    en: 'projectApplications',
-  },
-  {
-    ko: '소속 지원',
-    en: 'companyApplications',
-  },
-  {
-    ko: '게시글',
-    en: 'posts',
-  },
-  {
-    ko: '댓글',
-    en: 'comments',
-  },
-]
-const btnFilter = ['오늘', '어제', '일주일', '이번달']
-
-const getDateRange = (selectedFilterKey: string) => {
-  const today = new Date()
-  let startDate
-  let endDate
-
-  switch (selectedFilterKey) {
-    case '오늘':
-      startDate = format(today, 'yyyy-MM-dd')
-      endDate = format(today, 'yyyy-MM-dd')
-      break
-
-    case '어제':
-      startDate = format(subDays(today, 1), 'yyyy-MM-dd')
-      endDate = format(subDays(today, 1), 'yyyy-MM-dd')
-      break
-
-    case '일주일':
-      startDate = format(subDays(today, 6), 'yyyy-MM-dd')
-      endDate = format(today, 'yyyy-MM-dd')
-      break
-
-    case '이번달':
-      startDate = format(startOfMonth(today), 'yyyy-MM-dd')
-      endDate = format(endOfMonth(today), 'yyyy-MM-dd')
-      break
-
-    default:
-      startDate = format(subDays(today, 6), 'yyyy-MM-dd')
-      endDate = format(today, 'yyyy-MM-dd')
-      break
-  }
-
-  return { startDate, endDate }
-}
 
 export function StatisticsLogs() {
   const [selectedKey, setSelectedKey] = useState(btnTitle[0].en)
@@ -116,34 +32,27 @@ export function StatisticsLogs() {
   >([])
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchChart = async () => {
       try {
         const { startDate, endDate } = getDateRange(selectedFilterKey)
-
-        const chartData = await api.$get<ApiResponse<chartDataProps[]>>(
-          '/admin/dashboard/chart',
-          { startDate, endDate }
-        )
-
-        setChartData(chartData.output)
+        const data = await fetchChartData(startDate, endDate)
+        setChartData(data)
       } catch (_) {
         toast.error('차트 조회 중 오류가 발생했습니다.')
       }
     }
-    fetchAll()
+    fetchChart()
   }, [selectedKey, selectedFilterKey])
 
   useEffect(() => {
     const fetchStatic = async () => {
       try {
-        const [summaryData, latestPostsData] = await Promise.all([
-          api.$get<ApiResponse<summaryDataProps[]>>('/admin/dashboard/summary'),
-          api.$get<ApiResponse<latestPostsDataProps[]>>(
-            '/admin/dashboard/latestpost'
-          ),
+        const [summary, latestPosts] = await Promise.all([
+          fetchSummaryData(),
+          fetchLatestPostsData(),
         ])
-        setSummaryData(summaryData.output)
-        setLatestPostsData(latestPostsData.output)
+        setSummaryData(summary)
+        setLatestPostsData(latestPosts)
       } catch (_) {
         toast.error('데이터 조회 중 오류가 발생했습니다.')
       }
