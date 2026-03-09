@@ -243,7 +243,7 @@ const fetchUserInfo = async () => {
   try {
     const res = await api.$post('/me')
     const data = res.output
-    console.log('data', data)
+    // console.log('data', data)
 
     // Pinia 상태 저장
     userStore.setUser({

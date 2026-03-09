@@ -176,10 +176,16 @@ const markers = ref([])
 // --- 지도 로직 ---
 const initMap = () => {
   if (!mapContainer.value || mapInstance.value) return
+
+  // 1. 우선순위에 따른 중심 좌표 설정 (사용자 좌표 -> 없으면 서울시청)
+  const centerLat = userStore.userLat || 37.5665
+  const centerLng = userStore.userLng || 126.978
+
   mapInstance.value = new kakao.maps.Map(mapContainer.value, {
-    center: new kakao.maps.LatLng(37.5665, 126.978),
+    center: new kakao.maps.LatLng(centerLat, centerLng),
     level: 7,
   })
+
   kakao.maps.event.addListener(
     mapInstance.value,
     'zoom_changed',
@@ -194,6 +200,7 @@ const initMap = () => {
       .querySelectorAll('.marker-wrapper')
       .forEach((el) => el.classList.remove('active'))
   })
+
   if (projects.value.length > 0) displayMarkers()
 }
 
