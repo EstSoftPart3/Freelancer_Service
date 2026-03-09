@@ -79,7 +79,7 @@
         style="height: 500px"
       >
         <div
-          class="col-lg-3 col-md-4 bg-light border-end d-flex flex-column h-100"
+          class="col-lg-3 col-md-4 bg-light border-end d-none d-md-flex flex-column h-100"
         >
           <div
             class="p-2 bg-white border-bottom d-flex justify-content-between align-items-center"
@@ -104,7 +104,7 @@
           </div>
         </div>
 
-        <div class="col-lg-9 col-md-8 h-100 position-relative">
+        <div class="col-12 col-lg-9 col-md-8 h-100 position-relative">
           <transition name="fade">
             <div v-if="isMapMoved" class="search-btn-container">
               <button
@@ -188,8 +188,16 @@ const initMap = () => {
   kakao.maps.event.addListener(mapInstance.value, 'idle', () => {
     isMapMoved.value = true
   })
+  kakao.maps.event.addListener(mapInstance.value, 'click', () => {
+    selectedProjectId.value = null
+    document
+      .querySelectorAll('.marker-wrapper')
+      .forEach((el) => el.classList.remove('active'))
+  })
   if (projects.value.length > 0) displayMarkers()
 }
+
+const selectedProjectId = ref(null) // 최상단(script setup 내부)에 추가
 
 const displayMarkers = () => {
   if (!mapInstance.value) return
@@ -198,16 +206,16 @@ const displayMarkers = () => {
   const level = mapInstance.value.getLevel()
 
   if (level >= 8) {
-    // 시군구 클러스터 핀
+    // 시군구 클러스터 로직 (기존과 동일)
     regionGroups.value.forEach((group) => {
       const coords = new kakao.maps.LatLng(group.latitude, group.longitude)
       const content = document.createElement('div')
       content.className = 'cluster-pin'
       content.innerHTML = `${group.sigungu}<br><b>${group.projectCount}</b>`
       content.onclick = () => {
-        isMapMoved.value = false // 자동 검색하므로 버튼 숨김
+        isMapMoved.value = false
         mapInstance.value.setLevel(level - 2, { anchor: coords, animate: true })
-        setTimeout(() => updateBounds(), 350) // 확대 애니메이션 후 자동 데이터 갱신
+        setTimeout(() => updateBounds(), 350)
       }
       const overlay = new kakao.maps.CustomOverlay({
         position: coords,
@@ -218,7 +226,7 @@ const displayMarkers = () => {
       markers.value.push(overlay)
     })
   } else {
-    // 상세 프로젝트 핀 + 툴팁
+    // 상세 프로젝트 핀
     projects.value.forEach((project) => {
       if (!project.latitude || !project.longitude) return
       const isSubway = project.addressTypeCd === 2702
@@ -228,6 +236,12 @@ const displayMarkers = () => {
 
       const content = document.createElement('div')
       content.className = 'marker-wrapper'
+
+      // 만약 이미 선택된 프로젝트라면 active 클래스를 유지하게 설정
+      if (selectedProjectId.value === project.projectSq) {
+        content.classList.add('active')
+      }
+
       content.innerHTML = `
         <div class="marker-pin ${isSubway ? 'subway' : ''}"><i class="bi ${isSubway ? 'bi-train-front' : 'bi-geo-alt-fill'}"></i></div>
         <div class="marker-tooltip">
@@ -244,12 +258,24 @@ const displayMarkers = () => {
           </div>
         </div>`
 
-      // [수정] 상세 핀 클릭 시 상세 이동 컨펌 실행
+      // [수정된 클릭 로직]
       content.onclick = () => {
-        mapInstance.value.panTo(
-          new kakao.maps.LatLng(project.latitude, project.longitude),
-        )
-        goToProjectSpecWithConfirm(project)
+        if (selectedProjectId.value === project.projectSq) {
+          // 1. 이미 활성화된 핀을 또 클릭하면 상세 페이지 이동 모달 호출
+          goToProjectSpecWithConfirm(project)
+        } else {
+          // 2. 처음 클릭 시: 이전 active 제거하고 현재 핀에 active 부여
+          document
+            .querySelectorAll('.marker-wrapper')
+            .forEach((el) => el.classList.remove('active'))
+          content.classList.add('active')
+          selectedProjectId.value = project.projectSq
+
+          // 해당 위치로 지도 중심 이동
+          mapInstance.value.panTo(
+            new kakao.maps.LatLng(project.latitude, project.longitude),
+          )
+        }
       }
 
       const overlay = new kakao.maps.CustomOverlay({
@@ -442,7 +468,8 @@ const goToProjectSpecWithConfirm = (project) => {
   z-index: 1000;
   pointer-events: none;
 }
-:deep(.marker-wrapper:hover .marker-tooltip) {
+:deep(.marker-wrapper:hover .marker-tooltip),
+:deep(.marker-wrapper.active .marker-tooltip) {
   display: block;
 }
 :deep(.tt-header) {
