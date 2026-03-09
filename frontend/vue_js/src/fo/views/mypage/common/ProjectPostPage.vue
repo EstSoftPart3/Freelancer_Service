@@ -1,7 +1,7 @@
 <template lang="">
   <div class="d-flex layout-wrapper mx-auto">
     <div
-      class="tab-pane tab-pane-navigation active show content flex-grow-1 px-4"
+      class="tab-pane tab-pane-navigation active show content px-3 px-md-4"
       id="projectRegisterForm"
       role="tabpanel"
     >
@@ -1364,7 +1364,6 @@ const clearSubwayAddress = () => {
 </script>
 <style scoped>
 .layout-wrapper {
-  display: flex;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -1381,5 +1380,41 @@ const clearSubwayAddress = () => {
 
 .readonly:hover {
   cursor: default;
+}
+
+/* PC에서는 가로 배치, 모바일에서는 세로 배치 */
+@media (min-width: 992px) {
+  .layout-wrapper {
+    display: flex;
+  }
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+  }
+  .content {
+    flex-grow: 1;
+    /* 사이드바 너비를 뺀 나머지 공간 확보 */
+    max-width: calc(100% - 220px);
+  }
+}
+
+/* 모바일 전용 대응 */
+@media (max-width: 991px) {
+  .content {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+
+  /* 단가 입력 부분 모바일에서 세로 정렬 */
+  .d-flex.align-items-center.gap-2 {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .d-flex.align-items-center.gap-2 > input {
+    width: 100%;
+  }
 }
 </style>

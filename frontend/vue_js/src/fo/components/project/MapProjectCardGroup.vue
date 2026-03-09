@@ -157,4 +157,16 @@ const clickScrap = async (project) => {
   border-radius: 6px;
   display: inline-block;
 }
+
+/* 모바일에서 사이드바 숨기기 (추가) */
+@media (max-width: 767.98px) {
+  .map-project-list {
+    display: none !important;
+  }
+}
+
+.custom-hover-bg:hover {
+  background-color: #f0f7ff !important;
+  transition: background-color 0.2s ease;
+}
 </style>
