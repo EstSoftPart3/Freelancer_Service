@@ -1180,8 +1180,8 @@ onMounted(async () => {
   }
 })
 
-// 용량 제한 상수 (100MB)
-const MAX_FILE_SIZE = 100 * 1024 * 1024
+// 용량 제한 상수 (1MB)
+const MAX_FILE_SIZE = 1 * 1024 * 1024
 
 async function submitResume() {
   if (!resumeForm.resumeTtl || !resumeForm.resumeTtl.trim()) {
@@ -1226,7 +1226,7 @@ async function submitResume() {
   for (const file of profileImages.value) {
     if (file.size > MAX_FILE_SIZE) {
       return alertStore.show(
-        `프로필 이미지(${file.name})가 100MB를 초과합니다.`,
+        `프로필 이미지(${file.name})가 1MB를 초과합니다.`,
         'danger',
       )
     }
@@ -1236,7 +1236,7 @@ async function submitResume() {
   for (const file of attachments.value) {
     if (file.size > MAX_FILE_SIZE) {
       return alertStore.show(
-        `첨부파일(${file.name})이 100MB를 초과합니다.`,
+        `첨부파일(${file.name})이 1MB를 초과합니다.`,
         'danger',
       )
     }
