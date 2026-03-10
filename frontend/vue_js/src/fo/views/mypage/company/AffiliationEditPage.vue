@@ -95,6 +95,9 @@
           name="recruiting"
           id="recruiting"
           class="form-check-input"
+          v-model="form.companyIsRecruitingYn"
+          true-value="Y"
+          false-value="N"
           :disabled="userStore.companyAuthStatusCd === 2501"
           @change="onCheckboxChange"
         />
