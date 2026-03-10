@@ -172,6 +172,11 @@ const regionGroups = ref([])
 const mapContainer = ref(null)
 const mapInstance = ref(null)
 const markers = ref([])
+const selectedProjectId = ref(null)
+
+let isMarkerClickTriggered = false
+
+const projectOverlays = new Map()
 
 // --- 지도 로직 ---
 const initMap = () => {
@@ -195,16 +200,51 @@ const initMap = () => {
     isMapMoved.value = true
   })
   kakao.maps.event.addListener(mapInstance.value, 'click', () => {
+    if (isMarkerClickTriggered) return
+
     selectedProjectId.value = null
-    document
-      .querySelectorAll('.marker-wrapper')
-      .forEach((el) => el.classList.remove('active'))
+    document.querySelectorAll('.marker-wrapper').forEach((el) => {
+      el.classList.remove('active')
+    })
   })
 
   if (projects.value.length > 0) displayMarkers()
 }
 
-const selectedProjectId = ref(null) // 최상단(script setup 내부)에 추가
+const selectProject = (project) => {
+  if (!mapInstance.value) return
+
+  // 1. 모든 오버레이의 zIndex를 기본값으로 초기화
+  projectOverlays.forEach((ov) => ov.setZIndex(3))
+
+  const isAlreadySelected = selectedProjectId.value === project.projectSq
+
+  if (isAlreadySelected) {
+    goToProjectSpecWithConfirm(project)
+  } else {
+    selectedProjectId.value = project.projectSq
+
+    // 2. [핵심] 현재 선택된 오버레이의 zIndex를 최상단으로 변경
+    const currentOverlay = projectOverlays.get(project.projectSq)
+    if (currentOverlay) {
+      currentOverlay.setZIndex(999)
+    }
+
+    mapInstance.value.panTo(
+      new kakao.maps.LatLng(project.latitude, project.longitude),
+    )
+
+    nextTick(() => {
+      document
+        .querySelectorAll('.marker-wrapper')
+        .forEach((el) => el.classList.remove('active'))
+      const activeEl = document.querySelector(
+        `.marker-wrapper[data-id="${project.projectSq}"]`,
+      )
+      if (activeEl) activeEl.classList.add('active')
+    })
+  }
+}
 
 const displayMarkers = () => {
   if (!mapInstance.value) return
@@ -243,53 +283,55 @@ const displayMarkers = () => {
 
       const content = document.createElement('div')
       content.className = 'marker-wrapper'
+      content.setAttribute('data-id', project.projectSq)
 
-      // 만약 이미 선택된 프로젝트라면 active 클래스를 유지하게 설정
       if (selectedProjectId.value === project.projectSq) {
         content.classList.add('active')
       }
 
       content.innerHTML = `
-        <div class="marker-pin ${isSubway ? 'subway' : ''}"><i class="bi ${isSubway ? 'bi-train-front' : 'bi-geo-alt-fill'}"></i></div>
-        <div class="marker-tooltip">
-          <div class="tt-header">
-            <span class="tt-badge">${project.projectExperience || '등급미정'}</span>
-            <span class="tt-ttl">${project.projectTtl}</span>
-          </div>
-          <div class="tt-body">
-            <div class="tt-item"><i class="bi bi-building me-1"></i>${project.companyNm}</div>
-            <div class="tt-item"><i class="bi bi-geo-alt me-1"></i>${displayAddress || '주소 정보 없음'}</div>
-            <div class="tt-item text-primary-light font-weight-bold">
-              <i class="bi bi-currency-won me-1"></i>${project.formattedSalary || '단가협의'}
-            </div>
-          </div>
-        </div>`
+    <div class="marker-pin ${isSubway ? 'subway' : ''}"><i class="bi ${isSubway ? 'bi-train-front' : 'bi-geo-alt-fill'}"></i></div>
+    <div class="marker-tooltip">
+      <div class="tt-header">
+        <span class="tt-badge">${project.projectExperience || '등급미정'}</span>
+        <span class="tt-ttl">${project.projectTtl}</span>
+      </div>
+      <div class="tt-body">
+        <div class="tt-item"><i class="bi bi-building me-1"></i>${project.companyNm}</div>
+        <div class="tt-item"><i class="bi bi-geo-alt me-1"></i>${displayAddress || '주소 정보 없음'}</div>
+        <div class="tt-item text-primary-light font-weight-bold">
+          <i class="bi bi-currency-won me-1"></i>${project.formattedSalary || '단가협의'}
+        </div>
+      </div>
+    </div>`
 
-      // [수정된 클릭 로직]
-      content.onclick = () => {
-        if (selectedProjectId.value === project.projectSq) {
-          // 1. 이미 활성화된 핀을 또 클릭하면 상세 페이지 이동 모달 호출
-          goToProjectSpecWithConfirm(project)
-        } else {
-          // 2. 처음 클릭 시: 이전 active 제거하고 현재 핀에 active 부여
-          document
-            .querySelectorAll('.marker-wrapper')
-            .forEach((el) => el.classList.remove('active'))
-          content.classList.add('active')
-          selectedProjectId.value = project.projectSq
+      content.addEventListener('mousedown', () => {
+        // [가장 중요] 지도의 click 이벤트보다 먼저 발생하여 방어막을 침
+        isMarkerClickTriggered = true
+      })
 
-          // 해당 위치로 지도 중심 이동
-          mapInstance.value.panTo(
-            new kakao.maps.LatLng(project.latitude, project.longitude),
-          )
-        }
-      }
+      content.addEventListener('click', (e) => {
+        e.stopPropagation()
+        e.preventDefault()
+
+        // 이미 mousedown에서 플래그가 true가 되었으므로,
+        // 지도의 click 리스너(initMap에 있는 것)는 이 동작을 무시하게 됩니다.
+        selectProject(project)
+
+        // 로직 완료 후 플래그 해제
+        setTimeout(() => {
+          isMarkerClickTriggered = false
+        }, 200) // 시간을 200ms 정도로 넉넉히 줌
+      })
 
       const overlay = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(project.latitude, project.longitude),
         content: content,
-        zIndex: 3,
+        zIndex: 3, // 기본값
       })
+
+      projectOverlays.set(project.projectSq, overlay)
+
       overlay.setMap(mapInstance.value)
       markers.value.push(overlay)
     })
@@ -395,7 +437,16 @@ const updateFilters = (updated) => {
 }
 // 2. [수정] 왼쪽 목록 아이템 클릭 이벤트
 const handleFocusMarker = ({ project }) => {
-  navigateByUserTypeAndProjectSq(userStore.userType, project.projectSq)
+  // 1. 목록 클릭은 지도의 클릭 이벤트를 발생시키지 않으므로 플래그가 필요 없지만,
+  // 혹시 모를 간섭을 위해 안전하게 처리
+  isMarkerClickTriggered = true
+
+  // 2. 선택 로직 실행 (이미 활성화된 상태면 상세 페이지 이동 확인 모달이 뜹니다)
+  selectProject(project)
+
+  setTimeout(() => {
+    isMarkerClickTriggered = false
+  }, 200)
 }
 
 const handleRegisterClick = () => {
@@ -472,7 +523,7 @@ const goToProjectSpecWithConfirm = (project) => {
   font-size: 11px;
   min-width: 160px; /* 최소 너비 확보 */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 9999;
   pointer-events: none;
 }
 :deep(.marker-wrapper:hover .marker-tooltip),

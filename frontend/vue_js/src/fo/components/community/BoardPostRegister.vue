@@ -71,8 +71,8 @@ const isHtmlEmpty = (htmlString) => {
   return textOnly === ''
 }
 
-// 용량 제한 상수 (100MB)
-const MAX_FILE_SIZE = 100 * 1024 * 1024
+// 용량 제한 상수 (1MB)
+const MAX_FILE_SIZE = 1 * 1024 * 1024
 // 등록 함수
 const insertBoard = async () => {
   try {
@@ -84,7 +84,7 @@ const insertBoard = async () => {
       if (file instanceof File) {
         // 1. 개별 파일 용량 체크
         if (file.size > MAX_FILE_SIZE) {
-          alertStore.show(`${file.name}의 크기가 100MB를 초과합니다.`, 'danger')
+          alertStore.show(`${file.name}의 크기가 1MB를 초과합니다.`, 'danger')
           return
         }
       }
