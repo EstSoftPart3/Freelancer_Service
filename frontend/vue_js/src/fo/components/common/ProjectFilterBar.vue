@@ -258,8 +258,8 @@
             <a
               class="dropdown-item"
               href="#"
-              @click.prevent="updateTargetField('작성자명')"
-              >작성자명</a
+              @click.prevent="updateTargetField('회사명')"
+              >회사명</a
             >
           </li>
           <li>
@@ -579,8 +579,8 @@
                 <a
                   class="dropdown-item"
                   href="#"
-                  @click.prevent="updateTargetField('작성자명')"
-                  >작성자명</a
+                  @click.prevent="updateTargetField('회사명')"
+                  >회사명</a
                 >
               </li>
               <li>
