@@ -89,32 +89,36 @@
 			test="jobRoleCd != null and jobRoleCd.size() > 0"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
-				separator="," close=")">#{item}</foreach> ) </if> /* [추가 필터] 단가 검색 (선택한 금액 이상) */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 4] 키워드 검색
-		*/ <if test="searchKeyword != null and searchKeyword != ''">
+				separator="," close=")">#{item}</foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 4] 키워드 검색 -
+		수정됨 */ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
-				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c JOIN
-		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
-		CONCAT('%', #{searchKeyword}, '%') ) </when>
+
+				<when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
+
 				<when test="searchType == '내용'"> AND (p.project_preference_txt LIKE CONCAT('%',
 		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
+
 				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
+
 				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_preference_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
-		LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
+		LIKE CONCAT('%', #{searchKeyword}, '%') ) OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
-		/* [필터 5] 지도 영역(Bounds) 내 검색 */ <if
-			test="minLat != null and maxLat != null and minLng != null and maxLng != null"> AND (
-		CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END BETWEEN #{minLat}
-		AND #{maxLat} ) AND ( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
-		END BETWEEN #{minLng} AND #{maxLng} ) </if> /* 정렬 */ <choose>
+		/* [필터 5] 지도 영역 검색 */ <if
+			test="minLat != null and maxLat != null and minLng != null and maxLng != null"> AND
+		(CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END BETWEEN #{minLat}
+		AND #{maxLat}) AND (CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
+		END BETWEEN #{minLng} AND #{maxLng}) </if> /* 정렬 */ <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
 					<when test="sortBy == 'distance' and userLat != null"> ORDER BY distance ASC </when>
@@ -127,8 +131,8 @@
 				</choose>
 			</when>
 			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
-		</choose> /* [6]
-		페이징 */ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
+		</choose> /* 페이징
+		*/ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
 
 	<select id="findProjectGroupsByRegion"
