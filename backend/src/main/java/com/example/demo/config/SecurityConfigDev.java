@@ -49,6 +49,8 @@ public class SecurityConfigDev {
                 .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
+                        .requestMatchers("/actuator/**").permitAll()
                         // 1. 관리자 로그인 및 토큰 재발급은 누구나 접근 가능
                         .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
                         // 2. /api/admin으로 시작하는 모든 경로는 'ADMIN' 권한 필요
