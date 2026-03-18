@@ -411,7 +411,7 @@ const sendVerification = async () => {
     //   '인증 코드를 전송했습니다. 인증 코드 : ' + response.output.code,
     //   'info',
     // )
-    alertStore.show('인증 코드를 전송했습니다. 인증 코드 : ', 'info')
+    alertStore.show('인증 코드를 전송했습니다. ', 'info')
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error)
 
