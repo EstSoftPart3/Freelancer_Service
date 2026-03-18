@@ -1,6 +1,7 @@
 package com.example.demo.domain.project.service;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import com.example.demo.domain.project.dto.request.ApplicationStatusRequest;
 import com.example.demo.domain.project.dto.response.ApplicationStatusList;
 import com.example.demo.domain.project.dto.response.ApplicationStatusResponse;
 import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
+import com.example.demo.domain.project.entity.Project;
 import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.vo.ApplicationStatusVo;
@@ -110,6 +112,15 @@ public class ProjectApplicationService {
 	public void updateApplicantResult(ApplicationStatusRequest request, Long applicationSq) {
 		Long statusCd = commonCodeMapper.findCommonCodeSqByName(request.getStatus(),
 				ParentCodeEnum.PRO_APPLICATION.getCode());
+
+		if (statusCd.equals(804L)) {
+			Long projectSq = applicationMapper.findProjectBySq(applicationSq);
+			Project project = projectMapper.findBySq(projectSq);
+			if (project.getProjectRecruitEndDt().isBefore(LocalDate.now())) {
+				throw new IllegalArgumentException("모집 기간이 종료된 프로젝트입니다.");
+			}
+		}
+
 		applicationMapper.updateApplicationStatus(statusCd, applicationSq);
 
 		if (statusCd.equals(806L)) {
