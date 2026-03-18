@@ -44,7 +44,7 @@
             <i class="bi bi-buildings"></i> {{ project.companyNm }}
           </p>
           <div class="text-1 text-muted mb-2">
-            {{ project.address }} | {{ project.devGradeNm }}
+            {{ getDisplayAddress(project) }} | {{ project.devGradeNm }}
           </div>
 
           <div class="d-flex justify-content-between align-items-center">
@@ -100,6 +100,14 @@ const handleCardClick = (index, project) => {
 // const goToProjectSpec = (project) => {
 //   navigateByUserTypeAndProjectSq(userType, project.projectSq)
 // }
+
+// [추가] 주소 표시 로직 (지하철 여부에 따른 분기)
+const getDisplayAddress = (project) => {
+  const isSubway = project.addressTypeCd === 2702
+  const address = isSubway ? project.subwayAddress : project.detailedAddress
+
+  return address || project.address || '주소 정보 없음'
+}
 
 const getProjectStatus = (project) => {
   const today = new Date()
