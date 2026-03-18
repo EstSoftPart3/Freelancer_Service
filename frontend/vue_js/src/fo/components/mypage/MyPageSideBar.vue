@@ -164,6 +164,14 @@
                 >스크랩 내역</router-link
               >
             </li>
+            <li v-if="userStore.isAffiliated === 'Y'" class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/affiliatedWithdraw"
+                @click="handleNavigate"
+                >소속 탈퇴</router-link
+              >
+            </li>
           </ul>
         </li>
         <li class="nav-item">

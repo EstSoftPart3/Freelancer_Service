@@ -35,6 +35,7 @@ import ResumeFormPage from '../views/mypage/personal/ResumeFormPage_P.vue'
 import WithdrawPage from '../views/mypage/common/WithdrawPage.vue'
 import AffiliatedJobApplicationsPage from '../views/mypage/personal/AffiliatedJobApplicationsPage.vue'
 import AffiliatedScrapPage from '../views/mypage/personal/AffiliatedScrapPage.vue'
+import AffiliatedWithdrawPage from '../views/mypage/personal/AffiliatedWithdrawPage.vue'
 import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue'
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
@@ -197,6 +198,11 @@ const routes = [
         path: 'affiliatedScrap',
         name: 'AffiliatedScrap',
         component: AffiliatedScrapPage,
+      },
+      {
+        path: 'affiliatedWithdraw',
+        name: 'AffiliatedWithdraw',
+        component: AffiliatedWithdrawPage,
       },
       {
         path: 'resumeList',
