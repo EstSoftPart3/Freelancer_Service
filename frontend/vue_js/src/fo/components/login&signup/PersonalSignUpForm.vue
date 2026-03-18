@@ -443,7 +443,7 @@ const verifyCode = async () => {
     alertStore.show('이메일 인증에 성공하였습니다.', 'info')
     verifyCodeValid.value = true
   } catch (error) {
-    console.error('인증 코드 검증 실패:', error)
+    console.error(' 검증 실패:', error)
     verifycodeError.value = '인증번호가 일치하지 않습니다.'
     alertStore.show('이메일 인증에 실패하였습니다.', 'danger')
     verifyCodeValid.value = false
