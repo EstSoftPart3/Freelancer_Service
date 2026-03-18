@@ -1,10 +1,11 @@
 // [Freelancer Service]
 // eslint-disable react-hooks/exhaustive-deps
 import { useEffect, useRef, useState } from 'react';
+import { CompanySearchDialog } from './company-search-dialog';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera } from 'lucide-react';
+import { Camera, Search, X } from 'lucide-react';
 import { baseUrl } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ const schema = z.object({
   userIsDeletedYn: z.string(),
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
+  companySq: z.number().nullable(),
 });
 
 type UserMutateForm = z.infer<typeof schema>;
@@ -59,6 +61,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     null
   );
   const { setOpen, setPendingFormData } = useUsers();
+  const [companySearchOpen, setCompanySearchOpen] = useState(false);
 
   const {
     register,
@@ -76,6 +79,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userPhoneNum: '',
       userBirthDt: new Date(), // 생년월일 추가
       companyNm: null,
+      companySq: null,
       userTypeCd: 301,
       userGenderCd: 101,
       userIsActivateYn: 'Y',
@@ -95,6 +99,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userPhoneNum: currentRow.userPhoneNum,
           userBirthDt: currentRow.userBirthDt,
           companyNm: currentRow.companyNm,
+          companySq: currentRow.companySq ?? null,
           userTypeCd: currentRow.userTypeCd,
           userGenderCd: currentRow.userGenderCd,
           userIsActivateYn: currentRow.userIsActivateYn,
@@ -114,6 +119,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userPhoneNum: '',
           userBirthDt: new Date(), // 생년월일 추가
           companyNm: null,
+          companySq: null,
           userTypeCd: 301,
           userGenderCd: 101,
           userIsActivateYn: 'Y',
@@ -151,6 +157,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       data.userAgreedPrivacyPolicyYn
     );
     if (data.companyNm) formData.append('companyNm', data.companyNm);
+    if (data.companySq) formData.append('companySq', String(data.companySq));
     if (data.userPw) formData.append('userPw', data.userPw);
     if (profileImageFile) formData.append('profileImage', profileImageFile);
 
@@ -263,14 +270,51 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
 
           <div className='space-y-2'>
             <Label htmlFor='companyNm'>소속</Label>
-            <Input
-              id='companyNm'
-              autoComplete='off'
-              placeholder='소속 회사'
-              {...register('companyNm')}
-              readOnly
-            />
+            <div className='relative flex items-center'>
+              <Input
+                id='companyNm'
+                autoComplete='off'
+                placeholder='클릭하여 소속 검색'
+                value={watch('companyNm') ?? ''}
+                readOnly
+                className='cursor-pointer pr-16'
+                onClick={() => setCompanySearchOpen(true)}
+              />
+              <div className='absolute right-2 flex items-center gap-1'>
+                {watch('companyNm') && (
+                  <button
+                    type='button'
+                    className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setValue('companyNm', null);
+                      setValue('companySq', null);
+                    }}
+                    title='소속 삭제'
+                  >
+                    <X className='h-4 w-4' />
+                  </button>
+                )}
+                <button
+                  type='button'
+                  className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                  onClick={() => setCompanySearchOpen(true)}
+                  title='소속 검색'
+                >
+                  <Search className='h-4 w-4' />
+                </button>
+              </div>
+            </div>
           </div>
+
+          <CompanySearchDialog
+            open={companySearchOpen}
+            onOpenChange={setCompanySearchOpen}
+            onSelect={(companySq, companyNm) => {
+              setValue('companySq', companySq);
+              setValue('companyNm', companyNm);
+            }}
+          />
 
           <div className='space-y-2'>
             <Label>유저 유형</Label>
