@@ -1,22 +1,22 @@
 // [Freelancer Service]
 // eslint-disable react-hooks/exhaustive-deps
-import { useEffect, useRef, useState } from 'react'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera } from 'lucide-react'
-import { baseUrl } from '@/lib/api'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useEffect, useRef, useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Camera } from 'lucide-react';
+import { baseUrl } from '@/lib/api';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -24,40 +24,41 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Switch } from '@/components/ui/switch'
-import { type AdminUser } from '../data/schema'
-import { useUsers } from './users-provider'
+} from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
+import { type AdminUser } from '../data/schema';
+import { useUsers } from './users-provider';
 
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
   userPw: z.string(),
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
+  userBirthDt: z.date(), // 생년월일 추가
   userTypeCd: z.number(),
   userGenderCd: z.number(),
   userIsActivateYn: z.string(),
   userIsDeletedYn: z.string(),
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
-})
+});
 
-type UserMutateForm = z.infer<typeof schema>
+type UserMutateForm = z.infer<typeof schema>;
 
 interface Props {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  currentRow?: AdminUser
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentRow?: AdminUser;
 }
 
 export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
-  const isUpdate = !!currentRow
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
+  const isUpdate = !!currentRow;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null
-  )
-  const { setOpen, setPendingFormData } = useUsers()
+  );
+  const { setOpen, setPendingFormData } = useUsers();
 
   const {
     register,
@@ -73,6 +74,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
+      userBirthDt: new Date(), // 생년월일 추가
       companyNm: null,
       userTypeCd: 301,
       userGenderCd: 101,
@@ -80,9 +82,9 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userIsDeletedYn: 'N',
       userAgreedPrivacyPolicyYn: 'Y',
     },
-  })
+  });
 
-  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
+  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'));
   useEffect(() => {
     if (open) {
       if (isUpdate && currentRow) {
@@ -91,64 +93,70 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: currentRow.userEmail,
           userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
           userPhoneNum: currentRow.userPhoneNum,
+          userBirthDt: currentRow.userBirthDt,
           companyNm: currentRow.companyNm,
           userTypeCd: currentRow.userTypeCd,
           userGenderCd: currentRow.userGenderCd,
           userIsActivateYn: currentRow.userIsActivateYn,
           userIsDeletedYn: currentRow.userIsDeletedYn,
           userAgreedPrivacyPolicyYn: currentRow.userAgreedPrivacyPolicyYn,
-        })
+        });
         setProfileImagePreview(
           currentRow.profileImageUrl
             ? `${serverRoot}${currentRow.profileImageUrl}`
             : null
-        )
+        );
       } else {
         reset({
           userNm: '',
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
+          userBirthDt: new Date(), // 생년월일 추가
           companyNm: null,
           userTypeCd: 301,
           userGenderCd: 101,
           userIsActivateYn: 'Y',
           userIsDeletedYn: 'N',
           userAgreedPrivacyPolicyYn: 'Y',
-        })
-        setProfileImagePreview(null)
+        });
+        setProfileImagePreview(null);
       }
-      setProfileImageFile(null)
+      setProfileImageFile(null);
     }
-  }, [open, isUpdate, currentRow, reset])
+  }, [open, isUpdate, currentRow, reset]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setProfileImageFile(file)
-    setProfileImagePreview(URL.createObjectURL(file))
-    e.target.value = ''
-  }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+    e.target.value = '';
+  };
 
   const onSubmit = async (data: UserMutateForm) => {
-    if (!currentRow) return
+    if (!currentRow) return;
 
-    const formData = new FormData()
-    formData.append('userNm', data.userNm)
-    formData.append('userEmail', data.userEmail)
-    formData.append('userPhoneNum', data.userPhoneNum)
-    formData.append('userTypeCd', String(data.userTypeCd))
-    formData.append('userGenderCd', String(data.userGenderCd))
-    formData.append('userIsActivateYn', data.userIsActivateYn)
-    formData.append('userIsDeletedYn', data.userIsDeletedYn)
-    formData.append('userAgreedPrivacyPolicyYn', data.userAgreedPrivacyPolicyYn)
-    if (data.companyNm) formData.append('companyNm', data.companyNm)
-    if (data.userPw) formData.append('userPw', data.userPw)
-    if (profileImageFile) formData.append('profileImage', profileImageFile)
+    const formData = new FormData();
+    formData.append('userNm', data.userNm);
+    formData.append('userEmail', data.userEmail);
+    formData.append('userPhoneNum', data.userPhoneNum);
+    formData.append('userBirthDt', data.userBirthDt.toISOString()); // 생년월일 추가
+    formData.append('userTypeCd', String(data.userTypeCd));
+    formData.append('userGenderCd', String(data.userGenderCd));
+    formData.append('userIsActivateYn', data.userIsActivateYn);
+    formData.append('userIsDeletedYn', data.userIsDeletedYn);
+    formData.append(
+      'userAgreedPrivacyPolicyYn',
+      data.userAgreedPrivacyPolicyYn
+    );
+    if (data.companyNm) formData.append('companyNm', data.companyNm);
+    if (data.userPw) formData.append('userPw', data.userPw);
+    if (profileImageFile) formData.append('profileImage', profileImageFile);
 
-    setPendingFormData({ userSq: currentRow.userSq, formData })
-    setOpen('master-pw')
-  }
+    setPendingFormData({ userSq: currentRow.userSq, formData });
+    setOpen('master-pw');
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -235,6 +243,20 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             {errors.userPhoneNum && (
               <p className='text-sm text-destructive'>
                 {errors.userPhoneNum.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='userBirthDt'>생년월일</Label>
+            <Input
+              id='userBirthDt'
+              autoComplete='off'
+              {...register('userBirthDt')}
+            />
+            {errors.userBirthDt && (
+              <p className='text-sm text-destructive'>
+                {errors.userBirthDt.message}
               </p>
             )}
           </div>
@@ -333,5 +355,5 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         </form>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
