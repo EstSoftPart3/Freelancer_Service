@@ -18,7 +18,7 @@ public class ApplicationService {
     // 소속 합격 / 불합격 선택
     // [수정] 소속 합격 처리 로직
     public void processPass(ApplicationPassDTO dto) {
-        if (dto.getCompanyApplicationStatusCd() == 502L) { // 502: 합격
+        if (Long.valueOf(502L).equals(dto.getCompanyApplicationStatusCd())) { // 502: 합격
 
             // 1. 수정된 쿼리를 통해 '현재 재직 중'인 이력이 있는지 확인
             boolean isWorkingNow = applicationRepository.isUserAlreadyAffiliated(dto.getUserSq());

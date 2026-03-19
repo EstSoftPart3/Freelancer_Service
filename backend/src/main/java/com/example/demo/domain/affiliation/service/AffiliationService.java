@@ -230,6 +230,11 @@ public class AffiliationService {
 
 			// 상태 코드에 따른 메시지 분기 (예: 702 합격, 703 불합격 등 실제 코드에 맞춰 수정)
 			if (companyApplicationStatusCd.equals(502L)) {
+				// 합격 시 이미 다른 기업에 소속 중이면 상태 변경 롤백 + 알림 차단
+				boolean isWorkingNow = affiliationRepository.isUserAlreadyAffiliated(receiverSq);
+				if (isWorkingNow) {
+					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+				}
 				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
 			} else {
 				message = "아쉽게도 [" + companyNm + "] 소속 가입 신청 결과가 발표되었습니다. (불합격)";

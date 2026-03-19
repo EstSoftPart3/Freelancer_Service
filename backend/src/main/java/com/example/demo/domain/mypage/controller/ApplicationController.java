@@ -61,7 +61,7 @@ public class ApplicationController {
 
         Long statusCd = companyApplication.getCompanyApplicationStatusCd();
 
-        // 지원 상태 업데이트
+        // 지원 상태 업데이트 + 알림 발송
         affiliationService.updateApplicationStatus(companyApplicationSq, statusCd);
 
         // 합격 처리(502)일 경우 → 소속 등록
