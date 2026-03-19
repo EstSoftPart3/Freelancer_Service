@@ -165,7 +165,6 @@
                           unreadCount
                         }}</span>
                         <button
-                          v-if="unreadCount > 0"
                           @click.stop="markAllAsRead"
                           class="btn btn-sm btn-outline-primary"
                           style="font-size: 0.7rem"
@@ -173,7 +172,6 @@
                           모두 읽음
                         </button>
                         <button
-                          v-if="notifications.length > 0"
                           @click.stop="deleteAllNoti"
                           class="btn btn-sm btn-outline-danger"
                           style="font-size: 0.7rem"
