@@ -121,16 +121,16 @@
 		END BETWEEN #{minLng} AND #{maxLng}) </if> /* 정렬 */ <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
-					<when test="sortBy == 'distance' and userLat != null"> ORDER BY distance ASC </when>
-					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
+					<when test="sortBy == 'distance' and userLat != null"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, distance ASC </when>
+					<when test="sortBy == 'project_start_dt'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm
 		${sortOrder} </when>
-					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
-					<when test="sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
+					<when test="sortBy == 'view_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_view_cnt ${sortOrder} </when>
+					<when test="sortBy == 'applicant_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_candidate_cnt
 		${sortOrder} </when>
-					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+					<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 				</choose>
 			</when>
-			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+			<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 		</choose> /* 페이징
 		*/ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
