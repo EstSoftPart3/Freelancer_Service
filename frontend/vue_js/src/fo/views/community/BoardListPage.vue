@@ -98,6 +98,9 @@ const boardList = ref([])
 const size = 10
 
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
+if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+  router.replace({ query: { ...route.query, page: currentPage.value } })
+}
 
 const totalPages = ref(1)
 
@@ -136,6 +139,8 @@ const getBoardList = async () => {
       boardList.value = res.output.boards
       if (currentPage.value > totalPages.value) {
         currentPage.value = totalPages.value
+        router.replace({ query: { ...route.query, page: currentPage.value } })
+        return getBoardList()
       }
     }
   } catch (error) {
@@ -202,6 +207,9 @@ watch(
       return
     }
     const page = Math.max(1, Number(newQ.page) || 1)
+    if (Number(newQ.page) !== page) {
+      router.replace({ query: { ...route.query, page } })
+    }
     if (page !== currentPage.value) {
       currentPage.value = page
       getBoardList()

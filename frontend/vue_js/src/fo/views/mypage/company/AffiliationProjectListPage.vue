@@ -244,6 +244,9 @@ const route = useRoute()
 const router = useRouter()
 
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
+if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+  router.replace({ query: { ...route.query, page: currentPage.value } })
+}
 const totalPages = ref(1)
 const pageSize = ref(5)
 
@@ -347,6 +350,8 @@ const fetchCompanyProjectList = async () => {
 
     if (currentPage.value > totalPages.value) {
       currentPage.value = 1
+      router.replace({ query: { ...route.query, page: 1 } })
+      return fetchCompanyProjectList()
     }
   } catch (e) {
     console.error('❌ 프로젝트 목록 불러오기 실패', e)
@@ -438,6 +443,9 @@ watch(
   () => route.query.page,
   (newPage) => {
     const page = Math.max(1, Number(newPage) || 1)
+    if (Number(newPage) !== page) {
+      router.replace({ query: { ...route.query, page } })
+    }
     if (page !== currentPage.value) {
       currentPage.value = page
       fetchCompanyProjectList()
