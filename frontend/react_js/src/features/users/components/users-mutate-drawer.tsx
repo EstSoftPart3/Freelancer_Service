@@ -1,7 +1,6 @@
 // [Freelancer Service]
 // eslint-disable react-hooks/exhaustive-deps
 import { useEffect, useRef, useState } from 'react';
-import { CompanySearchDialog } from './company-search-dialog';
 import { z } from 'zod';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/date-picker';
 import {
   Select,
   SelectContent,
@@ -28,7 +26,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { DatePicker } from '@/components/date-picker';
 import { type AdminUser } from '../data/schema';
+import { CompanyDetailsDialog } from './company-details-dialog';
+import { CompanySearchDialog } from './company-search-dialog';
 import { useUsers } from './users-provider';
 
 const maxDate = new Date();
@@ -39,7 +40,11 @@ const schema = z.object({
   userEmail: z.string(),
   userPw: z.string(),
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
-  userBirthDt: z.date().max(maxDate, '만 19세 이상만 가입 가능합니다.').optional().nullable(),
+  userBirthDt: z
+    .date()
+    .max(maxDate, '만 19세 이상만 가입 가능합니다.')
+    .optional()
+    .nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number(),
   userIsActivateYn: z.string(),
@@ -66,6 +71,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   );
   const { setOpen, setPendingFormData } = useUsers();
   const [companySearchOpen, setCompanySearchOpen] = useState(false);
+  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
 
   const {
     register,
@@ -122,7 +128,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
-          userBirthDt: undefined, // 생성 시 비워둠
+          userBirthDt: undefined,
           companyNm: null,
           companySq: null,
           userTypeCd: 301,
@@ -292,10 +298,16 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 value={watch('companyNm') ?? ''}
                 readOnly
                 className='cursor-pointer pr-16'
-                onClick={() => setCompanySearchOpen(true)}
+                onClick={() => {
+                  if (watch('userTypeCd') === 302 && watch('companySq')) {
+                    setCompanyDetailsOpen(true);
+                  } else {
+                    setCompanySearchOpen(true);
+                  }
+                }}
               />
               <div className='absolute right-2 flex items-center gap-1'>
-                {watch('companyNm') && (
+                {watch('userTypeCd') !== 302 && watch('companyNm') && (
                   <button
                     type='button'
                     className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
@@ -309,14 +321,22 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                     <X className='h-4 w-4' />
                   </button>
                 )}
-                <button
-                  type='button'
-                  className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                  onClick={() => setCompanySearchOpen(true)}
-                  title='소속 검색'
-                >
-                  <Search className='h-4 w-4' />
-                </button>
+                {watch('userTypeCd') !== 302 || !watch('companySq') ? (
+                  <button
+                    type='button'
+                    className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                    onClick={() => {
+                      if (watch('userTypeCd') === 302 && watch('companySq')) {
+                        setCompanyDetailsOpen(true);
+                      } else {
+                        setCompanySearchOpen(true);
+                      }
+                    }}
+                    title='소속 검색'
+                  >
+                    <Search className='h-4 w-4' />
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -329,6 +349,17 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               setValue('companyNm', companyNm);
             }}
           />
+
+          {watch('companySq') && (
+            <CompanyDetailsDialog
+              open={companyDetailsOpen}
+              onOpenChange={setCompanyDetailsOpen}
+              companySq={watch('companySq') as number}
+              onUpdated={(newCompanyNm) => {
+                setValue('companyNm', newCompanyNm);
+              }}
+            />
+          )}
 
           <div className='space-y-2'>
             <Label>유저 유형</Label>
