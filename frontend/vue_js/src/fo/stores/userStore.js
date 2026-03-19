@@ -16,9 +16,7 @@ export const useUserStore = defineStore('user', {
       ? Number(localStorage.getItem('userLng'))
       : null,
     isAffiliated: localStorage.getItem('isAffiliated') || 'N',
-    affiliatedCompanySq: localStorage.getItem('affiliatedCompanySq')
-      ? Number(localStorage.getItem('affiliatedCompanySq'))
-      : null,
+    affiliatedCompanySq: null,
     // [추가] 기업 인증 상태 (기본값 null)
     companyAuthStatusCd: localStorage.getItem('companyAuthStatusCd')
       ? Number(localStorage.getItem('companyAuthStatusCd'))
@@ -68,10 +66,6 @@ export const useUserStore = defineStore('user', {
       if (longitude !== undefined && longitude !== null)
         localStorage.setItem('userLng', longitude)
       localStorage.setItem('isAffiliated', this.isAffiliated)
-      if (affiliatedCompanySq)
-        localStorage.setItem('affiliatedCompanySq', affiliatedCompanySq)
-      else
-        localStorage.removeItem('affiliatedCompanySq')
       // [추가] 로컬 스토리지 저장
       if (companyAuthStatusCd)
         localStorage.setItem('companyAuthStatusCd', companyAuthStatusCd)
@@ -94,7 +88,6 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('userLat')
       localStorage.removeItem('userLng')
       localStorage.removeItem('isAffiliated')
-      localStorage.removeItem('affiliatedCompanySq')
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')
