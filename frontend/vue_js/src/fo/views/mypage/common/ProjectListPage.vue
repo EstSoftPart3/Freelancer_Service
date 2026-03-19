@@ -68,7 +68,7 @@
           <CommonPagination
             :currentPage="currentPage"
             :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
+            @update:currentPage="onPageChange($event)"
           />
         </div>
       </div>
@@ -141,7 +141,7 @@ import { api } from '@/axios.js'
 import qs from 'qs'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useModalStore } from '@/fo/stores/modalStore'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
@@ -153,6 +153,7 @@ import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter'
 
 const userStore = useUserStore()
 const modalStore = useModalStore()
+const route = useRoute()
 const router = useRouter()
 const isMapView = ref(false)
 const isLoading = ref(false)
@@ -165,7 +166,7 @@ const filters = ref({
   minLng: null,
   maxLng: null,
 })
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page) || 1)
 const totalPages = ref(1)
 const projects = ref([])
 const regionGroups = ref([])
@@ -455,10 +456,23 @@ watch(isMapView, async (val) => {
 watch(projects, () => {
   if (isMapView.value) displayMarkers()
 })
-watch(currentPage, (val) => {
-  filters.value.page = val
+const onPageChange = (page) => {
+  currentPage.value = page
+  filters.value.page = page
+  router.push({ query: { ...route.query, page } })
   fetchProjects()
-})
+}
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Number(newPage) || 1
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      filters.value.page = page
+      fetchProjects()
+    }
+  },
+)
 onMounted(() => {
   if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng))
     fetchProjects()

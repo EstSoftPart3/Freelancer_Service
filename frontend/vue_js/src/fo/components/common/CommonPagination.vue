@@ -4,7 +4,7 @@
       <li
         class="page-item"
         :class="{ disabled: currentPage === 1 }"
-        @click="changePage(currentPage - 1)"
+        @click.prevent="changePage(currentPage - 1)"
       >
         <a class="page-link" href="#"><i class="fas fa-angle-left"></i></a>
       </li>
@@ -14,7 +14,7 @@
         :key="page"
         class="page-item"
         :class="{ active: page === currentPage }"
-        @click="changePage(page)"
+        @click.prevent="changePage(page)"
       >
         <a class="page-link" href="#">{{ page }}</a>
       </li>
@@ -22,7 +22,7 @@
       <li
         class="page-item"
         :class="{ disabled: currentPage === totalPages }"
-        @click="changePage(currentPage + 1)"
+        @click.prevent="changePage(currentPage + 1)"
       >
         <a class="page-link" href="#"><i class="fas fa-angle-right"></i></a>
       </li>

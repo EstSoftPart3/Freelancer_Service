@@ -14,7 +14,7 @@
           <select
             class="form-select w-auto d-inline-block"
             v-model="sortType"
-            @change="getBoardList"
+            @change="onSortChange"
           >
             <option selected value="latest">최신순</option>
             <option value="oldest">오래된순</option>
@@ -26,7 +26,7 @@
         <div class="col-md-6 text-end">
           <form
             class="d-flex justify-content-md-end"
-            @submit.prevent="getBoardList"
+            @submit.prevent="onSearch"
           >
             <select v-model="searchType" class="form-select w-auto me-2">
               <option selected value="all">전체</option>
@@ -38,7 +38,7 @@
               class="form-control w-auto me-2"
               type="search"
               placeholder="검색어 입력"
-              @keyup.enter="submit"
+              @keyup.enter="onSearch"
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
@@ -68,7 +68,7 @@
             <CommonPagination
               :currentPage="currentPage"
               :totalPages="totalPages"
-              @update:currentPage="currentPage = $event"
+              @update:currentPage="onPageChange($event)"
             />
           </div>
         </div>
@@ -82,10 +82,11 @@ import CommonPagination from '@/fo/components/common/CommonPagination.vue'
 import { onMounted, ref, watch, computed } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/axios'
 
 const route = useRoute()
+const router = useRouter()
 
 const isLoading = ref(false)
 
@@ -96,14 +97,14 @@ const boardList = ref([])
 // 한 화면에 보일 박스 숫자 설정
 const size = 10
 
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page) || 1)
 
 const totalPages = ref(1)
 
 // 필터
-const searchType = ref('all')
-const keyword = ref(null)
-const sortType = ref('latest')
+const searchType = ref(route.query.searchType || 'all')
+const keyword = ref(route.query.keyword ?? null)
+const sortType = ref(route.query.sort || 'latest')
 
 const selectedTag = ref(route.query.tag || '')
 
@@ -141,6 +142,27 @@ const getBoardList = async () => {
   }
 }
 
+const updateQuery = (params) => {
+  router.replace({ query: { ...route.query, ...params } })
+}
+
+const onSortChange = () => {
+  currentPage.value = 1
+  updateQuery({ page: 1, sort: sortType.value })
+  getBoardList()
+}
+
+const onSearch = () => {
+  currentPage.value = 1
+  updateQuery({
+    page: 1,
+    sort: sortType.value,
+    searchType: searchType.value,
+    keyword: keyword.value?.trim() || undefined,
+  })
+  getBoardList()
+}
+
 const dynamicBreadcrumbs = computed(() => {
   // 태그 검색 중일 때: 'Home'을 빼고 '일반 게시판'을 최상위로
   if (selectedTag.value) {
@@ -161,9 +183,21 @@ const dynamicStrongText = computed(() => {
     : '일반 게시판'
 })
 
-watch(currentPage, () => {
+const onPageChange = (page) => {
+  currentPage.value = page
+  router.push({ query: { ...route.query, page } })
   getBoardList()
-})
+}
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Number(newPage) || 1
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      getBoardList()
+    }
+  },
+)
 
 watch(
   () => route.query.tag,

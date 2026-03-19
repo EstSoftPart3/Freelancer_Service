@@ -14,7 +14,7 @@
           <select
             class="form-select w-auto d-inline-block me-2"
             v-model="sortType"
-            @change="getBoardList"
+            @change="onSortChange"
           >
             <option selected value="latest">최신순</option>
             <option value="oldest">오래된순</option>
@@ -24,7 +24,7 @@
           </select>
           <select
             v-model="boardAdoptStatusCd"
-            @change="changeFilter"
+            @change="onFilterChange"
             class="form-select w-auto d-inline-block"
           >
             <option selected value="all">상태</option>
@@ -37,7 +37,7 @@
         <div class="col-md-6 text-end">
           <form
             class="d-flex justify-content-md-end"
-            @submit.prevent="changeFilter"
+            @submit.prevent="onSearch"
           >
             <select v-model="searchType" class="form-select w-auto me-2">
               <option selected value="all">전체</option>
@@ -49,7 +49,7 @@
               class="form-control w-auto me-2"
               type="search"
               placeholder="검색어 입력"
-              @keyup.enter="submit"
+              @keyup.enter="onSearch"
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
@@ -80,7 +80,7 @@
             <CommonPagination
               :currentPage="currentPage"
               :totalPages="totalPages"
-              @update:currentPage="currentPage = $event"
+              @update:currentPage="onPageChange($event)"
             />
           </div>
         </div>
@@ -95,9 +95,10 @@ import { onMounted, ref, watch, computed } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 
 const isLoading = ref(false)
 
@@ -107,15 +108,15 @@ const boardList = ref([])
 // 한 화면에 보일 박스 숫자 설정
 const size = 10
 
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page) || 1)
 
 const totalPages = ref(1)
 
 // 필터
-const searchType = ref('all')
-const keyword = ref('')
-const sortType = ref('latest')
-const boardAdoptStatusCd = ref('all')
+const searchType = ref(route.query.searchType || 'all')
+const keyword = ref(route.query.keyword ?? '')
+const sortType = ref(route.query.sort || 'latest')
+const boardAdoptStatusCd = ref(route.query.status || 'all')
 const selectedTag = ref(route.query.tag || '') // [추가] 태그 상태
 
 const getBoardList = async () => {
@@ -173,6 +174,33 @@ const dynamicStrongText = computed(() => {
   return selectedTag.value ? `QnA 게시판 (#${selectedTag.value})` : 'QnA 게시판'
 })
 
+const updateQuery = (params) => {
+  router.replace({ query: { ...route.query, ...params } })
+}
+
+const onSortChange = () => {
+  currentPage.value = 1
+  updateQuery({ page: 1, sort: sortType.value })
+  getBoardList()
+}
+
+const onFilterChange = () => {
+  currentPage.value = 1
+  updateQuery({ page: 1, status: boardAdoptStatusCd.value })
+  getBoardList()
+}
+
+const onSearch = () => {
+  currentPage.value = 1
+  updateQuery({
+    page: 1,
+    sort: sortType.value,
+    searchType: searchType.value,
+    keyword: keyword.value?.trim() || undefined,
+  })
+  getBoardList()
+}
+
 // [추가] URL 태그 파라미터 감시
 watch(
   () => route.query.tag,
@@ -182,13 +210,21 @@ watch(
     getBoardList()
   },
 )
-const changeFilter = () => {
-  currentPage.value = 1
+const onPageChange = (page) => {
+  currentPage.value = page
+  router.push({ query: { ...route.query, page } })
   getBoardList()
 }
-watch(currentPage, () => {
-  getBoardList()
-})
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Number(newPage) || 1
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      getBoardList()
+    }
+  },
+)
 
 onMounted(() => {
   getBoardList()
