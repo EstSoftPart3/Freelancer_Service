@@ -113,14 +113,6 @@ public class ProjectApplicationService {
 		Long statusCd = commonCodeMapper.findCommonCodeSqByName(request.getStatus(),
 				ParentCodeEnum.PRO_APPLICATION.getCode());
 
-		if (statusCd.equals(804L)) {
-			Long projectSq = applicationMapper.findProjectBySq(applicationSq);
-			Project project = projectMapper.findBySq(projectSq);
-			if (project.getProjectRecruitEndDt().isBefore(LocalDate.now())) {
-				throw new IllegalArgumentException("모집 기간이 종료된 프로젝트입니다.");
-			}
-		}
-
 		applicationMapper.updateApplicationStatus(statusCd, applicationSq);
 
 		if (statusCd.equals(806L)) {
@@ -169,7 +161,16 @@ public class ProjectApplicationService {
 	}
 
 	@Transactional
-	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request) {
+	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request, Long userTypeCd) {
+		// 개인회원(301)은 모집 기간 만료 후 인터뷰 시간 선택 불가
+		if (userTypeCd.equals(301L)) {
+			Long projectSq = applicationMapper.findProjectBySq(request.getApplicationSq());
+			Project project = projectMapper.findBySq(projectSq);
+			if (project.getProjectRecruitEndDt().isBefore(LocalDate.now())) {
+				throw new IllegalArgumentException("모집 기간이 종료된 프로젝트입니다.");
+			}
+		}
+
 		applicationMapper.updateInterviewTimeSelected(interviewTimeSq);
 		applicationMapper.updateApplicationInterviewTimeAndStatus(request.getApplicationSq(),
 				applicationMapper.findInterviewTimeBySq(interviewTimeSq));
