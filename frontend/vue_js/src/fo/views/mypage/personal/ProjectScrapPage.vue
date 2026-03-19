@@ -210,7 +210,7 @@ const userStore = useUserStore()
 const scraps = ref([])
 const searchType = ref(route.query.searchType || '전체')
 const searchKeyword = ref(route.query.keyword || '')
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const itemsPerPage = 5
 const totalPages = ref(1)
 
@@ -248,6 +248,9 @@ async function fetchScraps() {
     const output = res.output
     scraps.value = output.content || []
     totalPages.value = Math.ceil((output.totalCount || 0) / itemsPerPage) || 1
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+    }
   } catch (e) {
     console.error('프로젝트 스크랩 조회 실패:', e)
   }
@@ -299,7 +302,7 @@ function changePage(page) {
 watch(
   () => route.query.page,
   (newPage) => {
-    const page = Number(newPage) || 1
+    const page = Math.max(1, Number(newPage) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       fetchScraps().then(() => {

@@ -89,7 +89,7 @@ const alertStore = useAlertStore()
 const noticeList = ref([])
 
 const size = 10
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const totalPages = ref(1)
 
 const searchType = ref(route.query.searchType || 'all')
@@ -121,6 +121,9 @@ const getNoticeList = async () => {
           ? 1
           : Math.ceil(res.output.totalElements / size)
       noticeList.value = res.output.boards
+      if (currentPage.value > totalPages.value) {
+        currentPage.value = totalPages.value
+      }
     }
   } catch (error) {
     alertStore.show('공지사항을 불러올 수 없습니다.', 'danger')
@@ -170,22 +173,20 @@ const onPageChange = (page) => {
   getNoticeList()
 }
 watch(
-  () => route.query.page,
-  (newPage) => {
-    const page = Number(newPage) || 1
+  () => ({ page: route.query.page, tag: route.query.tag }),
+  (newQ, oldQ) => {
+    const tagChanged = newQ.tag !== oldQ?.tag
+    if (tagChanged) {
+      selectedTag.value = newQ.tag || ''
+      currentPage.value = 1
+      getNoticeList()
+      return
+    }
+    const page = Math.max(1, Number(newQ.page) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       getNoticeList()
     }
-  },
-)
-
-watch(
-  () => route.query.tag,
-  (newTag) => {
-    selectedTag.value = newTag || ''
-    currentPage.value = 1
-    getNoticeList()
   },
 )
 

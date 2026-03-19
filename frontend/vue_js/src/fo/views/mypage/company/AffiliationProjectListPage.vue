@@ -243,7 +243,7 @@ const userType = userStore.getUserType
 const route = useRoute()
 const router = useRouter()
 
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const totalPages = ref(1)
 const pageSize = ref(5)
 
@@ -437,7 +437,7 @@ const changePage = (page) => {
 watch(
   () => route.query.page,
   (newPage) => {
-    const page = Number(newPage) || 1
+    const page = Math.max(1, Number(newPage) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       fetchCompanyProjectList()

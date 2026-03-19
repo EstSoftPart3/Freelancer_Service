@@ -108,7 +108,7 @@ const boardList = ref([])
 // 한 화면에 보일 박스 숫자 설정
 const size = 10
 
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 
 const totalPages = ref(1)
 
@@ -148,6 +148,9 @@ const getBoardList = async () => {
           ? 1
           : Math.floor((res.output.totalElements + size - 1) / size)
       boardList.value = res.output.boards
+      if (currentPage.value > totalPages.value) {
+        currentPage.value = totalPages.value
+      }
     }
   } catch (error) {
     alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
@@ -201,24 +204,24 @@ const onSearch = () => {
   getBoardList()
 }
 
-// [추가] URL 태그 파라미터 감시
-watch(
-  () => route.query.tag,
-  (newTag) => {
-    selectedTag.value = newTag || ''
-    currentPage.value = 1
-    getBoardList()
-  },
-)
 const onPageChange = (page) => {
   currentPage.value = page
   router.push({ query: { ...route.query, page } })
   getBoardList()
 }
+
+// [추가] URL 태그 파라미터 감시
 watch(
-  () => route.query.page,
-  (newPage) => {
-    const page = Number(newPage) || 1
+  () => ({ page: route.query.page, tag: route.query.tag }),
+  (newQ, oldQ) => {
+    const tagChanged = newQ.tag !== oldQ?.tag
+    if (tagChanged) {
+      selectedTag.value = newQ.tag || ''
+      currentPage.value = 1
+      getBoardList()
+      return
+    }
+    const page = Math.max(1, Number(newQ.page) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       getBoardList()

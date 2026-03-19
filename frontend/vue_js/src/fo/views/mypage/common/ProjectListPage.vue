@@ -166,7 +166,7 @@ const filters = ref({
   minLng: null,
   maxLng: null,
 })
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const totalPages = ref(1)
 const projects = ref([])
 const regionGroups = ref([])
@@ -410,6 +410,10 @@ const fetchProjects = async () => {
       totalPages.value = 1
       fetchRegionGroups()
     }
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+      filters.value.page = currentPage.value
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -465,7 +469,7 @@ const onPageChange = (page) => {
 watch(
   () => route.query.page,
   (newPage) => {
-    const page = Number(newPage) || 1
+    const page = Math.max(1, Number(newPage) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       filters.value.page = page

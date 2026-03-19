@@ -273,7 +273,7 @@ const readFilters = [
 ]
 
 // 페이징
-const currentPage = ref(Number(route.query.page) || 1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const itemsPerPage = 5
 const totalPages = ref(1)
 
@@ -315,6 +315,9 @@ const fetchApplicationList = async () => {
       1,
       Math.ceil((data.totalCount || 0) / itemsPerPage),
     )
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+    }
 
     // 필터 카운트 갱신
     updateCounts(data.counts)
@@ -369,7 +372,7 @@ const changePage = (page) => {
 watch(
   () => route.query.page,
   (newPage) => {
-    const page = Number(newPage) || 1
+    const page = Math.max(1, Number(newPage) || 1)
     if (page !== currentPage.value) {
       currentPage.value = page
       fetchApplicationList()
