@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CompanySearchDialog } from './company-search-dialog';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, Search, X } from 'lucide-react';
 import { baseUrl } from '@/lib/api';
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/date-picker';
 import {
   Select,
   SelectContent,
@@ -30,12 +31,15 @@ import { Switch } from '@/components/ui/switch';
 import { type AdminUser } from '../data/schema';
 import { useUsers } from './users-provider';
 
+const maxDate = new Date();
+maxDate.setFullYear(maxDate.getFullYear() - 19);
+
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
   userPw: z.string(),
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
-  userBirthDt: z.date(), // 생년월일 추가
+  userBirthDt: z.date().max(maxDate, '만 19세 이상만 가입 가능합니다.').optional().nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number(),
   userIsActivateYn: z.string(),
@@ -65,6 +69,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -77,7 +82,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
-      userBirthDt: new Date(), // 생년월일 추가
+      userBirthDt: undefined, // 생년월일 추가
       companyNm: null,
       companySq: null,
       userTypeCd: 301,
@@ -97,7 +102,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: currentRow.userEmail,
           userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
           userPhoneNum: currentRow.userPhoneNum,
-          userBirthDt: currentRow.userBirthDt,
+          userBirthDt: currentRow.userBirthDt ?? undefined,
           companyNm: currentRow.companyNm,
           companySq: currentRow.companySq ?? null,
           userTypeCd: currentRow.userTypeCd,
@@ -117,7 +122,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
-          userBirthDt: new Date(), // 생년월일 추가
+          userBirthDt: undefined, // 생성 시 비워둠
           companyNm: null,
           companySq: null,
           userTypeCd: 301,
@@ -147,7 +152,9 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     formData.append('userNm', data.userNm);
     formData.append('userEmail', data.userEmail);
     formData.append('userPhoneNum', data.userPhoneNum);
-    formData.append('userBirthDt', data.userBirthDt.toISOString()); // 생년월일 추가
+    if (data.userBirthDt) {
+      formData.append('userBirthDt', data.userBirthDt.toISOString());
+    }
     formData.append('userTypeCd', String(data.userTypeCd));
     formData.append('userGenderCd', String(data.userGenderCd));
     formData.append('userIsActivateYn', data.userIsActivateYn);
@@ -254,12 +261,19 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             )}
           </div>
 
-          <div className='space-y-2'>
+          <div className='flex flex-col space-y-2'>
             <Label htmlFor='userBirthDt'>생년월일</Label>
-            <Input
-              id='userBirthDt'
-              autoComplete='off'
-              {...register('userBirthDt')}
+            <Controller
+              control={control}
+              name='userBirthDt'
+              render={({ field }) => (
+                <DatePicker
+                  selected={field.value ?? undefined}
+                  onSelect={field.onChange}
+                  placeholder='생년월일 선택'
+                  defaultMonth={maxDate}
+                />
+              )}
             />
             {errors.userBirthDt && (
               <p className='text-sm text-destructive'>
