@@ -45,7 +45,9 @@ const confirmLeave = () => {
       try {
         await api.$patch('/affiliation/leave', {}, { withCredentials: true })
         userStore.isAffiliated = 'N'
+        userStore.affiliatedCompanySq = null
         localStorage.setItem('isAffiliated', 'N')
+        localStorage.removeItem('affiliatedCompanySq')
         modalStore.closeModal()
         alertStore.show('소속 탈퇴가 완료되었습니다.', 'success')
         router.push('/mypage')
