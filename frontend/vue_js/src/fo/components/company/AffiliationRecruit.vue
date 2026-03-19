@@ -152,6 +152,7 @@ import { api } from '@/axios'
 import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useUserStore } from '@/fo/stores/userStore'
 import { computed, defineProps } from 'vue'
 import CommonConfirmModal from '../common/CommonConfirmModal.vue'
 import ResumeListModal from '../mypage/common/ResumeListModal.vue'
@@ -166,6 +167,7 @@ const info = computed(() => props.afltnInfo)
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 const affiliationStore = useAffiliationStore()
+const userStore = useUserStore()
 
 const closeModal = () => {
   affiliationStore.resetGreeting()
@@ -188,6 +190,13 @@ const clickRecruit = async () => {
       if (localStorage.getItem('userType') == 'COMPANY') {
         alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
         modalStore.closeModal() // 컨펌창만 닫기
+        return
+      }
+
+      // 1-1. 현재 소속 중인 회사에 재신청 차단
+      if (userStore.affiliatedCompanySq && info.value.sq == userStore.affiliatedCompanySq) {
+        alertStore.show('현재 소속 중인 기업에는 소속 신청을 할 수 없습니다.', 'danger')
+        modalStore.closeModal()
         return
       }
 
