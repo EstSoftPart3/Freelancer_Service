@@ -16,6 +16,7 @@ import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 // import { roles } from '../data/data'
 import { type AdminUser } from '../data/schema'
 import { usersColumns as columns } from './users-columns'
+import { useUsers } from './users-provider'
 
 type UserTableProps = {
   data: AdminUser[]
@@ -46,6 +47,7 @@ export function UsersTable({
   onFilterType,
   setTagKeyword: _setTagKeyword,
 }: UserTableProps) {
+  const { setOpen, setCurrentRow } = useUsers()
   const [rowSelection, setRowSelection] = useState({})
   const sorting = useMemo(
     () => [{ id: sortField, desc: sortOrder === 'DESC' }],
@@ -155,7 +157,19 @@ export function UsersTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className='cursor-pointer hover:bg-muted/50'
+                  onClick={(e) => {
+                    // 클릭된 타겟이 버튼, 링크, 체크박스 등 상호작용 요소일 경우 무시
+                    const target = e.target as HTMLElement;
+                    if (target.closest('button, a, input, [role="checkbox"], [role="menuitem"], [data-radix-collection-item]')) {
+                      return;
+                    }
+                    setCurrentRow(row.original);
+                    setOpen('edit');
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
