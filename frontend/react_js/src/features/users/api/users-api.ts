@@ -6,7 +6,11 @@ import { type AdminUser } from '../data/schema';
 export interface Company {
   companySq: number;
   companyNm: string;
+  companyCeoNm?: string; // 대표자 이름
   companyRegNum?: string; // 사업자 등록번호
+  companyOpenDate?: string; // 개업일자
+  companyUrl?: string; // 기업 URL
+  companyPhone?: string; // 대표번호
   companyAddress?: string; // 회사 주소
 }
 
