@@ -18,6 +18,7 @@ import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
 import com.example.demo.domain.project.vo.ResumeSummaryVo;
+import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import jakarta.transaction.Transactional;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class CompanyService {
 	private final CompanyMapper companyMapper;
 	private final CommonCodeMapper commonCodeMapper;
+	private final NotificationService notificationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -125,6 +127,15 @@ public class CompanyService {
 		if ("퇴사".equals(request.getNewStatus())) {
 			// 3. 검증된 realCompanySq를 사용하여 해당 기업의 멤버만 퇴사 처리합니다.
 			companyMapper.updateMemberToResigned(realCompanySq, request.getUserSq(), memberStatusCd, LocalDate.now());
+
+			// 4. [알림] 퇴사 처리된 개인에게 알림 발송
+			String companyNm = companyMapper.findCompanyNmByCompanySq(realCompanySq);
+			notificationService.send(
+					request.getUserSq(),
+					token.getUserSq(),
+					2603L,
+					"[" + companyNm + "] 소속에서 퇴사 처리되었습니다.",
+					"/mypage");
 		} else {
 			companyMapper.updateMemberStatus(realCompanySq, request.getUserSq(), memberStatusCd);
 		}
