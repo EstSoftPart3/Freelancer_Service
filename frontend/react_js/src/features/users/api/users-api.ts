@@ -72,7 +72,7 @@ export const userApi = {
 // TODO: 백엔드 구현 후 실제 API 호출로 교체
 // ──────────────────────────────────────────────────────
 
-let MOCK_COMPANIES: Company[] = [
+export let MOCK_COMPANIES: Company[] = [
   {
     companySq: 1,
     companyNm: 'EST소프트',
