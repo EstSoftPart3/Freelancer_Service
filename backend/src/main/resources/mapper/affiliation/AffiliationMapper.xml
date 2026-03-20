@@ -618,9 +618,44 @@
 </select>
 
 <select id="findCompanyNameBySq" resultType="string">
-    SELECT company_nm 
-    FROM tbl_company_s 
+    SELECT company_nm
+    FROM tbl_company_s
     WHERE company_sq = #{companySq}
 </select>
-	
+
+<select id="findMemberCompanySq" resultType="long">
+    SELECT company_sq FROM TBL_COMPANY_MEMBER_R
+    WHERE user_sq = #{userSq} AND company_member_status_cd = 401
+    LIMIT 1
+</select>
+
+<update id="updateMemberToResigned">
+    UPDATE TBL_COMPANY_MEMBER_R
+    SET company_member_status_cd = #{memberStatusCd}, company_member_leave_dt = #{leaveDt}
+    WHERE user_sq = #{userSq} AND company_sq = #{companySq} AND company_member_status_cd = 401
+</update>
+
+<select id="findUserNmByUserSq" resultType="string">
+    SELECT user_nm FROM TBL_USER_M WHERE user_sq = #{userSq}
+</select>
+
+<select id="findMyAffiliationInfo" resultType="map">
+    SELECT c.company_sq as "companySq",
+           c.company_nm as "companyNm",
+           c.company_ceo_nm as "companyCeoNm",
+           c.company_open_dt as "companyOpenDt",
+           c.company_url as "companyUrl",
+           c.company_greeting_txt as "companyGreetingTxt",
+           c.company_is_recruiting_yn as "companyIsRecruitingYn",
+           a.address as "address",
+           a.sigungu as "sigungu",
+           m.company_member_join_dt as "companyMemberJoinDt"
+    FROM TBL_COMPANY_MEMBER_R m
+    JOIN TBL_COMPANY_S c ON m.company_sq = c.company_sq
+    LEFT JOIN TBL_ADDRESS_S a ON c.address_sq = a.address_sq
+    WHERE m.user_sq = #{userSq}
+      AND m.company_member_status_cd = 401
+      AND m.company_member_leave_dt IS NULL
+</select>
+
 </mapper>

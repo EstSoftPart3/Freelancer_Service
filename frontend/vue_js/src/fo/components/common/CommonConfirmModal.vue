@@ -5,10 +5,10 @@
       <button type="button" class="btn-close" @click="closeModal"></button>
     </div>
     <div class="modal-body">
-      <p>{{ message }}</p>
+      <p style="white-space: pre-line">{{ message }}</p>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" @click="onConfirm">
+      <button :class="['btn', confirmClass]" @click="onConfirm">
         {{ confirmText }}
       </button>
       <button
@@ -29,6 +29,7 @@ defineProps({
   title: { type: String, default: '확인' },
   message: { type: String, default: '이 작업을 계속하시겠습니까?' },
   confirmText: { type: String, default: '확인' },
+  confirmClass: { type: String, default: 'btn-primary' },
   cancelText: { type: String, default: '취소' },
   onConfirm: { type: Function, required: true },
   onCancel: Function, // optional

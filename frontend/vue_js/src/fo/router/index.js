@@ -35,7 +35,7 @@ import ResumeFormPage from '../views/mypage/personal/ResumeFormPage_P.vue'
 import WithdrawPage from '../views/mypage/common/WithdrawPage.vue'
 import AffiliatedJobApplicationsPage from '../views/mypage/personal/AffiliatedJobApplicationsPage.vue'
 import AffiliatedScrapPage from '../views/mypage/personal/AffiliatedScrapPage.vue'
-import AffiliatedWithdrawPage from '../views/mypage/personal/AffiliatedWithdrawPage.vue'
+import AffiliatedInfoPage from '../views/mypage/personal/AffiliatedInfoPage.vue'
 import AffiliationEditPage from '../views/mypage/company/AffiliationEditPage.vue'
 
 import AppliedProjectsPage from '../views/mypage/personal/AppliedProjectsPage.vue'
@@ -200,9 +200,13 @@ const routes = [
         component: AffiliatedScrapPage,
       },
       {
+        path: 'affiliatedInfo',
+        name: 'AffiliatedInfo',
+        component: AffiliatedInfoPage,
+      },
+      {
         path: 'affiliatedWithdraw',
-        name: 'AffiliatedWithdraw',
-        component: AffiliatedWithdrawPage,
+        redirect: { name: 'AffiliatedInfo' },
       },
       {
         path: 'resumeList',
@@ -297,6 +301,7 @@ router.beforeEach((to, from, next) => {
     'QnaResisterPage',
     'BoardResisterPage',
     'ScheduleCalendar',
+    'AffiliatedInfo',
     /* ... 로그인 필요 페이지들 */
   ]
 
