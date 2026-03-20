@@ -84,8 +84,9 @@ public class AffiliationService {
 					// : null;
 					String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
+					Long activeMember = (userSq != null) ? affiliationMapper.isActiveMember(userSq, company.getCompanySq()) : 0L;
 					Boolean isApply = false;
-					if (applyCnt > 0) {
+					if (applyCnt > 0 || activeMember > 0) {
 						isApply = true;
 					}
 
