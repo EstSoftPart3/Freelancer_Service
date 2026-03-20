@@ -83,20 +83,19 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg',
 
   // Cloud Services
-  aws: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg',
+  aws: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonaws.svg',
   googlecloud:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg',
   azure:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg',
-  awss3:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg',
+  awss3: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazons3.svg',
   awsec2:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg',
+    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonec2.svg',
   awslambda:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg',
+    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/awslambda.svg',
   awsrds:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg',
-  CloudFlare:
+    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonrds.svg',
+  cloudflare:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg',
   firebase:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg',
