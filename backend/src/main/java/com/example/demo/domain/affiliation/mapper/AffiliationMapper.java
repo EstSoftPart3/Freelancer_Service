@@ -59,6 +59,9 @@ public interface AffiliationMapper {
 	// 해당 소속에 신청했는지 여부
 	Long findIsApply(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
 
+	// 해당 기업의 활성 소속 멤버인지 여부
+	Long isActiveMember(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
+
 	// 소속 신청 열람 상태 변경
 	void updateReadAt(@Param("companyApplicationSq") Long companyApplicationSq);
 

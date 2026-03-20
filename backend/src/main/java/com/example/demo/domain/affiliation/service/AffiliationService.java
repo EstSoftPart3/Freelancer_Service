@@ -144,6 +144,11 @@ public class AffiliationService {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
 		}
 
+		Long activeMember = affiliationMapper.isActiveMember(companyApplication.getUserSq(), companyApplication.getCompanySq());
+		if (activeMember > 0) {
+			throw new IllegalArgumentException("이미 소속 중인 기업입니다.");
+		}
+
 		// 1. 소속 신청 저장
 		affiliationMapper.insertApplication(companyApplication);
 
