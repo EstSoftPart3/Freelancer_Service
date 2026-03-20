@@ -90,7 +90,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")">#{item}</foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 4] 키워드 검색 -
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 4] 키워드 검색 -
 		수정됨 */ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
@@ -177,7 +185,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")">#{item}</foreach>) </if> /* [필터 4] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 5] 키워드 검색
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] - 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 5] 키워드 검색
 		(제목, 작성자, 내용, 태그) */ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
@@ -266,7 +282,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")"> #{item} </foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 3] 키워드 검색
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] - 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 3] 키워드 검색
 		*/ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
