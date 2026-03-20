@@ -24,6 +24,8 @@ type UserTableProps = {
   totalCount: number;
   page: number;
   typeCds: number[];
+  companyNms: number[];
+  userGenderCds: number[];
   keyword: string;
   sortField: string;
   sortOrder: string;
@@ -31,6 +33,8 @@ type UserTableProps = {
   setPage: (page: number) => void;
   onSort: (field: string, order: string) => void;
   onFilterType: (types: number[]) => void;
+  onFilterCompany: (companySqs: number[]) => void;
+  onFilterGender: (genderCds: number[]) => void;
   setTagKeyword: (val: string) => void;
 };
 
@@ -39,6 +43,8 @@ export function UsersTable({
   totalCount,
   page,
   typeCds,
+  companyNms,
+  userGenderCds,
   keyword,
   sortField,
   sortOrder,
@@ -46,6 +52,8 @@ export function UsersTable({
   setPage,
   onSort,
   onFilterType,
+  onFilterCompany,
+  onFilterGender,
   setTagKeyword: _setTagKeyword,
 }: UserTableProps) {
   const { setOpen, setCurrentRow } = useUsers();
@@ -66,9 +74,17 @@ export function UsersTable({
         pageIndex: page - 1,
         pageSize: 10,
       },
-      columnFilters: typeCds.length
-        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
-        : [],
+      columnFilters: [
+        ...(typeCds.length
+          ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+          : []),
+        ...(companyNms.length
+          ? [{ id: 'companyNm', value: companyNms.map(String) }]
+          : []),
+        ...(userGenderCds.length
+          ? [{ id: 'userGenderCd', value: userGenderCds.map(String) }]
+          : []),
+      ],
     },
     enableRowSelection: true, // 행 선택 기능 활성화
     onRowSelectionChange: setRowSelection, // [연결] 행 선택 변경 함수 연결
@@ -103,17 +119,38 @@ export function UsersTable({
     },
 
     onColumnFiltersChange: (updater) => {
-      const currentFilters = typeCds.length
-        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
-        : [];
+      const currentFilters = [
+        ...(typeCds.length
+          ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+          : []),
+        ...(companyNms.length
+          ? [{ id: 'companyNm', value: companyNms.map(String) }]
+          : []),
+        ...(userGenderCds.length
+          ? [{ id: 'userGenderCd', value: userGenderCds.map(String) }]
+          : []),
+      ];
       const nextFilters =
         typeof updater === 'function' ? updater(currentFilters) : updater;
 
-      const typeFilter = nextFilters.find((f) => f.id === 'userTypeCd');
-      if (typeFilter) {
-        onFilterType((typeFilter.value as string[]).map(Number));
-      } else {
-        onFilterType([]);
+      // 각 필터별 변경 여부 확인 후 필요한 핸들러만 호출
+      const typeFilterValue = (nextFilters.find((f) => f.id === 'userTypeCd')
+        ?.value as string[])?.map(Number) || [];
+      if (JSON.stringify(typeCds) !== JSON.stringify(typeFilterValue)) {
+        onFilterType(typeFilterValue);
+      }
+
+      const companyFilterValue = (nextFilters.find((f) => f.id === 'companyNm')
+        ?.value as string[])?.map(Number) || [];
+      if (JSON.stringify(companyNms) !== JSON.stringify(companyFilterValue)) {
+        onFilterCompany(companyFilterValue);
+      }
+
+      const genderFilterValue = (
+        nextFilters.find((f) => f.id === 'userGenderCd')?.value as string[]
+      )?.map(Number) || [];
+      if (JSON.stringify(userGenderCds) !== JSON.stringify(genderFilterValue)) {
+        onFilterGender(genderFilterValue);
       }
     },
 

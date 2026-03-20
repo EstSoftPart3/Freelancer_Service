@@ -27,6 +27,8 @@ export interface UserQueryParams {
   page: number;
   size: number;
   typeCds?: number[];
+  companyNms?: number[];
+  userGenderCds?: number[];
   keyword?: string;
   tagKeyword?: string;
   sortField?: string;
