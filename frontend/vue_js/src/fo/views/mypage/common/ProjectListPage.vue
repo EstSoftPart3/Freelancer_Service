@@ -155,7 +155,7 @@ const userStore = useUserStore()
 const modalStore = useModalStore()
 const route = useRoute()
 const router = useRouter()
-const isMapView = ref(false)
+const isMapView = ref(route.query.view === 'map')
 const isLoading = ref(false)
 const isMapMoved = ref(false)
 const filters = ref({
@@ -451,10 +451,19 @@ const handleSearchInArea = () => {
   updateBounds()
 }
 watch(isMapView, async (val) => {
-  // 1. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
+  // 1. URL query에 view 상태 반영 (replace로 히스토리 중복 방지)
+  const query = { ...route.query }
+  if (val) {
+    query.view = 'map'
+  } else {
+    delete query.view
+  }
+  router.replace({ query })
+
+  // 2. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
   await fetchProjects()
 
-  // 2. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
+  // 3. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
   if (val) {
     await nextTick()
     initMap()
