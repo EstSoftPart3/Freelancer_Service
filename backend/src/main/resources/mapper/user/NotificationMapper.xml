@@ -34,4 +34,19 @@
     #{item.typeCd}, #{item.content}, #{item.targetUrl} ) </foreach>
   </insert>
 
+  <update id="updateAllNotificationsRead">
+    UPDATE tbl_notification_m
+    SET notification_read_yn = 'Y'
+    WHERE receiver_user_sq = #{receiverUserSq}
+      AND notification_read_yn = 'N'
+      AND notification_is_deleted_yn = 'N'
+  </update>
+
+  <update id="deleteAllNotifications">
+    UPDATE tbl_notification_m
+    SET notification_is_deleted_yn = 'Y'
+    WHERE receiver_user_sq = #{receiverUserSq}
+      AND notification_is_deleted_yn = 'N'
+  </update>
+
 </mapper>

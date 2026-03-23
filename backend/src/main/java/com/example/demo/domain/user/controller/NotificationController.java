@@ -44,4 +44,16 @@ public class NotificationController {
     public void deleteNotification(@PathVariable Long notificationSq) {
         notificationService.removeNotification(notificationSq);
     }
+
+    // 모두 읽음 처리
+    @PatchMapping("/read-all/{userSq}")
+    public void readAllNotifications(@PathVariable Long userSq) {
+        notificationService.markAllAsRead(userSq);
+    }
+
+    // 전체 삭제
+    @DeleteMapping("/all/{userSq}")
+    public void deleteAllNotifications(@PathVariable Long userSq) {
+        notificationService.removeAllNotifications(userSq);
+    }
 }

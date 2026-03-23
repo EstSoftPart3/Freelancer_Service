@@ -53,7 +53,19 @@ public class NotificationService {
         notificationMapper.deleteNotification(notificationSq);
     }
 
-    // 알림 대량 등록 (Batch Insert)\
+    // 6. 모두 읽음 처리
+    @Transactional
+    public void markAllAsRead(Long userSq) {
+        notificationMapper.updateAllNotificationsRead(userSq);
+    }
+
+    // 7. 전체 삭제
+    @Transactional
+    public void removeAllNotifications(Long userSq) {
+        notificationMapper.deleteAllNotifications(userSq);
+    }
+
+    // 알림 대량 등록 (Batch Insert)
     @Transactional
     public void insertNotificationBatch(List<NotificationBatchRequestDTO> list) {
         notificationMapper.insertNotificationBatch(list);
