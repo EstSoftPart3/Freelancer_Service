@@ -1,22 +1,22 @@
 // [Freelancer Service]
 // eslint-disable react-hooks/exhaustive-deps
-import { useEffect, useRef, useState } from 'react';
-import { z } from 'zod';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, Search, X } from 'lucide-react';
-import { baseUrl } from '@/lib/api';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useEffect, useRef, useState } from 'react'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Camera } from 'lucide-react'
+import { baseUrl } from '@/lib/api'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -24,58 +24,43 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-import { DatePicker } from '@/components/date-picker';
-import { type AdminUser } from '../data/schema';
-import { CompanyDetailsDialog } from './company-details-dialog';
-import { CompanySearchDialog } from './company-search-dialog';
-import { useUsers } from './users-provider';
-
-const maxDate = new Date();
-maxDate.setFullYear(maxDate.getFullYear() - 19);
+} from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
+import { type AdminUser } from '../data/schema'
+import { useUsers } from './users-provider'
 
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
   userPw: z.string(),
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
-  userBirthDt: z
-    .date()
-    .max(maxDate, '만 19세 이상만 가입 가능합니다.')
-    .optional()
-    .nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number(),
   userIsActivateYn: z.string(),
   userIsDeletedYn: z.string(),
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
-  companySq: z.number().nullable(),
-});
+})
 
-type UserMutateForm = z.infer<typeof schema>;
+type UserMutateForm = z.infer<typeof schema>
 
 interface Props {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentRow?: AdminUser;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentRow?: AdminUser
 }
 
 export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
-  const isUpdate = !!currentRow;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const isUpdate = !!currentRow
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null
-  );
-  const { setOpen, setPendingFormData } = useUsers();
-  const [companySearchOpen, setCompanySearchOpen] = useState(false);
-  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
+  )
+  const { setOpen, setPendingFormData } = useUsers()
 
   const {
     register,
-    control,
     handleSubmit,
     setValue,
     watch,
@@ -88,18 +73,16 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
-      userBirthDt: undefined, // 생년월일 추가
       companyNm: null,
-      companySq: null,
       userTypeCd: 301,
       userGenderCd: 101,
       userIsActivateYn: 'Y',
       userIsDeletedYn: 'N',
       userAgreedPrivacyPolicyYn: 'Y',
     },
-  });
+  })
 
-  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'));
+  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
   useEffect(() => {
     if (open) {
       if (isUpdate && currentRow) {
@@ -108,75 +91,64 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: currentRow.userEmail,
           userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
           userPhoneNum: currentRow.userPhoneNum,
-          userBirthDt: currentRow.userBirthDt ?? undefined,
           companyNm: currentRow.companyNm,
-          companySq: currentRow.companySq ?? null,
           userTypeCd: currentRow.userTypeCd,
           userGenderCd: currentRow.userGenderCd,
           userIsActivateYn: currentRow.userIsActivateYn,
           userIsDeletedYn: currentRow.userIsDeletedYn,
           userAgreedPrivacyPolicyYn: currentRow.userAgreedPrivacyPolicyYn,
-        });
+        })
         setProfileImagePreview(
           currentRow.profileImageUrl
             ? `${serverRoot}${currentRow.profileImageUrl}`
             : null
-        );
+        )
       } else {
         reset({
           userNm: '',
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
-          userBirthDt: undefined,
           companyNm: null,
-          companySq: null,
           userTypeCd: 301,
           userGenderCd: 101,
           userIsActivateYn: 'Y',
           userIsDeletedYn: 'N',
           userAgreedPrivacyPolicyYn: 'Y',
-        });
-        setProfileImagePreview(null);
+        })
+        setProfileImagePreview(null)
       }
-      setProfileImageFile(null);
+      setProfileImageFile(null)
     }
-  }, [open, isUpdate, currentRow, reset]);
+  }, [open, isUpdate, currentRow, reset])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setProfileImageFile(file);
-    setProfileImagePreview(URL.createObjectURL(file));
-    e.target.value = '';
-  };
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProfileImageFile(file)
+    setProfileImagePreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
 
   const onSubmit = async (data: UserMutateForm) => {
-    if (!currentRow) return;
+    if (!currentRow) return
 
-    const formData = new FormData();
-    formData.append('userNm', data.userNm);
-    formData.append('userEmail', data.userEmail);
-    formData.append('userPhoneNum', data.userPhoneNum);
-    if (data.userBirthDt) {
-      formData.append('userBirthDt', data.userBirthDt.toISOString());
-    }
-    formData.append('userTypeCd', String(data.userTypeCd));
-    formData.append('userGenderCd', String(data.userGenderCd));
-    formData.append('userIsActivateYn', data.userIsActivateYn);
-    formData.append('userIsDeletedYn', data.userIsDeletedYn);
-    formData.append(
-      'userAgreedPrivacyPolicyYn',
-      data.userAgreedPrivacyPolicyYn
-    );
-    if (data.companyNm) formData.append('companyNm', data.companyNm);
-    if (data.companySq) formData.append('companySq', String(data.companySq));
-    if (data.userPw) formData.append('userPw', data.userPw);
-    if (profileImageFile) formData.append('profileImage', profileImageFile);
+    const formData = new FormData()
+    formData.append('userNm', data.userNm)
+    formData.append('userEmail', data.userEmail)
+    formData.append('userPhoneNum', data.userPhoneNum)
+    formData.append('userTypeCd', String(data.userTypeCd))
+    formData.append('userGenderCd', String(data.userGenderCd))
+    formData.append('userIsActivateYn', data.userIsActivateYn)
+    formData.append('userIsDeletedYn', data.userIsDeletedYn)
+    formData.append('userAgreedPrivacyPolicyYn', data.userAgreedPrivacyPolicyYn)
+    if (data.companyNm) formData.append('companyNm', data.companyNm)
+    if (data.userPw) formData.append('userPw', data.userPw)
+    if (profileImageFile) formData.append('profileImage', profileImageFile)
 
-    setPendingFormData({ userSq: currentRow.userSq, formData });
-    setOpen('master-pw');
-  };
+    setPendingFormData({ userSq: currentRow.userSq, formData })
+    setOpen('master-pw')
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -267,99 +239,16 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             )}
           </div>
 
-          <div className='flex flex-col space-y-2'>
-            <Label htmlFor='userBirthDt'>생년월일</Label>
-            <Controller
-              control={control}
-              name='userBirthDt'
-              render={({ field }) => (
-                <DatePicker
-                  selected={field.value ?? undefined}
-                  onSelect={field.onChange}
-                  placeholder='생년월일 선택'
-                  defaultMonth={maxDate}
-                />
-              )}
-            />
-            {errors.userBirthDt && (
-              <p className='text-sm text-destructive'>
-                {errors.userBirthDt.message}
-              </p>
-            )}
-          </div>
-
           <div className='space-y-2'>
             <Label htmlFor='companyNm'>소속</Label>
-            <div className='relative flex items-center'>
-              <Input
-                id='companyNm'
-                autoComplete='off'
-                placeholder='클릭하여 소속 검색'
-                value={watch('companyNm') ?? ''}
-                readOnly
-                className='cursor-pointer pr-16'
-                onClick={() => {
-                  if (watch('userTypeCd') === 302 && watch('companySq')) {
-                    setCompanyDetailsOpen(true);
-                  } else {
-                    setCompanySearchOpen(true);
-                  }
-                }}
-              />
-              <div className='absolute right-2 flex items-center gap-1'>
-                {watch('userTypeCd') !== 302 && watch('companyNm') && (
-                  <button
-                    type='button'
-                    className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setValue('companyNm', null);
-                      setValue('companySq', null);
-                    }}
-                    title='소속 삭제'
-                  >
-                    <X className='h-4 w-4' />
-                  </button>
-                )}
-                {watch('userTypeCd') !== 302 || !watch('companySq') ? (
-                  <button
-                    type='button'
-                    className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                    onClick={() => {
-                      if (watch('userTypeCd') === 302 && watch('companySq')) {
-                        setCompanyDetailsOpen(true);
-                      } else {
-                        setCompanySearchOpen(true);
-                      }
-                    }}
-                    title='소속 검색'
-                  >
-                    <Search className='h-4 w-4' />
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <CompanySearchDialog
-            open={companySearchOpen}
-            onOpenChange={setCompanySearchOpen}
-            onSelect={(companySq, companyNm) => {
-              setValue('companySq', companySq);
-              setValue('companyNm', companyNm);
-            }}
-          />
-
-          {watch('companySq') && (
-            <CompanyDetailsDialog
-              open={companyDetailsOpen}
-              onOpenChange={setCompanyDetailsOpen}
-              companySq={watch('companySq') as number}
-              onUpdated={(newCompanyNm) => {
-                setValue('companyNm', newCompanyNm);
-              }}
+            <Input
+              id='companyNm'
+              autoComplete='off'
+              placeholder='소속 회사'
+              {...register('companyNm')}
+              readOnly
             />
-          )}
+          </div>
 
           <div className='space-y-2'>
             <Label>유저 유형</Label>
@@ -444,5 +333,5 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         </form>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

@@ -55,9 +55,8 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
   {
     id: 'boardTypeCd',
     accessorKey: 'boardTypeCd',
-    meta: { title: '유형' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='유형' />
     ),
     cell: ({ row }) => {
       // [확인] 현재 JSON 데이터에 boardTypeCd가 없어서 undefined가 나옵니다.
@@ -91,18 +90,16 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
   {
     id: 'ttl',
     accessorKey: 'ttl',
-    meta: { title: '제목' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='제목' />
     ),
     cell: ({ row }) => <TitleCell row={row} />,
   },
   {
     id: 'userNm',
     accessorKey: 'userNm',
-    meta: { title: '작성자' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='작성자' />
     ),
     cell: ({ row }) => (
       <div className='w-[80px] text-center'>{row.getValue('userNm')}</div>
@@ -111,9 +108,8 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
   {
     id: 'boardAdoptStatusCd',
     accessorKey: 'boardAdoptStatusCd',
-    meta: { title: '상태' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='상태' />
     ),
     cell: ({ row }) => {
       const status = row.getValue('boardAdoptStatusCd') as number
@@ -141,9 +137,8 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
   {
     id: 'createdAt',
     accessorKey: 'createdAt',
-    meta: { title: '등록일' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='등록일' />
     ),
     cell: ({ row }) => {
       const date = row.getValue('createdAt')
