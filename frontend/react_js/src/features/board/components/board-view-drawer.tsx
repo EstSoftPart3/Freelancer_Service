@@ -238,10 +238,6 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [newComment, setNewComment] = useState('')
-  const [isAnswerMode, setIsAnswerMode] = useState(false)
-  const [answerTitle, setAnswerTitle] = useState('')
-  const [answerContent, setAnswerContent] = useState('')
-  const [editingAnswer, setEditingAnswer] = useState<AnswerDetail | null>(null)
 
   const handleGoToQuestion = () => {
     if (!detail?.parentBoardSq) return
@@ -344,66 +340,6 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
       fetchDetail() // 목록 새로고침
     } catch (_) {
       toast.error('댓글 등록 실패')
-    }
-  }
-
-  /**
-   * 5. 답변 등록 핸들러
-   */
-  const handleCreateAnswer = async () => {
-    if (!answerTitle.trim() || !answerContent.trim() || !currentRow?.sq) return
-
-    try {
-      const formData = new FormData()
-      formData.append('ttl', answerTitle)
-      formData.append('description', answerContent)
-      formData.append('parentBoardSq', currentRow.sq.toString())
-
-      await boardApi.createBoard(1404, formData)
-      toast.success('답변이 등록되었습니다.')
-      setAnswerTitle('')
-      setAnswerContent('')
-      setIsAnswerMode(false)
-      fetchDetail() // 목록 새로고침
-    } catch (_) {
-      toast.error('답변 등록 실패')
-    }
-  }
-
-  /**
-   * 6. 답변 삭제 핸들러
-   */
-  const handleDeleteAnswer = async (answerSq: number) => {
-    if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return
-
-    try {
-      await boardApi.deleteBoard(answerSq, 'ANSWER')
-      toast.success('답변이 삭제되었습니다.')
-      fetchDetail() // 목록 새로고침
-    } catch (_) {
-      toast.error('답변 삭제에 실패했습니다.')
-    }
-  }
-
-  /**
-   * 7. 답변 수정 핸들러
-   */
-  const handleUpdateAnswer = async () => {
-    if (!editingAnswer || !answerTitle.trim() || !answerContent.trim()) return
-
-    try {
-      const formData = new FormData()
-      formData.append('ttl', answerTitle)
-      formData.append('description', answerContent)
-
-      await boardApi.updateBoard(editingAnswer.sq, 1404, formData)
-      toast.success('답변이 수정되었습니다.')
-      setEditingAnswer(null)
-      setAnswerTitle('')
-      setAnswerContent('')
-      fetchDetail() // 목록 새로고침
-    } catch (_) {
-      toast.error('답변 수정에 실패했습니다.')
     }
   }
 
@@ -548,39 +484,9 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               {answer.ttl}
                             </span>
                           </div>
-                          <div className='flex items-center gap-1'>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              className='h-6 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100'
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setEditingAnswer(answer)
-                                setAnswerTitle(answer.ttl)
-                                setAnswerContent('') // 내용은 API에서 가져와야 할 수 있음
-                                toast.info('답변 내용을 불러오는 중...')
-                                // 답변 상세를 가져와서 내용 설정
-                                boardApi.getBoardDetail(answer.sq, 1404).then((res) => {
-                                  setAnswerContent(res.output.description || '')
-                                }).catch(() => {
-                                  toast.error('답변 내용을 불러올 수 없습니다.')
-                                })
-                              }}
-                            >
-                              <Pencil size={10} />
-                            </Button>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              className='h-6 px-2 text-xs text-destructive opacity-0 transition-opacity group-hover:opacity-100'
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteAnswer(answer.sq)
-                              }}
-                            >
-                              <Trash2 size={10} />
-                            </Button>
-                          </div>
+                          <span className='text-xs text-muted-foreground'>
+                            {answer.createdAt}
+                          </span>
                         </div>
                         <div className='flex items-center justify-between'>
                           <div className='flex items-center gap-1 text-xs text-muted-foreground'>
@@ -599,101 +505,6 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                     </div>
                   )}
                 </div>
-
-                {!isAnswerMode && (
-                  <Button
-                    variant='outline'
-                    onClick={() => setIsAnswerMode(true)}
-                    className='w-full'
-                  >
-                    <Reply size={14} className='mr-2' /> 답변 작성
-                  </Button>
-                )}
-
-                {isAnswerMode && (
-                  <div className='mt-4 space-y-4 rounded-lg border bg-muted/20 p-4'>
-                    <div>
-                      <label className='text-sm font-medium'>답변 제목</label>
-                      <input
-                        type='text'
-                        value={answerTitle}
-                        onChange={(e) => setAnswerTitle(e.target.value)}
-                        placeholder='답변 제목을 입력하세요'
-                        className='mt-1 w-full rounded-md border px-3 py-2 text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 내용</label>
-                      <Textarea
-                        value={answerContent}
-                        onChange={(e) => setAnswerContent(e.target.value)}
-                        placeholder='답변 내용을 입력하세요'
-                        className='mt-1 min-h-[120px] resize-none'
-                      />
-                    </div>
-                    <div className='flex justify-end gap-2'>
-                      <Button
-                        variant='outline'
-                        onClick={() => {
-                          setIsAnswerMode(false)
-                          setAnswerTitle('')
-                          setAnswerContent('')
-                        }}
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        onClick={handleCreateAnswer}
-                        disabled={!answerTitle.trim() || !answerContent.trim()}
-                      >
-                        <Send size={14} className='mr-2' /> 답변 등록
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {editingAnswer && (
-                  <div className='mt-4 space-y-4 rounded-lg border bg-blue-50 p-4'>
-                    <div className='text-sm font-medium text-blue-700'>답변 수정</div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 제목</label>
-                      <input
-                        type='text'
-                        value={answerTitle}
-                        onChange={(e) => setAnswerTitle(e.target.value)}
-                        placeholder='답변 제목을 입력하세요'
-                        className='mt-1 w-full rounded-md border px-3 py-2 text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 내용</label>
-                      <Textarea
-                        value={answerContent}
-                        onChange={(e) => setAnswerContent(e.target.value)}
-                        placeholder='답변 내용을 입력하세요'
-                        className='mt-1 min-h-[120px] resize-none'
-                      />
-                    </div>
-                    <div className='flex justify-end gap-2'>
-                      <Button
-                        variant='outline'
-                        onClick={() => {
-                          setEditingAnswer(null)
-                          setAnswerTitle('')
-                          setAnswerContent('')
-                        }}
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        onClick={handleUpdateAnswer}
-                        disabled={!answerTitle.trim() || !answerContent.trim()}
-                      >
-                        <Send size={14} className='mr-2' /> 수정 완료
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
