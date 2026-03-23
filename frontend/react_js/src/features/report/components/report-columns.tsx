@@ -55,8 +55,9 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
   {
     id: 'originTypeCd', // [수정] targetTypeCd 대신 원천 유형 코드를 식별자로 사용
     accessorKey: 'originTypeCd',
+    meta: { title: '대상 유형' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='대상 유형' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => {
       const originType = row.original.originTypeCd
@@ -88,16 +89,18 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
   {
     id: 'targetTtl',
     accessorKey: 'targetTtl',
+    meta: { title: '신고 대상/내용' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='신고 대상/내용' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => <TargetCell row={row} />,
   },
   {
     id: 'reasonNm',
     accessorKey: 'reasonNm',
+    meta: { title: '신고 사유' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='신고 사유' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => (
       <div className='w-[100px] text-sm font-semibold text-red-500 uppercase'>
@@ -108,8 +111,9 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
   {
     id: 'reporterNm',
     accessorKey: 'reporterNm',
+    meta: { title: '신고자' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='신고자' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => (
       <div className='w-[80px] text-center'>{row.getValue('reporterNm')}</div>
@@ -118,8 +122,9 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
   {
     id: 'statusCd',
     accessorKey: 'statusCd',
+    meta: { title: '처리 상태' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='처리 상태' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => {
       const status = row.getValue('statusCd') as number
@@ -146,8 +151,9 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
   {
     id: 'createdAt',
     accessorKey: 'createdAt',
+    meta: { title: '신고일' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='신고일' />
+      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
     ),
     cell: ({ row }) => {
       const date = row.getValue('createdAt')

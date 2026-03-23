@@ -1,0 +1,7 @@
+filename.js
+/filename.js
+node_module/
+folder/my.txt
+folder/**/fileName_2.txt
+*.txt
+!filename.txt
