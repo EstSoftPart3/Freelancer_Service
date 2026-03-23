@@ -90,7 +90,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")">#{item}</foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 4] 키워드 검색 -
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 4] 키워드 검색 -
 		수정됨 */ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
@@ -121,16 +129,16 @@
 		END BETWEEN #{minLng} AND #{maxLng}) </if> /* 정렬 */ <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
-					<when test="sortBy == 'distance' and userLat != null"> ORDER BY distance ASC </when>
-					<when test="sortBy == 'project_start_dt'"> ORDER BY p.project_created_at_dtm
+					<when test="sortBy == 'distance' and userLat != null"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, distance ASC </when>
+					<when test="sortBy == 'project_start_dt'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm
 		${sortOrder} </when>
-					<when test="sortBy == 'view_count'"> ORDER BY p.project_view_cnt ${sortOrder} </when>
-					<when test="sortBy == 'applicant_count'"> ORDER BY p.project_candidate_cnt
+					<when test="sortBy == 'view_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_view_cnt ${sortOrder} </when>
+					<when test="sortBy == 'applicant_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_candidate_cnt
 		${sortOrder} </when>
-					<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+					<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 				</choose>
 			</when>
-			<otherwise> ORDER BY p.project_created_at_dtm DESC </otherwise>
+			<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 		</choose> /* 페이징
 		*/ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
@@ -177,7 +185,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")">#{item}</foreach>) </if> /* [필터 4] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 5] 키워드 검색
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] - 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 5] 키워드 검색
 		(제목, 작성자, 내용, 태그) */ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
@@ -266,7 +282,15 @@
 		TBL_PROJECT_RECRUIT_JOB_ROLE_S jr WHERE jr.project_sq = p.project_sq AND
 		jr.recruit_job_position_type_cd IN <foreach item="item" collection="jobRoleCd" open="("
 				separator="," close=")"> #{item} </foreach> ) </if> /* [추가 필터] 단가 검색 */ <if
-			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if> /* [필터 3] 키워드 검색
+			test="minPrice != null"> AND p.project_salary &gt;= #{minPrice} </if>
+		/* [필터] - 기술 태그 다중 필터링 */
+		<if test="skillTags != null and skillTags.size() > 0">
+			<foreach item="tag" collection="skillTags">
+				AND EXISTS (SELECT 1 FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S rs
+				WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm = #{tag})
+			</foreach>
+		</if>
+		/* [필터 3] 키워드 검색
 		*/ <if test="searchKeyword != null and searchKeyword != ''">
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',

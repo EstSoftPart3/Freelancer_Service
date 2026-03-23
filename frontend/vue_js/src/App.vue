@@ -37,6 +37,7 @@ const fetchUserInfo = async () => {
       latitude: data.latitude,
       longitude: data.longitude,
       isAffiliated: data.isAffiliated,
+      affiliatedCompanySq: data.affiliatedCompanySq,
       companyAuthStatusCd: data.companyAuthStatusCd,
     })
   } catch (error) {

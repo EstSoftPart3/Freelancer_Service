@@ -1177,6 +1177,31 @@ onMounted(async () => {
 
     setExistingAttachments(resumeForm.attachmentList)
     // console.log('resumeForm', resumeForm)
+  } else {
+    // 신규 등록 모드: 회원 기본정보 자동 기입
+    try {
+      const res = await api.$get('/mypage/edit/info', null)
+      const data = res.output
+      if (data) {
+        resumeForm.resumeNm = data.userNm ?? ''
+        resumeForm.resumeBirthDt = data.userBirthDt
+          ? new Date(data.userBirthDt)
+          : ''
+        resumeForm.resumePhoneNum = data.userPhoneNum ?? ''
+        resumeForm.resumeEmail = data.userEmail ?? ''
+        resumeForm.address = {
+          zonecode: data.zonecode ?? '',
+          address: data.address ?? '',
+          detailAddress: data.detailAddress ?? '',
+          sigungu: '',
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          areaCodeSq: data.sigunguCode ?? null,
+        }
+      }
+    } catch (e) {
+      console.error('회원 기본정보 조회 실패:', e)
+    }
   }
 })
 

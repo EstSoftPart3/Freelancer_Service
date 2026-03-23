@@ -70,6 +70,19 @@ public class AffiliationController {
 //    	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 신청 정보 수정이 완료되었습니다.", null));
 //    }
     
+    // 내 소속 정보 조회
+    @GetMapping("/my-info")
+    public ResponseEntity<ApiResponse<MyAffiliationInfoResponse>> getMyAffiliationInfo(@AuthenticationPrincipal Long userSq) {
+    	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "내 소속 정보 조회 성공", affiliationService.getMyAffiliationInfo(userSq)));
+    }
+
+    // 소속 탈퇴
+    @PatchMapping("/leave")
+    public ResponseEntity<ApiResponse<NullType>> leaveAffiliation(@AuthenticationPrincipal Long userSq) {
+    	affiliationService.leaveAffiliation(userSq);
+    	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 탈퇴가 완료되었습니다.", null));
+    }
+
     // 주소 코드 리스트 조회
     @GetMapping("/address")
     public ResponseEntity<ApiResponse<List<AreaCd>>> getAddressCds() {

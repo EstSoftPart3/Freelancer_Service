@@ -151,6 +151,14 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
+                to="/mypage/affiliatedInfo"
+                @click="handleNavigate"
+                >소속 정보</router-link
+              >
+            </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
                 to="/mypage/affiliatedJobApplications"
                 @click="handleNavigate"
                 >지원 내역</router-link

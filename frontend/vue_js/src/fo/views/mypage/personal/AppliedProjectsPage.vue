@@ -242,7 +242,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useUserStore } from '@/fo/stores/userStore'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter.js'
@@ -254,15 +255,17 @@ import { api } from '@/axios.js'
 const userStore = useUserStore()
 const userType = userStore.getUserType
 const modalStore = useModalStore()
+const route = useRoute()
+const router = useRouter()
 
 // 검색 조건
-const searchType = ref('all')
-const searchKeyword = ref('')
-const appliedSearchType = ref('all')
-const appliedSearchKeyword = ref('')
+const searchType = ref(route.query.searchType || 'all')
+const searchKeyword = ref(route.query.keyword || '')
+const appliedSearchType = ref(route.query.searchType || 'all')
+const appliedSearchKeyword = ref(route.query.keyword || '')
 
 // 열람 필터
-const readType = ref('all')
+const readType = ref(route.query.readType || 'all')
 const readFilters = [
   { type: 'all', label: '전체', count: 0 },
   { type: 'read', label: '열람', count: 0 },
@@ -270,7 +273,10 @@ const readFilters = [
 ]
 
 // 페이징
-const currentPage = ref(1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
+if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+  router.replace({ query: { ...route.query, page: currentPage.value } })
+}
 const itemsPerPage = 5
 const totalPages = ref(1)
 
@@ -312,6 +318,11 @@ const fetchApplicationList = async () => {
       1,
       Math.ceil((data.totalCount || 0) / itemsPerPage),
     )
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+      router.replace({ query: { ...route.query, page: currentPage.value } })
+      return fetchApplicationList()
+    }
 
     // 필터 카운트 갱신
     updateCounts(data.counts)
@@ -326,12 +337,22 @@ const updateCounts = (counts) => {
   })
 }
 
+const updateQuery = (params) => {
+  router.replace({ query: { ...route.query, ...params } })
+}
+
 // 검색
 const handleSearch = () => {
   // console.log('검색 클릭이여ㅑ')
   currentPage.value = 1
   appliedSearchType.value = searchType.value
   appliedSearchKeyword.value = searchKeyword.value
+  updateQuery({
+    page: 1,
+    searchType: searchType.value,
+    keyword: searchKeyword.value || undefined,
+    readType: readType.value !== 'all' ? readType.value : undefined,
+  })
   fetchApplicationList()
 }
 
@@ -339,6 +360,10 @@ const handleSearch = () => {
 const setReadFilter = (type) => {
   readType.value = type
   currentPage.value = 1
+  updateQuery({
+    page: 1,
+    readType: type !== 'all' ? type : undefined,
+  })
   fetchApplicationList()
 }
 
@@ -346,8 +371,22 @@ const setReadFilter = (type) => {
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  router.push({ query: { ...route.query, page } })
   fetchApplicationList()
 }
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Math.max(1, Number(newPage) || 1)
+    if (Number(newPage) !== page) {
+      router.replace({ query: { ...route.query, page } })
+    }
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      fetchApplicationList()
+    }
+  },
+)
 
 // 프로젝트 상세 이동
 const goToProjectSpec = (projectSq) => {

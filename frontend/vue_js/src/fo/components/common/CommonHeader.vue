@@ -160,9 +160,25 @@
                       class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light"
                     >
                       <h6 class="m-0 fw-bold">알림</h6>
-                      <span v-if="unreadCount > 0" class="badge bg-primary">{{
-                        unreadCount
-                      }}</span>
+                      <div class="d-flex align-items-center gap-2">
+                        <span v-if="unreadCount > 0" class="badge bg-primary">{{
+                          unreadCount
+                        }}</span>
+                        <button
+                          @click.stop="markAllAsRead"
+                          class="btn btn-sm btn-outline-primary"
+                          style="font-size: 0.7rem"
+                        >
+                          모두 읽음
+                        </button>
+                        <button
+                          @click.stop="deleteAllNoti"
+                          class="btn btn-sm btn-outline-danger"
+                          style="font-size: 0.7rem"
+                        >
+                          전체 삭제
+                        </button>
+                      </div>
                     </div>
 
                     <div v-if="notifications && notifications.length > 0">
@@ -514,6 +530,28 @@ const deleteNoti = async (sq) => {
     await fetchUnreadCount()
   } catch (error) {
     console.error('알림 삭제 실패:', error)
+  }
+}
+
+// 모두 읽음 처리
+const markAllAsRead = async () => {
+  try {
+    await api.$patch(`/notifications/read-all/${userStore.userSq}`)
+    notifications.value.forEach((n) => (n.notificationReadYn = 'Y'))
+    unreadCount.value = 0
+  } catch (error) {
+    console.error('알림 모두 읽음 처리 실패:', error)
+  }
+}
+
+// 전체 삭제
+const deleteAllNoti = async () => {
+  try {
+    await api.$delete(`/notifications/all/${userStore.userSq}`)
+    notifications.value = []
+    unreadCount.value = 0
+  } catch (error) {
+    console.error('알림 전체 삭제 실패:', error)
   }
 }
 

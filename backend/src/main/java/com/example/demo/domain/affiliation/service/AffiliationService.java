@@ -1,15 +1,17 @@
 package com.example.demo.domain.affiliation.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.management.Notification;
-
 import org.springframework.stereotype.Service;
 
+import com.example.demo.common.ParentCodeEnum;
+import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.dto.request.SearchFilterRequest;
+import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.affiliation.dto.response.AffiliationListResponse;
 import com.example.demo.domain.affiliation.dto.response.AffiliationResponse;
 import com.example.demo.domain.affiliation.dto.response.ApplicantListResponse;
@@ -17,6 +19,7 @@ import com.example.demo.domain.affiliation.dto.response.ApplicantResponse;
 import com.example.demo.domain.affiliation.dto.response.ApplicationListResponse;
 import com.example.demo.domain.affiliation.dto.response.ApplicationResponse;
 import com.example.demo.domain.affiliation.dto.response.ApplyResponse;
+import com.example.demo.domain.affiliation.dto.response.MyAffiliationInfoResponse;
 import com.example.demo.domain.affiliation.entity.Address;
 import com.example.demo.domain.affiliation.entity.AreaCd;
 import com.example.demo.domain.affiliation.entity.Career;
@@ -39,6 +42,7 @@ public class AffiliationService {
 	// private final AmazonS3 amazonS3;
 	private final ApplicationRepository affiliationRepository;
 	private final NotificationService notificationService;
+	private final CommonCodeMapper commonCodeMapper;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -84,8 +88,9 @@ public class AffiliationService {
 					// : null;
 					String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
+					Long activeMember = (userSq != null) ? affiliationMapper.isActiveMember(userSq, company.getCompanySq()) : 0L;
 					Boolean isApply = false;
-					if (applyCnt > 0) {
+					if (applyCnt > 0 || activeMember > 0) {
 						isApply = true;
 					}
 
@@ -144,6 +149,11 @@ public class AffiliationService {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
 		}
 
+		Long activeMember = affiliationMapper.isActiveMember(companyApplication.getUserSq(), companyApplication.getCompanySq());
+		if (activeMember > 0) {
+			throw new IllegalArgumentException("이미 소속 중인 기업입니다.");
+		}
+
 		// 1. 소속 신청 저장
 		affiliationMapper.insertApplication(companyApplication);
 
@@ -156,6 +166,49 @@ public class AffiliationService {
 					2603L, // 소속 지원 결과 카테고리 코드 (2603)
 					"우리 소속에 새로운 가입 신청이 도착했습니다.",
 					"/mypage/affiliationApplicantList");
+		}
+	}
+
+	// 내 소속 정보 조회
+	public MyAffiliationInfoResponse getMyAffiliationInfo(Long userSq) {
+		Map<String, Object> map = affiliationMapper.findMyAffiliationInfo(userSq);
+		if (map == null) {
+			throw new IllegalArgumentException("현재 소속된 기업이 없습니다.");
+		}
+
+		Long companySq = ((Number) map.get("companySq")).longValue();
+		List<String> tags = affiliationMapper.findTags(companySq);
+		String imgNm = affiliationMapper.findProfileImg(companySq);
+		String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
+
+		return MyAffiliationInfoResponse.fromMap(map, tags, imageUrl);
+	}
+
+	// 소속 탈퇴
+	@Transactional
+	public void leaveAffiliation(Long userSq) {
+		// 1. 개인이 소속된 companySq 조회
+		Long companySq = affiliationMapper.findMemberCompanySq(userSq);
+		if (companySq == null) {
+			throw new IllegalArgumentException("현재 소속된 기업이 없습니다.");
+		}
+
+		// 2. 퇴사 상태 코드 조회 (402)
+		Long resignedStatusCd = commonCodeMapper.findCommonCodeSqByName("퇴사", ParentCodeEnum.EMPLOYMENT.getCode());
+
+		// 3. 멤버 상태를 퇴사로 변경
+		affiliationMapper.updateMemberToResigned(companySq, userSq, resignedStatusCd, LocalDate.now());
+
+		// 4. 기업 담당자에게 알림 발송
+		Long companyOwnerSq = affiliationMapper.findCompanyOwnerUserSq(companySq);
+		if (companyOwnerSq != null) {
+			String userNm = affiliationMapper.findUserNmByUserSq(userSq);
+			notificationService.send(
+					companyOwnerSq,
+					userSq,
+					2603L,
+					"[" + userNm + "]님이 소속을 탈퇴하였습니다.",
+					"/mypage/affiliationMemberList");
 		}
 	}
 
@@ -230,6 +283,19 @@ public class AffiliationService {
 
 			// 상태 코드에 따른 메시지 분기 (예: 702 합격, 703 불합격 등 실제 코드에 맞춰 수정)
 			if (companyApplicationStatusCd.equals(502L)) {
+				// 합격 시 이미 다른 기업에 소속 중이면 상태 변경 롤백 + 알림 차단
+				boolean isWorkingNow = affiliationRepository.isUserAlreadyAffiliated(receiverSq);
+				if (isWorkingNow) {
+					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+				}
+
+				// 3. 합격 시 소속 멤버 등록 (같은 트랜잭션 내에서 처리)
+				ApplicationPassDTO passDTO = affiliationRepository.findApplicationDetail(companyApplicationSq);
+				if (passDTO == null) {
+					throw new IllegalStateException("지원 정보를 찾을 수 없습니다.");
+				}
+				affiliationRepository.insertCompanyMember(passDTO);
+
 				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
 			} else {
 				message = "아쉽게도 [" + companyNm + "] 소속 가입 신청 결과가 발표되었습니다. (불합격)";

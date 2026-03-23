@@ -79,7 +79,10 @@
     userSq, u.user_nm AS userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude,
     c.company_auth_status_cd AS companyAuthStatusCd, (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE
     'N' END FROM tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt
-    IS NULL) AS isAffiliated FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq =
+    IS NULL) AS isAffiliated,
+    (SELECT cm.company_sq FROM tbl_company_member_r cm
+     WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt IS NULL LIMIT 1) AS affiliatedCompanySq
+    FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq =
     a.address_sq LEFT JOIN tbl_company_s c ON u.user_sq = c.user_sq WHERE u.user_sq = #{userSq} AND
     u.user_is_deleted_yn = 'N' </select>
 

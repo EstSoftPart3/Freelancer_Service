@@ -43,7 +43,40 @@
       </div>
 
       <div v-show="!isMapView">
-        <ProjectCardGroup :projects="projects" />
+        <!-- 선택된 기술 태그 표시 -->
+        <div
+          v-if="selectedSkillTags.length > 0"
+          class="d-flex flex-wrap gap-2 mb-3 align-items-center"
+        >
+          선택된 기술:
+          <button
+            v-for="tag in selectedSkillTags"
+            :key="tag"
+            class="btn btn-primary btn-sm btn-rounded d-flex align-items-center gap-1"
+            @click="removeSkillTag(tag)"
+          >
+            <img
+              :src="generateIconUrl(tag)"
+              width="14"
+              height="14"
+              :alt="tag"
+            />
+            {{ tag }}
+            <i class="bi bi-x"></i>
+          </button>
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="clearSkillTags"
+          >
+            초기화
+          </button>
+        </div>
+
+        <ProjectCardGroup
+          :projects="projects"
+          :selected-skill-tags="selectedSkillTags"
+          @click-skill-tag="toggleSkillTag"
+        />
 
         <div
           v-if="userStore.userType === 'COMPANY' && projects.length > 0"
@@ -68,7 +101,7 @@
           <CommonPagination
             :currentPage="currentPage"
             :totalPages="totalPages"
-            @update:currentPage="currentPage = $event"
+            @update:currentPage="onPageChange($event)"
           />
         </div>
       </div>
@@ -141,7 +174,7 @@ import { api } from '@/axios.js'
 import qs from 'qs'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useModalStore } from '@/fo/stores/modalStore'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import ProjectFilterBar from '@/fo/components/common/ProjectFilterBar.vue'
 import ProjectCardGroup from '@/fo/components/project/ProjectCardGroup.vue'
@@ -150,11 +183,13 @@ import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import MapProjectCardGroup from '@/fo/components/project/MapProjectCardGroup.vue'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const userStore = useUserStore()
 const modalStore = useModalStore()
+const route = useRoute()
 const router = useRouter()
-const isMapView = ref(false)
+const isMapView = ref(route.query.view === 'map')
 const isLoading = ref(false)
 const isMapMoved = ref(false)
 const filters = ref({
@@ -165,7 +200,13 @@ const filters = ref({
   minLng: null,
   maxLng: null,
 })
-const currentPage = ref(1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
+if (
+  route.query.page !== undefined &&
+  Number(route.query.page) !== currentPage.value
+) {
+  router.replace({ query: { ...route.query, page: currentPage.value } })
+}
 const totalPages = ref(1)
 const projects = ref([])
 const regionGroups = ref([])
@@ -173,6 +214,33 @@ const mapContainer = ref(null)
 const mapInstance = ref(null)
 const markers = ref([])
 const selectedProjectId = ref(null)
+
+const selectedSkillTags = ref([])
+
+const generateIconUrl = (name) => {
+  const key = name.toLowerCase().replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
+}
+
+const toggleSkillTag = (tag) => {
+  const idx = selectedSkillTags.value.indexOf(tag)
+  if (idx >= 0) selectedSkillTags.value.splice(idx, 1)
+  else selectedSkillTags.value.push(tag)
+  currentPage.value = 1
+  fetchProjects()
+}
+
+const removeSkillTag = (tag) => {
+  selectedSkillTags.value = selectedSkillTags.value.filter((t) => t !== tag)
+  currentPage.value = 1
+  fetchProjects()
+}
+
+const clearSkillTags = () => {
+  selectedSkillTags.value = []
+  currentPage.value = 1
+  fetchProjects()
+}
 
 let isMarkerClickTriggered = false
 
@@ -389,6 +457,8 @@ const fetchProjects = async () => {
       userLng: userStore.userLng,
       // 백엔드에서 지도용 요청임을 인지할 수 있도록 플래그 추가
       isMapView: isMap,
+      // 기술 태그 필터링
+      skillTags: selectedSkillTags.value,
     }
 
     const response = await api.$get(
@@ -408,6 +478,12 @@ const fetchProjects = async () => {
       // 지도 모드: 페이지네이션이 필요 없으므로 1로 고정
       totalPages.value = 1
       fetchRegionGroups()
+    }
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+      filters.value.page = currentPage.value
+      router.replace({ query: { ...route.query, page: currentPage.value } })
+      return fetchProjects()
     }
   } catch (e) {
     console.error(e)
@@ -441,10 +517,19 @@ const handleSearchInArea = () => {
   updateBounds()
 }
 watch(isMapView, async (val) => {
-  // 1. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
+  // 1. URL query에 view 상태 반영 (replace로 히스토리 중복 방지)
+  const query = { ...route.query }
+  if (val) {
+    query.view = 'map'
+  } else {
+    delete query.view
+  }
+  router.replace({ query })
+
+  // 2. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
   await fetchProjects()
 
-  // 2. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
+  // 3. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
   if (val) {
     await nextTick()
     initMap()
@@ -455,10 +540,26 @@ watch(isMapView, async (val) => {
 watch(projects, () => {
   if (isMapView.value) displayMarkers()
 })
-watch(currentPage, (val) => {
-  filters.value.page = val
+const onPageChange = (page) => {
+  currentPage.value = page
+  filters.value.page = page
+  router.push({ query: { ...route.query, page } })
   fetchProjects()
-})
+}
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Math.max(1, Number(newPage) || 1)
+    if (Number(newPage) !== page) {
+      router.replace({ query: { ...route.query, page } })
+    }
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      filters.value.page = page
+      fetchProjects()
+    }
+  },
+)
 onMounted(() => {
   if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng))
     fetchProjects()

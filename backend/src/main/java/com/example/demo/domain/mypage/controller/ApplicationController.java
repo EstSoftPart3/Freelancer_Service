@@ -6,8 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.affiliation.service.AffiliationService;
-import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
-import com.example.demo.domain.mypage.service.ApplicationService;
 import com.example.demo.domain.affiliation.dto.response.*;
 import com.example.demo.domain.affiliation.entity.*;
 
@@ -21,7 +19,6 @@ import javax.lang.model.type.NullType;
 public class ApplicationController {
 
     private final AffiliationService affiliationService;
-    private final ApplicationService applicationService;
 
     // 소속 신청 내역 하나 조회
     @GetMapping("/{applicationSq}")
@@ -61,14 +58,8 @@ public class ApplicationController {
 
         Long statusCd = companyApplication.getCompanyApplicationStatusCd();
 
-        // 지원 상태 업데이트
+        // 지원 상태 업데이트 + 알림 발송 + 합격 시 소속 등록 (단일 트랜잭션)
         affiliationService.updateApplicationStatus(companyApplicationSq, statusCd);
-
-        // 합격 처리(502)일 경우 → 소속 등록
-        if (statusCd == 502L) {
-            ApplicationPassDTO applicationPassDTO = applicationService.findApplicationDetail(companyApplicationSq);
-            applicationService.processPass(applicationPassDTO);
-        }
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 지원 상태 수정이 완료되었습니다.", null));
     }
