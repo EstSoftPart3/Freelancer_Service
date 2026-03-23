@@ -42,7 +42,7 @@
           <span class="form-control text-3 h-auto py-2 border-0" style="flex: none; width: auto; padding-right: 0">{{ info.companyNm }}</span>
           <span
             v-if="info.companyIsRecruitingYn === 'Y'"
-            class="badge bg-success"
+            class="badge bg-primary"
             >채용중</span
           >
           <span v-else class="badge bg-secondary">채용 마감</span>
