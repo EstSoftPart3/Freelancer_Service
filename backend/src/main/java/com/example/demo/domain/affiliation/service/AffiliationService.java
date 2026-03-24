@@ -208,7 +208,7 @@ public class AffiliationService {
 					userSq,
 					2603L,
 					"[" + userNm + "]님이 소속을 탈퇴하였습니다.",
-					"/mypage/affiliationMemberList");
+					"/mypage/affiliatedMembers");
 		}
 	}
 
