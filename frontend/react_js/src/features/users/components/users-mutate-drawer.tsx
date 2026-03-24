@@ -42,7 +42,7 @@ const schema = z.object({
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
   userBirthDt: z
     .date()
-    .max(maxDate, '만 19세 이상만 가입 가능합니다.')
+    .max(maxDate, '회원의 나이는 만 19세 이상이어야 합니다.')
     .optional()
     .nullable(),
   userTypeCd: z.number(),
