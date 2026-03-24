@@ -517,14 +517,17 @@ const handleSearchInArea = () => {
   updateBounds()
 }
 watch(isMapView, async (val) => {
-  // 1. URL query에 view 상태 반영 (replace로 히스토리 중복 방지)
-  const query = { ...route.query }
-  if (val) {
-    query.view = 'map'
-  } else {
-    delete query.view
+  // 1. URL이 현재 상태와 다를 때만 replace (순환 방지)
+  const currentView = route.query.view
+  if ((val && currentView !== 'map') || (!val && currentView === 'map')) {
+    const query = { ...route.query }
+    if (val) {
+      query.view = 'map'
+    } else {
+      delete query.view
+    }
+    router.replace({ query })
   }
-  router.replace({ query })
 
   // 2. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
   await fetchProjects()
@@ -532,9 +535,25 @@ watch(isMapView, async (val) => {
   // 3. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
   if (val) {
     await nextTick()
+    mapInstance.value = null
     initMap()
     // 지도 모드로 진입 시 현재 지도 영역(Bounds) 기준으로 한 번 더 필터링하고 싶다면 유지
-    updateBounds()
+    // [수정] 뒤로가기 시 relayout()으로 크기를 재계산 후 영역 검색
+    if (mapInstance.value) {
+      mapInstance.value.relayout()
+      kakao.maps.event.addListener(
+        mapInstance.value,
+        'tilesloaded',
+        function onTilesLoaded() {
+          kakao.maps.event.removeListener(
+            mapInstance.value,
+            'tilesloaded',
+            onTilesLoaded,
+          )
+          updateBounds()
+        },
+      )
+    }
   }
 })
 watch(projects, () => {
@@ -546,6 +565,15 @@ const onPageChange = (page) => {
   router.push({ query: { ...route.query, page } })
   fetchProjects()
 }
+watch(
+  () => route.query.view,
+  (newView) => {
+    const shouldBeMap = newView === 'map'
+    if (shouldBeMap !== isMapView.value) {
+      isMapView.value = shouldBeMap
+    }
+  },
+)
 watch(
   () => route.query.page,
   (newPage) => {
@@ -563,6 +591,12 @@ watch(
 onMounted(() => {
   if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng))
     fetchProjects()
+
+  if (isMapView.value) {
+    nextTick(() => {
+      initMap()
+    })
+  }
 })
 
 const updateFilters = (updated) => {
