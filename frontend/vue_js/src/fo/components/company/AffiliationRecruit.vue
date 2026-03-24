@@ -134,7 +134,11 @@
         class="btn btn-light"
         disabled
       >
-        소속 신청 완료
+        {{
+          userStore.affiliatedCompanySq === afltnInfo.sq
+            ? '소속 중'
+            : '소속 신청 완료'
+        }}
       </button>
       <button
         type="button"
@@ -152,6 +156,7 @@ import { api } from '@/axios'
 import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useUserStore } from '@/fo/stores/userStore'
 import { computed, defineProps } from 'vue'
 import CommonConfirmModal from '../common/CommonConfirmModal.vue'
 import ResumeListModal from '../mypage/common/ResumeListModal.vue'
@@ -166,6 +171,7 @@ const info = computed(() => props.afltnInfo)
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 const affiliationStore = useAffiliationStore()
+const userStore = useUserStore()
 
 const closeModal = () => {
   affiliationStore.resetGreeting()

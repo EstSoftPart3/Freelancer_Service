@@ -193,14 +193,20 @@
                           type="button"
                           class="btn btn-sm"
                           :class="
-                            afltn.isApply
+                            userStore.affiliatedCompanySq === afltn.sq
                               ? 'btn-light disabled'
-                              : 'btn-outline-primary'
+                              : afltn.isApply
+                                ? 'btn-light disabled'
+                                : 'btn-outline-primary'
                           "
                           @click="clickApplication(afltn)"
                         >
                           {{
-                            afltn.isApply ? '소속 신청 완료' : '소속 신청하기'
+                            userStore.affiliatedCompanySq === afltn.sq
+                              ? '소속 중'
+                              : afltn.isApply
+                                ? '소속 신청 완료'
+                                : '소속 신청하기'
                           }}
                         </button>
                       </div>
@@ -232,6 +238,7 @@ import AffiliationRecruit from '@/fo/components/company/AffiliationRecruit.vue'
 import { useAffiliationStore } from '@/fo/stores/AffiliationStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
+import { useUserStore } from '@/fo/stores/userStore'
 import { onMounted, ref, watch } from 'vue'
 
 const isLoading = ref(false)
@@ -239,6 +246,7 @@ const isLoading = ref(false)
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 const affiliationStore = useAffiliationStore()
+const userStore = useUserStore()
 
 const afltnList = ref([])
 
