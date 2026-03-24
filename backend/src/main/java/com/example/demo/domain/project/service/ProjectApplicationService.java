@@ -136,6 +136,20 @@ public class ProjectApplicationService {
 				}
 
 				notificationService.send(receiverSq, null, 2602L, message, "/mypage/appliedProjects");
+
+				// 기업 지원(302)인 경우 소속 기업회원에게도 알림 발송
+				if (statusCd.equals(804L)) {
+					Long memberTypeCd = (Long) info.get("memberTypeCd");
+					if (memberTypeCd != null && memberTypeCd.equals(302L)) {
+						Long appCompanyUserSq = (Long) info.get("appCompanyUserSq");
+						if (appCompanyUserSq != null) {
+							Long projectSq = (Long) info.get("projectSq");
+							String companyMessage = "[" + projectTtl + "] 프로젝트에서 소속 멤버에게 인터뷰를 요청했습니다.";
+							String companyTargetUrl = "/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=corporate";
+							notificationService.send(appCompanyUserSq, null, 2602L, companyMessage, companyTargetUrl);
+						}
+					}
+				}
 			}
 		}
 
