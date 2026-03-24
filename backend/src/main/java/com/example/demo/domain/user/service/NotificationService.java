@@ -9,6 +9,8 @@ import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.dto.request.NotificationRequestDTO;
 import com.example.demo.domain.user.dto.response.NotificationResponseDTO;
 import com.example.demo.domain.user.mapper.NotificationMapper;
+import com.example.demo.domain.user.mapper.UserMapper;
+import com.example.demo.domain.user.util.EmailSender;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
+    private final UserMapper userMapper;
+    private final EmailSender emailSender;
 
     // 1. 알림 목록 조회
     public List<NotificationResponseDTO> getNotificationList(Long userSq) {
@@ -39,6 +43,13 @@ public class NotificationService {
         dto.setNotificationTargetUrl(url);
 
         notificationMapper.insertNotification(dto);
+
+        String email = userMapper.selectEmailByUserSq(receiver);
+        if (email != null) {
+            String subject = "[프리랜서 플랫폼] 새 알림이 도착했습니다.";
+            String body = "<h3>새 알림</h3><p>" + content + "</p>";
+            emailSender.sendAsync(email, subject, body);
+        }
     }
 
     // 4. 읽음 처리
