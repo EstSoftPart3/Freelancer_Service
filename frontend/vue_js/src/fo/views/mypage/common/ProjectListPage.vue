@@ -250,9 +250,13 @@ const projectOverlays = new Map()
 const initMap = () => {
   if (!mapContainer.value || mapInstance.value) return
 
-  // 1. 우선순위에 따른 중심 좌표 설정 (사용자 좌표 -> 없으면 서울시청)
-  const centerLat = userStore.userLat || 37.5665
-  const centerLng = userStore.userLng || 126.978
+  // 1. 우선순위에 따른 중심 좌표 설정 (저장된 프로젝트 좌표 -> 사용자 좌표 -> 서울시청)
+  const savedLat = sessionStorage.getItem('mapProjectLat')
+  const savedLng = sessionStorage.getItem('mapProjectLng')
+  const centerLat = Number(savedLat) || userStore.userLat || 37.5665
+  const centerLng = Number(savedLng) || userStore.userLng || 126.978
+  sessionStorage.removeItem('mapProjectLat')
+  sessionStorage.removeItem('mapProjectLng')
 
   mapInstance.value = new kakao.maps.Map(mapContainer.value, {
     center: new kakao.maps.LatLng(centerLat, centerLng),
@@ -638,6 +642,11 @@ const goToProjectSpecWithConfirm = (project) => {
     confirmText: '이동하기',
     cancelText: '취소',
     onConfirm: () => {
+      // 지도 모드에서 이동 시 프로젝트 좌표 저장 (뒤로가기 복원용)
+      if (isMapView.value) {
+        sessionStorage.setItem('mapProjectLat', project.latitude)
+        sessionStorage.setItem('mapProjectLng', project.longitude)
+      }
       // 유저 타입과 프로젝트 번호를 넘겨 분기 처리 실행
       navigateByUserTypeAndProjectSq(userStore.userType, project.projectSq)
       modalStore.closeModal()
