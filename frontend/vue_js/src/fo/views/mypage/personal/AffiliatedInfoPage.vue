@@ -101,18 +101,6 @@
         </div>
       </div>
 
-      <!-- 태그 -->
-      <div v-if="info.tags && info.tags.length > 0" class="form-group row align-items-center">
-        <label class="col-lg-2 col-form-label text-2">태그</label>
-        <div class="col-lg-10 d-flex flex-wrap gap-2" style="align-items: center">
-          <a
-            v-for="(tag, idx) in info.tags"
-            :key="idx"
-            class="btn btn-rounded btn-3d btn-light btn-sm d-flex align-items-center px-3 py-2"
-          >{{ tag }}</a>
-        </div>
-      </div>
-
       <!-- 입사일 -->
       <div class="form-group row align-items-center">
         <label class="col-lg-2 col-form-label text-2">입사일</label>
