@@ -23,8 +23,6 @@ public class ProjectSummary {
 	private String detailedAddressDetail; // 상세 주소 (사용자 입력 상세)
 	private String subwayAddress; // 지하철역 주소/명칭
 	private Long addressTypeCd;
-	private String descrption;
-	private String preferContent;
 	private String imageUrl;
 	private String requiredEduLvl;
 	private String devGradeNm;
@@ -60,8 +58,6 @@ public class ProjectSummary {
 				.subwayAddress(project.getSubwayAddress())
 				.addressTypeCd(project.getAddressTypeCd())
 				.projectTtl(project.getProjectTtl())
-				.descrption(project.getProjectDescriptionTxt())
-				.preferContent(project.getProjectPreferenceTxt())
 				.imageUrl(project.getProjectImageUrl())
 				.viewCnt(project.getProjectViewCnt())
 				.applicantCnt(project.getProjectCandidateCnt())
