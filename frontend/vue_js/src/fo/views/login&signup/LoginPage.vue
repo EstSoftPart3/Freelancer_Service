@@ -199,7 +199,7 @@ const login = async () => {
 
   try {
     const response = await api.$post('/login', payload)
-    const token = response.output.token
+    const token = response.output
     if (token && token.accessToken && token.refreshToken) {
       localStorage.setItem('accessToken', token.accessToken)
       localStorage.setItem('refreshToken', token.refreshToken)
