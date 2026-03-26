@@ -12,6 +12,7 @@ import {
   Pencil,
   Send,
   ArrowRight,
+  Plus,
 } from 'lucide-react'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.bubble.css'
@@ -560,11 +561,18 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                                 setAnswerContent('') // 내용은 API에서 가져와야 할 수 있음
                                 toast.info('답변 내용을 불러오는 중...')
                                 // 답변 상세를 가져와서 내용 설정
-                                boardApi.getBoardDetail(answer.sq, 1404).then((res) => {
-                                  setAnswerContent(res.output.description || '')
-                                }).catch(() => {
-                                  toast.error('답변 내용을 불러올 수 없습니다.')
-                                })
+                                boardApi
+                                  .getBoardDetail(answer.sq, 1404)
+                                  .then((res) => {
+                                    setAnswerContent(
+                                      res.output.description || ''
+                                    )
+                                  })
+                                  .catch(() => {
+                                    toast.error(
+                                      '답변 내용을 불러올 수 없습니다.'
+                                    )
+                                  })
                               }}
                             >
                               <Pencil size={10} />
@@ -601,13 +609,17 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                 </div>
 
                 {!isAnswerMode && (
-                  <Button
-                    variant='outline'
-                    onClick={() => setIsAnswerMode(true)}
-                    className='w-full'
-                  >
-                    <Reply size={14} className='mr-2' /> 답변 작성
-                  </Button>
+                  <div className='flex justify-end'>
+                    <Button
+                      className='space-x-1'
+                      // variant='outline'
+                      onClick={() => setIsAnswerMode(true)}
+                      // className='w-full'
+                    >
+                      <span>답변 등록</span> <Plus size={18} />
+                      {/* <Reply size={14} className='mr-2' /> 답변 작성 */}
+                    </Button>
+                  </div>
                 )}
 
                 {isAnswerMode && (
@@ -654,7 +666,9 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
 
                 {editingAnswer && (
                   <div className='mt-4 space-y-4 rounded-lg border bg-blue-50 p-4'>
-                    <div className='text-sm font-medium text-blue-700'>답변 수정</div>
+                    <div className='text-sm font-medium text-blue-700'>
+                      답변 수정
+                    </div>
                     <div>
                       <label className='text-sm font-medium'>답변 제목</label>
                       <input
