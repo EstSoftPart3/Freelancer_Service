@@ -250,9 +250,13 @@ const projectOverlays = new Map()
 const initMap = () => {
   if (!mapContainer.value || mapInstance.value) return
 
-  // 1. 우선순위에 따른 중심 좌표 설정 (사용자 좌표 -> 없으면 서울시청)
-  const centerLat = userStore.userLat || 37.5665
-  const centerLng = userStore.userLng || 126.978
+  // 1. 우선순위에 따른 중심 좌표 설정 (저장된 프로젝트 좌표 -> 사용자 좌표 -> 서울시청)
+  const savedLat = sessionStorage.getItem('mapProjectLat')
+  const savedLng = sessionStorage.getItem('mapProjectLng')
+  const centerLat = Number(savedLat) || userStore.userLat || 37.5665
+  const centerLng = Number(savedLng) || userStore.userLng || 126.978
+  sessionStorage.removeItem('mapProjectLat')
+  sessionStorage.removeItem('mapProjectLng')
 
   mapInstance.value = new kakao.maps.Map(mapContainer.value, {
     center: new kakao.maps.LatLng(centerLat, centerLng),
@@ -517,14 +521,17 @@ const handleSearchInArea = () => {
   updateBounds()
 }
 watch(isMapView, async (val) => {
-  // 1. URL query에 view 상태 반영 (replace로 히스토리 중복 방지)
-  const query = { ...route.query }
-  if (val) {
-    query.view = 'map'
-  } else {
-    delete query.view
+  // 1. URL이 현재 상태와 다를 때만 replace (순환 방지)
+  const currentView = route.query.view
+  if ((val && currentView !== 'map') || (!val && currentView === 'map')) {
+    const query = { ...route.query }
+    if (val) {
+      query.view = 'map'
+    } else {
+      delete query.view
+    }
+    router.replace({ query })
   }
-  router.replace({ query })
 
   // 2. 공통으로 데이터를 새로 불러옵니다. (모드에 맞는 size와 page로 요청)
   await fetchProjects()
@@ -532,9 +539,25 @@ watch(isMapView, async (val) => {
   // 3. 지도 모드로 전환된 경우에만 지도를 초기화하거나 영역을 갱신합니다.
   if (val) {
     await nextTick()
+    mapInstance.value = null
     initMap()
     // 지도 모드로 진입 시 현재 지도 영역(Bounds) 기준으로 한 번 더 필터링하고 싶다면 유지
-    updateBounds()
+    // [수정] 뒤로가기 시 relayout()으로 크기를 재계산 후 영역 검색
+    if (mapInstance.value) {
+      mapInstance.value.relayout()
+      kakao.maps.event.addListener(
+        mapInstance.value,
+        'tilesloaded',
+        function onTilesLoaded() {
+          kakao.maps.event.removeListener(
+            mapInstance.value,
+            'tilesloaded',
+            onTilesLoaded,
+          )
+          updateBounds()
+        },
+      )
+    }
   }
 })
 watch(projects, () => {
@@ -546,6 +569,15 @@ const onPageChange = (page) => {
   router.push({ query: { ...route.query, page } })
   fetchProjects()
 }
+watch(
+  () => route.query.view,
+  (newView) => {
+    const shouldBeMap = newView === 'map'
+    if (shouldBeMap !== isMapView.value) {
+      isMapView.value = shouldBeMap
+    }
+  },
+)
 watch(
   () => route.query.page,
   (newPage) => {
@@ -563,6 +595,12 @@ watch(
 onMounted(() => {
   if (!userStore.isLoggedIn || (userStore.userLat && userStore.userLng))
     fetchProjects()
+
+  if (isMapView.value) {
+    nextTick(() => {
+      initMap()
+    })
+  }
 })
 
 const updateFilters = (updated) => {
@@ -604,6 +642,11 @@ const goToProjectSpecWithConfirm = (project) => {
     confirmText: '이동하기',
     cancelText: '취소',
     onConfirm: () => {
+      // 지도 모드에서 이동 시 프로젝트 좌표 저장 (뒤로가기 복원용)
+      if (isMapView.value) {
+        sessionStorage.setItem('mapProjectLat', project.latitude)
+        sessionStorage.setItem('mapProjectLng', project.longitude)
+      }
       // 유저 타입과 프로젝트 번호를 넘겨 분기 처리 실행
       navigateByUserTypeAndProjectSq(userStore.userType, project.projectSq)
       modalStore.closeModal()

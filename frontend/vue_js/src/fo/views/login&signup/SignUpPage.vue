@@ -54,8 +54,6 @@ onMounted(() => {
   const type = route.query.loginType
   if (type === 'PERSONAL' || type === 'COMPANY') {
     signUpType.value = type
-
-    router.replace({ path: route.path })
   }
   // console.log('signUpType.value', signUpType.value)
 })

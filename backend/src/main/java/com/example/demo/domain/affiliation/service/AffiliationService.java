@@ -177,11 +177,10 @@ public class AffiliationService {
 		}
 
 		Long companySq = ((Number) map.get("companySq")).longValue();
-		List<String> tags = affiliationMapper.findTags(companySq);
 		String imgNm = affiliationMapper.findProfileImg(companySq);
 		String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
 
-		return MyAffiliationInfoResponse.fromMap(map, tags, imageUrl);
+		return MyAffiliationInfoResponse.fromMap(map, imageUrl);
 	}
 
 	// 소속 탈퇴
@@ -208,7 +207,7 @@ public class AffiliationService {
 					userSq,
 					2603L,
 					"[" + userNm + "]님이 소속을 탈퇴하였습니다.",
-					"/mypage/affiliationMemberList");
+					"/mypage/affiliatedMembers");
 		}
 	}
 

@@ -136,6 +136,15 @@ public class ProjectApplicationService {
 				}
 
 				notificationService.send(receiverSq, null, 2602L, message, "/mypage/appliedProjects");
+
+				// 기업 지원(302)인 경우 소속 기업회원에게도 알림 발송
+				Long memberTypeCd = (Long) info.get("memberTypeCd");
+				if (memberTypeCd != null && memberTypeCd.equals(302L)) {
+					Long appCompanyUserSq = (Long) info.get("appCompanyUserSq");
+					if (appCompanyUserSq != null) {
+						notificationService.send(appCompanyUserSq, null, 2602L, message, "/mypage/appliedProjects");
+					}
+				}
 			}
 		}
 
@@ -162,10 +171,16 @@ public class ProjectApplicationService {
 
 	@Transactional
 	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request, Long userTypeCd) {
+		Long projectSq = applicationMapper.findProjectBySq(request.getApplicationSq());
+		Project project = projectMapper.findBySq(projectSq);
+
+		// 삭제된 프로젝트에는 인터뷰 신청 불가
+		if (project.getProjectIsDeletedYn().equals("Y")) {
+			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
+		}
+
 		// 개인회원(301)은 모집 기간 만료 후 인터뷰 시간 선택 불가
 		if (userTypeCd.equals(301L)) {
-			Long projectSq = applicationMapper.findProjectBySq(request.getApplicationSq());
-			Project project = projectMapper.findBySq(projectSq);
 			if (project.getProjectRecruitEndDt().isBefore(LocalDate.now())) {
 				throw new IllegalArgumentException("모집 기간이 종료된 프로젝트입니다.");
 			}
@@ -186,7 +201,7 @@ public class ProjectApplicationService {
 			Long applicantUserSq = (Long) info.get("applicantUserSq");
 			String applicantNm = (String) info.get("applicantNm");
 			String projectTtl = (String) info.get("projectTtl");
-			Long projectSq = (Long) info.get("projectSq");
+			Long interviewProjectSq = (Long) info.get("projectSq");
 			Long typeCd = (Long) info.get("memberTypeCd");
 
 			// [오류 해결] java.sql.Timestamp 형변환 처리
@@ -205,28 +220,16 @@ public class ProjectApplicationService {
 
 				// 지원 유형 매핑 (301: personal, 302: corporate)
 				String appTyp = (typeCd != null && typeCd.equals(302L)) ? "corporate" : "personal";
+				String companyTargetUrl = "/mypage/affiliationProjectList?projectSq=" + interviewProjectSq + "&appTyp=" + appTyp;
 
-				// 메시지 구성
-				if (userTypeCd.equals(302L)) {
-					// 소속 기업이 인터뷰 시간을 선택한 경우 → 개인 + 프로젝트 기업 모두에게 알림
-					String applicantMessage = String.format("[%s] 프로젝트의 인터뷰 시간이 확정되었습니다. (일시: %s)",
-							projectTtl, formattedDate);
+				//	프로젝트 담당회사에게 항상 알림
+				String applicantMessage = String.format("[%s] 프로젝트의 인터뷰 시간이 확정되었습니다. (일시: %s)",
+						projectTtl, formattedDate);
+				notificationService.send(companyUserSq, null, 2602L, applicantMessage, companyTargetUrl);
+
+				// 기업 지원(302)인 경우 개인에게도 알림
+				if (typeCd != null && typeCd.equals(302L)) {
 					notificationService.send(applicantUserSq, null, 2602L, applicantMessage, "/mypage/appliedProjects");
-
-					String companyMessage = String.format("[%s] 프로젝트의 지원자(%s님)의 인터뷰 시간이 확정되었습니다. (일시: %s)",
-							projectTtl, applicantNm, formattedDate);
-					String companyTargetUrl = "/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp;
-					notificationService.send(companyUserSq, null, 2602L, companyMessage, companyTargetUrl);
-				} else {
-					// 개인이 인터뷰 시간을 선택한 경우 → 프로젝트 기업에게 알림
-					String message = String.format("[%s] 프로젝트의 지원자(%s님)가 인터뷰 시간을 확정했습니다. (일시: %s)",
-							projectTtl, applicantNm, formattedDate);
-
-					// 모달 오픈용 URL
-					String targetUrl = "/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp;
-
-					// 알림 발송
-					notificationService.send(companyUserSq, null, 2602L, message, targetUrl);
 				}
 			}
 		}
