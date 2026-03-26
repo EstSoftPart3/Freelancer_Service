@@ -2,6 +2,7 @@ package com.example.demo.domain.user.controller;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,19 +23,19 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     // 현재 접속한 사용자의 알림 목록 조회
-    @GetMapping("/{userSq}")
-    public List<NotificationResponseDTO> getNotifications(@PathVariable Long userSq) {
+    @GetMapping
+    public List<NotificationResponseDTO> getNotifications(@AuthenticationPrincipal Long userSq) {
         return notificationService.getNotificationList(userSq);
     }
 
     // 읽지 않은 알림 개수
-    @GetMapping("/unread-count/{userSq}")
-    public int getUnreadCount(@PathVariable Long userSq) {
+    @GetMapping("/unread-count")
+    public int getUnreadCount(@AuthenticationPrincipal Long userSq) {
         return notificationService.getUnreadCount(userSq);
     }
 
     // 알림 읽음 처리
-    @PatchMapping("/{notificationSq}/read")
+    @PatchMapping("/{notificationSq}")
     public void readNotification(@PathVariable Long notificationSq) {
         notificationService.markAsRead(notificationSq);
     }
@@ -46,14 +47,14 @@ public class NotificationController {
     }
 
     // 모두 읽음 처리
-    @PatchMapping("/read-all/{userSq}")
-    public void readAllNotifications(@PathVariable Long userSq) {
+    @PatchMapping
+    public void readAllNotifications(@AuthenticationPrincipal Long userSq) {
         notificationService.markAllAsRead(userSq);
     }
 
     // 전체 삭제
-    @DeleteMapping("/all/{userSq}")
-    public void deleteAllNotifications(@PathVariable Long userSq) {
+    @DeleteMapping
+    public void deleteAllNotifications(@AuthenticationPrincipal Long userSq) {
         notificationService.removeAllNotifications(userSq);
     }
 }
