@@ -570,16 +570,20 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                   )}
                 </div>
 
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setEditingAnswerForDrawer(null)
-                    setIsAnswerDrawerOpen(true)
-                  }}
-                  className='w-full'
-                >
-                  <Reply size={14} className='mr-2' /> 답변 작성
-                </Button>
+                <div className='flex justify-end'>
+                  <Button
+                    // variant='outline'
+                    onClick={() => {
+                      setEditingAnswerForDrawer(null)
+                      setIsAnswerDrawerOpen(true)
+                    }}
+                    // className='w-full'
+                    className='space-x-1'
+                  >
+                    {/* <Reply size={14} className='mr-2' /> 답변 등록 */}
+                    <span>답변 등록</span> <Plus size={18} />
+                  </Button>
+                </div>
 
                 <BoardMutateDrawer
                   open={isAnswerDrawerOpen}
