@@ -43,7 +43,7 @@ interface SkillTag {
 }
 
 const schema = z.object({
-  boardTypeCd: z.string().min(1, '게시글 유형을 선택해주세요.'),
+  boardTypeCd: z.string().optional(),
   title: z
     .string()
     .transform((val) => val.trim())
@@ -61,9 +61,11 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentRow?: AdminBoard
+  parentBoardSq?: number
 }
 
-export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
+export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardSq }: Props) {
+  const isAnswerMode = parentBoardSq !== undefined
   const isUpdate = !!currentRow
 
   const [normalTags, setNormalTags] = useState<string[]>([])
@@ -118,14 +120,14 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     if (open) {
       if (isUpdate) fetchDetail()
       else {
-        reset({ boardTypeCd: '1401', title: '', description: '' })
+        reset({ boardTypeCd: isAnswerMode ? '1404' : '1401', title: '', description: '' })
         setNormalTags([])
         setSkillTags([])
         setFiles([])
         setAttachments([])
       }
     }
-  }, [open, isUpdate, currentRow, reset])
+  }, [open, isUpdate, isAnswerMode, currentRow, reset])
 
   // 태그 추가 로직 (일반/기술 공통 사용 가능하도록 리팩토링 가능)
   const addNormalTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -177,21 +179,23 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         attachments.forEach((att) =>
           formData.append('attachments', att.fileSq.toString())
         )
-        // [수정] boardTypeCd 인자 추가
         await boardApi.updateBoard(
           currentRow.sq,
-          Number(data.boardTypeCd),
+          isAnswerMode ? 1404 : Number(data.boardTypeCd),
           formData
         )
-        toast.success('게시글이 수정되었습니다.')
+        toast.success(isAnswerMode ? '답변이 수정되었습니다.' : '게시글이 수정되었습니다.')
+      } else if (isAnswerMode) {
+        formData.append('boardSq', String(parentBoardSq))
+        await boardApi.createAnswer(formData)
+        toast.success('답변이 등록되었습니다.')
       } else {
-        // [수정] 선택된 boardTypeCd 사용
         await boardApi.createBoard(Number(data.boardTypeCd), formData)
         toast.success('새 게시글이 등록되었습니다.')
       }
 
       onOpenChange(false)
-      setTimeout(() => window.location.reload(), 500)
+      if (!isAnswerMode) setTimeout(() => window.location.reload(), 500)
     } catch (_) {
       toast.error('저장에 실패했습니다.')
     }
@@ -209,7 +213,9 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           <>
             <SheetHeader className='text-left'>
               <SheetTitle>
-                {isUpdate ? '게시글 수정' : '게시글 작성'}
+                {isAnswerMode
+                  ? isUpdate ? '답변 수정' : '답변 작성'
+                  : isUpdate ? '게시글 수정' : '게시글 작성'}
               </SheetTitle>
               <SheetDescription>
                 내용을 입력하고 태그를 분류해주세요.
@@ -217,7 +223,8 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             </SheetHeader>
 
             <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-6'>
-              {/* [추가] 게시글 유형 선택 섹션 */}
+              {/* 게시글 유형 선택 (답변 모드에서는 숨김) */}
+              {!isAnswerMode && (
               <div className='space-y-2'>
                 <Label>게시글 유형</Label>
                 <Select
@@ -234,6 +241,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {/* 제목/내용 필드는 사용자님 기존 코드와 동일 */}
               <div className='space-y-2'>

@@ -110,4 +110,12 @@ export const boardApi = {
   deleteComment: async (commentSq: number) => {
     return await api.$delete(`/admin/board/comment/${commentSq}`)
   },
+
+  /** * Q&A 답변 등록
+   */
+  createAnswer: async (formData: FormData) => {
+    return await api.$post('/admin/board/answer', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 }

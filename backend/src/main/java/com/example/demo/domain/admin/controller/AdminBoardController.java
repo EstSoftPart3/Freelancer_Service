@@ -1,5 +1,6 @@
 package com.example.demo.domain.admin.controller;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,9 @@ import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.admin.dto.response.AdminBoardDetailResponseDTO;
 import com.example.demo.domain.admin.dto.response.AdminBoardListResponseDTO;
 import com.example.demo.domain.admin.service.AdminBoardService;
+import com.example.demo.domain.community.dto.request.AnswerRequest;
 import com.example.demo.domain.community.dto.request.BoardRequest;
+import com.example.demo.domain.community.service.AnswerService;
 import com.example.demo.domain.community.service.BoardService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminBoardController {
     private final AdminBoardService adminBoardService;
     private final BoardService boardService;
+    private final AnswerService answerService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<AdminBoardListResponseDTO>> getBoards(
@@ -146,5 +150,22 @@ public class AdminBoardController {
         adminBoardService.deleteCommentMaster(commentSq);
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "댓글이 삭제되었습니다.", null));
+    }
+
+    
+    /**
+     * Q&A 답변 등록
+     */
+    @PostMapping("/answer")
+    public ResponseEntity<ApiResponse<Void>> createAnswer(
+            @AuthenticationPrincipal Long userSq,
+            @ModelAttribute AnswerRequest answerRequest) {
+
+        answerRequest.setUserSq(userSq);
+        if (answerRequest.getNormalTags() == null) answerRequest.setNormalTags(Collections.emptyList());
+        if (answerRequest.getSkillTags() == null) answerRequest.setSkillTags(Collections.emptyList());
+        answerService.createAnswer(answerRequest);
+
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED, "답변이 등록되었습니다.", null));
     }
 }
