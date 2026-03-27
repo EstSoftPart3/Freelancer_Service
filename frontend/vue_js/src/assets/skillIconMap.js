@@ -12,9 +12,8 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
   typescript:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+  // jsp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jsp/jsp-original.svg',
   php: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
-  'c#': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg',
-  go: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg',
 
   // Framework & Library
   springboot:
@@ -31,9 +30,8 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg',
   nextjs:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
-  nuxtjs:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nuxtjs/nuxtjs-original.svg',
-  net: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg',
+  websquare:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/webcomponents/webcomponents-original.svg',
 
   // Tools
   docker:
@@ -75,8 +73,8 @@ const iconMap = {
   mongodb:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
   mariadb: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mariadb.svg',
-  redis:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg',
+  mybatis:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mybatis/mybatis-original.svg',
   postgresql:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
   sqlite:

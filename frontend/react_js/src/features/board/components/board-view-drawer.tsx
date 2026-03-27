@@ -12,6 +12,7 @@ import {
   Pencil,
   Send,
   ArrowRight,
+  Plus,
 } from 'lucide-react'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.bubble.css'
@@ -512,6 +513,23 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               className='h-6 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100'
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setEditingAnswer(answer)
+                                setAnswerTitle(answer.ttl)
+                                setAnswerContent('') // 내용은 API에서 가져와야 할 수 있음
+                                toast.info('답변 내용을 불러오는 중...')
+                                // 답변 상세를 가져와서 내용 설정
+                                boardApi
+                                  .getBoardDetail(answer.sq, 1404)
+                                  .then((res) => {
+                                    setAnswerContent(
+                                      res.output.description || ''
+                                    )
+                                  })
+                                  .catch(() => {
+                                    toast.error(
+                                      '답변 내용을 불러올 수 없습니다.'
+                                    )
+                                  })
                                 setEditingAnswerForDrawer({
                                   sq: answer.sq,
                                   boardTypeCd: 1404,
@@ -552,16 +570,20 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                   )}
                 </div>
 
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setEditingAnswerForDrawer(null)
-                    setIsAnswerDrawerOpen(true)
-                  }}
-                  className='w-full'
-                >
-                  <Reply size={14} className='mr-2' /> 답변 작성
-                </Button>
+                <div className='flex justify-end'>
+                  <Button
+                    // variant='outline'
+                    onClick={() => {
+                      setEditingAnswerForDrawer(null)
+                      setIsAnswerDrawerOpen(true)
+                    }}
+                    // className='w-full'
+                    className='space-x-1'
+                  >
+                    {/* <Reply size={14} className='mr-2' /> 답변 등록 */}
+                    <span>답변 등록</span> <Plus size={18} />
+                  </Button>
+                </div>
 
                 <BoardMutateDrawer
                   open={isAnswerDrawerOpen}
@@ -575,7 +597,10 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                   parentBoardSq={currentRow?.sq}
                   currentRow={
                     editingAnswerForDrawer
-                      ? ({ sq: editingAnswerForDrawer.sq, boardTypeCd: 1404 } as AdminBoard)
+                      ? ({
+                          sq: editingAnswerForDrawer.sq,
+                          boardTypeCd: 1404,
+                        } as AdminBoard)
                       : undefined
                   }
                 />

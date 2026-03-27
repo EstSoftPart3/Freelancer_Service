@@ -2,173 +2,301 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.admin.mapper.AdminUsersMapper">
-    
-	<select id="findAllUsers" resultType="com.example.demo.domain.admin.dto.AdminUsersListDTO">                                                 
-		  SELECT
-	          u.user_sq           AS userSq,
-	          u.user_type_cd      AS userTypeCd,
-	          u.user_id           AS userId,
-	          CASE WHEN f.file_save_nm IS NOT NULL
-	          	   THEN CONCAT('/api/files/', f.file_save_nm)
-	          	   ELSE NULL END AS profileImageUrl,
-	          u.user_nm           AS userNm,
-	          COALESCE(c.company_nm, c2.company_nm) AS companyNm,
-	          u.user_email        AS userEmail,
-	          u.user_phone_num    AS userPhoneNum,
-	          u.user_gender_cd    AS userGenderCd,
-	          u.user_created_at_dtm   AS userCreatedDtm,
-	          u.user_modified_at_dtm  AS userModifiedDtm,
-	          u.user_is_deleted_yn    AS userIsDeletedYn,
-	          u.user_signup_type_cd   AS userSignupTypeCd,
-	          u.user_is_activate_yn   AS userIsActivateYn,
-	          u.user_agreed_privacy_policy_yn AS userAgreedPrivacyPolicyYn
-	      FROM TBL_USER_M u
-	      LEFT JOIN TBL_COMPANY_S c
-	          ON c.user_sq = u.user_sq
-	      LEFT JOIN TBL_COMPANY_MEMBER_R cm
-	          ON cm.user_sq = u.user_sq
-	          AND cm.company_member_status_cd = 401
-	      LEFT JOIN TBL_COMPANY_S c2 
-	      	  ON c2.company_sq = cm.company_sq
-	      LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
-	          ON up.user_sq = u.user_sq
-	      LEFT JOIN TBL_COMMON_FILE_S f 
-	      	  ON f.file_sq = up.file_sq
-	      WHERE 1=1
-	      <if test="typeCds != null and typeCds.size() > 0">
-	          AND u.user_type_cd IN
-	          <foreach item="t" collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
-	      </if>
-	      <if test="keyword != null and keyword != ''">
-	          AND (u.user_nm   LIKE CONCAT('%', #{keyword}, '%'))
-	      </if>
-	      ORDER BY
-	      <choose>
-		      <when test="sortField == 'userTypeCd'">u.user_type_cd</when>
-		      <when test="sortField == 'userId'">u.user_id</when>
-		      <when test="sortField == 'profileImageUrl'">up.file_sq</when>
-		      <when test="sortField == 'userNm'">u.user_nm</when>
-		      <when test="sortField == 'companyNm'">COALESCE(c.company_nm, c2.company_nm)</when>
-		      <when test="sortField == 'userEmail'">u.user_email</when>
-		      <when test="sortField == 'userPhoneNum'">u.user_phone_num</when>
-		      <when test="sortField == 'userGenderCd'">u.user_gender_cd</when>
-		      <when test="sortField == 'userCreatedDtm'">u.user_created_at_dtm</when>
-		      <when test="sortField == 'userModifiedDtm'">u.user_modified_at_dtm</when>
-		      <when test="sortField == 'userIsDeletedYn'">u.user_is_deleted_yn</when>
-		      <when test="sortField == 'userSignupTypeCd'">u.user_signup_type_cd</when>
-		      <when test="sortField == 'userIsActivateYn'">u.user_is_activate_yn</when>
-		      <when test="sortField == 'userAgreedPrivacyPolicyYn'">u.user_agreed_privacy_policy_yn</when>
-	          <otherwise>u.user_sq</otherwise>
-	      </choose>
-	      ${sortOrder}
-	      LIMIT #{size} OFFSET #{offset}
-	  </select>
-	  
-	  
-	  <select id="findAllUsersCnt" resultType="Long">
-		  	SELECT
-		  		COUNT(*) 
-		  	FROM TBL_USER_M u
-		    LEFT JOIN TBL_COMPANY_S c
-		        ON c.user_sq = u.user_sq
-		    LEFT JOIN TBL_COMPANY_MEMBER_R cm
-		        ON cm.user_sq = u.user_sq
-		        AND cm.company_member_status_cd = 401
-		    LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
-		        ON up.user_sq = u.user_sq
-		    WHERE 1=1
-		    <if test="typeCds != null and typeCds.size() > 0">
-	          	AND u.user_type_cd IN
-	          	<foreach item="t" collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
-	      	</if>
-	      	<if test="keyword != null and keyword != ''">
-	          	AND (u.user_nm   LIKE CONCAT('%', #{keyword}, '%'))
-	      	</if>
-	  </select>
-	  
-	  <update id="updateUser">
-	  		UPDATE
-	  			TBL_USER_M
-	  		<set>
-	  			user_nm					= #{dto.userNm},
-	  			user_email				= #{dto.userEmail},
-	  			user_phone_num			= #{dto.userPhoneNum},
-	  			user_type_cd			= #{dto.userTypeCd},
-	  			user_gender_cd			= #{dto.userGenderCd},
-	  			user_is_activate_yn		= #{dto.userIsActivateYn},
-	  			user_is_deleted_yn		= #{dto.userIsDeletedYn},
-	  			user_agreed_privacy_policy_yn = #{dto.userAgreedPrivacyPolicyYn},
-	  			<if test="encodePw != null">
-	  				user_pw = #{encodePw},
-	  			</if>
-	  			user_modified_at_dtm	= NOW()
-	  		</set>
-	  		WHERE 
-	  			user_sq = #{userSq}
-	  </update>
-	  
-	  <select id="findFileSqByUserSq" resultType="Long">
-	  		SELECT
-	  			file_sq
-	  		FROM
-	  			TBL_USER_PROFILE_IMAGE_S
-	  		WHERE
-	  			user_sq = #{userSq} LIMIT 1
-	  </select>
-	  
-	  <select id="findFileSaveNmByFileSq" resultType="String">
-	  		SELECT
-	  			file_save_nm
-	  		FROM
-	  			TBL_COMMON_FILE_S
-	  		WHERE
-	  			file_sq = #{fileSq}
-	  </select>
-	  
-	  <update id="updateFileSaveNm">
-	  		UPDATE
-	  			TBL_COMMON_FILE_S
-	  		SET
-	  			file_save_nm = #{savedNm}
-	  		WHERE
-	  			file_sq = #{fileSq}
-	  </update>
-	  
-	  <update id="updateCompanyNm">
-	  		UPDATE
-	  			TBL_COMPANY_S c
-	  		INNER JOIN (
-				SELECT company_sq FROM TBL_COMPANY_S WHERE user_sq = #{userSq}
-				UNION
-				SELECT company_sq FROM TBL_COMPANY_MEMBER_R
-				WHERE user_sq = #{userSq} AND company_member_status_cd = 401
-			) target ON c.company_sq = target.company_sq
-	  		SET
-	  			c.company_nm = #{companyNm}
-	  </update>
-	  
-	  <insert id="insertFile">
-	  		INSERT INTO
-	  			TBL_COMMON_FILE_S 
-	  			(file_original_nm, file_save_nm, file_typ, file_size)
-	  		VALUES
-	  			(#{uploaded.originalName}, #{uploaded.savedName}, #{uploaded.contentType}, #{uploaded.size})
-	  </insert>
-	  
-	  <select id="findFileSqBySavedNm" resultType="Long">
-	  		SELECT
-	  			file_sq
-	  		FROM
-	  			TBL_COMMON_FILE_S
-	  		WHERE
-	  			file_save_nm = #{savedNm}
-	  </select>
-	  
-	  <insert id="insertUserProfileImage">
-	  		INSERT INTO
-	  			TBL_USER_PROFILE_IMAGE_S
-	  			(user_sq, file_sq)
-	  		VALUES
-	  			(#{userSq}, #{fileSq})
-	  </insert>
+
+    <select id="findAllUsers" resultType="com.example.demo.domain.admin.dto.AdminUsersListDTO">
+        SELECT
+        u.user_sq AS userSq,
+        u.user_type_cd AS userTypeCd,
+        u.user_id AS userId,
+        CASE WHEN f.file_save_nm IS NOT NULL
+        THEN CONCAT('/api/files/', f.file_save_nm)
+        ELSE NULL END AS profileImageUrl,
+        u.user_nm AS userNm,
+        COALESCE(c.company_sq, c2.company_sq) AS companySq,
+        COALESCE(c.company_nm, c2.company_nm) AS companyNm,
+        u.user_email AS userEmail,
+        u.user_phone_num AS userPhoneNum,
+        u.user_gender_cd AS userGenderCd,
+        u.user_birth_dt AS userBirthDt,
+        u.user_created_at_dtm AS userCreatedDtm,
+        u.user_modified_at_dtm AS userModifiedDtm,
+        u.user_is_deleted_yn AS userIsDeletedYn,
+        u.user_signup_type_cd AS userSignupTypeCd,
+        u.user_is_activate_yn AS userIsActivateYn,
+        u.user_agreed_privacy_policy_yn AS userAgreedPrivacyPolicyYn
+        FROM TBL_USER_M u
+        LEFT JOIN TBL_COMPANY_S c
+        ON c.user_sq = u.user_sq
+        LEFT JOIN TBL_COMPANY_MEMBER_R cm
+        ON cm.user_sq = u.user_sq
+        AND cm.company_member_status_cd = 401
+        LEFT JOIN TBL_COMPANY_S c2
+        ON c2.company_sq = cm.company_sq
+        LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
+        ON up.user_sq = u.user_sq
+        LEFT JOIN TBL_COMMON_FILE_S f
+        ON f.file_sq = up.file_sq
+        WHERE 1=1
+        <if test="typeCds != null and typeCds.size() > 0">
+            AND u.user_type_cd IN
+            <foreach item="t" collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <!-- companySqs: 회사 SQ로 필터링 (개인 회사 c.company_sq 또는 멤버 회사 c2.company_sq) -->
+        <if test="companySqs != null and companySqs.size() > 0">
+            AND (c.company_sq IN
+            <foreach item="t" collection="companySqs" open="(" separator="," close=")">#{t}</foreach>
+            OR c2.company_sq IN
+            <foreach item="t" collection="companySqs" open="(" separator="," close=")">#{t}</foreach>)
+        </if>
+        <!-- userGenderCds: 사용자 성별 코드로 필터링 -->
+        <if test="userGenderCds != null and userGenderCds.size() > 0">
+            AND u.user_gender_cd IN
+            <foreach item="t" collection="userGenderCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY
+        <choose>
+            <when test="sortField == 'userTypeCd'">u.user_type_cd</when>
+            <when test="sortField == 'userId'">u.user_id</when>
+            <when test="sortField == 'profileImageUrl'">up.file_sq</when>
+            <when test="sortField == 'userNm'">u.user_nm</when>
+            <when test="sortField == 'companyNm'">COALESCE(c.company_nm, c2.company_nm)</when>
+            <when test="sortField == 'userEmail'">u.user_email</when>
+            <when test="sortField == 'userPhoneNum'">u.user_phone_num</when>
+            <when test="sortField == 'userGenderCd'">u.user_gender_cd</when>
+            <when test="sortField == 'userCreatedDtm'">u.user_created_at_dtm</when>
+            <when test="sortField == 'userModifiedDtm'">u.user_modified_at_dtm</when>
+            <when test="sortField == 'userIsDeletedYn'">u.user_is_deleted_yn</when>
+            <when test="sortField == 'userSignupTypeCd'">u.user_signup_type_cd</when>
+            <when test="sortField == 'userIsActivateYn'">u.user_is_activate_yn</when>
+            <when test="sortField == 'userAgreedPrivacyPolicyYn'">u.user_agreed_privacy_policy_yn</when>
+            <otherwise>u.user_sq</otherwise>
+        </choose>
+        ${sortOrder}
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <select id="findAllUsersCnt" resultType="Long">
+        SELECT
+        COUNT(*)
+        FROM TBL_USER_M u
+        LEFT JOIN TBL_COMPANY_S c
+        ON c.user_sq = u.user_sq
+        LEFT JOIN TBL_COMPANY_MEMBER_R cm
+        ON cm.user_sq = u.user_sq
+        AND cm.company_member_status_cd = 401
+        LEFT JOIN TBL_COMPANY_S c2 ON c2.company_sq = cm.company_sq
+        LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
+        ON up.user_sq = u.user_sq
+        WHERE 1=1
+        <if test="typeCds != null and typeCds.size() > 0">
+            AND u.user_type_cd IN
+            <foreach item="t" collection="typeCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <!-- companyNms 필터 추가 -->
+        <if test="companySqs != null and companySqs.size() > 0">
+            AND (c.company_sq IN
+            <foreach item="t" collection="companySqs" open="(" separator="," close=")">#{t}</foreach>
+            OR c2.company_sq IN
+            <foreach item="t" collection="companySqs" open="(" separator="," close=")">#{t}</foreach>)
+        </if>
+        <!-- userGenderCds 필터 추가 -->
+        <if test="userGenderCds != null and userGenderCds.size() > 0">
+            AND u.user_gender_cd IN
+            <foreach item="t" collection="userGenderCds" open="(" separator="," close=")">#{t}</foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="findAllCompanies"
+            resultType="com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO">
+        SELECT c.company_sq      AS companySq,
+               c.company_nm      AS companyNm,
+               c.company_ceo_nm  AS companyCeoNm,
+               c.company_open_dt AS companyOpenDt,
+               c.company_url     AS companyUrl,
+               c.company_biz_num AS companyBizNum,
+               a.address         AS companyAddress,
+               a.detail_address  AS companyDetailAddress,
+               u.user_type_cd    AS userTypeCd,
+               u.user_sq         AS userSq,
+               u.user_id         AS userId,
+               u.user_nm         AS userNm,
+               u.user_phone_num  AS userPhoneNum
+        FROM TBL_COMPANY_S c
+                 JOIN TBL_USER_M u ON u.user_sq = c.user_sq
+                 LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = c.address_sq
+        <if test="keyword != null and keyword != ''">
+            WHERE (c.company_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY c.company_sq ASC
+    </select>
+
+
+    <select id="findCompany" resultType="com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO">
+        SELECT c.company_sq      AS companySq,
+               c.company_nm      AS companyNm,
+               c.company_ceo_nm  AS companyCeoNm,
+               c.company_open_dt AS companyOpenDt,
+               c.company_url     AS companyUrl,
+               c.company_biz_num AS companyBizNum,
+--             a.zonecode            AS companyZonecode,
+               a.address         AS companyAddress,
+               a.detail_address  AS companyDetailAddress,
+--             a.sigungu             AS companySigungu,
+               u.user_type_cd    AS userTypeCd,
+               u.user_sq         AS userSq,
+               u.user_id         AS userId,
+               u.user_nm         AS userNm,
+               u.user_phone_num  AS userPhoneNum
+        FROM TBL_COMPANY_S c
+                 JOIN TBL_USER_M u ON u.user_sq = c.user_sq
+                 LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = c.address_sq
+        WHERE c.company_sq = #{companySq}
+    </select>
+
+
+    <update id="updateUser">
+        UPDATE
+        TBL_USER_M
+        <set>
+            user_nm = #{dto.userNm},
+            user_email = #{dto.userEmail},
+            user_phone_num = #{dto.userPhoneNum},
+            user_type_cd = #{dto.userTypeCd},
+            user_gender_cd = #{dto.userGenderCd},
+            user_birth_dt = #{dto.userBirthDt},
+            user_is_activate_yn = #{dto.userIsActivateYn},
+            user_is_deleted_yn = #{dto.userIsDeletedYn},
+            user_agreed_privacy_policy_yn = #{dto.userAgreedPrivacyPolicyYn},
+            <if test="encodePw != null">
+                user_pw = #{encodePw},
+            </if>
+            user_modified_at_dtm = NOW()
+        </set>
+        WHERE
+        user_sq = #{userSq}
+    </update>
+
+    <select id="findFileSqByUserSq" resultType="Long">
+        SELECT
+            file_sq
+        FROM
+            TBL_USER_PROFILE_IMAGE_S
+        WHERE
+            user_sq = #{userSq} LIMIT 1
+    </select>
+
+    <select id="findFileSaveNmByFileSq" resultType="String">
+        SELECT
+            file_save_nm
+        FROM
+            TBL_COMMON_FILE_S
+        WHERE
+            file_sq = #{fileSq}
+    </select>
+
+    <update id="updateFileSaveNm">
+        UPDATE
+            TBL_COMMON_FILE_S
+        SET
+            file_save_nm = #{savedNm}
+        WHERE
+            file_sq = #{fileSq}
+    </update>
+
+    <update id="updateCompanyNm">
+        UPDATE
+            TBL_COMPANY_S c
+            INNER JOIN (
+            SELECT company_sq FROM TBL_COMPANY_S WHERE user_sq = #{userSq}
+            UNION
+            SELECT company_sq FROM TBL_COMPANY_MEMBER_R
+            WHERE user_sq = #{userSq} AND company_member_status_cd = 401
+            ) target ON c.company_sq = target.company_sq
+            SET
+                c.company_nm = #{companyNm}
+    </update>
+
+    <insert id="insertFile">
+        INSERT INTO
+            TBL_COMMON_FILE_S
+            (file_original_nm, file_save_nm, file_typ, file_size)
+        VALUES
+            (#{uploaded.originalName}, #{uploaded.savedName}, #{uploaded.contentType}, #{uploaded.size})
+    </insert>
+
+    <select id="findFileSqBySavedNm" resultType="Long">
+        SELECT
+            file_sq
+        FROM
+            TBL_COMMON_FILE_S
+        WHERE
+            file_save_nm = #{savedNm}
+    </select>
+
+    <insert id="insertUserProfileImage">
+        INSERT INTO
+            TBL_USER_PROFILE_IMAGE_S
+            (user_sq, file_sq)
+        VALUES
+            (#{userSq}, #{fileSq})
+    </insert>
+
+    <!-- 소속 JOIN 기록 INSERT -->
+    <insert id="insertCompanyMember">
+        INSERT INTO TBL_COMPANY_MEMBER_R
+            (user_sq, company_sq, company_member_join_dt, company_member_status_cd)
+        VALUES (#{userSq}, #{companySq}, NOW(), 401)
+    </insert>
+
+    <!-- 현재 활성 소속 LEAVE 처리 (company_member_leave_dt 갱신, status=402) -->
+    <update id="updateCompanyMemberLeave">
+        UPDATE TBL_COMPANY_MEMBER_R
+        SET company_member_leave_dt  = NOW(),
+            company_member_status_cd = 402
+        WHERE user_sq = #{userSq}
+          AND company_member_leave_dt IS NULL
+          AND company_member_status_cd = 401
+    </update>
+
+    <!-- 회사 정보 수정 (TBL_COMPANY_S, TBL_ADDRESS_S, TBL_USER_M) -->
+    <update id="updateCompany">
+        UPDATE TBL_COMPANY_S c
+        LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = c.address_sq
+        LEFT JOIN TBL_USER_M u ON u.user_sq = c.user_sq
+        <set>
+            <!--
+                companyAuthStatusCd 존재 여부로 분기
+                - null → 인증 필드/상태 건드리지 않음 (URL·주소 등만 수정)
+                - 2502 → 인증 필드 + 상태 업데이트 (인증 완료) ← 이 케이스만 존재
+            -->
+            <if test="dto.companyAuthStatusCd != null">
+                c.company_nm             = #{dto.companyNm},
+                c.company_ceo_nm         = #{dto.companyCeoNm},
+                c.company_biz_num        = #{dto.companyBizNum},
+                c.company_open_dt        = #{dto.companyOpenDt},
+                c.company_auth_status_cd = #{dto.companyAuthStatusCd},
+            </if>
+
+            c.company_url = #{dto.companyUrl},
+
+            <if test="dto.companyAddress != null and dto.companyAddress != ''">
+                a.address = #{dto.companyAddress},
+            </if>
+            <if test="dto.companyDetailAddress != null and dto.companyDetailAddress != ''">
+                a.detail_address = #{dto.companyDetailAddress},
+            </if>
+            <if test="dto.userPhoneNum != null and dto.userPhoneNum != ''">
+                u.user_phone_num = #{dto.userPhoneNum},
+            </if>
+        </set>
+        WHERE c.company_sq = #{companySq}
+    </update>
+
 </mapper>

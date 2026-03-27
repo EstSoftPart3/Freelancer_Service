@@ -5,7 +5,7 @@
 
     <select id="findParentSkillTags"
         resultType="com.example.demo.domain.community.entity.CommonSkillTag"> SELECT * FROM
-        TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool', 'DBMS', 'Cloud', 'IDE') </select>
+        TBL_SKILL_TAG_C WHERE skill_tag_nm IN ('Language', 'FrameWork', 'Tool', 'DBMS', 'ETC') </select>
 
     <select id="findAll" resultType="com.example.demo.domain.community.entity.CommonSkillTag">
         SELECT * FROM TBL_SKILL_TAG_C WHERE parent_skill_tag_sq IN <foreach collection="skillTags"
