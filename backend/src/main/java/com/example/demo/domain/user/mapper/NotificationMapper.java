@@ -27,6 +27,12 @@ public interface NotificationMapper {
     // 5. 알림 삭제 (논리 삭제)
     int deleteNotification(Long notificationSq);
 
+    // 6. 모든 미읽음 알림 읽음 처리
+    int updateAllNotificationsRead(Long receiverUserSq);
+
+    // 7. 모든 알림 논리 삭제
+    int deleteAllNotifications(Long receiverUserSq);
+
     // 알림 대량 등록 (Batch Insert)
     void insertNotificationBatch(@Param("list") List<NotificationBatchRequestDTO> list);
 }

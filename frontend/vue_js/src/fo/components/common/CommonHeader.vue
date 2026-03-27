@@ -487,7 +487,7 @@ const logout = async () => {
 const fetchNotifications = async () => {
   if (!isLoggedIn.value) return
   try {
-    const res = await api.$get(`/notifications/${userStore.userSq}`)
+    const res = await api.$get(`/notifications`)
     notifications.value = res
   } catch (error) {
     console.error('알림 목록 조회 실패:', error)
@@ -498,9 +498,7 @@ const fetchNotifications = async () => {
 const fetchUnreadCount = async () => {
   if (!isLoggedIn.value) return
   try {
-    const res = await api.$get(
-      `/notifications/unread-count/${userStore.userSq}`,
-    )
+    const res = await api.$get(`/notifications/unread-count`)
     unreadCount.value = res
   } catch (error) {
     console.error('알림 개수 조회 실패:', error)
@@ -511,7 +509,7 @@ const fetchUnreadCount = async () => {
 const markAsRead = async (notification) => {
   if (notification.notificationReadYn === 'Y') return
   try {
-    await api.$patch(`/notifications/${notification.notificationSq}/read`)
+    await api.$patch(`/notifications/${notification.notificationSq}`)
     // 서버 응답을 기다리지 않고 즉시 UI 반영 (Optimistic UI)
     notification.notificationReadYn = 'Y'
     await fetchUnreadCount() // 배지 카운트 갱신
@@ -536,7 +534,7 @@ const deleteNoti = async (sq) => {
 // 모두 읽음 처리
 const markAllAsRead = async () => {
   try {
-    await api.$patch(`/notifications/read-all/${userStore.userSq}`)
+    await api.$patch(`/notifications`)
     notifications.value.forEach((n) => (n.notificationReadYn = 'Y'))
     unreadCount.value = 0
   } catch (error) {
@@ -547,7 +545,7 @@ const markAllAsRead = async () => {
 // 전체 삭제
 const deleteAllNoti = async () => {
   try {
-    await api.$delete(`/notifications/all/${userStore.userSq}`)
+    await api.$delete(`/notifications`)
     notifications.value = []
     unreadCount.value = 0
   } catch (error) {

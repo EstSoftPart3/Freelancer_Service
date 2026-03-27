@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -403,34 +404,63 @@ public class ProjectService {
 	}
 
 	private void updateAddress(Project project, ProjectCreateRequest request) {
-		// 1. 기존 주소 삭제 (기존에 주소가 있었다면 삭제 후 새로 등록하는 방식)
-		if (project.getAddressSq() != null) {
-			projectMapper.deleteProjectAddress(project.getAddressSq());
-		}
-		if (project.getSubwayAddressSq() != null) {
-			projectMapper.deleteProjectAddress(project.getSubwayAddressSq());
-		}
+		// 1. 상세 주소 등록 (DB 체크 로직 포함)
+		Long newAddressSq = handleDetailedAddressUpdate(project.getAddressSq(), request);
+		// 2. 지하철 주소 등록 (DB 체크 로직 포함)
+		Long newSubwaySq = handleSubwayAddressUpdate(project.getSubwayAddressSq(), request);
 
-		// 2. 상세 주소 등록 (DB 체크 로직 포함)
-		Long newAddressSq = null;
-		if (request.detailedAddressName() != null && !request.detailedAddressName().isBlank()) {
-			AddressInsertDto dto = AddressInsertDto.forDetailed(request);
-			// [중요] 코드로 시군구 명칭을 조회하여 DTO에 채워주는 로직 호출
-			newAddressSq = registerAddressWithDbCheck(request.detailedSigunguCode(), dto);
-		}
-
-		// 3. 지하철 주소 등록 (DB 체크 로직 포함)
-		Long newSubwaySq = null;
-		if (request.subwayAddressName() != null && !request.subwayAddressName().isBlank()) {
-			AddressInsertDto dto = AddressInsertDto.forSubway(request);
-			// [중요] 지하철용 시군구 명칭 조회 및 세팅
-			newSubwaySq = registerAddressWithDbCheck(request.subwaySigunguCode(), dto);
-		}
-
-		// 4. 프로젝트 객체에 새로운 주소 PK 세팅
+		// 3. 프로젝트 객체에 새로운 주소 PK 세팅 (address_type_cd 우선순위 자동 재설정 포함)
 		// 이 값들이 세팅되어야 나중에 projectMapper.updateProject(project) 시 반영됩니다.
-		project.setAddressSq(newAddressSq);
-		project.setSubwayAddressSq(newSubwaySq);
+		project.updateAddressInfo(newAddressSq, newSubwaySq);
+	}
+
+	private Long handleDetailedAddressUpdate(Long existingAddressSq, ProjectCreateRequest request) {
+		String reqAddress = request.detailedAddressName();
+		// 1. 요청에 주소 없으면 기존 유지
+		if (reqAddress == null || reqAddress.isBlank()) {
+			return null;
+		}
+		// 2. 기존 주소 없으면 새로 생성
+		if (existingAddressSq == null) {
+			// [중요] 코드로 시군구 명칭을 조회하여 DTO에 채워주는 로직 호출
+			return registerAddressWithDbCheck(request.detailedSigunguCode(), AddressInsertDto.forDetailed(request));
+		}
+		// 3. 기존 레코드 조회 후 비교. 기존 데이터가 일치하면 기존 주소 반환
+		AddressInsertDto existing = addressMapper.findFullAddressBySq(existingAddressSq);
+		if (isDetailedAddressUnchanged(existing, request)) {
+			return existingAddressSq;
+		}
+		// 4. 변경되었으면 새 주소 생성
+		AddressInsertDto newDto = AddressInsertDto.forDetailed(request);
+		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사
+		if (newDto.getZonecode() == null) newDto.setZonecode(existing.getZonecode());
+		if (newDto.getAreaCodeSq() == null) newDto.setAreaCodeSq(existing.getAreaCodeSq());
+		if (newDto.getSigungu() == null) newDto.setSigungu(existing.getSigungu());
+		if (newDto.getLatitude() == null) newDto.setLatitude(existing.getLatitude());
+		if (newDto.getLongitude() == null) newDto.setLongitude(existing.getLongitude());
+		addressMapper.createAddress(newDto);
+		return newDto.getAddressSq();
+	}
+
+	private boolean isDetailedAddressUnchanged(AddressInsertDto existing, ProjectCreateRequest request) {
+		return Objects.equals(existing.getAddress(), request.detailedAddressName())
+				&& Objects.equals(existing.getDetailAddress(), request.detailedAddressDetail());
+	}
+
+	private Long handleSubwayAddressUpdate(Long existingSubwaySq, ProjectCreateRequest request) {
+		String reqSubway = request.subwayAddressName();
+		if (reqSubway == null || reqSubway.isBlank()) {
+			return null;
+		}
+		if (existingSubwaySq == null) {
+			// [중요] 지하철용 시군구 명칭 조회 및 세팅
+			return registerAddressWithDbCheck(request.subwaySigunguCode(), AddressInsertDto.forSubway(request));
+		}
+		String existingSubway = addressMapper.findAddressBySq(existingSubwaySq);
+		if (reqSubway.equals(existingSubway)) {
+			return existingSubwaySq;
+		}
+		return registerAddressWithDbCheck(request.subwaySigunguCode(), AddressInsertDto.forSubway(request));
 	}
 
 	@Transactional

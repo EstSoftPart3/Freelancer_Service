@@ -379,9 +379,13 @@
 		#{companySq} AND a.read_application_dtm IS NULL </select>
 
 	<select id="findApplicationNotificationInfo" resultType="map"> SELECT r.user_sq as "userSq",
-		p.project_ttl as "projectTtl", p.project_sq as "projectSq" FROM tbl_project_application_h h
+		p.project_ttl as "projectTtl", p.project_sq as "projectSq",
+		h.project_application_member_type_cd as "memberTypeCd",
+		cs.user_sq as "appCompanyUserSq"
+		FROM tbl_project_application_h h
 		JOIN tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_project_m p ON h.project_sq =
-		p.project_sq WHERE h.project_application_sq = #{applicationSq} </select>
+		p.project_sq LEFT JOIN tbl_company_s cs ON h.company_sq = cs.company_sq
+		WHERE h.project_application_sq = #{applicationSq} </select>
 
 	<select id="findCancelNotificationInfo" resultType="map"> SELECT c.user_sq as "companyUserSq",
 		u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as "projectSq",

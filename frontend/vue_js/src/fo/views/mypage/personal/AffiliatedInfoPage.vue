@@ -39,10 +39,14 @@
       <div class="form-group row align-items-center">
         <label class="col-lg-2 col-form-label text-2">기업명</label>
         <div class="col-lg-10 d-flex align-items-center gap-2">
-          <span class="form-control text-3 h-auto py-2 border-0" style="flex: none; width: auto; padding-right: 0">{{ info.companyNm }}</span>
+          <span
+            class="form-control text-3 h-auto py-2 border-0"
+            style="flex: none; width: auto; padding-right: 0"
+            >{{ info.companyNm }}</span
+          >
           <span
             v-if="info.companyIsRecruitingYn === 'Y'"
-            class="badge bg-success"
+            class="badge bg-primary"
             >채용중</span
           >
           <span v-else class="badge bg-secondary">채용 마감</span>
@@ -101,18 +105,6 @@
         </div>
       </div>
 
-      <!-- 태그 -->
-      <div v-if="info.tags && info.tags.length > 0" class="form-group row align-items-center">
-        <label class="col-lg-2 col-form-label text-2">태그</label>
-        <div class="col-lg-10 d-flex flex-wrap gap-2" style="align-items: center">
-          <a
-            v-for="(tag, idx) in info.tags"
-            :key="idx"
-            class="btn btn-rounded btn-3d btn-light btn-sm d-flex align-items-center px-3 py-2"
-          >{{ tag }}</a>
-        </div>
-      </div>
-
       <!-- 입사일 -->
       <div class="form-group row align-items-center">
         <label class="col-lg-2 col-form-label text-2">입사일</label>
@@ -156,7 +148,7 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await api.$get('/affiliation/my-info')
+    const res = await api.$get('/mypage/applications/info')
     info.value = res.output
   } catch (e) {
     const msg = e.response?.data?.message
@@ -173,13 +165,18 @@ onMounted(async () => {
 const confirmLeave = () => {
   modalStore.openModal(CommonConfirmModal, {
     title: '소속 탈퇴 안내',
-    message: '• 소속 탈퇴 시 해당 소속에서 즉시 제외됩니다.\n• 탈퇴 후 동일 소속에 재가입하려면 처음부터 다시 신청해야 합니다.\n• 탈퇴 처리된 이력은 취소할 수 없습니다.',
+    message:
+      '• 소속 탈퇴 시 해당 소속에서 즉시 제외됩니다.\n• 탈퇴 후 동일 소속에 재가입하려면 처음부터 다시 신청해야 합니다.\n• 탈퇴 처리된 이력은 취소할 수 없습니다.',
     confirmText: '탈퇴',
     confirmClass: 'btn-danger',
     cancelText: '취소',
     onConfirm: async () => {
       try {
-        await api.$patch('/affiliation/leave', {}, { withCredentials: true })
+        await api.$patch(
+          '/mypage/applications/withdraw',
+          {},
+          { withCredentials: true },
+        )
         userStore.isAffiliated = 'N'
         userStore.affiliatedCompanySq = null
         localStorage.setItem('isAffiliated', 'N')

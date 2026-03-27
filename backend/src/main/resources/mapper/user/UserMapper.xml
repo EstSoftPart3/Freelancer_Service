@@ -116,4 +116,7 @@
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
     parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_type_cd,
     user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
+
+  <select id="selectEmailByUserSq" resultType="string"> SELECT user_email FROM TBL_USER_M WHERE
+    user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 </mapper>

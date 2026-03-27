@@ -199,7 +199,7 @@ const login = async () => {
 
   try {
     const response = await api.$post('/login', payload)
-    const token = response.output.token
+    const token = response.output
     if (token && token.accessToken && token.refreshToken) {
       localStorage.setItem('accessToken', token.accessToken)
       localStorage.setItem('refreshToken', token.refreshToken)
@@ -269,10 +269,6 @@ const fetchUserInfo = async () => {
 
 // 저장된 아이디를 form에 세팅하는 함수
 const loadSavedId = () => {
-  const savedType = localStorage.getItem('savedLoginType')
-  if (savedType) {
-    loginType.value = savedType
-  }
   if (loginType.value === 'PERSONAL') {
     form.value.id = localStorage.getItem('savedPersonalId') || ''
     form.value.id_save = !!localStorage.getItem('savedPersonalId')
@@ -287,15 +283,22 @@ const loadSavedId = () => {
 
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
+  const savedType = localStorage.getItem('loginType')
+  if (savedType === 'PERSONAL' || savedType === 'COMPANY') {
+    loginType.value = savedType
+  }
   loadSavedId()
 })
 
-// loginType 변경 시 저장된 아이디 변경 반영
-watch(loginType, () => {
-  if (loginType.value === 'PERSONAL') {
+// loginType 변경 시 localStorage 저장 및 저장된 아이디 반영
+watch(loginType, (newType) => {
+  localStorage.setItem('loginType', newType)
+  if (newType === 'PERSONAL') {
     form.value.id = localStorage.getItem('savedPersonalId') || ''
+    form.value.id_save = !!localStorage.getItem('savedPersonalId')
   } else {
     form.value.cid = localStorage.getItem('savedCompanyId') || ''
+    form.value.id_save = !!localStorage.getItem('savedCompanyId')
   }
 })
 

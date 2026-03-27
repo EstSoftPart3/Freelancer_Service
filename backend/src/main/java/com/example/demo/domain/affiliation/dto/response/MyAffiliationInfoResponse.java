@@ -10,21 +10,16 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 public class MyAffiliationInfoResponse {
-	private Long companySq;
 	private String companyNm;
 	private String companyCeoNm;
 	private LocalDate companyOpenDt;
 	private String companyUrl;
-	private String companyGreetingTxt;
 	private String companyIsRecruitingYn;
 	private String address;
-	private String sigungu;
-	private List<String> tags;
 	private String profileImageUrl;
 	private LocalDate joinDt;
 
-	public static MyAffiliationInfoResponse fromMap(Map<String, Object> map, List<String> tags,
-			String profileImageUrl) {
+	public static MyAffiliationInfoResponse fromMap(Map<String, Object> map, String profileImageUrl) {
 		LocalDate openDt = null;
 		Object openDtObj = map.get("companyOpenDt");
 		if (openDtObj instanceof LocalDate) {
@@ -42,16 +37,12 @@ public class MyAffiliationInfoResponse {
 		}
 
 		return MyAffiliationInfoResponse.builder()
-				.companySq(((Number) map.get("companySq")).longValue())
 				.companyNm((String) map.get("companyNm"))
 				.companyCeoNm((String) map.get("companyCeoNm"))
 				.companyOpenDt(openDt)
 				.companyUrl((String) map.get("companyUrl"))
-				.companyGreetingTxt((String) map.get("companyGreetingTxt"))
 				.companyIsRecruitingYn((String) map.get("companyIsRecruitingYn"))
 				.address((String) map.get("address"))
-				.sigungu((String) map.get("sigungu"))
-				.tags(tags)
 				.profileImageUrl(profileImageUrl)
 				.joinDt(joinDt)
 				.build();

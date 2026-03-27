@@ -24,16 +24,13 @@ public class LoginController {
         private final LoginService loginService;
 
         @PostMapping("/login")
-        public ResponseEntity<ApiResponse<LoginResponseDTO>> login(
+        public ResponseEntity<ApiResponse<TokenDTO>> login(
                         @RequestBody LoginRequestDTO request) {
 
                 LoginResultDTO result = loginService.login(request.getUserId(), request.getUserPw(),
                                 request.getUserTypeCd());
-                TokenDTO tokens = result.getToken();
-                LoginResponseDTO userInfo = result.getUserInfo();
-                userInfo.setToken(tokens);
 
-                return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그인 성공", userInfo));
+                return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그인 성공", result.getToken()));
         }
 
         @PostMapping("/refresh-token")

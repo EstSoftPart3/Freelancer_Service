@@ -640,15 +640,12 @@
 </select>
 
 <select id="findMyAffiliationInfo" resultType="map">
-    SELECT c.company_sq as "companySq",
-           c.company_nm as "companyNm",
+    SELECT c.company_nm as "companyNm",
            c.company_ceo_nm as "companyCeoNm",
            c.company_open_dt as "companyOpenDt",
            c.company_url as "companyUrl",
-           c.company_greeting_txt as "companyGreetingTxt",
            c.company_is_recruiting_yn as "companyIsRecruitingYn",
            a.address as "address",
-           a.sigungu as "sigungu",
            m.company_member_join_dt as "companyMemberJoinDt"
     FROM TBL_COMPANY_MEMBER_R m
     JOIN TBL_COMPANY_S c ON m.company_sq = c.company_sq

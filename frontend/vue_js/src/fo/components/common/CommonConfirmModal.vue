@@ -8,7 +8,7 @@
       <p style="white-space: pre-line">{{ message }}</p>
     </div>
     <div class="modal-footer">
-      <button :class="['btn', confirmClass]" @click="onConfirm">
+      <button :class="['btn', confirmClass]" @click="() => { closeModal(); onConfirm(); }">
         {{ confirmText }}
       </button>
       <button
