@@ -33,26 +33,46 @@ import { CompanyDetailsDialog } from './company-details-dialog'
 import { CompanySearchDialog } from './company-search-dialog'
 import { useUsers } from './users-provider'
 
-const maxDate = new Date()
-maxDate.setFullYear(maxDate.getFullYear() - 19)
+// 만 19세 기준 나이 계산
+const getAdultCutoffDate = () => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 19)
+  return date
+}
+
+// 만 19세 미만인지 확인 (미성년자 판단)
+const isMinor = (date: Date | null | undefined) => {
+  if (!date) return false
+  return date > getAdultCutoffDate()
+}
+
+// 생년월일 변경 시 유효성 검사
+const validateBirthDate = ({
+  newBirth,
+  isDirty,
+}: {
+  newBirth: Date | null | undefined
+  isDirty: boolean
+}) => {
+  if (!newBirth) return null
+
+  // 변경되지 않았다면 굳이 검증 안 함 (UX 개선)
+  if (!isDirty) return null
+
+  // 결과는 반드시 성인이어야 함
+  if (isMinor(newBirth)) {
+    return '회원의 나이는 만 19세 이상이어야 합니다.'
+  }
+
+  return null
+}
 
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
   userPw: z.string(),
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
-  userBirthDt: z
-    .date()
-    .refine(
-      (date) => {
-        const max = new Date() // 검증 시점에 새로 계산
-        max.setFullYear(max.getFullYear() - 19)
-        return date <= max
-      },
-      { message: '회원의 나이는 만 19세 이상이어야 합니다.' }
-    )
-    .optional()
-    .nullable(),
+  userBirthDt: z.date().optional().nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number(),
   userIsActivateYn: z.string(),
@@ -94,7 +114,8 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     setValue,
     watch,
     reset,
-    formState: { errors },
+    setError,
+    formState: { errors, dirtyFields },
   } = useForm<UserMutateForm>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -102,7 +123,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
-      userBirthDt: undefined,
+      userBirthDt: null,
       companyNm: '',
       companySq: null,
       userTypeCd: 301,
@@ -116,6 +137,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
   useEffect(() => {
     if (open) {
+      console.log('currentRow', currentRow?.userNm, currentRow?.userBirthDt)
       if (isUpdate && currentRow) {
         const sq = currentRow.companySq ?? null
         reset({
@@ -146,7 +168,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
-          userBirthDt: undefined,
+          userBirthDt: null,
           companyNm: '',
           companySq: null,
           userTypeCd: 301,
@@ -184,6 +206,16 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const onSubmit = async (data: UserMutateForm) => {
     if (!currentRow) return
 
+    const errorMessage = validateBirthDate({
+      newBirth: data.userBirthDt,
+      isDirty: !!dirtyFields.userBirthDt,
+    })
+
+    if (errorMessage) {
+      setError('userBirthDt', { message: errorMessage })
+      return
+    }
+
     const affiliationAction = calcAffiliationAction(data.companySq)
 
     const formData = new FormData()
@@ -195,9 +227,10 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         'userBirthDt',
         format(new Date(data.userBirthDt), 'yyyy-MM-dd')
       )
-    } else {
-      formData.append('userBirthDt', '')
     }
+    // else {
+    //   formData.append('userBirthDt', '')
+    // }
     formData.append('userTypeCd', String(data.userTypeCd))
     formData.append('userGenderCd', String(data.userGenderCd))
     formData.append('userIsActivateYn', data.userIsActivateYn)
@@ -335,7 +368,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                   selected={field.value ?? undefined}
                   onSelect={field.onChange}
                   placeholder='생년월일 선택'
-                  defaultMonth={maxDate}
+                  defaultMonth={getAdultCutoffDate()}
                 />
               )}
             />
