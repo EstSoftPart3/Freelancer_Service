@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { Search, Building2 } from 'lucide-react'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { type Company, searchCompanies } from '../api/users-api'
+import { Input } from '@/components/ui/input'
+import { type Company, userCompanyApi } from '../api/users-api'
 
 interface Props {
   open: boolean
@@ -34,8 +34,10 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
     const fetchCompanies = async () => {
       setIsLoading(true)
       try {
-        const data = await searchCompanies(debouncedKeyword)
-        if (!cancelled) setResults(data)
+        const data = await userCompanyApi.getCompanies({
+          keyword: debouncedKeyword,
+        })
+        if (!cancelled) setResults(data.output)
       } catch {
         if (!cancelled) setResults([])
       } finally {
@@ -68,14 +70,12 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle>소속 검색</DialogTitle>
-          <DialogDescription>
-            회사를 검색하고 선택하세요.
-          </DialogDescription>
+          <DialogDescription>회사를 검색하고 선택하세요.</DialogDescription>
         </DialogHeader>
 
         {/* 검색 Input */}
         <div className='relative'>
-          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
           <Input
             placeholder='회사명을 입력하세요...'
             value={keyword}

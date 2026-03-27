@@ -1,22 +1,23 @@
 // [Freelancer Service]
 // eslint-disable react-hooks/exhaustive-deps
-import { useEffect, useRef, useState } from 'react';
-import { z } from 'zod';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, Search, X } from 'lucide-react';
-import { baseUrl } from '@/lib/api';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useEffect, useRef, useState } from 'react'
+import { z } from 'zod'
+import { format } from 'date-fns'
+import { Controller, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Camera, Search, X } from 'lucide-react'
+import { baseUrl } from '@/lib/api'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -24,16 +25,16 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-import { DatePicker } from '@/components/date-picker';
-import { type AdminUser } from '../data/schema';
-import { CompanyDetailsDialog } from './company-details-dialog';
-import { CompanySearchDialog } from './company-search-dialog';
-import { useUsers } from './users-provider';
+} from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
+import { DatePicker } from '@/components/date-picker'
+import { type AdminUser } from '../data/schema'
+import { CompanyDetailsDialog } from './company-details-dialog'
+import { CompanySearchDialog } from './company-search-dialog'
+import { useUsers } from './users-provider'
 
-const maxDate = new Date();
-maxDate.setFullYear(maxDate.getFullYear() - 19);
+const maxDate = new Date()
+maxDate.setFullYear(maxDate.getFullYear() - 19)
 
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
@@ -42,7 +43,14 @@ const schema = z.object({
   userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
   userBirthDt: z
     .date()
-    .max(maxDate, '회원의 나이는 만 19세 이상이어야 합니다.')
+    .refine(
+      (date) => {
+        const max = new Date() // 검증 시점에 새로 계산
+        max.setFullYear(max.getFullYear() - 19)
+        return date <= max
+      },
+      { message: '회원의 나이는 만 19세 이상이어야 합니다.' }
+    )
     .optional()
     .nullable(),
   userTypeCd: z.number(),
@@ -52,26 +60,32 @@ const schema = z.object({
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
   companySq: z.number().nullable(),
-});
+})
 
-type UserMutateForm = z.infer<typeof schema>;
+type UserMutateForm = z.infer<typeof schema>
 
 interface Props {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentRow?: AdminUser;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentRow?: AdminUser
 }
 
 export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
-  const isUpdate = !!currentRow;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const isUpdate = !!currentRow
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null
-  );
-  const { setOpen, setPendingFormData } = useUsers();
-  const [companySearchOpen, setCompanySearchOpen] = useState(false);
-  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
+  )
+  const { setOpen, setPendingFormData } = useUsers()
+
+  type CompanyDialogType = 'search' | 'details' | null
+  const [companyDialog, setCompanyDialog] = useState<CompanyDialogType>(null)
+
+  // 드로어 열릴 때의 원본 companySq (affiliationAction 계산용)
+  const [originalCompanySq, setOriginalCompanySq] = useState<number | null>(
+    null
+  )
 
   const {
     register,
@@ -88,8 +102,8 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
-      userBirthDt: undefined, // 생년월일 추가
-      companyNm: null,
+      userBirthDt: undefined,
+      companyNm: '',
       companySq: null,
       userTypeCd: 301,
       userGenderCd: 101,
@@ -97,31 +111,35 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       userIsDeletedYn: 'N',
       userAgreedPrivacyPolicyYn: 'Y',
     },
-  });
+  })
 
-  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'));
+  const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
   useEffect(() => {
     if (open) {
       if (isUpdate && currentRow) {
+        const sq = currentRow.companySq ?? null
         reset({
           userNm: currentRow.userNm,
           userEmail: currentRow.userEmail,
           userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
           userPhoneNum: currentRow.userPhoneNum,
-          userBirthDt: currentRow.userBirthDt ?? undefined,
+          userBirthDt: currentRow.userBirthDt
+            ? new Date(currentRow.userBirthDt)
+            : null,
           companyNm: currentRow.companyNm,
-          companySq: currentRow.companySq ?? null,
+          companySq: sq,
           userTypeCd: currentRow.userTypeCd,
           userGenderCd: currentRow.userGenderCd,
           userIsActivateYn: currentRow.userIsActivateYn,
           userIsDeletedYn: currentRow.userIsDeletedYn,
           userAgreedPrivacyPolicyYn: currentRow.userAgreedPrivacyPolicyYn,
-        });
+        })
+        setOriginalCompanySq(sq)
         setProfileImagePreview(
           currentRow.profileImageUrl
             ? `${serverRoot}${currentRow.profileImageUrl}`
             : null
-        );
+        )
       } else {
         reset({
           userNm: '',
@@ -129,54 +147,93 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           userPw: '',
           userPhoneNum: '',
           userBirthDt: undefined,
-          companyNm: null,
+          companyNm: '',
           companySq: null,
           userTypeCd: 301,
           userGenderCd: 101,
           userIsActivateYn: 'Y',
           userIsDeletedYn: 'N',
           userAgreedPrivacyPolicyYn: 'Y',
-        });
-        setProfileImagePreview(null);
+        })
+        setOriginalCompanySq(null)
+        setProfileImagePreview(null)
       }
-      setProfileImageFile(null);
+      setProfileImageFile(null)
+      setCompanyDialog(null)
     }
-  }, [open, isUpdate, currentRow, reset]);
+  }, [open, isUpdate, currentRow, reset])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setProfileImageFile(file);
-    setProfileImagePreview(URL.createObjectURL(file));
-    e.target.value = '';
-  };
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProfileImageFile(file)
+    setProfileImagePreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  // affiliationAction 계산
+  const calcAffiliationAction = (currentCompanySq: number | null): string => {
+    const orig = originalCompanySq
+    if (orig === null && currentCompanySq !== null) return 'JOIN'
+    if (orig !== null && currentCompanySq === null) return 'LEAVE'
+    if (orig !== null && currentCompanySq !== null && orig !== currentCompanySq)
+      return 'CHANGE'
+    return 'NONE'
+  }
 
   const onSubmit = async (data: UserMutateForm) => {
-    if (!currentRow) return;
+    if (!currentRow) return
 
-    const formData = new FormData();
-    formData.append('userNm', data.userNm);
-    formData.append('userEmail', data.userEmail);
-    formData.append('userPhoneNum', data.userPhoneNum);
+    const affiliationAction = calcAffiliationAction(data.companySq)
+
+    const formData = new FormData()
+    formData.append('userNm', data.userNm)
+    formData.append('userEmail', data.userEmail)
+    formData.append('userPhoneNum', data.userPhoneNum)
     if (data.userBirthDt) {
-      formData.append('userBirthDt', data.userBirthDt.toISOString());
+      formData.append(
+        'userBirthDt',
+        format(new Date(data.userBirthDt), 'yyyy-MM-dd')
+      )
+    } else {
+      formData.append('userBirthDt', '')
     }
-    formData.append('userTypeCd', String(data.userTypeCd));
-    formData.append('userGenderCd', String(data.userGenderCd));
-    formData.append('userIsActivateYn', data.userIsActivateYn);
-    formData.append('userIsDeletedYn', data.userIsDeletedYn);
-    formData.append(
-      'userAgreedPrivacyPolicyYn',
-      data.userAgreedPrivacyPolicyYn
-    );
-    if (data.companyNm) formData.append('companyNm', data.companyNm);
-    if (data.companySq) formData.append('companySq', String(data.companySq));
-    if (data.userPw) formData.append('userPw', data.userPw);
-    if (profileImageFile) formData.append('profileImage', profileImageFile);
+    formData.append('userTypeCd', String(data.userTypeCd))
+    formData.append('userGenderCd', String(data.userGenderCd))
+    formData.append('userIsActivateYn', data.userIsActivateYn)
+    formData.append('userIsDeletedYn', data.userIsDeletedYn)
+    formData.append('userAgreedPrivacyPolicyYn', data.userAgreedPrivacyPolicyYn)
+    formData.append('affiliationAction', affiliationAction)
+    if (data.companyNm) formData.append('companyNm', data.companyNm)
+    if (data.companySq) formData.append('companySq', String(data.companySq))
+    if (data.userPw) formData.append('userPw', data.userPw)
+    if (profileImageFile) formData.append('profileImage', profileImageFile)
 
-    setPendingFormData({ userSq: currentRow.userSq, formData });
-    setOpen('master-pw');
-  };
+    setPendingFormData({ userSq: currentRow.userSq, formData })
+    setOpen('master-pw')
+  }
+
+  const currentTypeCd = watch('userTypeCd')
+  const currentCompanySq = watch('companySq')
+  const currentCompanyNm = watch('companyNm')
+
+  const handleAffiliationClick = () => {
+    setCompanyDialog(
+      currentTypeCd === 302 && currentCompanySq ? 'details' : 'search'
+    )
+  }
+
+  // 검색 다이얼로그에서 회사 선택 시
+  const handleCompanySelect = (companySq: number, companyNm: string) => {
+    setValue('companySq', companySq)
+    setValue('companyNm', companyNm)
+    setCompanyDialog(null)
+  }
+
+  // 기업 소속 있음 → CompanyDetailsDialog 저장 완료 시
+  const handleCompanyUpdated = (newCompanyNm: string) => {
+    setValue('companyNm', newCompanyNm)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -214,6 +271,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             className='hidden'
             onChange={handleImageChange}
           />
+
           <div className='space-y-2'>
             <Label htmlFor='userNm'>이름</Label>
             <Input id='userNm' autoComplete='off' {...register('userNm')} />
@@ -288,76 +346,71 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             )}
           </div>
 
+          {/* ── 소속 필드 ── */}
           <div className='space-y-2'>
             <Label htmlFor='companyNm'>소속</Label>
             <div className='relative flex items-center'>
               <Input
                 id='companyNm'
                 autoComplete='off'
-                placeholder='클릭하여 소속 검색'
-                value={watch('companyNm') ?? ''}
+                placeholder={
+                  currentTypeCd === 302 && currentCompanySq
+                    ? '클릭하여 회사 정보 수정'
+                    : '클릭하여 소속 검색'
+                }
+                value={currentCompanyNm ?? ''}
                 readOnly
                 className='cursor-pointer pr-16'
-                onClick={() => {
-                  if (watch('userTypeCd') === 302 && watch('companySq')) {
-                    setCompanyDetailsOpen(true);
-                  } else {
-                    setCompanySearchOpen(true);
-                  }
-                }}
+                onClick={handleAffiliationClick}
               />
               <div className='absolute right-2 flex items-center gap-1'>
-                {watch('userTypeCd') !== 302 && watch('companyNm') && (
+                {/* X 버튼: 일반 유저(301)가 소속 있을 때만 표시 */}
+                {currentTypeCd !== 302 && currentCompanyNm && (
                   <button
                     type='button'
                     className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                     onClick={(e) => {
-                      e.stopPropagation();
-                      setValue('companyNm', null);
-                      setValue('companySq', null);
+                      e.stopPropagation()
+                      setValue('companyNm', null)
+                      setValue('companySq', null)
                     }}
                     title='소속 삭제'
                   >
                     <X className='h-4 w-4' />
                   </button>
                 )}
-                {watch('userTypeCd') !== 302 || !watch('companySq') ? (
+                {/* 검색 버튼: 기업+소속 있는 경우 숨김 (클릭하면 수정창으로) */}
+                {!(currentTypeCd === 302 && currentCompanySq) && (
                   <button
                     type='button'
                     className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                    onClick={() => {
-                      if (watch('userTypeCd') === 302 && watch('companySq')) {
-                        setCompanyDetailsOpen(true);
-                      } else {
-                        setCompanySearchOpen(true);
-                      }
-                    }}
+                    onClick={handleAffiliationClick}
                     title='소속 검색'
                   >
                     <Search className='h-4 w-4' />
                   </button>
-                ) : null}
+                )}
               </div>
             </div>
           </div>
 
+          {/* 소속 관련 다이얼로그 */}
           <CompanySearchDialog
-            open={companySearchOpen}
-            onOpenChange={setCompanySearchOpen}
-            onSelect={(companySq, companyNm) => {
-              setValue('companySq', companySq);
-              setValue('companyNm', companyNm);
-            }}
+            open={companyDialog === 'search'}
+            onOpenChange={(isOpen) =>
+              setCompanyDialog(isOpen ? 'search' : null)
+            }
+            onSelect={handleCompanySelect}
           />
 
-          {watch('companySq') && (
+          {currentCompanySq && (
             <CompanyDetailsDialog
-              open={companyDetailsOpen}
-              onOpenChange={setCompanyDetailsOpen}
-              companySq={watch('companySq') as number}
-              onUpdated={(newCompanyNm) => {
-                setValue('companyNm', newCompanyNm);
-              }}
+              open={companyDialog === 'details'}
+              onOpenChange={(isOpen) =>
+                setCompanyDialog(isOpen ? 'details' : null)
+              }
+              companySq={currentCompanySq}
+              onUpdated={handleCompanyUpdated}
             />
           )}
 
@@ -444,5 +497,5 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         </form>
       </SheetContent>
     </Sheet>
-  );
+  )
 }
