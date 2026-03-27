@@ -31,6 +31,8 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
       await userApi.verifyPassword(password)
     } catch {
       toast.error('비밀번호가 맞지 않습니다.')
+      setIsLoading(false)
+      return
     }
 
     try {
