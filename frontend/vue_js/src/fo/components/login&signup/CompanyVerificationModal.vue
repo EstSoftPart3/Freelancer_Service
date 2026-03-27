@@ -254,7 +254,7 @@ async function handleVerify() {
   try {
     const response = await api.$post('/mypage/edit/verify-enterprise', payload)
 
-    if (response.status === 'OK' || response.output === true) {
+    if (response.status === 'OK' && response.output === true) {
       isVerified.value = true
       alertStore.show('기업 실명 인증이 성공했습니다.', 'success')
     } else {

@@ -640,7 +640,8 @@
 </select>
 
 <select id="findMyAffiliationInfo" resultType="map">
-    SELECT c.company_nm as "companyNm",
+    SELECT c.company_sq as "companySq",
+           c.company_nm as "companyNm",
            c.company_ceo_nm as "companyCeoNm",
            c.company_open_dt as "companyOpenDt",
            c.company_url as "companyUrl",

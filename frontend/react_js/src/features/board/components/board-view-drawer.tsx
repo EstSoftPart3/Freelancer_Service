@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea'
 // [해결] 명칭 및 경로 수정
 import { boardApi } from '../api/board-api'
 import { type AdminBoard } from '../data/schema'
+import { BoardMutateDrawer } from './board-mutate-drawer'
 import { useBoard } from './board-provider'
 
 // --- 타입 정의 ---
@@ -239,10 +240,11 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [newComment, setNewComment] = useState('')
-  const [isAnswerMode, setIsAnswerMode] = useState(false)
-  const [answerTitle, setAnswerTitle] = useState('')
-  const [answerContent, setAnswerContent] = useState('')
-  const [editingAnswer, setEditingAnswer] = useState<AnswerDetail | null>(null)
+  const [isAnswerDrawerOpen, setIsAnswerDrawerOpen] = useState(false)
+  const [editingAnswerForDrawer, setEditingAnswerForDrawer] = useState<{
+    sq: number
+    boardTypeCd: number
+  } | null>(null)
 
   const handleGoToQuestion = () => {
     if (!detail?.parentBoardSq) return
@@ -349,30 +351,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
   }
 
   /**
-   * 5. 답변 등록 핸들러
-   */
-  const handleCreateAnswer = async () => {
-    if (!answerTitle.trim() || !answerContent.trim() || !currentRow?.sq) return
-
-    try {
-      const formData = new FormData()
-      formData.append('ttl', answerTitle)
-      formData.append('description', answerContent)
-      formData.append('parentBoardSq', currentRow.sq.toString())
-
-      await boardApi.createBoard(1404, formData)
-      toast.success('답변이 등록되었습니다.')
-      setAnswerTitle('')
-      setAnswerContent('')
-      setIsAnswerMode(false)
-      fetchDetail() // 목록 새로고침
-    } catch (_) {
-      toast.error('답변 등록 실패')
-    }
-  }
-
-  /**
-   * 6. 답변 삭제 핸들러
+   * 5. 답변 삭제 핸들러
    */
   const handleDeleteAnswer = async (answerSq: number) => {
     if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return
@@ -383,28 +362,6 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
       fetchDetail() // 목록 새로고침
     } catch (_) {
       toast.error('답변 삭제에 실패했습니다.')
-    }
-  }
-
-  /**
-   * 7. 답변 수정 핸들러
-   */
-  const handleUpdateAnswer = async () => {
-    if (!editingAnswer || !answerTitle.trim() || !answerContent.trim()) return
-
-    try {
-      const formData = new FormData()
-      formData.append('ttl', answerTitle)
-      formData.append('description', answerContent)
-
-      await boardApi.updateBoard(editingAnswer.sq, 1404, formData)
-      toast.success('답변이 수정되었습니다.')
-      setEditingAnswer(null)
-      setAnswerTitle('')
-      setAnswerContent('')
-      fetchDetail() // 목록 새로고침
-    } catch (_) {
-      toast.error('답변 수정에 실패했습니다.')
     }
   }
 
@@ -573,6 +530,11 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                                       '답변 내용을 불러올 수 없습니다.'
                                     )
                                   })
+                                setEditingAnswerForDrawer({
+                                  sq: answer.sq,
+                                  boardTypeCd: 1404,
+                                })
+                                setIsAnswerDrawerOpen(true)
                               }}
                             >
                               <Pencil size={10} />
@@ -608,106 +570,36 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                   )}
                 </div>
 
-                {!isAnswerMode && (
-                  <div className='flex justify-end'>
-                    <Button
-                      className='space-x-1'
-                      // variant='outline'
-                      onClick={() => setIsAnswerMode(true)}
-                      // className='w-full'
-                    >
-                      <span>답변 등록</span> <Plus size={18} />
-                      {/* <Reply size={14} className='mr-2' /> 답변 작성 */}
-                    </Button>
-                  </div>
-                )}
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    setEditingAnswerForDrawer(null)
+                    setIsAnswerDrawerOpen(true)
+                  }}
+                  className='w-full'
+                >
+                  <Reply size={14} className='mr-2' /> 답변 작성
+                </Button>
 
-                {isAnswerMode && (
-                  <div className='mt-4 space-y-4 rounded-lg border bg-muted/20 p-4'>
-                    <div>
-                      <label className='text-sm font-medium'>답변 제목</label>
-                      <input
-                        type='text'
-                        value={answerTitle}
-                        onChange={(e) => setAnswerTitle(e.target.value)}
-                        placeholder='답변 제목을 입력하세요'
-                        className='mt-1 w-full rounded-md border px-3 py-2 text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 내용</label>
-                      <Textarea
-                        value={answerContent}
-                        onChange={(e) => setAnswerContent(e.target.value)}
-                        placeholder='답변 내용을 입력하세요'
-                        className='mt-1 min-h-[120px] resize-none'
-                      />
-                    </div>
-                    <div className='flex justify-end gap-2'>
-                      <Button
-                        variant='outline'
-                        onClick={() => {
-                          setIsAnswerMode(false)
-                          setAnswerTitle('')
-                          setAnswerContent('')
-                        }}
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        onClick={handleCreateAnswer}
-                        disabled={!answerTitle.trim() || !answerContent.trim()}
-                      >
-                        <Send size={14} className='mr-2' /> 답변 등록
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {editingAnswer && (
-                  <div className='mt-4 space-y-4 rounded-lg border bg-blue-50 p-4'>
-                    <div className='text-sm font-medium text-blue-700'>
-                      답변 수정
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 제목</label>
-                      <input
-                        type='text'
-                        value={answerTitle}
-                        onChange={(e) => setAnswerTitle(e.target.value)}
-                        placeholder='답변 제목을 입력하세요'
-                        className='mt-1 w-full rounded-md border px-3 py-2 text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-sm font-medium'>답변 내용</label>
-                      <Textarea
-                        value={answerContent}
-                        onChange={(e) => setAnswerContent(e.target.value)}
-                        placeholder='답변 내용을 입력하세요'
-                        className='mt-1 min-h-[120px] resize-none'
-                      />
-                    </div>
-                    <div className='flex justify-end gap-2'>
-                      <Button
-                        variant='outline'
-                        onClick={() => {
-                          setEditingAnswer(null)
-                          setAnswerTitle('')
-                          setAnswerContent('')
-                        }}
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        onClick={handleUpdateAnswer}
-                        disabled={!answerTitle.trim() || !answerContent.trim()}
-                      >
-                        <Send size={14} className='mr-2' /> 수정 완료
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <BoardMutateDrawer
+                  open={isAnswerDrawerOpen}
+                  onOpenChange={(open) => {
+                    setIsAnswerDrawerOpen(open)
+                    if (!open) {
+                      setEditingAnswerForDrawer(null)
+                      fetchDetail()
+                    }
+                  }}
+                  parentBoardSq={currentRow?.sq}
+                  currentRow={
+                    editingAnswerForDrawer
+                      ? ({
+                          sq: editingAnswerForDrawer.sq,
+                          boardTypeCd: 1404,
+                        } as AdminBoard)
+                      : undefined
+                  }
+                />
               </div>
             )}
 
