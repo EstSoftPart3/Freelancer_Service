@@ -68,7 +68,8 @@
 
 	<update id="update" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE
 		TBL_BOARD_M SET board_ttl = #{boardTtl}, board_description_edt = #{boardDescriptionEdt},
-		board_adopt_status_cd = #{boardAdoptStatusCd} WHERE board_sq = #{boardSq} </update>
+		board_adopt_status_cd = #{boardAdoptStatusCd}, board_modified_at_dtm = NOW() WHERE board_sq =
+		#{boardSq} </update>
 
 	<update id="delete" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE
 		TBL_BOARD_M SET board_is_deleted_yn = 'Y' WHERE board_sq = #{boardSq} AND user_sq =
