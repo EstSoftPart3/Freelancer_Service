@@ -1,6 +1,6 @@
 // [Freelancer Service] 소속(회사) 검색 모달
-import { useEffect, useState } from 'react'
-import { Search, Building2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Search, Building2, Check } from 'lucide-react'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,17 +17,37 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (companySq: number, companyNm: string) => void
+  multiple?: boolean
+  selectedCompanySqs?: number[]
+  onSelectMultiple?: (companySqs: number[]) => void
 }
 
-export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
+export function CompanySearchDialog({
+  open,
+  onOpenChange,
+  onSelect,
+  multiple = false,
+  selectedCompanySqs = [],
+  onSelectMultiple,
+}: Props) {
   const [keyword, setKeyword] = useState('')
   const [results, setResults] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [localSelectedCompanySqs, setLocalSelectedCompanySqs] = useState<
+    number[]
+  >([])
+  const wasOpenRef = useRef(false)
   const debouncedKeyword = useDebounce(keyword, 300)
 
   // 디바운스된 키워드가 변경되면 검색 실행
   useEffect(() => {
     if (!open) return
+    const keyword = debouncedKeyword.trim()
+    if (keyword.length < 1) {
+      setResults([])
+      setIsLoading(false)
+      return
+    }
 
     let cancelled = false
 
@@ -35,7 +55,7 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
       setIsLoading(true)
       try {
         const data = await userCompanyApi.getCompanies({
-          keyword: debouncedKeyword,
+          keyword,
         })
         if (!cancelled) setResults(data.output)
       } catch {
@@ -54,14 +74,32 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
 
   // 모달이 열릴 때 상태 초기화
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       setKeyword('')
       setResults([])
+      if (multiple) {
+        setLocalSelectedCompanySqs(selectedCompanySqs)
+      }
     }
-  }, [open])
+    wasOpenRef.current = open
+  }, [open, multiple, selectedCompanySqs])
 
   const handleSelect = (company: Company) => {
+    if (multiple) {
+      setLocalSelectedCompanySqs((prev) =>
+        prev.includes(company.companySq)
+          ? prev.filter((sq) => sq !== company.companySq)
+          : [...prev, company.companySq]
+      )
+      return
+    }
+
     onSelect(company.companySq, company.companyNm)
+    onOpenChange(false)
+  }
+
+  const handleApplyMultiple = () => {
+    onSelectMultiple?.(localSelectedCompanySqs)
     onOpenChange(false)
   }
 
@@ -112,17 +150,32 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
                     </span>
                   </div>
                   <Button
-                    variant='outline'
+                    variant={
+                      multiple &&
+                      localSelectedCompanySqs.includes(company.companySq)
+                        ? 'default'
+                        : 'outline'
+                    }
                     size='sm'
+                    className='w-16'
                     onClick={() => handleSelect(company)}
                   >
-                    선택
+                    {multiple
+                      ? localSelectedCompanySqs.includes(company.companySq)
+                        ? <Check className='h-4 w-4' />
+                        : '선택'
+                      : '선택'}
                   </Button>
                 </li>
               ))}
             </ul>
           )}
         </div>
+        {multiple && (
+          <div className='flex justify-end'>
+            <Button onClick={handleApplyMultiple}>적용</Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

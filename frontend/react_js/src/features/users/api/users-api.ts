@@ -29,6 +29,27 @@ export interface CompanyVerifyPayload {
   companyOpenDt: string // yyyy-MM-dd
 }
 
+export interface CompanyCreatePayload {
+  userSq: number
+  companyNm: string
+  companyCeoNm: string
+  companyBizNum: string
+  companyOpenDt: string
+  companyUrl: string
+  userPhoneNum: string
+  companyAddress: string
+  companyDetailAddress: string
+  companySigungu: string
+  companyZonecode: string
+  companyLatitude: string
+  companyLongitude: string
+  companyAuthStatusCd: string
+}
+
+export interface CompanyCreateResponse {
+  companySq: number
+}
+
 // 기업의 인증 상태
 export const AUTH_STATUS = { PENDING: '2501', VERIFIED: '2502' } as const
 
@@ -111,6 +132,18 @@ export const userCompanyApi = {
     return await api.$patch(`/admin/users/companies/${companySq}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+  },
+
+  /** * 회사(소속) 등록
+   */
+  createCompany: async (formData: FormData) => {
+    return await api.$post<ApiResponse<CompanyCreateResponse>>(
+      '/admin/users/companies',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    )
   },
 
   /** * 회사(소속) 인증

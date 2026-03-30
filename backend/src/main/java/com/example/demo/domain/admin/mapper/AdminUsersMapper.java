@@ -2,6 +2,8 @@ package com.example.demo.domain.admin.mapper;
 
 import java.util.List;
 
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyAddressRequestDTO;
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyRequestDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateCompanyRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -68,6 +70,10 @@ public interface AdminUsersMapper {
     void updateCompany(
             @Param("companySq") Long companySq,
             @Param("dto") AdminUsersUpdateCompanyRequestDTO dto);
+
+    void insertCompanyAddress(AdminUsersCreateCompanyAddressRequestDTO dto);
+
+    void insertCompany(AdminUsersCreateCompanyRequestDTO dto);
 
     void insertFile(
     		@Param("uploaded") UploadedFileDTO uploaded);

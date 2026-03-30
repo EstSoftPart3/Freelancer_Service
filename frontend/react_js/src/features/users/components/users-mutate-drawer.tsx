@@ -137,7 +137,6 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
   useEffect(() => {
     if (open) {
-      console.log('currentRow', currentRow?.userNm, currentRow?.userBirthDt)
       if (isUpdate && currentRow) {
         const sq = currentRow.companySq ?? null
         reset({
@@ -183,7 +182,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       setProfileImageFile(null)
       setCompanyDialog(null)
     }
-  }, [open, isUpdate, currentRow, reset])
+  }, [open, isUpdate, currentRow, reset, serverRoot])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -251,9 +250,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const currentCompanyNm = watch('companyNm')
 
   const handleAffiliationClick = () => {
-    setCompanyDialog(
-      currentTypeCd === 302 && currentCompanySq ? 'details' : 'search'
-    )
+    setCompanyDialog(currentTypeCd === 302 ? 'details' : 'search')
   }
 
   // 검색 다이얼로그에서 회사 선택 시
@@ -264,8 +261,11 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   }
 
   // 기업 소속 있음 → CompanyDetailsDialog 저장 완료 시
-  const handleCompanyUpdated = (newCompanyNm: string) => {
+  const handleCompanyUpdated = (newCompanyNm: string, newCompanySq?: number) => {
     setValue('companyNm', newCompanyNm)
+    if (typeof newCompanySq === 'number') {
+      setValue('companySq', newCompanySq)
+    }
   }
 
   return (
@@ -387,7 +387,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 id='companyNm'
                 autoComplete='off'
                 placeholder={
-                  currentTypeCd === 302 && currentCompanySq
+                  currentTypeCd === 302
                     ? '클릭하여 회사 정보 수정'
                     : '클릭하여 소속 검색'
                 }
@@ -412,8 +412,8 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                     <X className='h-4 w-4' />
                   </button>
                 )}
-                {/* 검색 버튼: 기업+소속 있는 경우 숨김 (클릭하면 수정창으로) */}
-                {!(currentTypeCd === 302 && currentCompanySq) && (
+                {/* 검색 버튼: 기업 회원은 회사 정보 모달만 사용 */}
+                {currentTypeCd !== 302 && (
                   <button
                     type='button'
                     className='rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
@@ -436,16 +436,19 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             onSelect={handleCompanySelect}
           />
 
-          {currentCompanySq && (
-            <CompanyDetailsDialog
-              open={companyDialog === 'details'}
-              onOpenChange={(isOpen) =>
-                setCompanyDialog(isOpen ? 'details' : null)
-              }
-              companySq={currentCompanySq}
-              onUpdated={handleCompanyUpdated}
-            />
-          )}
+          <CompanyDetailsDialog
+            open={companyDialog === 'details'}
+            onOpenChange={(isOpen) =>
+              setCompanyDialog(isOpen ? 'details' : null)
+            }
+            companySq={currentCompanySq}
+            initialValues={{
+              userSq: currentRow?.userSq,
+              companyNm: currentCompanyNm,
+              userPhoneNum: watch('userPhoneNum'),
+            }}
+            onUpdated={handleCompanyUpdated}
+          />
 
           <div className='space-y-2'>
             <Label>유저 유형</Label>
