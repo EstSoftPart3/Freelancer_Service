@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Camera, Search, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { baseUrl } from '@/lib/api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -282,7 +283,8 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         >
           <div
             className='relative cursor-pointer'
-            onClick={() => fileInputRef.current?.click()}
+            // onClick={() => fileInputRef.current?.click()}
+            onClick={() => toast.error('이미지 변경은 관리자에게 문의하세요.')}
           >
             <Avatar className='h-24 w-24'>
               <AvatarImage src={profileImagePreview ?? ''} />
