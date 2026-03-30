@@ -28,6 +28,12 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
   // 디바운스된 키워드가 변경되면 검색 실행
   useEffect(() => {
     if (!open) return
+    const keyword = debouncedKeyword.trim()
+    if (keyword.length < 1) {
+      setResults([])
+      setIsLoading(false)
+      return
+    }
 
     let cancelled = false
 
@@ -35,7 +41,7 @@ export function CompanySearchDialog({ open, onOpenChange, onSelect }: Props) {
       setIsLoading(true)
       try {
         const data = await userCompanyApi.getCompanies({
-          keyword: debouncedKeyword,
+          keyword,
         })
         if (!cancelled) setResults(data.output)
       } catch {

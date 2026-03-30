@@ -24,7 +24,7 @@ import {
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  companySq: number
+  companySq?: number | null
   onUpdated: (companyNm: string) => void
 }
 
@@ -60,46 +60,67 @@ export function CompanyDetailsDialog({
   const [companyDetailAddress, setCompanyDetailAddress] = useState('')
 
   useEffect(() => {
-    if (open && companySq) {
-      let isMounted = true
-      setIsLoading(true)
-      setIsVerified(false) // 모달 열릴 때 인증 초기화
+    if (!open) return
 
-      userCompanyApi
-        .getCompanyDetail(companySq)
-        .then(({ output }) => {
-          if (!isMounted || !output) return
+    if (!companySq) {
+      setIsLoading(false)
+      setIsVerified(false)
+      setCompany(null)
+      setCompanyNm('')
+      setCompanyCeoNm('')
+      setCompanyBizNum('')
+      setCompanyOpenDt(null)
+      setCompanyUrl('')
+      setUserPhoneNum('')
+      setCompanyAddress('')
+      setCompanyDetailAddress('')
+      setAuthSnapshot({
+        companyNm: '',
+        companyCeoNm: '',
+        companyBizNum: '',
+        companyOpenDt: '',
+      })
+      return
+    }
 
-          const openDtStr = output.companyOpenDt
-            ? format(new Date(output.companyOpenDt), 'yyyy-MM-dd')
-            : ''
+    let isMounted = true
+    setIsLoading(true)
+    setIsVerified(false) // 모달 열릴 때 인증 초기화
 
-          setCompany(output)
-          setCompanyNm(output.companyNm || '')
-          setCompanyCeoNm(output.companyCeoNm || '')
-          setCompanyBizNum(output.companyBizNum || '')
-          setCompanyOpenDt(
-            output.companyOpenDt ? new Date(output.companyOpenDt) : null
-          )
-          setCompanyUrl(output.companyUrl || '')
-          setUserPhoneNum(output.userPhoneNum || '')
-          setCompanyAddress(output.companyAddress || '')
-          setCompanyDetailAddress(output.companyDetailAddress || '')
+    userCompanyApi
+      .getCompanyDetail(companySq)
+      .then(({ output }) => {
+        if (!isMounted || !output) return
 
-          setAuthSnapshot({
-            companyNm: output.companyNm || '',
-            companyCeoNm: output.companyCeoNm || '',
-            companyBizNum: output.companyBizNum || '',
-            companyOpenDt: openDtStr,
-          })
+        const openDtStr = output.companyOpenDt
+          ? format(new Date(output.companyOpenDt), 'yyyy-MM-dd')
+          : ''
+
+        setCompany(output)
+        setCompanyNm(output.companyNm || '')
+        setCompanyCeoNm(output.companyCeoNm || '')
+        setCompanyBizNum(output.companyBizNum || '')
+        setCompanyOpenDt(
+          output.companyOpenDt ? new Date(output.companyOpenDt) : null
+        )
+        setCompanyUrl(output.companyUrl || '')
+        setUserPhoneNum(output.userPhoneNum || '')
+        setCompanyAddress(output.companyAddress || '')
+        setCompanyDetailAddress(output.companyDetailAddress || '')
+
+        setAuthSnapshot({
+          companyNm: output.companyNm || '',
+          companyCeoNm: output.companyCeoNm || '',
+          companyBizNum: output.companyBizNum || '',
+          companyOpenDt: openDtStr,
         })
-        .finally(() => {
-          if (isMounted) setIsLoading(false)
-        })
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
 
-      return () => {
-        isMounted = false
-      }
+    return () => {
+      isMounted = false
     }
   }, [open, companySq])
 
@@ -365,7 +386,7 @@ export function CompanyDetailsDialog({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isLoading || isSaving || !canSave}
+              disabled={isLoading || isSaving || !canSave || !company}
             >
               {isSaving ? '저장 중...' : '저장하기'}
             </Button>
