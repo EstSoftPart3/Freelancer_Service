@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -13,9 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { userCompanyApi } from '../api/users-api'
 // import { roles } from '../data/data'
 import { type AdminUser } from '../data/schema'
+import { CompanySearchDialog } from './company-search-dialog'
 import { usersColumns as columns } from './users-columns'
 import { useUsers } from './users-provider'
 
@@ -59,6 +59,7 @@ export function UsersTable({
   const { setOpen, setCurrentRow } = useUsers()
   // const { open, setOpen, currentRow, setCurrentRow } = useUsers();
   const [rowSelection, setRowSelection] = useState({})
+  const [isCompanySearchOpen, setIsCompanySearchOpen] = useState(false)
   const sorting = useMemo(
     () => [{ id: sortField, desc: sortOrder === 'DESC' }],
     [sortField, sortOrder]
@@ -173,21 +174,6 @@ export function UsersTable({
     { label: '여성', value: '102' },
   ]
 
-  // companyOptions가 배열이 아닌 Promise 객체라서 useState + useEffect 활용
-  const [companyOptions, setCompanyOptions] = useState<
-    { label: string; value: string }[]
-  >([])
-  useEffect(() => {
-    userCompanyApi.getCompanies({ keyword: '' }).then((res) => {
-      setCompanyOptions(
-        res.output.map((company) => ({
-          label: company.companyNm,
-          value: company.companySq.toString(),
-        }))
-      )
-    })
-  }, [])
-
   return (
     <div className='space-y-4'>
       <DataTableToolbar
@@ -202,7 +188,8 @@ export function UsersTable({
           {
             columnId: 'companyNm',
             title: '소속',
-            options: companyOptions,
+            onTriggerClick: () => setIsCompanySearchOpen(true),
+            options: [],
           },
           {
             columnId: 'userGenderCd',
@@ -210,6 +197,14 @@ export function UsersTable({
             options: genderOptions,
           },
         ]}
+      />
+      <CompanySearchDialog
+        open={isCompanySearchOpen}
+        onOpenChange={setIsCompanySearchOpen}
+        onSelect={(companySq) => onFilterCompany([companySq])}
+        multiple
+        selectedCompanySqs={companySqs}
+        onSelectMultiple={(sqs) => onFilterCompany(sqs)}
       />
       <div className='overflow-hidden rounded-md border'>
         <Table>

@@ -1,7 +1,11 @@
 package com.example.demo.domain.admin.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyAddressRequestDTO;
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyRequestDTO;
+import com.example.demo.domain.admin.dto.response.AdminUsersCreateCompanyResponseDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateCompanyRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +21,7 @@ import com.example.demo.domain.admin.dto.response.AdminUsersListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminUsersMapper;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -125,6 +130,33 @@ public class AdminUsersService {
     @Transactional
     public void updateCompany(Long companySq, AdminUsersUpdateCompanyRequestDTO dto) {
         adminUsersMapper.updateCompany(companySq, dto);
+    }
+
+    @Transactional
+    public AdminUsersCreateCompanyResponseDTO createCompany(AdminUsersCreateCompanyRequestDTO dto) {
+        Long addressSq = null;
+
+        if (StringUtils.hasText(dto.getCompanyAddress())
+                || StringUtils.hasText(dto.getCompanyDetailAddress())) {
+            AdminUsersCreateCompanyAddressRequestDTO addressDto = AdminUsersCreateCompanyAddressRequestDTO
+                    .builder()
+                    .zonecode(dto.getCompanyZonecode())
+                    .address(dto.getCompanyAddress())
+                    .detailAddress(dto.getCompanyDetailAddress())
+                    .sigungu(dto.getCompanySigungu())
+                    .latitude(dto.getCompanyLatitude() != null ? dto.getCompanyLatitude() : BigDecimal.ZERO)
+                    .longitude(dto.getCompanyLongitude() != null ? dto.getCompanyLongitude() : BigDecimal.ZERO)
+                    .build();
+            adminUsersMapper.insertCompanyAddress(addressDto);
+            addressSq = addressDto.getAddressSq();
+        }
+
+        dto.setAddressSq(addressSq);
+        adminUsersMapper.insertCompany(dto);
+
+        return AdminUsersCreateCompanyResponseDTO.builder()
+                .companySq(dto.getCompanySq())
+                .build();
     }
 
 	public void verifyMasterPassword(String password) {

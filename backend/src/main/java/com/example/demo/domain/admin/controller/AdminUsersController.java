@@ -2,6 +2,8 @@ package com.example.demo.domain.admin.controller;
 
 import java.util.List;
 
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyRequestDTO;
+import com.example.demo.domain.admin.dto.response.AdminUsersCreateCompanyResponseDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateCompanyRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -82,6 +84,13 @@ public class AdminUsersController {
     ) {
         adminUsersService.updateCompany(companySq, dto);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 정보 수정 성공", null));
+    }
+
+    @PostMapping("/companies")
+    public ResponseEntity<ApiResponse<AdminUsersCreateCompanyResponseDTO>> createCompany(
+            @ModelAttribute AdminUsersCreateCompanyRequestDTO dto
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 정보 등록 성공", adminUsersService.createCompany(dto)));
     }
 
 	@PostMapping("/verify-password")

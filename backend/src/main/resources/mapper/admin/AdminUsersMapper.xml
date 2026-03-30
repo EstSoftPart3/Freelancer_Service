@@ -299,4 +299,59 @@
         WHERE c.company_sq = #{companySq}
     </update>
 
+    <insert id="insertCompanyAddress"
+            parameterType="com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyAddressRequestDTO"
+            useGeneratedKeys="true"
+            keyProperty="addressSq">
+        INSERT INTO TBL_ADDRESS_S (
+            zonecode,
+            address,
+            detail_address,
+            sigungu,
+            latitude,
+            longitude,
+            area_code_sq
+        ) VALUES (
+            #{zonecode},
+            #{address},
+            #{detailAddress},
+            #{sigungu},
+            #{latitude},
+            #{longitude},
+            (
+                SELECT area_code_sq
+                FROM TBL_AREA_C
+                WHERE area_sigungu LIKE CONCAT('%', #{sigungu}, '%')
+                LIMIT 1
+            )
+        )
+    </insert>
+
+    <insert id="insertCompany"
+            parameterType="com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyRequestDTO"
+            useGeneratedKeys="true"
+            keyProperty="companySq">
+        INSERT INTO TBL_COMPANY_S (
+            user_sq,
+            address_sq,
+            company_nm,
+            company_ceo_nm,
+            company_biz_num,
+            company_open_dt,
+            company_url,
+            company_auth_status_cd,
+            company_agreed_terms_yn
+        ) VALUES (
+            #{userSq},
+            #{addressSq},
+            #{companyNm},
+            #{companyCeoNm},
+            #{companyBizNum},
+            #{companyOpenDt},
+            #{companyUrl},
+            #{companyAuthStatusCd},
+            'Y'
+        )
+    </insert>
+
 </mapper>

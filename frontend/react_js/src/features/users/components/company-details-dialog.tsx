@@ -17,6 +17,7 @@ import { DatePicker } from '@/components/date-picker'
 import {
   type Company,
   type CompanyVerifyPayload,
+  type CompanyCreatePayload,
   AUTH_STATUS,
   userCompanyApi,
 } from '../api/users-api'
@@ -24,8 +25,31 @@ import {
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  companySq: number
-  onUpdated: (companyNm: string) => void
+  companySq?: number | null
+  onUpdated: (companyNm: string, companySq?: number) => void
+  initialValues?: {
+    userSq?: number | null
+    companyNm?: string | null
+    userPhoneNum?: string | null
+    companyAddress?: string | null
+    companyDetailAddress?: string | null
+  }
+}
+
+type DaumPostcodeAddressData = {
+  roadAddress?: string
+  jibunAddress?: string
+  address?: string
+  sigungu?: string
+  zonecode?: string
+}
+
+type DaumPostcodeConstructor = new (options: {
+  oncomplete: (data: DaumPostcodeAddressData) => void
+}) => { open: () => void }
+
+type DaumPostcodeNamespace = {
+  Postcode?: DaumPostcodeConstructor
 }
 
 export function CompanyDetailsDialog({
@@ -33,6 +57,7 @@ export function CompanyDetailsDialog({
   onOpenChange,
   companySq,
   onUpdated,
+  initialValues,
 }: Props) {
   const [company, setCompany] = useState<Company | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -58,50 +83,118 @@ export function CompanyDetailsDialog({
   const [userPhoneNum, setUserPhoneNum] = useState('')
   const [companyAddress, setCompanyAddress] = useState('')
   const [companyDetailAddress, setCompanyDetailAddress] = useState('')
+  const [companySigungu, setCompanySigungu] = useState('')
+  const [companyZonecode, setCompanyZonecode] = useState('')
 
   useEffect(() => {
-    if (open && companySq) {
-      let isMounted = true
-      setIsLoading(true)
-      setIsVerified(false) // 모달 열릴 때 인증 초기화
+    if (!open) return
 
-      userCompanyApi
-        .getCompanyDetail(companySq)
-        .then(({ output }) => {
-          if (!isMounted || !output) return
-
-          const openDtStr = output.companyOpenDt
-            ? format(new Date(output.companyOpenDt), 'yyyy-MM-dd')
-            : ''
-
-          setCompany(output)
-          setCompanyNm(output.companyNm || '')
-          setCompanyCeoNm(output.companyCeoNm || '')
-          setCompanyBizNum(output.companyBizNum || '')
-          setCompanyOpenDt(
-            output.companyOpenDt ? new Date(output.companyOpenDt) : null
-          )
-          setCompanyUrl(output.companyUrl || '')
-          setUserPhoneNum(output.userPhoneNum || '')
-          setCompanyAddress(output.companyAddress || '')
-          setCompanyDetailAddress(output.companyDetailAddress || '')
-
-          setAuthSnapshot({
-            companyNm: output.companyNm || '',
-            companyCeoNm: output.companyCeoNm || '',
-            companyBizNum: output.companyBizNum || '',
-            companyOpenDt: openDtStr,
-          })
-        })
-        .finally(() => {
-          if (isMounted) setIsLoading(false)
-        })
-
-      return () => {
-        isMounted = false
-      }
+    if (!companySq) {
+      setIsLoading(false)
+      setIsVerified(false)
+      setCompany(null)
+      setCompanyNm(initialValues?.companyNm || '')
+      setCompanyCeoNm('')
+      setCompanyBizNum('')
+      setCompanyOpenDt(null)
+      setCompanyUrl('')
+      setUserPhoneNum(initialValues?.userPhoneNum || '')
+      setCompanyAddress(initialValues?.companyAddress || '')
+      setCompanyDetailAddress(initialValues?.companyDetailAddress || '')
+      setCompanySigungu('')
+      setCompanyZonecode('')
+      setAuthSnapshot({
+        companyNm: initialValues?.companyNm || '',
+        companyCeoNm: '',
+        companyBizNum: '',
+        companyOpenDt: '',
+      })
+      return
     }
-  }, [open, companySq])
+
+    let isMounted = true
+    setIsLoading(true)
+    setIsVerified(false) // 모달 열릴 때 인증 초기화
+
+    userCompanyApi
+      .getCompanyDetail(companySq)
+      .then(({ output }) => {
+        if (!isMounted || !output) return
+
+        const openDtStr = output.companyOpenDt
+          ? format(new Date(output.companyOpenDt), 'yyyy-MM-dd')
+          : ''
+
+        setCompany(output)
+        setCompanyNm(output.companyNm || '')
+        setCompanyCeoNm(output.companyCeoNm || '')
+        setCompanyBizNum(output.companyBizNum || '')
+        setCompanyOpenDt(
+          output.companyOpenDt ? new Date(output.companyOpenDt) : null
+        )
+        setCompanyUrl(output.companyUrl || '')
+        setUserPhoneNum(output.userPhoneNum || '')
+        setCompanyAddress(output.companyAddress || '')
+        setCompanyDetailAddress(output.companyDetailAddress || '')
+        setCompanySigungu('')
+        setCompanyZonecode('')
+
+        setAuthSnapshot({
+          companyNm: output.companyNm || '',
+          companyCeoNm: output.companyCeoNm || '',
+          companyBizNum: output.companyBizNum || '',
+          companyOpenDt: openDtStr,
+        })
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [open, companySq, initialValues])
+
+  const openAddressSearch = () => {
+    const daumNamespace = (
+      window as Window & { daum?: DaumPostcodeNamespace }
+    ).daum
+
+    const openDaumPostcode = () => {
+      if (!daumNamespace?.Postcode) return
+
+      new daumNamespace.Postcode({
+        oncomplete: (data) => {
+          const selectedAddress =
+            data?.roadAddress || data?.jibunAddress || data?.address || ''
+          setCompanyAddress(selectedAddress)
+          setCompanySigungu(data?.sigungu || '')
+          setCompanyZonecode(data?.zonecode || '')
+        },
+      }).open()
+    }
+
+    if (daumNamespace?.Postcode) {
+      openDaumPostcode()
+      return
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[data-daum-postcode="true"]'
+    )
+    if (existingScript) {
+      existingScript.addEventListener('load', openDaumPostcode, { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src =
+      'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    script.dataset.daumPostcode = 'true'
+    script.onload = openDaumPostcode
+    document.body.appendChild(script)
+  }
 
   // 4개 인증 필드 모두 채워져 있는지
   const hasAllAuthFields = useMemo(
@@ -130,7 +223,9 @@ export function CompanyDetailsDialog({
    * 2. 인증 필드 하나라도 비어있음               → 저장 불가능
    * 3. 인증 필드 변경 + 모두 채워짐              → 인증 완료 후 저장 가능
    */
-  const canSave = !isAuthDirty || (hasAllAuthFields && isVerified)
+  const canSave = companySq
+    ? !isAuthDirty || (hasAllAuthFields && isVerified)
+    : hasAllAuthFields && isVerified
 
   // ── 인증 필드 변경 핸들러 (변경 시 isVerified 초기화) ──
   const withResetVerify =
@@ -170,9 +265,72 @@ export function CompanyDetailsDialog({
   }
 
   const handleSave = async () => {
-    if (!company) return
+    if (!canSave) {
+      if (!hasAllAuthFields) {
+        toast.error('저장 불가', {
+          description: '기업명, 대표자명, 개업일자, 사업자등록번호를 모두 입력하세요.',
+        })
+        return
+      }
+
+      if (!isVerified) {
+        toast.error('저장 불가', {
+          description: '인증하기를 완료한 뒤 저장할 수 있습니다.',
+        })
+        return
+      }
+
+      toast.error('저장 불가', {
+        description: '기업 인증을 완료한 뒤 저장할 수 있습니다.',
+      })
+      return
+    }
+
     setIsSaving(true)
     try {
+      if (!companySq || !company) {
+        if (!initialValues?.userSq) {
+          toast.error('등록 실패', {
+            description: '회원 정보가 없어 회사를 등록할 수 없습니다.',
+          })
+          return
+        }
+
+        const createPayload: CompanyCreatePayload = {
+          userSq: initialValues.userSq,
+          companyNm,
+          companyCeoNm,
+          companyBizNum,
+          companyOpenDt: companyOpenDt ? format(companyOpenDt, 'yyyy-MM-dd') : '',
+          companyUrl,
+          userPhoneNum,
+          companyAddress,
+          companyDetailAddress,
+          companySigungu,
+          companyZonecode,
+          companyLatitude: '0',
+          companyLongitude: '0',
+          companyAuthStatusCd: AUTH_STATUS.VERIFIED,
+        }
+
+        const formData = new FormData()
+        Object.entries(createPayload).forEach(([key, value]) =>
+          formData.append(key, String(value))
+        )
+
+        const response = await userCompanyApi.createCompany(formData)
+        const createdCompanySq = response.output?.companySq
+
+        if (!createdCompanySq) {
+          throw new Error('created companySq is missing')
+        }
+
+        onUpdated(companyNm, createdCompanySq)
+        toast.success('회사 정보 등록 완료')
+        onOpenChange(false)
+        return
+      }
+
       const formData = new FormData()
       formData.append('companyNm', companyNm)
       formData.append('companyCeoNm', companyCeoNm)
@@ -193,11 +351,13 @@ export function CompanyDetailsDialog({
       // 인증 필드 미변경 시 → companyAuthStatusCd 미포함 (백엔드 기존값 유지)
 
       await userCompanyApi.updateCompany(company.companySq, formData)
-      onUpdated(companyNm)
+      onUpdated(companyNm, company.companySq)
       toast.success('회사 정보 수정 완료')
       onOpenChange(false)
-    } catch {
-      toast.error('수정 실패', { description: '수정 중 오류가 발생했습니다.' })
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : '수정 중 오류가 발생했습니다.'
+      toast.error('수정 실패', { description: errorMessage })
     } finally {
       setIsSaving(false)
     }
@@ -338,12 +498,21 @@ export function CompanyDetailsDialog({
               {/* TODO: 주소 수정은 추후에 추가할 것. 현재는 readonly로 설정 */}
               <div className='space-y-1.5'>
                 <Label htmlFor='companyAddress'>주소</Label>
-                <Input
-                  id='companyAddress'
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
-                  readOnly
-                />
+                <div className='flex gap-2'>
+                  <Input
+                    id='companyAddress'
+                    value={companyAddress}
+                    onChange={(e) => setCompanyAddress(e.target.value)}
+                    readOnly
+                  />
+                  <Button
+                    type='button'
+                    className='shrink-0'
+                    onClick={openAddressSearch}
+                  >
+                    주소 검색
+                  </Button>
+                </div>
               </div>
               <div className='space-y-1.5'>
                 <Label htmlFor='companyDetailAddress'>상세 주소</Label>
@@ -351,7 +520,6 @@ export function CompanyDetailsDialog({
                   id='companyDetailAddress'
                   value={companyDetailAddress}
                   onChange={(e) => setCompanyDetailAddress(e.target.value)}
-                  readOnly
                 />
               </div>
             </div>
@@ -365,7 +533,7 @@ export function CompanyDetailsDialog({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isLoading || isSaving || !canSave}
+              disabled={isLoading || isSaving}
             >
               {isSaving ? '저장 중...' : '저장하기'}
             </Button>
