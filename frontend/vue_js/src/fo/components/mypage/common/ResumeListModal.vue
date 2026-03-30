@@ -118,7 +118,6 @@ const selectResume = (resume) => {
       affiliationStore.setResume(resume)
       alertStore.show('이력서 선택이 완료되었습니다.', 'success')
       close()
-      close()
     },
   })
 }
