@@ -36,7 +36,6 @@ export interface CompanyCreatePayload {
   companyBizNum: string
   companyOpenDt: string
   companyUrl: string
-  userPhoneNum: string
   companyAddress: string
   companyDetailAddress: string
   companySigungu: string

@@ -30,7 +30,6 @@ interface Props {
   initialValues?: {
     userSq?: number | null
     companyNm?: string | null
-    userPhoneNum?: string | null
     companyAddress?: string | null
     companyDetailAddress?: string | null
   }
@@ -80,14 +79,12 @@ export function CompanyDetailsDialog({
   const [companyOpenDt, setCompanyOpenDt] = useState<Date | null>(null)
 
   const [companyUrl, setCompanyUrl] = useState('')
-  const [userPhoneNum, setUserPhoneNum] = useState('')
   const [companyAddress, setCompanyAddress] = useState('')
   const [companyDetailAddress, setCompanyDetailAddress] = useState('')
   const [companySigungu, setCompanySigungu] = useState('')
   const [companyZonecode, setCompanyZonecode] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{
     companyUrl?: string
-    userPhoneNum?: string
   }>({})
 
   useEffect(() => {
@@ -102,7 +99,6 @@ export function CompanyDetailsDialog({
       setCompanyBizNum('')
       setCompanyOpenDt(null)
       setCompanyUrl('')
-      setUserPhoneNum(initialValues?.userPhoneNum || '')
       setCompanyAddress(initialValues?.companyAddress || '')
       setCompanyDetailAddress(initialValues?.companyDetailAddress || '')
       setCompanySigungu('')
@@ -137,7 +133,6 @@ export function CompanyDetailsDialog({
           output.companyOpenDt ? new Date(output.companyOpenDt) : null
         )
         setCompanyUrl(output.companyUrl || '')
-        setUserPhoneNum(output.userPhoneNum || '')
         setCompanyAddress(output.companyAddress || '')
         setCompanyDetailAddress(output.companyDetailAddress || '')
         setCompanySigungu('')
@@ -291,15 +286,10 @@ export function CompanyDetailsDialog({
     }
 
     // ── 입력값 유효성 검증 ──
-    const errors: { companyUrl?: string; userPhoneNum?: string } = {}
-    const phoneRegex = /^(01[016789]\d{7,8}|02\d{7,8}|0[3-9][0-9]\d{6,7})$/
+    const errors: { companyUrl?: string } = {}
     const urlRegex =
       /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
 
-    if (userPhoneNum && !phoneRegex.test(userPhoneNum)) {
-      errors.userPhoneNum =
-        '올바른 연락처 형식을 입력해주세요. (예: 01012345678)'
-    }
     if (companyUrl && !urlRegex.test(companyUrl)) {
       errors.companyUrl =
         '올바른 URL 형식을 입력해주세요. (예: https://example.com)'
@@ -334,7 +324,6 @@ export function CompanyDetailsDialog({
             ? format(companyOpenDt, 'yyyy-MM-dd')
             : '',
           companyUrl,
-          userPhoneNum,
           companyAddress,
           companyDetailAddress,
           companySigungu,
@@ -371,7 +360,6 @@ export function CompanyDetailsDialog({
         companyOpenDt ? format(companyOpenDt, 'yyyy-MM-dd') : ''
       )
       formData.append('companyUrl', companyUrl)
-      formData.append('userPhoneNum', userPhoneNum)
       formData.append('companyAddress', companyAddress)
       formData.append('companyDetailAddress', companyDetailAddress)
 
@@ -531,28 +519,6 @@ export function CompanyDetailsDialog({
                   </p>
                 )}
               </div>
-              <div className='space-y-1.5'>
-                <Label htmlFor='userPhoneNum'>연락처</Label>
-                <Input
-                  id='userPhoneNum'
-                  value={userPhoneNum}
-                  onChange={(e) => {
-                    setUserPhoneNum(e.target.value)
-                    if (fieldErrors.userPhoneNum) {
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        userPhoneNum: undefined,
-                      }))
-                    }
-                  }}
-                />
-                {fieldErrors.userPhoneNum && (
-                  <p className='text-xs text-destructive'>
-                    {fieldErrors.userPhoneNum}
-                  </p>
-                )}
-              </div>
-              {/* TODO: 주소 수정은 추후에 추가할 것. 현재는 readonly로 설정 */}
               <div className='space-y-1.5'>
                 <Label htmlFor='companyAddress'>주소</Label>
                 <div className='flex gap-2'>

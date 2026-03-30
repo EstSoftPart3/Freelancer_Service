@@ -456,7 +456,6 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             initialValues={{
               userSq: currentRow?.userSq,
               companyNm: currentCompanyNm,
-              userPhoneNum: watch('userPhoneNum'),
             }}
             onUpdated={handleCompanyUpdated}
           />
