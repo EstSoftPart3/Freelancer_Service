@@ -202,6 +202,9 @@ export function UsersTable({
         open={isCompanySearchOpen}
         onOpenChange={setIsCompanySearchOpen}
         onSelect={(companySq) => onFilterCompany([companySq])}
+        multiple
+        selectedCompanySqs={companySqs}
+        onSelectMultiple={(sqs) => onFilterCompany(sqs)}
       />
       <div className='overflow-hidden rounded-md border'>
         <Table>
