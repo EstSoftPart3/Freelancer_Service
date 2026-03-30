@@ -72,7 +72,13 @@ const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
   userPw: z.string(),
-  userPhoneNum: z.string().min(1, '휴대폰 번호를 입력해주세요.'),
+  userPhoneNum: z
+    .string()
+    .min(1, '휴대폰 번호를 입력해주세요.')
+    .regex(
+      /^(01[016789]\d{7,8}|02\d{7,8}|0[3-9][0-9]\d{6,7})$/,
+      '올바른 휴대폰 번호를 입력해주세요. (예: 01012345678)'
+    ),
   userBirthDt: z.date().optional().nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number(),
@@ -262,7 +268,10 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   }
 
   // 기업 소속 있음 → CompanyDetailsDialog 저장 완료 시
-  const handleCompanyUpdated = (newCompanyNm: string, newCompanySq?: number) => {
+  const handleCompanyUpdated = (
+    newCompanyNm: string,
+    newCompanySq?: number
+  ) => {
     setValue('companyNm', newCompanyNm)
     if (typeof newCompanySq === 'number') {
       setValue('companySq', newCompanySq)
@@ -447,7 +456,6 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             initialValues={{
               userSq: currentRow?.userSq,
               companyNm: currentCompanyNm,
-              userPhoneNum: watch('userPhoneNum'),
             }}
             onUpdated={handleCompanyUpdated}
           />

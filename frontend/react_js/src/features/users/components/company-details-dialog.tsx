@@ -30,7 +30,6 @@ interface Props {
   initialValues?: {
     userSq?: number | null
     companyNm?: string | null
-    userPhoneNum?: string | null
     companyAddress?: string | null
     companyDetailAddress?: string | null
   }
@@ -80,11 +79,13 @@ export function CompanyDetailsDialog({
   const [companyOpenDt, setCompanyOpenDt] = useState<Date | null>(null)
 
   const [companyUrl, setCompanyUrl] = useState('')
-  const [userPhoneNum, setUserPhoneNum] = useState('')
   const [companyAddress, setCompanyAddress] = useState('')
   const [companyDetailAddress, setCompanyDetailAddress] = useState('')
   const [companySigungu, setCompanySigungu] = useState('')
   const [companyZonecode, setCompanyZonecode] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{
+    companyUrl?: string
+  }>({})
 
   useEffect(() => {
     if (!open) return
@@ -98,7 +99,6 @@ export function CompanyDetailsDialog({
       setCompanyBizNum('')
       setCompanyOpenDt(null)
       setCompanyUrl('')
-      setUserPhoneNum(initialValues?.userPhoneNum || '')
       setCompanyAddress(initialValues?.companyAddress || '')
       setCompanyDetailAddress(initialValues?.companyDetailAddress || '')
       setCompanySigungu('')
@@ -133,7 +133,6 @@ export function CompanyDetailsDialog({
           output.companyOpenDt ? new Date(output.companyOpenDt) : null
         )
         setCompanyUrl(output.companyUrl || '')
-        setUserPhoneNum(output.userPhoneNum || '')
         setCompanyAddress(output.companyAddress || '')
         setCompanyDetailAddress(output.companyDetailAddress || '')
         setCompanySigungu('')
@@ -156,9 +155,8 @@ export function CompanyDetailsDialog({
   }, [open, companySq, initialValues])
 
   const openAddressSearch = () => {
-    const daumNamespace = (
-      window as Window & { daum?: DaumPostcodeNamespace }
-    ).daum
+    const daumNamespace = (window as Window & { daum?: DaumPostcodeNamespace })
+      .daum
 
     const openDaumPostcode = () => {
       if (!daumNamespace?.Postcode) return
@@ -268,7 +266,8 @@ export function CompanyDetailsDialog({
     if (!canSave) {
       if (!hasAllAuthFields) {
         toast.error('저장 불가', {
-          description: '기업명, 대표자명, 개업일자, 사업자등록번호를 모두 입력하세요.',
+          description:
+            '기업명, 대표자명, 개업일자, 사업자등록번호를 모두 입력하세요.',
         })
         return
       }
@@ -286,6 +285,26 @@ export function CompanyDetailsDialog({
       return
     }
 
+    // ── 입력값 유효성 검증 ──
+    const errors: { companyUrl?: string } = {}
+    const urlRegex =
+      /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
+
+    if (companyUrl && !urlRegex.test(companyUrl)) {
+      errors.companyUrl =
+        '올바른 URL 형식을 입력해주세요. (예: https://example.com)'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      toast.error('입력 정보 오류', {
+        description: '입력한 정보를 다시 확인해주세요.',
+      })
+      return
+    }
+
+    setFieldErrors({})
+
     setIsSaving(true)
     try {
       if (!companySq || !company) {
@@ -301,9 +320,10 @@ export function CompanyDetailsDialog({
           companyNm,
           companyCeoNm,
           companyBizNum,
-          companyOpenDt: companyOpenDt ? format(companyOpenDt, 'yyyy-MM-dd') : '',
+          companyOpenDt: companyOpenDt
+            ? format(companyOpenDt, 'yyyy-MM-dd')
+            : '',
           companyUrl,
-          userPhoneNum,
           companyAddress,
           companyDetailAddress,
           companySigungu,
@@ -340,7 +360,6 @@ export function CompanyDetailsDialog({
         companyOpenDt ? format(companyOpenDt, 'yyyy-MM-dd') : ''
       )
       formData.append('companyUrl', companyUrl)
-      formData.append('userPhoneNum', userPhoneNum)
       formData.append('companyAddress', companyAddress)
       formData.append('companyDetailAddress', companyDetailAddress)
 
@@ -484,18 +503,22 @@ export function CompanyDetailsDialog({
                 <Input
                   id='companyUrl'
                   value={companyUrl}
-                  onChange={(e) => setCompanyUrl(e.target.value)}
+                  onChange={(e) => {
+                    setCompanyUrl(e.target.value)
+                    if (fieldErrors.companyUrl) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        companyUrl: undefined,
+                      }))
+                    }
+                  }}
                 />
+                {fieldErrors.companyUrl && (
+                  <p className='text-xs text-destructive'>
+                    {fieldErrors.companyUrl}
+                  </p>
+                )}
               </div>
-              <div className='space-y-1.5'>
-                <Label htmlFor='userPhoneNum'>연락처</Label>
-                <Input
-                  id='userPhoneNum'
-                  value={userPhoneNum}
-                  onChange={(e) => setUserPhoneNum(e.target.value)}
-                />
-              </div>
-              {/* TODO: 주소 수정은 추후에 추가할 것. 현재는 readonly로 설정 */}
               <div className='space-y-1.5'>
                 <Label htmlFor='companyAddress'>주소</Label>
                 <div className='flex gap-2'>
@@ -531,10 +554,7 @@ export function CompanyDetailsDialog({
             <Button variant='outline' onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isLoading || isSaving}
-            >
+            <Button onClick={handleSave} disabled={isLoading || isSaving}>
               {isSaving ? '저장 중...' : '저장하기'}
             </Button>
           </div>
