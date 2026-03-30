@@ -137,7 +137,6 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const serverRoot = baseUrl.slice(0, baseUrl.lastIndexOf('/api'))
   useEffect(() => {
     if (open) {
-      console.log('currentRow', currentRow?.userNm, currentRow?.userBirthDt)
       if (isUpdate && currentRow) {
         const sq = currentRow.companySq ?? null
         reset({
@@ -183,7 +182,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       setProfileImageFile(null)
       setCompanyDialog(null)
     }
-  }, [open, isUpdate, currentRow, reset])
+  }, [open, isUpdate, currentRow, reset, serverRoot])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -262,8 +261,11 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   }
 
   // 기업 소속 있음 → CompanyDetailsDialog 저장 완료 시
-  const handleCompanyUpdated = (newCompanyNm: string) => {
+  const handleCompanyUpdated = (newCompanyNm: string, newCompanySq?: number) => {
     setValue('companyNm', newCompanyNm)
+    if (typeof newCompanySq === 'number') {
+      setValue('companySq', newCompanySq)
+    }
   }
 
   return (
@@ -440,6 +442,11 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               setCompanyDialog(isOpen ? 'details' : null)
             }
             companySq={currentCompanySq}
+            initialValues={{
+              userSq: currentRow?.userSq,
+              companyNm: currentCompanyNm,
+              userPhoneNum: watch('userPhoneNum'),
+            }}
             onUpdated={handleCompanyUpdated}
           />
 
