@@ -81,16 +81,16 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
             onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
           />
         </div>
-      </DialogContent>
 
-      <DialogFooter>
-        <Button variant='outline' onClick={() => onOpenChange(false)}>
-          취소
-        </Button>
-        <Button onClick={handleConfirm} disabled={!password || isLoading}>
-          확인
-        </Button>
-      </DialogFooter>
+        <DialogFooter>
+          <Button onClick={handleConfirm} disabled={!password || isLoading}>
+            확인
+          </Button>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
+            취소
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   )
 }
