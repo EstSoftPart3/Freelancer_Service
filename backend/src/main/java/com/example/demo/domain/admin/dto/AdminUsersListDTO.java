@@ -24,7 +24,7 @@ public class AdminUsersListDTO {
     private String profileImageUrl;
     private String userNm;
     private String companyNm;
-    private String companySq;
+    private Long companySq;
     private String userEmail;
     private String userPhoneNum;
     private Long userGenderCd;
