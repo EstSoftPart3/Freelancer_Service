@@ -85,6 +85,10 @@ export function CompanyDetailsDialog({
   const [companyDetailAddress, setCompanyDetailAddress] = useState('')
   const [companySigungu, setCompanySigungu] = useState('')
   const [companyZonecode, setCompanyZonecode] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{
+    companyUrl?: string
+    userPhoneNum?: string
+  }>({})
 
   useEffect(() => {
     if (!open) return
@@ -156,9 +160,8 @@ export function CompanyDetailsDialog({
   }, [open, companySq, initialValues])
 
   const openAddressSearch = () => {
-    const daumNamespace = (
-      window as Window & { daum?: DaumPostcodeNamespace }
-    ).daum
+    const daumNamespace = (window as Window & { daum?: DaumPostcodeNamespace })
+      .daum
 
     const openDaumPostcode = () => {
       if (!daumNamespace?.Postcode) return
@@ -268,7 +271,8 @@ export function CompanyDetailsDialog({
     if (!canSave) {
       if (!hasAllAuthFields) {
         toast.error('저장 불가', {
-          description: '기업명, 대표자명, 개업일자, 사업자등록번호를 모두 입력하세요.',
+          description:
+            '기업명, 대표자명, 개업일자, 사업자등록번호를 모두 입력하세요.',
         })
         return
       }
@@ -286,6 +290,31 @@ export function CompanyDetailsDialog({
       return
     }
 
+    // ── 입력값 유효성 검증 ──
+    const errors: { companyUrl?: string; userPhoneNum?: string } = {}
+    const phoneRegex = /^(01[016789]\d{7,8}|02\d{7,8}|0[3-9][0-9]\d{6,7})$/
+    const urlRegex =
+      /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
+
+    if (userPhoneNum && !phoneRegex.test(userPhoneNum)) {
+      errors.userPhoneNum =
+        '올바른 연락처 형식을 입력해주세요. (예: 01012345678)'
+    }
+    if (companyUrl && !urlRegex.test(companyUrl)) {
+      errors.companyUrl =
+        '올바른 URL 형식을 입력해주세요. (예: https://example.com)'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      toast.error('입력 정보 오류', {
+        description: '입력한 정보를 다시 확인해주세요.',
+      })
+      return
+    }
+
+    setFieldErrors({})
+
     setIsSaving(true)
     try {
       if (!companySq || !company) {
@@ -301,7 +330,9 @@ export function CompanyDetailsDialog({
           companyNm,
           companyCeoNm,
           companyBizNum,
-          companyOpenDt: companyOpenDt ? format(companyOpenDt, 'yyyy-MM-dd') : '',
+          companyOpenDt: companyOpenDt
+            ? format(companyOpenDt, 'yyyy-MM-dd')
+            : '',
           companyUrl,
           userPhoneNum,
           companyAddress,
@@ -484,16 +515,42 @@ export function CompanyDetailsDialog({
                 <Input
                   id='companyUrl'
                   value={companyUrl}
-                  onChange={(e) => setCompanyUrl(e.target.value)}
+                  onChange={(e) => {
+                    setCompanyUrl(e.target.value)
+                    if (fieldErrors.companyUrl) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        companyUrl: undefined,
+                      }))
+                    }
+                  }}
                 />
+                {fieldErrors.companyUrl && (
+                  <p className='text-xs text-destructive'>
+                    {fieldErrors.companyUrl}
+                  </p>
+                )}
               </div>
               <div className='space-y-1.5'>
                 <Label htmlFor='userPhoneNum'>연락처</Label>
                 <Input
                   id='userPhoneNum'
                   value={userPhoneNum}
-                  onChange={(e) => setUserPhoneNum(e.target.value)}
+                  onChange={(e) => {
+                    setUserPhoneNum(e.target.value)
+                    if (fieldErrors.userPhoneNum) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        userPhoneNum: undefined,
+                      }))
+                    }
+                  }}
                 />
+                {fieldErrors.userPhoneNum && (
+                  <p className='text-xs text-destructive'>
+                    {fieldErrors.userPhoneNum}
+                  </p>
+                )}
               </div>
               {/* TODO: 주소 수정은 추후에 추가할 것. 현재는 readonly로 설정 */}
               <div className='space-y-1.5'>
@@ -531,10 +588,7 @@ export function CompanyDetailsDialog({
             <Button variant='outline' onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isLoading || isSaving}
-            >
+            <Button onClick={handleSave} disabled={isLoading || isSaving}>
               {isSaving ? '저장 중...' : '저장하기'}
             </Button>
           </div>
