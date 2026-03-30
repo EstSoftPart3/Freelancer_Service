@@ -513,23 +513,6 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               className='h-6 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100'
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setEditingAnswer(answer)
-                                setAnswerTitle(answer.ttl)
-                                setAnswerContent('') // 내용은 API에서 가져와야 할 수 있음
-                                toast.info('답변 내용을 불러오는 중...')
-                                // 답변 상세를 가져와서 내용 설정
-                                boardApi
-                                  .getBoardDetail(answer.sq, 1404)
-                                  .then((res) => {
-                                    setAnswerContent(
-                                      res.output.description || ''
-                                    )
-                                  })
-                                  .catch(() => {
-                                    toast.error(
-                                      '답변 내용을 불러올 수 없습니다.'
-                                    )
-                                  })
                                 setEditingAnswerForDrawer({
                                   sq: answer.sq,
                                   boardTypeCd: 1404,
