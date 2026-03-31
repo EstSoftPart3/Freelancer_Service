@@ -155,10 +155,9 @@ export function CompanyDetailsDialog({
   }, [open, companySq, initialValues])
 
   const openAddressSearch = () => {
-    const daumNamespace = (window as Window & { daum?: DaumPostcodeNamespace })
-      .daum
-
     const openDaumPostcode = () => {
+      const daumNamespace = (window as Window & { daum?: DaumPostcodeNamespace })
+        .daum
       if (!daumNamespace?.Postcode) return
 
       new daumNamespace.Postcode({
@@ -172,6 +171,8 @@ export function CompanyDetailsDialog({
       }).open()
     }
 
+    const daumNamespace = (window as Window & { daum?: DaumPostcodeNamespace })
+      .daum
     if (daumNamespace?.Postcode) {
       openDaumPostcode()
       return

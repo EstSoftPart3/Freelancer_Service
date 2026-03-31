@@ -48,8 +48,11 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
         toast.success('유저 정보가 수정되었습니다.')
         setTimeout(() => window.location.reload(), 500)
       }
-    } catch {
-      toast.error('유저 정보 수정 중 오류가 발생하였습니다.')
+    } catch (error) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || '유저 정보 수정 중 오류가 발생하였습니다.'
+      toast.error('유저 정보 수정 실패', { description: errorMessage })
     } finally {
       setIsLoading(false)
     }
