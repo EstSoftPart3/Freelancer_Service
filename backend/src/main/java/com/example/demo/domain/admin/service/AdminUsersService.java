@@ -135,9 +135,15 @@ public class AdminUsersService {
     @Transactional
     public AdminUsersCreateCompanyResponseDTO createCompany(AdminUsersCreateCompanyRequestDTO dto) {
         Long addressSq = null;
+        boolean hasCompanyAddress = StringUtils.hasText(dto.getCompanyAddress());
+        boolean hasCompanyDetailAddress = StringUtils.hasText(dto.getCompanyDetailAddress());
+        boolean hasCompanyZonecode = StringUtils.hasText(dto.getCompanyZonecode());
 
-        if (StringUtils.hasText(dto.getCompanyAddress())
-                || StringUtils.hasText(dto.getCompanyDetailAddress())) {
+        if ((hasCompanyDetailAddress && !hasCompanyAddress) || (hasCompanyAddress && !hasCompanyZonecode)) {
+            throw new IllegalArgumentException("주소 검색을 이용해 주소를 입력해주세요.");
+        }
+
+        if (hasCompanyAddress || hasCompanyDetailAddress) {
             AdminUsersCreateCompanyAddressRequestDTO addressDto = AdminUsersCreateCompanyAddressRequestDTO
                     .builder()
                     .zonecode(dto.getCompanyZonecode())
