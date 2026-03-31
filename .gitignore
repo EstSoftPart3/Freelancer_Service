@@ -413,3 +413,24 @@ application.yml
 # Claude
 CLAUDE.md
 .claude/settings.local.json
+
+# 특정 파일 제외
+filename.js
+
+# 현재 경로의 특정 파일 제외
+/filename.js
+
+# 특정 폴더 전체 제외
+node_modules/
+
+# 특정 경로의 특정 파일 제외
+folder/my.txt
+
+# 특정 경로 하위 모든 파일 제외
+folder/**/fileName_2.txt
+
+# 특정 확장자 전체 제외
+*.txt
+
+# 예외 처리 (txt 중에서 이것만 포함)
+!filename.txt
