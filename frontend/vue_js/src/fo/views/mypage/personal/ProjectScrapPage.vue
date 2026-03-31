@@ -245,9 +245,10 @@ async function fetchScraps() {
       size: itemsPerPage,
     }
     const res = await api.$get('/mypage/projectScrap', { params })
-    const output = res.output
-    scraps.value = output.content || []
-    totalPages.value = Math.ceil((output.totalCount || 0) / itemsPerPage) || 1
+    const output = res?.output ?? {}
+    scraps.value = Array.isArray(output.content) ? output.content : []
+    const totalCount = Number(output.totalCount ?? 0)
+    totalPages.value = Math.max(1, Math.ceil(totalCount / itemsPerPage))
     if (currentPage.value > totalPages.value) {
       currentPage.value = totalPages.value
     }
