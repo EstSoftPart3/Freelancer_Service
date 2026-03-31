@@ -12,7 +12,7 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
   typescript:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
-  // jsp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jsp/jsp-original.svg',
+  jsp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
   php: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
 
   // Framework & Library
@@ -30,8 +30,9 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg',
   nextjs:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
-  websquare:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/webcomponents/webcomponents-original.svg',
+  nuxtjs:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nuxtjs/nuxtjs-original.svg',
+  net: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg',
 
   // Tools
   docker:
@@ -52,6 +53,10 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg',
   postman:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg',
+  dbeaver:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dbeaver/dbeaver-original.svg',
+  sqldeveloper:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqldeveloper/sqldeveloper-original.svg',
 
   // Device (대체 아이콘 사용)
   pc: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/monitor.svg',
@@ -73,26 +78,20 @@ const iconMap = {
   mongodb:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
   mariadb: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mariadb.svg',
-  mybatis:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mybatis/mybatis-original.svg',
+  mybatis: 'https://cdn.jsdelivr.net/gh/mybatis/logo/logo-bird-ninja.svg',
+  redis:
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg',
   postgresql:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
   sqlite:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg',
 
   // Cloud Services
-  aws: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonaws.svg',
+  aws: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg',
   googlecloud:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg',
   azure:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg',
-  awss3: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazons3.svg',
-  awsec2:
-    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonec2.svg',
-  awslambda:
-    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/awslambda.svg',
-  awsrds:
-    'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonrds.svg',
   cloudflare:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg',
   firebase:
