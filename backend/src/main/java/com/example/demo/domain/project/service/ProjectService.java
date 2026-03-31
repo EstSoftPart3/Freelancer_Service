@@ -1,11 +1,7 @@
 package com.example.demo.domain.project.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -685,6 +681,7 @@ public class ProjectService {
 		Map<String, List<String>> grouped = responses.stream()
 				.collect(Collectors.groupingBy(
 						SingleSkillInfoResponse::getParentSkillTagNm,
+						LinkedHashMap::new,
 						Collectors.mapping(SingleSkillInfoResponse::getChildSkillTagNm, Collectors.toList())));
 
 		List<GroupSkillInfoResponse> result = grouped.entrySet().stream()
