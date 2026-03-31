@@ -13,6 +13,7 @@
         <input
           type="text"
           v-model="form.id"
+          id="signup-id"
           class="form-control form-control-lg"
           @input="onIdInput"
         />
@@ -34,6 +35,7 @@
         <input
           type="password"
           v-model="form.password"
+          id="signup-password"
           class="form-control form-control-lg"
           @input="validatePassword"
         />
@@ -53,6 +55,7 @@
         <input
           type="password"
           v-model="form.confirmPassword"
+          id="signup-confirmPassword"
           class="form-control form-control-lg"
           @input="passwordValid ? validateConfirmPassword() : ''"
         />
@@ -76,6 +79,7 @@
         <input
           type="text"
           v-model="form.name"
+          id="signup-name"
           class="form-control form-control-lg"
           @input="validateName"
         />
@@ -94,7 +98,7 @@
             style="color: #007bff"
           ></i>
         </label>
-        <div class="datepicker-wrapper">
+        <div class="datepicker-wrapper" id="signup-dob">
           <Datepicker
             v-model="form.dob"
             :locale="ko"
@@ -121,6 +125,7 @@
         </label>
         <select
           v-model="form.gender"
+          id="signup-gender"
           class="form-control form-control-lg"
           @change="validateGender"
         >
@@ -146,6 +151,7 @@
         <input
           type="text"
           v-model="form.phone"
+          id="signup-phone"
           class="form-control form-control-lg"
           @input="validatePhone"
         />
@@ -167,6 +173,7 @@
         <input
           type="text"
           v-model="form.address"
+          id="signup-address"
           class="form-control form-control-lg"
           placeholder="주소를 검색하세요"
           readonly
@@ -204,6 +211,7 @@
           <input
             type="text"
             v-model="form.emailId"
+            id="signup-emailId"
             class="form-control form-control-lg"
             @input="validateEmail"
             placeholder="이메일 아이디"
@@ -226,13 +234,12 @@
             @change="handleDomainChange"
             class="form-control form-control-lg"
           >
-            <option disabled value="">선택하세요</option>
+            <option value="custom">직접입력</option>
             <option value="naver.com">naver.com</option>
             <option value="gmail.com">gmail.com</option>
             <option value="daum.net">daum.net</option>
             <option value="nate.com">nate.com</option>
             <option value="hotmail.com">hotmail.com</option>
-            <option value="custom">직접입력</option>
           </select>
 
           <button
@@ -262,6 +269,7 @@
           <input
             type="text"
             v-model="form.verificationCode"
+            id="signup-verificationCode"
             class="form-control form-control-lg"
             @input="validateVerifycode"
           />
@@ -338,24 +346,52 @@ const validateAll = async () => {
   validateVerifycode()
   validateTerms()
 
-  // 모든 유효성 통과 여부 확인
-  const isFormValid =
-    idValid.value &&
-    passwordValid.value &&
-    confirmPasswordValid.value &&
-    nameValid.value &&
-    dobValid.value &&
-    genderValid.value &&
-    phoneValid.value &&
-    addressValid.value &&
-    emailValid.value &&
-    verifyCodeValid.value && // 인증번호 유효성 처리 보완 필요
-    termsValid.value
+  //유효성 검사 항목 위에서부터 순서대로 체크
+  const validationItems = [
+    { valid: idValid.value, error: idError.value, id: 'signup-id' },
+    {
+      valid: passwordValid.value,
+      error: passwordError.value,
+      id: 'signup-password',
+    },
+    {
+      valid: confirmPasswordValid.value,
+      error: confirmPasswordError.value,
+      id: 'signup-confirmPassword',
+    },
+    { valid: nameValid.value, error: nameError.value, id: 'signup-name' },
+    { valid: dobValid.value, error: dobError.value, id: 'signup-dob' },
+    { valid: genderValid.value, error: genderError.value, id: 'signup-gender' },
+    { valid: phoneValid.value, error: phoneError.value, id: 'signup-phone' },
+    {
+      valid: addressValid.value,
+      error: addressError.value,
+      id: 'signup-address',
+    },
+    { valid: emailValid.value, error: emailError.value, id: 'signup-emailId' },
+    {
+      valid: !!verifyCodeValid.value,
+      error: verifycodeError.value,
+      id: 'signup-verificationCode',
+    },
+    { valid: termsValid.value, error: termsError.value, id: 'terms' },
+  ]
 
-  if (isFormValid) {
-    emit('submit', { ...form })
+  const firstError = validationItems.find((item) => !item.valid)
+
+  if (firstError) {
+    alertStore.show(firstError.error || '입력 정보를 확인해주세요.', 'danger')
+    //해당 위치로 이동 및 포커스
+    const element = document.getElementById(firstError.id)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      //input이나 select 요소인 경우 포커스
+      if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
+        element.focus()
+      }
+    }
   } else {
-    console.warn('❌ 유효성 검사 실패. 폼 제출 불가.')
+    emit('submit', { ...form })
   }
 }
 
@@ -384,8 +420,8 @@ const form = reactive({
 const modalStore = useModalStore()
 const alertStore = useAlertStore()
 
-const selectedDomain = ref('')
-const isCustomDomain = ref(false)
+const selectedDomain = ref('custom')
+const isCustomDomain = ref(true)
 
 function handleDomainChange() {
   if (selectedDomain.value === 'custom') {
