@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, type FieldErrors, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Camera, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -81,7 +81,7 @@ const schema = z.object({
     ),
   userBirthDt: z.date().optional().nullable(),
   userTypeCd: z.number(),
-  userGenderCd: z.number(),
+  userGenderCd: z.number().nullable(),
   userIsActivateYn: z.string(),
   userIsDeletedYn: z.string(),
   userAgreedPrivacyPolicyYn: z.string(),
@@ -252,6 +252,21 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     setOpen('master-pw')
   }
 
+  const onInvalid = (errors: FieldErrors<UserMutateForm>) => {
+    const firstErrorEntry = Object.entries(errors).find(
+      ([, error]) => typeof error?.message === 'string'
+    )
+    const firstErrorField = firstErrorEntry?.[0] as keyof UserMutateForm | undefined
+    const firstErrorMessage = firstErrorEntry?.[1]?.message
+
+    toast.error('입력값을 확인해주세요.', {
+      description:
+        typeof firstErrorMessage === 'string'
+          ? `${firstErrorField ? `${firstErrorField}: ` : ''}${firstErrorMessage}`
+          : '필수 항목 또는 형식을 다시 확인해주세요.',
+    })
+  }
+
   const currentTypeCd = watch('userTypeCd')
   const currentCompanySq = watch('companySq')
   const currentCompanyNm = watch('companyNm')
@@ -287,7 +302,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         </SheetHeader>
 
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(onSubmit, onInvalid)}
           className='mt-6 space-y-6 px-4 sm:px-8'
         >
           <div
