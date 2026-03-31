@@ -834,20 +834,19 @@ function deleteProfileImage() {
 }
 
 // 전화번호
-function onPhoneInput(event) {
-  const value = event.target.value
-  const digits = value.replace(/\D/g, '') // 숫자 외 제거
+function formatPhoneNumber(phoneNumber) {
+  const digits = String(phoneNumber ?? '').replace(/\D/g, '').slice(0, 11)
 
-  let formatted = ''
-  if (digits.length <= 3) {
-    formatted = digits
-  } else if (digits.length <= 7) {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
-  } else {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+  if (digits.length <= 3) return digits
+  if (digits.length <= 7) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`
   }
 
-  resumeForm.resumePhoneNum = formatted // 수동으로 반영
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+}
+
+function onPhoneInput(event) {
+  resumeForm.resumePhoneNum = formatPhoneNumber(event.target.value)
 }
 
 // 주소
@@ -1161,6 +1160,7 @@ onMounted(async () => {
 
     // 1. 이력서 기본값 세팅
     Object.assign(resumeForm, data.output)
+    resumeForm.resumePhoneNum = formatPhoneNumber(resumeForm.resumePhoneNum)
 
     // 2. 상위 태그 불러오기
     const parentTags = await api.$get(
@@ -1187,7 +1187,7 @@ onMounted(async () => {
         resumeForm.resumeBirthDt = data.userBirthDt
           ? new Date(data.userBirthDt)
           : ''
-        resumeForm.resumePhoneNum = data.userPhoneNum ?? ''
+        resumeForm.resumePhoneNum = formatPhoneNumber(data.userPhoneNum)
         resumeForm.resumeEmail = data.userEmail ?? ''
         resumeForm.address = {
           zonecode: data.zonecode ?? '',
