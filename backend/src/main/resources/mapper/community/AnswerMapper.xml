@@ -25,7 +25,8 @@
         UPDATE TBL_BOARD_ANSWER_S
         SET answer_ttl = #{answerTtl},
         answer_description_edt = #{answerDescriptionEdt},
-        answer_is_adopted_yn = #{answerIsAdoptedYn}
+        answer_is_adopted_yn = #{answerIsAdoptedYn},
+        answer_modified_at_dtm = NOW()
         WHERE answer_sq = #{answerSq}
     </update>
 

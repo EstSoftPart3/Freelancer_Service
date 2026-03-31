@@ -272,9 +272,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
         const output = response.output as BoardDetail
         setDetail(output)
 
-        if (output.comments) {
-          setComments(output.comments)
-        }
+        setComments(output.comments ?? [])
       } catch (_) {
         toast.error('데이터를 불러오는 중 에러가 발생했습니다.')
       } finally {
@@ -325,8 +323,13 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!currentRow?.sq) return
 
     try {
-      // 현재 보고 있는 글이 게시글인지 답변인지에 따라 boardSq 전송
-      await boardApi.createComment(currentRow.sq, content, parentCommentSq)
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      await boardApi.createComment(
+        currentRow.sq,
+        content,
+        parentCommentSq,
+        targetType
+      )
       toast.success('답글이 등록되었습니다.')
       fetchDetail() // 목록 새로고침
     } catch (_) {
@@ -341,7 +344,13 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!newComment.trim() || !currentRow?.sq) return
 
     try {
-      await boardApi.createComment(currentRow.sq, newComment)
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      await boardApi.createComment(
+        currentRow.sq,
+        newComment,
+        undefined,
+        targetType
+      )
       toast.success('댓글이 등록되었습니다.')
       setNewComment('')
       fetchDetail() // 목록 새로고침
