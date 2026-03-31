@@ -304,7 +304,7 @@ export function CompanyDetailsDialog({
     }
 
     if (!!companyDetailAddress.trim() && !companyAddress.trim()) {
-      toast.error('저장 불가', {
+      toast.error('주소 정보 오류', {
         description: '주소 검색을 이용해 주소를 입력해주세요.',
       })
       return

@@ -140,7 +140,7 @@ public class AdminUsersService {
         boolean hasCompanyZonecode = StringUtils.hasText(dto.getCompanyZonecode());
 
         if ((hasCompanyDetailAddress && !hasCompanyAddress) || (hasCompanyAddress && !hasCompanyZonecode)) {
-            throw new IllegalArgumentException("주소 검색을 이용해 주소를 입력해주세요.");
+            throw new IllegalArgumentException("주소 정보가 올바르지 않습니다.");
         }
 
         if (hasCompanyAddress || hasCompanyDetailAddress) {
