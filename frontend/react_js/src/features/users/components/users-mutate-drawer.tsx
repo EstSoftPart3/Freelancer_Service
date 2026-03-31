@@ -71,7 +71,15 @@ const validateBirthDate = ({
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
   userEmail: z.string(),
-  userPw: z.string(),
+  userPw: z
+    .string()
+    .refine(
+      (val) =>
+        val === '' || /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(val),
+      {
+        message: '8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.',
+      }
+    ),
   userPhoneNum: z
     .string()
     .min(1, '휴대폰 번호를 입력해주세요.')
