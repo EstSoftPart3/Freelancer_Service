@@ -238,7 +238,9 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     //   formData.append('userBirthDt', '')
     // }
     formData.append('userTypeCd', String(data.userTypeCd))
-    formData.append('userGenderCd', String(data.userGenderCd))
+    if (data.userGenderCd !== null) {
+      formData.append('userGenderCd', String(data.userGenderCd))
+    }
     formData.append('userIsActivateYn', data.userIsActivateYn)
     formData.append('userIsDeletedYn', data.userIsDeletedYn)
     formData.append('userAgreedPrivacyPolicyYn', data.userAgreedPrivacyPolicyYn)
@@ -494,11 +496,15 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           <div className='space-y-2'>
             <Label>성별</Label>
             <Select
-              value={String(watch('userGenderCd'))}
+              value={
+                watch('userGenderCd') === null
+                  ? ''
+                  : String(watch('userGenderCd'))
+              }
               onValueChange={(val) => setValue('userGenderCd', Number(val))}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder='선택 안 함' />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='101'>남자</SelectItem>
