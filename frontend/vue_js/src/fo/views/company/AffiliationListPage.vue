@@ -93,6 +93,8 @@
                 >
                   <article
                     class="post post-medium border-0 pb-0 mb-0 shadow-sm rounded overflow-hidden bg-white d-flex flex-column h-100"
+                    @click="clickApplication(afltn)"
+                    style="cursor: pointer"
                   >
                     <div
                       class="post-image position-relative d-flex align-items-center justify-content-center bg-light"
@@ -142,7 +144,6 @@
                           <button
                             type="button"
                             class="text-primary fw-bold text-decoration-none border-0 bg-transparent p-0 text-start"
-                            @click="clickApplication(afltn)"
                           >
                             {{ afltn.companyNm }}
                           </button>
@@ -150,7 +151,7 @@
                         <button
                           type="button"
                           class="text-muted border-0 bg-transparent p-0"
-                          @click="clickScrap(afltn.sq)"
+                          @click.stop="clickScrap(afltn.sq)"
                         >
                           <i
                             class="bi bi-heart-fill"
@@ -199,7 +200,6 @@
                                 ? 'btn-light disabled'
                                 : 'btn-outline-primary'
                           "
-                          @click="clickApplication(afltn)"
                         >
                           {{
                             userStore.affiliatedCompanySq === afltn.sq

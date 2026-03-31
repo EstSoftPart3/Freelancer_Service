@@ -62,7 +62,8 @@ public class AffiliationService {
 		Address address = affiliationMapper.findAddress(company.getAddressSq());
 		List<String> tags = affiliationMapper.findTags(company.getCompanySq());
 		AffiliationResponse affiliation = AffiliationResponse.fromEntity(company, address, tags, null, null, null,
-				null);
+				null, // applicationSq
+				null); // imageUrl 추가 (인자 개수 8개 맞춤)
 
 		return ApplyResponse.builder().apply(responses).affiliation(affiliation).build();
 	}
@@ -87,12 +88,11 @@ public class AffiliationService {
 					// String imageUrl = (imgNm != null) ? amazonS3.getUrl(bucket, imgNm).toString()
 					// : null;
 					String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
-					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
+					// [수정] 단순히 카운트만 가져오는 게 아니라, 신청 번호(applicationSq)를 가져오도록 로직 변경 필요
+					Long applicationSq = (userSq != null) ? affiliationMapper.findIsApply(userSq, company.getCompanySq()) : null;
 					Long activeMember = (userSq != null) ? affiliationMapper.isActiveMember(userSq, company.getCompanySq()) : 0L;
-					Boolean isApply = false;
-					if (applyCnt > 0 || activeMember > 0) {
-						isApply = true;
-					}
+					
+					Boolean isApply = (applicationSq != null && applicationSq > 0) || activeMember > 0;
 
 					Boolean isScrap = false;
 					if (userSq != null) {
@@ -102,7 +102,7 @@ public class AffiliationService {
 						}
 					}
 
-					return AffiliationResponse.fromEntity(company, address, tags, scrapCnt, isScrap, isApply, imageUrl);
+					return AffiliationResponse.fromEntity(company, address, tags, scrapCnt, isScrap, isApply, applicationSq, imageUrl);
 
 				}).collect(Collectors.toList());
 
@@ -145,7 +145,7 @@ public class AffiliationService {
 		}
 
 		Long isApply = affiliationMapper.findIsApply(companyApplication.getUserSq(), companyApplication.getCompanySq());
-		if (isApply > 0) {
+		if (isApply != null && isApply > 0) {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
 		}
 
@@ -295,9 +295,9 @@ public class AffiliationService {
 				}
 				affiliationRepository.insertCompanyMember(passDTO);
 
-				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
+				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 합격 되었습니다.";
 			} else {
-				message = "아쉽게도 [" + companyNm + "] 소속 가입 신청 결과가 발표되었습니다. (불합격)";
+				message = "[" + companyNm + "] 소속 가입 신청이 불합격 되었습니다.";
 			}
 
 			notificationService.send(
@@ -372,7 +372,7 @@ public class AffiliationService {
 
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
 					Boolean isApply = false;
-					if (applyCnt > 0) {
+					if (applyCnt != null && applyCnt > 0) {
 						isApply = true;
 					}
 

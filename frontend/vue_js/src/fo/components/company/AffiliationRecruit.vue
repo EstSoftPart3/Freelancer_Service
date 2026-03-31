@@ -49,8 +49,19 @@
         <label for="companyLocation" class="form-label text-primary text-bold"
           >회사위치</label
         >
-        <div class="text-dark" id="companyLocation">
+        <div
+          class="text-dark d-flex align-items-center gap-2"
+          id="companyLocation"
+        >
           {{ info.address }}
+          <button
+            type="button"
+            class="btn btn-primary btn-xs py-1 px-2 text-1"
+            @click="openKakaoRoute"
+            title="카카오 맵 경로찾기"
+          >
+            <i class="bi bi-cursor-fill me-1"></i>경로 찾기
+          </button>
         </div>
       </div>
 
@@ -123,23 +134,35 @@
       <button
         v-if="!afltnInfo.isApply"
         type="button"
-        class="btn btn-primary"
+        class="btn"
+        :class="userStore.userType === 'COMPANY' ? 'btn-light' : 'btn-primary'"
+        :disabled="userStore.userType === 'COMPANY'"
         @click="clickRecruit"
       >
-        소속 신청하기
-      </button>
-      <button
-        v-if="afltnInfo.isApply"
-        type="button"
-        class="btn btn-light"
-        disabled
-      >
         {{
-          userStore.affiliatedCompanySq === afltnInfo.sq
-            ? '소속 중'
-            : '소속 신청 완료'
+          userStore.userType === 'COMPANY'
+            ? '기업 회원 신청 불가'
+            : '소속 신청하기'
         }}
       </button>
+      <template v-if="afltnInfo.isApply">
+        <button
+          v-if="userStore.affiliatedCompanySq === afltnInfo.sq"
+          type="button"
+          class="btn btn-light"
+          disabled
+        >
+          소속 중
+        </button>
+        <button
+          v-else
+          type="button"
+          class="btn btn-danger"
+          @click="clickCancel"
+        >
+          신청 취소
+        </button>
+      </template>
       <button
         type="button"
         class="btn btn-light"
@@ -186,27 +209,25 @@ const clickRecruit = async () => {
     return
   }
 
+  // 1. 권한 체크 (사전 검사)
+  if (userStore.userType === 'COMPANY') {
+    alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
+    return
+  }
+
+  // 2. 이력서 선택 체크 (사전 검사)
+  if (
+    !affiliationStore.resume.resumeSq ||
+    affiliationStore.resume.resumeSq == 0
+  ) {
+    alertStore.show('이력서를 선택해주세요.', 'danger')
+    return
+  }
+
   modalStore.openModal(CommonConfirmModal, {
     title: '소속 신청',
     message: `${info.value.companyNm} 소속 신청하시겠습니까?`,
     onConfirm: async () => {
-      // 1. 권한 체크
-      if (localStorage.getItem('userType') == 'COMPANY') {
-        alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
-        modalStore.closeModal() // 컨펌창만 닫기
-        return
-      }
-
-      // 2. 이력서 선택 체크
-      if (
-        !affiliationStore.resume.resumeSq ||
-        affiliationStore.resume.resumeSq == 0
-      ) {
-        alertStore.show('이력서를 선택해주세요.', 'danger')
-        modalStore.closeModal() // 컨펌창만 닫기
-        return
-      }
-
       try {
         const res = await api.$post(`/affiliation/apply`, {
           companySq: info.value.sq,
@@ -232,6 +253,35 @@ const clickRecruit = async () => {
         modalStore.closeModal() // 에러 시 컨펌창만 닫기
       }
     },
+  }) // 수정 요청이 아닌 확인용 코드입니다.
+  console.log('현재 스토어의 내 위치 위도:', userStore.userLat)
+  console.log('현재 스토어의 내 위치 경도:', userStore.userLng)
+}
+
+// 소속 신청 취소 버튼 클릭 이벤트
+const clickCancel = async () => {
+  modalStore.openModal(CommonConfirmModal, {
+    title: '신청 취소',
+    message: '소속 신청을 취소하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        // [수정] AffiliatedJobApplicationsPage.vue와 동일한 API 경로 및 방식($patch) 사용
+        const res = await api.$patch(
+          `/mypage/applications/${info.value.applicationSq}`,
+        )
+
+        if (res.status == 'OK') {
+          alertStore.show(res.message, 'success')
+
+          // 목록 갱신 및 모든 모달 닫기
+          if (props.onConfirm) props.onConfirm()
+          modalStore.closeAllModals()
+        }
+      } catch (error) {
+        alertStore.show('신청 취소 처리에 실패했습니다.', 'danger')
+        modalStore.closeModal()
+      }
+    },
   })
 }
 
@@ -243,6 +293,29 @@ const openResumeModal = () => {
   }
   modalStore.openModal(ResumeListModal)
 }
+
+// 카카오 맵 경로찾기 오픈
+const openKakaoRoute = () => {
+  const baseUrl = 'https://map.kakao.com/link/to/'
+  const destName = encodeURIComponent(info.value.companyNm)
+  const destLat = info.value.latitude
+  const destLng = info.value.longitude
+
+  if (!destLat || !destLng) {
+    alertStore.show('해당 기업의 위치 정보가 등록되지 않았습니다.', 'danger')
+    return
+  }
+
+  let url = `${baseUrl}${destName},${destLat},${destLng}`
+
+  // 출발지 정보(내 위치)가 있다면 추가
+  if (userStore.userLat && userStore.userLng) {
+    const startName = encodeURIComponent('내 위치')
+    url += `/from/${startName},${userStore.userLat},${userStore.userLng}`
+  }
+
+  window.open(url, '_blank')
+}
 </script>
 <style>
 .text-bold {
@@ -250,5 +323,8 @@ const openResumeModal = () => {
 }
 .bg-f5 {
   background: #f5f5f5;
+}
+.btn-xs {
+  font-size: 0.75rem;
 }
 </style>

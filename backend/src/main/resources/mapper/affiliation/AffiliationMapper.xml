@@ -262,11 +262,12 @@
     </select>
 
     <select id="findIsApply" resultType="Long">
-        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        SELECT company_application_sq FROM TBL_COMPANY_APPLICATION_H
         WHERE company_sq = #{companySq}
         AND user_sq = #{userSq}
         AND company_application_status_cd = 501
         AND company_application_is_deleted_yn = 'N'
+        LIMIT 1
     </select>
 
     <select id="isActiveMember" resultType="Long">

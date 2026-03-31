@@ -3,6 +3,7 @@ package com.example.demo.domain.affiliation.dto.response;
 import lombok.*;
 import java.util.*;
 import java.time.*;
+import java.math.BigDecimal;
 
 import com.example.demo.domain.affiliation.entity.*;
 
@@ -24,21 +25,30 @@ public class AffiliationResponse{
     private Long scrapCnt; // 스크랩 수 (스크랩 테이블)
     private Boolean isScrap; // 스크랩 여부
     private Boolean isApply; // 지원 여부
+	private Long applicationSq; // 신청 고유 번호 추가
     private Long memberCnt; // 소속 직원 수
     private String isRecruitingYn;
+    private Double latitude; // 위도 추가
+    private Double longitude; // 경도 추가
     
 
 
-    public static AffiliationResponse fromEntity(Company company, Address adress, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, String imgUrl) {
+    public static AffiliationResponse fromEntity(Company company, Address adress, List<String> tags, Long scrapCnt, Boolean isScrap, Boolean isApply, Long applicationSq, String imgUrl) {
     	LocalDate today = LocalDate.now();
         Period period = Period.between(company.getCompanyOpenDt(), today);
     	Integer openYear = period.getYears();
+
+        String addressTxt = (adress != null) ? adress.getAddress() : null;
+
+        Double lat = (adress != null && adress.getLatitude() != null) ? ((BigDecimal) adress.getLatitude()).doubleValue() : null;
+        Double lng = (adress != null && adress.getLongitude() != null) ? ((BigDecimal) adress.getLongitude()).doubleValue() : null;
+
         return new AffiliationResponse(
         		company.getCompanySq(),
         		company.getCompanyNm(),
         		company.getCompanyCeoNm(),
         		imgUrl,
-        		adress.getAddress(),
+        		addressTxt,
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
@@ -47,8 +57,11 @@ public class AffiliationResponse{
         		scrapCnt,
         		isScrap,
         		isApply,
+        		applicationSq,
         		null,
-        		null
+        		null,
+        		lat,
+        		lng
         		
         );
     }
@@ -57,12 +70,18 @@ public class AffiliationResponse{
     	LocalDate today = LocalDate.now();
         Period period = Period.between(company.getCompanyOpenDt(), today);
     	Integer openYear = period.getYears();
+
+        String addressTxt = (adress != null) ? adress.getAddress() : null;
+
+        Double lat = (adress != null && adress.getLatitude() != null) ? ((BigDecimal) adress.getLatitude()).doubleValue() : null;
+        Double lng = (adress != null && adress.getLongitude() != null) ? ((BigDecimal) adress.getLongitude()).doubleValue() : null;
+
         return new AffiliationResponse(
         		company.getCompanySq(),
         		company.getCompanyNm(),
         		company.getCompanyCeoNm(),
         		company.getCompanyProfileImageUrl(),
-        		adress.getAddress(),
+        		addressTxt,
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
@@ -71,8 +90,11 @@ public class AffiliationResponse{
         		null,
         		null,
         		isApply,
-        		memberCnt,
-        		company.getCompanyIsRecruitingYn()
+        		null, // applicationSq 자리에 null 추가
+        		memberCnt, // memberCnt는 15번째
+        		company.getCompanyIsRecruitingYn(), // isRecruitingYn은 16번째
+        		lat,
+        		lng
         		
         );
     	
