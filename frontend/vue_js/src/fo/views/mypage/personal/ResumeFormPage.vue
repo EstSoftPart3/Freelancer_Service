@@ -353,16 +353,16 @@
               <a
                 href="#"
                 class="text-dark text-decoration-none small"
-                @click.prevent="expandAllProjects"
+                @click.prevent="toggleAllProjects"
               >
-                <i class="fas fa-chevron-down me-2"></i>전체 펼치기
-              </a>
-              <a
-                href="#"
-                class="text-dark text-decoration-none small"
-                @click.prevent="collapseAllProjects"
-              >
-                <i class="fas fa-chevron-up me-2"></i>전체 닫기
+                <i
+                  :class="[
+                    'fas',
+                    allProjectsExpanded ? 'fa-chevron-up' : 'fa-chevron-down',
+                    'me-2',
+                  ]"
+                ></i>
+                {{ allProjectsExpanded ? '전체 닫기' : '전체 펼치기' }}
               </a>
             </div>
             <div v-for="(project, index) in resumeData.projects" :key="index">
@@ -617,7 +617,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import ResumeModal from '@/fo/components/mypage/personal/ResumeModal.vue'
 import EducationSearchModal from '@/fo/components/mypage/personal/EducationSearchModal.vue'
@@ -833,12 +833,15 @@ const toggleProject = (index) => {
 }
 
 // 전체 프로젝트 펼치기/접기
-const expandAllProjects = () => {
-  resumeData.projects.forEach((project) => (project.isExpanded = true))
-}
+const allProjectsExpanded = computed(
+  () =>
+    resumeData.projects.length > 0 &&
+    resumeData.projects.every((project) => project.isExpanded),
+)
 
-const collapseAllProjects = () => {
-  resumeData.projects.forEach((project) => (project.isExpanded = false))
+const toggleAllProjects = () => {
+  const nextExpanded = !allProjectsExpanded.value
+  resumeData.projects.forEach((project) => (project.isExpanded = nextExpanded))
 }
 
 // 프로젝트가 추가/변경될 때 전체 펼침

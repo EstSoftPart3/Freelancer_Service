@@ -345,16 +345,16 @@
               <a
                 href="#"
                 class="text-dark text-decoration-none small"
-                @click.prevent="expandAllProjects"
+                @click.prevent="toggleAllProjects"
               >
-                <i class="fas fa-chevron-down me-2"></i>전체 펼치기
-              </a>
-              <a
-                href="#"
-                class="text-dark text-decoration-none small"
-                @click.prevent="collapseAllProjects"
-              >
-                <i class="fas fa-chevron-up me-2"></i>전체 닫기
+                <i
+                  :class="[
+                    'fas',
+                    allProjectsExpanded ? 'fa-chevron-up' : 'fa-chevron-down',
+                    'me-2',
+                  ]"
+                ></i>
+                {{ allProjectsExpanded ? '전체 닫기' : '전체 펼치기' }}
               </a>
             </div>
             <div
@@ -834,20 +834,22 @@ function deleteProfileImage() {
 }
 
 // 전화번호
-function onPhoneInput(event) {
-  const value = event.target.value
-  const digits = value.replace(/\D/g, '') // 숫자 외 제거
+function formatPhoneNumber(value) {
+  const digits = String(value ?? '').replace(/\D/g, '').slice(0, 11)
 
-  let formatted = ''
   if (digits.length <= 3) {
-    formatted = digits
-  } else if (digits.length <= 7) {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
-  } else {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+    return digits
   }
 
-  resumeForm.resumePhoneNum = formatted // 수동으로 반영
+  if (digits.length <= 7) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`
+  }
+
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+}
+
+function onPhoneInput(event) {
+  resumeForm.resumePhoneNum = formatPhoneNumber(event.target.value)
 }
 
 // 주소
@@ -1043,15 +1045,17 @@ const toggleProject = (index) => {
 }
 
 // 전체 프로젝트 펼치기/접기
-const expandAllProjects = () => {
-  resumeForm.projectHistoryList.forEach(
-    (project) => (project.isExpanded = true),
-  )
-}
+const allProjectsExpanded = computed(
+  () =>
+    resumeForm.projectHistoryList.length > 0 &&
+    resumeForm.projectHistoryList.every((project) => project.isExpanded),
+)
 
-const collapseAllProjects = () => {
+const toggleAllProjects = () => {
+  const nextExpanded = !allProjectsExpanded.value
+
   resumeForm.projectHistoryList.forEach(
-    (project) => (project.isExpanded = false),
+    (project) => (project.isExpanded = nextExpanded),
   )
 }
 
@@ -1187,7 +1191,7 @@ onMounted(async () => {
         resumeForm.resumeBirthDt = data.userBirthDt
           ? new Date(data.userBirthDt)
           : ''
-        resumeForm.resumePhoneNum = data.userPhoneNum ?? ''
+        resumeForm.resumePhoneNum = formatPhoneNumber(data.userPhoneNum)
         resumeForm.resumeEmail = data.userEmail ?? ''
         resumeForm.address = {
           zonecode: data.zonecode ?? '',

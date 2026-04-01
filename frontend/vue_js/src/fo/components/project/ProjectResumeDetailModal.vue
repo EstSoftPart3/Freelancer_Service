@@ -126,17 +126,17 @@
             <div class="d-flex gap-3">
               <a
                 href="#"
-                @click.prevent="expandAllProjects"
+                @click.prevent="toggleAllProjects"
                 class="text-grey text-decoration-none small"
               >
-                <i class="fas fa-chevron-down me-2"></i>전체 펼치기
-              </a>
-              <a
-                href="#"
-                @click.prevent="collapseAllProjects"
-                class="text-grey text-decoration-none small"
-              >
-                <i class="fas fa-chevron-up me-2"></i>전체 닫기
+                <i
+                  :class="[
+                    'fas',
+                    allProjectsExpanded ? 'fa-chevron-up' : 'fa-chevron-down',
+                    'me-2',
+                  ]"
+                ></i>
+                {{ allProjectsExpanded ? '전체 닫기' : '전체 펼치기' }}
               </a>
             </div>
           </h5>
@@ -367,7 +367,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, defineProps } from 'vue'
+import { ref, watchEffect, defineProps, computed } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { api } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
@@ -414,15 +414,17 @@ const toggleProject = (index) => {
     !resumeInfo.value.projectList[index].isExpanded
 }
 
-const expandAllProjects = () => {
-  resumeInfo.value.projectList.forEach((project) => {
-    project.isExpanded = true
-  })
-}
+const allProjectsExpanded = computed(
+  () =>
+    resumeInfo.value.projectList.length > 0 &&
+    resumeInfo.value.projectList.every((project) => project.isExpanded),
+)
 
-const collapseAllProjects = () => {
+const toggleAllProjects = () => {
+  const nextExpanded = !allProjectsExpanded.value
+
   resumeInfo.value.projectList.forEach((project) => {
-    project.isExpanded = false
+    project.isExpanded = nextExpanded
   })
 }
 

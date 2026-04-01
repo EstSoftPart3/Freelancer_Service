@@ -12,8 +12,9 @@
     </div>
     <div class="row">
       <div class="col">
-        <ul class="simple-post-list m-0 position-relative">
+        <ul class="simple-post-list m-0">
           <li
+            class="position-relative"
             v-for="resume in resumeList"
             :key="resume.resumeSq"
             style="border-bottom: 1px rgb(230, 230, 230) solid"
