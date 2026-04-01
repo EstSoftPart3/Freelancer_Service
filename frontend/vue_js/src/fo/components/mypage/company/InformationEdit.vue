@@ -97,8 +97,17 @@
                 class="form-control text-3 h-auto py-2"
                 type="password"
                 name="password"
+                placeholder="새 비밀번호"
                 :value="form.userPw"
                 @input="onPasswordInput"
+              />
+              <input
+                class="form-control text-3 h-auto py-2 mt-2"
+                type="password"
+                name="repeatPassword"
+                placeholder="비밀번호 확인"
+                v-model="repeatPassword"
+                @input="validateRepeatPassword"
               />
               <div v-if="passwordError" class="invalid-feedback d-block">
                 {{ passwordError }}
@@ -120,7 +129,7 @@
                 type="button"
                 class="btn btn-primary btn-outline me-2"
                 @click="saveField('userPw')"
-                :disabled="!passwordValid"
+                :disabled="!passwordValid || !repeatPasswordValid"
               >
                 확인
               </button>
@@ -572,9 +581,16 @@ const nameError = ref('')
 const nameValid = ref(false)
 const passwordError = ref('')
 const passwordValid = ref(false)
+const repeatPassword = ref('')
+const repeatPasswordValid = ref(false)
 const emailError = ref('')
 const verifycodeError = ref('')
 const isVerified = ref(false)
+
+const resetRepeatPasswordState = () => {
+  repeatPassword.value = ''
+  repeatPasswordValid.value = false
+}
 
 // 이름 유효성 검사
 const validateName = () => {
@@ -602,6 +618,16 @@ const validatePasswordCore = async (pw) => {
     passwordError.value = '8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.'
     return
   }
+  if (!repeatPassword.value) {
+    passwordError.value = '비밀번호 확인을 입력하세요.'
+    return
+  }
+  if (repeatPassword.value !== form.userPw) {
+    passwordError.value = '비밀번호가 일치하지 않습니다.'
+    return
+  }
+
+  repeatPasswordValid.value = true
 
   try {
     // API 요청 바디
@@ -621,6 +647,12 @@ const validatePasswordCore = async (pw) => {
   }
 }
 
+const validateRepeatPassword = () => {
+  repeatPasswordValid.value =
+    !!repeatPassword.value && repeatPassword.value === form.userPw
+  validatePasswordCore(form.userPw)
+}
+
 // 디바운스 처리 함수
 const validatePassword = debounce((pw) => {
   validatePasswordCore(pw)
@@ -629,6 +661,7 @@ const validatePassword = debounce((pw) => {
 // input 이벤트 핸들러
 const onPasswordInput = (e) => {
   form.userPw = e.target.value
+  repeatPasswordValid.value = false
   validatePassword(form.userPw)
 }
 
@@ -761,17 +794,28 @@ const validatePhone = () => {
 
 // 편집 모드 토글
 function toggleEdit(field) {
+  if (field === 'userPw') {
+    resetRepeatPasswordState()
+  }
   editing[field] = true
 }
 
 function saveField(field) {
-  if (field === 'name' && !nameValid.value) return
-  if (field === 'password' && !passwordValid.value) return
-  if (field === 'email' && !isVerified.value) return
-  if (field === 'phone' && !phoneValid.value) return
+  if (field === 'userNm' && !nameValid.value) return
+  if (
+    field === 'userPw' &&
+    (!passwordValid.value || !repeatPasswordValid.value)
+  )
+    return
+  if (field === 'userEmail' && !isVerified.value) return
+  if (field === 'userPhoneNum' && !phoneValid.value) return
 
-  if (field === 'email') {
+  if (field === 'userEmail') {
     form.userEmail = `${editEmail.emailId}@${editEmail.emailDomain}`
+  }
+
+  if (field === 'userPw') {
+    resetRepeatPasswordState()
   }
 
   editing[field] = false
@@ -788,13 +832,16 @@ function cancelEdit(field) {
     form.sigunguCode = originalData.sigunguCode
     form.latitude = originalData.latitude
     form.longitude = originalData.longitude
-  } else if (field === 'email') {
+  } else if (field === 'userEmail') {
     form.userEmail = originalData.userEmail
     editEmail.emailId = ''
     editEmail.emailDomain = ''
     editEmail.verificationCode = ''
-  } else if (field === 'name') {
+  } else if (field === 'userNm') {
     form.userNm = originalData.userNm
+  } else if (field === 'userPw') {
+    form.userPw = originalData.userPw
+    resetRepeatPasswordState()
   } else {
     form[field] = originalData[field]
   }
@@ -804,6 +851,7 @@ function resetForm() {
   for (const key in originalData) {
     form[key] = originalData[key]
   }
+  resetRepeatPasswordState()
   Object.keys(editing).forEach((field) => {
     editing[field] = false
   })
