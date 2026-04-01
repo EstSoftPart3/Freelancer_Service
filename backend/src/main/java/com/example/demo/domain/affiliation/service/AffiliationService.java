@@ -295,9 +295,9 @@ public class AffiliationService {
 				}
 				affiliationRepository.insertCompanyMember(passDTO);
 
-				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 합격 되었습니다.";
+				message = "[" + companyNm + "] 소속 가입 신청이 (합격) 되었습니다.";
 			} else {
-				message = "[" + companyNm + "] 소속 가입 신청이 불합격 되었습니다.";
+				message = "[" + companyNm + "] 소속 가입 신청이 (불합격) 되었습니다.";
 			}
 
 			notificationService.send(
