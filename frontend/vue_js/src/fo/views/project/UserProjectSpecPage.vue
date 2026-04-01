@@ -30,9 +30,21 @@
                 />
               </div>
               <div>
-                <h2 class="text-color-dark font-weight-normal text-5 mb-0">
-                  {{ project.projectTtl }}
-                </h2>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                  <h2 class="text-color-dark font-weight-normal text-5 mb-0">
+                    {{ project.projectTtl }}
+                  </h2>
+                  <span
+                    v-if="
+                      (project.userRole === 'PERSONAL' ||
+                        project.userRole === 'COMPANY_EXTERNAL') &&
+                      project.isApplied === 1
+                    "
+                    class="btn btn-sm btn-rounded btn-primary title-status-badge"
+                  >
+                    지원 완료
+                  </span>
+                </div>
                 <p class="text-muted mb-0">{{ project.companyNm }}</p>
               </div>
             </div>
@@ -78,22 +90,25 @@
               </a>
 
               <span
-                v-else-if="
-                  (project.userRole === 'PERSONAL' ||
-                    project.userRole === 'COMPANY_EXTERNAL') &&
-                  project.isApplied === 1
-                "
-                class="btn btn-lg btn-rounded btn-primary btn-lg"
-              >
-                지원 완료
-              </span>
-
-              <span
                 v-else-if="isRecruitmentEnded"
                 class="btn btn-lg btn-rounded btn-light disabled"
               >
                 지원 마감
               </span>
+
+              <button
+                v-if="
+                  (project.userRole === 'PERSONAL' ||
+                    project.userRole === 'COMPANY_EXTERNAL') &&
+                  project.isApplied === 1 &&
+                  project.applicationSq
+                "
+                type="button"
+                class="btn btn-lg btn-rounded btn-outline btn-danger status-action-btn"
+                @click="cancelApplication"
+              >
+                지원 취소
+              </button>
 
               <a
                 v-if="
@@ -240,6 +255,7 @@
 </template>
 <script setup>
 import UserResumeModal from '@/fo/components/mypage/common/ResumeSelectModal.vue'
+import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import { useModalStore } from '../../stores/modalStore.js'
 import { useAlertStore } from '../../stores/alertStore.js'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
@@ -302,6 +318,32 @@ const applyCheck = () => {
       },
     })
   }
+}
+
+const cancelApplication = () => {
+  if (!project.value.applicationSq) return
+
+  modalStore.openModal(CommonConfirmModal, {
+    title: '프로젝트 지원 취소',
+    message: '취소한 프로젝트 내역은 복구할 수 없습니다. 취소하시겠습니까?',
+    onConfirm: async () => {
+      try {
+        await api.$patch(
+          `/projects/applications/${project.value.applicationSq}`,
+          { status: '지원취소' },
+          { withCredentials: true },
+        )
+
+        alertStore.show('지원 취소되었습니다.', 'success')
+        await fetchProjectDetail()
+      } catch (error) {
+        console.error(error)
+        alertStore.show('지원 취소에 실패했습니다.', 'danger')
+      } finally {
+        modalStore.closeModal()
+      }
+    },
+  })
 }
 
 const isRecruitmentEnded = computed(() => {
@@ -378,6 +420,14 @@ const addressIcon = computed(() => {
 .detail-list li {
   margin-bottom: 12px; /* 또는 16px */
   line-height: 1.6; /* 줄 간 여유 */
+}
+
+.status-action-btn {
+  white-space: nowrap;
+}
+
+.title-status-badge {
+  white-space: nowrap;
 }
 
 .custom-scrap-btn {

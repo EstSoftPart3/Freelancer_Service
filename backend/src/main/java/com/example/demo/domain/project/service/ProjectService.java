@@ -348,6 +348,7 @@ public class ProjectService {
 
 		int hasScrapped = 0;
 		int hasApplied = 0;
+		Long applicationSq = null;
 		UserRole userRole = UserRole.PERSONAL; // 기본값 설정
 
 		if (token != null) {
@@ -359,15 +360,16 @@ public class ProjectService {
 
 			if (userTypeCd.equals(302)) {
 				Long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
-				hasApplied = projectApplicationMapper.findByProAndCom(projectSq, companySq) != null ? 1 : 0;
+				applicationSq = projectApplicationMapper.findByProAndCom(projectSq, companySq);
 			} else {
-				hasApplied = projectApplicationMapper.findByProAndUser(projectSq, userSq) != null ? 1 : 0;
+				applicationSq = projectApplicationMapper.findByProAndUser(projectSq, userSq);
 			}
+			hasApplied = applicationSq != null ? 1 : 0;
 			userRole = findUserRole(token, p);
 		}
 
 		return ProjectDetailResponse.from(p, projectUtil, reqSkills, preferSkills, projectAddress, hasScrapped,
-				hasApplied, userRole, companyImageUrl, formattedSalary);
+				hasApplied, applicationSq, userRole, companyImageUrl, formattedSalary);
 	}
 
 	public Long fetchScrapCount(Long projectSq) {

@@ -53,12 +53,13 @@ public class ProjectDetailResponse {
 
     private int isScrap;
     private int isApplied;
+    private Long applicationSq;
 
     private UserRole userRole;
 
     public static ProjectDetailResponse from(Project p, ProjectUtil util, List<GroupSkillInfoResponse> req,
-            List<GroupSkillInfoResponse> prefer, String address, int hasScrapped, int hasApplied, UserRole userRole,
-            String companyImageUrl, String formattedSalary) {
+            List<GroupSkillInfoResponse> prefer, String address, int hasScrapped, int hasApplied, Long applicationSq,
+            UserRole userRole, String companyImageUrl, String formattedSalary) {
         Long projectSq = p.getProjectSq();
         Map<String, LocalDateTime> interviewTimes = util.fetchInterviewTimeMinMaxBySq(projectSq);
         return ProjectDetailResponse.builder()
@@ -96,6 +97,7 @@ public class ProjectDetailResponse {
 
                 .isScrap(hasScrapped)
                 .isApplied(hasApplied)
+                .applicationSq(applicationSq)
                 .userRole(userRole)
                 .build();
     }
