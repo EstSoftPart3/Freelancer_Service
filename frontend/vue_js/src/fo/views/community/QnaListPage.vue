@@ -55,6 +55,26 @@
           </form>
         </div>
       </div>
+      <div v-if="selectedTag" class="row mb-3">
+        <div class="col d-flex align-items-center gap-2 flex-wrap">
+          <span class="text-muted small">적용 태그</span>
+          <button
+            type="button"
+            class="btn btn-light btn-sm d-inline-flex align-items-center gap-2 active-tag-chip"
+            @click="clearTagFilter"
+          >
+            <span>#{{ selectedTag }}</span>
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            @click="clearTagFilter"
+          >
+            초기화
+          </button>
+        </div>
+      </div>
       <!-- 게시판 리스트 -->
       <div class="row">
         <div class="col">
@@ -178,9 +198,7 @@ const dynamicBreadcrumbs = computed(() => {
 })
 
 // 헤더 굵은 텍스트 동적 계산
-const dynamicStrongText = computed(() => {
-  return selectedTag.value ? `QnA 게시판 (#${selectedTag.value})` : 'QnA 게시판'
-})
+const dynamicStrongText = computed(() => 'QnA 게시판')
 
 const updateQuery = (params) => {
   router.replace({ query: { ...route.query, ...params } })
@@ -205,6 +223,16 @@ const onSearch = () => {
     sort: sortType.value,
     searchType: searchType.value,
     keyword: keyword.value?.trim() || undefined,
+  })
+  getBoardList()
+}
+
+const clearTagFilter = () => {
+  selectedTag.value = ''
+  currentPage.value = 1
+  updateQuery({
+    page: 1,
+    tag: undefined,
   })
   getBoardList()
 }
@@ -241,4 +269,10 @@ onMounted(() => {
   getBoardList()
 })
 </script>
-<style></style>
+<style scoped>
+.active-tag-chip {
+  border-radius: 999px;
+  border: 1px solid #d9dee8;
+  color: #495057;
+}
+</style>

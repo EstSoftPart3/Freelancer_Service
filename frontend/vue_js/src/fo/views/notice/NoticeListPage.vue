@@ -43,6 +43,26 @@
           </form>
         </div>
       </div>
+      <div v-if="selectedTag" class="row mb-3">
+        <div class="col d-flex align-items-center gap-2 flex-wrap">
+          <span class="text-muted small">적용 태그</span>
+          <button
+            type="button"
+            class="btn btn-light btn-sm d-inline-flex align-items-center gap-2 active-tag-chip"
+            @click="clearTagFilter"
+          >
+            <span>#{{ selectedTag }}</span>
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            @click="clearTagFilter"
+          >
+            초기화
+          </button>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col">
@@ -142,9 +162,7 @@ const dynamicBreadcrumbs = computed(() => {
   return [{ text: 'Home', link: '/' }, { text: '공지사항' }]
 })
 
-const dynamicStrongText = computed(() => {
-  return selectedTag.value ? `공지사항 (#${selectedTag.value})` : '공지사항'
-})
+const dynamicStrongText = computed(() => '공지사항')
 
 const updateQuery = (params) => {
   router.replace({ query: { ...route.query, ...params } })
@@ -163,6 +181,16 @@ const onSearch = () => {
     sort: sortType.value,
     searchType: searchType.value,
     keyword: keyword.value?.trim() || undefined,
+  })
+  getNoticeList()
+}
+
+const clearTagFilter = () => {
+  selectedTag.value = ''
+  currentPage.value = 1
+  updateQuery({
+    page: 1,
+    tag: undefined,
   })
   getNoticeList()
 }
@@ -194,3 +222,10 @@ onMounted(() => {
   getNoticeList()
 })
 </script>
+<style scoped>
+.active-tag-chip {
+  border-radius: 999px;
+  border: 1px solid #d9dee8;
+  color: #495057;
+}
+</style>
