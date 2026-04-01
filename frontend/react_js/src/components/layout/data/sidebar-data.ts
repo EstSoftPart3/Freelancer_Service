@@ -21,16 +21,16 @@ import {
   Trophy,
   ShieldAlert,
   // ShieldCheck,
-  // HelpCircle,
+  HelpCircle,
   // AudioWaveform,
   Command,
   // GalleryVerticalEnd,
   ListOrdered,
   ClipboardPen,
   ClipboardList,
-} from 'lucide-react'
+} from 'lucide-react';
 // import { ClerkLogo } from '@/assets/clerk-logo'
-import { type SidebarData } from '../types'
+import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
   // 1. 관리자 정보 (추후 auth-store와 연동 권장)
@@ -86,6 +86,11 @@ export const sidebarData: SidebarData = {
               icon: Bell,
             },
             {
+              title: 'FAQ 관리',
+              url: '/contents/faq',
+              icon: HelpCircle,
+            },
+            {
               title: '신고 내역 관리',
               url: '/contents/report',
               icon: ShieldAlert,
@@ -126,7 +131,7 @@ export const sidebarData: SidebarData = {
     //   ],
     // },
   ],
-}
+};
 
 // 기존 샘플
 // export const sidebarData: SidebarData = {
