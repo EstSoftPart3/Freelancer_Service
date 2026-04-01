@@ -28,6 +28,7 @@ import {
   ListOrdered,
   ClipboardPen,
   ClipboardList,
+  FolderKanban,
 } from 'lucide-react';
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types';
@@ -79,6 +80,11 @@ export const sidebarData: SidebarData = {
               title: '게시글 관리',
               url: '/contents/board',
               icon: ClipboardList,
+            },
+            {
+              title: '프로젝트 관리',
+              url: '/contents/project',
+              icon: FolderKanban,
             },
             {
               title: '공지사항 관리',

@@ -34,6 +34,7 @@ import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_a
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
+import { Route as AuthenticatedContentsProjectIndexRouteImport } from './routes/_authenticated/contents/project/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsFaqIndexRouteImport } from './routes/_authenticated/contents/faq/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
@@ -171,6 +172,12 @@ const AuthenticatedContentsReportIndexRoute =
     path: '/contents/report/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsProjectIndexRoute =
+  AuthenticatedContentsProjectIndexRouteImport.update({
+    id: '/contents/project/',
+    path: '/contents/project/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsNoticeIndexRoute =
   AuthenticatedContentsNoticeIndexRouteImport.update({
     id: '/contents/notice/',
@@ -217,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/faq/': typeof AuthenticatedContentsFaqIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
+  '/contents/project/': typeof AuthenticatedContentsProjectIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRoutesByTo {
@@ -245,6 +253,7 @@ export interface FileRoutesByTo {
   '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/faq': typeof AuthenticatedContentsFaqIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
+  '/contents/project': typeof AuthenticatedContentsProjectIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRoutesById {
@@ -276,6 +285,7 @@ export interface FileRoutesById {
   '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/_authenticated/contents/faq/': typeof AuthenticatedContentsFaqIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
+  '/_authenticated/contents/project/': typeof AuthenticatedContentsProjectIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRouteTypes {
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/contents/board/'
     | '/contents/faq/'
     | '/contents/notice/'
+    | '/contents/project/'
     | '/contents/report/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/contents/board'
     | '/contents/faq'
     | '/contents/notice'
+    | '/contents/project'
     | '/contents/report'
   id:
     | '__root__'
@@ -365,6 +377,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/board/'
     | '/_authenticated/contents/faq/'
     | '/_authenticated/contents/notice/'
+    | '/_authenticated/contents/project/'
     | '/_authenticated/contents/report/'
   fileRoutesById: FileRoutesById
 }
@@ -559,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContentsReportIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/project/': {
+      id: '/_authenticated/contents/project/'
+      path: '/contents/project'
+      fullPath: '/contents/project/'
+      preLoaderRoute: typeof AuthenticatedContentsProjectIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/notice/': {
       id: '/_authenticated/contents/notice/'
       path: '/contents/notice'
@@ -618,6 +638,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
   AuthenticatedContentsFaqIndexRoute: typeof AuthenticatedContentsFaqIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
+  AuthenticatedContentsProjectIndexRoute: typeof AuthenticatedContentsProjectIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
 }
 
@@ -633,6 +654,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
   AuthenticatedContentsFaqIndexRoute: AuthenticatedContentsFaqIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
+  AuthenticatedContentsProjectIndexRoute:
+    AuthenticatedContentsProjectIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
 }
 
