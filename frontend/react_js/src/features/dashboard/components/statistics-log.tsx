@@ -1,48 +1,48 @@
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui/card';
 import {
   fetchChartData,
   fetchSummaryData,
   fetchLatestPostsData,
-} from '../api/statistics-api'
-import { btnTitle, btnFilter, getDateRange } from '../data/constants'
+} from '../api/statistics-api';
+import { btnTitle, btnFilter, getDateRange } from '../data/constants';
 import type {
   summaryDataProps,
   chartDataProps,
   latestPostsDataProps,
-} from '../data/types'
-import { LatestPosts } from './latest-posts'
-import { StatisticLogsChart } from './statistic-logs-chart'
+} from '../data/types';
+import { LatestPosts } from './latest-posts';
+import { StatisticLogsChart } from './statistic-logs-chart';
 
 export function StatisticsLogs() {
-  const [selectedKey, setSelectedKey] = useState(btnTitle[0].en)
-  const [selectedFilterKey, setSelectedFilterKey] = useState('일주일')
-  const [summaryData, setSummaryData] = useState<summaryDataProps[]>([])
-  const [chartData, setChartData] = useState<chartDataProps[]>([])
+  const [selectedKey, setSelectedKey] = useState(btnTitle[0].en);
+  const [selectedFilterKey, setSelectedFilterKey] = useState('일주일');
+  const [summaryData, setSummaryData] = useState<summaryDataProps[]>([]);
+  const [chartData, setChartData] = useState<chartDataProps[]>([]);
   const [latestPostsData, setLatestPostsData] = useState<
     latestPostsDataProps[]
-  >([])
+  >([]);
 
   useEffect(() => {
     const fetchChart = async () => {
       try {
-        const { startDate, endDate } = getDateRange(selectedFilterKey)
-        const data = await fetchChartData(startDate, endDate)
-        setChartData(data)
+        const { startDate, endDate } = getDateRange(selectedFilterKey);
+        const data = await fetchChartData(startDate, endDate);
+        setChartData(data);
       } catch (_) {
-        toast.error('차트 조회 중 오류가 발생했습니다.')
+        toast.error('차트 조회 중 오류가 발생했습니다.');
       }
-    }
-    fetchChart()
-  }, [selectedKey, selectedFilterKey])
+    };
+    fetchChart();
+  }, [selectedKey, selectedFilterKey]);
 
   useEffect(() => {
     const fetchStatic = async () => {
@@ -50,15 +50,15 @@ export function StatisticsLogs() {
         const [summary, latestPosts] = await Promise.all([
           fetchSummaryData(),
           fetchLatestPostsData(),
-        ])
-        setSummaryData(summary)
-        setLatestPostsData(latestPosts)
+        ]);
+        setSummaryData(summary);
+        setLatestPostsData(latestPosts);
       } catch (_) {
-        toast.error('데이터 조회 중 오류가 발생했습니다.')
+        toast.error('데이터 조회 중 오류가 발생했습니다.');
       }
-    }
-    fetchStatic()
-  }, [selectedKey, selectedFilterKey])
+    };
+    fetchStatic();
+  }, [selectedKey, selectedFilterKey]);
 
   return (
     <div className='space-y-4'>
@@ -74,6 +74,9 @@ export function StatisticsLogs() {
               <p className='text-xs text-muted-foreground'>
                 {Number(s.percent) > 0 ? `+${s.percent}` : s.percent}% from
                 yesterday
+                <br />
+                <br />
+                {s.yesterdayCount ?? 0} previous day
               </p>
             </CardContent>
           </Card>
@@ -125,5 +128,5 @@ export function StatisticsLogs() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
