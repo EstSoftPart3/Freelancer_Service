@@ -94,12 +94,12 @@
 	<select id="findByProAndUser" resultType="Long"> SELECT pa.project_application_sq FROM
 		TBL_PROJECT_APPLICATION_H pa JOIN TBL_RESUME_M m ON pa.resume_sq = m.resume_sq WHERE
 		pa.project_sq = #{projectSq} AND m.user_sq = #{userSq} AND pa.project_application_status_cd
-		!= 806 LIMIT 1 </select>
+		NOT IN (802, 806) LIMIT 1 </select>
 
 	<!-- 기업 지원 여부 (지원 취소는 제외) -->
 	<select id="findByProAndCom" resultType="Long"> SELECT project_application_sq FROM
 		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND company_sq = #{companySq} AND
-		project_application_status_cd != 806 LIMIT 1 </select>
+		project_application_status_cd NOT IN (802, 806) LIMIT 1 </select>
 
 
 	<select id="findMmTypStrBySq" resultType="String"> SELECT CASE

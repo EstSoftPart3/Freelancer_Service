@@ -115,7 +115,7 @@ public class ProjectApplicationService {
 
 		applicationMapper.updateApplicationStatus(statusCd, applicationSq);
 
-		if (statusCd.equals(806L)) {
+		if (statusCd.equals(802L) || statusCd.equals(806L)) {
 			Long projectSq = applicationMapper.findProjectBySq(applicationSq);
 			projectMapper.decreaseApplication(projectSq);
 		}
