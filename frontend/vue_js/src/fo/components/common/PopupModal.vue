@@ -35,7 +35,7 @@
                   </label>
                 </div>
               </div>
-              <button class="btn-close-popup" @click="handleClose">닫기</button>
+              <button class="btn btn-primary" @click="handleClose">닫기</button>
             </div>
           </div>
         </transition>
@@ -105,7 +105,7 @@ const handleClose = () => {
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 500px;
+  max-width: 1000px;
   position: relative;
   border: none;
 }
