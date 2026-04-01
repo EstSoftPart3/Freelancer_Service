@@ -128,18 +128,29 @@
                   </template>
 
                   <template v-else-if="item.applicantType === '인터뷰요청중'">
-                    <a
-                      @click.prevent="
-                        fetchAvailableInterviewTimes(
-                          item.projectSq,
-                          item.applicationSq,
-                        )
-                      "
-                      href="#"
-                      class="btn btn-outline btn-primary btn-sm"
-                    >
-                      인터뷰 요청중
-                    </a>
+                    <div class="d-flex gap-2">
+                      <a
+                        @click.prevent="
+                          fetchAvailableInterviewTimes(
+                            item.projectSq,
+                            item.applicationSq,
+                          )
+                        "
+                        href="#"
+                        class="btn btn-outline btn-primary btn-sm"
+                      >
+                        인터뷰 요청중
+                      </a>
+                      <button
+                        type="button"
+                        class="btn btn-outline btn-danger btn-sm"
+                        @click.prevent="
+                          cancelApplication('지원취소', item.applicationSq)
+                        "
+                      >
+                        지원 철회
+                      </button>
+                    </div>
                   </template>
 
                   <template v-if="item.isRecruitEnded === true">
@@ -274,7 +285,10 @@ const readFilters = [
 
 // 페이징
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
-if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+if (
+  route.query.page !== undefined &&
+  Number(route.query.page) !== currentPage.value
+) {
   router.replace({ query: { ...route.query, page: currentPage.value } })
 }
 const itemsPerPage = 5

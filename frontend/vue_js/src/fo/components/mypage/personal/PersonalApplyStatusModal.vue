@@ -163,9 +163,22 @@
                           applicant.appStatusVo.appStatus === '인터뷰요청중'
                         "
                       >
-                        <span class="btn btn-primary btn-sm"
-                          >인터뷰 요청중</span
-                        >
+                        <div class="d-flex gap-2">
+                          <span class="btn btn-primary btn-sm"
+                            >인터뷰 요청중</span
+                          >
+                          <span
+                            @click.prevent="
+                              () =>
+                                openCancelApplicationModal(
+                                  applicant.applicationSq,
+                                )
+                            "
+                            class="btn btn-outline btn-danger btn-sm"
+                          >
+                            지원 철회
+                          </span>
+                        </div>
                       </template>
                       <template
                         v-else-if="applicant.appStatusVo.appStatus === '불합격'"
@@ -469,6 +482,17 @@ const updateStatus = async (applicationSq, status) => {
 const openStatusFailureModal = (applicationSq) => {
   modalStore.openModal(CommonConfirmModal, {
     message: '해당 지원자를 불합격 처리하겠습니까?',
+    onConfirm: async () => {
+      await updateStatus(applicationSq, '불합격')
+      modalStore.closeModal()
+    },
+  })
+}
+
+const openCancelApplicationModal = (applicationSq) => {
+  modalStore.openModal(CommonConfirmModal, {
+    title: '지원 철회',
+    message: '해당 지원자를 불합격 처리하시겠습니까?',
     onConfirm: async () => {
       await updateStatus(applicationSq, '불합격')
       modalStore.closeModal()
