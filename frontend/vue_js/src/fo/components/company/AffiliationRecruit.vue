@@ -157,7 +157,7 @@
         <button
           v-else
           type="button"
-          class="btn btn-danger"
+          class="btn btn-primary"
           @click="clickCancel"
         >
           신청 취소

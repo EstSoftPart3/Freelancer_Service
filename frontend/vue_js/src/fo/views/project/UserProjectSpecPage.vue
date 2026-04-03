@@ -104,7 +104,7 @@
                   project.applicationSq
                 "
                 type="button"
-                class="btn btn-lg btn-rounded btn-outline btn-danger status-action-btn"
+                class="btn btn-lg btn-rounded btn-primary status-action-btn"
                 @click="cancelApplication"
               >
                 지원 취소

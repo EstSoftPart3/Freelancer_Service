@@ -143,7 +143,7 @@
                       </a>
                       <button
                         type="button"
-                        class="btn btn-outline btn-danger btn-sm"
+                        class="btn btn-primary btn-sm"
                         @click.prevent="
                           cancelApplication('지원취소', item.applicationSq)
                         "

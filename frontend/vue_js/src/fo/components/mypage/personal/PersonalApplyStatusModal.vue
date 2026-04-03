@@ -153,7 +153,7 @@
                             () =>
                               openStatusFailureModal(applicant.applicationSq)
                           "
-                          class="btn btn-outline btn-primary btn-sm"
+                          class="btn btn-primary btn-sm"
                         >
                           불합격
                         </span>
@@ -164,7 +164,7 @@
                         "
                       >
                         <div class="d-flex gap-2">
-                          <span class="btn btn-primary btn-sm"
+                          <span class="btn btn-outline btn-primary btn-sm"
                             >인터뷰 요청중</span
                           >
                           <span
@@ -174,7 +174,7 @@
                                   applicant.applicationSq,
                                 )
                             "
-                            class="btn btn-outline btn-danger btn-sm"
+                            class="btn btn-primary btn-sm"
                           >
                             지원 철회
                           </span>
@@ -183,7 +183,7 @@
                       <template
                         v-else-if="applicant.appStatusVo.appStatus === '불합격'"
                       >
-                        <span class="btn btn-primary btn-sm">불합격</span>
+                        <span class="btn btn-light btn-sm">불합격</span>
                       </template>
                       <template
                         v-else-if="
