@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { ProjectPost } from '../data';
 
-type OpenType = 'view' | 'update' | 'delete' | null;
+type OpenType = 'create' | 'view' | 'update' | 'delete' | null;
 
 type ProjectContextType = {
   open: OpenType;

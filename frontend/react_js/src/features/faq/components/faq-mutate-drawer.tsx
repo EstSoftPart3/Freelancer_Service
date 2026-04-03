@@ -128,9 +128,7 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       <SheetContent className='overflow-y-auto sm:max-w-xl'>
         <SheetHeader className='text-left'>
           <SheetTitle>{isUpdate ? 'FAQ 수정' : 'FAQ 작성'}</SheetTitle>
-          <SheetDescription>
-            내용을 입력하고 태그를 분류해주세요.
-          </SheetDescription>
+          <SheetDescription>제목과 내용을 작성해주세요.</SheetDescription>
         </SheetHeader>
 
         <form
@@ -144,11 +142,12 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               className='w-full rounded-md border px-3 py-2 text-sm'
               {...register('faqType')}
             >
-              <option value='general'>일반 FAQ</option>
+              <option value='general'>일반</option>
               <option value='member'>회원</option>
               <option value='account'>계정</option>
               <option value='company'>기업</option>
               <option value='service'>서비스</option>
+              <option value='service'>게시판</option>
             </select>
           </div>
 
@@ -171,65 +170,6 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 onChange={(val) => setValue('description', val)}
                 placeholder='내용을 입력해주세요.'
               />
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label>일반 태그</Label>
-            <Input placeholder='일반 태그 입력 후 엔터' onKeyDown={addTag} />
-            <div className='mt-2 flex flex-wrap gap-2'>
-              {normalTags.map((tag) => (
-                <Badge key={tag} variant='secondary' className='gap-1 pr-1'>
-                  #{tag}
-                  <button
-                    type='button'
-                    onClick={() => removeTag(tag)}
-                    className='ml-1 rounded-full outline-none hover:bg-slate-200'
-                  >
-                    <X size={12} />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label>첨부파일</Label>
-            <div className='flex items-center gap-2'>
-              <Input
-                type='file'
-                id='faq-file-upload'
-                className='hidden'
-                multiple
-                onChange={handleFileChange}
-              />
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() =>
-                  document.getElementById('faq-file-upload')?.click()
-                }
-              >
-                <Paperclip className='mr-2 h-4 w-4' />
-                파일 선택
-              </Button>
-            </div>
-
-            <div className='mt-2 space-y-2'>
-              {files.map((file, i) => (
-                <div
-                  key={i}
-                  className='flex items-center justify-between rounded bg-muted p-2 text-sm'
-                >
-                  <span className='truncate'>{file.name}</span>
-                  <X
-                    className='h-4 w-4 cursor-pointer'
-                    onClick={() =>
-                      setFiles(files.filter((_, idx) => idx !== i))
-                    }
-                  />
-                </div>
-              ))}
             </div>
           </div>
 
