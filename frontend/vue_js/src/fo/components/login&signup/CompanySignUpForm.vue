@@ -356,8 +356,18 @@ const validateAll = async () => {
     //해당 위치로 이동 및 포커스
     const element = document.getElementById(firstError.id)
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      element.focus()
+      const offset = 300
+      const rect = element.getBoundingClientRect()
+      const targetY = window.scrollY + rect.top - offset
+
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        behavior: 'smooth',
+      })
+
+      if (typeof element.focus === 'function') {
+        element.focus()
+      }
     }
   } else {
     emit('submit', { ...form })

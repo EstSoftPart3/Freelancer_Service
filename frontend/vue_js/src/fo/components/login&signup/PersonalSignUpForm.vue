@@ -384,9 +384,16 @@ const validateAll = async () => {
     //해당 위치로 이동 및 포커스
     const element = document.getElementById(firstError.id)
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const offset = 300
+      const rect = element.getBoundingClientRect()
+      const targetY = window.scrollY + rect.top - offset
+
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        behavior: 'smooth',
+      })
       //input이나 select 요소인 경우 포커스
-      if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {
+      if (typeof element.focus === 'function') {
         element.focus()
       }
     }
