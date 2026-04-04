@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { FaqMutateDrawer } from './faq-mutate-drawer';
 import { useFaq } from './faq-provider';
+import { FaqViewDrawer } from './faq-view-drawer';
 
 export function FaqDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useFaq();
@@ -18,15 +19,15 @@ export function FaqDialogs() {
     <>
       <FaqMutateDrawer
         key='faq-create'
-        open={open === 'create'}
+        open={open === 'create' || open === 'update'}
         onOpenChange={(isOpen) => !isOpen && setOpen(null)}
       />
 
       {currentRow && (
         <>
-          <FaqMutateDrawer
-            key={`faq-update-${currentRow.id}`}
-            open={open === 'update'}
+          <FaqViewDrawer
+            key={`faq-view-${currentRow.id}`}
+            open={open === 'view'}
             onOpenChange={(isOpen) => {
               if (!isOpen) {
                 setOpen(null);
@@ -34,6 +35,12 @@ export function FaqDialogs() {
               }
             }}
             currentRow={currentRow}
+            onEdit={function (): void {
+              throw new Error('Function not implemented.');
+            }}
+            onDelete={function (): void {
+              throw new Error('Function not implemented.');
+            }}
           />
 
           <ConfirmDialog
@@ -47,7 +54,7 @@ export function FaqDialogs() {
             desc={
               <>
                 정말로 <strong>{currentRow.question}</strong> FAQ를
-                삭제하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.
+                삭제하시겠습니까? <br />
               </>
             }
             confirmText='삭제'

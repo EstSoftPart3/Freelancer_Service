@@ -1,5 +1,5 @@
 // [Freelancer Service]
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react';
 import {
   Loader2,
   Paperclip,
@@ -13,65 +13,65 @@ import {
   Send,
   ArrowRight,
   Plus,
-} from 'lucide-react'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.bubble.css'
-import { toast } from 'sonner'
-import { baseUrl } from '@/lib/api'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+} from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.bubble.css';
+import { toast } from 'sonner';
+import { baseUrl } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
 // [해결] 명칭 및 경로 수정
-import { boardApi } from '../api/board-api'
-import { type AdminBoard } from '../data/schema'
-import { BoardMutateDrawer } from './board-mutate-drawer'
-import { useBoard } from './board-provider'
+import { boardApi } from '../api/board-api';
+import { type AdminBoard } from '../data/schema';
+import { BoardMutateDrawer } from './board-mutate-drawer';
+import { useBoard } from './board-provider';
 
 // --- 타입 정의 ---
 interface Attachment {
-  fileSq: number
-  fileOriginalNm: string
+  fileSq: number;
+  fileOriginalNm: string;
 }
 
 interface SkillTag {
-  skillTagSq: number
-  skillTagNm: string
+  skillTagSq: number;
+  skillTagNm: string;
 }
 
 interface AnswerDetail {
-  sq: number
-  ttl: string
-  userNm: string
-  createdAt: string
-  isAdoptedYn: 'Y' | 'N'
-  recommendCnt?: number
-  commentCnt?: number
+  sq: number;
+  ttl: string;
+  userNm: string;
+  createdAt: string;
+  isAdoptedYn: 'Y' | 'N';
+  recommendCnt?: number;
+  commentCnt?: number;
 }
 
 interface Comment {
-  sq: number
-  parentCommentSq: number | null
-  description: string
-  userNm: string
-  createdAt: string
-  isDeletedYn?: 'Y' | 'N'
-  childComments?: Comment[]
+  sq: number;
+  parentCommentSq: number | null;
+  description: string;
+  userNm: string;
+  createdAt: string;
+  isDeletedYn?: 'Y' | 'N';
+  childComments?: Comment[];
 }
 
 // 상세 조회를 위한 확장 타입 (schema에 없는 comments 필드 대응)
 interface BoardDetail extends Omit<AdminBoard, 'skillTags'> {
-  comments?: Comment[]
-  answers?: AnswerDetail[] // [추가] 답변 목록 필드
-  parentBoardSq?: number
-  parentBoardTypeCd?: number
-  skillTags?: SkillTag[] // 여기서 다시 정의
+  comments?: Comment[];
+  answers?: AnswerDetail[]; // [추가] 답변 목록 필드
+  parentBoardSq?: number;
+  parentBoardTypeCd?: number;
+  skillTags?: SkillTag[]; // 여기서 다시 정의
 }
 
 // --- 댓글 아이템 컴포넌트 (Notice와 동일 로직 유지) ---
@@ -81,28 +81,28 @@ function CommentItem({
   onReply,
   onUpdate,
 }: {
-  comment: Comment
-  onDelete: (sq: number) => void
-  onReply: (parentSq: number, content: string) => Promise<void>
-  onUpdate: (sq: number, content: string) => Promise<void>
+  comment: Comment;
+  onDelete: (sq: number) => void;
+  onReply: (parentSq: number, content: string) => Promise<void>;
+  onUpdate: (sq: number, content: string) => Promise<void>;
 }) {
-  const [isReplyOpen, setIsReplyOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [replyContent, setReplyContent] = useState('')
-  const [editContent, setEditContent] = useState(comment.description)
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
+  const [editContent, setEditContent] = useState(comment.description);
 
   const handleUpdate = async () => {
-    if (!editContent.trim()) return
-    await onUpdate(comment.sq, editContent)
-    setIsEditMode(false)
-  }
+    if (!editContent.trim()) return;
+    await onUpdate(comment.sq, editContent);
+    setIsEditMode(false);
+  };
 
   const handleReply = async () => {
-    if (!replyContent.trim()) return
-    await onReply(comment.sq, replyContent)
-    setReplyContent('')
-    setIsReplyOpen(false)
-  }
+    if (!replyContent.trim()) return;
+    await onReply(comment.sq, replyContent);
+    setReplyContent('');
+    setIsReplyOpen(false);
+  };
 
   return (
     <div className='group relative space-y-2 py-4'>
@@ -137,8 +137,8 @@ function CommentItem({
                   size='sm'
                   className='h-7 px-2 text-xs'
                   onClick={() => {
-                    setIsEditMode(!isEditMode)
-                    setEditContent(comment.description)
+                    setIsEditMode(!isEditMode);
+                    setEditContent(comment.description);
                   }}
                 >
                   <Pencil size={12} className='mr-1' /> 수정
@@ -224,94 +224,94 @@ function CommentItem({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // --- 메인 Drawer 컴포넌트 ---
 interface Props {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function BoardViewDrawer({ open, onOpenChange }: Props) {
   // [해결] useBoard 훅 사용
-  const { currentRow, setCurrentRow } = useBoard()
-  const [detail, setDetail] = useState<BoardDetail | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [newComment, setNewComment] = useState('')
-  const [isAnswerDrawerOpen, setIsAnswerDrawerOpen] = useState(false)
+  const { currentRow, setCurrentRow } = useBoard();
+  const [detail, setDetail] = useState<BoardDetail | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [isAnswerDrawerOpen, setIsAnswerDrawerOpen] = useState(false);
   const [editingAnswerForDrawer, setEditingAnswerForDrawer] = useState<{
-    sq: number
-    boardTypeCd: number
-  } | null>(null)
+    sq: number;
+    boardTypeCd: number;
+  } | null>(null);
 
   const handleGoToQuestion = () => {
-    if (!detail?.parentBoardSq) return
+    if (!detail?.parentBoardSq) return;
 
     // 현재 드로어를 닫지 않고 데이터만 교체하여 '이동' 효과를 줌
     setCurrentRow({
       sq: detail.parentBoardSq,
       boardTypeCd: detail.parentBoardTypeCd || 1402,
       // 필요한 다른 필드들은 fetchDetail에서 채워짐
-    } as AdminBoard)
+    } as AdminBoard);
 
-    toast.info('질문글로 이동합니다.')
-  }
+    toast.info('질문글로 이동합니다.');
+  };
 
   const fetchDetail = useCallback(async () => {
     if (open && currentRow?.sq && currentRow.boardTypeCd !== undefined) {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
         const response = await boardApi.getBoardDetail(
           currentRow.sq,
           currentRow.boardTypeCd
-        )
+        );
 
         // 3. [해결] 가져온 데이터를 BoardDetail 타입으로 강제 지정 (Property 'comments' 에러 해결)
-        const output = response.output as BoardDetail
-        setDetail(output)
+        const output = response.output as BoardDetail;
+        setDetail(output);
 
-        setComments(output.comments ?? [])
+        setComments(output.comments ?? []);
       } catch (_) {
-        toast.error('데이터를 불러오는 중 에러가 발생했습니다.')
+        toast.error('데이터를 불러오는 중 에러가 발생했습니다.');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-  }, [open, currentRow])
+  }, [open, currentRow]);
 
   useEffect(() => {
-    fetchDetail()
-  }, [fetchDetail])
+    fetchDetail();
+  }, [fetchDetail]);
 
   /**
    * 1. 댓글 삭제 핸들러 (마스터 권한)
    */
   const handleDeleteComment = async (commentSq: number) => {
-    if (!confirm('정말로 이 댓글을 삭제하시겠습니까?')) return
+    if (!confirm('정말로 이 댓글을 삭제하시겠습니까?')) return;
 
     try {
-      await boardApi.deleteComment(commentSq)
-      toast.success('댓글이 삭제되었습니다.')
-      fetchDetail() // 목록 새로고침
+      await boardApi.deleteComment(commentSq);
+      toast.success('댓글이 삭제되었습니다.');
+      fetchDetail(); // 목록 새로고침
     } catch (_) {
-      toast.error('댓글 삭제에 실패했습니다.')
+      toast.error('댓글 삭제에 실패했습니다.');
     }
-  }
+  };
 
   /**
    * 2. 댓글 수정 핸들러 (마스터 권한)
    */
   const handleUpdateComment = async (commentSq: number, content: string) => {
     try {
-      await boardApi.updateComment(commentSq, content)
-      toast.success('댓글이 수정되었습니다.')
-      fetchDetail() // 목록 새로고침
+      await boardApi.updateComment(commentSq, content);
+      toast.success('댓글이 수정되었습니다.');
+      fetchDetail(); // 목록 새로고침
     } catch (_) {
-      toast.error('댓글 수정에 실패했습니다.')
+      toast.error('댓글 수정에 실패했습니다.');
     }
-  }
+  };
 
   /**
    * 3. 대댓글(답글) 등록 핸들러
@@ -320,67 +320,67 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     parentCommentSq: number,
     content: string
   ) => {
-    if (!currentRow?.sq) return
+    if (!currentRow?.sq) return;
 
     try {
-      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD';
       await boardApi.createComment(
         currentRow.sq,
         content,
         parentCommentSq,
         targetType
-      )
-      toast.success('답글이 등록되었습니다.')
-      fetchDetail() // 목록 새로고침
+      );
+      toast.success('답글이 등록되었습니다.');
+      fetchDetail(); // 목록 새로고침
     } catch (_) {
-      toast.error('답글 등록에 실패했습니다.')
+      toast.error('답글 등록에 실패했습니다.');
     }
-  }
+  };
 
   /**
    * 4. 일반 댓글 등록 핸들러
    */
   const handleCreateComment = async () => {
-    if (!newComment.trim() || !currentRow?.sq) return
+    if (!newComment.trim() || !currentRow?.sq) return;
 
     try {
-      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD';
       await boardApi.createComment(
         currentRow.sq,
         newComment,
         undefined,
         targetType
-      )
-      toast.success('댓글이 등록되었습니다.')
-      setNewComment('')
-      fetchDetail() // 목록 새로고침
+      );
+      toast.success('댓글이 등록되었습니다.');
+      setNewComment('');
+      fetchDetail(); // 목록 새로고침
     } catch (_) {
-      toast.error('댓글 등록 실패')
+      toast.error('댓글 등록 실패');
     }
-  }
+  };
 
   /**
    * 5. 답변 삭제 핸들러
    */
   const handleDeleteAnswer = async (answerSq: number) => {
-    if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return
+    if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return;
 
     try {
-      await boardApi.deleteBoard(answerSq, 'ANSWER')
-      toast.success('답변이 삭제되었습니다.')
-      fetchDetail() // 목록 새로고침
+      await boardApi.deleteBoard(answerSq, 'ANSWER');
+      toast.success('답변이 삭제되었습니다.');
+      fetchDetail(); // 목록 새로고침
     } catch (_) {
-      toast.error('답변 삭제에 실패했습니다.')
+      toast.error('답변 삭제에 실패했습니다.');
     }
-  }
+  };
 
   // 다운로드 URL 생성 헬퍼 함수
   const getDownloadUrl = (fileSq: number) => {
     // baseUrl이 'https://job.estsw.co.kr/api' 라면
     // 결과는 'https://job.estsw.co.kr/api/board/download/123' 이 됩니다.
-    const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
-    return `${base}/board/download/${fileSq}`
-  }
+    const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${base}/board/download/${fileSq}`;
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -500,8 +500,8 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                           setCurrentRow({
                             sq: answer.sq,
                             boardTypeCd: 1404,
-                          } as AdminBoard)
-                          toast.info('답변 상세 내용으로 이동합니다.')
+                          } as AdminBoard);
+                          toast.info('답변 상세 내용으로 이동합니다.');
                         }}
                       >
                         <div className='mb-2 flex items-center justify-between'>
@@ -521,12 +521,12 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               size='sm'
                               className='h-6 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100'
                               onClick={(e) => {
-                                e.stopPropagation()
+                                e.stopPropagation();
                                 setEditingAnswerForDrawer({
                                   sq: answer.sq,
                                   boardTypeCd: 1404,
-                                })
-                                setIsAnswerDrawerOpen(true)
+                                });
+                                setIsAnswerDrawerOpen(true);
                               }}
                             >
                               <Pencil size={10} />
@@ -536,8 +536,8 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               size='sm'
                               className='h-6 px-2 text-xs text-destructive opacity-0 transition-opacity group-hover:opacity-100'
                               onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteAnswer(answer.sq)
+                                e.stopPropagation();
+                                handleDeleteAnswer(answer.sq);
                               }}
                             >
                               <Trash2 size={10} />
@@ -566,8 +566,8 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                   <Button
                     // variant='outline'
                     onClick={() => {
-                      setEditingAnswerForDrawer(null)
-                      setIsAnswerDrawerOpen(true)
+                      setEditingAnswerForDrawer(null);
+                      setIsAnswerDrawerOpen(true);
                     }}
                     // className='w-full'
                     className='space-x-1'
@@ -580,10 +580,10 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                 <BoardMutateDrawer
                   open={isAnswerDrawerOpen}
                   onOpenChange={(open) => {
-                    setIsAnswerDrawerOpen(open)
+                    setIsAnswerDrawerOpen(open);
                     if (!open) {
-                      setEditingAnswerForDrawer(null)
-                      fetchDetail()
+                      setEditingAnswerForDrawer(null);
+                      fetchDetail();
                     }
                   }}
                   parentBoardSq={currentRow?.sq}
@@ -642,5 +642,5 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
         ) : null}
       </SheetContent>
     </Sheet>
-  )
+  );
 }

@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react';
 import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import {
   ArrowDown,
   ArrowUp,
-  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
   EyeOff,
   MoreHorizontal,
   Pencil,
@@ -18,8 +26,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { DataTablePagination } from '@/components/data-table';
 import type { Faq } from '../data/schema';
-import { useFaq } from './faq-provider';
+import { useFaq, type OpenType } from './faq-provider';
 
 type SortField = 'id' | 'question' | 'category' | 'isPublic' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
@@ -54,6 +71,204 @@ function compareValues(a: Faq, b: Faq, field: SortField, order: SortOrder) {
   return String(va).localeCompare(String(vb)) * multiplier;
 }
 
+function getFaqColumns(params: {
+  columnVisibility: ColumnVisibility;
+  setSortField: React.Dispatch<React.SetStateAction<SortField>>;
+  setSortOrder: React.Dispatch<React.SetStateAction<SortOrder>>;
+  setColumnVisibility: React.Dispatch<React.SetStateAction<ColumnVisibility>>;
+  setCurrentRow: (value: Faq | null) => void;
+  setOpen: (value: OpenType) => void;
+}): ColumnDef<Faq>[] {
+  const {
+    columnVisibility,
+    setSortField,
+    setSortOrder,
+    setColumnVisibility,
+    setCurrentRow,
+    setOpen,
+  } = params;
+
+  return [
+    ...(columnVisibility.id
+      ? [
+          {
+            accessorKey: 'id',
+            header: () => (
+              <HeaderMenu
+                label='ID'
+                onAsc={() => {
+                  setSortField('id');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('id');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, id: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.id,
+          } satisfies ColumnDef<Faq>,
+        ]
+      : []),
+
+    ...(columnVisibility.question
+      ? [
+          {
+            accessorKey: 'question',
+            header: () => (
+              <HeaderMenu
+                label='제목'
+                onAsc={() => {
+                  setSortField('question');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('question');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, question: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => (
+              <button
+                type='button'
+                className='text-left text-primary hover:underline'
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('view');
+                }}
+              >
+                {row.original.question}
+              </button>
+            ),
+          } satisfies ColumnDef<Faq>,
+        ]
+      : []),
+
+    ...(columnVisibility.category
+      ? [
+          {
+            accessorKey: 'category',
+            header: () => (
+              <HeaderMenu
+                label='카테고리'
+                onAsc={() => {
+                  setSortField('category');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('category');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, category: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.category,
+          } satisfies ColumnDef<Faq>,
+        ]
+      : []),
+
+    ...(columnVisibility.isPublic
+      ? [
+          {
+            accessorKey: 'isPublic',
+            header: () => (
+              <HeaderMenu
+                label='상태'
+                onAsc={() => {
+                  setSortField('isPublic');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('isPublic');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, isPublic: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => (row.original.isPublic ? '표시' : '숨김'),
+          } satisfies ColumnDef<Faq>,
+        ]
+      : []),
+
+    ...(columnVisibility.createdAt
+      ? [
+          {
+            accessorKey: 'createdAt',
+            header: () => (
+              <HeaderMenu
+                label='등록일'
+                onAsc={() => {
+                  setSortField('createdAt');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('createdAt');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({
+                    ...prev,
+                    createdAt: false,
+                  }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.createdAt,
+          } satisfies ColumnDef<Faq>,
+        ]
+      : []),
+
+    {
+      id: 'actions',
+      header: () => <div className='text-right'></div>,
+      cell: ({ row }) => (
+        <div className='text-right'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='icon'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align='end' className='w-32'>
+              <DropdownMenuItem
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('update');
+                }}
+              >
+                <Pencil className='mr-2 h-4 w-4' />
+                수정
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('delete');
+                }}
+              >
+                <Trash className='mr-2 h-4 w-4' />
+                삭제
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+}
+
 export function FaqTable({ data, keyword, setKeyword }: FaqTableProps) {
   const { setOpen, setCurrentRow } = useFaq();
 
@@ -78,13 +293,6 @@ export function FaqTable({ data, keyword, setKeyword }: FaqTableProps) {
     );
   }, [data, keyword, sortField, sortOrder]);
 
-  const setColumnHidden = (field: SortField) => {
-    setColumnVisibility((prev) => ({
-      ...prev,
-      [field]: false,
-    }));
-  };
-
   const toggleColumn = (field: keyof ColumnVisibility, checked: boolean) => {
     setColumnVisibility((prev) => ({
       ...prev,
@@ -92,13 +300,30 @@ export function FaqTable({ data, keyword, setKeyword }: FaqTableProps) {
     }));
   };
 
-  const visibleColumnCount =
-    Number(columnVisibility.id) +
-    Number(columnVisibility.question) +
-    Number(columnVisibility.category) +
-    Number(columnVisibility.isPublic) +
-    Number(columnVisibility.createdAt) +
-    1;
+  const columns = useMemo(
+    () =>
+      getFaqColumns({
+        columnVisibility,
+        setSortField,
+        setSortOrder,
+        setColumnVisibility,
+        setCurrentRow,
+        setOpen,
+      }),
+    [columnVisibility, setCurrentRow, setOpen]
+  );
+
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
 
   return (
     <Card>
@@ -108,7 +333,10 @@ export function FaqTable({ data, keyword, setKeyword }: FaqTableProps) {
             className='h-9 w-[210px] rounded-md border px-3 text-sm'
             placeholder='제목으로 검색...'
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              table.setPageIndex(0);
+            }}
           />
 
           <DropdownMenu>
@@ -168,168 +396,54 @@ export function FaqTable({ data, keyword, setKeyword }: FaqTableProps) {
           </DropdownMenu>
         </div>
 
-        <div className='overflow-x-auto rounded-md border'>
-          <table className='w-full text-sm'>
-            <thead className='bg-muted/40'>
-              <tr className='border-b'>
-                {columnVisibility.id && (
-                  <th className='px-4 py-3 text-left'>
-                    <HeaderMenu
-                      label='번호'
-                      onAsc={() => {
-                        setSortField('id');
-                        setSortOrder('asc');
-                      }}
-                      onDesc={() => {
-                        setSortField('id');
-                        setSortOrder('desc');
-                      }}
-                      onHide={() => setColumnHidden('id')}
-                    />
-                  </th>
-                )}
-
-                {columnVisibility.question && (
-                  <th className='px-4 py-3 text-left'>
-                    <HeaderMenu
-                      label='제목'
-                      onAsc={() => {
-                        setSortField('question');
-                        setSortOrder('asc');
-                      }}
-                      onDesc={() => {
-                        setSortField('question');
-                        setSortOrder('desc');
-                      }}
-                      onHide={() => setColumnHidden('question')}
-                    />
-                  </th>
-                )}
-
-                {columnVisibility.category && (
-                  <th className='px-4 py-3 text-left'>
-                    <HeaderMenu
-                      label='카테고리'
-                      onAsc={() => {
-                        setSortField('category');
-                        setSortOrder('asc');
-                      }}
-                      onDesc={() => {
-                        setSortField('category');
-                        setSortOrder('desc');
-                      }}
-                      onHide={() => setColumnHidden('category')}
-                    />
-                  </th>
-                )}
-
-                {columnVisibility.isPublic && (
-                  <th className='px-4 py-3 text-left'>
-                    <HeaderMenu
-                      label='표시 여부'
-                      onAsc={() => {
-                        setSortField('isPublic');
-                        setSortOrder('asc');
-                      }}
-                      onDesc={() => {
-                        setSortField('isPublic');
-                        setSortOrder('desc');
-                      }}
-                      onHide={() => setColumnHidden('isPublic')}
-                    />
-                  </th>
-                )}
-
-                {columnVisibility.createdAt && (
-                  <th className='px-4 py-3 text-left'>
-                    <HeaderMenu
-                      label='등록일'
-                      onAsc={() => {
-                        setSortField('createdAt');
-                        setSortOrder('asc');
-                      }}
-                      onDesc={() => {
-                        setSortField('createdAt');
-                        setSortOrder('desc');
-                      }}
-                      onHide={() => setColumnHidden('createdAt')}
-                    />
-                  </th>
-                )}
-
-                <th className='px-4 py-3 text-left'></th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredData.map((faq) => (
-                <tr key={faq.id} className='border-b'>
-                  {columnVisibility.id && (
-                    <td className='px-4 py-3'>{faq.id}</td>
-                  )}
-                  {columnVisibility.question && (
-                    <td className='px-4 py-3'>{faq.question}</td>
-                  )}
-                  {columnVisibility.category && (
-                    <td className='px-4 py-3'>{faq.category}</td>
-                  )}
-                  {columnVisibility.isPublic && (
-                    <td className='px-4 py-3'>
-                      {faq.isPublic ? '표시' : '숨김'}
-                    </td>
-                  )}
-                  {columnVisibility.createdAt && (
-                    <td className='px-4 py-3'>{faq.createdAt}</td>
-                  )}
-
-                  <td className='px-4 py-3 text-right'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' size='icon'>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align='end' className='w-32'>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setCurrentRow(faq);
-                            setOpen('update');
-                          }}
-                        >
-                          <Pencil className='mr-2 h-4 w-4' />
-                          수정
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          className='text-destructive focus:text-destructive'
-                          onClick={() => {
-                            setCurrentRow(faq);
-                            setOpen('delete');
-                          }}
-                        >
-                          <Trash className='mr-2 h-4 w-4' />
-                          삭제
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
+        <div className='rounded-md border'>
+          <Table>
+            <TableHeader className='bg-muted/40'>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
               ))}
+            </TableHeader>
 
-              {filteredData.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={visibleColumnCount}
-                    className='py-10 text-center text-sm text-muted-foreground'
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='h-24 text-center text-muted-foreground'
                   >
                     등록된 FAQ가 없습니다.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
+
+        <DataTablePagination table={table} />
       </CardContent>
     </Card>
   );
@@ -351,7 +465,10 @@ function HeaderMenu({ label, onAsc, onDesc, onHide }: HeaderMenuProps) {
           className='h-8 px-2 text-sm font-semibold hover:bg-muted'
         >
           <span>{label}</span>
-          <ArrowUpDown className='h-3.5 w-3.5' />
+          <span className='ml-1 flex flex-col leading-none'>
+            <ChevronUp className='h-3 w-3 text-muted-foreground/60' />
+            <ChevronDown className='-mt-1 h-3 w-3 text-muted-foreground/60' />
+          </span>
         </Button>
       </DropdownMenuTrigger>
 

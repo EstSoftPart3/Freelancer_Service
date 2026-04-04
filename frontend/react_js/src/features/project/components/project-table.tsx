@@ -1,8 +1,17 @@
 import { useMemo, useState } from 'react';
 import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import {
   ArrowDown,
   ArrowUp,
-  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  EyeOff,
   MoreHorizontal,
   Pencil,
   Settings2,
@@ -17,6 +26,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { DataTablePagination } from '@/components/data-table';
 import type { ProjectPost } from '../data';
 import { ProjectPrimaryButtons } from './project-primary-buttons';
 import { useProject } from './project-provider';
@@ -61,6 +79,229 @@ function compareValues(
   return String(a[field]).localeCompare(String(b[field])) * multiplier;
 }
 
+function getProjectColumns(params: {
+  columnVisibility: ColumnVisibility;
+  setSortField: React.Dispatch<React.SetStateAction<SortField>>;
+  setSortOrder: React.Dispatch<React.SetStateAction<SortOrder>>;
+  setColumnVisibility: React.Dispatch<React.SetStateAction<ColumnVisibility>>;
+  setCurrentRow: (value: ProjectPost | null) => void;
+  setOpen: (value: 'create' | 'view' | 'update' | 'delete' | null) => void;
+}): ColumnDef<ProjectPost>[] {
+  const {
+    columnVisibility,
+    setSortField,
+    setSortOrder,
+    setColumnVisibility,
+    setCurrentRow,
+    setOpen,
+  } = params;
+
+  return [
+    ...(columnVisibility.id
+      ? [
+          {
+            accessorKey: 'id',
+            header: () => (
+              <HeaderMenu
+                label='ID'
+                onAsc={() => {
+                  setSortField('id');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('id');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, id: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.id,
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    ...(columnVisibility.title
+      ? [
+          {
+            accessorKey: 'title',
+            header: () => (
+              <HeaderMenu
+                label='제목'
+                onAsc={() => {
+                  setSortField('title');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('title');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, title: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => (
+              <button
+                type='button'
+                className='text-left text-primary hover:underline'
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('view');
+                }}
+              >
+                {row.original.title}
+              </button>
+            ),
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    ...(columnVisibility.author
+      ? [
+          {
+            accessorKey: 'author',
+            header: () => (
+              <HeaderMenu
+                label='작성자'
+                onAsc={() => {
+                  setSortField('author');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('author');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, author: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.author,
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    ...(columnVisibility.category
+      ? [
+          {
+            accessorKey: 'category',
+            header: () => (
+              <HeaderMenu
+                label='근무형태'
+                onAsc={() => {
+                  setSortField('category');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('category');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, category: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.category,
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    ...(columnVisibility.status
+      ? [
+          {
+            accessorKey: 'status',
+            header: () => (
+              <HeaderMenu
+                label='상태'
+                onAsc={() => {
+                  setSortField('status');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('status');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({ ...prev, status: false }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.status,
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    ...(columnVisibility.createdAt
+      ? [
+          {
+            accessorKey: 'createdAt',
+            header: () => (
+              <HeaderMenu
+                label='등록일'
+                onAsc={() => {
+                  setSortField('createdAt');
+                  setSortOrder('asc');
+                }}
+                onDesc={() => {
+                  setSortField('createdAt');
+                  setSortOrder('desc');
+                }}
+                onHide={() =>
+                  setColumnVisibility((prev) => ({
+                    ...prev,
+                    createdAt: false,
+                  }))
+                }
+              />
+            ),
+            cell: ({ row }) => row.original.createdAt,
+          } satisfies ColumnDef<ProjectPost>,
+        ]
+      : []),
+
+    {
+      id: 'actions',
+      header: () => <div className='text-right'></div>,
+      cell: ({ row }) => (
+        <div className='text-right'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='icon'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('update');
+                }}
+              >
+                <Pencil className='mr-2 h-4 w-4' />
+                수정
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className='text-destructive'
+                onClick={() => {
+                  setCurrentRow(row.original);
+                  setOpen('delete');
+                }}
+              >
+                <Trash className='mr-2 h-4 w-4' />
+                삭제
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+}
+
 export function ProjectTable({ data, keyword, setKeyword }: Props) {
   const { setOpen, setCurrentRow } = useProject();
 
@@ -91,32 +332,30 @@ export function ProjectTable({ data, keyword, setKeyword }: Props) {
     );
   }, [data, keyword, sortField, sortOrder]);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
+  const columns = useMemo(
+    () =>
+      getProjectColumns({
+        columnVisibility,
+        setSortField,
+        setSortOrder,
+        setColumnVisibility,
+        setCurrentRow,
+        setOpen,
+      }),
+    [columnVisibility, setCurrentRow, setOpen]
+  );
 
-    setSortField(field);
-    setSortOrder('asc');
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className='ml-1 h-4 w-4' />;
-    }
-
-    return sortOrder === 'asc' ? (
-      <ArrowUp className='ml-1 h-4 w-4' />
-    ) : (
-      <ArrowDown className='ml-1 h-4 w-4' />
-    );
-  };
-
-  const sortableHeaderClass =
-    'px-4 py-3 text-left font-medium whitespace-nowrap';
-  const sortableButtonClass =
-    'inline-flex items-center text-sm font-medium text-foreground hover:text-primary';
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
 
   return (
     <Card className='border-none shadow-none'>
@@ -125,13 +364,15 @@ export function ProjectTable({ data, keyword, setKeyword }: Props) {
           <ProjectPrimaryButtons />
         </div>
 
-        {/* 2줄: 검색/보기 */}
         <div className='flex items-center justify-between'>
           <input
             className='h-9 w-[240px] rounded-md border px-3 text-sm'
             placeholder='제목/작성자/카테고리 검색...'
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              table.setPageIndex(0);
+            }}
           />
 
           <DropdownMenu>
@@ -203,180 +444,96 @@ export function ProjectTable({ data, keyword, setKeyword }: Props) {
           </DropdownMenu>
         </div>
 
-        <div className='overflow-x-auto rounded-md border'>
-          <table className='w-full text-sm'>
-            <thead className='bg-muted/40'>
-              <tr>
-                {columnVisibility.id && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('id')}
-                    >
-                      ID
-                      {renderSortIcon('id')}
-                    </button>
-                  </th>
-                )}
+        <div className='rounded-md border'>
+          <Table>
+            <TableHeader className='bg-muted/40'>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
 
-                {columnVisibility.title && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('title')}
-                    >
-                      제목
-                      {renderSortIcon('title')}
-                    </button>
-                  </th>
-                )}
-
-                {columnVisibility.author && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('author')}
-                    >
-                      작성자
-                      {renderSortIcon('author')}
-                    </button>
-                  </th>
-                )}
-
-                {columnVisibility.category && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('category')}
-                    >
-                      카테고리
-                      {renderSortIcon('category')}
-                    </button>
-                  </th>
-                )}
-
-                {columnVisibility.status && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('status')}
-                    >
-                      상태
-                      {renderSortIcon('status')}
-                    </button>
-                  </th>
-                )}
-
-                {columnVisibility.createdAt && (
-                  <th className={sortableHeaderClass}>
-                    <button
-                      type='button'
-                      className={sortableButtonClass}
-                      onClick={() => handleSort('createdAt')}
-                    >
-                      등록일
-                      {renderSortIcon('createdAt')}
-                    </button>
-                  </th>
-                )}
-
-                <th className='px-4 py-3 text-right'>관리</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredData.length > 0 ? (
-                filteredData.map((item) => (
-                  <tr key={item.id} className='border-b'>
-                    {columnVisibility.id && (
-                      <td className='px-4 py-3'>{item.id}</td>
-                    )}
-
-                    {columnVisibility.title && (
-                      <td className='px-4 py-3'>
-                        <button
-                          className='text-left text-primary hover:underline'
-                          onClick={() => {
-                            setCurrentRow(item);
-                            setOpen('view');
-                          }}
-                        >
-                          {item.title}
-                        </button>
-                      </td>
-                    )}
-
-                    {columnVisibility.author && (
-                      <td className='px-4 py-3'>{item.author}</td>
-                    )}
-
-                    {columnVisibility.category && (
-                      <td className='px-4 py-3'>{item.category}</td>
-                    )}
-
-                    {columnVisibility.status && (
-                      <td className='px-4 py-3'>{item.status}</td>
-                    )}
-
-                    {columnVisibility.createdAt && (
-                      <td className='px-4 py-3'>{item.createdAt}</td>
-                    )}
-
-                    <td className='px-4 py-3 text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setCurrentRow(item);
-                              setOpen('update');
-                            }}
-                          >
-                            <Pencil className='mr-2 h-4 w-4' />
-                            수정
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            className='text-destructive'
-                            onClick={() => {
-                              setCurrentRow(item);
-                              setOpen('delete');
-                            }}
-                          >
-                            <Trash className='mr-2 h-4 w-4' />
-                            삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className='border-b'>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td
-                    colSpan={
-                      Object.values(columnVisibility).filter(Boolean).length + 1
-                    }
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
                     className='px-4 py-10 text-center text-muted-foreground'
                   >
                     검색 결과가 없습니다.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
+
+        <DataTablePagination table={table} />
       </CardContent>
     </Card>
+  );
+}
+
+type HeaderMenuProps = {
+  label: string;
+  onAsc: () => void;
+  onDesc: () => void;
+  onHide: () => void;
+};
+
+function HeaderMenu({ label, onAsc, onDesc, onHide }: HeaderMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant='ghost'
+          className='h-8 px-2 text-sm font-semibold hover:bg-muted'
+        >
+          <span>{label}</span>
+          <span className='ml-1 flex flex-col leading-none'>
+            <ChevronUp className='h-3 w-3 text-muted-foreground/60' />
+            <ChevronDown className='-mt-1 h-3 w-3 text-muted-foreground/60' />
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align='start' className='w-28'>
+        <DropdownMenuItem onClick={onAsc}>
+          <ArrowUp className='mr-2 h-4 w-4' />
+          Asc
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDesc}>
+          <ArrowDown className='mr-2 h-4 w-4' />
+          Desc
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onHide}>
+          <EyeOff className='mr-2 h-4 w-4' />
+          Hide
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

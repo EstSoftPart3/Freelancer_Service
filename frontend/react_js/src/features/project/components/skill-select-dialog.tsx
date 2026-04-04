@@ -209,7 +209,7 @@ export function SkillSelectDialog({
 
           <Button
             type='button'
-            variant='destructive'
+            variant='outline'
             className='h-10 min-w-[96px]'
             onClick={() => onOpenChange(false)}
           >

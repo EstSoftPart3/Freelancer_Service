@@ -15,17 +15,19 @@ const mockProjects: ProjectPost[] = [
     id: 1,
     title: 'React 기반 관리자 페이지 구축 프로젝트',
     author: '네이버',
-    category: '외주',
+    category: '계약직',
     status: '모집중',
     createdAt: '2026-04-02',
+    viewCount: undefined,
   },
   {
     id: 2,
     title: 'Spring Boot API 유지관리 프로젝트',
     author: '카카오',
-    category: '상주',
+    category: '프리랜서',
     status: '모집완료',
     createdAt: '2026-04-01',
+    viewCount: undefined,
   },
 ];
 

@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, Paperclip } from 'lucide-react';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
 import type { Faq } from '../data/schema';
 
 interface Props {
@@ -28,16 +25,16 @@ interface Props {
 }
 
 const schema = z.object({
-  faqType: z.string().min(1, 'FAQ 유형을 선택해주세요.'),
+  faqType: z.string().min(1, '카테고리를 선택해주세요.'),
   title: z
     .string()
     .transform((val) => val.trim())
     .refine((val) => val.length > 0, '제목을 입력해주세요.')
     .refine((val) => val.length <= 100, '제목은 100자 이내로 입력해주세요.'),
-  description: z.string().refine((val) => {
-    const stripped = val.replace(/<[^>]*>?/gm, '').trim();
-    return stripped.length > 0;
-  }, '내용을 입력해주세요.'),
+  description: z
+    .string()
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0, '내용을 입력해 주세요.'),
 });
 
 type FaqForm = z.infer<typeof schema>;
@@ -56,8 +53,6 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       description: '',
     },
   });
-
-  const descriptionContent = watch('description');
 
   useEffect(() => {
     if (open) {
@@ -136,7 +131,7 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           className='mt-6 space-y-6'
         >
           <div className='space-y-2'>
-            <Label htmlFor='faqType'>FAQ 유형</Label>
+            <Label htmlFor='faqType'>카테고리</Label>
             <select
               id='faqType'
               className='w-full rounded-md border px-3 py-2 text-sm'
@@ -147,7 +142,6 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               <option value='account'>계정</option>
               <option value='company'>기업</option>
               <option value='service'>서비스</option>
-              <option value='service'>게시판</option>
             </select>
           </div>
 
@@ -161,16 +155,13 @@ export function FaqMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           </div>
 
           <div className='space-y-2'>
-            <Label>내용</Label>
-            <div className='mb-12 h-[300px]'>
-              <ReactQuill
-                theme='snow'
-                className='h-full'
-                value={descriptionContent || ''}
-                onChange={(val) => setValue('description', val)}
-                placeholder='내용을 입력해주세요.'
-              />
-            </div>
+            <Label htmlFor='description'>내용</Label>
+            <Textarea
+              id='description'
+              rows={10}
+              placeholder='내용을 입력해주세요.'
+              {...register('description')}
+            />
           </div>
 
           <SheetFooter className='mt-8'>

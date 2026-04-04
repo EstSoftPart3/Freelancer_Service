@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { Faq } from '../data/schema';
 
-type OpenType = 'create' | 'update' | 'delete' | null;
+export type OpenType = 'create' | 'view' | 'update' | 'delete' | null;
 
 type FaqContextType = {
   open: OpenType;
