@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,9 @@ import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -151,7 +154,15 @@ public class CommentService {
 
         Comment comment = getComment(commentSq);
 
-        if (comment.getUserSq() != commentRequest.getUserSq()) {
+        // if (comment.getUserSq() != commentRequest.getUserSq()) {
+        // throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
+        // }
+
+        // log.info("수정 시도 - DB 작성자 SQ: {}, 요청자(세션) SQ: {}", comment.getUserSq(),
+        // commentRequest.getUserSq());
+
+        // sq 비교 방식 변경
+        if (!Objects.equals(comment.getUserSq(), commentRequest.getUserSq())) {
             throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
         }
 

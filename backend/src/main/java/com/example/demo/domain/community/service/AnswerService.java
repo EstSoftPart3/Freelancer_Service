@@ -225,7 +225,12 @@ public class AnswerService {
 
 		Answer answer = answerMapper.findById(answerSq);
 
-		if (answer.getUserSq() != answerRequest.getUserSq()) {
+		// if (answer.getUserSq() != answerRequest.getUserSq()) {
+		// throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(answer.getUserSq(), answerRequest.getUserSq())) {
 			throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
 		}
 
@@ -328,7 +333,12 @@ public class AnswerService {
 		Answer answer = answerMapper.findById(answerSq);
 		Board board = boardMapper.findByIdBoard(answer.getBoardSq(), 1402L);
 
-		if (board.getUserSq() != userSq) {
+		// if (board.getUserSq() != userSq) {
+		// throw new IllegalArgumentException("유효하지 않은 접근입니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(board.getUserSq(), userSq)) {
 			throw new IllegalArgumentException("유효하지 않은 접근입니다.");
 		}
 		if (board.getBoardAdoptStatusCd() == 1502L) {

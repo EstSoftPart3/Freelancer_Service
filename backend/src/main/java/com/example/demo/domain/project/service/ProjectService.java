@@ -353,7 +353,7 @@ public class ProjectService {
 			Long scrapSq = scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, projectSq);
 			hasScrapped = (scrapSq != null) ? 1 : 0;
 
-			if (userTypeCd.equals(302)) {
+			if (userTypeCd.equals(302L)) {
 				Long companySq = companyService.fetchCompanySq(userSq, userTypeCd);
 				hasApplied = projectApplicationMapper.findByProAndCom(projectSq, companySq) != null ? 1 : 0;
 			} else {

@@ -88,7 +88,9 @@ public class AffiliationService {
 					// : null;
 					String imageUrl = (imgNm != null) ? "/api/files/" + imgNm : null;
 					Long applyCnt = affiliationMapper.findIsApply(userSq, company.getCompanySq());
-					Long activeMember = (userSq != null) ? affiliationMapper.isActiveMember(userSq, company.getCompanySq()) : 0L;
+					Long activeMember = (userSq != null)
+							? affiliationMapper.isActiveMember(userSq, company.getCompanySq())
+							: 0L;
 					Boolean isApply = false;
 					if (applyCnt > 0 || activeMember > 0) {
 						isApply = true;
@@ -149,7 +151,8 @@ public class AffiliationService {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
 		}
 
-		Long activeMember = affiliationMapper.isActiveMember(companyApplication.getUserSq(), companyApplication.getCompanySq());
+		Long activeMember = affiliationMapper.isActiveMember(companyApplication.getUserSq(),
+				companyApplication.getCompanySq());
 		if (activeMember > 0) {
 			throw new IllegalArgumentException("이미 소속 중인 기업입니다.");
 		}
@@ -219,7 +222,12 @@ public class AffiliationService {
 			throw new IllegalArgumentException("등록된 소속 신청 정보가 없습니다.");
 		}
 
-		if (companyApplication.getUserSq() != application.getUserSq()) {
+		// if (companyApplication.getUserSq() != application.getUserSq()) {
+		// throw new IllegalArgumentException("사용자 정보가 일치하지 않습니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(companyApplication.getUserSq(), application.getUserSq())) {
 			throw new IllegalArgumentException("사용자 정보가 일치하지 않습니다.");
 		}
 

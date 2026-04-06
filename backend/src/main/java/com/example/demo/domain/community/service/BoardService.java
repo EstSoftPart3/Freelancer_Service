@@ -266,7 +266,12 @@ public class BoardService {
 
 		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
 
-		if (board.getUserSq() != boardRequest.getUserSq()) {
+		// if (board.getUserSq() != boardRequest.getUserSq()) {
+		// throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(board.getUserSq(), boardRequest.getUserSq())) {
 			throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
 		}
 
@@ -399,9 +404,15 @@ public class BoardService {
 
 		Board board = boardMapper.findByIdBoard(boardSq, 1402L);
 
-		if (board.getUserSq() != userSq) {
+		// if (board.getUserSq() != userSq) {
+		// throw new IllegalArgumentException("유효하지 않은 접근입니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(board.getUserSq(), userSq)) {
 			throw new IllegalArgumentException("유효하지 않은 접근입니다.");
 		}
+
 		if (board.getBoardAdoptStatusCd() != 1501L) {
 			throw new IllegalArgumentException("채택 상태가 이미 변경되었습니다.");
 		}
