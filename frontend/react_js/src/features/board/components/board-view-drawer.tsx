@@ -12,6 +12,7 @@ import {
   Pencil,
   Send,
   ArrowRight,
+  Plus,
 } from 'lucide-react'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.bubble.css'
@@ -30,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea'
 // [해결] 명칭 및 경로 수정
 import { boardApi } from '../api/board-api'
 import { type AdminBoard } from '../data/schema'
+import { BoardMutateDrawer } from './board-mutate-drawer'
 import { useBoard } from './board-provider'
 
 // --- 타입 정의 ---
@@ -238,6 +240,11 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [newComment, setNewComment] = useState('')
+  const [isAnswerDrawerOpen, setIsAnswerDrawerOpen] = useState(false)
+  const [editingAnswerForDrawer, setEditingAnswerForDrawer] = useState<{
+    sq: number
+    boardTypeCd: number
+  } | null>(null)
 
   const handleGoToQuestion = () => {
     if (!detail?.parentBoardSq) return
@@ -265,9 +272,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
         const output = response.output as BoardDetail
         setDetail(output)
 
-        if (output.comments) {
-          setComments(output.comments)
-        }
+        setComments(output.comments ?? [])
       } catch (_) {
         toast.error('데이터를 불러오는 중 에러가 발생했습니다.')
       } finally {
@@ -318,8 +323,13 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!currentRow?.sq) return
 
     try {
-      // 현재 보고 있는 글이 게시글인지 답변인지에 따라 boardSq 전송
-      await boardApi.createComment(currentRow.sq, content, parentCommentSq)
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      await boardApi.createComment(
+        currentRow.sq,
+        content,
+        parentCommentSq,
+        targetType
+      )
       toast.success('답글이 등록되었습니다.')
       fetchDetail() // 목록 새로고침
     } catch (_) {
@@ -334,12 +344,33 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!newComment.trim() || !currentRow?.sq) return
 
     try {
-      await boardApi.createComment(currentRow.sq, newComment)
+      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      await boardApi.createComment(
+        currentRow.sq,
+        newComment,
+        undefined,
+        targetType
+      )
       toast.success('댓글이 등록되었습니다.')
       setNewComment('')
       fetchDetail() // 목록 새로고침
     } catch (_) {
       toast.error('댓글 등록 실패')
+    }
+  }
+
+  /**
+   * 5. 답변 삭제 핸들러
+   */
+  const handleDeleteAnswer = async (answerSq: number) => {
+    if (!confirm('정말로 이 답변을 삭제하시겠습니까?')) return
+
+    try {
+      await boardApi.deleteBoard(answerSq, 'ANSWER')
+      toast.success('답변이 삭제되었습니다.')
+      fetchDetail() // 목록 새로고침
+    } catch (_) {
+      toast.error('답변 삭제에 실패했습니다.')
     }
   }
 
@@ -484,9 +515,34 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                               {answer.ttl}
                             </span>
                           </div>
-                          <span className='text-xs text-muted-foreground'>
-                            {answer.createdAt}
-                          </span>
+                          <div className='flex items-center gap-1'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-6 px-2 text-xs opacity-0 transition-opacity group-hover:opacity-100'
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingAnswerForDrawer({
+                                  sq: answer.sq,
+                                  boardTypeCd: 1404,
+                                })
+                                setIsAnswerDrawerOpen(true)
+                              }}
+                            >
+                              <Pencil size={10} />
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-6 px-2 text-xs text-destructive opacity-0 transition-opacity group-hover:opacity-100'
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteAnswer(answer.sq)
+                              }}
+                            >
+                              <Trash2 size={10} />
+                            </Button>
+                          </div>
                         </div>
                         <div className='flex items-center justify-between'>
                           <div className='flex items-center gap-1 text-xs text-muted-foreground'>
@@ -505,6 +561,41 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                     </div>
                   )}
                 </div>
+
+                <div className='flex justify-end'>
+                  <Button
+                    // variant='outline'
+                    onClick={() => {
+                      setEditingAnswerForDrawer(null)
+                      setIsAnswerDrawerOpen(true)
+                    }}
+                    // className='w-full'
+                    className='space-x-1'
+                  >
+                    {/* <Reply size={14} className='mr-2' /> 답변 등록 */}
+                    <span>답변 등록</span> <Plus size={18} />
+                  </Button>
+                </div>
+
+                <BoardMutateDrawer
+                  open={isAnswerDrawerOpen}
+                  onOpenChange={(open) => {
+                    setIsAnswerDrawerOpen(open)
+                    if (!open) {
+                      setEditingAnswerForDrawer(null)
+                      fetchDetail()
+                    }
+                  }}
+                  parentBoardSq={currentRow?.sq}
+                  currentRow={
+                    editingAnswerForDrawer
+                      ? ({
+                          sq: editingAnswerForDrawer.sq,
+                          boardTypeCd: 1404,
+                        } as AdminBoard)
+                      : undefined
+                  }
+                />
               </div>
             )}
 

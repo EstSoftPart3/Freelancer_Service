@@ -228,16 +228,11 @@ public class InformationEditController {
     }
 
     @PostMapping("/verify-enterprise")
-    public ApiResponse<Void> verifyEnterprise(
+    public ApiResponse<Boolean> verifyEnterprise(
             @RequestBody CompanyVerifyRequestDTO requestDto,
             @AuthenticationPrincipal Long userSq) {
 
-        try {
-            informationEditService.updateCompanyVerification(userSq, requestDto);
-            return ApiResponse.of(HttpStatus.OK, "기업 인증에 성공하였습니다.", null);
-        } catch (Exception e) {
-            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "기업 인증에 실패했습니다.");
-        }
+        return informationEditService.updateCompanyVerification(userSq, requestDto);
 
     }
 }

@@ -1,5 +1,6 @@
 package com.example.demo.domain.admin.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,9 +24,11 @@ public class AdminUsersListDTO {
     private String profileImageUrl;
     private String userNm;
     private String companyNm;
+    private Long companySq;
     private String userEmail;
     private String userPhoneNum;
     private Long userGenderCd;
+    private LocalDate userBirthDt;
     private LocalDateTime userCreatedDtm;
     private LocalDateTime userModifiedDtm;
     private String userIsDeletedYn;

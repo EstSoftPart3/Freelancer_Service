@@ -6,6 +6,11 @@
     <select id="findAddressBySq" parameterType="Long" resultType="String"> SELECT address FROM
         TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
 
+    <select id="findFullAddressBySq" parameterType="Long"
+        resultType="com.example.demo.domain.project.dto.AddressInsertDto"> SELECT address_sq AS
+        addressSq, zonecode, address, detail_address AS detailAddress, sigungu, latitude, longitude,
+        area_code_sq AS areaCodeSq FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
+
     <select id="findAreaInfoBySq" parameterType="Long"
         resultType="com.example.demo.domain.project.dto.response.AreaInfoResponse"> SELECT
         area_code_sq, sigungu FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>

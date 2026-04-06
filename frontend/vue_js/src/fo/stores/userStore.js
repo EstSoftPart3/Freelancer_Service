@@ -16,6 +16,7 @@ export const useUserStore = defineStore('user', {
       ? Number(localStorage.getItem('userLng'))
       : null,
     isAffiliated: localStorage.getItem('isAffiliated') || 'N',
+    affiliatedCompanySq: null,
     // [추가] 기업 인증 상태 (기본값 null)
     companyAuthStatusCd: localStorage.getItem('companyAuthStatusCd')
       ? Number(localStorage.getItem('companyAuthStatusCd'))
@@ -39,6 +40,7 @@ export const useUserStore = defineStore('user', {
       latitude,
       longitude,
       isAffiliated,
+      affiliatedCompanySq,
       companyAuthStatusCd, // [추가]
     }) {
       const userType =
@@ -51,6 +53,7 @@ export const useUserStore = defineStore('user', {
       this.userLat = latitude
       this.userLng = longitude
       this.isAffiliated = isAffiliated || 'N'
+      this.affiliatedCompanySq = affiliatedCompanySq || null
       this.companyAuthStatusCd = companyAuthStatusCd // [추가]
 
       localStorage.setItem('userSq', userSq)
@@ -75,6 +78,7 @@ export const useUserStore = defineStore('user', {
       this.userLat = null
       this.userLng = null
       this.isAffiliated = 'N'
+      this.affiliatedCompanySq = null
       this.companyAuthStatusCd = null
 
       localStorage.removeItem('userSq')

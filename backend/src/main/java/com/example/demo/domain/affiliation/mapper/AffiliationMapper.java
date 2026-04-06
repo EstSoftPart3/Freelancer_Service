@@ -1,5 +1,7 @@
 package com.example.demo.domain.affiliation.mapper;
 
+import java.time.LocalDate;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -59,6 +61,9 @@ public interface AffiliationMapper {
 	// 해당 소속에 신청했는지 여부
 	Long findIsApply(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
 
+	// 해당 기업의 활성 소속 멤버인지 여부
+	Long isActiveMember(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
+
 	// 소속 신청 열람 상태 변경
 	void updateReadAt(@Param("companyApplicationSq") Long companyApplicationSq);
 
@@ -115,4 +120,17 @@ public interface AffiliationMapper {
 	List<Map<String, Object>> findScrapUserInfos(@Param("companySq") Long companySq);
 
 	String findCompanyNameBySq(@Param("companySq") Long companySq);
+
+	// 개인의 활성 소속 companySq 조회
+	Long findMemberCompanySq(@Param("userSq") Long userSq);
+
+	// 멤버 퇴사 처리
+	void updateMemberToResigned(@Param("companySq") Long companySq, @Param("userSq") Long userSq,
+			@Param("memberStatusCd") Long memberStatusCd, @Param("leaveDt") LocalDate leaveDt);
+
+	// userSq 기반 개인 이름 조회
+	String findUserNmByUserSq(@Param("userSq") Long userSq);
+
+	// 내 소속 정보 조회
+	Map<String, Object> findMyAffiliationInfo(@Param("userSq") Long userSq);
 }

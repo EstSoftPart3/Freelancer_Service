@@ -21,7 +21,8 @@
 
   <select id="countUsersBySearch" resultType="Long"> SELECT COUNT(DISTINCT cm.user_sq) FROM
     TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
-    TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq} <if
+    TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq}
+    AND cm.company_member_status_cd = 401 AND cm.company_member_leave_dt IS NULL <if
       test="request.keyword != null and request.searchType == 'skill'"> AND rs.skill_tag_nm LIKE
     CONCAT('%', #{request.keyword}, '%') </if>
   <if

@@ -2,6 +2,10 @@ package com.example.demo.domain.admin.controller;
 
 import java.util.List;
 
+import com.example.demo.domain.admin.dto.request.AdminUsersCreateCompanyRequestDTO;
+import com.example.demo.domain.admin.dto.response.AdminUsersCreateCompanyResponseDTO;
+import com.example.demo.domain.admin.dto.request.AdminUsersUpdateCompanyRequestDTO;
+import com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +37,8 @@ public class AdminUsersController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<AdminUsersListResponseDTO>> getUsers(
             @RequestParam(value = "typeCds", required = false) List<Long> typeCds,
+            @RequestParam(value = "companySqs", required = false) List<Long> companySqs,
+            @RequestParam(value = "userGenderCds", required = false) List<Long> userGenderCds,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "tagKeyword", required = false) String tagKeyword,
             @RequestParam(value = "sortField", defaultValue = "createdAt") String sortField,
@@ -40,13 +46,13 @@ public class AdminUsersController {
             @RequestParam(value = "page", defaultValue = "1") Long page,
             @RequestParam(value = "size", defaultValue = "10") Long size
 			) {
-		
-		log.info("유저 목록 page: {}, typeCds: {}, keyword: {}", page, typeCds, keyword);
-			
+
+		log.info("유저 목록 page: {}, typeCds: {}, companySqs: {}, userGenderCds: {}, keyword: {}", page, typeCds, companySqs, userGenderCds, keyword);
+
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "유저 목록 조회 성공",
-				adminUsersService.getAdminUsers(typeCds, keyword, tagKeyword, sortField, sortOrder, page, size)));
-	};
-	
+				adminUsersService.getAdminUsers(typeCds, companySqs, userGenderCds, keyword, tagKeyword, sortField, sortOrder, page, size)));
+	}
+
 	@PatchMapping("/{userSq}")
 	public ResponseEntity<ApiResponse<Void>> updateUser(
 			@PathVariable Long userSq,
@@ -56,7 +62,37 @@ public class AdminUsersController {
 		adminUsersService.updateUser(userSq, dto);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "유저 수정 성공", null));
 	}
-	
+
+    @GetMapping("/companies")
+    public ResponseEntity<ApiResponse<List<AdminUsersCompanyListResponseDTO>>> getCompanies(
+            @RequestParam(value = "keyword", required = false) String keyword
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 목록 조회 성공", adminUsersService.getCompanies(keyword)));
+    }
+
+    @GetMapping("/companies/{companySq}")
+    public ResponseEntity<ApiResponse<AdminUsersCompanyListResponseDTO>> getCompany(@PathVariable(value = "companySq") Long companySq) {
+        List<AdminUsersCompanyListResponseDTO> companies = adminUsersService.getCompany(companySq);
+        AdminUsersCompanyListResponseDTO company = companies.isEmpty() ? null : companies.get(0);
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 상세 정보 조회 성공", company));
+    }
+
+    @PatchMapping("/companies/{companySq}")
+    public ResponseEntity<ApiResponse<Void>> updateCompany(
+            @PathVariable Long companySq,
+            @ModelAttribute AdminUsersUpdateCompanyRequestDTO dto
+    ) {
+        adminUsersService.updateCompany(companySq, dto);
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 정보 수정 성공", null));
+    }
+
+    @PostMapping("/companies")
+    public ResponseEntity<ApiResponse<AdminUsersCreateCompanyResponseDTO>> createCompany(
+            @ModelAttribute AdminUsersCreateCompanyRequestDTO dto
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "회사 정보 등록 성공", adminUsersService.createCompany(dto)));
+    }
+
 	@PostMapping("/verify-password")
 	public ResponseEntity<ApiResponse<Void>> verifyPassword(
 	        @RequestBody AdminVerifyPasswordRequestDTO dto) {

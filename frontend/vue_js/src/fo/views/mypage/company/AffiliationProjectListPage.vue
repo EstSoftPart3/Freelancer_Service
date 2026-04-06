@@ -235,20 +235,24 @@ import { navigateCompanyPageWithProjectSq } from '@/fo/router/userTypeRouter.js'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 import { api } from '@/axios.js'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const modalStore = useModalStore()
 const userStore = useUserStore()
 const userType = userStore.getUserType
 const route = useRoute()
+const router = useRouter()
 
-const currentPage = ref(1)
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
+if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+  router.replace({ query: { ...route.query, page: currentPage.value } })
+}
 const totalPages = ref(1)
 const pageSize = ref(5)
 
 const projects = ref([])
 
-const currentFilter = ref('all')
+const currentFilter = ref(route.query.filter || 'all')
 const currnetStatusCnt = ref([])
 
 const filters = computed(() => [
@@ -346,6 +350,8 @@ const fetchCompanyProjectList = async () => {
 
     if (currentPage.value > totalPages.value) {
       currentPage.value = 1
+      router.replace({ query: { ...route.query, page: 1 } })
+      return fetchCompanyProjectList()
     }
   } catch (e) {
     console.error('❌ 프로젝트 목록 불러오기 실패', e)
@@ -397,30 +403,55 @@ const generateIconUrl = (name) => {
 }
 
 // 검색 상태
-const searchType = ref('all')
-const searchText = ref('')
+const searchType = ref(route.query.searchType || 'all')
+const searchText = ref(route.query.keyword || '')
 const searchOptions = ref([
   { value: 'all', label: '전체' },
   { value: 'title', label: '제목' },
   { value: 'content', label: '내용' },
 ])
 
+const updateQuery = (params) => {
+  router.replace({ query: { ...route.query, ...params } })
+}
+
 const search = () => {
   currentPage.value = 1
+  updateQuery({
+    page: 1,
+    filter: currentFilter.value,
+    searchType: searchType.value,
+    keyword: searchText.value || undefined,
+  })
   fetchCompanyProjectList()
 }
 
 const setFilter = (type) => {
   currentFilter.value = type
   currentPage.value = 1
+  updateQuery({ page: 1, filter: type })
   fetchCompanyProjectList()
 }
 
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  router.push({ query: { ...route.query, page } })
   fetchCompanyProjectList()
 }
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Math.max(1, Number(newPage) || 1)
+    if (Number(newPage) !== page) {
+      router.replace({ query: { ...route.query, page } })
+    }
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      fetchCompanyProjectList()
+    }
+  },
+)
 const goToProjectSpec = (project) => {
   navigateCompanyPageWithProjectSq(userType, project.projectSq)
 }

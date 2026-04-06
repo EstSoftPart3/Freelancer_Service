@@ -15,13 +15,17 @@ import {
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 // import { roles } from '../data/data'
 import { type AdminUser } from '../data/schema'
+import { CompanySearchDialog } from './company-search-dialog'
 import { usersColumns as columns } from './users-columns'
+import { useUsers } from './users-provider'
 
 type UserTableProps = {
   data: AdminUser[]
   totalCount: number
   page: number
   typeCds: number[]
+  companySqs: number[]
+  userGenderCds: number[]
   keyword: string
   sortField: string
   sortOrder: string
@@ -29,6 +33,8 @@ type UserTableProps = {
   setPage: (page: number) => void
   onSort: (field: string, order: string) => void
   onFilterType: (types: number[]) => void
+  onFilterCompany: (companySqs: number[]) => void
+  onFilterGender: (genderCds: number[]) => void
   setTagKeyword: (val: string) => void
 }
 
@@ -37,6 +43,8 @@ export function UsersTable({
   totalCount,
   page,
   typeCds,
+  companySqs,
+  userGenderCds,
   keyword,
   sortField,
   sortOrder,
@@ -46,7 +54,10 @@ export function UsersTable({
   onFilterType,
   setTagKeyword: _setTagKeyword,
 }: UserTableProps) {
+  const { setOpen, setCurrentRow } = useUsers()
+  // const { open, setOpen, currentRow, setCurrentRow } = useUsers();
   const [rowSelection, setRowSelection] = useState({})
+  const [isCompanySearchOpen, setIsCompanySearchOpen] = useState(false)
   const sorting = useMemo(
     () => [{ id: sortField, desc: sortOrder === 'DESC' }],
     [sortField, sortOrder]
@@ -63,9 +74,17 @@ export function UsersTable({
         pageIndex: page - 1,
         pageSize: 10,
       },
-      columnFilters: typeCds.length
-        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
-        : [],
+      columnFilters: [
+        ...(typeCds.length
+          ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+          : []),
+        ...(companySqs.length
+          ? [{ id: 'companyNm', value: companySqs.map(String) }]
+          : []),
+        ...(userGenderCds.length
+          ? [{ id: 'userGenderCd', value: userGenderCds.map(String) }]
+          : []),
+      ],
     },
     enableRowSelection: true, // 행 선택 기능 활성화
     onRowSelectionChange: setRowSelection, // [연결] 행 선택 변경 함수 연결
@@ -100,17 +119,43 @@ export function UsersTable({
     },
 
     onColumnFiltersChange: (updater) => {
-      const currentFilters = typeCds.length
-        ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
-        : []
+      const currentFilters = [
+        ...(typeCds.length
+          ? [{ id: 'userTypeCd', value: typeCds.map(String) }]
+          : []),
+        ...(companySqs.length
+          ? [{ id: 'companyNm', value: companySqs.map(String) }]
+          : []),
+        ...(userGenderCds.length
+          ? [{ id: 'userGenderCd', value: userGenderCds.map(String) }]
+          : []),
+      ]
       const nextFilters =
         typeof updater === 'function' ? updater(currentFilters) : updater
 
-      const typeFilter = nextFilters.find((f) => f.id === 'userTypeCd')
-      if (typeFilter) {
-        onFilterType((typeFilter.value as string[]).map(Number))
-      } else {
-        onFilterType([])
+      // 각 필터별 변경 여부 확인 후 필요한 핸들러만 호출
+      const typeFilterValue =
+        (
+          nextFilters.find((f) => f.id === 'userTypeCd')?.value as string[]
+        )?.map(Number) || []
+      if (JSON.stringify(typeCds) !== JSON.stringify(typeFilterValue)) {
+        onFilterType(typeFilterValue)
+      }
+
+      const companyFilterValue =
+        (nextFilters.find((f) => f.id === 'companyNm')?.value as string[])?.map(
+          Number
+        ) || []
+      if (JSON.stringify(companySqs) !== JSON.stringify(companyFilterValue)) {
+        onFilterCompany(companyFilterValue)
+      }
+
+      const genderFilterValue =
+        (
+          nextFilters.find((f) => f.id === 'userGenderCd')?.value as string[]
+        )?.map(Number) || []
+      if (JSON.stringify(userGenderCds) !== JSON.stringify(genderFilterValue)) {
+        onFilterGender(genderFilterValue)
       }
     },
 
@@ -120,6 +165,11 @@ export function UsersTable({
   const typeOptions = [
     { label: '일반 회원', value: '301' },
     { label: '기업 회원', value: '302' },
+  ]
+
+  const genderOptions = [
+    { label: '남성', value: '101' },
+    { label: '여성', value: '102' },
   ]
 
   return (
@@ -133,7 +183,26 @@ export function UsersTable({
             title: '유저 유형',
             options: typeOptions,
           },
+          {
+            columnId: 'companyNm',
+            title: '소속',
+            onTriggerClick: () => setIsCompanySearchOpen(true),
+            options: [],
+          },
+          {
+            columnId: 'userGenderCd',
+            title: '성별',
+            options: genderOptions,
+          },
         ]}
+      />
+      <CompanySearchDialog
+        open={isCompanySearchOpen}
+        onOpenChange={setIsCompanySearchOpen}
+        onSelect={(companySq) => onFilterCompany([companySq])}
+        multiple
+        selectedCompanySqs={companySqs}
+        onSelectMultiple={(sqs) => onFilterCompany(sqs)}
       />
       <div className='overflow-hidden rounded-md border'>
         <Table>
@@ -155,7 +224,23 @@ export function UsersTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className='cursor-pointer hover:bg-muted/50'
+                  onClick={(e) => {
+                    // 클릭된 타겟이 버튼, 링크, 체크박스 등 상호작용 요소일 경우 무시
+                    const target = e.target as HTMLElement
+                    if (
+                      target.closest(
+                        'button, a, input, [role="checkbox"], [role="menuitem"], [data-radix-collection-item]'
+                      )
+                    ) {
+                      return
+                    }
+                    setCurrentRow(row.original)
+                    setOpen('edit')
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(

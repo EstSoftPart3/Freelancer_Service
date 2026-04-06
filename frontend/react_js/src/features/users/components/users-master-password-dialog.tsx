@@ -31,6 +31,8 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
       await userApi.verifyPassword(password)
     } catch {
       toast.error('비밀번호가 맞지 않습니다.')
+      setIsLoading(false)
+      return
     }
 
     try {
@@ -46,8 +48,11 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
         toast.success('유저 정보가 수정되었습니다.')
         setTimeout(() => window.location.reload(), 500)
       }
-    } catch {
-      toast.error('유저 정보 수정 중 오류가 발생하였습니다.')
+    } catch (error) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || '유저 정보 수정 중 오류가 발생하였습니다.'
+      toast.error('유저 정보 수정 실패', { description: errorMessage })
     } finally {
       setIsLoading(false)
     }
@@ -79,16 +84,16 @@ export function UsersMasterPasswordDialog({ open, onOpenChange }: Props) {
             onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
           />
         </div>
-      </DialogContent>
 
-      <DialogFooter>
-        <Button variant='outline' onClick={() => onOpenChange(false)}>
-          취소
-        </Button>
-        <Button onClick={handleConfirm} disabled={!password || isLoading}>
-          확인
-        </Button>
-      </DialogFooter>
+        <DialogFooter>
+          <Button onClick={handleConfirm} disabled={!password || isLoading}>
+            확인
+          </Button>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
+            취소
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   )
 }

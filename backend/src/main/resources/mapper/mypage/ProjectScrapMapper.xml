@@ -18,9 +18,9 @@
     <select id="findAddressByProjectSq"
         resultType="com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO"> SELECT
         p_area.area_sigungu AS parentSigungu, area.area_sigungu AS sigungu FROM TBL_PROJECT_M p JOIN
-        TBL_ADDRESS_S a ON p.address_sq = a.address_sq JOIN TBL_AREA_C area ON a.area_code_sq =
-        area.area_code_sq LEFT JOIN TBL_AREA_C p_area ON area.parent_area_code_sq =
-        p_area.area_code_sq WHERE p.project_sq = #{projectSq} </select>
+        TBL_ADDRESS_S a ON a.address_sq = COALESCE(p.address_sq, p.subway_address_sq) JOIN TBL_AREA_C
+        area ON a.area_code_sq = area.area_code_sq LEFT JOIN TBL_AREA_C p_area ON
+        area.parent_area_code_sq = p_area.area_code_sq WHERE p.project_sq = #{projectSq} </select>
 
     <select id="findEducationName" resultType="string"> SELECT common_code_nm FROM TBL_COMMON_CODE_C
         WHERE common_code_sq = #{commonCodeSq} </select>

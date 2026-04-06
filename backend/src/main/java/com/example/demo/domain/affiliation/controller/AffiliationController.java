@@ -69,7 +69,7 @@ public class AffiliationController {
 //    	affiliationService.updateApply(companyApplication);
 //    	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 신청 정보 수정이 완료되었습니다.", null));
 //    }
-    
+
     // 주소 코드 리스트 조회
     @GetMapping("/address")
     public ResponseEntity<ApiResponse<List<AreaCd>>> getAddressCds() {

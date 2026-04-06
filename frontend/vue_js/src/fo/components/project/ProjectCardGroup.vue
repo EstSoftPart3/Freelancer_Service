@@ -129,7 +129,13 @@
               <button
                 v-for="skill in project.reqSkills"
                 :key="skill.id"
-                class="btn btn-rounded btn-3d btn-light btn-sm"
+                :class="[
+                  'btn btn-rounded btn-3d btn-sm',
+                  props.selectedSkillTags.includes(skill)
+                    ? 'btn-primary'
+                    : 'btn-light',
+                ]"
+                @click.stop="emit('click-skill-tag', skill)"
               >
                 <img
                   :src="generateIconUrl(skill)"
@@ -149,7 +155,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
+import { defineProps, defineEmits } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
 import { useUserStore } from '../../stores/userStore.js'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter.js'
@@ -169,10 +175,16 @@ const generateIconUrl = (name) => {
   return skillIconMap[key] || skillIconMap.default
 }
 
+const emit = defineEmits(['click-skill-tag'])
+
 const props = defineProps({
   projects: {
     type: Array,
     required: true,
+  },
+  selectedSkillTags: {
+    type: Array,
+    default: () => [],
   },
 })
 

@@ -81,12 +81,17 @@ export const boardApi = {
   /** * 댓글 등록 (관리자 권한)
    */
   createComment: async (
-    boardSq: number,
+    targetSq: number,
     description: string,
-    parentCommentSq?: number
+    parentCommentSq?: number,
+    targetType: 'BOARD' | 'ANSWER' = 'BOARD'
   ) => {
     const params = new URLSearchParams()
-    params.append('boardSq', boardSq.toString())
+    if (targetType === 'ANSWER') {
+      params.append('answerSq', targetSq.toString())
+    } else {
+      params.append('boardSq', targetSq.toString())
+    }
     params.append('description', description)
     if (parentCommentSq)
       params.append('parentCommentSq', parentCommentSq.toString())
@@ -109,5 +114,13 @@ export const boardApi = {
    */
   deleteComment: async (commentSq: number) => {
     return await api.$delete(`/admin/board/comment/${commentSq}`)
+  },
+
+  /** * Q&A 답변 등록
+   */
+  createAnswer: async (formData: FormData) => {
+    return await api.$post('/admin/board/answer', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
   },
 }

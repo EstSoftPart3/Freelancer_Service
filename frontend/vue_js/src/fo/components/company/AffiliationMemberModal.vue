@@ -356,6 +356,10 @@ const toggleSelection = async (memberId, name, resumeSq) => {
   const index = selectedResumes.value.findIndex((r) => r.userSq === memberId)
 
   if (index === -1) {
+    if (!resumeSq) {
+      alertStore.show('대표 이력서를 먼저 선택해주세요.', 'danger')
+      return
+    }
     // 지원 여부 API 호출
     try {
       const res = await api.$get(`/projects/applications/${projectSq}/check`, {

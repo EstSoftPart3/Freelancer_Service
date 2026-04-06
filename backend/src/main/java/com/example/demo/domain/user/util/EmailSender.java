@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import jakarta.mail.MessagingException;
@@ -27,5 +28,14 @@ public class EmailSender {
         helper.setSubject(subject);
         helper.setText(text, true);
         mailSender.send(message);
+    }
+
+    @Async
+    public void sendAsync(String to, String subject, String text) {
+        try {
+            send(to, subject, text);
+        } catch (MessagingException e) {
+            throw new RuntimeException("이메일 발송 실패", e);
+        }
     }
 }

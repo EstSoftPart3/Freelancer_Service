@@ -20,7 +20,8 @@
         ></i>
         {{ type === 'danger' ? ' 실패!' : ' 성공!' }}
       </strong>
-      {{ message }}
+      <!-- alert 내부에서 줄바꿈 적용을 위해 white-space: pre-line 사용 -->
+      <span style="white-space: pre-line">{{ message }}</span>
     </div>
   </transition>
 </template>

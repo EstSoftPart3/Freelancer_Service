@@ -134,7 +134,11 @@
         class="btn btn-light"
         disabled
       >
-        소속 신청 완료
+        {{
+          userStore.affiliatedCompanySq === afltnInfo.sq
+            ? '소속 중'
+            : '소속 신청 완료'
+        }}
       </button>
       <button
         type="button"
@@ -190,14 +194,6 @@ const clickRecruit = async () => {
       if (localStorage.getItem('userType') == 'COMPANY') {
         alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
         modalStore.closeModal() // 컨펌창만 닫기
-        return
-      }
-
-      if (userStore.isAffiliated === 'Y') {
-        alertStore.show(
-          '이미 소속이 되어있어 추가로 소속 신청을 할 수 없습니다.',
-          'danger',
-        )
         return
       }
 

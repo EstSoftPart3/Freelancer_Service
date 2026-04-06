@@ -324,7 +324,9 @@
 		AS companyTitle, p.project_candidate_cnt AS applicantCnt, u.user_nm AS applicantName,
 		r.resume_sq AS resumeSq, r.resume_ttl AS resumeTitle, a.project_application_created_at_dtm
 		AS appliedDt, a.selected_interview_dtm AS interviewDt, a.read_application_dtm AS
-		readApplicationDt, cc.common_code_nm AS applicationStatus FROM TBL_PROJECT_APPLICATION_H a
+		readApplicationDt, cc.common_code_nm AS applicantType,
+		CASE WHEN p.project_recruit_end_dt &lt; CURDATE() THEN TRUE ELSE FALSE END AS isRecruitEnded
+		FROM TBL_PROJECT_APPLICATION_H a
 		JOIN TBL_PROJECT_M p ON a.project_sq = p.project_sq JOIN TBL_RESUME_M r ON a.resume_sq =
 		r.resume_sq JOIN TBL_USER_M u ON r.user_sq = u.user_sq JOIN TBL_COMMON_CODE_C cc ON
 		a.project_application_status_cd = cc.common_code_sq WHERE a.company_sq = #{companySq} <if
@@ -377,9 +379,13 @@
 		#{companySq} AND a.read_application_dtm IS NULL </select>
 
 	<select id="findApplicationNotificationInfo" resultType="map"> SELECT r.user_sq as "userSq",
-		p.project_ttl as "projectTtl", p.project_sq as "projectSq" FROM tbl_project_application_h h
+		p.project_ttl as "projectTtl", p.project_sq as "projectSq",
+		h.project_application_member_type_cd as "memberTypeCd",
+		cs.user_sq as "appCompanyUserSq"
+		FROM tbl_project_application_h h
 		JOIN tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_project_m p ON h.project_sq =
-		p.project_sq WHERE h.project_application_sq = #{applicationSq} </select>
+		p.project_sq LEFT JOIN tbl_company_s cs ON h.company_sq = cs.company_sq
+		WHERE h.project_application_sq = #{applicationSq} </select>
 
 	<select id="findCancelNotificationInfo" resultType="map"> SELECT c.user_sq as "companyUserSq",
 		u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as "projectSq",
@@ -389,7 +395,7 @@
 		c.company_sq WHERE h.project_application_sq = #{applicationSq} </select>
 
 	<select id="findInterviewConfirmationInfo" resultType="map"> SELECT c.user_sq as
-		"companyUserSq", u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as
+		"companyUserSq", r.user_sq as "applicantUserSq", u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as
 		"projectSq", h.project_application_member_type_cd as "memberTypeCd",
 		t.interview_available_dtm as "interviewDtm" FROM tbl_project_application_h h JOIN
 		tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_user_m u ON r.user_sq = u.user_sq JOIN

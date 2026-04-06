@@ -37,6 +37,10 @@ export function Users() {
         page: search.page || 1,
         size: search.pageSize || 10,
         typeCds: search.typeCds?.length ? search.typeCds : undefined,
+        companySqs: search.companySqs?.length ? search.companySqs : undefined,
+        userGenderCds: search.userGenderCds?.length
+          ? search.userGenderCds
+          : undefined,
         keyword: search.keyword || undefined,
         tagKeyword: search.tagKeyword || undefined,
         sortField: search.sortField || 'createdAt',
@@ -88,6 +92,26 @@ export function Users() {
     })
   }
 
+  const handleFilterCompany = (companySqs: number[]) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        companySqs: companySqs.length ? companySqs : undefined,
+        page: 1,
+      }),
+    })
+  }
+
+  const handleFilterGender = (genderCds: number[]) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        userGenderCds: genderCds.length ? genderCds : undefined,
+        page: 1,
+      }),
+    })
+  }
+
   const handleSort = (field: string, order: string) => {
     navigate({
       search: (prev) => ({ ...prev, sortField: field, sortOrder: order }),
@@ -128,6 +152,8 @@ export function Users() {
             totalCount={totalCount}
             page={search.page || 1}
             typeCds={search.typeCds || []}
+            companySqs={search.companySqs || []}
+            userGenderCds={search.userGenderCds || []}
             keyword={keyword}
             sortField={search.sortField || 'createdAt'}
             sortOrder={search.sortOrder || 'DESC'}

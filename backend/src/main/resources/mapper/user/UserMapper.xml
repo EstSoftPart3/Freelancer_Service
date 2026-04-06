@@ -79,7 +79,10 @@
     userSq, u.user_nm AS userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude,
     c.company_auth_status_cd AS companyAuthStatusCd, (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE
     'N' END FROM tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt
-    IS NULL) AS isAffiliated FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq =
+    IS NULL) AS isAffiliated,
+    (SELECT cm.company_sq FROM tbl_company_member_r cm
+     WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt IS NULL LIMIT 1) AS affiliatedCompanySq
+    FROM tbl_user_m u LEFT JOIN tbl_address_s a ON u.address_sq =
     a.address_sq LEFT JOIN tbl_company_s c ON u.user_sq = c.user_sq WHERE u.user_sq = #{userSq} AND
     u.user_is_deleted_yn = 'N' </select>
 
@@ -113,4 +116,7 @@
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
     parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_type_cd,
     user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
+
+  <select id="selectEmailByUserSq" resultType="string"> SELECT user_email FROM TBL_USER_M WHERE
+    user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 </mapper>

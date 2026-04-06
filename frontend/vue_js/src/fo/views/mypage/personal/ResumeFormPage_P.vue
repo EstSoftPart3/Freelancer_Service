@@ -834,20 +834,19 @@ function deleteProfileImage() {
 }
 
 // 전화번호
-function onPhoneInput(event) {
-  const value = event.target.value
-  const digits = value.replace(/\D/g, '') // 숫자 외 제거
+function formatPhoneNumber(phoneNumber) {
+  const digits = String(phoneNumber ?? '').replace(/\D/g, '').slice(0, 11)
 
-  let formatted = ''
-  if (digits.length <= 3) {
-    formatted = digits
-  } else if (digits.length <= 7) {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
-  } else {
-    formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+  if (digits.length <= 3) return digits
+  if (digits.length <= 7) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`
   }
 
-  resumeForm.resumePhoneNum = formatted // 수동으로 반영
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`
+}
+
+function onPhoneInput(event) {
+  resumeForm.resumePhoneNum = formatPhoneNumber(event.target.value)
 }
 
 // 주소
@@ -1161,6 +1160,7 @@ onMounted(async () => {
 
     // 1. 이력서 기본값 세팅
     Object.assign(resumeForm, data.output)
+    resumeForm.resumePhoneNum = formatPhoneNumber(resumeForm.resumePhoneNum)
 
     // 2. 상위 태그 불러오기
     const parentTags = await api.$get(
@@ -1177,6 +1177,31 @@ onMounted(async () => {
 
     setExistingAttachments(resumeForm.attachmentList)
     // console.log('resumeForm', resumeForm)
+  } else {
+    // 신규 등록 모드: 회원 기본정보 자동 기입
+    try {
+      const res = await api.$get('/mypage/edit/info', null)
+      const data = res.output
+      if (data) {
+        resumeForm.resumeNm = data.userNm ?? ''
+        resumeForm.resumeBirthDt = data.userBirthDt
+          ? new Date(data.userBirthDt)
+          : ''
+        resumeForm.resumePhoneNum = formatPhoneNumber(data.userPhoneNum)
+        resumeForm.resumeEmail = data.userEmail ?? ''
+        resumeForm.address = {
+          zonecode: data.zonecode ?? '',
+          address: data.address ?? '',
+          detailAddress: data.detailAddress ?? '',
+          sigungu: '',
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          areaCodeSq: data.sigunguCode ?? null,
+        }
+      }
+    } catch (e) {
+      console.error('회원 기본정보 조회 실패:', e)
+    }
   }
 })
 

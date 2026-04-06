@@ -26,6 +26,7 @@ import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.PagedApplicantResponseDTO;
 import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.service.ProjectService;
+import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
 
@@ -107,8 +108,10 @@ public class ProjectApplicationController {
 
 	@PatchMapping("/interviews/{interviewTimeSq}")
 	public ResponseEntity<ApiResponse<Void>> patchApplicationStatus(
+			Authentication authentication,
 			@PathVariable("interviewTimeSq") Long interviewTimeSq, @RequestBody ApplicationSqRequest request) {
-		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request);
+		JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
+		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request, jwtToken.getUserTypeCd());
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인터뷰 시간 선택 성공", null));
 	}
 

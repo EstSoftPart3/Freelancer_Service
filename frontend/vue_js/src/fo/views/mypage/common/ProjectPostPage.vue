@@ -215,7 +215,7 @@
                   v-if="errors.projectPeriod"
                   class="text-primary small mt-1"
                 >
-                  {{ errors.description }}
+                  {{ errors.projectPeriod }}
                 </div>
               </div>
             </div>
@@ -249,7 +249,7 @@
                   v-if="errors.recruitPeriod"
                   class="text-primary small mt-1"
                 >
-                  {{ errors.description }}
+                  {{ errors.recruitPeriod }}
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@
                 </div>
               </div>
               <div v-if="errors.salary" class="text-primary small mt-1">
-                {{ errors.description }}
+                {{ errors.salary }}
               </div>
             </div>
             <div class="form-group mb-3">
@@ -1047,6 +1047,23 @@ watch(selectedInterviewTimes, validateInterview, { deep: true })
 watch(projectSalary, validateSalary)
 
 // --- 최종 제출 시 전체 검증 ---
+const fieldLabels = {
+  title: '프로젝트 제목',
+  address: '근무지 주소',
+  devGrade: '개발자 등급',
+  education: '학력',
+  projectPeriod: '프로젝트 기간',
+  recruitPeriod: '모집 기간',
+  salary: '단가',
+  workType: '근무 형태',
+  job: '모집 직군',
+  skills: '사용 기술',
+  preferSkills: '우대 기술',
+  preference: '우대 사항',
+  description: '상세 내용',
+  interview: '인터뷰 가능 시간',
+}
+
 const validateAll = () => {
   validateTitle()
   validateAddressInfo()
@@ -1067,7 +1084,13 @@ const validateAll = () => {
 }
 const submitProject = async () => {
   if (!validateAll()) {
-    alertStore.show('입력 항목을 다시 확인해주세요.', 'danger')
+    const failedFields = Object.entries(valids)
+      .filter(([, v]) => v === false)
+      .map(([key]) => fieldLabels[key] || key)
+    alertStore.show(
+      `다음 항목을 확인해주세요. \n${failedFields.join(', ')}`,
+      'danger',
+    )
     return
   }
   const requestBody = {

@@ -11,8 +11,9 @@ type DataTableToolbarProps<TData> = {
   searchPlaceholder?: string
   searchKey?: string
   filters?: {
-    columnId: string
-    title: string
+    columnId: string;
+    title: string;
+    onTriggerClick?: () => void
     options: {
       label: string
       value: string
@@ -60,6 +61,7 @@ export function DataTableToolbar<TData>({
                 column={column}
                 title={filter.title}
                 options={filter.options}
+                onTriggerClick={filter.onTriggerClick}
               />
             )
           })}

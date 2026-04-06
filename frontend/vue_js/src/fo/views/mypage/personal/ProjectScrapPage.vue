@@ -195,21 +195,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/fo/stores/userStore'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
 const scraps = ref([])
-const searchType = ref('전체')
-const searchKeyword = ref('')
-const currentPage = ref(1)
+const searchType = ref(route.query.searchType || '전체')
+const searchKeyword = ref(route.query.keyword || '')
+const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 const itemsPerPage = 5
 const totalPages = ref(1)
 
@@ -244,17 +245,30 @@ async function fetchScraps() {
       size: itemsPerPage,
     }
     const res = await api.$get('/mypage/projectScrap', { params })
-    const output = res.output
-    scraps.value = output.content || []
-    totalPages.value = Math.ceil((output.totalCount || 0) / itemsPerPage) || 1
+    const output = res?.output ?? {}
+    scraps.value = Array.isArray(output.content) ? output.content : []
+    const totalCount = Number(output.totalCount ?? 0)
+    totalPages.value = Math.max(1, Math.ceil(totalCount / itemsPerPage))
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
+    }
   } catch (e) {
     console.error('프로젝트 스크랩 조회 실패:', e)
   }
 }
 onMounted(fetchScraps)
 
+const updateQuery = (params) => {
+  router.replace({ query: { ...route.query, ...params } })
+}
+
 function handleSearch() {
   currentPage.value = 1
+  updateQuery({
+    page: 1,
+    searchType: searchType.value !== '전체' ? searchType.value : undefined,
+    keyword: searchKeyword.value || undefined,
+  })
   fetchScraps()
 }
 
@@ -265,6 +279,7 @@ async function removeScrap(projectSq) {
     if (response.status === 'OK') {
       if (scraps.value.length === 1 && currentPage.value > 1) {
         currentPage.value -= 1
+        updateQuery({ page: currentPage.value })
       }
       await fetchScraps()
       alertStore.show('스크랩이 삭제되었습니다.', 'success')
@@ -280,10 +295,23 @@ async function removeScrap(projectSq) {
 function changePage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  router.push({ query: { ...route.query, page } })
   fetchScraps().then(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   })
 }
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const page = Math.max(1, Number(newPage) || 1)
+    if (page !== currentPage.value) {
+      currentPage.value = page
+      fetchScraps().then(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })
+    }
+  },
+)
 
 const generateIconUrl = (name) => {
   const key = name.toLowerCase().replace(/[\s.]+/g, '')

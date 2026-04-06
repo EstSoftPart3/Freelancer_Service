@@ -174,6 +174,14 @@ const toggleTime = (time) => {
   if (selectedTimes.value[date][0] === time) {
     selectedTimes.value[date] = []
   } else {
+    // 이미 지난 시간인 경우 -> 예외
+    const [h, m] = time.split(':').map(Number)
+    const dt = new Date(date)
+    dt.setHours(h, m, 0, 0)
+    if (dt <= new Date()) {
+      alertStore.show('이미 지난 시간은 선택할 수 없습니다.', 'danger')
+      return
+    }
     // 새로 선택된 경우 -> 기존 값 덮어쓰기
     selectedTimes.value[date] = [time]
   }

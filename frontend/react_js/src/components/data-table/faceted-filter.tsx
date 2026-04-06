@@ -21,8 +21,9 @@ import {
 import { Separator } from '@/components/ui/separator'
 
 type DataTableFacetedFilterProps<TData, TValue> = {
-  column?: Column<TData, TValue>
-  title?: string
+  column?: Column<TData, TValue>;
+  title?: string;
+  onTriggerClick?: () => void
   options: {
     label: string
     value: string
@@ -33,52 +34,64 @@ type DataTableFacetedFilterProps<TData, TValue> = {
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
+  onTriggerClick,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as string[])
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant='outline' size='sm' className='h-8 border-dashed'>
-          <PlusCircledIcon className='size-4' />
-          {title}
-          {selectedValues?.size > 0 && (
-            <>
-              <Separator orientation='vertical' className='mx-2 h-4' />
+  const triggerButton = (
+    <Button
+      variant='outline'
+      size='sm'
+      className='h-8 border-dashed'
+      onClick={onTriggerClick}
+    >
+      <PlusCircledIcon className='size-4' />
+      {title}
+      {selectedValues?.size > 0 && (
+        <>
+          <Separator orientation='vertical' className='mx-2 h-4' />
+          <Badge
+            variant='secondary'
+            className='rounded-sm px-1 font-normal lg:hidden'
+          >
+            {selectedValues.size}
+          </Badge>
+          <div className='hidden space-x-1 lg:flex'>
+            {selectedValues.size > 2 || options.length === 0 ? (
               <Badge
                 variant='secondary'
-                className='rounded-sm px-1 font-normal lg:hidden'
+                className='rounded-sm px-1 font-normal'
               >
-                {selectedValues.size}
+                {selectedValues.size} selected
               </Badge>
-              <div className='hidden space-x-1 lg:flex'>
-                {selectedValues.size > 2 ? (
+            ) : (
+              options
+                .filter((option) => selectedValues.has(option.value))
+                .map((option) => (
                   <Badge
                     variant='secondary'
+                    key={option.value}
                     className='rounded-sm px-1 font-normal'
                   >
-                    {selectedValues.size} selected
+                    {option.label}
                   </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        variant='secondary'
-                        key={option.value}
-                        className='rounded-sm px-1 font-normal'
-                      >
-                        {option.label}
-                      </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
-      </PopoverTrigger>
+                ))
+            )}
+          </div>
+        </>
+      )}
+    </Button>
+  )
+
+  if (onTriggerClick) {
+    return triggerButton
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent className='w-[200px] p-0' align='start'>
         <Command>
           <CommandInput placeholder={title} />
