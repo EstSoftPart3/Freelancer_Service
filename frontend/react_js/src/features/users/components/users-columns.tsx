@@ -42,7 +42,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userTypeCd',
-    meta: { title: '유형' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -77,7 +76,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'profileImageUrl',
-    meta: { title: '프로필 이미지' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -102,7 +100,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userId',
-    meta: { title: '아이디' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -117,7 +114,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
 
   {
     accessorKey: 'userNm',
-    meta: { title: '이름' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -131,7 +127,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'companyNm',
-    meta: { title: '소속' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -145,7 +140,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userEmail',
-    meta: { title: '이메일' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -159,7 +153,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userPhoneNum',
-    meta: { title: '휴대폰' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -178,7 +171,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userGenderCd',
-    meta: { title: '성별' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -219,7 +211,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userCreatedDtm',
-    meta: { title: '생성일시' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -237,7 +228,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userModifiedDtm',
-    meta: { title: '수정일시' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -255,7 +245,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userSignupTypeCd',
-    meta: { title: '로그인 유형' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -279,7 +268,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userIsActivateYn',
-    meta: { title: '계정 활성화 여부' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -297,7 +285,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userIsDeletedYn',
-    meta: { title: '탈퇴 여부' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -316,7 +303,6 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userAgreedPrivacyPolicyYn',
-    meta: { title: '개인정보 이용 동의 여부' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}

@@ -1,6 +1,6 @@
-import z from 'zod';
-import { createFileRoute } from '@tanstack/react-router';
-import { Users } from '@/features/users';
+import z from 'zod'
+import { createFileRoute } from '@tanstack/react-router'
+import { Users } from '@/features/users'
 
 const usersSearchSchema = z.object({
   page: z.number().optional().catch(1),
@@ -12,9 +12,9 @@ const usersSearchSchema = z.object({
   tagKeyword: z.string().optional().catch(''), // 태그 검색어
   sortField: z.string().optional().catch('createdAt'),
   sortOrder: z.string().optional().catch('DESC'),
-});
+})
 
 export const Route = createFileRoute('/_authenticated/users/')({
   validateSearch: usersSearchSchema,
   component: Users,
-});
+})

@@ -58,9 +58,8 @@ export const noticeColumns: ColumnDef<Notice>[] = [
   },
   {
     accessorKey: 'sq', // board_sq
-    meta: { title: '번호' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='번호' />
     ),
     cell: ({ row }) => (
       <div className='w-[60px] text-center'>{row.getValue('sq')}</div>
@@ -70,18 +69,16 @@ export const noticeColumns: ColumnDef<Notice>[] = [
   },
   {
     accessorKey: 'ttl',
-    meta: { title: '제목' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='제목' />
     ),
     // 2. 분리한 컴포넌트를 사용
     cell: ({ row }) => <TitleCell row={row} />,
   },
   {
     accessorKey: 'userNm', // 작성자
-    meta: { title: '작성자' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='작성자' />
     ),
     cell: ({ row }) => (
       <div className='w-[80px] text-center'>{row.getValue('userNm')}</div>
@@ -89,9 +86,8 @@ export const noticeColumns: ColumnDef<Notice>[] = [
   },
   {
     accessorKey: 'viewCnt', // 조회수
-    meta: { title: '조회수' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='조회수' />
     ),
     cell: ({ row }) => (
       <div className='w-[60px] text-center'>{row.getValue('viewCnt')}</div>
@@ -99,9 +95,8 @@ export const noticeColumns: ColumnDef<Notice>[] = [
   },
   {
     accessorKey: 'recommendCnt', // 추천수
-    meta: { title: '추천' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='추천' />
     ),
     cell: ({ row }) => (
       <div className='w-[60px] text-center'>{row.getValue('recommendCnt')}</div>
@@ -109,9 +104,8 @@ export const noticeColumns: ColumnDef<Notice>[] = [
   },
   {
     accessorKey: 'createdAt', // 등록일
-    meta: { title: '등록일' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='등록일' />
     ),
     cell: ({ row }) => {
       const date = new Date(row.getValue('createdAt'))

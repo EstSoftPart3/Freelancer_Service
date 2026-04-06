@@ -28,7 +28,7 @@
 import BoardPost from '@/fo/components/community/BoardPost.vue'
 import BoardComment from '@/fo/components/community/BoardComment.vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { defineProps } from 'vue'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
@@ -66,15 +66,5 @@ onMounted(() => {
   addViewCnt()
   getBoard()
 })
-
-watch(
-  () => props.board_sq,
-  (newSq, oldSq) => {
-    if (newSq !== oldSq) {
-      addViewCnt()
-      getBoard()
-    }
-  },
-)
 </script>
 <style></style>

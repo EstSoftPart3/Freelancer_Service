@@ -1,7 +1,4 @@
-// import { fi, sq } from 'date-fns/locale'
-
 const iconMap = {
-  // Language
   java: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
   python:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
@@ -24,17 +21,6 @@ const iconMap = {
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
   vuejs:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg',
-  nestjs:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-original.svg',
-  expressjs:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg',
-  nextjs:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
-  nuxtjs:
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nuxtjs/nuxtjs-original.svg',
-  net: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg',
-
-  // Tools
   docker:
     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg',
   git: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',

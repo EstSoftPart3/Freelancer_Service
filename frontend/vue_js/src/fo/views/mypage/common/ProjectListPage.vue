@@ -318,24 +318,6 @@ const selectProject = (project) => {
   }
 }
 
-// 길찾기 페이지 오픈 함수
-const openKakaoRoute = (project) => {
-  const baseUrl = 'https://map.kakao.com/link/to/'
-  const destName = encodeURIComponent(project.projectTtl)
-  const destLat = project.latitude
-  const destLng = project.longitude
-
-  let url = `${baseUrl}${destName},${destLat},${destLng}`
-
-  // 출발지 정보가 있다면 추가 (userStore 활용)
-  if (userStore.userLat && userStore.userLng) {
-    const startName = encodeURIComponent('내 위치')
-    url += `/from/${startName},${userStore.userLat},${userStore.userLng}`
-  }
-
-  window.open(url, '_blank')
-}
-
 const displayMarkers = () => {
   if (!mapInstance.value) return
   markers.value.forEach((m) => m.setMap(null))
@@ -379,65 +361,49 @@ const displayMarkers = () => {
         content.classList.add('active')
       }
 
-      // 1. HTML 구조에 '경로 찾기' 버튼 추가
       content.innerHTML = `
-        <div class="marker-pin ${isSubway ? 'subway' : ''}"><i class="bi ${isSubway ? 'bi-train-front' : 'bi-geo-alt-fill'}"></i></div>
-        <div class="marker-tooltip">
-          <div class="tt-header">
-            <span class="tt-badge">${project.projectExperience || '등급미정'}</span>
-            <span class="tt-ttl">${project.projectTtl}</span>
-          </div>
-          <div class="tt-body">
-            <div class="tt-item"><i class="bi bi-building me-1"></i>${project.companyNm}</div>
-            <div class="tt-item"><i class="bi bi-geo-alt me-1"></i>${displayAddress || '주소 정보 없음'}</div>
-            <div class="tt-item text-primary-light font-weight-bold mb-2">
-              <i class="bi bi-currency-won me-1"></i>${project.formattedSalary || '단가협의'}
-            </div>
-            <button class="btn-route-search">
-              <i class="bi bi-cursor-fill me-1"></i>경로 찾기
-            </button>
-          </div>
-        </div>`
+    <div class="marker-pin ${isSubway ? 'subway' : ''}"><i class="bi ${isSubway ? 'bi-train-front' : 'bi-geo-alt-fill'}"></i></div>
+    <div class="marker-tooltip">
+      <div class="tt-header">
+        <span class="tt-badge">${project.projectExperience || '등급미정'}</span>
+        <span class="tt-ttl">${project.projectTtl}</span>
+      </div>
+      <div class="tt-body">
+        <div class="tt-item"><i class="bi bi-building me-1"></i>${project.companyNm}</div>
+        <div class="tt-item"><i class="bi bi-geo-alt me-1"></i>${displayAddress || '주소 정보 없음'}</div>
+        <div class="tt-item text-primary-light font-weight-bold">
+          <i class="bi bi-currency-won me-1"></i>${project.formattedSalary || '단가협의'}
+        </div>
+      </div>
+    </div>`
 
-      // 2. [핵심] 경로 찾기 버튼 전용 mousedown 이벤트 바인딩
-      const routeBtn = content.querySelector('.btn-route-search')
-      routeBtn.addEventListener('mousedown', (e) => {
-        // 부모의 mousedown(isMarkerClickTriggered 세팅) 및 click 전파를 막음
-        e.stopPropagation()
-
-        // 지도의 click 이벤트가 발생하지 않도록 방어막 침
-        isMarkerClickTriggered = true
-
-        openKakaoRoute(project)
-
-        // 지도의 click 리스너가 동작을 무시할 수 있는 충분한 시간 뒤 해제
-        setTimeout(() => {
-          isMarkerClickTriggered = false
-        }, 300)
-      })
-
-      // 3. 기존 마커 전체 영역에 대한 mousedown (지도의 click 방어용)
       content.addEventListener('mousedown', () => {
+        // [가장 중요] 지도의 click 이벤트보다 먼저 발생하여 방어막을 침
         isMarkerClickTriggered = true
       })
 
       content.addEventListener('click', (e) => {
         e.stopPropagation()
         e.preventDefault()
+
+        // 이미 mousedown에서 플래그가 true가 되었으므로,
+        // 지도의 click 리스너(initMap에 있는 것)는 이 동작을 무시하게 됩니다.
         selectProject(project)
 
+        // 로직 완료 후 플래그 해제
         setTimeout(() => {
           isMarkerClickTriggered = false
-        }, 200)
+        }, 200) // 시간을 200ms 정도로 넉넉히 줌
       })
 
       const overlay = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(project.latitude, project.longitude),
         content: content,
-        zIndex: 3,
+        zIndex: 3, // 기본값
       })
 
       projectOverlays.set(project.projectSq, overlay)
+
       overlay.setMap(mapInstance.value)
       markers.value.push(overlay)
     })
@@ -691,49 +657,18 @@ const goToProjectSpecWithConfirm = (project) => {
 :deep(.marker-tooltip) {
   display: none;
   position: absolute;
-  bottom: 42px;
+  bottom: 42px; /* 핀 위로 살짝 더 올림 */
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(33, 37, 41, 0.95);
+  background: rgba(33, 37, 41, 0.95); /* 조금 더 진한 다크 모드 */
   color: white;
-  padding: 10px 12px; /* 패딩 약간 증량 */
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   font-size: 11px;
-  min-width: 180px; /* 버튼을 위해 너비 확장 */
+  min-width: 160px; /* 최소 너비 확보 */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   z-index: 9999;
-
-  pointer-events: auto;
-}
-
-/* 경로 찾기 버튼 스타일 */
-:deep(.btn-route-search) {
-  width: 100%;
-  background: #0088cc;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 0;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-:deep(.btn-route-search:hover) {
-  background: #0088cc;
-  transform: translateY(-1px);
-}
-
-:deep(.btn-route-search:active) {
-  transform: translateY(0);
-}
-
-:deep(.btn-route-search i) {
-  font-size: 12px;
+  pointer-events: none;
 }
 :deep(.marker-wrapper:hover .marker-tooltip),
 :deep(.marker-wrapper.active .marker-tooltip) {

@@ -12,14 +12,12 @@ type DatePickerProps = {
   selected: Date | undefined
   onSelect: (date: Date | undefined) => void
   placeholder?: string
-  defaultMonth?: Date
 }
 
 export function DatePicker({
   selected,
   onSelect,
   placeholder = 'Pick a date',
-  defaultMonth,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -30,7 +28,7 @@ export function DatePicker({
           className='w-[240px] justify-start text-start font-normal data-[empty=true]:text-muted-foreground'
         >
           {selected ? (
-            format(selected, 'yyyy-MM-dd')
+            format(selected, 'MMM d, yyyy')
           ) : (
             <span>{placeholder}</span>
           )}
@@ -43,7 +41,6 @@ export function DatePicker({
           captionLayout='dropdown'
           selected={selected}
           onSelect={onSelect}
-          defaultMonth={selected || defaultMonth}
           disabled={(date: Date) =>
             date > new Date() || date < new Date('1900-01-01')
           }

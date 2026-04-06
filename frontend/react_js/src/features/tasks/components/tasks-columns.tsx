@@ -33,9 +33,8 @@ export const tasksColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: 'id',
-    meta: { title: 'Task' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='Task' />
     ),
     cell: ({ row }) => <div className='w-[80px]'>{row.getValue('id')}</div>,
     enableSorting: false,
@@ -43,14 +42,13 @@ export const tasksColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: 'title',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Title' />
+    ),
     meta: {
-      title: 'Title',
       className: 'ps-1 max-w-0 w-2/3',
       tdClassName: 'ps-4',
     },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
-    ),
     cell: ({ row }) => {
       const label = labels.find((label) => label.value === row.original.label)
 
@@ -64,10 +62,10 @@ export const tasksColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: 'status',
-    meta: { title: 'Status', className: 'ps-1', tdClassName: 'ps-4' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='Status' />
     ),
+    meta: { className: 'ps-1', tdClassName: 'ps-4' },
     cell: ({ row }) => {
       const status = statuses.find(
         (status) => status.value === row.getValue('status')
@@ -92,10 +90,10 @@ export const tasksColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: 'priority',
-    meta: { title: 'Priority', className: 'ps-1', tdClassName: 'ps-3' },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={column.columnDef.meta?.title as string} />
+      <DataTableColumnHeader column={column} title='Priority' />
     ),
+    meta: { className: 'ps-1', tdClassName: 'ps-3' },
     cell: ({ row }) => {
       const priority = priorities.find(
         (priority) => priority.value === row.getValue('priority')
