@@ -20,6 +20,24 @@
 
     </select>
 
+    <!--일반 태그 한번에 조회-->
+    <select id="findNTByBoardSqs" resultType="com.example.demo.domain.community.entity.NormalTag">
+        SELECT *
+        FROM TBL_BOARD_NORMAL_TAG_S
+        WHERE 1=1
+        <choose>
+            <when test="boardSqs != null and boardSqs.size() > 0">
+                AND board_sq IN
+                <foreach collection="boardSqs" item="boardSq" open="(" separator="," close=")">
+                    #{boardSq}
+                </foreach>
+            </when>
+            <otherwise>
+                AND 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
     <insert id="insertNT" parameterType="List" useGeneratedKeys="true" keyProperty="normalTagSq">
         INSERT INTO TBL_BOARD_NORMAL_TAG_S (board_sq, answer_sq, normal_tag_nm, normal_tag_type_cd)
         VALUES <foreach collection="normalTags" item="tag" separator=","> (#{tag.boardSq},
@@ -36,6 +54,24 @@
         FROM TBL_BOARD_SKILL_TAG_S <if test="boardSq != null"> WHERE board_sq = #{boardSq} </if>
         <if
             test="answerSq != null"> WHERE answer_sq = #{answerSq} </if>
+    </select>
+
+    <!--스킬 태그 한번에 조회-->
+    <select id="findSTByBoardSqs" resultType="com.example.demo.domain.community.entity.SkillTag">
+        SELECT *
+        FROM TBL_BOARD_SKILL_TAG_S
+        WHERE 1=1
+        <choose>
+            <when test="boardSqs != null and boardSqs.size() > 0">
+                AND board_sq IN
+                <foreach collection="boardSqs" item="boardSq" open="(" separator="," close=")">
+                    #{boardSq}
+                </foreach>
+            </when>
+            <otherwise>
+                AND 1 = 0
+            </otherwise>
+        </choose>
     </select>
 
     <insert id="insertST" parameterType="List" useGeneratedKeys="true" keyProperty="skillTagSq">

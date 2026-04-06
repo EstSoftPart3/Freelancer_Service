@@ -13,4 +13,6 @@ public interface CommunityUserMapper {
 
      List<Long> findAllUserSqs();
 
+     //게시글 작성자 조회
+     List<UserDTO> findUsersByIds(@Param("userSqs") List<Long> userSq);
 }

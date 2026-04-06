@@ -48,6 +48,8 @@ public interface BoardMapper {
 
       BoardAttachment findFile(@Param("fileSq") Long fileSq);
 
+      List<BoardAttachment> findAttachmentsByBoardSq(@Param("boardSq") Long boardSq);
+
       void deleteBoardFile(@Param("boardSq") Long boardSq, @Param("fileSq") Long fileSq);
 
       void deleteFile(@Param("fileSq") Long fileSq);

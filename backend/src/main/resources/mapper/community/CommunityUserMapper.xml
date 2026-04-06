@@ -6,6 +6,24 @@
     <select id="findById" resultType="com.example.demo.domain.user.dto.UserDTO" parameterType="Long">
         SELECT * FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 
+	<!--유저 답변 목록 조회-->
+    <select id="findUsersByIds" resultType="com.example.demo.domain.user.dto.UserDTO">
+	    SELECT *
+	    FROM TBL_USER_M
+	    WHERE user_is_deleted_yn = 'N'
+	    <choose>
+	        <when test="userSqs != null and userSqs.size() > 0">
+	            AND user_sq IN
+	            <foreach collection="userSqs" item="userSq" open="(" separator="," close=")">
+	                #{userSq}
+	            </foreach>
+	        </when>
+	        <otherwise>
+	            AND 1 = 0
+	        </otherwise>
+	    </choose>
+	</select>
+
     <select id="findAllUserSqs" resultType="Long"> SELECT user_sq FROM TBL_USER_M WHERE
         user_is_activate_yn = 'Y' </select>
 

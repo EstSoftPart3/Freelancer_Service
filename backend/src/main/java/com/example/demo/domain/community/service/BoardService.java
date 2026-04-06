@@ -3,6 +3,7 @@ package com.example.demo.domain.community.service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,7 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
+import com.example.demo.domain.community.dto.BoardAnswerCountDTO;
 import com.example.demo.domain.community.dto.BoardListDTO;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
@@ -25,8 +27,11 @@ import com.example.demo.domain.community.dto.response.BoardResponse;
 import com.example.demo.domain.community.dto.response.CommentResponse;
 import com.example.demo.domain.community.entity.Board;
 import com.example.demo.domain.community.entity.BoardAttachment;
+import com.example.demo.domain.community.entity.Comment;
 import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.community.entity.NormalTag;
 import com.example.demo.domain.community.entity.Recommendation;
+import com.example.demo.domain.community.entity.SkillTag;
 import com.example.demo.domain.community.mapper.AnswerMapper;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.mapper.CmntTagMapper;
@@ -34,8 +39,8 @@ import com.example.demo.domain.community.mapper.CommentMapper;
 import com.example.demo.domain.community.mapper.CommunityUserMapper;
 import com.example.demo.domain.community.mapper.RecommendationMapper;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
+import com.example.demo.domain.mypage.dto.UserProfileImageDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
-import com.example.demo.domain.mypage.service.InformationEditService;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.service.NotificationService;
@@ -49,129 +54,167 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BoardService {
 
-	private final BoardMapper boardMapper;
-	private final CmntTagMapper cmntTagMapper;
-	private final CommentMapper commentMapper;
-	private final CommentService commentService; // [추가] 트리 변환 로직 사용을 위해 주입
-	private final AnswerMapper answerMapper;
-	private final NormalTagConverter normalTagConverter;
-	private final SkillTagConverter skillTagConverter;
-	private final RecommendationMapper recommendationMapper;
-	private final CommunityUserMapper communityUserMapper;
-	private final AnswerService answerService;
-	// private final AmazonS3Service amazonS3Service;
-	private final FileStorageService fileStorageService;
-	private final InformationEditRepository informationEditRepository;
-	private final InformationEditService informationEditService;
-	private final NotificationService notificationService;
+    private final BoardMapper boardMapper;
+    private final CmntTagMapper cmntTagMapper;
+    private final CommentMapper commentMapper;
+    private final CommentService commentService; // [추가] 트리 변환 로직 사용을 위해 주입
+    private final AnswerMapper answerMapper;
+    private final NormalTagConverter normalTagConverter;
+    private final SkillTagConverter skillTagConverter;
+    private final RecommendationMapper recommendationMapper;
+    private final CommunityUserMapper communityUserMapper;
+    private final AnswerService answerService;
+    private final FileStorageService fileStorageService;
+    private final InformationEditRepository informationEditRepository;
+    private final NotificationService notificationService;
+    
+    // @Value("${cloud.aws.s3.bucket}")
+ 	// private String bucket;
 
-	// @Value("${cloud.aws.s3.bucket}")
-	// private String bucket;
+    @Transactional
+    public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
+            String tag, List<Long> searchSkillTags, String sortType, Long page, Long size) {
+        if (page < 1) {
+            page = 1L;
+        }
+        Long offset = (page - 1L) * size;
+        if (sortType == null || sortType.isEmpty()) {
+            sortType = "latest";
+        }
 
-	@Transactional
-	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
-			String tag,
-			List<Long> searchSkillTags, String sortType, Long page, Long size) {
-		if (page < 1)
-			page = 1L;
-		Long offset = (page - 1L) * size;
-		if (sortType == null || sortType.isEmpty())
-			sortType = "latest";
+        //게시글 목록
+        List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+                searchSkillTags, sortType, size, offset);
+        Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+                searchSkillTags);
 
-		List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
-				searchSkillTags,
-				sortType, size, offset);
-		Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
-				searchSkillTags);
+        //게시글이 없으면 빈 리스트 반환
+        if (boards.isEmpty()) {
+            return BoardListResponse.builder()
+                    .page(page)
+                    .size(size)
+                    .totalElements(totalElements)
+                    .boards(List.of())
+                    .build();
+        }
 
-		List<BoardListDTO> responses = boards.stream()
-				.filter(Objects::nonNull)
-				.map(board -> {
-					// 각 게시글의 일반 태그 조회
-					List<String> normalTags = normalTagConverter
-							.convertNormalTagsToStrings(cmntTagMapper.findNT(board.getBoardSq(), null));
+        //게시글 PK
+        List<Long> boardSqs = boards.stream()
+                .map(Board::getBoardSq)
+                .toList();
 
-					// 각 게시글의 스킬 태그 조회
-					List<SkillTagDTO> skillTags = skillTagConverter
-							.convertSkillTagsToStrings(cmntTagMapper.findST(board.getBoardSq(), null));
+        //작성자 PK
+        List<Long> userSqs = boards.stream()
+                .map(Board::getUserSq)
+                .distinct()
+                .toList();
 
-					// 각 게시글의 답변 리스트 조회
-					Integer boardAnswerCnt = answerMapper.findAllCnt(board.getBoardSq());
+        //태그, 답변, 작성자 한번에 조회
+        List<NormalTag> allNormalTags = cmntTagMapper.findNTByBoardSqs(boardSqs);
+        List<SkillTag> allSkillTags = cmntTagMapper.findSTByBoardSqs(boardSqs);
+        List<BoardAnswerCountDTO> answerCounts = answerMapper.findAnswerCountByBoardSqs(boardSqs);
+        List<UserDTO> users = communityUserMapper.findUsersByIds(userSqs);
 
-					// 각 게시글의 작성자 조회
-					UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-					String userNm = Optional.ofNullable(userInfo)
-							.map(UserDTO::getUserNm)
-							.orElse("존재하지 않는 사용자");
+        //게시글 번호 기준으로 Map
+        Map<Long, List<NormalTag>> normalTagMap = allNormalTags.stream()
+                .collect(Collectors.groupingBy(NormalTag::getBoardSq));
+        Map<Long, List<SkillTag>> skillTagMap = allSkillTags.stream()
+                .collect(Collectors.groupingBy(SkillTag::getBoardSq));
+        Map<Long, Integer> answerCountMap = answerCounts.stream()
+                .collect(Collectors.toMap(BoardAnswerCountDTO::getBoardSq, BoardAnswerCountDTO::getAnswerCnt));
+        Map<Long, UserDTO> userMap = users.stream()
+                .collect(Collectors.toMap(UserDTO::getUserSq, user -> user));
 
-					// BoardListResponse 생성 (태그 포함)
-					return BoardListDTO.fromEntity(board, userNm, boardAnswerCnt, normalTags, skillTags);
-				})
-				.collect(Collectors.toList());
+        //만든 Map을 조회하여 DTO로 정보 반환
+        List<BoardListDTO> responses = boards.stream()
+                .map(board -> {
+                    List<String> normalTags = normalTagConverter.convertNormalTagsToStrings(
+                            normalTagMap.getOrDefault(board.getBoardSq(), List.of()));
 
-		return BoardListResponse.builder().page(page).size(size).totalElements(totalElements).boards(responses).build();
-	}
+                    List<SkillTagDTO> skillTags = skillTagConverter.convertSkillTagsToStrings(
+                            skillTagMap.getOrDefault(board.getBoardSq(), List.of()));
 
-	@Transactional
-	public BoardResponse getBoard(Long userSq, Long boardSq, Long boardTypeCd) {
-		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
-		if (board == null) {
-			throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
-		} else if (board.getBoardIsDeletedYn().equals("Y")) {
-			throw new IllegalArgumentException("삭제된 게시글입니다.");
-		}
+                    Integer boardAnswerCnt = answerCountMap.getOrDefault(board.getBoardSq(), 0);
 
-		List<String> normalTags = normalTagConverter.convertNormalTagsToStrings(cmntTagMapper.findNT(boardSq, null));
-		List<SkillTagDTO> skillTags = skillTagConverter.convertSkillTagsToStrings(cmntTagMapper.findST(boardSq, null));
+                    UserDTO userInfo = userMap.get(board.getUserSq());
+                    String userNm = Optional.ofNullable(userInfo)
+                            .map(UserDTO::getUserNm)
+                            .orElse("존재하지 않는 사용자");
 
-		// 게시글의 작성자 조회
-		UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-		String userNm = Optional.ofNullable(userInfo)
-				.map(UserDTO::getUserNm)
-				.orElse("존재하지 않는 사용자");
+                    return BoardListDTO.fromEntity(board, userNm, boardAnswerCnt, normalTags, skillTags);
+                })
+                .collect(Collectors.toList());
 
-		List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
+        return BoardListResponse.builder()
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .boards(responses)
+                .build();
+    }
 
-		// --- [댓글 조회 및 트리 구조 변환 로직 시작] ---
+    @Transactional
+    public BoardResponse getBoard(Long userSq, Long boardSq, Long boardTypeCd) {
+        Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
+        if (board == null) {
+            throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
+        } else if ("Y".equals(board.getBoardIsDeletedYn())) {
+            throw new IllegalArgumentException("삭제된 게시글입니다.");
+        }
 
-		// 1. 게시글의 모든 댓글 조회 (평면 리스트)
-		List<CommentResponse> flatComments = commentMapper.findByBoardSq(boardSq).stream()
-				.filter(Objects::nonNull)
-				.map(comment -> {
-					UserDTO userDto = communityUserMapper.findById(comment.getUserSq());
-					String profileImageUrl = informationEditService.getProfileImageUrl(userDto.getUserSq());
-					return CommentResponse.fromEntity(comment, userDto, profileImageUrl);
-				})
-				.collect(Collectors.toList());
+        List<String> normalTags = normalTagConverter.convertNormalTagsToStrings(cmntTagMapper.findNT(boardSq, null));
+        List<SkillTagDTO> skillTags = skillTagConverter.convertSkillTagsToStrings(cmntTagMapper.findST(boardSq, null));
 
-		// 2. [핵심] CommentService의 유틸리티를 사용하여 트리 구조로 변환
-		List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
+        UserDTO boardWriter = communityUserMapper.findById(board.getUserSq());
+        String userNm = Optional.ofNullable(boardWriter)
+                .map(UserDTO::getUserNm)
+                .orElse("존재하지 않는 사용자");
 
-		// --- [댓글 조회 및 트리 구조 변환 로직 종료] ---
+        List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
 
-		// 게시글의 첨부파일 조회
-		List<Long> fileSqs = boardMapper.findFiles(boardSq);
-		List<BoardAttachmentResponse> files = fileSqs.stream()
-				.filter(Objects::nonNull)
-				.map(fileSq -> {
-					BoardAttachment attachment = boardMapper.findFile(fileSq);
-					if (attachment == null)
-						return null;
-					return BoardAttachmentResponse.builder()
-							.fileSq(attachment.getFileSq())
-							.fileOriginalNm(attachment.getFileOriginalNm())
-							.fileSaveNm(attachment.getFileSaveNm())
-							.build();
-				})
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+        List<Comment> comments = commentMapper.findByBoardSq(boardSq);
+        List<Long> commentUserSqs = comments.stream()
+                .map(Comment::getUserSq)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
-		// 변환된 commentTree를 넘겨줍니다.
-		return BoardResponse.fromEntity(board, userNm, normalTags, skillTags, answerListResponses, commentTree, userSq,
-				files);
-	}
+        List<UserDTO> users = communityUserMapper.findUsersByIds(commentUserSqs);
+        List<UserProfileImageDTO> profileImages = informationEditRepository.findProfileImagesByUserSqs(commentUserSqs);
 
-	@Transactional
+        Map<Long, UserDTO> userMap = users.stream()
+                .collect(Collectors.toMap(UserDTO::getUserSq, user -> user));
+
+        Map<Long, String> profileImageMap = profileImages.stream()
+                .collect(Collectors.toMap(
+                        UserProfileImageDTO::getUserSq,
+                        image -> "/api/files/" + image.getSavedName()));
+
+        List<CommentResponse> flatComments = comments.stream()
+                .filter(Objects::nonNull)
+                .map(comment -> {
+                    UserDTO commentWriter = userMap.get(comment.getUserSq());
+                    String profileImageUrl = profileImageMap.get(comment.getUserSq());
+                    return CommentResponse.fromEntity(comment, commentWriter, profileImageUrl);
+                })
+                .collect(Collectors.toList());
+
+        List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
+
+        List<BoardAttachmentResponse> files = boardMapper.findAttachmentsByBoardSq(boardSq).stream()
+                .filter(Objects::nonNull)
+                .map(attachment -> BoardAttachmentResponse.builder()
+                        .fileSq(attachment.getFileSq())
+                        .fileOriginalNm(attachment.getFileOriginalNm())
+                        .fileSaveNm(attachment.getFileSaveNm())
+                        .build())
+                .collect(Collectors.toList());
+
+        return BoardResponse.fromEntity(board, userNm, normalTags, skillTags, answerListResponses, commentTree, userSq,
+                files);
+    }
+
+    @Transactional
 	public void createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
 		// 게시글 오류 처리
 		if (boardRequest.getTtl() == null) {
@@ -266,7 +309,12 @@ public class BoardService {
 
 		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
 
-		if (board.getUserSq() != boardRequest.getUserSq()) {
+		// if (board.getUserSq() != boardRequest.getUserSq()) {
+		// throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(board.getUserSq(), boardRequest.getUserSq())) {
 			throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
 		}
 
@@ -399,9 +447,15 @@ public class BoardService {
 
 		Board board = boardMapper.findByIdBoard(boardSq, 1402L);
 
-		if (board.getUserSq() != userSq) {
+		// if (board.getUserSq() != userSq) {
+		// throw new IllegalArgumentException("유효하지 않은 접근입니다.");
+		// }
+
+		// sq 비교 방식 변경
+		if (!Objects.equals(board.getUserSq(), userSq)) {
 			throw new IllegalArgumentException("유효하지 않은 접근입니다.");
 		}
+
 		if (board.getBoardAdoptStatusCd() != 1501L) {
 			throw new IllegalArgumentException("채택 상태가 이미 변경되었습니다.");
 		}
@@ -413,3 +467,4 @@ public class BoardService {
 	}
 
 }
+

@@ -30,6 +30,7 @@ public class AffiliationResponse{
     private String isRecruitingYn;
     private Double latitude; // 위도 추가
     private Double longitude; // 경도 추가
+    private String companyUrl; // 회사 홈페이지 추가
     
 
 
@@ -61,8 +62,8 @@ public class AffiliationResponse{
         		null,
         		null,
         		lat,
-        		lng
-        		
+        		lng,
+        		company.getCompanyUrl()
         );
     }
     
@@ -94,8 +95,8 @@ public class AffiliationResponse{
         		memberCnt, // memberCnt는 15번째
         		company.getCompanyIsRecruitingYn(), // isRecruitingYn은 16번째
         		lat,
-        		lng
-        		
+        		lng,
+        		company.getCompanyUrl()
         );
     	
     }

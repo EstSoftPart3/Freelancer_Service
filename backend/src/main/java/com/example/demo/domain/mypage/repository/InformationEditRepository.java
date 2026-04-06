@@ -9,6 +9,7 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
+import com.example.demo.domain.mypage.dto.UserProfileImageDTO;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 import com.example.demo.domain.mypage.dto.request.AffiliationInfoUpdateRequestDTO;
 import com.example.demo.domain.mypage.mapper.InformationEditMapper;
@@ -160,6 +161,10 @@ public class InformationEditRepository {
 
     public ProfileImageInfoDTO findFileByUserSq(Long userSq) {
         return informationEditMapper.findFileByUserSq(userSq);
+    }
+
+    public List<UserProfileImageDTO> findProfileImagesByUserSqs(List<Long> userSqs) {
+        return informationEditMapper.findProfileImagesByUserSqs(userSqs);
     }
 
     public Long findFileSqByCompanySq(Long companySq) {

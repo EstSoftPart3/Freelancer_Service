@@ -16,6 +16,22 @@
         SELECT COUNT(*) FROM TBL_BOARD_ANSWER_S WHERE board_sq = #{boardSq}
     </select>
 
+    <!--게시글 답변 한번에 조회-->
+    <select id="findAnswerCountByBoardSqs"
+	        resultType="com.example.demo.domain.community.dto.BoardAnswerCountDTO">
+	    SELECT
+	        board_sq AS boardSq,
+	        COUNT(*) AS answerCnt
+	    FROM TBL_BOARD_ANSWER_S
+	    WHERE board_sq IN
+	    <foreach collection="boardSqs" item="boardSq" open="(" separator="," close=")">
+	        #{boardSq}
+	    </foreach>
+	    GROUP BY board_sq
+	</select>
+
+
+
     <insert id="insert" parameterType="com.example.demo.domain.community.entity.Answer" useGeneratedKeys="true" keyProperty="answerSq" keyColumn="answer_sq">
         INSERT INTO TBL_BOARD_ANSWER_S (user_sq, board_sq, answer_ttl, answer_description_edt) 
         VALUES (#{userSq}, #{boardSq}, #{answerTtl}, #{answerDescriptionEdt})

@@ -22,5 +22,10 @@ public interface CmntTagMapper {
     List <SkillTag> findST(@Param("boardSq") Long boardSq, @Param("answerSq") Long answerSq);
     void insertST(@Param("skillTags") List<SkillTag> skillTags);
     void deleteST(@Param("boardSq") Long boardSq, @Param("answerSq") Long answerSq);
-     
+
+    //일반태그 전체 조회
+    List <NormalTag> findNTByBoardSqs(@Param("boardSqs") List<Long> boardSqs);
+
+    //스킬태그 전체 조회
+    List <SkillTag> findSTByBoardSqs(@Param("boardSqs") List<Long> boardSqs);
 }

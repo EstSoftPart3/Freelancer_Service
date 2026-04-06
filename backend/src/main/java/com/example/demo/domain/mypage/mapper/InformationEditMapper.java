@@ -10,6 +10,7 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
+import com.example.demo.domain.mypage.dto.UserProfileImageDTO;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 
 @Mapper
@@ -110,6 +111,8 @@ public interface InformationEditMapper {
         int deleteUserProfileImageByUserSq(@Param("userSq") Long userSq);
 
         ProfileImageInfoDTO findFileByUserSq(@Param("userSq") Long userSq);
+
+        List<UserProfileImageDTO> findProfileImagesByUserSqs(@Param("userSqs") List<Long> userSqs);
 
         void markFileAsDeleted(@Param("fileSq") Long fileSq);
 

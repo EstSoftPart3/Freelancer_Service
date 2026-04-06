@@ -65,6 +65,26 @@
         </div>
       </div>
 
+      <!-- 회사 링크 -->
+      <div class="mb-3">
+        <label
+          for="companyDescription"
+          class="form-label text-primary text-bold"
+          >회사 사이트</label
+        >
+        <div class="text-dark" id="companyDescription">
+          <a
+            :href="normalizedCompanyUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="company-link"
+          >
+            <span>{{ info.companyUrl }}</span>
+            <i class="bi bi-link-45deg ms-1" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+
       <!-- 간단한 설명 -->
       <div class="mb-3">
         <label
@@ -95,7 +115,10 @@
       </div>
 
       <!-- 이력서 선택 -->
-      <div class="mb-3" v-if="!afltnInfo.isApply">
+      <div
+        class="mb-3"
+        v-if="!afltnInfo.isApply && userStore.userType !== 'COMPANY'"
+      >
         <label for="resume" class="form-label text-primary text-bold"
           >소속 신청할 이력서</label
         >
@@ -117,7 +140,10 @@
       </div>
 
       <!-- 간단한 자기소개 -->
-      <div class="mb-3" v-if="!afltnInfo.isApply">
+      <div
+        class="mb-3"
+        v-if="!afltnInfo.isApply && userStore.userType !== 'COMPANY'"
+      >
         <label for="selfIntroduction" class="form-label text-primary text-bold"
           >간단한 자기소개</label
         >
@@ -132,18 +158,12 @@
     </div>
     <div class="modal-footer">
       <button
-        v-if="!afltnInfo.isApply"
+        v-if="!afltnInfo.isApply && userStore.userType !== 'COMPANY'"
         type="button"
-        class="btn"
-        :class="userStore.userType === 'COMPANY' ? 'btn-light' : 'btn-primary'"
-        :disabled="userStore.userType === 'COMPANY'"
+        class="btn btn-primary"
         @click="clickRecruit"
       >
-        {{
-          userStore.userType === 'COMPANY'
-            ? '기업 회원 신청 불가'
-            : '소속 신청하기'
-        }}
+        소속 신청하기
       </button>
       <template v-if="afltnInfo.isApply">
         <button
@@ -210,12 +230,12 @@ const clickRecruit = async () => {
   }
 
   // 1. 권한 체크 (사전 검사)
-  if (userStore.userType === 'COMPANY') {
-    alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
-    return
-  }
+  // if (userStore.userType === 'COMPANY') {
+  //   alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger')
+  //   return
+  // }
 
-  // 2. 이력서 선택 체크 (사전 검사)
+  //이력서 선택 체크
   if (
     !affiliationStore.resume.resumeSq ||
     affiliationStore.resume.resumeSq == 0
@@ -326,5 +346,19 @@ const openKakaoRoute = () => {
 }
 .btn-xs {
   font-size: 0.75rem;
+}
+.company-link {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.company-link:hover,
+.company-link:focus,
+.company-link:active,
+.company-link:visited {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
 }
 </style>

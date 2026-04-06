@@ -150,6 +150,25 @@
         contentType, f.file_size AS size FROM TBL_COMMON_FILE_S f JOIN TBL_USER_PROFILE_IMAGE_S up
         ON up.file_sq = f.file_sq WHERE up.user_sq = #{userSq} </select>
 
+    <select id="findProfileImagesByUserSqs"
+        resultType="com.example.demo.domain.mypage.dto.UserProfileImageDTO">
+        SELECT up.user_sq AS userSq, f.file_save_nm AS savedName
+        FROM TBL_USER_PROFILE_IMAGE_S up
+        JOIN TBL_COMMON_FILE_S f ON up.file_sq = f.file_sq
+        <choose>
+            <when test="userSqs != null and userSqs.size() > 0">
+                WHERE up.user_sq IN
+                <foreach collection="userSqs" item="userSq" open="(" separator="," close=")">
+                    #{userSq}
+                </foreach>
+                AND (f.file_is_deleted_yn IS NULL OR f.file_is_deleted_yn = 'N')
+            </when>
+            <otherwise>
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
     <update id="markFileAsDeleted"> UPDATE TBL_COMMON_FILE_S SET file_is_deleted_yn = 'Y' WHERE
         file_sq = #{fileSq} </update>
 

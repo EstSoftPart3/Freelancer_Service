@@ -95,6 +95,14 @@
 	<select id="findFile" resultType="com.example.demo.domain.community.entity.BoardAttachment">
 		SELECT * FROM TBL_COMMON_FILE_S WHERE file_sq = #{fileSq} </select>
 
+	<select id="findAttachmentsByBoardSq" resultType="com.example.demo.domain.community.entity.BoardAttachment">
+		SELECT f.file_sq, f.file_original_nm, f.file_save_nm
+		FROM TBL_BOARD_ATTACHMENT_S ba
+		JOIN TBL_COMMON_FILE_S f ON ba.file_sq = f.file_sq
+		WHERE ba.board_sq = #{boardSq}
+		  AND (f.file_is_deleted_yn IS NULL OR f.file_is_deleted_yn = 'N')
+	</select>
+
 	<delete id="deleteBoardFile"> DELETE FROM TBL_BOARD_ATTACHMENT_S WHERE board_sq = #{boardSq} AND
 		file_sq = #{fileSq} </delete>
 
