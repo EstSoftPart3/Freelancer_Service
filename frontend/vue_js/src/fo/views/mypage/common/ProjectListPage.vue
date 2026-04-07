@@ -73,13 +73,13 @@
         </div>
 
         <ProjectCardGroup
-          :projects="projects"
+          :projects="listProjects"
           :selected-skill-tags="selectedSkillTags"
           @click-skill-tag="toggleSkillTag"
         />
 
         <div
-          v-if="userStore.userType === 'COMPANY' && projects.length > 0"
+          v-if="userStore.userType === 'COMPANY' && listProjects.length > 0"
           class="d-flex justify-content-center my-4"
         >
           <button
@@ -91,13 +91,13 @@
         </div>
 
         <div
-          v-if="projects.length === 0 && !isLoading"
+          v-if="listProjects.length === 0 && !isLoading"
           class="text-center py-4 border rounded bg-light text-2"
         >
           검색 결과가 없습니다.
         </div>
 
-        <div v-if="projects.length > 0" class="mt-2">
+        <div v-if="listProjects.length > 0" class="mt-2">
           <CommonPagination
             :currentPage="currentPage"
             :totalPages="totalPages"
@@ -118,7 +118,7 @@
             class="p-2 bg-white border-bottom d-flex justify-content-between align-items-center"
           >
             <span class="text-1 font-weight-bold"
-              >결과 <b class="text-primary">{{ projects.length }}</b></span
+              >결과 <b class="text-primary">{{ mapProjects.length }}</b></span
             >
             <button
               v-if="userStore.userType === 'COMPANY'"
@@ -131,7 +131,7 @@
 
           <div class="flex-grow-1 overflow-auto p-1 custom-scrollbar">
             <MapProjectCardGroup
-              :projects="projects"
+              :projects="mapProjects"
               @focus-marker="handleFocusMarker"
             />
           </div>
@@ -200,6 +200,14 @@ const filters = ref({
   minLng: null,
   maxLng: null,
 })
+//Map 전용
+const mapBounds = ref({
+  minLat: null,
+  maxLat: null,
+  minLng: null,
+  maxLng: null,
+})
+
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
 if (
   route.query.page !== undefined &&
@@ -208,7 +216,10 @@ if (
   router.replace({ query: { ...route.query, page: currentPage.value } })
 }
 const totalPages = ref(1)
-const projects = ref([])
+// const projects = ref([])
+/*list / map 모드 분리*/
+const listProjects = ref([])
+const mapProjects = ref([])
 const regionGroups = ref([])
 const mapContainer = ref(null)
 const mapInstance = ref(null)
@@ -280,7 +291,7 @@ const initMap = () => {
     })
   })
 
-  if (projects.value.length > 0) displayMarkers()
+  if (mapProjects.value.length > 0) displayMarkers()
 }
 
 const selectProject = (project) => {
@@ -364,7 +375,7 @@ const displayMarkers = () => {
     })
   } else {
     // 상세 프로젝트 핀
-    projects.value.forEach((project) => {
+    mapProjects.value.forEach((project) => {
       if (!project.latitude || !project.longitude) return
       const isSubway = project.addressTypeCd === 2702
       const displayAddress = isSubway
@@ -445,23 +456,74 @@ const displayMarkers = () => {
 }
 
 // --- 데이터 로직 ---
+// const fetchProjects = async () => {
+//   isLoading.value = true
+//   try {
+//     // [수정] 지도 모드와 목록 모드에 따라 요청 파라미터 분기
+//     const isMap = isMapView.value
+
+//     const params = {
+//       ...filters.value,
+//       // 지도 모드일 때는 대량(예: 1000개)으로 요청하여 페이징을 무력화, 목록은 기존 5개 유지
+//       size: isMap ? 1000 : 5,
+//       // 지도 모드일 때는 항상 1페이지 전체를 가져옴
+//       page: isMap ? 1 : currentPage.value,
+//       userLat: userStore.userLat,
+//       userLng: userStore.userLng,
+//       // 백엔드에서 지도용 요청임을 인지할 수 있도록 플래그 추가
+//       isMapView: isMap,
+//       // 기술 태그 필터링
+//       skillTags: selectedSkillTags.value,
+//     }
+
+//     const response = await api.$get(
+//       `/projects?${qs.stringify(params, { arrayFormat: 'repeat' })}`,
+//     )
+
+//     projects.value = response.output.projects
+
+//     // [수정] 페이지네이션 계산 분기
+//     if (!isMap) {
+//       // 목록 모드: 기존처럼 5개 기준으로 전체 페이지 계산
+//       totalPages.value = Math.max(
+//         1,
+//         Math.ceil((response.output.totalCount ?? 0) / 5),
+//       )
+//     } else {
+//       // 지도 모드: 페이지네이션이 필요 없으므로 1로 고정
+//       totalPages.value = 1
+//       fetchRegionGroups()
+//     }
+//     if (currentPage.value > totalPages.value) {
+//       currentPage.value = totalPages.value
+//       filters.value.page = currentPage.value
+//       router.replace({ query: { ...route.query, page: currentPage.value } })
+//       return fetchProjects()
+//     }
+//   } catch (e) {
+//     console.error(e)
+//   } finally {
+//     isLoading.value = false
+//   }
+// }
+/*List / Map 모드 요청 분리*/
 const fetchProjects = async () => {
+  if (isMapView.value) {
+    return fetchMapProjects()
+  }
+  return fetchListProjects()
+}
+//List
+const fetchListProjects = async () => {
   isLoading.value = true
   try {
-    // [수정] 지도 모드와 목록 모드에 따라 요청 파라미터 분기
-    const isMap = isMapView.value
-
     const params = {
       ...filters.value,
-      // 지도 모드일 때는 대량(예: 1000개)으로 요청하여 페이징을 무력화, 목록은 기존 5개 유지
-      size: isMap ? 1000 : 5,
-      // 지도 모드일 때는 항상 1페이지 전체를 가져옴
-      page: isMap ? 1 : currentPage.value,
+      size: 5,
+      page: currentPage.value,
       userLat: userStore.userLat,
       userLng: userStore.userLng,
-      // 백엔드에서 지도용 요청임을 인지할 수 있도록 플래그 추가
-      isMapView: isMap,
-      // 기술 태그 필터링
+      isMapView: false,
       skillTags: selectedSkillTags.value,
     }
 
@@ -469,26 +531,39 @@ const fetchProjects = async () => {
       `/projects?${qs.stringify(params, { arrayFormat: 'repeat' })}`,
     )
 
-    projects.value = response.output.projects
+    listProjects.value = response.output.projects
+    totalPages.value = Math.max(
+      1,
+      Math.ceil((response.output.totalCount ?? 0) / 5),
+    )
+  } catch (e) {
+    console.error(e)
+  } finally {
+    isLoading.value = false
+  }
+}
+//Map
+const fetchMapProjects = async () => {
+  isLoading.value = true
+  try {
+    const params = {
+      ...filters.value,
+      ...mapBounds.value,
+      size: 1000,
+      page: 1,
+      userLat: userStore.userLat,
+      userLng: userStore.userLng,
+      isMapView: true,
+      skillTags: selectedSkillTags.value,
+    }
 
-    // [수정] 페이지네이션 계산 분기
-    if (!isMap) {
-      // 목록 모드: 기존처럼 5개 기준으로 전체 페이지 계산
-      totalPages.value = Math.max(
-        1,
-        Math.ceil((response.output.totalCount ?? 0) / 5),
-      )
-    } else {
-      // 지도 모드: 페이지네이션이 필요 없으므로 1로 고정
-      totalPages.value = 1
-      fetchRegionGroups()
-    }
-    if (currentPage.value > totalPages.value) {
-      currentPage.value = totalPages.value
-      filters.value.page = currentPage.value
-      router.replace({ query: { ...route.query, page: currentPage.value } })
-      return fetchProjects()
-    }
+    const response = await api.$get(
+      `/projects?${qs.stringify(params, { arrayFormat: 'repeat' })}`,
+    )
+
+    mapProjects.value = response.output.projects
+    totalPages.value = 1
+    fetchRegionGroups()
   } catch (e) {
     console.error(e)
   } finally {
@@ -507,10 +582,10 @@ const fetchRegionGroups = async () => {
 const updateBounds = () => {
   if (!mapInstance.value) return
   const bounds = mapInstance.value.getBounds()
-  filters.value.minLat = bounds.getSouthWest().getLat()
-  filters.value.maxLat = bounds.getNorthEast().getLat()
-  filters.value.minLng = bounds.getSouthWest().getLng()
-  filters.value.maxLng = bounds.getNorthEast().getLng()
+  mapBounds.value.minLat = bounds.getSouthWest().getLat()
+  mapBounds.value.maxLat = bounds.getNorthEast().getLat()
+  mapBounds.value.minLng = bounds.getSouthWest().getLng()
+  mapBounds.value.maxLng = bounds.getNorthEast().getLng()
   currentPage.value = 1
   filters.value.page = 1
   fetchProjects()
@@ -560,7 +635,7 @@ watch(isMapView, async (val) => {
     }
   }
 })
-watch(projects, () => {
+watch(mapProjects, () => {
   if (isMapView.value) displayMarkers()
 })
 const onPageChange = (page) => {

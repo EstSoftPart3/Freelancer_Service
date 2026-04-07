@@ -155,6 +155,7 @@ public class BoardService {
 
     @Transactional
     public BoardResponse getBoard(Long userSq, Long boardSq, Long boardTypeCd) {
+    	//게시글 본문 조회
         Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
         if (board == null) {
             throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
@@ -162,16 +163,20 @@ public class BoardService {
             throw new IllegalArgumentException("삭제된 게시글입니다.");
         }
 
+        //게시글 태그 조회
         List<String> normalTags = normalTagConverter.convertNormalTagsToStrings(cmntTagMapper.findNT(boardSq, null));
         List<SkillTagDTO> skillTags = skillTagConverter.convertSkillTagsToStrings(cmntTagMapper.findST(boardSq, null));
 
+        //게시글 작성자 조회
         UserDTO boardWriter = communityUserMapper.findById(board.getUserSq());
         String userNm = Optional.ofNullable(boardWriter)
                 .map(UserDTO::getUserNm)
                 .orElse("존재하지 않는 사용자");
 
+        //답변 전체 조회
         List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
 
+        //댓글 전체 조회 및 작성자 번호 중복제거 후 추출
         List<Comment> comments = commentMapper.findByBoardSq(boardSq);
         List<Long> commentUserSqs = comments.stream()
                 .map(Comment::getUserSq)
@@ -179,28 +184,34 @@ public class BoardService {
                 .distinct()
                 .toList();
 
+        //작성자 전체 조회
         List<UserDTO> users = communityUserMapper.findUsersByIds(commentUserSqs);
         List<UserProfileImageDTO> profileImages = informationEditRepository.findProfileImagesByUserSqs(commentUserSqs);
 
+        //유저 정보 Map
         Map<Long, UserDTO> userMap = users.stream()
                 .collect(Collectors.toMap(UserDTO::getUserSq, user -> user));
-
+        //유저 프로필 이미지 Map
         Map<Long, String> profileImageMap = profileImages.stream()
                 .collect(Collectors.toMap(
                         UserProfileImageDTO::getUserSq,
                         image -> "/api/files/" + image.getSavedName()));
 
+        //평면구조 덧글 List 생성
         List<CommentResponse> flatComments = comments.stream()
                 .filter(Objects::nonNull)
                 .map(comment -> {
+                	//위에서 만든 Map을 조회하여 DTO 생성
                     UserDTO commentWriter = userMap.get(comment.getUserSq());
                     String profileImageUrl = profileImageMap.get(comment.getUserSq());
                     return CommentResponse.fromEntity(comment, commentWriter, profileImageUrl);
                 })
                 .collect(Collectors.toList());
 
+        //덧글을 부모-자식 관계로 변환
         List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
 
+        //조회한 게시글 파일목록을 통해 응답 DTO 생성
         List<BoardAttachmentResponse> files = boardMapper.findAttachmentsByBoardSq(boardSq).stream()
                 .filter(Objects::nonNull)
                 .map(attachment -> BoardAttachmentResponse.builder()

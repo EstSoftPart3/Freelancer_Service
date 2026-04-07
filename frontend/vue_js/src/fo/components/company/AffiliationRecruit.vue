@@ -70,11 +70,11 @@
         <label
           for="companyDescription"
           class="form-label text-primary text-bold"
-          >회사 사이트</label
+          >회사 홈페이지</label
         >
         <div class="text-dark" id="companyDescription">
           <a
-            :href="normalizedCompanyUrl"
+            :href="companyUrl"
             target="_blank"
             rel="noopener noreferrer"
             class="company-link"
@@ -336,6 +336,16 @@ const openKakaoRoute = () => {
 
   window.open(url, '_blank')
 }
+
+//회사 사이트 주소
+const companyUrl = computed(() => {
+  const url = info.value.companyUrl?.trim()
+
+  if (!url) return '#'
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+
+  return `https://${url}`
+})
 </script>
 <style>
 .text-bold {
@@ -357,8 +367,8 @@ const openKakaoRoute = () => {
 .company-link:focus,
 .company-link:active,
 .company-link:visited {
-  color: #000;
-  text-decoration: none;
+  color: #000 !important;
+  text-decoration: none !important;
   cursor: pointer;
 }
 </style>
