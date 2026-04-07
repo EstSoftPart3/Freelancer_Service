@@ -76,7 +76,7 @@ export function StatisticsLogs() {
                 yesterday
                 <br />
                 <br />
-                {s.yesterdayCount ?? 0} previous day
+                {s.yesterdayCount ?? 0} Yesterday
               </p>
             </CardContent>
           </Card>
