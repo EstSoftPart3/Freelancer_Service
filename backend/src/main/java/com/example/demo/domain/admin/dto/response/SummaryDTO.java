@@ -15,4 +15,5 @@ public class SummaryDTO {
 	private String title;
 	private Long count;
 	private Double percent;
+	private Long yesterdayCount;
 }

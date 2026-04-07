@@ -132,14 +132,15 @@ public class AdminDashBoardService {
 	private SummaryDTO toSummaryDTO(String title, List<DateCountDTO> list) {
 	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	    String today = LocalDate.now().format(formatter);
-
+	    String yesterday = LocalDate.now().minusDays(1).format(formatter);
+	   
 	    Long todayCount = 0L;
 	    Long yesterdayCount = 0L;
-
+	    
 	    for (DateCountDTO d : list) {
 	        if (d.getDate().equals(today)) {
 	            todayCount = d.getCount();
-	        } else {
+	        } else if (d.getDate().equals(yesterday)) {
 	            yesterdayCount = d.getCount();
 	        }
 	    }
@@ -151,6 +152,7 @@ public class AdminDashBoardService {
 	            .title(title)
 	            .count(todayCount)
 	            .percent(percent)
+	            .yesterdayCount(yesterdayCount)
 	            .build();
 	}
 	
