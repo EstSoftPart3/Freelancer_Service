@@ -16,6 +16,7 @@ public interface BoardMapper {
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,
                   @Param("tag") String tag, // 5번째: 단일 태그 검색어
+                  @Param("normalTags") List<String> normalTags,
                   @Param("skillTags") List<Long> skillTags, // 6번째: 기술 태그 리스트
                   @Param("sortType") String sortType,
                   @Param("size") Long size,
@@ -27,6 +28,7 @@ public interface BoardMapper {
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,
                   @Param("tag") String tag, // [수정] tag 파라미터 추가
+                  @Param("normalTags") List<String> normalTags,
                   @Param("skillTags") List<Long> skillTags // [수정] 불필요한 sortType, size, offset 제거
       );
 

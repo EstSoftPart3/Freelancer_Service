@@ -30,6 +30,7 @@
             <BoardTags
               :skillTags="board.skillTags"
               :normalTags="board.normalTags"
+              @click-tag="emit('click-tag', $event)"
             />
           </td>
           <td>{{ board.userNm }}</td>
@@ -72,7 +73,7 @@
   </div>
 </template>
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed, defineEmits, defineProps } from 'vue'
 import BoardTags from './BoardTags.vue'
 
 const props = defineProps({
@@ -80,6 +81,8 @@ const props = defineProps({
   isQna: { type: Boolean, default: false },
   isNotice: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['click-tag'])
 
 const boardList = computed(() => props.boardList)
 const isQna = computed(() => props.isQna)

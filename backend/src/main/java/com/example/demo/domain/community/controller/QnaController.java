@@ -31,6 +31,7 @@ public class QnaController {
             @RequestParam(value = "searchType", required = false) String searchType,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "tag", required = false) String tag, // [추가] 태그 파라미터
+            @RequestParam(value = "normalTags", required = false) List<String> normalTags,
             @RequestParam(value = "skillTags", required = false) List<Long> skillTags,
             @RequestParam(value = "sortType", defaultValue = "latest") String sortType,
             @RequestParam(value = "page", defaultValue = "1") Long page,
@@ -38,7 +39,7 @@ public class QnaController {
 
         // 서비스 호출 시 인자 순서 주의: (1402L, 채택상태, 검색타입, 키워드, 태그, 스킬태그리스트, 정렬, 페이지, 사이즈)
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공",
-                boardService.getAllBoards(1402L, boardAdoptStatusCd, searchType, keyword, tag, skillTags, sortType,
+                boardService.getAllBoards(1402L, boardAdoptStatusCd, searchType, keyword, tag, normalTags, skillTags, sortType,
                         page, size)));
     }
 

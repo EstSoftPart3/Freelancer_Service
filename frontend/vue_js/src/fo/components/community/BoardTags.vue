@@ -9,7 +9,7 @@
       ref="tagRefs"
       class="btn btn-rounded btn-3d py-0 px-2 tag-btn d-flex align-items-center"
       :class="tagInfo.type === 'skill' ? 'btn-primary' : 'btn-light'"
-      @click="clickTag(tagInfo.tag_nm)"
+      @click="clickTag(tagInfo)"
     >
       <img
         v-if="tagInfo.type === 'skill'"
@@ -35,8 +35,7 @@
 </template>
 
 <script setup>
-import { nextTick, ref, defineProps, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { nextTick, ref, defineProps, defineEmits, onMounted, watch } from 'vue'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 const props = defineProps({
@@ -52,6 +51,8 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['click-tag'])
+
 const totalTags = ref([])
 const containerRef = ref(null)
 const tagRefs = ref([])
@@ -59,19 +60,14 @@ const visibleTags = ref([])
 const hiddenCount = ref(0)
 const buttonMsg = ref('')
 
-const router = useRouter()
-const route = useRoute()
+const clickTag = (tagInfo) => {
+  const tag = tagInfo.tag_nm
+  const tagName = tagInfo.type === 'skill' ? tag.skillTagNm : tag
 
-const clickTag = (tag) => {
-  const tagName = typeof tag === 'object' ? tag.skillTagNm : tag
-
-  // [수정 포인트] path를 '/board' 고정이 아닌 route.path(현재 경로)로 설정
-  router.push({
-    path: route.path,
-    query: {
-      tag: tagName,
-      page: 1,
-    },
+  emit('click-tag', {
+    type: tagInfo.type,
+    name: tagName,
+    skillTagSq: tagInfo.type === 'skill' ? tag.skillTagSq : null,
   })
 }
 

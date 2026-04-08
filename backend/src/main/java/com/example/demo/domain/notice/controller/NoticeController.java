@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import javax.lang.model.type.NullType;
 
@@ -57,13 +58,15 @@ public class NoticeController {
             @RequestParam(value = "searchType", required = false) String searchType,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "normalTags", required = false) List<String> normalTags,
+            @RequestParam(value = "skillTags", required = false) List<Long> skillTags,
             @RequestParam(value = "sortType", defaultValue = "latest") String sortType,
             @RequestParam(value = "page", defaultValue = "1") Long page,
             @RequestParam(value = "size", defaultValue = "10") Long size) {
 
         // 공지사항 타입 코드인 1403L을 고정하여 호출합니다.
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "공지사항 조회 성공",
-                boardService.getAllBoards(1403L, null, searchType, keyword, tag, null, sortType, page, size)));
+                boardService.getAllBoards(1403L, null, searchType, keyword, tag, normalTags, skillTags, sortType, page, size)));
     }
 
     /**

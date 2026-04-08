@@ -6,13 +6,39 @@
 	<select id="findByIdBoard" resultType="com.example.demo.domain.community.entity.Board"> SELECT *
 		FROM TBL_BOARD_M WHERE board_sq = #{boardSq} AND board_type_cd = #{boardTypeCd} </select>
 
-	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board"> SELECT * FROM
+	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
+		<bind name="normalTagCount" value="normalTags != null ? normalTags.size() : 0" />
+		<bind name="skillTagCount" value="skillTags != null ? skillTags.size() : 0" />
+		SELECT * FROM
 		TBL_BOARD_M WHERE board_is_deleted_yn = 'N' AND board_type_cd = #{boardTypeCd} <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
-			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
-		TBL_BOARD_SKILL_TAG_S WHERE skill_tag_nm = #{tag}) OR board_sq IN (SELECT board_sq FROM
-		TBL_BOARD_NORMAL_TAG_S WHERE normal_tag_nm = #{tag}) ) </if>
+			test="tag != null and tag != '' and (normalTags == null or normalTags.size == 0) and (skillTags == null or skillTags.size == 0)">
+			AND ( board_sq IN (SELECT board_sq FROM TBL_BOARD_SKILL_TAG_S WHERE skill_tag_nm = #{tag}) OR
+			board_sq IN (SELECT board_sq FROM TBL_BOARD_NORMAL_TAG_S WHERE normal_tag_nm = #{tag}) )
+		</if>
+		<if
+			test="normalTags != null and normalTags.size > 0">
+			AND board_sq IN (
+				SELECT board_sq
+				FROM TBL_BOARD_NORMAL_TAG_S
+				WHERE normal_tag_nm IN
+				<foreach item="nTag" collection="normalTags" open="(" separator="," close=")"> #{nTag} </foreach>
+				GROUP BY board_sq
+				HAVING COUNT(DISTINCT normal_tag_nm) = #{normalTagCount}
+			)
+		</if>
+		<if
+			test="skillTags != null and skillTags.size > 0">
+			AND board_sq IN (
+				SELECT board_sq
+				FROM TBL_BOARD_SKILL_TAG_S
+				WHERE skill_tag_sq IN
+				<foreach item="tSq" collection="skillTags" open="(" separator="," close=")"> #{tSq} </foreach>
+				GROUP BY board_sq
+				HAVING COUNT(DISTINCT skill_tag_sq) = #{skillTagCount}
+			)
+		</if>
         <if
 			test="keyword != null and keyword != ''">
 			<choose>
@@ -23,10 +49,6 @@
 		OR board_description_edt LIKE CONCAT('%', #{keyword}, '%')) </when>
 			</choose>
 		</if>
-	    <if
-			test="skillTags != null and skillTags.size > 0"> AND board_sq IN ( SELECT DISTINCT
-		board_sq FROM TBL_BOARD_SKILL_TAG_S WHERE skill_tag_sq IN <foreach item="tSq"
-				collection="skillTags" open="(" separator="," close=")"> #{tSq} </foreach> ) </if>
 	    <choose>
 			<when test="sortType == 'latest'"> ORDER BY board_created_at_dtm DESC </when>
 			<when test="sortType == 'oldest'"> ORDER BY board_created_at_dtm ASC </when>
@@ -38,13 +60,39 @@
 		</choose>
 		LIMIT #{size} OFFSET #{offset} </select>
 
-	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
+	<select id="findAllCnt" resultType="Long">
+		<bind name="normalTagCount" value="normalTags != null ? normalTags.size() : 0" />
+		<bind name="skillTagCount" value="skillTags != null ? skillTags.size() : 0" />
+		SELECT COUNT(*) FROM TBL_BOARD_M WHERE
 		board_is_deleted_yn = 'N' AND board_type_cd = #{boardTypeCd} <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
-			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
-		TBL_BOARD_SKILL_TAG_S WHERE skill_tag_nm = #{tag}) OR board_sq IN (SELECT board_sq FROM
-		TBL_BOARD_NORMAL_TAG_S WHERE normal_tag_nm = #{tag}) ) </if>
+			test="tag != null and tag != '' and (normalTags == null or normalTags.size == 0) and (skillTags == null or skillTags.size == 0)">
+			AND ( board_sq IN (SELECT board_sq FROM TBL_BOARD_SKILL_TAG_S WHERE skill_tag_nm = #{tag}) OR
+			board_sq IN (SELECT board_sq FROM TBL_BOARD_NORMAL_TAG_S WHERE normal_tag_nm = #{tag}) )
+		</if>
+		<if
+			test="normalTags != null and normalTags.size > 0">
+			AND board_sq IN (
+				SELECT board_sq
+				FROM TBL_BOARD_NORMAL_TAG_S
+				WHERE normal_tag_nm IN
+				<foreach item="nTag" collection="normalTags" open="(" separator="," close=")"> #{nTag} </foreach>
+				GROUP BY board_sq
+				HAVING COUNT(DISTINCT normal_tag_nm) = #{normalTagCount}
+			)
+		</if>
+		<if
+			test="skillTags != null and skillTags.size > 0">
+			AND board_sq IN (
+				SELECT board_sq
+				FROM TBL_BOARD_SKILL_TAG_S
+				WHERE skill_tag_sq IN
+				<foreach item="tSq" collection="skillTags" open="(" separator="," close=")"> #{tSq} </foreach>
+				GROUP BY board_sq
+				HAVING COUNT(DISTINCT skill_tag_sq) = #{skillTagCount}
+			)
+		</if>
         <if
 			test="keyword != null and keyword != ''">
 			<choose>
@@ -55,10 +103,6 @@
 		OR board_description_edt LIKE CONCAT('%', #{keyword}, '%')) </when>
 			</choose>
 		</if>
-	    <if
-			test="skillTags != null and skillTags.size > 0"> AND board_sq IN ( SELECT DISTINCT
-		board_sq FROM TBL_BOARD_SKILL_TAG_S WHERE skill_tag_sq IN <foreach item="tSq"
-				collection="skillTags" open="(" separator="," close=")"> #{tSq} </foreach> ) </if>
 	</select>
 
 	<insert id="insert" parameterType="com.example.demo.domain.community.entity.Board"

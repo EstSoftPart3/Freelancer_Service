@@ -55,21 +55,39 @@
           </form>
         </div>
       </div>
-      <div v-if="selectedTag" class="row mb-3">
+      <div v-if="hasSelectedTags" class="row mb-3">
         <div class="col d-flex align-items-center gap-2 flex-wrap">
           <span class="text-muted small">적용 태그</span>
           <button
+            v-for="tag in selectedSkillTags"
+            :key="`skill-${tag.skillTagSq}`"
             type="button"
-            class="btn btn-light btn-sm d-inline-flex align-items-center gap-2 active-tag-chip"
-            @click="clearTagFilter"
+            class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 active-tag-chip selected-skill-chip"
+            @click="removeSkillTag(tag.skillTagSq)"
           >
-            <span>#{{ selectedTag }}</span>
+            <img
+              :src="generateIconUrl(tag.skillTagNm)"
+              width="14"
+              height="14"
+              :alt="tag.skillTagNm"
+            />
+            <span>{{ tag.skillTagNm }}</span>
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <button
+            v-for="tag in selectedNormalTags"
+            :key="`normal-${tag}`"
+            type="button"
+            class="btn btn-light btn-sm d-inline-flex align-items-center gap-2 active-tag-chip selected-normal-chip"
+            @click="removeNormalTag(tag)"
+          >
+            <span>#{{ tag }}</span>
             <span aria-hidden="true">&times;</span>
           </button>
           <button
             type="button"
             class="btn btn-outline-secondary btn-sm"
-            @click="clearTagFilter"
+            @click="clearTagFilters"
           >
             초기화
           </button>
@@ -84,7 +102,11 @@
           </div>
 
           <div v-else>
-            <BoardTable :boardList="boardList" :isQna="true" />
+            <BoardTable
+              :boardList="boardList"
+              :isQna="true"
+              @click-tag="toggleTagFilter"
+            />
 
             <div
               v-if="boardList.length === 0"
@@ -116,6 +138,7 @@ import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import { api } from '@/axios'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { useRoute, useRouter } from 'vue-router'
+import skillIconMap from '@/assets/skillIconMap.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -129,7 +152,10 @@ const boardList = ref([])
 const size = 10
 
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
-if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+if (
+  route.query.page !== undefined &&
+  Number(route.query.page) !== currentPage.value
+) {
   router.replace({ query: { ...route.query, page: currentPage.value } })
 }
 
@@ -140,30 +166,83 @@ const searchType = ref(route.query.searchType || 'all')
 const keyword = ref(route.query.keyword ?? '')
 const sortType = ref(route.query.sort || 'latest')
 const boardAdoptStatusCd = ref(route.query.status || 'all')
-const selectedTag = ref(route.query.tag || '') // [추가] 태그 상태
+const toArray = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  return value ? [value] : []
+}
+
+const selectedSkillTagSqs = ref(toArray(route.query.skillTags).map(String))
+const selectedNormalTags = ref([
+  ...toArray(route.query.normalTags).map(String),
+  ...toArray(route.query.tag).map(String),
+])
+const skillTagMap = ref({})
+
+const selectedSkillTags = computed(() =>
+  selectedSkillTagSqs.value.map((sq) => ({
+    skillTagSq: sq,
+    skillTagNm: skillTagMap.value[sq] || sq,
+  })),
+)
+const hasSelectedTags = computed(
+  () =>
+    selectedSkillTagSqs.value.length > 0 || selectedNormalTags.value.length > 0,
+)
+
+const generateIconUrl = (name) => {
+  const key = String(name)
+    .toLowerCase()
+    .replace(/[\s.]+/g, '')
+  return skillIconMap[key] || skillIconMap.default
+}
+
+const loadSkillTagMap = async () => {
+  if (Object.keys(skillTagMap.value).length > 0) return
+  const res = await api.$get('/board/skill-tags')
+  if (res?.output) {
+    skillTagMap.value = res.output.reduce((acc, tag) => {
+      acc[String(tag.skillTagSq)] = tag.skillTagNm
+      return acc
+    }, {})
+  }
+}
+
+const buildQueryParams = () => {
+  const params = new URLSearchParams()
+  params.set('page', currentPage.value)
+  params.set('size', size)
+  params.set('sortType', sortType.value)
+  if (keyword.value?.trim()) {
+    params.set('searchType', searchType.value)
+    params.set('keyword', keyword.value.trim())
+  }
+  if (boardAdoptStatusCd.value !== 'all') {
+    params.set('boardAdoptStatusCd', boardAdoptStatusCd.value)
+  }
+  selectedSkillTagSqs.value.forEach((tagSq) =>
+    params.append('skillTags', tagSq),
+  )
+  selectedNormalTags.value.forEach((tag) => params.append('normalTags', tag))
+  return params.toString()
+}
+
+const buildTagQuery = () => ({
+  skillTags: selectedSkillTagSqs.value.length
+    ? selectedSkillTagSqs.value
+    : undefined,
+  normalTags: selectedNormalTags.value.length
+    ? selectedNormalTags.value
+    : undefined,
+  tag: undefined,
+})
 
 const getBoardList = async () => {
   isLoading.value = true
   try {
-    const searchFilter =
-      !keyword.value || keyword.value.trim() === ''
-        ? ''
-        : `&searchType=${searchType.value}&keyword=${encodeURIComponent(keyword.value.trim())}`
-
-    const adoptFilter =
-      boardAdoptStatusCd.value === 'all'
-        ? ''
-        : `&boardAdoptStatusCd=${boardAdoptStatusCd.value}`
-
     // [추가] 태그 필터 구성
-    const tagFilter = selectedTag.value
-      ? `&tag=${encodeURIComponent(selectedTag.value)}`
-      : ''
 
     // API 호출 (경로 동적 처리)
-    const res = await api.$get(
-      `${route.path}?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${adoptFilter}${tagFilter}`,
-    )
+    const res = await api.$get(`${route.path}?${buildQueryParams()}`)
 
     if (res && res.output) {
       totalPages.value =
@@ -186,11 +265,8 @@ const getBoardList = async () => {
 
 const dynamicBreadcrumbs = computed(() => {
   // 태그 검색 중일 때: 'Home'을 빼고 'QnA 게시판'을 최상위로
-  if (selectedTag.value) {
-    return [
-      { text: 'QnA 게시판', link: '/qna' },
-      { text: `#${selectedTag.value}` },
-    ]
+  if (hasSelectedTags.value) {
+    return [{ text: 'QnA 게시판', link: '/qna' }, { text: '태그 검색' }]
   }
 
   // 기본 상태: 원래대로 Home > QnA 게시판
@@ -227,14 +303,54 @@ const onSearch = () => {
   getBoardList()
 }
 
-const clearTagFilter = () => {
-  selectedTag.value = ''
+const clearTagFilters = () => {
+  selectedSkillTagSqs.value = []
+  selectedNormalTags.value = []
   currentPage.value = 1
   updateQuery({
     page: 1,
-    tag: undefined,
+    ...buildTagQuery(),
   })
   getBoardList()
+}
+
+const removeSkillTag = (tagSq) => {
+  selectedSkillTagSqs.value = selectedSkillTagSqs.value.filter(
+    (sq) => sq !== String(tagSq),
+  )
+  currentPage.value = 1
+  updateQuery({ page: 1, ...buildTagQuery() })
+  getBoardList()
+}
+
+const removeNormalTag = (tag) => {
+  selectedNormalTags.value = selectedNormalTags.value.filter((t) => t !== tag)
+  currentPage.value = 1
+  updateQuery({ page: 1, ...buildTagQuery() })
+  getBoardList()
+}
+
+const toggleTagFilter = (tag) => {
+  if (tag.type === 'skill' && tag.skillTagSq) {
+    const tagSq = String(tag.skillTagSq)
+    if (selectedSkillTagSqs.value.includes(tagSq)) removeSkillTag(tagSq)
+    else {
+      selectedSkillTagSqs.value = [...selectedSkillTagSqs.value, tagSq]
+      skillTagMap.value = { ...skillTagMap.value, [tagSq]: tag.name }
+      currentPage.value = 1
+      updateQuery({ page: 1, ...buildTagQuery() })
+      getBoardList()
+    }
+    return
+  }
+
+  if (selectedNormalTags.value.includes(tag.name)) removeNormalTag(tag.name)
+  else {
+    selectedNormalTags.value = [...selectedNormalTags.value, tag.name]
+    currentPage.value = 1
+    updateQuery({ page: 1, ...buildTagQuery() })
+    getBoardList()
+  }
 }
 
 const onPageChange = (page) => {
@@ -245,11 +361,23 @@ const onPageChange = (page) => {
 
 // [추가] URL 태그 파라미터 감시
 watch(
-  () => ({ page: route.query.page, tag: route.query.tag }),
+  () => ({
+    page: route.query.page,
+    tag: route.query.tag,
+    normalTags: route.query.normalTags,
+    skillTags: route.query.skillTags,
+  }),
   (newQ, oldQ) => {
-    const tagChanged = newQ.tag !== oldQ?.tag
+    const tagChanged =
+      newQ.tag !== oldQ?.tag ||
+      newQ.normalTags !== oldQ?.normalTags ||
+      newQ.skillTags !== oldQ?.skillTags
     if (tagChanged) {
-      selectedTag.value = newQ.tag || ''
+      selectedSkillTagSqs.value = toArray(newQ.skillTags).map(String)
+      selectedNormalTags.value = [
+        ...toArray(newQ.normalTags).map(String),
+        ...toArray(newQ.tag).map(String),
+      ]
       currentPage.value = 1
       getBoardList()
       return
@@ -265,7 +393,8 @@ watch(
   },
 )
 
-onMounted(() => {
+onMounted(async () => {
+  await loadSkillTagMap()
   getBoardList()
 })
 </script>
@@ -273,6 +402,17 @@ onMounted(() => {
 .active-tag-chip {
   border-radius: 999px;
   border: 1px solid #d9dee8;
-  color: #495057;
+}
+
+.selected-skill-chip,
+.selected-skill-chip:hover,
+.selected-skill-chip:focus {
+  color: white;
+}
+
+.selected-normal-chip,
+.selected-normal-chip:hover,
+.selected-normal-chip:focus {
+  color: #212529;
 }
 </style>

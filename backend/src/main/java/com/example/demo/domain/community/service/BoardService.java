@@ -73,7 +73,7 @@ public class BoardService {
 
     @Transactional
     public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
-            String tag, List<Long> searchSkillTags, String sortType, Long page, Long size) {
+            String tag, List<String> searchNormalTags, List<Long> searchSkillTags, String sortType, Long page, Long size) {
         if (page < 1) {
             page = 1L;
         }
@@ -83,9 +83,9 @@ public class BoardService {
         }
 
         //게시글 목록
-        List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+        List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag, searchNormalTags,
                 searchSkillTags, sortType, size, offset);
-        Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+        Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag, searchNormalTags,
                 searchSkillTags);
 
         //게시글이 없으면 빈 리스트 반환
