@@ -68,6 +68,10 @@ public class AdminFaqService {
             throw new IllegalArgumentException("유효하지 않은 FAQ 카테고리 코드입니다: " + dto.getFaqTypeCd());
         }
     	
+    	if (!"Y".equals(dto.getFaqIsDeletedYn()) && !"N".equals(dto.getFaqIsDeletedYn())) {
+            throw new IllegalArgumentException("상태값은 Y 또는 N만 가능합니다. 입력값: " + dto.getFaqIsDeletedYn());
+        }
+    	
         FaqEntity faq = FaqEntity.builder()
                 .faqTypeCd(dto.getFaqTypeCd())
                 .questionTtl(dto.getQuestionTtl())
@@ -89,6 +93,10 @@ public class AdminFaqService {
             throw new IllegalArgumentException("유효하지 않은 FAQ 카테고리 코드입니다: " + dto.getFaqTypeCd());
         }
     	
+    	if (!"Y".equals(dto.getFaqIsDeletedYn()) && !"N".equals(dto.getFaqIsDeletedYn())) {
+            throw new IllegalArgumentException("상태값은 Y 또는 N만 가능합니다. 입력값: " + dto.getFaqIsDeletedYn());
+        }
+    	
         FaqEntity faq = FaqEntity.builder()
                 .faqSq(faqSq)
                 .faqTypeCd(dto.getFaqTypeCd())
@@ -104,6 +112,10 @@ public class AdminFaqService {
      */
     @Transactional
     public void changeDeleteStatus(Long faqSq, String isDeletedYn) {
+    	
+    	if (!"Y".equals(isDeletedYn) && !"N".equals(isDeletedYn)) {
+            throw new IllegalArgumentException("상태값은 Y 또는 N만 가능합니다. 입력값: " + isDeletedYn);
+        }
         adminFaqMapper.updateDeleteStatus(faqSq, isDeletedYn);
     }
 }

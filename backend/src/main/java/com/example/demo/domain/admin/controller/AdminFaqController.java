@@ -33,6 +33,12 @@ public class AdminFaqController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> registerFaq(@RequestBody AdminFaqCreateRequestDTO dto) {
+    	
+    	// 1. 방어 로직: Y 또는 N만 허용
+    	if (!"Y".equals(dto.getFaqIsDeletedYn()) && !"N".equals(dto.getFaqIsDeletedYn())) {
+            throw new IllegalArgumentException("유효하지 않은 상태값입니다. (입력값: " + dto.getFaqIsDeletedYn() + ")");
+        }
+    	
         adminFaqService.registerFaq(dto);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED,"정상적으로 등록되었습니다.", null));
     }
@@ -77,6 +83,11 @@ public class AdminFaqController {
     public ResponseEntity<String> modifyFaq(
             @PathVariable Long faqSq, 
             @RequestBody AdminFaqCreateRequestDTO dto) {
+    	
+    	// 1. 방어 로직: Y 또는 N만 허용
+    	if (!"Y".equals(dto.getFaqIsDeletedYn()) && !"N".equals(dto.getFaqIsDeletedYn())) {
+            throw new IllegalArgumentException("유효하지 않은 상태값입니다. (입력값: " + dto.getFaqIsDeletedYn() + ")");
+        }
         
         // 서비스의 modifyFaq 호출 시 경로의 faqSq를 같이 넘겨줌
         adminFaqService.modifyFaq(dto, faqSq);
@@ -87,11 +98,22 @@ public class AdminFaqController {
      * FAQ 상태 변경 (삭제/복구)
      */
     @DeleteMapping("/{faqSq}/status")
-    public ResponseEntity<String> changeStatus(
+    public ResponseEntity<ApiResponse<Object>> changeStatus(
             @PathVariable Long faqSq, 
             @RequestParam String isDeletedYn) {
+    	
+    	// 1. 방어 로직: Y 또는 N만 허용
+    	if (!"Y".equals(isDeletedYn) && !"N".equals(isDeletedYn)) {
+            throw new IllegalArgumentException("유효하지 않은 상태값입니다. (입력값: " + isDeletedYn + ")");
+        }
         
+        // 2. 서비스 로직 호출
         adminFaqService.changeDeleteStatus(faqSq, isDeletedYn);
-        return ResponseEntity.ok("상태가 변경되었습니다.");
+        
+        // 3. 삼항 연산자로 메시지 처리
+        String message = "Y".equals(isDeletedYn) ? "성공적으로 삭제되었습니다." : "성공적으로 복구되었습니다.";
+        
+        // 4. 리턴 타입에 맞춰 ApiResponse 반환
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, message, null));
     }
 }
