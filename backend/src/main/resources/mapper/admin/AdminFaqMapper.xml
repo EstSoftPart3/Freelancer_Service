@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminFaqMapper">
+
+    <!-- 1. FAQ 목록 조회 (request 객체 내부 필드 접근) -->
+    <select id="findAll" resultType="com.example.demo.domain.admin.dto.response.AdminFaqDetailResponseDTO">
+   		SELECT
+            f.faq_sq AS faqSq,
+	        f.faq_type_cd AS faqTypeCd,
+	        c.common_code_nm AS categoryNm,
+	        f.question_ttl AS questionTtl,
+	        f.faq_created_at_dtm AS faqCreatedAtDtm, 
+	        f.faq_modified_at_dtm AS modifiedAt,
+        	f.faq_is_deleted_yn AS isDeletedYn
+        FROM tbl_faq_m f
+ 		LEFT JOIN tbl_common_code_c c ON f.faq_type_cd = c.common_code_sq
+        WHERE f.faq_is_deleted_yn = 'N'
+        <if test="request.faqTypeCd != null">
+            AND f.faq_type_cd = #{request.faqTypeCd}
+        </if>
+        <if test="request.keyword != null and request.keyword != ''">
+            AND (f.question_ttl LIKE CONCAT('%', #{request.keyword}, '%') 
+                 OR f.answer_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+        </if>
+        ORDER BY f.faq_sq DESC
+        LIMIT #{request.size} OFFSET #{request.offset}
+    </select>
+    
+    <!-- 2. 전체 개수 조회 -->
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM tbl_faq_m
+        WHERE faq_is_deleted_yn = 'N'
+        <if test="request.faqTypeCd != null">
+            AND faq_type_cd = #{request.faqTypeCd}
+        </if>
+        <if test="request.keyword != null and request.keyword != ''">
+            AND (question_ttl LIKE CONCAT('%', #{request.keyword}, '%') 
+                 OR answer_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+        </if>
+    </select>
+    
+    <!-- 3. 상세 조회 (findById -> findBySq로 변경) -->
+    <select id="findBySq" resultType="com.example.demo.domain.admin.dto.response.AdminFaqDetailResponseDTO">
+        SELECT 
+         	 f.faq_sq AS faqSq,
+	        f.faq_type_cd AS faqTypeCd,
+	        c.common_code_nm AS categoryNm,
+         	f.question_ttl AS questionTtl,
+	        f.answer_cn AS answerCn,
+	        f.faq_created_at_dtm AS faqCreatedAtDtm, 
+	        f.faq_modified_at_dtm AS modifiedAt,     
+	        f.faq_is_deleted_yn AS isDeletedYn
+        FROM tbl_faq_m f
+        LEFT JOIN tbl_common_code_c c ON f.faq_type_cd = c.common_code_sq
+        WHERE f.faq_sq = #{faqSq}
+    </select>
+
+    <!-- 5. FAQ 등록 (삭제 여부는 기본 'N'으로 등록) -->
+   <insert id="insertFaq" parameterType="com.example.demo.domain.admin.entity.FaqEntity"
+        useGeneratedKeys="true" keyProperty="faqSq" keyColumn="faq_sq">
+	    INSERT INTO tbl_faq_m (
+	        faq_type_cd, 
+	        question_ttl, 
+	        answer_cn, 
+	        faq_created_at_dtm, 
+	        faq_modified_at_dtm, 
+	        faq_is_deleted_yn
+		) VALUES (
+	        #{faqTypeCd}, 
+	        #{questionTtl}, 
+	        #{answerCn}, 
+	        NOW(), 
+	        NOW(), 
+	        'N'
+        )
+    </insert>
+    
+    <!-- 6. 수정 -->
+    <update id="updateFaq">
+        UPDATE tbl_faq_m
+        SET faq_type_cd = #{faqTypeCd},
+            question_ttl = #{questionTtl},
+            answer_cn = #{answerCn},
+            faq_modified_at_dtm = NOW()
+        WHERE faq_sq = #{faqSq}
+    </update>
+
+   <!-- 7. 상태 업데이트 (삭제/복구 통합, 논리 삭제: Y로 변경) -->
+    <update id="updateDeleteStatus">
+        UPDATE tbl_faq_m 
+        SET faq_is_deleted_yn = #{isDeletedYn},
+            faq_modified_at_dtm = NOW()
+        WHERE faq_sq = #{faqSq}
+    </update>
+
+</mapper>

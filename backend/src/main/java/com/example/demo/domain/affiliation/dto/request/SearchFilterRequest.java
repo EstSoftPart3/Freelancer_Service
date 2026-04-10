@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchFilterRequest{
-    private String searchType;
+    private String faqTypeCd;
     private String keyword;
     private String sortType;
     private Long addressCd;
