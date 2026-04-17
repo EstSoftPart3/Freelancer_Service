@@ -184,7 +184,7 @@
         </div>
       </div>
     </section>
-    <PopupModal />
+    <!-- <PopupModal /> -->
   </div>
 </template>
 
@@ -196,7 +196,7 @@ import { api } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
 import { navigateByUserTypeAndProjectSq } from '../router/userTypeRouter'
 import { useRouter } from 'vue-router'
-import PopupModal from '../components/common/PopupModal.vue'
+// import PopupModal from '../components/common/PopupModal.vue'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
