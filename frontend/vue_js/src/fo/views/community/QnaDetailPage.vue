@@ -70,12 +70,11 @@ import BoardPost from '@/fo/components/community/BoardPost.vue'
 import AnswerDetailModal from '@/fo/components/community/AnswerDetailModal.vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import { defineProps, ref } from 'vue'
-import { api } from '@/axios'
-import { useAlertStore } from '@/fo/stores/alertStore'
-import { onMounted } from 'vue'
+import { defineProps, ref, onMounted, watch } from 'vue'
 import { useBoardStore } from '@/fo/stores/boardStore'
 import { useRoute } from 'vue-router'
+import { useAlertStore } from '@/fo/stores/alertStore'
+import { api } from '@/axios'
 
 const alertStore = useAlertStore()
 const modalStore = useModalStore()
@@ -144,6 +143,16 @@ onMounted(() => {
   addViewCnt()
   getBoard()
 })
+
+watch(
+  () => props.board_sq,
+  (newSq, oldSq) => {
+    if (newSq !== oldSq) {
+      addViewCnt()
+      getBoard()
+    }
+  },
+)
 </script>
 <style>
 .answer-box {
