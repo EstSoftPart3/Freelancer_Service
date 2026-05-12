@@ -19,6 +19,7 @@ import com.example.demo.domain.project.dto.request.ContractInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
 import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
+import com.example.demo.domain.project.dto.request.ProjectGetListRequestDto;
 import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
@@ -64,6 +65,7 @@ public class ProjectService {
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
 
+	
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 

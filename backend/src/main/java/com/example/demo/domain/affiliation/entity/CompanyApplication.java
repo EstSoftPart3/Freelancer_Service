@@ -22,5 +22,6 @@ public class CompanyApplication {
     private String companyApplicationIsDeletedYn;
     private LocalDateTime companyApplicationReadAtDtm;
     private LocalDateTime companyApplicationCreatedAtDtm;
+    private LocalDateTime companyApplicationCompletedAtDtm; // 완료일자 추가
     
 }

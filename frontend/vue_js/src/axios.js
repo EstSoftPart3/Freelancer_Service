@@ -92,7 +92,7 @@ apiInstance.interceptors.response.use(
             headers: { Authorization: `Bearer ${refreshToken}` },
           },
         )
-        // console.log('refresh-token 요청 성공')
+        console.log('refresh-token 요청 성공')
 
         const newAccessToken = response.data.data.accessToken
         const newRefreshToken = response.data.data.refreshToken
@@ -104,12 +104,12 @@ apiInstance.interceptors.response.use(
         processQueue(null)
         return apiInstance(originalRequest)
       } catch (err) {
-        // console.log('refresh-token 요청 실패', err)
+        console.log('refresh-token 요청 실패', err)
         processQueue(err)
         clearLoginState()
         return Promise.reject(err)
       } finally {
-        // console.log('refresh-token 요청 finally')
+        console.log('refresh-token 요청 finally')
         isRefreshing = false
       }
     }

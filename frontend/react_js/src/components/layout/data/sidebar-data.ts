@@ -28,9 +28,13 @@ import {
   ListOrdered,
   ClipboardPen,
   ClipboardList,
+  // 추가된 아이콘
+  Briefcase,
+  UserCheck,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
+import { CompanyDetailsDialog } from '@/features/users/components/company-details-dialog'
 
 export const sidebarData: SidebarData = {
   // 1. 관리자 정보 (추후 auth-store와 연동 권장)
@@ -71,6 +75,60 @@ export const sidebarData: SidebarData = {
             },
           ],
         },
+        // --- 프로젝트 관리 메뉴 추가 시작 ---
+        {
+          title: '프로젝트 관리',
+          icon: Briefcase,
+          items: [
+            {
+              title: '프로젝트 진행 상황',
+              url: '/projects/project',
+              icon: Users,
+            },
+            // {
+            //   title: '전문가 승인 관리',
+            //   url: '/freelancers/approvals',
+            //   icon: UserCheck,
+            // },
+          ],
+        },
+        // --- 프리랜서 관리 메뉴 추가 끝 ---
+        // --- 프리랜서 관리 메뉴 추가 시작 ---
+        {
+          title: '프리랜서 관리',
+          icon: Briefcase,
+          items: [
+            {
+              title: '프리랜서 제안 상황',
+              url: '/freelancers',
+              icon: Users,
+            },
+            // {
+            //   title: '전문가 승인 관리',
+            //   url: '/freelancers/approvals',
+            //   icon: UserCheck,
+            // },
+          ],
+        },
+        // --- 프리랜서 관리 메뉴 추가 끝 ---
+        // --- 프리랜서 관리 메뉴 추가 시작 ---
+        {
+          title: '소속 관리',
+          icon: Briefcase,
+          items: [
+            {
+              title: '전체 회사 목록',
+              url: '/affiliation/company',
+              icon: CompanyDetailsDialog,
+            },
+            // {
+            //   title: '전문가 승인 관리',
+            //   url: '/freelancers/approvals',
+            //   icon: UserCheck,
+            // },
+          ],
+        },
+        // --- 프리랜서 관리 메뉴 추가 끝 ---
         {
           title: '게시물 관리',
           icon: ClipboardPen,

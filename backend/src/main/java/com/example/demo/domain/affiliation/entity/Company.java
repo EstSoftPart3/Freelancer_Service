@@ -19,4 +19,5 @@ public class Company {
     private String companyProfileImageUrl; // 프로필 이미지 URL (선택)
     private String companyGreetingTxt; // 인사말 (선택)
     private Long companyViewCnt; // 조회수
+    
 }

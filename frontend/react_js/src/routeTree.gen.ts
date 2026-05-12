@@ -26,13 +26,17 @@ import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
+import { Route as AuthenticatedFreelancersIndexRouteImport } from './routes/_authenticated/freelancers/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated/apps/index'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedProjectsProjectRouteImport } from './routes/_authenticated/projects/project'
+import { Route as AuthenticatedFreelancersApprovalsRouteImport } from './routes/_authenticated/freelancers/approvals'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedAffiliationCompanyRouteImport } from './routes/_authenticated/affiliation/company'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
@@ -124,6 +128,12 @@ const AuthenticatedHelpCenterIndexRoute =
     path: '/help-center/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFreelancersIndexRoute =
+  AuthenticatedFreelancersIndexRouteImport.update({
+    id: '/freelancers/',
+    path: '/freelancers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChatsIndexRoute = AuthenticatedChatsIndexRouteImport.update({
   id: '/chats/',
   path: '/chats/',
@@ -158,10 +168,28 @@ const AuthenticatedSettingsAccountRoute =
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
+const AuthenticatedProjectsProjectRoute =
+  AuthenticatedProjectsProjectRouteImport.update({
+    id: '/projects/project',
+    path: '/projects/project',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFreelancersApprovalsRoute =
+  AuthenticatedFreelancersApprovalsRouteImport.update({
+    id: '/freelancers/approvals',
+    path: '/freelancers/approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedErrorsErrorRoute =
   AuthenticatedErrorsErrorRouteImport.update({
     id: '/errors/$error',
     path: '/errors/$error',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAffiliationCompanyRoute =
+  AuthenticatedAffiliationCompanyRouteImport.update({
+    id: '/affiliation/company',
+    path: '/affiliation/company',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContentsReportIndexRoute =
@@ -196,13 +224,17 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/affiliation/company': typeof AuthenticatedAffiliationCompanyRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/freelancers/approvals': typeof AuthenticatedFreelancersApprovalsRoute
+  '/projects/project': typeof AuthenticatedProjectsProjectRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/chats/': typeof AuthenticatedChatsIndexRoute
+  '/freelancers/': typeof AuthenticatedFreelancersIndexRoute
   '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
@@ -223,13 +255,17 @@ export interface FileRoutesByTo {
   '/500': typeof errors500Route
   '/503': typeof errors503Route
   '/': typeof AuthenticatedIndexRoute
+  '/affiliation/company': typeof AuthenticatedAffiliationCompanyRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/freelancers/approvals': typeof AuthenticatedFreelancersApprovalsRoute
+  '/projects/project': typeof AuthenticatedProjectsProjectRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
+  '/freelancers': typeof AuthenticatedFreelancersIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -253,13 +289,17 @@ export interface FileRoutesById {
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/affiliation/company': typeof AuthenticatedAffiliationCompanyRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
+  '/_authenticated/freelancers/approvals': typeof AuthenticatedFreelancersApprovalsRoute
+  '/_authenticated/projects/project': typeof AuthenticatedProjectsProjectRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
+  '/_authenticated/freelancers/': typeof AuthenticatedFreelancersIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
@@ -283,13 +323,17 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/affiliation/company'
     | '/errors/$error'
+    | '/freelancers/approvals'
+    | '/projects/project'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
     | '/apps/'
     | '/chats/'
+    | '/freelancers/'
     | '/help-center/'
     | '/settings/'
     | '/tasks/'
@@ -310,13 +354,17 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/'
+    | '/affiliation/company'
     | '/errors/$error'
+    | '/freelancers/approvals'
+    | '/projects/project'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
     | '/apps'
     | '/chats'
+    | '/freelancers'
     | '/help-center'
     | '/settings'
     | '/tasks'
@@ -339,13 +387,17 @@ export interface FileRouteTypes {
     | '/(errors)/500'
     | '/(errors)/503'
     | '/_authenticated/'
+    | '/_authenticated/affiliation/company'
     | '/_authenticated/errors/$error'
+    | '/_authenticated/freelancers/approvals'
+    | '/_authenticated/projects/project'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
+    | '/_authenticated/freelancers/'
     | '/_authenticated/help-center/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
@@ -490,6 +542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/freelancers/': {
+      id: '/_authenticated/freelancers/'
+      path: '/freelancers'
+      fullPath: '/freelancers/'
+      preLoaderRoute: typeof AuthenticatedFreelancersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
       path: '/chats'
@@ -532,11 +591,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
+    '/_authenticated/projects/project': {
+      id: '/_authenticated/projects/project'
+      path: '/projects/project'
+      fullPath: '/projects/project'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/freelancers/approvals': {
+      id: '/_authenticated/freelancers/approvals'
+      path: '/freelancers/approvals'
+      fullPath: '/freelancers/approvals'
+      preLoaderRoute: typeof AuthenticatedFreelancersApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/errors/$error': {
       id: '/_authenticated/errors/$error'
       path: '/errors/$error'
       fullPath: '/errors/$error'
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/affiliation/company': {
+      id: '/_authenticated/affiliation/company'
+      path: '/affiliation/company'
+      fullPath: '/affiliation/company'
+      preLoaderRoute: typeof AuthenticatedAffiliationCompanyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contents/report/': {
@@ -589,9 +669,13 @@ const AuthenticatedSettingsRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAffiliationCompanyRoute: typeof AuthenticatedAffiliationCompanyRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
+  AuthenticatedFreelancersApprovalsRoute: typeof AuthenticatedFreelancersApprovalsRoute
+  AuthenticatedProjectsProjectRoute: typeof AuthenticatedProjectsProjectRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
+  AuthenticatedFreelancersIndexRoute: typeof AuthenticatedFreelancersIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
@@ -603,9 +687,14 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAffiliationCompanyRoute: AuthenticatedAffiliationCompanyRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
+  AuthenticatedFreelancersApprovalsRoute:
+    AuthenticatedFreelancersApprovalsRoute,
+  AuthenticatedProjectsProjectRoute: AuthenticatedProjectsProjectRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
+  AuthenticatedFreelancersIndexRoute: AuthenticatedFreelancersIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
