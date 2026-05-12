@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminCompanyMapper">
+	
+	<select id="selectCompanyAll"
+	resultType="com.example.demo.domain.admin.dto.response.AdminCompanyResponseDTO">
+
+	SELECT
+		company_sq,
+		company_nm,
+		company_ceo_nm,
+		company_is_recruiting_yn,
+		company_view_cnt,
+		company_recruit_start_dtm 
+	FROM
+		TBL_COMPANY_S
+	WHERE
+		1 = 1
+		<!--ERD에 삭제여부를 추가하게되면 필요 -->
+	
+	ORDER BY 
+		company_sq DESC
+		
+	</select>
+	<!--
+	
+	<insert id = "adminInsertCompany"
+		parameterType="com.example.demo.domain.admin.dto.request.AdminCompanyCreateRequestDTO">
+		INSERT INTO TBL_COMPANY_S(
+			company_nm,
+			company_ceo_nm,
+			company_is_recruiting_yn,
+			company_view_cnt,
+			company_recruit_start_dtm
+		) VALUES(
+			#{companyNm},
+			#{companyCeoNm},
+			#{companyIsRecruitingYn},
+		이거주석처리해야함	#{companyViewCnt}
+			0,
+			#{companyRecruitStartDtm}
+		)
+	</insert>
+	-->
+	
+	<insert id="insertAddress"
+		parameterType="com.example.demo.domain.admin.dto.request.AdminCompanyCreateRequestDTO"
+		useGeneratedKeys="true"
+		keyProperty="addressSq">
+		INSERT INTO TBL_ADDRESS_S(
+			zonecode,
+			address,
+			detail_address,
+			sigungu,
+			latitude,
+			longitude,
+			area_code_sq
+		) VALUES(
+			#{zonecode},
+			#{address},
+			#{detailAddress},
+			#{sigungu},
+			#{latitude},
+			#{longitude},
+			#{areaCodeSq}
+		)
+	</insert>
+	
+	<insert id="adminInsertCompany"
+		parameterType="com.example.demo.domain.admin.dto.request.AdminCompanyCreateRequestDTO">
+		
+		INSERT INTO TBL_COMPANY_S (
+			user_sq,
+			address_sq,
+			company_nm,
+			company_ceo_nm,
+			company_biz_num,
+			company_open_dt,
+			company_agreed_terms_yn,
+			company_is_recruiting_yn,
+			company_view_cnt
+		)
+		VALUES(
+			#{userSq},
+			#{addressSq},
+			#{companyNm},
+			#{companyCeoNm},
+			#{companyBizNum},
+			#{companyOpenDt},
+			'Y',
+			#{companyIsRecruitingYn},
+			0
+		)
+	</insert>
+	
+	<delete id="adminDeleteCompany" parameterType="Long">
+		DELETE FROM TBL_COMPANY_S
+		WHERE company_sq = #{companySq}
+	</delete>
+	
+	<!-- 1. 상세조회용 - 기존 데이터  -->
+	<select id="selectCompanyDetail"
+		resultType="com.example.demo.domain.admin.dto.response.AdminCompanyResponseDTO"
+		parameterType="Long">
+		SELECT 
+			company_sq,
+			company_nm,
+			company_ceo_nm,
+			company_is_recruiting_yn,
+			company_view_cnt,
+			company_recruit_start_dtm
+		FROM 
+			TBL_COMPANY_S
+		WHERE
+			company_sq = #{companySq}
+			<!-- AND company_is_deleted_yn = 'N' -->
+	</select>
+	
+	<!-- 수정 -->
+	<update id="adminUpdateCompany"
+	parameterType="com.example.demo.domain.admin.dto.request.AdminCompanyUpdateRequestDTO">
+	UPDATE TBL_COMPANY_S
+	SET 
+		company_nm 					= #{companyNm},
+		company_ceo_nm				= #{companyCeoNm},
+		company_biz_num				= #{companyBizNum},
+		company_open_dt				= #{companyOpenDt, jdbcType=DATE},
+		company_is_recruiting_yn	= #{companyIsRecruitingYn},
+		company_recruit_start_dtm	= #{companyRecruitStartDtm} 
+	WHERE 
+		company_sq = #{companySq}
+		<!-- And company_is_deleted_yn = 'N'-->
+	</update>
+	
+</mapper>
+

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminProjectMapper">
+
+
+
+	<select id="selectProjectAll" resultType="com.example.demo.domain.admin.dto.response.AdminProjectResponseDTO">
+		SELECT 
+			p.project_sq,
+			p.project_ttl,
+			c.company_nm,
+			p.project_salary,
+			p.project_start_dt,
+			p.project_end_dt,
+			
+			CASE
+			WHEN p.project_end_dt &lt; CURDATE() THEN '완료'
+		    WHEN p.project_start_dt &lt;= CURDATE()
+		     AND p.project_end_dt >= CURDATE() THEN '진행중'
+		    WHEN p.project_recruit_start_dt &lt;= CURDATE()
+		     AND p.project_recruit_end_dt >= CURDATE() THEN '모집중'
+		    WHEN p.project_recruit_end_dt &lt; CURDATE()
+		     AND p.project_start_dt > CURDATE() THEN '모집마감'
+		    ELSE '예정'
+			END AS project_status
+		FROM 
+			TBL_PROJECT_M p
+			LEFT JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+		WHERE p.project_is_deleted_yn = 'N'
+		ORDER BY 
+			p.project_sq DESC
+	</select>
+</mapper>
