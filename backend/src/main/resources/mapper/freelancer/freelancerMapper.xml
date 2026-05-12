@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.freelancer.mapper.FreelancerMapper">
+
+    <!-- 프리랜서 등록 -->
+    <insert id="insertFreelancer" parameterType="com.example.demo.domain.freelancer.dto.request.FreelancerRequestDTO"
+        useGeneratedKeys="true" keyProperty="freelancerSq">
+        INSERT INTO TBL_FREELANCER_MEMBER (user_sq, freelancer_skill, freelancer_greeting_txt, freelancer_created_at, freelancer_is_deleted_yn)
+        VALUES (#{userSq}, #{freelancerSkill}, #{freelancerGreetingTxt}, NOW(),'N')
+    </insert>
+    
+    <!-- 프리랜서 전체 조회 -->
+	<select id="selectFreelancerAll"
+	    resultType="com.example.demo.domain.freelancer.dto.response.FreelancerResponseDTO">
+	    SELECT
+	        f.freelancer_sq,
+	        f.user_sq,
+	        u.user_nm,
+	        u.user_email,
+	        fi.file_save_nm AS profileImgUrl,
+	        f.freelancer_skill,
+	        f.freelancer_greeting_txt
+	    FROM TBL_FREELANCER_MEMBER f
+	    LEFT JOIN TBL_USER_M u ON f.user_sq = u.user_sq
+	    LEFT JOIN TBL_FREELANCER_PROFILE_IMAGE_S fp ON f.freelancer_sq = fp.freelancer_sq
+	    LEFT JOIN TBL_COMMON_FILE_S fi ON fp.file_sq = fi.file_sq
+	    WHERE f.freelancer_is_deleted_yn = 'N'
+	</select>
+	
+	<!-- 프리랜서 검색 조회 -->
+	<select id="selectFreelancerSearch"
+	    parameterType="com.example.demo.domain.freelancer.dto.request.FreelancerSearchRequestDTO"
+	    resultType="com.example.demo.domain.freelancer.dto.response.FreelancerResponseDTO">
+	    SELECT
+	        f.freelancer_sq,
+	        f.user_sq,
+	        u.user_nm,
+	        u.user_email,
+	        fi.file_save_nm AS profileImgUrl,
+	        f.freelancer_skill,
+	        f.freelancer_greeting_txt
+	    FROM TBL_FREELANCER_MEMBER f
+	    LEFT JOIN TBL_USER_M u ON f.user_sq = u.user_sq
+	    LEFT JOIN TBL_FREELANCER_PROFILE_IMAGE_S fp ON f.freelancer_sq = fp.freelancer_sq
+	    LEFT JOIN TBL_COMMON_FILE_S fi ON fp.file_sq = fi.file_sq
+	    WHERE f.freelancer_is_deleted_yn = 'N'
+	    <if test="category == 'userNm' and keyword != null and keyword != ''">
+	        AND u.user_nm LIKE CONCAT('%', #{keyword}, '%')
+	    </if>
+	    <if test="category == 'freelancerSkill' and keyword != null and keyword != ''">
+	        AND f.freelancer_skill LIKE CONCAT('%', #{keyword}, '%')
+	    </if>
+	</select>
+	
+	<!-- 프리랜서 중복 확인 -->
+	<select id="selectFreelancerByUserSq" parameterType="Long" resultType="int">
+		select COUNT(*)
+		FROM TBL_FREELANCER_MEMBER
+		WHERE user_sq = #{userSq}
+		AND freelancer_is_deleted_yn = 'N'
+	</select>
+	
+	<!-- 프로필 이미지 파일 저장 -->
+	<insert id="insertFreelancerProfileImage" parameterType="com.example.demo.domain.freelancer.dto.request.FreelancerFileDTO"
+	    useGeneratedKeys="true" keyProperty="fileSq">
+	    INSERT INTO TBL_COMMON_FILE_S (file_original_nm, file_save_nm, file_typ, file_size)
+	    VALUES (#{fileOriginalNm}, #{fileSaveNm}, #{fileTyp}, #{fileSize})
+	</insert>
+	
+	<!-- 프로필 이미지 매핑 저장 -->
+	<insert id="insertFreelancerProfileImageMapping">
+	    INSERT INTO TBL_FREELANCER_PROFILE_IMAGE_S (freelancer_sq, file_sq)
+	    VALUES (#{freelancerSq}, #{fileSq})
+	</insert>
+
+</mapper>

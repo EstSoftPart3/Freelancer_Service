@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.domain.interview.mapper.InterviewMapper">
+
+    <!-- 인터뷰 신청 -->
+    <insert id="insertInterview" parameterType="com.example.demo.domain.interview.dto.request.InterviewRequestDTO"
+        useGeneratedKeys="true"  keyProperty="interviewSq">
+        INSERT INTO TBL_INTERVIEW_S (company_sq, user_sq, interview_request_txt, interview_status, interview_created_at)
+        VALUES (#{companySq}, #{userSq}, #{interviewRequestTxt}, 'W', NOW())
+    </insert>
+
+    <!-- 인터뷰 목록 조회 (사용자) -->
+    <select id="selectInterviewList" resultType="com.example.demo.domain.interview.dto.response.InterviewResponseDTO">
+        SELECT i.interview_sq, c.company_nm, i.interview_created_at, i.interview_status, i.interview_request_txt
+        FROM TBL_INTERVIEW_S i
+        JOIN TBL_COMPANY_S c ON i.company_sq = c.company_sq
+        WHERE i.user_sq = #{userSq}
+    </select>
+    
+    <!-- 인터뷰 목록 조회 (기업용) -->
+    <select id="selectInterviewListByCompanyUserSq"
+	    resultType="com.example.demo.domain.interview.dto.response.InterviewResponseDTO">
+	    SELECT i.interview_sq, c.company_nm, u.user_nm, i.interview_created_at,
+	           i.interview_status, i.interview_request_txt
+	    FROM TBL_INTERVIEW_S i
+	    JOIN TBL_COMPANY_S c ON i.company_sq = c.company_sq
+	    JOIN TBL_USER_M u ON i.user_sq = u.user_sq
+	    WHERE i.company_sq = (
+	        SELECT company_sq
+	        FROM TBL_COMPANY_MEMBER_R
+	        WHERE user_sq = #{userSq}
+	        AND company_member_leave_dt IS NULL
+	        LIMIT 1
+	    )
+	</select>
+
+    <!-- 인터뷰 상태 변경 (수락/거절) -->
+    <update id="updateInterviewStatus">
+        UPDATE TBL_INTERVIEW_S
+        SET interview_status = #{interviewStatus},
+            interview_modified_at = NOW()
+        WHERE interview_sq = #{interviewSq}
+    </update>
+    
+    <!-- 인터뷰 신청 중복 체크 -->
+    <select id="selectInterviewByUserSq" resultType="int">
+    	SELECT COUNT(*)
+    	FROM TBL_INTERVIEW_S
+    	WHERE user_sq = #{userSq}
+    	AND company_sq = #{companySq}
+    </select>
+</mapper>

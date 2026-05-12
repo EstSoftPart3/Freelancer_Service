@@ -233,10 +233,35 @@
     </where>
   </select>
 
-
   <select id="findUserByResumeSq" resultType="Long"> SELECT user_sq FROM TBL_RESUME_M WHERE
     resume_sq = #{resumeSq} </select>
 
+  <!-- 링크 등록 -->
+  <insert id="insertResumeLink" parameterType="map">
+  	INSERT INTO TBL_RESUME_LINK_S(resume_sq,link_url)
+  	VALUES(#{resumeSq}, #{linkUrl})
+  </insert>
+  
+  <!-- 링크 조회 -->
+  <select id="selectResumeLinkList" parameterType="long"
+    resultType="string">
+    SELECT link_url
+    FROM TBL_RESUME_LINK_S
+    WHERE resume_sq = #{resumeSq}
+  </select>
+  
+  <!-- 링크 수정 -->
+  <update id="updateResumeLink">
+  	UPDATE TBL_RESUME_LINK_S
+  	SET link_url = #{linkUrl}
+  	WHERE resume_sq = #{resumeSq}
+  </update>
+  
+  <!-- 링크 삭제 -->
+  <delete id="deleteResumeLinkByResumeSq" parameterType="long">
+    DELETE FROM TBL_RESUME_LINK_S
+    WHERE resume_sq = #{resumeSq}
+  </delete>
 
   <!--대표이력서
   설정-->
@@ -391,11 +416,17 @@
 
   <!-- 이력서 전체 조회 (userSq 기준) -->
   <select id="selectAllResumes" parameterType="long"
-    resultType="com.example.demo.domain.mypage.dto.response.ResumeListResponse"> SELECT resume_sq AS
-    resumeSq, resume_ttl AS resumeTtl, resume_nm AS resumeNm, resume_email AS resumeEmail,
-    resume_greeting_txt AS resumeGreetingTxt, resume_is_representative_yn AS
-    resumeIsRepresentativeYn, resume_created_at_dtm AS resumeCreatedAtDtm FROM TBL_RESUME_M WHERE
-    user_sq = #{userSq} AND resume_is_deleted_yn = 'N' ORDER BY resume_sq DESC </select>
+    resultType="com.example.demo.domain.mypage.dto.response.ResumeListResponse">
+    SELECT resume_sq AS resumeSq,
+    		resume_ttl AS resumeTtl,
+    		resume_nm AS resumeNm,
+    		resume_email AS resumeEmail,
+    		resume_greeting_txt AS resumeGreetingTxt,
+    		resume_is_representative_yn AS resumeIsRepresentativeYn,
+    		resume_created_at_dtm AS resumeCreatedAtDtm
+	FROM TBL_RESUME_M WHERE
+    user_sq = #{userSq} AND resume_is_deleted_yn = 'N' ORDER BY resume_sq DESC
+	</select>
 
   <select id="selectParentSkillTags"
     resultType="com.example.demo.domain.mypage.dto.ParentSkillTagDTO"> SELECT skill_tag_sq AS

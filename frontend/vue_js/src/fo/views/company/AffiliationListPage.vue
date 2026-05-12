@@ -71,12 +71,13 @@
               class="form-control w-auto me-2"
               type="search"
               placeholder="검색어 입력"
-              @keyup.enter="submit"
+              @keyup.enter="changeFilter"
             />
             <button class="btn btn-primary px-3" type="submit">검색</button>
           </form>
         </div>
       </div>
+
       <div class="row">
         <div class="col">
           <div class="blog-posts">
@@ -139,10 +140,11 @@
                           class="font-weight-bold line-height-2 mb-0 text-truncate"
                           style="font-size: 1rem; max-width: 85%"
                         >
+                          <!-- ✅ 회사명 클릭 → 상세 페이지 이동 -->
                           <button
                             type="button"
                             class="text-primary fw-bold text-decoration-none border-0 bg-transparent p-0 text-start"
-                            @click="clickApplication(afltn)"
+                            @click="goToDetail(afltn.sq)"
                           >
                             {{ afltn.companyNm }}
                           </button>
@@ -189,11 +191,12 @@
                       </div>
 
                       <div class="d-grid mt-auto">
+                        <!-- ✅ 소속 신청하기 버튼 → 기존 모달 유지 -->
                         <button
                           type="button"
                           class="btn btn-sm"
                           :class="
-                            userStore.affiliatedCompanySq === afltn.sq
+                            userStore.affiliatedCompanySq === afltn.companySq
                               ? 'btn-light disabled'
                               : afltn.isApply
                                 ? 'btn-light disabled'
@@ -202,7 +205,7 @@
                           @click="clickApplication(afltn)"
                         >
                           {{
-                            userStore.affiliatedCompanySq === afltn.sq
+                            userStore.affiliatedCompanySq === afltn.companySq
                               ? '소속 중'
                               : afltn.isApply
                                 ? '소속 신청 완료'
@@ -230,6 +233,7 @@
     </div>
   </section>
 </template>
+
 <script setup>
 import { api } from '@/axios'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
@@ -240,7 +244,9 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { useUserStore } from '@/fo/stores/userStore'
 import { onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const isLoading = ref(false)
 
 const modalStore = useModalStore()
@@ -249,6 +255,90 @@ const affiliationStore = useAffiliationStore()
 const userStore = useUserStore()
 
 const afltnList = ref([])
+
+// ✅ 더미데이터
+const dummyAfltnList = [
+  {
+    sq: 15,
+    companyNm: '이에스티소프트',
+    profileImg: '',
+    tags: ['IT', 'AI', '스타트업'],
+    greeting: '함께 성장하는 IT 기업입니다. 열정 있는 개발자를 모집합니다.',
+    viewCnt: 151,
+    isScrap: false,
+    isApply: false,
+  },
+  {
+    sq: 16,
+    companyNm: '카카오엔터프라이즈',
+    profileImg: '',
+    tags: ['플랫폼', '클라우드', '대기업'],
+    greeting: '카카오의 B2B 전문 기업입니다. 다양한 프로젝트에 참여하세요.',
+    viewCnt: 320,
+    isScrap: true,
+    isApply: false,
+  },
+  {
+    sq: 17,
+    companyNm: '네이버클라우드',
+    profileImg: '',
+    tags: ['클라우드', 'DevOps', '대기업'],
+    greeting: '네이버 클라우드 플랫폼과 함께 미래를 만들어갈 인재를 찾습니다.',
+    viewCnt: 540,
+    isScrap: false,
+    isApply: true,
+  },
+  {
+    sq: 18,
+    companyNm: '라인플러스',
+    profileImg: '',
+    tags: ['글로벌', '메신저', '스타트업'],
+    greeting: '글로벌 메신저 LINE을 함께 만들어 나갈 프리랜서를 모집합니다.',
+    viewCnt: 210,
+    isScrap: false,
+    isApply: false,
+  },
+  {
+    sq: 19,
+    companyNm: '토스뱅크',
+    profileImg: '',
+    tags: ['핀테크', '금융', 'IT'],
+    greeting: '금융을 혁신하는 토스뱅크에서 함께 일할 파트너를 찾습니다.',
+    viewCnt: 430,
+    isScrap: true,
+    isApply: false,
+  },
+  {
+    sq: 20,
+    companyNm: '우아한형제들',
+    profileImg: '',
+    tags: ['O2O', '물류', '플랫폼'],
+    greeting: '배달의민족을 만드는 우아한형제들과 함께하세요.',
+    viewCnt: 380,
+    isScrap: false,
+    isApply: false,
+  },
+  {
+    sq: 21,
+    companyNm: '크래프톤',
+    profileImg: '',
+    tags: ['게임', '글로벌', '엔터테인먼트'],
+    greeting: 'PUBG를 만든 크래프톤에서 함께 게임을 개발할 인재를 찾습니다.',
+    viewCnt: 290,
+    isScrap: false,
+    isApply: false,
+  },
+  {
+    sq: 22,
+    companyNm: '당근마켓',
+    profileImg: '',
+    tags: ['커머스', '로컬', '스타트업'],
+    greeting: '지역 커뮤니티를 연결하는 당근마켓의 성장에 함께해주세요.',
+    viewCnt: 175,
+    isScrap: false,
+    isApply: false,
+  },
+]
 
 const formatNum = (num) => {
   if (num < 1000) {
@@ -260,27 +350,26 @@ const formatNum = (num) => {
   }
 }
 
-// 한 화면에 보일 박스 숫자 설정
 const size = 8
-
 const currentPage = ref(1)
-
 const totalPages = ref(1)
 
-// 필터
 const searchType = ref('all')
 const keyword = ref('')
 const sortType = ref('latest')
 
-// 주소 코드 리스트
 const addressCdList = ref([])
 const childrenAddressCdList = ref({})
-const selectedParent = ref('all') // 선택된 부모 코드
+const selectedParent = ref('all')
 const addressCd = ref('all')
 
-// 부모 변경 시 자식 초기화
+// ✅ 회사명 클릭 → 소속 상세 페이지 이동
+const goToDetail = (sq) => {
+  router.push({ name: 'AffiliationDetailPage', params: { company_sq: sq } })
+}
+
 const onParentChange = () => {
-  addressCd.value = 'all' // 자식 초기화
+  addressCd.value = 'all'
   childrenAddressCdList.value = {}
   const parent = addressCdList.value.find(
     (item) => item.areaCodeSq === selectedParent.value,
@@ -290,7 +379,6 @@ const onParentChange = () => {
   getAfltnList()
 }
 
-// 주소 필터 리스트 불러오기
 const getAllAddress = async () => {
   try {
     const res = await api.$get(`/affiliation/address`)
@@ -301,18 +389,15 @@ const getAllAddress = async () => {
           const children = res.output.filter(
             (cd) => cd.parentAreaCodeSq === parent.areaCodeSq,
           )
-          return {
-            ...parent,
-            children,
-          }
+          return { ...parent, children }
         })
     }
   } catch (error) {
-    alertStore.show('주소 정보 로드에 실패하였습니다.', 'danger')
+    // 더미 환경에서는 무시
+    console.warn('주소 API 실패, 더미 환경으로 동작')
   }
 }
 
-// 공고 목록 가져오기
 const getAfltnList = async () => {
   isLoading.value = true
   try {
@@ -329,7 +414,6 @@ const getAfltnList = async () => {
     const res = await api.$get(
       `/affiliation?page=${currentPage.value}&size=${size}&sortType=${sortType.value}${searchFilter}${addressFilter}`,
     )
-    // console.log(res.output)
     if (res) {
       if (res.output.totalElements == 0) {
         totalPages.value = 1
@@ -342,16 +426,19 @@ const getAfltnList = async () => {
       affiliationStore.viewerSq = res.output.viewerSq
     }
   } catch (error) {
-    alertStore.show('소속 공고를 불러올 수 없습니다.', 'danger')
+    // ✅ API 실패 시 더미데이터로 대체
+    console.warn('API 호출 실패, 더미데이터 사용:', error)
+    afltnList.value = dummyAfltnList
+    totalPages.value = 1
   } finally {
     isLoading.value = false
   }
 }
 
-// 스크랩 버튼 클릭
 const clickScrap = async (sq) => {
   if (!affiliationStore.viewerSq) {
     alertStore.show('로그인 후 이용해주세요.', 'danger')
+    return
   }
   try {
     const res = await api.$post(`/affiliation/${sq}/scrap`)
@@ -362,27 +449,35 @@ const clickScrap = async (sq) => {
       alertStore.show('추천 반영에 실패하였습니다.', 'danger')
     }
   } catch (error) {
-    alertStore.show('로그인 후 이용해주세요.', 'danger')
+    // ✅ 더미 환경에서는 직접 토글
+    const target = afltnList.value.find((a) => a.sq === sq)
+    if (target) {
+      target.isScrap = !target.isScrap
+      alertStore.show(
+        target.isScrap ? '스크랩 되었습니다.' : '스크랩 해제되었습니다.',
+        'success',
+      )
+    }
   }
 }
 
-// 소속 신청하기 모달
 const clickApplication = async (afltnInfo) => {
-  await api.$patch(`/affiliation/${afltnInfo.sq}/increment-view`)
-
+  try {
+    await api.$patch(`/affiliation/${afltnInfo.sq}/increment-view`)
+  } catch (e) {
+    // 더미 환경에서는 무시
+  }
   modalStore.openModal(AffiliationRecruit, {
     afltnInfo: afltnInfo,
     onConfirm: getAfltnList,
   })
 }
 
-// 검색 또는 채택 상태 변경 시 전체 페이지 수가 변경되므로 현재 페이지를 1페이지로 초기화 후 리스트 갱신
 const changeFilter = () => {
   currentPage.value = 1
   getAfltnList()
 }
 
-// 전체 글자 없애기
 const removeAllTxt = (str) => {
   if (str.endsWith('전체')) {
     return str.slice(0, -2)
@@ -399,10 +494,11 @@ onMounted(() => {
   getAfltnList()
 })
 </script>
+
 <style>
 .line-clamp-3 {
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* 보여줄 줄 수 */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;

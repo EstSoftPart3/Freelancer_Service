@@ -439,7 +439,7 @@
 
 <script setup>
 import PasswordCheck from '../common/PasswordCheck.vue'
-import { watchEffect, reactive, ref } from 'vue'
+import { watchEffect, reactive, ref, onMounted } from 'vue'
 import { api } from '@/axios'
 import { debounce } from 'lodash'
 import { useAlertStore } from '@/fo/stores/alertStore'
@@ -487,6 +487,29 @@ const editing = reactive({
   userEmail: false,
   userPhoneNum: false,
   address: false,
+})
+
+onMounted(() => {
+  const stored = sessionStorage.getItem('password-validate-token')
+
+  // null이거나 "undefined" 문자열이면 스킵
+  if (!stored || stored === 'undefined') {
+    sessionStorage.removeItem('password-validate-token')
+    return
+  }
+
+  try {
+    const { expiredAt } = JSON.parse(stored)
+    if (Date.now() < expiredAt) {
+      isConfirmed.value = true
+    } else {
+      sessionStorage.removeItem('password-validate-token')
+    }
+  } catch (e) {
+    // JSON 파싱 실패 시 삭제
+    sessionStorage.removeItem('password-validate-token')
+    console.error('토큰 파싱 실패:', e)
+  }
 })
 
 // 파일 변경 이벤트 핸들러

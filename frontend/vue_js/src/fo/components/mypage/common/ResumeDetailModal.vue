@@ -319,6 +319,14 @@
             </li>
           </ul>
 
+          <!-- 링크 -->
+          <h5 class="text-primary">링크</h5>
+          <ul class="list-unstyled">
+            <li v-for="(link, index) in resumeInfo.linkList" :key="index">
+              <a :href="link.linkUrl" target="_blank">{{ link.linkUrl }}</a>
+            </li>
+          </ul>
+
           <!-- 기술 -->
           <h5 class="text-primary">보유 기술</h5>
           <div class="d-flex gap-2 flex-wrap mb-3">
@@ -402,6 +410,7 @@ const resumeInfo = ref({
   trainingList: [],
   projectList: [],
   certificationList: [],
+  linkList: [],
   skillTagList: [],
   resumeGreetingTxt: '',
   attachmentList: [],

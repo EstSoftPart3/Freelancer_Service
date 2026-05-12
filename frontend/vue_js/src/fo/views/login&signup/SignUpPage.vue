@@ -78,7 +78,15 @@ async function handleSubmit(rawFormData) {
     userPhoneNum: rawFormData.phone,
     userEmail: `${rawFormData.emailId}@${rawFormData.emailDomain}`,
     userAgreedPrivacyPolicyYn: rawFormData.terms ? 'Y' : 'N',
-    userBirthDt: rawFormData.dob,
+    userBirthDt: rawFormData.dob
+      ? (() => {
+          const d = new Date(rawFormData.dob)
+          const year = d.getFullYear()
+          const month = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        })()
+      : null,
     userTypeCd: Number(rawFormData.typeCode),
     userSignupTypeCd: Number(rawFormData.signupTypeCode),
     zonecode: rawFormData.postcode,

@@ -76,5 +76,10 @@ public class AffiliationController {
     	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "주소 코드 리스트 조회 완료.", affiliationService.getAddressList()));
     }
     
+    // 소속 상세보기 조회
+    @GetMapping("/detail/{companySq}")
+    public ResponseEntity<ApiResponse<AffiliationDetailDTO>> getAffiliationDetail(@AuthenticationPrincipal Long userSq, @PathVariable Long companySq) {
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 상세보기 조회 완료", affiliationService.getAffiliationDetail(userSq, companySq)));
+    }
 
 }

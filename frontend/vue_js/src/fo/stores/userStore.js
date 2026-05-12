@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', {
       ? Number(localStorage.getItem('userSq'))
       : null,
     userNm: localStorage.getItem('userNm') || '',
+    userEmail: localStorage.getItem('userEmail') || '',
     userType: localStorage.getItem('userType') || '',
     userAddress: localStorage.getItem('userAddress') || '',
     // 문자열을 숫자로 변환하여 저장
@@ -16,7 +17,9 @@ export const useUserStore = defineStore('user', {
       ? Number(localStorage.getItem('userLng'))
       : null,
     isAffiliated: localStorage.getItem('isAffiliated') || 'N',
-    affiliatedCompanySq: null,
+    affiliatedCompanySq: localStorage.getItem('affiliatedCompanySq')
+      ? Number(localStorage.getItem('affiliatedCompanySq'))
+      : null,
     // [추가] 기업 인증 상태 (기본값 null)
     companyAuthStatusCd: localStorage.getItem('companyAuthStatusCd')
       ? Number(localStorage.getItem('companyAuthStatusCd'))
@@ -35,6 +38,7 @@ export const useUserStore = defineStore('user', {
     setUser({
       userSq,
       userNm,
+      userEmail,
       userTypeCd,
       address,
       latitude,
@@ -48,16 +52,22 @@ export const useUserStore = defineStore('user', {
 
       this.userSq = userSq
       this.userNm = userNm
+      this.userEmail = userEmail || ''
       this.userType = userType
       this.userAddress = address || ''
       this.userLat = latitude
       this.userLng = longitude
       this.isAffiliated = isAffiliated || 'N'
       this.affiliatedCompanySq = affiliatedCompanySq || null
+      if (affiliatedCompanySq) {
+        localStorage.setItem('affiliatedCompanySq', affiliatedCompanySq)
+      }
+
       this.companyAuthStatusCd = companyAuthStatusCd // [추가]
 
       localStorage.setItem('userSq', userSq)
       localStorage.setItem('userNm', userNm)
+      if (userEmail) localStorage.setItem('userEmail', userEmail)
       localStorage.setItem('userType', userType)
       // [추가] 로컬 스토리지 저장 (새로고침 대비)
       if (address) localStorage.setItem('userAddress', address)
@@ -73,6 +83,7 @@ export const useUserStore = defineStore('user', {
     clearUser() {
       this.userSq = null
       this.userNm = ''
+      this.userEmail = ''
       this.userType = ''
       this.userAddress = ''
       this.userLat = null
@@ -83,6 +94,7 @@ export const useUserStore = defineStore('user', {
 
       localStorage.removeItem('userSq')
       localStorage.removeItem('userNm')
+      localStorage.removeItem('userEmail')
       localStorage.removeItem('userType')
       localStorage.removeItem('userAddress')
       localStorage.removeItem('userLat')
@@ -92,6 +104,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')
       localStorage.removeItem('companyAuthStatusCd')
+      localStorage.removeItem('affiliatedCompanySq')
     },
   },
 })

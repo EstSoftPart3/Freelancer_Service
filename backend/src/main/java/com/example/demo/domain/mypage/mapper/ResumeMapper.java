@@ -95,7 +95,16 @@ public interface ResumeMapper {
 	int countFileUsageInAttachment(Long fileSq);
 
 	int countFileUsageInAttachmentExceptResume(@Param("fileSq") Long fileSq, @Param("resumeSq") Long resumeSq);
-
+	
+	// 링크 등록
+	int insertResumeLink(@Param("resumeSq")Long resumeSq, @Param("linkUrl") String linkUrl);
+	// 링크 조회
+	List<String> selectResumeLinkList(Long resumeSq);
+	// 링크 수정
+	int updateResumeLink(@Param("resumeSq") Long resumeSq, @Param("linkUrl") String linkUrl);
+	// 링크 삭제
+	int deleteResumeLinkByResumeSq(Long resumeSq);	
+	
 	// 1. 학력 조회 (업데이트용)
 	List<ResumeRequestDTO.EducationDTO> selectEducationListForUpdateByResumeSq(Long resumeSq);
 

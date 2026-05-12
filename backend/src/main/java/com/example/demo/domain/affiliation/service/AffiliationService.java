@@ -1,6 +1,7 @@
 package com.example.demo.domain.affiliation.service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.dto.request.SearchFilterRequest;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
+import com.example.demo.domain.affiliation.dto.response.AffiliationDetailDTO;
 import com.example.demo.domain.affiliation.dto.response.AffiliationListResponse;
 import com.example.demo.domain.affiliation.dto.response.AffiliationResponse;
 import com.example.demo.domain.affiliation.dto.response.ApplicantListResponse;
@@ -31,9 +33,12 @@ import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
 import com.example.demo.domain.user.service.NotificationService;
 
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AffiliationService {
@@ -392,4 +397,23 @@ public class AffiliationService {
 				.companies(affiliations).viewerSq(userSq).build();
 	}
 
+	// 소속 상세 페이지 상세 정보
+	@Transactional(readOnly = true)
+	public AffiliationDetailDTO getAffiliationDetail(Long userSq, Long companySq) {
+	    log.info("소속 상세 페이지 정보 조회 시작");
+	    
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("userSq", userSq);
+	    params.put("companySq", companySq);
+	    
+	    AffiliationDetailDTO result = affiliationMapper.selectAffiliationDetail(params);
+	    
+	    if (result == null) {
+	        throw new RuntimeException("존재하지 않는 소속입니다.");
+	    }
+	    
+	    log.info("소속 상세 페이지 정보 조회 완료");
+	    
+	    return result;
+	}
 }

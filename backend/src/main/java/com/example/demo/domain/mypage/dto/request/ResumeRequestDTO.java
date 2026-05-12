@@ -34,6 +34,7 @@ public class ResumeRequestDTO {
     private List<ResumeFileDTO> attachmentList;
 
     private List<SkillTagDTO> skillTagList; // 전체 기술 태그 리스트
+    private List<String> linkList;
 
     @Getter
     @Setter

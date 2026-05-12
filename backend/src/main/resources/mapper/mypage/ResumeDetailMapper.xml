@@ -93,4 +93,13 @@
     project_application_sq = #{applicationSq} AND read_application_dtm IS NULL </update>
 
 
+	<!-- 링크 추가 -->
+	<select id="selectLinkList" parameterType="long" resultType="com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO$LinkDTO">
+	    SELECT
+	        resume_link_sq,
+	        link_url
+	    FROM TBL_RESUME_LINK_S
+	    WHERE resume_sq = #{resumeSq}
+	    ORDER BY resume_link_sq ASC
+	</select>
 </mapper>

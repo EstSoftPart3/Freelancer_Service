@@ -190,6 +190,15 @@ const headerInfo = computed(() => {
           { text: '프로젝트 수정' },
         ],
       }
+    case 'InterviewList':
+      return {
+        title: '인터뷰',
+        strongText: '목록',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '인터뷰 목록' },
+        ],
+      }
     default:
       return {
         title: '마이페이지',

@@ -1,5 +1,7 @@
 package com.example.demo.domain.mypage.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,6 +44,7 @@ public class InformationEditController {
         boolean matches = informationEditService.checkPassword(userSq, dto.getCurrentPassword());
 
         if (matches) {
+        	String token = UUID.randomUUID().toString();
             return ApiResponse.of(HttpStatus.OK, "비밀번호 일치", true);
         } else {
             return ApiResponse.error(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");

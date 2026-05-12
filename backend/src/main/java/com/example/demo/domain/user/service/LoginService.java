@@ -61,6 +61,7 @@ public class LoginService {
         TokenDTO tokenDTO = new TokenDTO(accessToken, refreshToken);
         LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
         loginResponseDTO.setUserNm(user.getUserNm());
+        loginResponseDTO.setUserEmail(user.getUserEmail());
         loginResponseDTO.setUserTypeCd(user.getUserTypeCd());
 
         adminDashBoardMapper.insertConnectedUser(user.getUserSq());

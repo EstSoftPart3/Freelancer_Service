@@ -124,6 +124,9 @@ public class ResumeDetailService {
 
         // 2. 첨부파일 리스트 URL 생성 (로컬 API 경로)
         List<java.util.Map<String, Object>> attachments = repository.getAttachmentList(resumeSq);
+        
+        // 링크 추가
+        resume.setLinkList(repository.getLinkList(resumeSq));
 
         List<ResumeDetailResponseDTO.AttachmentDTO> attachmentDTOs = attachments.stream()
                 .map(map -> {

@@ -3,6 +3,36 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.affiliation.mapper.AffiliationMapper">
+
+	<resultMap id="affiliationDetailMap" 
+	           type="com.example.demo.domain.affiliation.dto.response.AffiliationDetailDTO">
+	    <id property="companySq" column="company_sq"/>
+	    <result property="companyNm" column="company_nm"/>
+	    <result property="companyCeoNm" column="company_ceo_nm"/>
+        <result property="companyOpenDt" column="company_open_dt"/>
+	    <result property="addressSq" column="address_sq"/>
+	    <result property="companyUrl" column="company_url"/>
+	    <result property="companyBizNum" column="company_biz_num"/>
+	    <result property="companyIsRecruitingYn" column="company_is_recruiting_yn"/>
+	    <result property="companyGreetingTxt" column="company_greeting_txt"/>
+	    <result property="companyViewCnt" column="company_view_cnt"/>
+	    <result property="address" column="address"/>
+	    <result property="detailAddress" column="detail_address"/>
+	    <result property="isApply" column="is_apply"/>
+		<result property="isMember" column="is_member"/>
+	
+	    <collection property="projects" 
+	                ofType="com.example.demo.domain.affiliation.dto.response.AffiliationProjectDTO">
+	        <id property="projectSq" column="project_sq"/>
+	        <result property="projectTtl" column="project_ttl"/>
+	        <result property="projectDescriptionTxt" column="project_description_txt"/>
+	        <result property="projectStartDt" column="project_start_dt"/>
+	        <result property="projectEndDt" column="project_end_dt"/>
+	        <result property="projectPreferenceTxt" column="project_preference_txt"/>
+	        <result property="projectCandidateCnt" column="project_candidate_cnt"/>
+	        <result property="projectIsDeletedYn" column="project_is_deleted_yn"/>
+	    </collection>
+	</resultMap>
 	
 	<select id="findAll" resultType="com.example.demo.domain.affiliation.entity.Company">
 		SELECT * FROM TBL_COMPANY_S 
@@ -655,5 +685,48 @@
       AND m.company_member_status_cd = 401
       AND m.company_member_leave_dt IS NULL
 </select>
+
+	<!-- 소속 상세페이지 조회 -->
+	<select id="selectAffiliationDetail" parameterType="Long" resultMap="affiliationDetailMap">
+		SELECT c.company_sq,
+			   c.company_nm,
+			   c.company_ceo_nm,
+			   c.company_open_dt,
+			   a.address_sq,
+			   c.company_url,
+			   c.company_biz_num,
+			   c.company_is_recruiting_yn,
+			   c.company_greeting_txt,
+			   c.company_view_cnt,
+			   a.address,
+			   a.detail_address,
+          	   <!-- 신청 중 여부 추가 -->
+	           (SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+	            WHERE company_sq = c.company_sq
+	            AND user_sq = #{userSq}
+	            AND company_application_status_cd = 501
+	            AND company_application_is_deleted_yn = 'N') > 0 AS is_apply,
+               <!-- 소속 중 여부 추가 -->
+	           (SELECT COUNT(*) FROM TBL_COMPANY_MEMBER_R
+	            WHERE company_sq = c.company_sq
+	            AND user_sq = #{userSq}
+	            AND company_member_status_cd = 401
+	            AND company_member_leave_dt IS NULL) > 0 AS is_member,
+			   p.project_sq,
+			   p.project_ttl,
+			   p.project_description_txt,
+			   p.project_start_dt,
+			   p.project_end_dt,
+			   p.project_preference_txt,
+			   p.project_candidate_cnt,
+			   p.project_is_deleted_yn
+		FROM TBL_COMPANY_S c
+		LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = c.address_sq
+		LEFT JOIN TBL_PROJECT_M p ON p.company_sq = c.company_sq
+									AND p.project_is_deleted_yn = 'N'
+									AND p.project_end_dt >= CURDATE()
+		WHERE c.company_sq = #{companySq}
+	</select>
+	
 
 </mapper>

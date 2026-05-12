@@ -697,6 +697,40 @@
             />
           </div>
 
+          <!-- 링크 -->
+          <div class="form-group mb-3">
+            <label class="form-label mb-1 text-2" style="font-weight: bold">
+              링크
+              <a
+                href="#"
+                class="text-grey text-decoration-none small ms-2"
+                @click.prevent="addLink"
+                >+ 추가하기</a
+              >
+            </label>
+
+            <div
+              v-for="(link, index) in resumeForm.linkList"
+              :key="index"
+              class="d-flex align-items-center mb-2 gap-2"
+            >
+              <input
+                v-model="link.url"
+                type="text"
+                class="form-control text-3 h-auto py-2"
+                style="border: none"
+                placeholder="https://github.com/..."
+              />
+              <span
+                class="text-grey"
+                style="cursor: pointer; font-size: 18px; line-height: 1"
+                title="삭제"
+                @click="removeLink(index)"
+                >×</span
+              >
+            </div>
+          </div>
+
           <!-- 자기소개 -->
           <div class="form-group mb-3">
             <label class="form-label mb-1 text-2" style="font-weight: bold"
@@ -794,6 +828,7 @@ const resumeForm = reactive({
   certificationList: [],
   trainingHistoryList: [],
   skillTagList: [],
+  linkList: [],
 })
 
 const resumeId = route.params.resumeSq
@@ -835,7 +870,9 @@ function deleteProfileImage() {
 
 // 전화번호
 function formatPhoneNumber(phoneNumber) {
-  const digits = String(phoneNumber ?? '').replace(/\D/g, '').slice(0, 11)
+  const digits = String(phoneNumber ?? '')
+    .replace(/\D/g, '')
+    .slice(0, 11)
 
   if (digits.length <= 3) return digits
   if (digits.length <= 7) {
@@ -976,6 +1013,15 @@ function onAttachmentChange(event) {
     event.target.value = ''
   }
   // console.log('resumeForm.attachments', resumeForm.attachments)
+}
+
+// 링크 추가/삭제
+function addLink() {
+  resumeForm.linkList.push({ url: '' })
+}
+
+function removeLink(index) {
+  resumeForm.linkList.splice(index, 1)
 }
 
 // 학력 입력 폼 표시 로직
@@ -1160,7 +1206,21 @@ onMounted(async () => {
 
     // 1. 이력서 기본값 세팅
     Object.assign(resumeForm, data.output)
+
+    resumeForm.resumeBirthDt = resumeForm.resumeBirthDt
+      ? new Date(resumeForm.resumeBirthDt)
+      : ''
+
     resumeForm.resumePhoneNum = formatPhoneNumber(resumeForm.resumePhoneNum)
+
+    resumeForm.linkList = (data.output.linkList || []).map((url) => ({
+      url: url,
+    }))
+
+    // linkList가 없을 경우 빈 배열로 초기화
+    if (!resumeForm.linkList) {
+      resumeForm.linkList = []
+    }
 
     // 2. 상위 태그 불러오기
     const parentTags = await api.$get(
@@ -1246,6 +1306,17 @@ async function submitResume() {
     return alertStore.show('자기소개를 입력하세요.', 'danger')
   }
 
+  // 링크 유효성 검사
+  const urlRegex = /^https?:\/\/([\w-]+\.)+[\w-]+(\/[\w\-./?%&=]*)?$/
+  for (const link of resumeForm.linkList) {
+    if (link.url && link.url.trim() && !urlRegex.test(link.url.trim())) {
+      return alertStore.show(
+        '올바른 URL 형식을 입력하세요. 예: https://github.com/...',
+        'danger',
+      )
+    }
+  }
+
   // [추가] 파일 용량 체크 로직
   // 1. 프로필 이미지 체크
   for (const file of profileImages.value) {
@@ -1305,6 +1376,11 @@ async function submitResume() {
       projectHistoryStartDt: formatDate(proj.projectHistoryStartDt),
       projectHistoryEndDt: formatDate(proj.projectHistoryEndDt),
     })),
+
+    // 링크: 객체 배열 → 문자열 배열로 변환
+    linkList: (resumeForm.linkList || [])
+      .filter((link) => link.url && link.url.trim())
+      .map((link) => link.url),
   }
 
   const formData = new FormData()

@@ -48,6 +48,19 @@
           </ul>
         </li>
         <li class="nav-item">
+          <span class="nav-link">인터뷰 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/interview"
+                @click="handleNavigate"
+                >인터뷰 신청 목록</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
           <span class="nav-link">프로젝트 관리</span>
           <ul>
             <li class="nav-item">
@@ -170,6 +183,19 @@
                 to="/mypage/affiliatedScrap"
                 @click="handleNavigate"
                 >스크랩 내역</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <span class="nav-link">인터뷰 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/interview"
+                @click="handleNavigate"
+                >인터뷰 요청 목록</router-link
               >
             </li>
           </ul>

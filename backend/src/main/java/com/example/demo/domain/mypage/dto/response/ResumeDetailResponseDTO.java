@@ -28,6 +28,9 @@ public class ResumeDetailResponseDTO {
     private List<CertificationDTO> certificationList;
     private List<TrainingDTO> trainingList;
     private List<AttachmentDTO> attachmentList;
+    
+    // 링크
+    private List<LinkDTO> linkList;
 
     @Data
     public static class AddressDTO {
@@ -86,5 +89,11 @@ public class ResumeDetailResponseDTO {
     public static class AttachmentDTO {
         private String attachmentFileUrl;
         private String attachmentOriginFileNm;
+    }
+    
+    @Data
+    public static class LinkDTO {
+        private Long resumeLinkSq;
+        private String linkUrl;
     }
 }
