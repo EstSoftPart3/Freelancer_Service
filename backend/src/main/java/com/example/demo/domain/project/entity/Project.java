@@ -91,6 +91,9 @@ public class Project {
 
     @Column(name = "project_view_cnt")
     private Integer projectViewCnt;
+    
+    @Column(name = "project_status")   // admin담당자 추가
+    private Integer projectStatus;
 
     // =========================================================================
     // MyBatis 조인 결과 매핑용 (DB 컬럼 아님)

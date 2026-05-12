@@ -81,11 +81,14 @@ export function UserAuthForm({
     try {
       // 2. API 호출 (제네릭에 LoginResponse 적용)
       const response = await api.$post<LoginResponse>('/admin/login', {
+        // const response = await api.$post<LoginResponse>('/api/admin/login', {
         userId: data.id,
         userPw: data.password,
         userTypeCd: 303,
         autoLogin: false, // DTO에 있는 필드 추가 (필요시)
       })
+
+      console.log("response : ", response);
 
       // 3. 데이터 추출 로직 수정
       // api.$post가 이미 바디({status, message, output})를 반환하므로
