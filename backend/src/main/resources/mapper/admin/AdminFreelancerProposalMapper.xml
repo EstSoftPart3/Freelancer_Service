@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminFreelancerProposalMapper">
+	
+	<select id="selectAllProposal"
+		resultType="com.example.demo.domain.admin.dto.response.AdminFreelancerProposalResponseDTO">
+		SELECT
+			i.interview_sq,
+			c.company_sq,
+			c.company_nm,
+			u.user_nm,
+			i.interview_status,
+			u.user_sq,
+			i.interview_created_at,
+			i.interview_modified_at,
+			i.interview_request_txt
+		FROM TBL_INTERVIEW_S i
+		LEFT JOIN TBL_COMPANY_S c ON c.company_sq = i.company_sq
+		LEFT JOIN TBL_USER_M u ON u.user_sq = i.user_sq
+	</select>
+</mapper>
+
