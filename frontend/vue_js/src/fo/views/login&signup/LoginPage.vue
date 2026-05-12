@@ -244,11 +244,13 @@ const fetchUserInfo = async () => {
     const res = await api.$post('/me')
     const data = res.output
     // console.log('data', data)
+    console.log('data.userEmail:', data.userEmail)
 
     // Pinia 상태 저장
     userStore.setUser({
       userSq: data.userSq,
       userNm: data.userNm,
+      userEmail: data.userEmail,
       userTypeCd: data.userTypeCd,
       address: data.address,
       latitude: data.latitude,

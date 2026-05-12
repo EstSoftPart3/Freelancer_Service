@@ -41,4 +41,7 @@ public interface ResumeDetailMapper {
 
     void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq);
 
+    // 링크 조회
+    List<ResumeDetailResponseDTO.LinkDTO> selectLinkList(@Param("resumeSq") Long resumeSq);
+
 }

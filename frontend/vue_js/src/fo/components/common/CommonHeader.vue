@@ -60,6 +60,19 @@
                         <i class="fas fa-chevron-down"></i
                       ></router-link>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/freelancerListPage"
+                      >
+                        프리랜서
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
                     <li
                       class="dropdown"
                       :class="{ open: isCommunityDropdownOpen }"
@@ -336,6 +349,19 @@
                         <i class="fas fa-chevron-down"></i>
                       </router-link>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/freelancerListPage"
+                      >
+                        프리랜서
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
                     <li
                       class="dropdown"
                       :class="{ open: isCommunityDropdownOpen }"
@@ -464,13 +490,18 @@ const toggleCommunityDropdown = () => {
 }
 
 const logout = async () => {
-  await api.$post('/logout', {}) // 서버 로그아웃 API 호출
-
   // 유지할 값만 추출
   const backup = {
     pId: localStorage.getItem('savedPersonalId'),
     cId: localStorage.getItem('savedCompanyId'),
     type: localStorage.getItem('savedLoginType'),
+  }
+
+  // 서버 로그아웃은 실패해도 로컬은 무조건 정리
+  try {
+    await api.$post('/logout', {})
+  } catch (error) {
+    console.log('서버 로그아웃 실패 (무시):', error)
   }
 
   localStorage.clear()

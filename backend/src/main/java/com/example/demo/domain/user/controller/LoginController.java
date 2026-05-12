@@ -44,9 +44,14 @@ public class LoginController {
 
                 String refreshToken = authorizationHeader.substring(7);
 
-                TokenDTO newTokens = loginService.refreshToken(refreshToken);
+                
+                try {
+                	   TokenDTO newTokens = loginService.refreshToken(refreshToken);
+                	   return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "토큰갱신성공", newTokens));
 
-                return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "토큰 갱신 성공", newTokens));
+                	} catch (Exception e) {
+                	   return ResponseEntity.ok(ApiResponse.error(HttpStatus.UNAUTHORIZED, "유효하지않은리프레시토큰입니다."));
+                	}
         }
 
         @PostMapping("/me")

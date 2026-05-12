@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Param;
 import com.example.demo.domain.affiliation.entity.*;
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
 import com.example.demo.domain.affiliation.dto.request.SearchFilterRequest;
+import com.example.demo.domain.affiliation.dto.response.AffiliationDetailDTO;
+
 import java.util.*;
 
 @Mapper
@@ -133,4 +135,7 @@ public interface AffiliationMapper {
 
 	// 내 소속 정보 조회
 	Map<String, Object> findMyAffiliationInfo(@Param("userSq") Long userSq);
+	
+	// 소속 상세 정보
+	AffiliationDetailDTO selectAffiliationDetail(Map<String, Object> params);
 }

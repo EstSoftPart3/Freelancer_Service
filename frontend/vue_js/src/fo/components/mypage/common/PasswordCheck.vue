@@ -64,6 +64,15 @@ const handleCheck = async () => {
     const response = await api.$post('/mypage/edit/check-password', requestBody)
 
     if (response.status === 'OK' && response.output === true) {
+      // sessionStorage에 token 저장
+      sessionStorage.setItem(
+        'password-validate-token',
+        JSON.stringify({
+          token: response.output.token,
+          expiredAt: Date.now() + 10 * 60 * 1000,
+        }),
+      )
+
       // 비밀번호 일치
       // console.log('emit confirmed')
       emit('confirmed')

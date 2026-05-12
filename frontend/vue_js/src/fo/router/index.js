@@ -22,6 +22,7 @@ import ResetPasswordPage from '../views/login&signup/ResetPasswordPage.vue'
 import SignUpPage from '../views/login&signup/SignUpPage.vue'
 
 import AffiliationListPage from '../views/company/AffiliationListPage.vue'
+import AffiliationDetailPage from '../views/company/AffiliationDetailPage.vue'
 import QnaListPage from '../views/community/QnaListPage.vue'
 import MyPageLayout from '../views/mypage/MyPageLayout.vue'
 import InformationEditPage from '../views/mypage/common/InformationEditPage.vue'
@@ -43,6 +44,8 @@ import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
+
+import FreelancerListPage from '../views/freelancer/FreelancerListPage.vue'
 
 const routes = [
   {
@@ -151,6 +154,12 @@ const routes = [
   },
 
   {
+    path: '/affiliation/detail/:company_sq',
+    component: AffiliationDetailPage,
+    name: 'AffiliationDetailPage',
+  },
+
+  {
     path: '/signUp',
     component: SignUpPage,
     name: 'SignUp',
@@ -160,6 +169,12 @@ const routes = [
     path: '/projectListPage',
     name: 'ProjectListPage',
     component: ProjectListPage,
+  },
+
+  {
+    path: '/freelancerListPage',
+    name: 'freelancerListPage',
+    component: FreelancerListPage,
   },
 
   {
@@ -265,6 +280,13 @@ const routes = [
         name: 'ProjectPostPage',
         component: ProjectPostPage,
       },
+
+      {
+        path: 'interview',
+        name: 'InterviewList',
+        component: () =>
+          import('@/fo/views/mypage/interview/InterviewList.vue'),
+      },
     ],
   },
 ]
@@ -302,6 +324,7 @@ router.beforeEach((to, from, next) => {
     'BoardResisterPage',
     'ScheduleCalendar',
     'AffiliatedInfo',
+    'InterviewList',
     /* ... 로그인 필요 페이지들 */
   ]
 

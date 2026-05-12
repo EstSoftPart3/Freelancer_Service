@@ -172,6 +172,25 @@ public class ResumeRepository {
     public int countCertificatesByName(String searchNm) {
         return resumeMapper.countCertificatesByName(searchNm);
     }
+    
+    // 링크 등록
+    public int insertResumeLink(Long resumeSq, String linkUrl) {
+    	return resumeMapper.insertResumeLink(resumeSq, linkUrl);
+    }
+    
+    // 링크 조회
+    public List<String> selectResumeLinkList(Long resumeSq) {
+        return resumeMapper.selectResumeLinkList(resumeSq);
+    }
+    
+    // 링크 수정
+    public int updateResumeLink(Long resumeSq, String linkUrl) {
+    	return resumeMapper.updateResumeLink(resumeSq, linkUrl);
+    }
+    // 링크 삭제
+    public int deleteResumeLinkByResumeSq(Long resumeSq) {
+        return resumeMapper.deleteResumeLinkByResumeSq(resumeSq);
+    }
 
     // 수정용 불러오기
     public ResumeRequestDTO findByResumeSq(Long resumeSq) {

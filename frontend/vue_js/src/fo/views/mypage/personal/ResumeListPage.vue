@@ -12,11 +12,14 @@
     </div>
     <div class="row">
       <div class="col">
-        <ul class="simple-post-list m-0 position-relative">
+        <ul class="simple-post-list m-0">
           <li
             v-for="resume in resumeList"
             :key="resume.resumeSq"
-            style="border-bottom: 1px rgb(230, 230, 230) solid"
+            style="
+              border-bottom: 1px rgb(230, 230, 230) solid;
+              position: relative;
+            "
           >
             <!-- X(닫기) 버튼 -->
             <button

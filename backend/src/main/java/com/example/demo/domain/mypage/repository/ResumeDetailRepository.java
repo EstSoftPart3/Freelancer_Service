@@ -73,4 +73,8 @@ public class ResumeDetailRepository {
         mapper.updateReadApplicationDtmIfNull(resumeSq, projectSq, applicationSq);
     }
 
+    // 링크
+    public List<ResumeDetailResponseDTO.LinkDTO> getLinkList(Long resumeSq) {
+        return mapper.selectLinkList(resumeSq);
+    }
 }

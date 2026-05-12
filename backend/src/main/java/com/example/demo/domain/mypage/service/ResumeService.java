@@ -157,6 +157,19 @@ public class ResumeService {
 				}
 			}
 		}
+		
+		// 링크 저장
+		if (dto.getLinkList() != null) {
+		    String urlRegex = "^https?://(([\\w-]+\\.)+[\\w-]+)(/[\\w\\-./?%&=]*)?$";
+		    for (String url : dto.getLinkList()) {
+		        if (!url.matches(urlRegex)) {
+		            throw new IllegalArgumentException("올바른 URL 형식이 아닙니다: " + url);
+		        }
+		        if (resumeRepository.insertResumeLink(resumeSq, url) <= 0) {
+		            throw new IllegalArgumentException("링크 저장 실패");
+		        }
+		    }
+		}
 
 		// 프로필 이미지 저장 및 매핑
 		if (dto.getProfileImage() != null) {
@@ -481,6 +494,26 @@ public class ResumeService {
 			}
 		}
 
+		// ===================
+		// 9. 링크 처리
+		// ===================
+		// 기존 링크 전체 삭제
+		resumeRepository.deleteResumeLinkByResumeSq(resumeSq);
+
+		// 새 링크 삽입
+		if (dto.getLinkList() != null && !dto.getLinkList().isEmpty()) {
+		    String urlRegex = "^https?://(([\\w-]+\\.)+[\\w-]+)(/[\\w\\-./?%&=]*)?$";
+		    for (String url : dto.getLinkList()) {
+		        if (!url.matches(urlRegex)) {
+		            throw new IllegalArgumentException("올바른 URL 형식이 아닙니다: " + url);
+		        }
+		        if (resumeRepository.insertResumeLink(resumeSq, url) <= 0) {
+		            throw new IllegalArgumentException("링크 저장 실패.");
+		        }
+		    }
+		}
+		
+		
 		// 프로필 이미지 삭제 요청 여부 확인
 		if ((profileImages == null || profileImages.isEmpty()) && dto.getProfileImage() == null) {
 			// 기존 프로필 이미지 정보 조회
@@ -781,6 +814,10 @@ public class ResumeService {
 		// 보유 기술 태그
 		List<ResumeRequestDTO.SkillTagDTO> skillTagList = resumeRepository.findSkillTagList(resumeSq);
 		resume.setSkillTagList(skillTagList);
+		
+		// 링크
+		List<String> linkList = resumeRepository.selectResumeLinkList(resumeSq);
+		resume.setLinkList(linkList);
 
 		// [핵심 수정] 프로필 이미지 URL 세팅 (로컬 API 경로)
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(resumeSq);
@@ -903,6 +940,7 @@ public class ResumeService {
 		ResumeRequestDTO.AddressDTO address = resumeRepository
 				.findAddressByAddressSq(originDto.getAddress().getAddressSq());
 		resumeRepository.insertAddress(address);
+		System.out.println("새 addressSq: " + address.getAddressSq());
 
 		// 2. 기본정보 복사 (제목 후처리)
 		String suffix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
@@ -962,16 +1000,24 @@ public class ResumeService {
 			tag.setResumeSq(newResumeSq);
 			resumeRepository.insertResumeSkillTag(tag);
 		}
+		
+		// 9. 링크 복사
+		List<String> linkList = resumeRepository.selectResumeLinkList(originResumeSq);
+		if (linkList != null) {
+		    for (String url : linkList) {
+		        resumeRepository.insertResumeLink(newResumeSq, url);
+		    }
+		}
 
-		// 9. 파일 매핑만 (withFiles=true일 경우)
+		// 10. 파일 매핑만 (withFiles=true일 경우)
 		if (withFiles) {
-			// 9-1. 프로필 이미지 매핑만
+			// 10-1. 프로필 이미지 매핑만
 			ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(originResumeSq);
 			if (profileImage != null) {
 				resumeRepository.insertResumeProfileImageMapping(newResumeSq, profileImage.getFileSq());
 			}
 
-			// 9-2. 첨부파일 매핑만
+			// 10-2. 첨부파일 매핑만
 			for (ResumeRequestDTO.ResumeFileDTO file : resumeRepository.findAttachmentList(originResumeSq)) {
 				resumeRepository.insertResumeAttachmentMapping(newResumeSq, file.getFileSq());
 			}
