@@ -30,7 +30,7 @@ import {
   ClipboardList,
   // 추가된 아이콘
   Briefcase,
-  UserCheck,
+  // UserCheck,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'

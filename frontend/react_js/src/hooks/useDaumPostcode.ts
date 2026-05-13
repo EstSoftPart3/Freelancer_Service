@@ -22,7 +22,7 @@ interface UseDaumPostcodeProps {
 
 declare global {
   interface Window {
-    daum?: {
+    daum: {
       Postcode: new (options: {
         oncomplete: (data: DaumPostcodeData) => void
         width?: string | number
@@ -30,7 +30,7 @@ declare global {
       }) => {
         open: () => void
       }
-    }
+    } | undefined
   }
 }
 
