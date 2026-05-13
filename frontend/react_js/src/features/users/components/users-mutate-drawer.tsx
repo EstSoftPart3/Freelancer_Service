@@ -129,6 +129,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     watch,
     reset,
     setError,
+    control,
     formState: { errors, dirtyFields },
   } = useForm<UserMutateForm>({
     resolver: zodResolver(schema),
@@ -388,7 +389,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                   selected={field.value ?? undefined}
                   onSelect={field.onChange}
                   placeholder='생년월일 선택'
-                  defaultMonth={getAdultCutoffDate()}
+                  // defaultMonth={getAdultCutoffDate()}
                 />
               )}
             />

@@ -92,8 +92,8 @@ function AffiliationCompany() {
       console.log('📍 주소 선택:', data)
       
       const address = data.userSelectedType === 'R' 
-        ? data.roadAddress 
-        : data.jibunAddress
+        ? (data as any).roadAddress
+        : (data as any).jibunAddress
       
       const sigunguCode = data.sigunguCode || '1'
       

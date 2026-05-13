@@ -158,9 +158,10 @@ function FreelancerListPage() {
                     No. {selectedItem?.interviewSq} | {selectedItem?.companyNm} → {selectedItem?.userNm}
                   </DrawerDescription>
                 </div>
-                <Badge className={selectedItem && getStatusColor(selectedItem.interviewStatus)}>
-                  {selectedItem && getStatusText(selectedItem.interviewStatus)}
-                </Badge>
+                {/* <Badge className={selectedItem && getStatusColor(selectedItem.interviewStatus)}> */}
+                  <Badge className={selectedItem ? getStatusColor(selectedItem.interviewStatus) : undefined}></Badge>
+                  {/* {selectedItem && getStatusText(selectedItem.interviewStatus)}
+                </Badge> */}
               </div>
             </DrawerHeader>
 

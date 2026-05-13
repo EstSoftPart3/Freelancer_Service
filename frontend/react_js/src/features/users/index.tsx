@@ -159,6 +159,8 @@ export function Users() {
             sortOrder={search.sortOrder || 'DESC'}
             setKeyword={setKeyword}
             onFilterType={handleFilterType}
+            onFilterCompany={handleFilterCompany}   // 추가
+            onFilterGender={handleFilterGender}     // 추가
             setPage={handlePageChange}
             onSort={handleSort}
             setTagKeyword={(tag) =>

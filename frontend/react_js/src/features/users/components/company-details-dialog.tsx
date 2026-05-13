@@ -163,7 +163,8 @@ export function CompanyDetailsDialog({
       new daumNamespace.Postcode({
         oncomplete: (data) => {
           const selectedAddress =
-            data?.roadAddress || data?.jibunAddress || data?.address || ''
+            // data?.roadAddress || data?.jibunAddress || data?.address || ''
+            (data as any)?.roadAddress || (data as any)?.jibunAddress
           setCompanyAddress(selectedAddress)
           setCompanySigungu(data?.sigungu || '')
           setCompanyZonecode(data?.zonecode || '')
