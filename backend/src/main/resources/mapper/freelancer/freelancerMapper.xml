@@ -75,5 +75,14 @@
 	    INSERT INTO TBL_FREELANCER_PROFILE_IMAGE_S (freelancer_sq, file_sq)
 	    VALUES (#{freelancerSq}, #{fileSq})
 	</insert>
+	
+	<!-- 프리랜서 삭제 (N -> Y 상태변경) -->
+	<update id="deleteFreelancer">
+	    UPDATE TBL_FREELANCER_MEMBER
+	    SET freelancer_is_deleted_yn = 'Y',
+	        freelancer_modified_at = NOW()
+	    WHERE freelancer_sq = #{freelancerSq}
+	    AND user_sq = #{userSq}
+	</update>
 
 </mapper>

@@ -25,7 +25,7 @@ public class InterviewService {
 	public int createInterview(InterviewRequestDTO dto) {
 		log.info("인터뷰 신청 시작");
 		
-		int existInterview = interviewMapper.selectInterviewByUserSq(dto.getUserSq(), dto.getCompanySq());
+		int existInterview = interviewMapper.selectInterviewByUserSq(dto.getUserSq(), dto.getCompanySq(), dto.getCompanyUserSq());
 		
 		if(existInterview > 0) {
 			log.warn("중복된 인터뷰 신청");

@@ -53,5 +53,16 @@ public class FreelancerController {
 	    List<FreelancerResponseDTO> result = freelancerService.getFreelancerSearch(request);
 	    return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로랜서 검색 성공",result));
 	}
+	
+	// 프리랜서 삭제
+	@DeleteMapping("/{freelancerSq}")
+	public ResponseEntity<ApiResponse<?>> deleteFreelancer(@PathVariable Long freelancerSq, @RequestParam Long userSq) {
+	    int result = freelancerService.deleteFreelancer(freelancerSq, userSq);
+	    if (result > 0) {
+	        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프리랜서 삭제 완료", "success"));
+	    } else {
+	        return ResponseEntity.ok(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "프리랜서 삭제 실패"));
+	    }
+	}
 
 }

@@ -117,5 +117,17 @@ public class FreelancerService {
         dto.setFileSize(uploadedFileDTO.getSize());
         return dto;
     }
+    
+    // 프리랜서 삭제
+    @Transactional
+    public int deleteFreelancer(Long freelancerSq, Long userSq) {
+        log.info("프리랜서 삭제 시작");
+        int result = freelancerMapper.deleteFreelancer(freelancerSq, userSq);
+        if (result <= 0) {
+            throw new IllegalArgumentException("프리랜서 삭제 실패");
+        }
+        log.info("프리랜서 삭제 완료. freelancerSq: {}", freelancerSq);
+        return result;
+    }
 
 }

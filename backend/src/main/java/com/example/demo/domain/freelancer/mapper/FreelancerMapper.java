@@ -25,4 +25,6 @@ public interface FreelancerMapper {
     int insertFreelancerProfileImage(FreelancerFileDTO fileDTO);
     // 프로필 이미지 매핑 저장
     int insertFreelancerProfileImageMapping(@Param("freelancerSq") Long freelancerSq, @Param("fileSq") Long fileSq);
+    // 프리랜서 삭제
+    int deleteFreelancer(@Param("freelancerSq") Long freelancerSq, @Param("userSq") Long userSq);
 }

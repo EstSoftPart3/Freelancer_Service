@@ -19,7 +19,7 @@ public interface InterviewMapper {
     // 인터뷰 상태 변경
     int updateInterviewStatus(@Param("interviewSq") Long interviewSq, @Param("interviewStatus") String interviewStatus);
     // 인터뷰 중복 체크
-    int selectInterviewByUserSq(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
+    int selectInterviewByUserSq(@Param("userSq") Long userSq, @Param("companySq") Long companySq, @Param("companyUserSq") Long companyUserSq);
     // 유저 순번으로 기업 순번 확인
     List<InterviewResponseDTO> selectInterviewListByCompanyUserSq(Long userSq);
 }

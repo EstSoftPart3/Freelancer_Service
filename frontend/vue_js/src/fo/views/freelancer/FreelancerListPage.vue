@@ -140,6 +140,16 @@
                         인터뷰 신청하기
                       </button>
                     </div>
+                    <!-- 삭제 버튼 - 본인만 표시 -->
+                    <div v-if="freelancer.userSq === userStore.userSq">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm w-100"
+                        @click="deleteFreelancer(freelancer)"
+                      >
+                        삭제하기
+                      </button>
+                    </div>
                   </div>
                 </article>
               </div>
@@ -380,40 +390,40 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
-import CommonPagination from '@/fo/components/common/CommonPagination.vue'
-import { useUserStore } from '@/fo/stores/userStore'
-import { useAlertStore } from '@/fo/stores/alertStore'
-import { useModalStore } from '@/fo/stores/modalStore'
-import skillIconMap from '@/assets/skillIconMap.js'
-import SkillTagModal from '@/fo/components/community/SkillTagModal.vue'
-import { api } from '@/axios'
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue';
+import CommonPagination from '@/fo/components/common/CommonPagination.vue';
+import { useUserStore } from '@/fo/stores/userStore';
+import { useAlertStore } from '@/fo/stores/alertStore';
+import { useModalStore } from '@/fo/stores/modalStore';
+import skillIconMap from '@/assets/skillIconMap.js';
+import SkillTagModal from '@/fo/components/community/SkillTagModal.vue';
+import { api } from '@/axios';
 
-const userStore = useUserStore()
-const alertStore = useAlertStore()
-const modalStore = useModalStore()
-const router = useRouter()
+const userStore = useUserStore();
+const alertStore = useAlertStore();
+const modalStore = useModalStore();
+const router = useRouter();
 
 // 로그인 + PERSONAL이 아닌 경우만 인터뷰 신청 버튼 표시
 const canInterview = computed(
-  () => userStore.isLoggedIn && userStore.getUserType !== 'PERSONAL',
-)
+  () => userStore.isLoggedIn && userStore.getUserType !== 'PERSONAL'
+);
 
 // 기술스택 아이콘
 const getSkillIcon = (name) => {
-  const key = name.toLowerCase().replace(/[\s.]+/g, '')
-  return skillIconMap[key] || skillIconMap.default
-}
+  const key = name.toLowerCase().replace(/[\s.]+/g, '');
+  return skillIconMap[key] || skillIconMap.default;
+};
 
-const isLoading = ref(false)
-const searchType = ref('all')
-const keyword = ref('')
-const currentPage = ref(1)
-const size = 8
-const introError = ref('')
-const messageError = ref('')
+const isLoading = ref(false);
+const searchType = ref('all');
+const keyword = ref('');
+const currentPage = ref(1);
+const size = 8;
+const introError = ref('');
+const messageError = ref('');
 
 // // 더미 데이터 (API 연동 시 onMounted에서 api.$get으로 교체)
 // const freelancerList = ref([
@@ -538,20 +548,19 @@ const messageError = ref('')
 //     isScrap: false,
 //   },
 // ])
-const freelancerList = ref([])
+const freelancerList = ref([]);
 
 onMounted(async () => {
   // 로그인 체크
   if (!userStore.isLoggedIn) {
-    alertStore.show('로그인 후 이용해주세요.', 'danger')
-    router.push('/login')
-    return
+    alertStore.show('로그인 후 이용해주세요.', 'danger');
+    router.push('/login');
+    return;
   }
 
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const response = await api.$get('/freelancer/all')
-    console.log('응답 전체:', response)
+    const response = await api.$get('/freelancer/all');
     freelancerList.value = response.output.map((f) => ({
       id: f.freelancerSq,
       name: f.userNm,
@@ -563,59 +572,59 @@ onMounted(async () => {
       intro: f.freelancerGreetingTxt,
       profileImg: f.profileImgUrl ? `/api/files/${f.profileImgUrl}` : null,
       isScrap: false,
-    }))
+    }));
   } catch (error) {
-    console.log('에러 내용:', error)
-    alertStore.show('프리랜서 목록 조회 실패', 'danger')
+    console.log('에러 내용:', error);
+    alertStore.show('프리랜서 목록 조회 실패', 'danger');
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-})
+});
 
 // 검색 필터링
 const filteredList = computed(() => {
-  const kw = keyword.value.trim().toLowerCase()
-  if (!kw) return freelancerList.value
+  const kw = keyword.value.trim().toLowerCase();
+  if (!kw) return freelancerList.value;
   return freelancerList.value.filter((f) => {
-    if (searchType.value === 'name') return f.name?.toLowerCase().includes(kw)
+    if (searchType.value === 'name') return f.name?.toLowerCase().includes(kw);
     if (searchType.value === 'skill')
-      return f.skills?.some((s) => s.skillTagNm.toLowerCase().includes(kw))
+      return f.skills?.some((s) => s.skillTagNm.toLowerCase().includes(kw));
     return (
       f.name?.toLowerCase().includes(kw) ||
       f.skills?.some((s) => s.skillTagNm.toLowerCase().includes(kw)) ||
       f.intro?.toLowerCase().includes(kw)
-    )
-  })
-})
+    );
+  });
+});
 
 const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredList.value.length / size)),
-)
+  Math.max(1, Math.ceil(filteredList.value.length / size))
+);
 
 const pagedList = computed(() => {
-  const start = (currentPage.value - 1) * size
-  return filteredList.value.slice(start, start + size)
-})
+  const start = (currentPage.value - 1) * size;
+  return filteredList.value.slice(start, start + size);
+});
 
 const changeFilter = () => {
-  currentPage.value = 1
-}
+  currentPage.value = 1;
+};
 
 const toggleScrap = (freelancer) => {
   if (!userStore.isLoggedIn) {
-    alertStore.show('로그인 후 이용해주세요.', 'danger')
-    return
+    alertStore.show('로그인 후 이용해주세요.', 'danger');
+    return;
   }
-  freelancer.isScrap = !freelancer.isScrap
-}
+  freelancer.isScrap = !freelancer.isScrap;
+};
 
 watch(currentPage, () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 // ── 등록 모달 ──
-const showRegisterModal = ref(false)
-const fileInputRef = ref(null)
+const showRegisterModal = ref(false);
+const fileInputRef = ref(null);
 const registerForm = ref({
   name: '',
   email: '',
@@ -624,27 +633,27 @@ const registerForm = ref({
   file: null,
   skillTags: [],
   normalTags: [],
-})
+});
 
 const openRegisterModal = async () => {
-  showRegisterModal.value = true
-  registerForm.value.name = userStore.userNm
+  showRegisterModal.value = true;
+  registerForm.value.name = userStore.userNm;
 
   // userEmail 없으면 API로 다시 가져오기
   if (!userStore.userEmail) {
     try {
-      const res = await api.$post('/me')
-      registerForm.value.email = res.output.userEmail?.trim() || ''
+      const res = await api.$post('/me');
+      registerForm.value.email = res.output.userEmail?.trim() || '';
     } catch (e) {
-      console.log('유저 정보 조회 실패', e)
+      console.log('유저 정보 조회 실패', e);
     }
   } else {
-    registerForm.value.email = userStore.userEmail?.trim() || ''
+    registerForm.value.email = userStore.userEmail?.trim() || '';
   }
-}
+};
 
 const closeRegisterModal = () => {
-  showRegisterModal.value = false
+  showRegisterModal.value = false;
   registerForm.value = {
     name: '',
     email: '',
@@ -653,95 +662,95 @@ const closeRegisterModal = () => {
     file: null,
     skillTags: [],
     normalTags: [],
-  }
-}
+  };
+};
 
 const triggerFileInput = () => {
-  fileInputRef.value?.click()
-}
+  fileInputRef.value?.click();
+};
 
 const onFileChange = (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  registerForm.value.file = file
-  registerForm.value.previewImg = URL.createObjectURL(file)
-}
+  const file = e.target.files[0];
+  if (!file) return;
+  registerForm.value.file = file;
+  registerForm.value.previewImg = URL.createObjectURL(file);
+};
 
 // 기술 태그 모달
 const openSkillModal = () => {
   modalStore.openModal(SkillTagModal, {
     skillTags: [...registerForm.value.skillTags],
     onConfirm: (skills) => {
-      registerForm.value.skillTags = skills
+      registerForm.value.skillTags = skills;
     },
-  })
-}
+  });
+};
 
 const removeSTag = (tag) => {
   registerForm.value.skillTags = registerForm.value.skillTags.filter(
-    (t) => t !== tag,
-  )
-}
+    (t) => t !== tag
+  );
+};
 
 const removeNTag = (tag) => {
   registerForm.value.normalTags = registerForm.value.normalTags.filter(
-    (t) => t !== tag,
-  )
-}
+    (t) => t !== tag
+  );
+};
 
 // 공통 유효성 검사 함수
 const validateText = (target) => {
-  const regex = /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.!,]*$/
+  const regex = /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.!,]*$/;
 
   if (target === 'intro') {
     if (!regex.test(registerForm.value.intro)) {
       registerForm.value.intro = registerForm.value.intro.replace(
         /[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.!,]/g,
-        '',
-      )
+        ''
+      );
       introError.value =
-        '한글, 영어, 숫자, 마침표(.), 느낌표(!), 쉼표(,)만 입력 가능합니다.'
+        '한글, 영어, 숫자, 마침표(.), 느낌표(!), 쉼표(,)만 입력 가능합니다.';
     } else {
-      introError.value = ''
+      introError.value = '';
     }
     if (registerForm.value.intro.length > 100) {
-      registerForm.value.intro = registerForm.value.intro.slice(0, 100)
+      registerForm.value.intro = registerForm.value.intro.slice(0, 100);
     }
   } else if (target === 'message') {
     if (!regex.test(interviewMessage.value)) {
       interviewMessage.value = interviewMessage.value.replace(
         /[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.!,?]/g,
-        '',
-      )
+        ''
+      );
       messageError.value =
-        '한글, 영어, 숫자, 마침표(.), 느낌표(!), 쉼표(,)만 입력 가능합니다.'
+        '한글, 영어, 숫자, 마침표(.), 느낌표(!), 쉼표(,)만 입력 가능합니다.';
     } else {
-      messageError.value = ''
+      messageError.value = '';
     }
     if (interviewMessage.value.length > 100) {
-      interviewMessage.value = interviewMessage.value.slice(0, 100)
+      interviewMessage.value = interviewMessage.value.slice(0, 100);
     }
   }
-}
+};
 
 const submitRegister = async () => {
   if (!registerForm.value.name.trim()) {
-    alertStore.show('이름을 입력해주세요.', 'danger')
-    return
+    alertStore.show('이름을 입력해주세요.', 'danger');
+    return;
   }
 
   try {
-    const formData = new FormData()
+    const formData = new FormData();
 
     // 스킬 합치기
     const allSkills = [
       ...registerForm.value.skillTags.map((t) => t.skillTagNm),
       ...registerForm.value.normalTags,
-    ].join(', ')
+    ].join(', ');
 
     if (introError.value) {
-      alertStore.show('소개글을 확인해주세요.', 'danger')
-      return
+      alertStore.show('소개글을 확인해주세요.', 'danger');
+      return;
     }
 
     // dto를 JSON Blob으로 묶어서 전송
@@ -749,24 +758,24 @@ const submitRegister = async () => {
       userSq: userStore.userSq,
       freelancerSkill: allSkills,
       freelancerGreetingTxt: registerForm.value.intro,
-    }
+    };
     formData.append(
       'request',
-      new Blob([JSON.stringify(dto)], { type: 'application/json' }),
-    )
+      new Blob([JSON.stringify(dto)], { type: 'application/json' })
+    );
 
     // 이미지 있으면 추가
     if (registerForm.value.file) {
-      formData.append('profileImage', registerForm.value.file)
+      formData.append('profileImage', registerForm.value.file);
     }
 
-    await api.$post('/freelancer', formData)
+    await api.$post('/freelancer', formData);
 
-    alertStore.show('등록이 완료되었습니다.', 'success')
-    closeRegisterModal()
+    alertStore.show('등록이 완료되었습니다.', 'success');
+    closeRegisterModal();
 
     // 목록 새로고침
-    const response = await api.$get('/freelancer/all')
+    const response = await api.$get('/freelancer/all');
     freelancerList.value = response.output.map((f) => ({
       id: f.freelancerSq,
       name: f.userNm,
@@ -778,42 +787,72 @@ const submitRegister = async () => {
       intro: f.freelancerGreetingTxt,
       profileImg: f.profileImgUrl ? `/api/files/${f.profileImgUrl}` : null, // 수정
       isScrap: false,
-    }))
+    }));
   } catch (error) {
-    console.log('등록 에러:', error)
+    console.log('등록 에러:', error);
     // 백엔드 에러 메시지 사용
-    const message = error.response?.data?.message || '등록에 실패했습니다.'
-    alertStore.show(message, 'danger')
+    const message = error.response?.data?.message || '등록에 실패했습니다.';
+    alertStore.show(message, 'danger');
   }
-}
+};
+
+// 프리랜서 삭제
+const deleteFreelancer = async (freelancer) => {
+  if (!confirm('프리랜서를 삭제하시겠습니까?')) return;
+
+  try {
+    await api.$delete(
+      `/freelancer/${freelancer.id}?userSq=${userStore.userSq}`
+    );
+    alertStore.show('삭제되었습니다.', 'success');
+
+    // 목록 새로고침
+    const response = await api.$get('/freelancer/all');
+    freelancerList.value = response.output.map((f) => ({
+      id: f.freelancerSq,
+      name: f.userNm,
+      email: f.userEmail,
+      userSq: f.userSq,
+      skills: f.freelancerSkill
+        ? f.freelancerSkill.split(',').map((s) => ({ skillTagNm: s.trim() }))
+        : [],
+      intro: f.freelancerGreetingTxt,
+      profileImg: f.profileImgUrl ? `/api/files/${f.profileImgUrl}` : null,
+      isScrap: false,
+    }));
+  } catch (error) {
+    const message = error.response?.data?.message || '삭제에 실패했습니다.';
+    alertStore.show(message, 'danger');
+  }
+};
 
 // ── 인터뷰 신청 모달 ──
-const showInterviewModal = ref(false)
-const selectedFreelancer = ref(null)
-const interviewMessage = ref('')
+const showInterviewModal = ref(false);
+const selectedFreelancer = ref(null);
+const interviewMessage = ref('');
 
 const openInterviewModal = (freelancer) => {
-  selectedFreelancer.value = freelancer
-  interviewMessage.value = ''
-  showInterviewModal.value = true
-}
+  selectedFreelancer.value = freelancer;
+  interviewMessage.value = '';
+  showInterviewModal.value = true;
+};
 
 const closeInterviewModal = () => {
-  showInterviewModal.value = false
-  selectedFreelancer.value = null
-  interviewMessage.value = ''
-  messageError.value = ''
-}
+  showInterviewModal.value = false;
+  selectedFreelancer.value = null;
+  interviewMessage.value = '';
+  messageError.value = '';
+};
 
 const submitInterview = async () => {
   if (!interviewMessage.value.trim()) {
-    alertStore.show('오류 메시지를 입력해주세요.', 'danger')
-    return
+    alertStore.show('메시지를 입력해주세요.', 'danger');
+    return;
   }
 
   if (messageError.value) {
-    alertStore.show('오류 메시지를 확인해주세요.', 'danger')
-    return
+    alertStore.show('메시지를 확인해주세요.', 'danger');
+    return;
   }
 
   try {
@@ -821,16 +860,16 @@ const submitInterview = async () => {
       userSq: selectedFreelancer.value.userSq,
       companySq: userStore.affiliatedCompanySq,
       interviewRequestTxt: interviewMessage.value,
-    })
-    alertStore.show('인터뷰 신청이 완료되었습니다.', 'success')
-    closeInterviewModal()
+    });
+    alertStore.show('인터뷰 신청이 완료되었습니다.', 'success');
+    closeInterviewModal();
   } catch (error) {
-    console.log('인터뷰 신청 에러:', error)
+    console.log('인터뷰 신청 에러:', error);
     const message =
-      error.response?.data?.message || '인터뷰 신청에 실패했습니다.'
-    alertStore.show(message, 'danger')
+      error.response?.data?.message || '인터뷰 신청에 실패했습니다.';
+    alertStore.show(message, 'danger');
   }
-}
+};
 </script>
 
 <style scoped>

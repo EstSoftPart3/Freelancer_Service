@@ -21,4 +21,6 @@ public class InterviewResponseDTO {
     private String interviewRequestTxt;
     // 유저 이름
     private String userNm;
+    // 소속된 유저 순번
+ 	private Long companyUserSq;
 }

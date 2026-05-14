@@ -11,6 +11,8 @@ public class InterviewRequestDTO {
     private Long companySq;
     // 유저 순번
     private Long userSq;
+    // 소속 유저 순번
+    private Long companyUserSq;
     // 인터뷰 요청 메세지
     private String interviewRequestTxt;
     // 인터뷰 상태
