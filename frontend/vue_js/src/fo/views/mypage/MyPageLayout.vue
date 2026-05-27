@@ -190,6 +190,15 @@ const headerInfo = computed(() => {
           { text: '프로젝트 수정' },
         ],
       }
+    case 'NotificationList':
+      return {
+        title: '알림',
+        strongText: '내역',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '알림 내역' },
+        ],
+      }
     default:
       return {
         title: '마이페이지',
