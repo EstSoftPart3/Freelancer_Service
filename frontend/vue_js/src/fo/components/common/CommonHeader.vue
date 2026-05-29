@@ -102,6 +102,19 @@
                         공지사항
                       </router-link>
                     </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/estimates"
+                      >
+                        견적의뢰
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -376,6 +389,19 @@
                         to="/notice"
                       >
                         공지사항
+                      </router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
+                          active: isProjectActive,
+                          'current-page-active': true,
+                        }"
+                        to="/estimates"
+                      >
+                        견적의뢰
+                        <i class="fas fa-chevron-down"></i>
                       </router-link>
                     </li>
                   </ul>

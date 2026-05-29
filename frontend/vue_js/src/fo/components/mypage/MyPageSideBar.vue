@@ -74,6 +74,14 @@
                 >스크랩 내역</router-link
               >
             </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/estimates"
+                @click="handleNavigate"
+                >견적의뢰서</router-link
+              >
+            </li>
           </ul>
         </li>
         <li class="nav-item">
