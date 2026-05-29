@@ -126,6 +126,12 @@
               </div>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-3">
+              <span
+                :class="['btn btn-rounded btn-3d btn-sm btn-light text-dark']"
+                style="cursor: default; pointer-events: none"
+              >
+                매칭 스킬 없음
+              </span>
               <button
                 v-for="skill in project.reqSkills"
                 :key="skill.id"

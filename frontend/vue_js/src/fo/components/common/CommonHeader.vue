@@ -229,17 +229,17 @@
                     </div>
 
                     <div v-else class="p-4 text-center text-muted">
-                      <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
-                      <small>새로운 알림이 없습니다.</small>
+                      <!-- <i class="bi bi-bell-slash fs-4 d-block mb-2"></i> -->
+                      <small>최근 7일 이내 새로운 알림이 없습니다.</small>
                     </div>
 
-                    <!-- <div class="p-2 border-top text-center bg-light">
+                    <div class="p-2 border-top text-center bg-light">
                       <router-link
-                        to="/mypage/notifications"
+                        to="/mypage/notificationList"
                         class="small text-primary text-decoration-none fw-bold"
                         >전체보기</router-link
                       >
-                    </div> -->
+                    </div>
                   </div>
                 </div>
 

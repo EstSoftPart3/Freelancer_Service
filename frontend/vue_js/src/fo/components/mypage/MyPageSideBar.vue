@@ -77,6 +77,19 @@
           </ul>
         </li>
         <li class="nav-item">
+          <span class="nav-link">알림 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/notificationList"
+                @click="handleNavigate"
+                >알림 내역</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
           <span class="nav-link">회원 정보 관리</span>
           <ul>
             <li class="nav-item">
@@ -191,6 +204,19 @@
                 to="/mypage/projectScrap"
                 @click="handleNavigate"
                 >스크랩 내역</router-link
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <span class="nav-link">알림 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/notificationList"
+                @click="handleNavigate"
+                >알림 내역</router-link
               >
             </li>
           </ul>

@@ -154,6 +154,10 @@
         <ul>
           <li>
             <strong class="text-color-primary">필수 기술 </strong>
+            <span class="text-2 font-weight-bold text-muted px-1"
+              >매칭 스킬 없음</span
+            >
+
             <ul class="ps-4 mb-2">
               <li
                 v-for="skillGroup in project.projectRequiredSkills"

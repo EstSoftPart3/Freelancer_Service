@@ -43,6 +43,7 @@ import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
+import NotificationListPage from '../views/mypage/common/NotificationListPage.vue'
 
 const routes = [
   {
@@ -232,6 +233,11 @@ const routes = [
         path: 'projectScrap',
         name: 'projectScrap',
         component: ProjectScrapPage,
+      },
+      {
+        path: 'notificationList',
+        name: 'NotificationList',
+        component: NotificationListPage,
       },
       //company
       {
