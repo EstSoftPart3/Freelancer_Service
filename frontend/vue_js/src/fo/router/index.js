@@ -43,6 +43,9 @@ import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
+import EstimatesListPage from '../views/estimates/EstimatesListPage.vue'
+import AffiliationEstimatesListPage from '../views/mypage/company/AffiliationEstimatesListPage.vue'
+import AffiliationEstimatesListDetailPage from '../views/mypage/company/AffiliationEstimatesListDetailPage.vue'
 
 const routes = [
   {
@@ -119,7 +122,12 @@ const routes = [
     name: 'NoticeDetailPage',
     props: true,
   },
-
+  //견적의뢰서
+  {
+    path: '/estimates',
+    component: EstimatesListPage,
+    name: 'EstimatesListPage',
+  },
   {
     path: '/login',
     component: LoginPage,
@@ -253,6 +261,17 @@ const routes = [
         path: 'affiliationProjectList',
         name: 'AffiliationProjectList',
         component: AffiliationProjectListPage,
+      },
+      //기업회원 견적의뢰서
+      {
+        path: 'estimates',
+        name: 'AffiliationEstimates',
+        component: AffiliationEstimatesListPage,
+      },
+      {
+        path: 'estimates/:estimateSq',
+        name: 'AffiliationEstimatesDetial',
+        component: AffiliationEstimatesListDetailPage,
       },
       {
         path: 'projectPostPage/:project_sq',

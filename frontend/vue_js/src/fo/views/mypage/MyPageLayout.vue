@@ -136,6 +136,24 @@ const headerInfo = computed(() => {
           { text: '프로젝트 스크랩' },
         ],
       }
+    case 'AffiliationEstimates':
+      return {
+        title: '견적',
+        strongText: '의뢰서',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '견적의뢰서' },
+        ],
+      }
+    case 'AffiliationEstimatesDetial':
+      return {
+        title: '견적',
+        strontText: '의뢰서',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '견적의뢰서상세' },
+        ],
+      }
     case 'AffiliationEdit':
       return {
         title: '기업',
