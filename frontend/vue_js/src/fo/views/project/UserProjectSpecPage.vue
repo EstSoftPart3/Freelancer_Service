@@ -236,10 +236,27 @@
         </ul>
       </div>
     </div>
+
+    <!-- 유사 공고 섹션 -->
+    <section v-if="similarProjects.length > 0" class="similar-projects-section">
+      <h2 class="text-color-dark font-weight-normal text-5 mb-2 pb-2">
+        비슷한 조건의 공고를 확인해 보세요
+      </h2>
+      <div class="row g-0">
+        <div
+          v-for="item in similarProjects"
+          :key="item.projectSq"
+          class="col-md-6 px-0"
+        >
+          <ProjectCard :project="item" />
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 <script setup>
 import UserResumeModal from '@/fo/components/mypage/common/ResumeSelectModal.vue'
+import ProjectCard from '@/fo/components/project/ProjectCard.vue'
 import { useModalStore } from '../../stores/modalStore.js'
 import { useAlertStore } from '../../stores/alertStore.js'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
@@ -257,6 +274,48 @@ const projectSq = route.params.project_sq
 const scrapCount = ref('')
 
 const project = ref([])
+
+// TODO: API 연동 후 유사도(스킬 50%, 근무형태 30%, 지역 20%) 기반으로 교체
+// TBL_PROJECT_M 기반 mock — 조인/가공 필드(companyNm, reqSkills 등)는 API 응답 형태에 맞춘 placeholder
+const BASE_SIMILAR_PROJECT = {
+  companySq: 14,
+  addressSq: 264,
+  projectTtl: '웅진 영업정보시스템 개발 및 유지보수',
+  projectDeveloperGradeCd: 704,
+  projectRequiredEducationCd: 2101,
+  projectSalary: 5000000,
+  salaryNegotiableYn: 'N',
+  projectStartDt: '2026-01-28',
+  projectEndDt: '2026-04-30',
+  recruitStartDt: '2026-01-28',
+  recruitEndDt: '2026-02-07',
+  projectPreferenceTxt: 'SAP RFC연동 경험',
+  projectDescriptionTxt: '영업정보시스템 업무 보유(회원,판매,실적,수납 등)',
+  addressTypeCd: 2701,
+  companyNm: '웅진',
+  companyImageUrl: null,
+  formattedSalary: '월 500만원',
+  devGradeNm: '',
+  requiredEduLvl: '',
+  detailedAddress: '',
+  detailedAddressDetail: '',
+  reqSkills: [],
+}
+
+const similarProjects = ref(
+  [
+    { projectSq: 73, viewCnt: 1 },
+    { projectSq: 74, viewCnt: 1 },
+    { projectSq: 75, viewCnt: 0 },
+    { projectSq: 76, viewCnt: 0 },
+    { projectSq: 77, viewCnt: 0 },
+    { projectSq: 78, viewCnt: 0 },
+  ].map((row) => ({
+    ...BASE_SIMILAR_PROJECT,
+    ...row,
+    hasScrapped: 'N',
+  })),
+)
 
 const fetchProjectDetail = async () => {
   try {
@@ -372,12 +431,17 @@ const addressIcon = computed(() => {
   padding-left: 1rem;
   margin: 0;
 }
+
 .child-skill-list li {
-  margin-left: 0.5rem; /* 더 명확한 들여쓰기 */
+  margin-left: 0.5rem;
+  /* 더 명확한 들여쓰기 */
 }
+
 .detail-list li {
-  margin-bottom: 12px; /* 또는 16px */
-  line-height: 1.6; /* 줄 간 여유 */
+  margin-bottom: 12px;
+  /* 또는 16px */
+  line-height: 1.6;
+  /* 줄 간 여유 */
 }
 
 .custom-scrap-btn {
