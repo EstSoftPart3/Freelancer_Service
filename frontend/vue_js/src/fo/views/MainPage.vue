@@ -7,6 +7,7 @@
         </button>
 
         <div class="carouselTrack">
+          <!-- 첫 번째 슬라이드 (일정) -->
           <div
             class="carouselSlide"
             :class="{ active: currentSlide === 0 }"
@@ -21,14 +22,28 @@
               </p>
             </div>
           </div>
+          <!-- 나머지 광고 배너 -->
+          <!-- <div
+            v-for="(banner, index) in banners"
+            :key="banner.bannerSq"
+            class="carouselSlide"
+            :class="{ active: currentSlide === index + 1 }"
+            @click="goToPage('#')"
+          >
+            <div class="centerTextArea text-center cursor-pointer">
+              <img
+                :src="banner.imagePath"
+                :alt="banner.title"
+              />
+            </div>
+          </div> -->
           <div
             class="carouselSlide"
             :class="{ active: currentSlide === 1 }"
             @click="goToPage('#')"
           >
             <div class="centerTextArea text-center cursor-pointer">
-              <h1 class="heroTitle">광고 1<br />광고가 들어갈 예정입니다.</h1>
-              <p class="heroSubtitle">광고 내용</p>
+              <img src="@/assets/banner-ad1.png" alt="ad-image1" />
             </div>
           </div>
           <div
@@ -37,8 +52,7 @@
             @click="goToPage('#')"
           >
             <div class="centerTextArea text-center cursor-pointer">
-              <h1 class="heroTitle">광고 2<br />광고가 들어갈 예정입니다.</h1>
-              <p class="heroSubtitle">광고 내용</p>
+              <img src="@/assets/banner-ad2.png" alt="광고 이미지2" />
             </div>
           </div>
         </div>
@@ -218,6 +232,9 @@ const goToPage = (path) => {
 
 // 1. 슬라이드 기능 로직
 const currentSlide = ref(0)
+// const totalSlides = ref(0)
+// const banners = ref([])
+
 const totalSlides = 3 // 광고 1, 광고 2
 
 const nextSlide = () => {
@@ -229,6 +246,20 @@ const prevSlide = () => {
 const moveSlide = (index) => {
   currentSlide.value = index
 }
+
+// const fetchBannerData = async () => {
+//   try {
+//     const res = await api.$get('/banners/active')
+//     const data = res.output
+
+//     banners.value = data
+//     totalSlides.value = banners.value.length + 1
+//     currentSlide.value = 0
+
+//   } catch (error) {
+//     alertStore.show('배너를 불러오는 데 실패했습니다.', error)
+//   }
+// }
 
 // 2. 인기 프로젝트 데이터
 const projects = ref([])
@@ -265,6 +296,7 @@ const toggleFaq = (index) => {
 }
 
 onMounted(() => {
+  // fetchBannerData()
   fetchPopularProjects('views')
 })
 </script>
