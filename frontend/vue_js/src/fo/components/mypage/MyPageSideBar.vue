@@ -82,7 +82,7 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
-                to="/mypage/projectScrap"
+                to="/mypage/notificationList"
                 @click="handleNavigate"
                 >알림 내역</router-link
               >
