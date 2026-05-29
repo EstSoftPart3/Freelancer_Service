@@ -43,9 +43,6 @@ import ProjectScrapPage from '../views/mypage/personal/ProjectScrapPage.vue'
 import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vue'
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
-import EstimatesListPage from '../views/estimates/EstimatesListPage.vue'
-import AffiliationEstimatesListPage from '../views/mypage/company/AffiliationEstimatesListPage.vue'
-import AffiliationEstimatesListDetailPage from '../views/mypage/company/AffiliationEstimatesListDetailPage.vue'
 
 const routes = [
   {
@@ -123,13 +120,6 @@ const routes = [
     props: true,
   },
 
-  // 견적의뢰서
-  {
-    path: '/estimates',
-    component: EstimatesListPage,
-    name: 'EstimatesListPage',
-  },
-
   {
     path: '/login',
     component: LoginPage,
@@ -178,12 +168,11 @@ const routes = [
     children: [
       // 기본 화면 설정
       {
-        path: '',
+        path: '', // 여기! 기본 자식 경로
         name: 'MypageDefault',
         component: InformationEditPage,
       },
-
-      // common
+      //common
       {
         path: 'informationEdit',
         name: 'InformationEdit',
@@ -199,26 +188,7 @@ const routes = [
         name: 'ScheduleCalendar',
         component: ScheduleCalendarPage,
       },
-
-      // event
-      {
-        path: 'event/attendance',
-        name: 'AttendanceCheckPage',
-        component: () =>
-          import('@/fo/views/mypage/event/AttendanceCheckPage.vue'),
-      },
-      {
-        path: 'event/point',
-        name: 'PointLookupPage',
-        component: () => import('@/fo/views/mypage/event/PointLookupPage.vue'),
-      },
-      {
-        path: 'event/point-history',
-        name: 'PointHistoryPage',
-        component: () => import('@/fo/views/mypage/event/PointHistoryPage.vue'),
-      },
-
-      // personal
+      //personal
       {
         path: 'affiliatedJobApplications',
         name: 'AffiliatedJobApplications',
@@ -244,12 +214,12 @@ const routes = [
         component: ResumeListPage,
       },
       {
-        path: 'resumeform',
+        path: 'resumeform', //등록하기
         name: 'ResumeFormNew',
         component: ResumeFormPage,
       },
       {
-        path: 'resumeform/:resumeSq',
+        path: 'resumeform/:resumeSq', //수정하기
         name: 'ResumeFormEdit',
         component: ResumeFormPage,
       },
@@ -263,8 +233,7 @@ const routes = [
         name: 'projectScrap',
         component: ProjectScrapPage,
       },
-
-      // company
+      //company
       {
         path: 'affiliationEdit',
         name: 'AffiliationEdit',
@@ -285,23 +254,12 @@ const routes = [
         name: 'AffiliationProjectList',
         component: AffiliationProjectListPage,
       },
-
-      // 기업회원 견적의뢰서
-      {
-        path: 'estimates',
-        name: 'AffiliationEstimates',
-        component: AffiliationEstimatesListPage,
-      },
-      {
-        path: 'estimates/:estimateSq',
-        name: 'AffiliationEstimatesDetial',
-        component: AffiliationEstimatesListDetailPage,
-      },
       {
         path: 'projectPostPage/:project_sq',
         name: 'ProjectPostPageWithId',
         component: ProjectPostPage,
       },
+
       {
         path: 'projectPostPage',
         name: 'ProjectPostPage',
@@ -310,18 +268,18 @@ const routes = [
     ],
   },
 ]
-
 const router = createRouter({
   history: createWebHistory(),
   routes,
-
-  // 페이지 이동 시 스크롤 제어
+  // [추가] 페이지 이동 시 스크롤 제어 로직
   scrollBehavior(to, from, savedPosition) {
+    // 1. 브라우저 뒤로가기/앞으로가기 시 이전 스크롤 위치 복원
     if (savedPosition) {
       return savedPosition
+    } else {
+      // 2. 새로운 페이지 이동 시 무조건 최상단(y=0)으로 이동
+      return { top: 0 }
     }
-
-    return { top: 0 }
   },
 })
 
@@ -336,7 +294,6 @@ router.beforeEach((to, from, next) => {
     'FindIdResult',
     'ResetPassword',
   ]
-
   const authRequiredPages = [
     'MyPageDefault',
     'InformationEdit',
@@ -345,9 +302,7 @@ router.beforeEach((to, from, next) => {
     'BoardResisterPage',
     'ScheduleCalendar',
     'AffiliatedInfo',
-    'AttendanceCheckPage',
-    'PointLookupPage',
-    'PointHistoryPage',
+    /* ... 로그인 필요 페이지들 */
   ]
 
   const userRolePages = ['UserProjectSpec']
