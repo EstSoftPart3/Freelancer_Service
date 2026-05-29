@@ -28,6 +28,9 @@ import {
   ListOrdered,
   ClipboardPen,
   ClipboardList,
+  CalendarCheck,
+  Coins,
+  Settings,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -105,6 +108,21 @@ export const sidebarData: SidebarData = {
               title: '활동 랭킹 집계',
               url: '/events/ranking',
               icon: ListOrdered,
+            },
+            {
+              title: '출석체크',
+              url: '/events/attendance',
+              icon: CalendarCheck,
+            },
+            {
+              title: '포인트',
+              url: '/events/points',
+              icon: Coins,
+            },
+            {
+              title: '포인트 정책 설정',
+              url: '/events/points/policy',
+              icon: Settings,
             },
           ],
         },
