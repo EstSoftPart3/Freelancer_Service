@@ -326,7 +326,23 @@ const socialProviders = [
 ]
 
 const handleSocialLogin = (provider) => {
-  alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  if (provider === 'google') {
+    // 화면설계서용 더미 로그인
+    localStorage.setItem('accessToken', 'mock-google-access-token')
+    localStorage.setItem('refreshToken', 'mock-google-refresh-token')
+    userStore.setUser({
+      userSq: 9999,
+      userNm: '구글 사용자',
+      userTypeCd: 301,  // 개인회원
+      latitude: 37.5665,
+      longitude: 126.9780,
+      isAffiliated: 'N',
+    })
+    alertStore.show('구글 사용자님 안녕하세요.', 'success')
+    router.push('/')
+  } else {
+    alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  }
 }
 </script>
 
