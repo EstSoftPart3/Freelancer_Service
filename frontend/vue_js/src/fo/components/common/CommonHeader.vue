@@ -102,19 +102,6 @@
                         공지사항
                       </router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
-                        class="dropdown-item dropdown-toggle"
-                        :class="{
-                          active: isProjectActive,
-                          'current-page-active': true,
-                        }"
-                        to="/estimates"
-                      >
-                        견적의뢰
-                        <i class="fas fa-chevron-down"></i
-                      ></router-link>
-                    </li>
                   </ul>
                 </nav>
               </div>
@@ -292,14 +279,6 @@
                     </li>
                   </ul>
                 </div>
-                <div class="header-chat">
-                  <button
-                    class="btn btn-light d-flex align-items-center justify-content-center"
-                    @click="openChat"
-                  >
-                    <i class="bi bi-chat-right-text-fill fs-5"></i>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -399,19 +378,6 @@
                         공지사항
                       </router-link>
                     </li>
-                    <li class="dropdown">
-                      <router-link
-                        class="dropdown-item dropdown-toggle"
-                        :class="{
-                          active: isProjectActive,
-                          'current-page-active': true,
-                        }"
-                        to="/estimates"
-                      >
-                        견적의뢰
-                        <i class="fas fa-chevron-down"></i>
-                      </router-link>
-                    </li>
                   </ul>
                 </nav>
               </div>
@@ -447,8 +413,6 @@ import { useUserStore } from '@/fo/stores/userStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
 import { useRoute, useRouter } from 'vue-router'
-import { useModalStore } from '@/fo/stores/modalStore'
-import ChatModal from '../chat/ChatModal.vue'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -460,7 +424,6 @@ const notificationDropdownRef = ref(null)
 const userDropdownRef = ref(null)
 const notifications = ref([])
 const unreadCount = ref(0)
-const modalStore = useModalStore()
 
 const closeMenu = () => {
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
@@ -588,11 +551,6 @@ const deleteAllNoti = async () => {
   } catch (error) {
     console.error('알림 전체 삭제 실패:', error)
   }
-}
-
-// 채팅창 열기
-const openChat = () => {
-  modalStore.openModal(ChatModal)
 }
 
 onMounted(() => {
