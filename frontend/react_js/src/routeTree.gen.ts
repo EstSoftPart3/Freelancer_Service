@@ -36,6 +36,7 @@ import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenti
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
+import { Route as AuthenticatedContentsBannersIndexRouteImport } from './routes/_authenticated/contents/banners/index'
 import { Route as AuthenticatedContentsAuditIndexRouteImport } from './routes/_authenticated/contents/audit/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -183,6 +184,12 @@ const AuthenticatedContentsBoardIndexRoute =
     path: '/contents/board/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsBannersIndexRoute =
+  AuthenticatedContentsBannersIndexRouteImport.update({
+    id: '/contents/banners/',
+    path: '/contents/banners/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsAuditIndexRoute =
   AuthenticatedContentsAuditIndexRouteImport.update({
     id: '/contents/audit/',
@@ -215,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/tasks/': typeof AuthenticatedTasksIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
   '/contents/audit/': typeof AuthenticatedContentsAuditIndexRoute
+  '/contents/banners/': typeof AuthenticatedContentsBannersIndexRoute
   '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
@@ -243,6 +251,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/contents/audit': typeof AuthenticatedContentsAuditIndexRoute
+  '/contents/banners': typeof AuthenticatedContentsBannersIndexRoute
   '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
@@ -274,6 +283,7 @@ export interface FileRoutesById {
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/contents/audit/': typeof AuthenticatedContentsAuditIndexRoute
+  '/_authenticated/contents/banners/': typeof AuthenticatedContentsBannersIndexRoute
   '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/users/'
     | '/contents/audit/'
+    | '/contents/banners/'
     | '/contents/board/'
     | '/contents/notice/'
     | '/contents/report/'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/users'
     | '/contents/audit'
+    | '/contents/banners'
     | '/contents/board'
     | '/contents/notice'
     | '/contents/report'
@@ -363,6 +375,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
     | '/_authenticated/contents/audit/'
+    | '/_authenticated/contents/banners/'
     | '/_authenticated/contents/board/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContentsBoardIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/banners/': {
+      id: '/_authenticated/contents/banners/'
+      path: '/contents/banners'
+      fullPath: '/contents/banners/'
+      preLoaderRoute: typeof AuthenticatedContentsBannersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/audit/': {
       id: '/_authenticated/contents/audit/'
       path: '/contents/audit'
@@ -616,6 +636,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedContentsAuditIndexRoute: typeof AuthenticatedContentsAuditIndexRoute
+  AuthenticatedContentsBannersIndexRoute: typeof AuthenticatedContentsBannersIndexRoute
   AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
@@ -631,6 +652,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
   AuthenticatedContentsAuditIndexRoute: AuthenticatedContentsAuditIndexRoute,
+  AuthenticatedContentsBannersIndexRoute:
+    AuthenticatedContentsBannersIndexRoute,
   AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,

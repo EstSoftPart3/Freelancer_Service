@@ -24,6 +24,8 @@ import {
   // HelpCircle,
   // AudioWaveform,
   Command,
+  Wallpaper,
+  BookImage,
   // GalleryVerticalEnd,
   ListOrdered,
   ClipboardPen,
@@ -93,7 +95,7 @@ export const sidebarData: SidebarData = {
             },
           ],
         },
-        {
+                {
           title: '로그 관리',
           icon: ClipboardPen,
           items: [
@@ -101,6 +103,17 @@ export const sidebarData: SidebarData = {
               title: '활동 로그 조회',
               url: '/contents/audit',
               icon: FileSearch,
+            },
+          ],
+        },
+        {
+          title: '배너 관리',
+          icon: Wallpaper,
+          items: [
+            {
+              title: '전체 배너 목록',
+              url: '/contents/banners',
+              icon: BookImage,
             },
           ],
         },
