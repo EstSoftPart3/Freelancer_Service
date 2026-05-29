@@ -73,6 +73,34 @@ const headerInfo = computed(() => {
           { text: '회원탈퇴' },
         ],
       }
+    case 'AttendanceCheckPage':
+      return {
+        title: '출석',
+        strongText: '체크',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '출석체크' },
+        ],
+      }
+    case 'PointLookupPage':
+      return {
+        title: '포인트',
+        strongText: '조회',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '포인트 조회' },
+        ],
+      }
+    case 'PointHistoryPage':
+      return {
+        title: '포인트',
+        strongText: '내역',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '포인트 내역' },
+        ],
+      }
+
     case 'AffiliatedJobApplications':
       return {
         title: '소속',

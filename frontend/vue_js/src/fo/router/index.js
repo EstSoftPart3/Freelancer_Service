@@ -122,12 +122,14 @@ const routes = [
     name: 'NoticeDetailPage',
     props: true,
   },
-  //견적의뢰서
+
+  // 견적의뢰서
   {
     path: '/estimates',
     component: EstimatesListPage,
     name: 'EstimatesListPage',
   },
+
   {
     path: '/login',
     component: LoginPage,
@@ -176,11 +178,12 @@ const routes = [
     children: [
       // 기본 화면 설정
       {
-        path: '', // 여기! 기본 자식 경로
+        path: '',
         name: 'MypageDefault',
         component: InformationEditPage,
       },
-      //common
+
+      // common
       {
         path: 'informationEdit',
         name: 'InformationEdit',
@@ -196,7 +199,26 @@ const routes = [
         name: 'ScheduleCalendar',
         component: ScheduleCalendarPage,
       },
-      //personal
+
+      // event
+      {
+        path: 'event/attendance',
+        name: 'AttendanceCheckPage',
+        component: () =>
+          import('@/fo/views/mypage/event/AttendanceCheckPage.vue'),
+      },
+      {
+        path: 'event/point',
+        name: 'PointLookupPage',
+        component: () => import('@/fo/views/mypage/event/PointLookupPage.vue'),
+      },
+      {
+        path: 'event/point-history',
+        name: 'PointHistoryPage',
+        component: () => import('@/fo/views/mypage/event/PointHistoryPage.vue'),
+      },
+
+      // personal
       {
         path: 'affiliatedJobApplications',
         name: 'AffiliatedJobApplications',
@@ -222,12 +244,12 @@ const routes = [
         component: ResumeListPage,
       },
       {
-        path: 'resumeform', //등록하기
+        path: 'resumeform',
         name: 'ResumeFormNew',
         component: ResumeFormPage,
       },
       {
-        path: 'resumeform/:resumeSq', //수정하기
+        path: 'resumeform/:resumeSq',
         name: 'ResumeFormEdit',
         component: ResumeFormPage,
       },
@@ -241,7 +263,8 @@ const routes = [
         name: 'projectScrap',
         component: ProjectScrapPage,
       },
-      //company
+
+      // company
       {
         path: 'affiliationEdit',
         name: 'AffiliationEdit',
@@ -262,7 +285,8 @@ const routes = [
         name: 'AffiliationProjectList',
         component: AffiliationProjectListPage,
       },
-      //기업회원 견적의뢰서
+
+      // 기업회원 견적의뢰서
       {
         path: 'estimates',
         name: 'AffiliationEstimates',
@@ -278,7 +302,6 @@ const routes = [
         name: 'ProjectPostPageWithId',
         component: ProjectPostPage,
       },
-
       {
         path: 'projectPostPage',
         name: 'ProjectPostPage',
@@ -287,18 +310,18 @@ const routes = [
     ],
   },
 ]
+
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // [추가] 페이지 이동 시 스크롤 제어 로직
+
+  // 페이지 이동 시 스크롤 제어
   scrollBehavior(to, from, savedPosition) {
-    // 1. 브라우저 뒤로가기/앞으로가기 시 이전 스크롤 위치 복원
     if (savedPosition) {
       return savedPosition
-    } else {
-      // 2. 새로운 페이지 이동 시 무조건 최상단(y=0)으로 이동
-      return { top: 0 }
     }
+
+    return { top: 0 }
   },
 })
 
@@ -313,6 +336,7 @@ router.beforeEach((to, from, next) => {
     'FindIdResult',
     'ResetPassword',
   ]
+
   const authRequiredPages = [
     'MyPageDefault',
     'InformationEdit',
@@ -321,7 +345,9 @@ router.beforeEach((to, from, next) => {
     'BoardResisterPage',
     'ScheduleCalendar',
     'AffiliatedInfo',
-    /* ... 로그인 필요 페이지들 */
+    'AttendanceCheckPage',
+    'PointLookupPage',
+    'PointHistoryPage',
   ]
 
   const userRolePages = ['UserProjectSpec']
