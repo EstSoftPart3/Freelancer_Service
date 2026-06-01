@@ -93,11 +93,6 @@ export const sidebarData: SidebarData = {
               url: '/contents/report',
               icon: ShieldAlert,
             },
-            {
-              title: '견적의뢰서 관리',
-              url: '/contents/estimates',
-              icon: ClipboardList,
-            },
           ],
         },
       ],

@@ -33,10 +33,13 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedEventsPointsIndexRouteImport } from './routes/_authenticated/events/points/index'
+import { Route as AuthenticatedEventsAttendanceIndexRouteImport } from './routes/_authenticated/events/attendance/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsEstimatesIndexRouteImport } from './routes/_authenticated/contents/estimates/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
+import { Route as AuthenticatedEventsPointsPolicyIndexRouteImport } from './routes/_authenticated/events/points/policy/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -165,6 +168,18 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEventsPointsIndexRoute =
+  AuthenticatedEventsPointsIndexRouteImport.update({
+    id: '/events/points/',
+    path: '/events/points/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventsAttendanceIndexRoute =
+  AuthenticatedEventsAttendanceIndexRouteImport.update({
+    id: '/events/attendance/',
+    path: '/events/attendance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsReportIndexRoute =
   AuthenticatedContentsReportIndexRouteImport.update({
     id: '/contents/report/',
@@ -187,6 +202,12 @@ const AuthenticatedContentsBoardIndexRoute =
   AuthenticatedContentsBoardIndexRouteImport.update({
     id: '/contents/board/',
     path: '/contents/board/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventsPointsPolicyIndexRoute =
+  AuthenticatedEventsPointsPolicyIndexRouteImport.update({
+    id: '/events/points/policy/',
+    path: '/events/points/policy/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -218,6 +239,9 @@ export interface FileRoutesByFullPath {
   '/contents/estimates/': typeof AuthenticatedContentsEstimatesIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/events/attendance/': typeof AuthenticatedEventsAttendanceIndexRoute
+  '/events/points/': typeof AuthenticatedEventsPointsIndexRoute
+  '/events/points/policy/': typeof AuthenticatedEventsPointsPolicyIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -246,6 +270,9 @@ export interface FileRoutesByTo {
   '/contents/estimates': typeof AuthenticatedContentsEstimatesIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
+  '/events/attendance': typeof AuthenticatedEventsAttendanceIndexRoute
+  '/events/points': typeof AuthenticatedEventsPointsIndexRoute
+  '/events/points/policy': typeof AuthenticatedEventsPointsPolicyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -277,6 +304,9 @@ export interface FileRoutesById {
   '/_authenticated/contents/estimates/': typeof AuthenticatedContentsEstimatesIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/_authenticated/events/attendance/': typeof AuthenticatedEventsAttendanceIndexRoute
+  '/_authenticated/events/points/': typeof AuthenticatedEventsPointsIndexRoute
+  '/_authenticated/events/points/policy/': typeof AuthenticatedEventsPointsPolicyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -308,6 +338,9 @@ export interface FileRouteTypes {
     | '/contents/estimates/'
     | '/contents/notice/'
     | '/contents/report/'
+    | '/events/attendance/'
+    | '/events/points/'
+    | '/events/points/policy/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -336,6 +369,9 @@ export interface FileRouteTypes {
     | '/contents/estimates'
     | '/contents/notice'
     | '/contents/report'
+    | '/events/attendance'
+    | '/events/points'
+    | '/events/points/policy'
   id:
     | '__root__'
     | '/_authenticated'
@@ -366,6 +402,9 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/estimates/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
+    | '/_authenticated/events/attendance/'
+    | '/_authenticated/events/points/'
+    | '/_authenticated/events/points/policy/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -552,6 +591,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/events/points/': {
+      id: '/_authenticated/events/points/'
+      path: '/events/points'
+      fullPath: '/events/points/'
+      preLoaderRoute: typeof AuthenticatedEventsPointsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/attendance/': {
+      id: '/_authenticated/events/attendance/'
+      path: '/events/attendance'
+      fullPath: '/events/attendance/'
+      preLoaderRoute: typeof AuthenticatedEventsAttendanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/report/': {
       id: '/_authenticated/contents/report/'
       path: '/contents/report'
@@ -578,6 +631,13 @@ declare module '@tanstack/react-router' {
       path: '/contents/board'
       fullPath: '/contents/board/'
       preLoaderRoute: typeof AuthenticatedContentsBoardIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/points/policy/': {
+      id: '/_authenticated/events/points/policy/'
+      path: '/events/points/policy'
+      fullPath: '/events/points/policy/'
+      preLoaderRoute: typeof AuthenticatedEventsPointsPolicyIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -619,6 +679,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsEstimatesIndexRoute: typeof AuthenticatedContentsEstimatesIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
+  AuthenticatedEventsAttendanceIndexRoute: typeof AuthenticatedEventsAttendanceIndexRoute
+  AuthenticatedEventsPointsIndexRoute: typeof AuthenticatedEventsPointsIndexRoute
+  AuthenticatedEventsPointsPolicyIndexRoute: typeof AuthenticatedEventsPointsPolicyIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -635,6 +698,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedContentsEstimatesIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
+  AuthenticatedEventsAttendanceIndexRoute:
+    AuthenticatedEventsAttendanceIndexRoute,
+  AuthenticatedEventsPointsIndexRoute: AuthenticatedEventsPointsIndexRoute,
+  AuthenticatedEventsPointsPolicyIndexRoute:
+    AuthenticatedEventsPointsPolicyIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

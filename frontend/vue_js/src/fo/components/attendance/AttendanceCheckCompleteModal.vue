@@ -1,7 +1,8 @@
 <template>
-  <div>
-    <div class="modal-header border-0 justify-content-center pb-0">
+  <div class="attendance-complete-modal">
+    <div class="modal-header border-0 justify-content-center">
       <h5 class="modal-title fw-bold">출석체크 완료</h5>
+
       <button
         type="button"
         class="btn-close attendance-close"
@@ -10,12 +11,16 @@
       ></button>
     </div>
 
-    <div class="modal-body text-center pt-3 pb-2">
-      <p class="attendance-message mb-0">출석체크가 완료되었습니다.</p>
+    <div class="modal-body text-center">
+      <p class="attendance-message">출석체크가 완료되었습니다.</p>
     </div>
 
-    <div class="modal-footer border-0 justify-content-center pt-2 pb-4">
-      <button type="button" class="btn btn-primary px-4" @click="closeModal">
+    <div class="modal-footer border-0 justify-content-center">
+      <button
+        type="button"
+        class="btn btn-primary attendance-btn"
+        @click="closeModal"
+      >
         확인
       </button>
     </div>
@@ -33,19 +38,48 @@ const closeModal = () => {
 </script>
 
 <style scoped>
-.modal-title {
-  font-size: 18px;
-  color: #222;
+.attendance-complete-modal {
+  position: relative;
+  padding: 28px 32px 32px;
+  text-align: center;
 }
 
-.attendance-message {
-  font-size: 15px;
-  color: #555;
+.modal-header {
+  padding: 0;
+  margin-bottom: 18px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
 }
 
 .attendance-close {
   position: absolute;
   right: 18px;
   top: 18px;
+}
+
+.modal-body {
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.attendance-message {
+  margin: 0;
+  font-size: 15px;
+  color: #555;
+}
+
+.modal-footer {
+  padding: 0;
+}
+
+.attendance-btn {
+  min-width: 88px;
+  height: 42px;
+  font-size: 15px;
+  font-weight: 600;
 }
 </style>
