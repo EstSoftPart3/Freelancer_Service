@@ -9,7 +9,7 @@
         <button
           v-if="viewMode === 'CHAT'"
           type="button"
-          class="btn btn-sm btn-light"
+          class="btn btn-sm btn-outline-secondary chat-header-btn"
           @click="goList"
         >
           목록
@@ -20,10 +20,6 @@
     </div>
 
     <div v-if="viewMode === 'LIST'" class="modal-body chat-modal-body">
-      <button class="btn btn-primary w-100" @click="startChat">
-        새 상담 시작
-      </button>
-
       <div class="chat-room-list">
         <div
           v-for="room in chatRooms"
@@ -31,12 +27,15 @@
           class="chat-room-item"
           @click="openChat(room)"
         >
-          <span
-            class="badge"
-            :class="room.chatRoomType === 'AI' ? 'bg-primary' : 'bg-success'"
-          >
-            {{ room.chatRoomType === 'AI' ? 'AI 상담' : '상담사 상담' }}
-          </span>
+          <div class="chat-room-icon">
+            <i
+              :class="
+                room.chatRoomType === 'AI'
+                  ? 'bi bi-robot'
+                  : 'bi bi-person-badge'
+              "
+            ></i>
+          </div>
 
           <div class="chat-room-content">
             <div class="chat-room-top">
@@ -55,31 +54,28 @@
           </div>
         </div>
       </div>
+      <button type="button" class="chat-create-btn" @click="startChat">
+        <i class="bi bi-plus-lg"></i>
+      </button>
     </div>
 
     <div v-else class="modal-body chat-modal-body chat-body-with-status">
-      <div
-        class="chat-status-bar d-flex justify-content-between align-items-center"
-      >
-        <div>
-          <span
-            class="badge"
-            :class="
-              currentRoom?.chatRoomType === 'AI' ? 'bg-primary' : 'bg-success'
-            "
-          >
-            {{
-              currentRoom?.chatRoomType === 'AI'
-                ? 'AI 상담 중'
-                : '상담사 상담 중'
-            }}
-          </span>
-        </div>
+      <div class="chat-status-bar">
+        <span
+          class="badge chat-status-badge"
+          :class="
+            currentRoom?.chatRoomType === 'AI' ? 'bg-primary' : 'bg-success'
+          "
+        >
+          {{
+            currentRoom?.chatRoomType === 'AI' ? 'AI 상담 중' : '상담사 상담 중'
+          }}
+        </span>
 
         <button
           type="button"
-          class="btn btn-sm btn-outline-primary"
-          @click="requestCounselor"
+          class="btn btn-sm btn-outline-primary chat-switch-btn"
+          @click.stop="requestCounselor"
         >
           {{
             currentRoom?.chatRoomType === 'AI' ? '상담사 전환' : 'AI 상담 전환'
@@ -92,10 +88,10 @@
           v-for="chat in chatMessages"
           :key="chat.chatMessageSeq"
           class="chat-message"
-          :class="chat.senderType === 'USER' ? 'user' : 'bot'"
+          :class="chat.senderType.toLowerCase()"
         >
           <div class="chat-bubble">
-            <p class="mb-0">{{ chat.messageContent }}</p>
+            {{ chat.messageContent }}
           </div>
         </div>
       </div>
@@ -202,7 +198,15 @@ const openChat = (room) => {
 }
 
 const requestCounselor = () => {
-  if (!currentRoom.value) return
+  console.log('전환 클릭', currentRoom.value)
+
+  if (!currentRoom.value) {
+    currentRoom.value = {
+      chatRoomSeq: null,
+      title: '새 상담',
+      chatRoomType: 'AI',
+    }
+  }
 
   currentRoom.value.chatRoomType =
     currentRoom.value.chatRoomType === 'AI' ? 'COUNSELOR' : 'AI'
@@ -273,6 +277,13 @@ const closeModal = () => {
 </script>
 
 <style>
+.chat-modal-content {
+  width: 600px;
+  height: 650px;
+  display: flex;
+  flex-direction: column;
+}
+
 .chat-modal-header {
   display: flex;
   align-items: center;
@@ -285,37 +296,80 @@ const closeModal = () => {
   gap: 8px;
 }
 
-.chat-modal-content {
-  width: 600px;
-  height: 650px;
-  display: flex;
-  flex-direction: column;
+.chat-modal-body {
+  position: relative;
 }
 
-.chat-modal-body {
-  flex: 1;
-  min-height: 450px;
-  overflow-y: auto;
+.chat-room-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f1f3f5;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.chat-create-btn {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .chat-body-with-status {
-  padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100%;
+  background: #f5f5f5;
 }
 
 .chat-status-bar {
   flex-shrink: 0;
-  padding: 10px 14px;
-  border-bottom: 1px solid #eeeeee;
-  background-color: #ffffff;
+  margin: 14px 16px 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+}
+
+.chat-status-bar .badge,
+.chat-status-bar .btn {
+  height: 32px;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chat-status-bar .btn {
+  padding: 0 12px;
 }
 
 .chat-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 16px;
+  padding: 0 16px 16px;
+  background: #f5f5f5;
 }
 
 .chat-modal-footer {
@@ -337,22 +391,30 @@ const closeModal = () => {
   justify-content: flex-end;
 }
 
-.chat-message.bot {
+.chat-message.ai,
+.chat-message.counselor {
   justify-content: flex-start;
 }
 
 .chat-bubble {
-  max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 16px;
+  max-width: 72%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  line-height: 1.5;
   word-break: break-word;
-  background-color: #d7ec14;
-  color: #000000;
+  font: inherit;
 }
 
 .chat-message.user .chat-bubble {
-  background-color: #d8dee7;
-  color: #180f0f;
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.chat-message.ai .chat-bubble,
+.chat-message.counselor .chat-bubble {
+  background-color: #ffffff;
+  color: inherit;
+  border: 1px solid #eeeeee;
 }
 
 .chat-room-list {
@@ -400,7 +462,7 @@ const closeModal = () => {
 }
 
 .chat-room-message {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 14px;
   color: #777777;
   overflow: hidden;
