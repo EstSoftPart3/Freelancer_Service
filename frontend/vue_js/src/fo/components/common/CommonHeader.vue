@@ -166,14 +166,14 @@
                         }}</span>
                         <button
                           @click.stop="markAllAsRead"
-                          class="btn btn-sm btn-outline-primary"
+                          class="btn btn-outline btn-primary btn-sm"
                           style="font-size: 0.7rem"
                         >
                           모두 읽음
                         </button>
                         <button
                           @click.stop="deleteAllNoti"
-                          class="btn btn-sm btn-outline-danger"
+                          class="btn btn-outline btn-primary btn-sm"
                           style="font-size: 0.7rem"
                         >
                           전체 삭제

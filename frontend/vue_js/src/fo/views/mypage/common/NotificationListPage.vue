@@ -45,32 +45,37 @@
           >
             <div class="post-info position-relative">
               <!-- 알림타입 + 제목 + 버튼 -->
-              <span class="badge bg-light text-primary border mb-2">{{
+
+              <span :class="['btn', 'btn-light', 'btn-sm', 'mb-2']">{{
                 item.notificationType
               }}</span>
+
               <div
                 class="d-flex justify-content-between align-items-center gap-2"
               >
-                <div class="d-flex gap-2">
+                <div class="flex-grow-1 overflow-hidden">
                   <a
                     href="#"
-                    class="text-5 m-0"
+                    class="d-block text-5 m-0 text-truncate py-1"
                     @click.prevent="goToProjectDetail(item.projectSq)"
                   >
                     {{ item.title }}
                   </a>
                 </div>
-                <div class="d-flex gap-2 align-items-center">
+
+                <div class="d-flex gap-2 flex-shrink-0">
                   <!-- 읽음 / 삭제 버튼 -->
+
                   <button
                     v-if="!item.readYn"
-                    class="btn btn-outline-primary btn-sm"
+                    class="btn btn-outline btn-primary btn-sm"
                     @click="removeScrap(item.projectSq)"
                   >
                     읽음
                   </button>
+
                   <button
-                    class="btn btn-outline-danger btn-sm"
+                    class="btn btn-outline btn-primary btn-sm"
                     @click="deleteAlert(item.projectSq)"
                   >
                     삭제
