@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch, nextTick } from 'vue'
 import CommonHeader from './fo/components/common/CommonHeader.vue'
 import CommonFooter from './fo/components/common/CommonFooter.vue'
 import CommonModalContainer from './fo/components/common/CommonModalContainer.vue'
@@ -19,8 +19,13 @@ import CommonAlert from './fo/components/common/CommonAlert.vue'
 import { useUserStore } from './fo/stores/userStore'
 import { api } from '@/axios'
 import { setClearLoginState } from '@/axios'
+import { useRoute } from 'vue-router'
+import { useModalStore } from '@/fo/stores/modalStore'
+import AttendanceCheckCompleteModal from '@/fo/components/attendance/AttendanceCheckCompleteModal.vue'
 
 const userStore = useUserStore()
+const route = useRoute()
+const modalStore = useModalStore()
 
 const fetchUserInfo = async () => {
   try {
@@ -56,15 +61,34 @@ function clearLoginStateFunc() {
 
 setClearLoginState(clearLoginStateFunc)
 
+watch(
+  () => route.fullPath,
+  async () => {
+    const shouldShowAttendanceModal = sessionStorage.getItem(
+      'showAttendanceCheckModal',
+    )
+
+    if (shouldShowAttendanceModal === 'Y') {
+      await nextTick()
+
+      setTimeout(() => {
+        modalStore.openModal(AttendanceCheckCompleteModal, {
+          size: 'modal-sm modal-dialog-centered',
+        })
+
+        sessionStorage.removeItem('showAttendanceCheckModal')
+      }, 300)
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
   const token = localStorage.getItem('accessToken')
 
-  // 토큰이 있을 때만 유저 정보를 가져옵니다.
   if (token) {
     fetchUserInfo()
   } else {
-    // 토큰이 없으면 비로그인 상태이므로 아무것도 하지 않거나
-    // 필요한 초기화만 수행합니다.
     userStore.clearUser()
   }
 })

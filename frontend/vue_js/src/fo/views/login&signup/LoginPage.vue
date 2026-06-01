@@ -230,9 +230,9 @@ const login = async () => {
       localStorage.removeItem('autoLogin')
     }
 
-    alertStore.show(userStore.userNm + '님 안녕하세요.', 'success')
+    sessionStorage.setItem('showAttendanceCheckModal', 'Y')
 
-    router.push('/') // 메인 페이지로 이동
+    await router.push('/') // 메인 페이지로 이동
   } catch (error) {
     console.error(error)
     alertStore.show(error.response?.data?.message || error.message, 'danger')

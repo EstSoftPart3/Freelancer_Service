@@ -20,8 +20,11 @@
         style="display: block"
       >
         <!-- modalProps.size가 없을 경우 빈 문자열로 대체 -->
-        <div :class="['modal-dialog', currentModalProps.size || '']">
-          <div class="modal-content">
+        <div
+          :class="['modal-dialog', currentModalProps.size || '']"
+          :style="currentModalProps.style || {}"
+        >
+          <div :class="['modal-content', currentModalProps.contentClass || '']">
             <component
               :is="currentModalComponent"
               v-bind="currentModalProps || {}"

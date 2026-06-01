@@ -74,50 +74,8 @@
                 >스크랩 내역</router-link
               >
             </li>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/estimates"
-                @click="handleNavigate"
-                >견적의뢰서</router-link
-              >
-            </li>
           </ul>
         </li>
-
-        <li class="nav-item">
-          <span class="nav-link">출석/포인트 관리</span>
-          <ul>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/attendance"
-                @click="handleNavigate"
-              >
-                출석체크
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/point"
-                @click="handleNavigate"
-              >
-                포인트 조회
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/point-history"
-                @click="handleNavigate"
-              >
-                포인트 내역
-              </router-link>
-            </li>
-          </ul>
-        </li>
-
         <li class="nav-item">
           <span class="nav-link">회원 정보 관리</span>
           <ul>
@@ -142,6 +100,30 @@
                 @click="handleNavigate"
                 >회원 탈퇴</router-link
               >
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <span class="nav-link">이벤트</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/attendance"
+                @click="handleNavigate"
+              >
+                출석체크
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/points"
+                @click="handleNavigate"
+              >
+                포인트 조회
+              </router-link>
             </li>
           </ul>
         </li>
@@ -237,40 +219,6 @@
             </li>
           </ul>
         </li>
-
-        <li class="nav-item">
-          <span class="nav-link">출석/포인트 관리</span>
-          <ul>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/attendance"
-                @click="handleNavigate"
-              >
-                출석체크
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/point"
-                @click="handleNavigate"
-              >
-                포인트 조회
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/mypage/event/point-history"
-                @click="handleNavigate"
-              >
-                포인트 내역
-              </router-link>
-            </li>
-          </ul>
-        </li>
-
         <li class="nav-item">
           <span class="nav-link">회원 정보 관리</span>
           <ul>
@@ -295,6 +243,30 @@
                 @click="handleNavigate"
                 >회원 탈퇴</router-link
               >
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <span class="nav-link">이벤트</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/attendance"
+                @click="handleNavigate"
+              >
+                출석체크
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/points"
+                @click="handleNavigate"
+              >
+                포인트 조회
+              </router-link>
             </li>
           </ul>
         </li>

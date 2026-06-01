@@ -28,6 +28,15 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import bootstrap5Plugin from '@fullcalendar/bootstrap5'
 
+import { useModalStore } from '@/fo/stores/modalStore'
+import AttendanceCheckCompleteModal from '@/fo/components/attendance/AttendanceCheckCompleteModal.vue'
+
+const modalStore = useModalStore()
+
+const openAttendanceCompleteModal = () => {
+  modalStore.openModal(AttendanceCheckCompleteModal)
+}
+
 /**
  * 임시 출석 날짜 데이터
  *
@@ -107,6 +116,10 @@ const calendarOptions = reactive({
   height: 'auto',
 
   events: attendanceEvents,
+
+  eventClick: () => {
+    openAttendanceCompleteModal()
+  },
 })
 </script>
 
