@@ -230,7 +230,15 @@ const login = async () => {
       localStorage.removeItem('autoLogin')
     }
 
-    sessionStorage.setItem('showAttendanceCheckModal', 'Y')
+    try {
+      const attendanceResponse = await api.$post('/mypage/attendance')
+
+      if (attendanceResponse.checked) {
+        sessionStorage.setItem('showAttendanceCheckModal', 'Y')
+      }
+    } catch (attendanceError) {
+      console.error('자동 출석체크 실패:', attendanceError)
+    }
 
     await router.push('/') // 메인 페이지로 이동
   } catch (error) {
