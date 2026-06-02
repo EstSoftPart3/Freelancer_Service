@@ -23,7 +23,8 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import { api } from '@/axios'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import bootstrap5Plugin from '@fullcalendar/bootstrap5'
@@ -38,12 +39,31 @@ const openAttendanceCompleteModal = () => {
 }
 
 /**
- * 임시 출석 날짜 데이터
+ * 월별 출석 날짜 데이터
  *
- * 지금은 백엔드 연결 전이므로 프론트에서 직접 출석 날짜를 넣어둡니다.
- * 나중에 백엔드 API가 생기면 이 배열만 API 응답값으로 바꾸면 됩니다.
+ * 백엔드 월별 출석 조회 API 응답값을 저장합니다.
  */
-const attendanceDates = ['2026-05-28']
+const attendanceDates = ref([])
+
+const fetchMonthlyAttendance = async () => {
+  try {
+    const response = await api.get('/mypage/attendance', {
+      params: {
+        year: 2026,
+        month: 5,
+      },
+    })
+
+    attendanceDates.value = response.data.attendanceDates || []
+    calendarOptions.events = attendanceEvents.value
+  } catch (error) {
+    console.error('월별 출석 조회 실패:', error)
+  }
+}
+
+onMounted(() => {
+  fetchMonthlyAttendance()
+})
 
 /**
  * 연속 출석일 계산
@@ -58,11 +78,11 @@ const attendanceDates = ['2026-05-28']
  * => 최신 날짜인 28일 기준으로 27일이 없으므로 1일
  */
 const consecutiveDays = computed(() => {
-  if (attendanceDates.length === 0) {
+  if (attendanceDates.value.length === 0) {
     return 0
   }
 
-  const sortedDates = attendanceDates
+  const sortedDates = attendanceDates.value
     .map((date) => new Date(date))
     .sort((a, b) => b - a)
 
@@ -90,12 +110,14 @@ const consecutiveDays = computed(() => {
  *
  * attendanceDates 배열을 FullCalendar가 이해할 수 있는 events 형식으로 변환합니다.
  */
-const attendanceEvents = attendanceDates.map((date) => ({
-  title: '출석',
-  start: date,
-  allDay: true,
-  className: 'attendance-stamp-event',
-}))
+const attendanceEvents = computed(() =>
+  attendanceDates.value.map((date) => ({
+    title: '출석',
+    start: date,
+    allDay: true,
+    className: 'attendance-stamp-event',
+  })),
+)
 
 const calendarOptions = reactive({
   plugins: [dayGridPlugin, bootstrap5Plugin],
@@ -115,7 +137,7 @@ const calendarOptions = reactive({
   locale: 'ko',
   height: 'auto',
 
-  events: attendanceEvents,
+  events: [],
 
   eventClick: () => {
     openAttendanceCompleteModal()
