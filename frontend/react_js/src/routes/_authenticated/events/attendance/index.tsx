@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CalendarCheck,
@@ -8,6 +8,7 @@ import {
   Search,
   Users,
 } from 'lucide-react'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -32,28 +33,74 @@ type AttendanceRecord = {
   createdAtDtm: string
 }
 
-const attendanceRecords: AttendanceRecord[] = [
-  {
-    attendanceSq: 1,
-    userSq: 101,
-    attendanceDt: '2026-06-02',
-    createdAtDtm: '2026-06-02 09:12:35',
-  },
-  {
-    attendanceSq: 2,
-    userSq: 102,
-    attendanceDt: '2026-06-02',
-    createdAtDtm: '2026-06-02 09:25:10',
-  },
-  {
-    attendanceSq: 3,
-    userSq: 103,
-    attendanceDt: '2026-06-02',
-    createdAtDtm: '2026-06-02 10:03:48',
-  },
-]
-
 function AttendancePage() {
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([])
+
+  useEffect(() => {
+    const fetchAttendanceRecords = async () => {
+      try {
+        const response = await api.$get<unknown>('/admin/attendance')
+
+        console.log('관리자 출석 내역 응답:', response)
+
+        let records: AttendanceRecord[] = []
+
+        if (Array.isArray(response)) {
+          records = response
+        } else if (response && typeof response === 'object') {
+          const responseObj = response as {
+            output?: unknown
+            data?: unknown
+            list?: unknown
+          }
+
+          if (Array.isArray(responseObj.output)) {
+            records = responseObj.output
+          } else if (
+            responseObj.output &&
+            typeof responseObj.output === 'object'
+          ) {
+            const outputObj = responseObj.output as {
+              list?: unknown
+              data?: unknown
+              attendanceList?: unknown
+              attendanceRecords?: unknown
+              attendances?: unknown
+              content?: unknown
+            }
+
+            if (Array.isArray(outputObj.list)) {
+              records = outputObj.list
+            } else if (Array.isArray(outputObj.data)) {
+              records = outputObj.data
+            } else if (Array.isArray(outputObj.attendanceList)) {
+              records = outputObj.attendanceList
+            } else if (Array.isArray(outputObj.attendanceRecords)) {
+              records = outputObj.attendanceRecords
+            } else if (Array.isArray(outputObj.attendances)) {
+              records = outputObj.attendances
+            } else if (Array.isArray(outputObj.content)) {
+              records = outputObj.content
+            }
+          } else if (Array.isArray(responseObj.data)) {
+            records = responseObj.data
+          } else if (Array.isArray(responseObj.list)) {
+            records = responseObj.list
+          }
+        }
+
+        setAttendanceRecords(records)
+      } catch (error) {
+        console.error('관리자 출석 내역 조회 오류:', error)
+        setAttendanceRecords([])
+      }
+    }
+
+    fetchAttendanceRecords()
+  }, [])
+
   const totalMemberCount = 2000
   const todayAttendanceCount = attendanceRecords.length
   const accumulatedParticipantCount = attendanceRecords.length
