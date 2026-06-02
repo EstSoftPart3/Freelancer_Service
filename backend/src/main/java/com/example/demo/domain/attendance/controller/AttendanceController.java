@@ -1,6 +1,14 @@
 package com.example.demo.domain.attendance.controller;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.demo.domain.attendance.dto.MonthlyAttendanceResponse;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,9 +24,8 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping("/mypage/attendance")
-    public ResponseEntity<AttendanceCheckResponse> checkAttendance() {
-
-        Long userSq = 1L; // TODO: 로그인 사용자 정보에서 가져오도록 수정 예정
+    public ResponseEntity<AttendanceCheckResponse> checkAttendance(
+    		@AuthenticationPrincipal Long userSq) {
 
         boolean checked = attendanceService.checkAttendance(userSq);
 
@@ -26,6 +33,21 @@ public class AttendanceController {
                 checked,
                 checked ? "출석체크가 완료되었습니다." : "오늘은 이미 출석체크가 완료되었습니다."
         );
+
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/mypage/attendance")
+    public ResponseEntity<MonthlyAttendanceResponse> getMonthlyAttendance(
+            @AuthenticationPrincipal Long userSq,
+            @RequestParam int year,
+            @RequestParam int month) {
+
+        List<String> attendanceDates =
+                attendanceService.getMonthlyAttendanceDates(userSq, year, month);
+
+        MonthlyAttendanceResponse response =
+                new MonthlyAttendanceResponse(attendanceDates);
 
         return ResponseEntity.ok(response);
     }

@@ -47,6 +47,8 @@ public class SecurityConfigDev {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
@@ -55,6 +57,9 @@ public class SecurityConfigDev {
                         .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
                         // 2. /api/admin으로 시작하는 모든 경로는 'ADMIN' 권한 필요
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                        
+                        .requestMatchers("/mypage/attendance").authenticated()
+                        
                         // 3. 사용자 정보 조회 등은 인증 필요
                         .requestMatchers("/me").authenticated()
                         // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
@@ -67,6 +72,6 @@ public class SecurityConfigDev {
 
     @Bean
     public Filter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider);
+       return new JwtAuthenticationFilter(jwtProvider);
     }
 }
