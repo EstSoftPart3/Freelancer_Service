@@ -7,14 +7,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.example.demo.domain.user.service.CustomOAuth2UserService;
 import com.example.demo.domain.user.util.JwtAuthenticationFilter;
 import com.example.demo.domain.user.util.JwtProvider;
+import com.example.demo.domain.user.util.OAuth2SuccessHandler;
+import com.nimbusds.openid.connect.sdk.claims.UserInfo;
+
 
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfigDev {
 
     private final JwtProvider jwtProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -47,6 +54,10 @@ public class SecurityConfigDev {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
+                .oauth2Login(oauth2 -> oauth2
+                		.userInfoEndpoint(userInfo -> userInfo
+                				.userService(customOAuth2UserService))
+                		.successHandler(oAuth2SuccessHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---

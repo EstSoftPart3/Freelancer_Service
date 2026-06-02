@@ -141,7 +141,7 @@
                 <button
                   v-for="provider in socialProviders"
                   :key="provider.name"
-                  class="btn btn-icon rounded-circle border"
+                  class="btn btn-icon rounded-circle border-0 bg-white"
                   :title="provider.title"
                   @click="handleSocialLogin(provider.name)"
                 >
@@ -256,6 +256,7 @@ const fetchUserInfo = async () => {
       isAffiliated: data.isAffiliated,
       affiliatedCompanySq: data.affiliatedCompanySq,
       companyAuthStatusCd: data.companyAuthStatusCd,
+      userSignupTypeCd: data.userSignupTypeCd,
     })
   } catch (error) {
     console.error('유저 정보 불러오기 실패:', error)
@@ -326,23 +327,7 @@ const socialProviders = [
 ]
 
 const handleSocialLogin = (provider) => {
-  if (provider === 'google') {
-    // 화면설계서용 더미 로그인
-    localStorage.setItem('accessToken', 'mock-google-access-token')
-    localStorage.setItem('refreshToken', 'mock-google-refresh-token')
-    userStore.setUser({
-      userSq: 9999,
-      userNm: '구글 사용자',
-      userTypeCd: 301,  // 개인회원
-      latitude: 37.5665,
-      longitude: 126.9780,
-      isAffiliated: 'N',
-    })
-    alertStore.show('구글 사용자님 안녕하세요.', 'success')
-    router.push('/')
-  } else {
-    alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
-  }
+  window.location.href = `http://localhost:8080/api/oauth2/authorization/${provider}`
 }
 </script>
 

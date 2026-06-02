@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="!isSocialUser">
     <div class="overflow-hidden mb-3">
       <slot />
       <!-- <h2 class="font-weight-normal text-7 mb-0">회원 정보 수정</h2> -->
@@ -45,10 +45,22 @@
 </template>
 
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref, defineEmits, computed, onMounted } from 'vue'
 import { api } from '@/axios'
+import { useUserStore } from '@/fo/stores/userStore'
 
 const emit = defineEmits(['confirmed'])
+const userStore = useUserStore()
+
+const isSocialUser = computed(
+  () => userStore.userSignupTypeCd && userStore.userSignupTypeCd !== 204,
+)
+
+onMounted(() => {
+  if (isSocialUser.value) {
+    emit('confirmed')
+  }
+})
 
 const password = ref('')
 const error = ref('')

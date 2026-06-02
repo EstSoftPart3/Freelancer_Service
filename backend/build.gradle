@@ -61,6 +61,7 @@ dependencies {
 
 	// 이미지 최적화
 	implementation 'net.coobird:thumbnailator:0.4.20'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
 tasks.named('test') {

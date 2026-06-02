@@ -83,7 +83,7 @@
         </div>
 
         <!-- 비밀번호 + 수정 버튼 -->
-        <div class="form-group row align-items-center">
+        <div class="form-group row align-items-center" v-show="isNormalUser">
           <label class="col-lg-2 col-form-label text-2">비밀번호</label>
           <div class="col-lg-7">
             <template v-if="!editing.userPw">
@@ -439,12 +439,16 @@
 
 <script setup>
 import PasswordCheck from '../common/PasswordCheck.vue'
-import { watchEffect, reactive, ref } from 'vue'
+import { watchEffect, reactive, ref, computed } from 'vue'
 import { api } from '@/axios'
 import { debounce } from 'lodash'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useUserStore } from '@/fo/stores/userStore.js'
 
 const alertStore = useAlertStore()
+const userStore = useUserStore()
+
+const isNormalUser = computed(() => userStore.userSignupTypeCd === 204)
 
 const isConfirmed = ref(false)
 

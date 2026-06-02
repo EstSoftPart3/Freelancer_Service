@@ -31,4 +31,7 @@ public class LoginResponseDTO {
 
     // [추가] 기업 인증 상태 코드 (2501: 미인증, 2502: 인증완료)
     private Long companyAuthStatusCd;
+    
+    // 프론트엔드용 가입 유형 (일반 가입 = 204, 소셜 가입=102)
+    private Long userSignupTypeCd;
 }
