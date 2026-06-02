@@ -39,8 +39,10 @@ const attendanceDates = ref([])
 /**
  * 현재 달력에서 보고 있는 년/월
  */
-const currentYear = ref(2026)
-const currentMonth = ref(5)
+const today = new Date()
+
+const currentYear = ref(today.getFullYear())
+const currentMonth = ref(today.getMonth() + 1)
 
 const currentMonthText = computed(() => {
   return `${currentYear.value}년 ${currentMonth.value}월`
@@ -124,9 +126,6 @@ const calendarOptions = reactive({
   },
 
   initialView: 'dayGridMonth',
-
-  // 테스트 기준 화면을 2026년 5월로 고정
-  initialDate: '2026-05-01',
 
   themeSystem: 'bootstrap5',
   locale: 'ko',
