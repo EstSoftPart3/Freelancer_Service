@@ -1,5 +1,7 @@
 package com.example.demo.domain.attendance.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,5 +28,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         attendanceMapper.insertAttendance(userSq);
 
         return true;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getMonthlyAttendanceDates(Long userSq, int year, int month) {
+        return attendanceMapper.selectMonthlyAttendanceDates(userSq, year, month);
     }
 }

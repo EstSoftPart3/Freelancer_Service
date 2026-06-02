@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.attendance.mapper.AttendanceMapper">
 
-    <!-- 오늘 이미 출석했는지 확인 -->
-    <select id="countTodayAttendance" resultType="int">
-        SELECT COUNT(*)
-        FROM TBL_ATTENDANCE_M
-        WHERE user_sq = #{userSq}
-          AND attendance_dt = CURDATE()
-    </select>
+	<!-- 오늘 이미 출석했는지 확인 -->
+	<select id="countTodayAttendance" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_ATTENDANCE_M
+		WHERE user_sq = #{userSq}
+		AND attendance_dt = CURDATE()
+	</select>
 
-    <!-- 오늘 출석 기록 등록 -->
-    <insert id="insertAttendance">
-        INSERT INTO TBL_ATTENDANCE_M (
-            attendance_dt,
-            created_at_dtm,
-            user_sq
-        ) VALUES (
-            CURDATE(),
-            NOW(),
-            #{userSq}
-        )
-    </insert>
+	<!-- 오늘 출석 기록 등록 -->
+	<insert id="insertAttendance">
+		INSERT INTO TBL_ATTENDANCE_M (
+		attendance_dt,
+		created_at_dtm,
+		user_sq
+		) VALUES (
+		CURDATE(),
+		NOW(),
+		#{userSq}
+		)
+	</insert>
+
+	<!-- 월별 출석일 조회 -->
+	<select id="selectMonthlyAttendanceDates" resultType="string">
+		SELECT DATE_FORMAT(attendance_dt, '%Y-%m-%d')
+		FROM TBL_ATTENDANCE_M
+		WHERE user_sq = #{userSq}
+		AND YEAR(attendance_dt) = #{year}
+		AND MONTH(attendance_dt) = #{month}
+		ORDER BY attendance_dt ASC
+	</select>
 
 </mapper>
