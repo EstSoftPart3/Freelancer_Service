@@ -34,6 +34,13 @@
 	order by last_message_at desc
 	
 	</select>
+	
+	
+	<update id="updateChatRoomType" parameterType="com.example.demo.domain.chat.dto.ChatRoomVo">
+	UPDATE TBL_CHATROOM_S
+	SET chatroom_type = #{chatRoomType}
+	where chatRoom_sq = #{chatroomSq} and user_sq = #{userSq}
+	</update>
 
 
 </mapper>
