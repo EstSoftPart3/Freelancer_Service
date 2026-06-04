@@ -36,7 +36,7 @@
           </tr>
 
           <tr v-for="history in pointHistories" :key="history.id">
-            <td>{{ history.regDt }}</td>
+            <td>{{ formatRegDt(history.regDt) }}</td>
             <td>{{ history.reason }}</td>
             <td>
               <span
@@ -98,6 +98,14 @@ onMounted(() => {
   fetchCurrentPoint()
   fetchPointHistories()
 })
+
+const formatRegDt = (regDt) => {
+  if (!regDt) {
+    return '-'
+  }
+
+  return regDt.replace('T', ' ').slice(0, 16)
+}
 
 const formatChangePoint = (point) => {
   if (point > 0) {
