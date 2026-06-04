@@ -13,4 +13,24 @@ public interface PointMapper {
     int selectPointAmount(@Param("userSq") Long userSq);
     
     List<PointHistoryResponse> selectPointHistory(@Param("userSq") Long userSq);
+    
+    int countPointByUserSq(@Param("userSq") Long userSq);
+
+    void insertPoint(@Param("userSq") Long userSq);
+
+    Long selectPointSqByUserSq(@Param("userSq") Long userSq);
+
+    void updatePointAmount(
+            @Param("userSq") Long userSq,
+            @Param("pointAmount") int pointAmount
+    );
+
+    void insertAttendancePointHistory(
+            @Param("pointSq") Long pointSq,
+            @Param("userSq") Long userSq,
+            @Param("pointTp") String pointTp,
+            @Param("chgPoint") int chgPoint,
+            @Param("remPoint") int remPoint,
+            @Param("pointRsn") String pointRsn
+    );
 }

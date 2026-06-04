@@ -22,4 +22,57 @@
 		ORDER BY reg_dt DESC
 	</select>
 
+	<select id="countPointByUserSq" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_POINT_M
+		WHERE user_sq = #{userSq}
+	</select>
+
+	<insert id="insertPoint">
+		INSERT INTO TBL_POINT_M (
+		point_amount,
+		point_create_at_dt,
+		point_updated_at_dt,
+		user_sq
+		) VALUES (
+		0,
+		NOW(),
+		NULL,
+		#{userSq}
+		)
+	</insert>
+
+	<select id="selectPointSqByUserSq" resultType="long">
+		SELECT point_sq
+		FROM TBL_POINT_M
+		WHERE user_sq = #{userSq}
+	</select>
+
+	<update id="updatePointAmount">
+		UPDATE TBL_POINT_M
+		SET point_amount = #{pointAmount},
+		point_updated_at_dt = NOW()
+		WHERE user_sq = #{userSq}
+	</update>
+
+	<insert id="insertAttendancePointHistory">
+		INSERT INTO TBL_POINT_HISTORY_M (
+		point_tp,
+		chg_point,
+		rem_point,
+		point_rsn,
+		reg_dt,
+		point_sq,
+		user_sq
+		) VALUES (
+		#{pointTp},
+		#{chgPoint},
+		#{remPoint},
+		#{pointRsn},
+		NOW(),
+		#{pointSq},
+		#{userSq}
+		)
+	</insert>
+
 </mapper>

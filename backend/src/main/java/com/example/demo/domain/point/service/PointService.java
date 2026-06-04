@@ -10,4 +10,6 @@ public interface PointService {
     PointResponse getMyPoint(Long userSq);
     
     List<PointHistoryResponse> getMyPointHistory(Long userSq);
+    
+    void earnAttendancePoint(Long userSq);
 }
