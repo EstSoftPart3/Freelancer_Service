@@ -83,7 +83,7 @@ const fetchPointHistories = async () => {
       id: index,
       regDt: history.regDt,
       reason: history.pointRsn,
-      type: history.pointTp === 'EARN' ? '적립' : '사용',
+      type: formatPointType(history.pointTp),
       changePoint:
         history.pointTp === 'EARN' ? history.chgPoint : -history.chgPoint,
       remainingPoint: history.remPoint,
@@ -105,6 +105,22 @@ const formatRegDt = (regDt) => {
   }
 
   return regDt.replace('T', ' ').slice(0, 16)
+}
+
+const formatPointType = (pointTp) => {
+  if (pointTp === 'EARN') {
+    return '적립'
+  }
+
+  if (pointTp === 'USE') {
+    return '사용'
+  }
+
+  if (pointTp === 'DEDUCT') {
+    return '차감'
+  }
+
+  return pointTp
 }
 
 const formatChangePoint = (point) => {
