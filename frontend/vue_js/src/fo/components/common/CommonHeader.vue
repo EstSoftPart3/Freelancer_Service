@@ -165,6 +165,7 @@
                           unreadCount
                         }}</span>
                         <button
+                          v-if="notifications && notifications.length > 0"
                           @click.stop="markAllAsRead"
                           class="btn btn-outline btn-primary btn-sm"
                           style="font-size: 0.7rem"
@@ -172,6 +173,7 @@
                           모두 읽음
                         </button>
                         <button
+                          v-if="notifications && notifications.length > 0"
                           @click.stop="deleteAllNoti"
                           class="btn btn-outline btn-primary btn-sm"
                           style="font-size: 0.7rem"
@@ -411,6 +413,7 @@
 import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useUserStore } from '@/fo/stores/userStore'
 import { useAlertStore } from '@/fo/stores/alertStore'
+import { useNotificationStore } from '@/fo/stores/NotificationStore'
 import { api } from '@/axios'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -422,8 +425,9 @@ const router = useRouter()
 const headerRef = ref(null)
 const notificationDropdownRef = ref(null)
 const userDropdownRef = ref(null)
-const notifications = ref([])
-const unreadCount = ref(0)
+// const notifications = ref([])
+// const unreadCount = ref(0)
+const notificationStore = useNotificationStore()
 
 const closeMenu = () => {
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
@@ -456,6 +460,10 @@ const isCommunityActive = computed(() =>
 )
 const isNoticeActive = computed(() => currentPath.value.startsWith('/notice'))
 
+const notifications = computed(() => notificationStore.recentNotifications)
+
+const unreadCount = computed(() => notificationStore.unreadCount)
+
 // Mobile dropdown state
 const isCommunityDropdownOpen = ref(false)
 
@@ -484,35 +492,36 @@ const logout = async () => {
 }
 
 // 알림 목록 가져오기
-const fetchNotifications = async () => {
-  if (!isLoggedIn.value) return
-  try {
-    const res = await api.$get(`/notifications`)
-    notifications.value = res
-  } catch (error) {
-    console.error('알림 목록 조회 실패:', error)
-  }
-}
+// const fetchNotifications = async () => {
+//   if (!isLoggedIn.value) return
+//   try {
+//     const res = await api.$get(`/notifications/recent`)
+//     notifications.value = res
+//   } catch (error) {
+//     console.error('알림 목록 조회 실패:', error)
+//   }
+// }
 
 // 안 읽은 알림 수 가져오기
-const fetchUnreadCount = async () => {
-  if (!isLoggedIn.value) return
-  try {
-    const res = await api.$get(`/notifications/unread-count`)
-    unreadCount.value = res
-  } catch (error) {
-    console.error('알림 개수 조회 실패:', error)
-  }
-}
+// const fetchUnreadCount = async () => {
+//   if (!isLoggedIn.value) return
+//   try {
+//     const res = await api.$get(`/notifications/unread-count`)
+//     unreadCount.value = res
+//   } catch (error) {
+//     console.error('알림 개수 조회 실패:', error)
+//   }
+// }
 
 // 알림 읽음 처리
 const markAsRead = async (notification) => {
   if (notification.notificationReadYn === 'Y') return
   try {
-    await api.$patch(`/notifications/${notification.notificationSq}`)
+    // await api.$patch(`/notifications/${notification.notificationSq}`)
+    await notificationStore.markAsRead(notification)
     // 서버 응답을 기다리지 않고 즉시 UI 반영 (Optimistic UI)
-    notification.notificationReadYn = 'Y'
-    await fetchUnreadCount() // 배지 카운트 갱신
+    // notification.notificationReadYn = 'Y'
+    // await fetchUnreadCount() // 배지 카운트 갱신
   } catch (error) {
     console.error('알림 읽음 처리 실패:', error)
   }
@@ -521,11 +530,12 @@ const markAsRead = async (notification) => {
 // 알림 삭제
 const deleteNoti = async (sq) => {
   try {
-    await api.$delete(`/notifications/${sq}`)
-    notifications.value = notifications.value.filter(
-      (n) => n.notificationSq !== sq,
-    )
-    await fetchUnreadCount()
+    await notificationStore.deleteNotification(sq)
+    // await api.$delete(`/notifications/${sq}`)
+    // notifications.value = notifications.value.filter(
+    //   (n) => n.notificationSq !== sq,
+    // )
+    // await fetchUnreadCount()
   } catch (error) {
     console.error('알림 삭제 실패:', error)
   }
@@ -534,9 +544,14 @@ const deleteNoti = async (sq) => {
 // 모두 읽음 처리
 const markAllAsRead = async () => {
   try {
-    await api.$patch(`/notifications`)
-    notifications.value.forEach((n) => (n.notificationReadYn = 'Y'))
-    unreadCount.value = 0
+    const visibleNotifications = notificationStore.recentNotifications
+
+    await Promise.all(
+      visibleNotifications
+        .filter((n) => n.notificationReadYn !== 'Y')
+        .map((n) => notificationStore.markAsRead(n)),
+    )
+    notificationStore.notifyChanged()
   } catch (error) {
     console.error('알림 모두 읽음 처리 실패:', error)
   }
@@ -545,9 +560,14 @@ const markAllAsRead = async () => {
 // 전체 삭제
 const deleteAllNoti = async () => {
   try {
-    await api.$delete(`/notifications`)
-    notifications.value = []
-    unreadCount.value = 0
+    const visibleNotifications = [...notificationStore.recentNotifications]
+
+    await Promise.all(
+      visibleNotifications.map((n) =>
+        notificationStore.deleteNotification(n.notificationSq),
+      ),
+    )
+    notificationStore.notifyChanged()
   } catch (error) {
     console.error('알림 전체 삭제 실패:', error)
   }
@@ -555,8 +575,9 @@ const deleteAllNoti = async () => {
 
 onMounted(() => {
   if (isLoggedIn.value) {
-    fetchNotifications()
-    fetchUnreadCount()
+    // fetchNotifications()
+    // fetchUnreadCount()
+    notificationStore.refreshNotifications()
   }
   document.addEventListener('mousedown', handleClickOutside)
   if (notificationDropdownRef.value) {
@@ -582,11 +603,12 @@ onMounted(() => {
 // 로그인 시 데이터 다시 불러오기
 watch(isLoggedIn, (newVal) => {
   if (newVal) {
-    fetchNotifications()
-    fetchUnreadCount()
-  } else {
-    notifications.value = []
-    unreadCount.value = 0
+    notificationStore.refreshNotifications()
+    //   fetchNotifications()
+    //   fetchUnreadCount()
+    // } else {
+    //   notifications.value = []
+    //   unreadCount.value = 0
   }
 })
 
