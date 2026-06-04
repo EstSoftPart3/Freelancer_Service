@@ -64,7 +64,25 @@
 </template>
 
 <script setup>
-const currentPoint = 12500
+import { onMounted, ref } from 'vue'
+import { api } from '@/axios'
+
+const currentPoint = ref(0)
+
+const fetchCurrentPoint = async () => {
+  try {
+    const response = await api.$get('/mypage/points')
+
+    currentPoint.value = response.currentPoint ?? 0
+  } catch (error) {
+    console.error('보유 포인트 조회 실패:', error)
+    currentPoint.value = 0
+  }
+}
+
+onMounted(() => {
+  fetchCurrentPoint()
+})
 
 const pointHistories = [
   {
