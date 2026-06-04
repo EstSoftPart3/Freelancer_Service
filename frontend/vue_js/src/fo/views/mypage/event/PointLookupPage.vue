@@ -15,7 +15,7 @@
 
     <div class="history-title-wrap">
       <h5 class="history-title">포인트 내역</h5>
-      <span class="history-description">최근 3개월 포인트 변동 내역</span>
+      <span class="history-description">포인트 변동 내역</span>
     </div>
 
     <div class="history-table-wrap">
@@ -31,6 +31,10 @@
         </thead>
 
         <tbody>
+          <tr v-if="pointHistories.length === 0">
+            <td colspan="5" class="empty-history">포인트 내역이 없습니다.</td>
+          </tr>
+
           <tr v-for="history in pointHistories" :key="history.id">
             <td>{{ history.regDt }}</td>
             <td>{{ history.reason }}</td>
@@ -232,5 +236,13 @@ const formatChangePoint = (point) => {
 .point-minus {
   color: #e60012 !important;
   font-weight: 700;
+}
+
+.empty-history {
+  height: 80px;
+  color: #777;
+  font-size: 15px;
+  text-align: center;
+  vertical-align: middle;
 }
 </style>
