@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminPointMapper">
+
+    <select id="selectAdminPointList"
+            resultType="com.example.demo.domain.admin.dto.AdminPointResponse">
+        SELECT
+            p.point_sq AS pointSq,
+            p.user_sq AS userSq,
+            p.point_amount AS pointAmount,
+            p.point_create_at_dt AS pointCreateAtDt,
+            p.point_updated_at_dt AS pointUpdatedAtDt
+        FROM TBL_POINT_M p
+        ORDER BY p.point_updated_at_dt DESC, p.point_create_at_dt DESC
+    </select>
+
+</mapper>
