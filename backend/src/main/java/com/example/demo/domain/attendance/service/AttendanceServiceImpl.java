@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.domain.attendance.mapper.AttendanceMapper;
+import com.example.demo.domain.point.service.PointService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceMapper attendanceMapper;
+    private final PointService pointService;
 
     @Override
     @Transactional
@@ -26,6 +28,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         attendanceMapper.insertAttendance(userSq);
+        
+        pointService.earnAttendancePoint(userSq);
 
         return true;
     }
