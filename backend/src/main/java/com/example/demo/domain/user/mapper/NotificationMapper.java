@@ -7,14 +7,18 @@ import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.dto.request.NotificationRequestDTO;
+import com.example.demo.domain.user.dto.request.NotificationSearchDTO;
 import com.example.demo.domain.user.dto.response.NotificationResponseDTO;
 
 @Mapper
 public interface NotificationMapper {
 
     // 1. 알림 목록 조회 (최신순)
-    List<NotificationResponseDTO> selectNotificationList(Long receiverUserSq);
+    List<NotificationResponseDTO> selectNotificationList(@Param("receiverUserSq") Long receiverUserSq, @Param("search")NotificationSearchDTO notificationSearchDTO);
 
+    // 1-2 최근 알림 목록 조회(5개 헤더 드롭다운용)
+    List<NotificationResponseDTO> selectRecentNotifications(Long receiverUserSq);
+    
     // 2. 읽지 않은 알림 수 조회 (배지 노출용)
     int selectUnreadNotificationCnt(Long receiverUserSq);
 
@@ -32,6 +36,10 @@ public interface NotificationMapper {
 
     // 7. 모든 알림 논리 삭제
     int deleteAllNotifications(Long receiverUserSq);
+    
+    // 8. 알림 수량
+    Long countNotificationList(@Param("receiverUserSq") Long receiverUserSq, @Param("search")NotificationSearchDTO notificationSearchDTO);
+
 
     // 알림 대량 등록 (Batch Insert)
     void insertNotificationBatch(@Param("list") List<NotificationBatchRequestDTO> list);

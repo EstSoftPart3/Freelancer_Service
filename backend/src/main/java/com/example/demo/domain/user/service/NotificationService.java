@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.dto.request.NotificationRequestDTO;
+import com.example.demo.domain.user.dto.request.NotificationSearchDTO;
+import com.example.demo.domain.user.dto.response.NotificationListResponse;
 import com.example.demo.domain.user.dto.response.NotificationResponseDTO;
 import com.example.demo.domain.user.mapper.NotificationMapper;
 import com.example.demo.domain.user.mapper.UserMapper;
@@ -23,10 +25,29 @@ public class NotificationService {
     private final EmailSender emailSender;
 
     // 1. 알림 목록 조회
-    public List<NotificationResponseDTO> getNotificationList(Long userSq) {
-        return notificationMapper.selectNotificationList(userSq);
+    public NotificationListResponse getNotificationList(Long userSq, NotificationSearchDTO notificationSearchDTO) {
+
+    	System.out.println(notificationSearchDTO.toString());
+    	List<NotificationResponseDTO> notifications = notificationMapper.selectNotificationList(userSq, notificationSearchDTO);
+        
+    	Long totalCount = notificationMapper.countNotificationList(userSq, notificationSearchDTO);
+        
+    	NotificationListResponse response = new NotificationListResponse();
+    	
+    	response.setNotifications(notifications);
+    	response.setPage(notificationSearchDTO.getPage());
+    	response.setSize(notificationSearchDTO.getSize());
+    	response.setTotalCount(totalCount);
+    	response.setTotalPages((int)Math.ceil((double)totalCount / notificationSearchDTO.getSize()));
+    	        
+    	return response;
     }
 
+    // 1-2. 최근 알림 목록 조회(5개)
+    public List<NotificationResponseDTO> getRecentNotifications(Long userSq) {
+    	return notificationMapper.selectRecentNotifications(userSq);
+    }       
+    
     // 2. 안 읽은 알림 수 조회
     public int getUnreadCount(Long userSq) {
         return notificationMapper.selectUnreadNotificationCnt(userSq);

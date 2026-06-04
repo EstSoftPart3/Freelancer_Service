@@ -11,6 +11,7 @@ public class NotificationResponseDTO {
     private String notificationTargetUrl;
     private String notificationReadYn;
     private LocalDateTime notificationCreatedAtDtm;
+    private Long notificationTypeCd;
 
     // 추가로 필요한 정보 (발신자 이름 등)
     private String senderNm;
