@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CalendarCheck,
@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Star,
 } from 'lucide-react'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,98 @@ export const Route = createFileRoute('/_authenticated/events/points/policy/')({
   component: PointPolicyPage,
 })
 
+type ApiResponse<T> = {
+  status: string
+  message: string
+  output: T
+}
+
+type PointPolicy = {
+  pointPolicySq?: number
+  attendancePoint: number
+  streakPoint: number
+  eventPoint: number
+  autoPaymentYn?: string
+  duplicateBlockYn?: string
+  manualAdjustYn?: string
+  regDt?: string
+  modDt?: string
+}
+
 function PointPolicyPage() {
+  const [policy, setPolicy] = useState<PointPolicy>({
+    attendancePoint: 0,
+    streakPoint: 0,
+    eventPoint: 0,
+  })
+
+  const [form, setForm] = useState<PointPolicy>({
+    attendancePoint: 0,
+    streakPoint: 0,
+    eventPoint: 0,
+  })
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const fetchPolicy = async () => {
+    try {
+      setIsLoading(true)
+
+      const response = await api.$get<ApiResponse<PointPolicy>>(
+        '/admin/points/policy'
+      )
+
+      const policyData = response.output
+
+      setPolicy(policyData)
+      setForm(policyData)
+    } catch (error) {
+      console.error('포인트 정책 조회 실패:', error)
+      alert('포인트 정책 조회에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleChange = (key: keyof PointPolicy, value: string) => {
+    const numberValue = Number(value)
+
+    setForm((prev) => ({
+      ...prev,
+      [key]: Number.isNaN(numberValue) ? 0 : numberValue,
+    }))
+  }
+
+  const handleReset = () => {
+    setForm(policy)
+  }
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+
+      await api.$put<ApiResponse<PointPolicy>>('/admin/points/policy', {
+        attendancePoint: form.attendancePoint,
+        streakPoint: form.streakPoint,
+        eventPoint: form.eventPoint,
+      })
+
+      alert('포인트 정책이 저장되었습니다.')
+
+      await fetchPolicy()
+    } catch (error) {
+      console.error('포인트 정책 저장 실패:', error)
+      alert('포인트 정책 저장에 실패했습니다.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPolicy()
+  }, [])
+
   return (
     <Main className='space-y-6'>
       <div className='flex flex-col gap-2'>
@@ -48,21 +140,21 @@ function PointPolicyPage() {
         <PolicySummaryCard
           icon={<CalendarCheck className='size-5 text-primary' />}
           title='기본 출석 보상'
-          value='10P'
+          value={`${form.attendancePoint}P`}
           description='매일 1회 출석 시 지급'
         />
 
         <PolicySummaryCard
           icon={<Star className='size-5 text-primary' />}
           title='연속 출석 보너스'
-          value='50P'
+          value={`${form.streakPoint}P`}
           description='7일 연속 출석 달성 시 지급'
         />
 
         <PolicySummaryCard
           icon={<Gift className='size-5 text-primary' />}
           title='이벤트 추가 보상'
-          value='100P'
+          value={`${form.eventPoint}P`}
           description='이벤트 참여 조건 충족 시 지급'
         />
       </section>
@@ -73,23 +165,34 @@ function PointPolicyPage() {
         </CardHeader>
 
         <CardContent className='space-y-6'>
-          <PointInputRow
-            label='기본 출석 보상'
-            description='회원이 하루 1회 출석체크를 완료했을 때 지급되는 포인트입니다.'
-            defaultValue='10'
-          />
+          {isLoading ? (
+            <p className='text-sm text-muted-foreground'>
+              포인트 정책을 불러오는 중입니다.
+            </p>
+          ) : (
+            <>
+              <PointInputRow
+                label='기본 출석 보상'
+                description='회원이 하루 1회 출석체크를 완료했을 때 지급되는 포인트입니다.'
+                value={form.attendancePoint}
+                onChange={(value) => handleChange('attendancePoint', value)}
+              />
 
-          <PointInputRow
-            label='연속 출석 보너스'
-            description='7일 이상 연속 출석한 회원에게 추가로 지급되는 보너스 포인트입니다.'
-            defaultValue='50'
-          />
+              <PointInputRow
+                label='연속 출석 보너스'
+                description='7일 이상 연속 출석한 회원에게 추가로 지급되는 보너스 포인트입니다.'
+                value={form.streakPoint}
+                onChange={(value) => handleChange('streakPoint', value)}
+              />
 
-          <PointInputRow
-            label='이벤트 추가 보상'
-            description='특정 이벤트 참여 조건을 달성한 회원에게 지급되는 추가 포인트입니다.'
-            defaultValue='100'
-          />
+              <PointInputRow
+                label='이벤트 추가 보상'
+                description='특정 이벤트 참여 조건을 달성한 회원에게 지급되는 추가 포인트입니다.'
+                value={form.eventPoint}
+                onChange={(value) => handleChange('eventPoint', value)}
+              />
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -102,19 +205,19 @@ function PointPolicyPage() {
           <PolicyOption
             title='자동 지급'
             description='설정된 조건을 충족하면 포인트를 자동으로 지급합니다.'
-            checked
+            checked={form.autoPaymentYn === 'Y'}
           />
 
           <PolicyOption
             title='중복 지급 방지'
             description='동일한 조건에서 포인트가 중복 지급되지 않도록 방지합니다.'
-            checked
+            checked={form.duplicateBlockYn === 'Y'}
           />
 
           <PolicyOption
             title='운영자 수동 조정 허용'
             description='운영자가 필요 시 포인트를 수동으로 지급하거나 차감할 수 있습니다.'
-            checked
+            checked={form.manualAdjustYn === 'Y'}
           />
         </CardContent>
       </Card>
@@ -125,14 +228,14 @@ function PointPolicyPage() {
       </div>
 
       <div className='flex justify-end gap-2'>
-        <Button variant='outline'>
+        <Button variant='outline' onClick={handleReset} disabled={isSaving}>
           <RotateCcw className='size-4' />
           초기화
         </Button>
 
-        <Button>
+        <Button onClick={handleSave} disabled={isSaving || isLoading}>
           <Save className='size-4' />
-          저장
+          {isSaving ? '저장 중' : '저장'}
         </Button>
       </div>
     </Main>
@@ -174,13 +277,15 @@ function PolicySummaryCard({
 type PointInputRowProps = {
   label: string
   description: string
-  defaultValue: string
+  value: number
+  onChange: (value: string) => void
 }
 
 function PointInputRow({
   label,
   description,
-  defaultValue,
+  value,
+  onChange,
 }: PointInputRowProps) {
   return (
     <div className='grid gap-3 border-b pb-6 last:border-b-0 last:pb-0 md:grid-cols-[220px_1fr] md:items-center'>
@@ -190,7 +295,13 @@ function PointInputRow({
       </div>
 
       <div className='flex max-w-sm items-center'>
-        <Input defaultValue={defaultValue} className='rounded-r-none' />
+        <Input
+          type='number'
+          min={0}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className='rounded-r-none'
+        />
         <div className='flex h-9 items-center rounded-r-md border border-l-0 bg-muted px-4 text-sm text-muted-foreground'>
           P
         </div>
