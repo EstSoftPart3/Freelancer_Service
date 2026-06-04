@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.chat.mapper.ChatRoomMapper">
+
+<!--채팅방 생성-->
+	<insert id="insertChatRoom" parameterType="com.example.demo.domain.chat.dto.ChatRoomVo" useGeneratedKeys="true" keyProperty="chatroomSq"
+	            keyColumn="chatroom_sq">
+	            INSERT INTO TBL_CHATROOM_S
+	            (
+	            user_sq,
+	            last_message
+	            
+	            )
+	            
+	            VALUES
+	            (
+	            #{userSq},
+	            #{lastMessage}
+	            )
+	</insert>
+
+	
+	<select id= "selectChatRoomList" parameterType="long" resultType="com.example.demo.domain.chat.dto.ChatRoomVo">
+	
+	SELECT chatroom_sq,
+	last_message,
+	last_message_at,
+	chatroom_type,
+	chatroom_created_at
+	
+	FROM TBL_CHATROOM_S
+	WHERE user_sq = #{userSq}
+	order by last_message_at desc
+	
+	</select>
+
+
+</mapper>
