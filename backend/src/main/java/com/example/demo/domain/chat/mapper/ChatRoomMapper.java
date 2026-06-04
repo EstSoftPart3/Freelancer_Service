@@ -10,5 +10,7 @@ import com.example.demo.domain.chat.dto.ChatRoomVo;
 public interface ChatRoomMapper {
 	void insertChatRoom(ChatRoomVo chatRoom);
 	List<ChatRoomVo> selectChatRoomList(Long userSq);
+	int updateChatRoomType(ChatRoomVo chatRoomVo);
+	
 	
 }

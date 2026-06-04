@@ -20,5 +20,5 @@ public class ChatRoomVo {
     private LocalDateTime lastMessageAt;
     private Long userSq;
     private String lastMessage;
-    private ChatRoomStatus chatRoomStatus;
+    private ChatRoomType chatRoomType;
 }
