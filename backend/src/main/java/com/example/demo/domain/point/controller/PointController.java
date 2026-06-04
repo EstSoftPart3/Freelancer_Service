@@ -1,5 +1,6 @@
 package com.example.demo.domain.point.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +17,11 @@ public class PointController {
     private final PointService pointService;
 
     @GetMapping("/mypage/points")
-    public PointResponse getCurrentPoint(@AuthenticationPrincipal Long userSq) {
-        return pointService.getCurrentPoint(userSq);
+    public ResponseEntity<PointResponse> getMyPoint(
+            @AuthenticationPrincipal Long userSq) {
+
+        PointResponse response = pointService.getMyPoint(userSq);
+
+        return ResponseEntity.ok(response);
     }
-}	
+}

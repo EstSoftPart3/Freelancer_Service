@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.demo.domain.point.mapper.PointMapper">
 
-    <select id="selectCurrentPoint" parameterType="long" resultType="int">
+    <select id="selectPointAmount" parameterType="long" resultType="int">
         SELECT IFNULL(MAX(point_amount), 0)
         FROM TBL_POINT_M
         WHERE user_sq = #{userSq}

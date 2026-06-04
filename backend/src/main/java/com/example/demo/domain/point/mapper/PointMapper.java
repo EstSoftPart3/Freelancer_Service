@@ -6,5 +6,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PointMapper {
 
-    int selectCurrentPoint(@Param("userSq") Long userSq);
+    int selectPointAmount(@Param("userSq") Long userSq);
 }

@@ -4,5 +4,5 @@ import com.example.demo.domain.point.dto.PointResponse;
 
 public interface PointService {
 
-    PointResponse getCurrentPoint(Long userSq);
+    PointResponse getMyPoint(Long userSq);
 }
