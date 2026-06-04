@@ -46,7 +46,6 @@ import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
 
 import AttendanceCheckPage from '../views/mypage/event/AttendanceCheckPage.vue'
 import PointLookupPage from '../views/mypage/event/PointLookupPage.vue'
-import PointHistoryPage from '../views/mypage/event/PointHistoryPage.vue'
 
 const routes = [
   {
@@ -203,12 +202,6 @@ const routes = [
         path: 'points',
         name: 'PointLookup',
         component: PointLookupPage,
-      },
-
-      {
-        path: 'points/history',
-        name: 'PointHistory',
-        component: PointHistoryPage,
       },
 
       //personal
