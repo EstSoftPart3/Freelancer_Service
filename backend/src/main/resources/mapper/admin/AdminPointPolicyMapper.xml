@@ -1,25 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.admin.mapper.AdminPointPolicyMapper">
 
-    <select id="selectPointPolicy"
-            resultType="com.example.demo.domain.admin.dto.AdminPointPolicyResponse">
-        SELECT
-            point_policy_sq AS pointPolicySq,
-            attendance_point AS attendancePoint,
-            streak_point AS streakPoint,
-            event_point AS eventPoint,
-            auto_payment_yn AS autoPaymentYn,
-            duplicate_block_yn AS duplicateBlockYn,
-            manual_adjust_yn AS manualAdjustYn,
-            DATE_FORMAT(reg_dt, '%Y-%m-%d %H:%i:%s') AS regDt,
-            DATE_FORMAT(mod_dt, '%Y-%m-%d %H:%i:%s') AS modDt
-        FROM TBL_POINT_POLICY_M
-        ORDER BY point_policy_sq DESC
-        LIMIT 1
-    </select>
+	<select id="selectPointPolicy"
+		resultType="com.example.demo.domain.admin.dto.AdminPointPolicyResponse">
+		SELECT
+			point_policy_sq AS pointPolicySq,
+			attendance_point AS attendancePoint,
+			streak_point AS streakPoint,
+			event_point AS eventPoint,
+			auto_payment_yn AS autoPaymentYn,
+			duplicate_block_yn AS duplicateBlockYn,
+			manual_adjust_yn AS manualAdjustYn,
+			DATE_FORMAT(reg_dt, '%Y-%m-%d %H:%i:%s') AS regDt,
+			DATE_FORMAT(mod_dt, '%Y-%m-%d %H:%i:%s') AS modDt
+		FROM TBL_POINT_POLICY_M
+		ORDER BY point_policy_sq DESC
+		LIMIT 1
+	</select>
+
+	<update id="updatePointPolicy"
+		parameterType="com.example.demo.domain.admin.dto.AdminPointPolicyUpdateRequest">
+		UPDATE TBL_POINT_POLICY_M
+		SET
+			attendance_point = #{attendancePoint},
+			streak_point = #{streakPoint},
+			event_point = #{eventPoint},
+			auto_payment_yn = #{autoPaymentYn},
+			duplicate_block_yn = #{duplicateBlockYn},
+			manual_adjust_yn = #{manualAdjustYn},
+			mod_dt = NOW()
+		WHERE point_policy_sq = (
+			SELECT point_policy_sq
+			FROM (
+				SELECT point_policy_sq
+				FROM TBL_POINT_POLICY_M
+				ORDER BY point_policy_sq DESC
+				LIMIT 1
+			) AS latest_policy
+		)
+	</update>
+
 
 </mapper>
