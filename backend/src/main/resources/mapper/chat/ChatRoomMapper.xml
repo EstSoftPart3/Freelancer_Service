@@ -20,7 +20,20 @@
 	            )
 	</insert>
 
-
+	
+	<select id= "selectChatRoomList" parameterType="long" resultType="com.example.demo.domain.chat.dto.ChatRoomVo">
+	
+	SELECT chatroom_sq,
+	last_message,
+	last_message_at,
+	chatroom_type,
+	chatroom_created_at
+	
+	FROM TBL_CHATROOM_S
+	WHERE user_sq = #{userSq}
+	order by last_message_at desc
+	
+	</select>
 
 
 </mapper>

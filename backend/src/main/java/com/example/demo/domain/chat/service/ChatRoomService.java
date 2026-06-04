@@ -1,11 +1,14 @@
 package com.example.demo.domain.chat.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.domain.chat.dto.ChatRoomVo;
+import com.example.demo.domain.chat.dto.response.ChatRoomListResponse;
 import com.example.demo.domain.chat.mapper.ChatRoomMapper;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,5 +27,14 @@ public class ChatRoomService {
 		
 		chatRoomMapper.insertChatRoom(chatRoom);
 				}
+	
+	
+	@Transactional(readOnly = true)
+	public ChatRoomListResponse getChatRoomList(Long userSq) {
+		List<ChatRoomVo> chatRoomList = chatRoomMapper.selectChatRoomList(userSq);
+		
+		return ChatRoomListResponse.builder().chatRoomList(chatRoomList).build();
+	
+	}
 
 }
