@@ -50,16 +50,6 @@
         </tbody>
       </table>
     </div>
-
-    <div class="pagination-wrap">
-      <button type="button" class="page-btn">&laquo;</button>
-      <button type="button" class="page-btn active">1</button>
-      <button type="button" class="page-btn">2</button>
-      <button type="button" class="page-btn">3</button>
-      <button type="button" class="page-btn">4</button>
-      <button type="button" class="page-btn">5</button>
-      <button type="button" class="page-btn">&raquo;</button>
-    </div>
   </div>
 </template>
 
@@ -68,6 +58,7 @@ import { onMounted, ref } from 'vue'
 import { api } from '@/axios'
 
 const currentPoint = ref(0)
+const pointHistories = ref([])
 
 const fetchCurrentPoint = async () => {
   try {
@@ -80,92 +71,29 @@ const fetchCurrentPoint = async () => {
   }
 }
 
+const fetchPointHistories = async () => {
+  try {
+    const response = await api.$get('/mypage/points/history')
+
+    pointHistories.value = (response ?? []).map((history, index) => ({
+      id: index,
+      regDt: history.regDt,
+      reason: history.pointRsn,
+      type: history.pointTp === 'EARN' ? '적립' : '사용',
+      changePoint:
+        history.pointTp === 'EARN' ? history.chgPoint : -history.chgPoint,
+      remainingPoint: history.remPoint,
+    }))
+  } catch (error) {
+    console.error('포인트 이력 조회 실패:', error)
+    pointHistories.value = []
+  }
+}
+
 onMounted(() => {
   fetchCurrentPoint()
+  fetchPointHistories()
 })
-
-const pointHistories = [
-  {
-    id: 1,
-    regDt: '2026-05-28 10:00',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12500,
-  },
-  {
-    id: 2,
-    regDt: '2026-05-27 09:45',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12490,
-  },
-  {
-    id: 3,
-    regDt: '2026-05-26 11:20',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12480,
-  },
-  {
-    id: 4,
-    regDt: '2026-05-25 14:15',
-    reason: '프로젝트 지원',
-    type: '사용',
-    changePoint: -100,
-    remainingPoint: 12470,
-  },
-  {
-    id: 5,
-    regDt: '2026-05-24 16:30',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12570,
-  },
-  {
-    id: 6,
-    regDt: '2026-05-23 13:05',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12560,
-  },
-  {
-    id: 7,
-    regDt: '2026-05-22 17:40',
-    reason: '프로젝트 지원',
-    type: '사용',
-    changePoint: -100,
-    remainingPoint: 12550,
-  },
-  {
-    id: 8,
-    regDt: '2026-05-21 09:10',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12650,
-  },
-  {
-    id: 9,
-    regDt: '2026-05-20 10:25',
-    reason: '출석체크',
-    type: '적립',
-    changePoint: 10,
-    remainingPoint: 12640,
-  },
-  {
-    id: 10,
-    regDt: '2026-05-19 15:00',
-    reason: '프로젝트 지원',
-    type: '사용',
-    changePoint: -100,
-    remainingPoint: 12630,
-  },
-]
 
 const formatChangePoint = (point) => {
   if (point > 0) {
@@ -304,38 +232,5 @@ const formatChangePoint = (point) => {
 .point-minus {
   color: #e60012 !important;
   font-weight: 700;
-}
-
-.pagination-wrap {
-  margin-top: 18px;
-
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.page-btn {
-  min-width: 38px;
-  height: 38px;
-
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fff;
-
-  font-size: 15px;
-  color: #333;
-
-  cursor: pointer;
-}
-
-.page-btn.active {
-  background-color: #0069d9;
-  border-color: #0069d9;
-  color: #fff;
-  font-weight: 700;
-}
-
-.page-btn:hover {
-  border-color: #0069d9;
 }
 </style>
