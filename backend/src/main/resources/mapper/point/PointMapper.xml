@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.point.mapper.PointMapper">
 
-    <select id="selectPointAmount" parameterType="long" resultType="int">
-        SELECT IFNULL(MAX(point_amount), 0)
-        FROM TBL_POINT_M
-        WHERE user_sq = #{userSq}
-    </select>
+	<select id="selectPointAmount" parameterType="long" resultType="int">
+		SELECT IFNULL(MAX(point_amount), 0)
+		FROM TBL_POINT_M
+		WHERE user_sq = #{userSq}
+	</select>
+
+	<select id="selectPointHistory"
+		resultType="com.example.demo.domain.point.dto.PointHistoryResponse">
+		SELECT
+		point_tp AS pointTp,
+		chg_point AS chgPoint,
+		rem_point AS remPoint,
+		point_rsn AS pointRsn,
+		reg_dt AS regDt
+		FROM TBL_POINT_HISTORY_M
+		WHERE user_sq = #{userSq}
+		ORDER BY reg_dt DESC
+	</select>
 
 </mapper>
