@@ -102,6 +102,6 @@
 		'Y' WHERE file_sq = #{fileSq} </update>
 
 	<select id="findByIdOnly" resultType="com.example.demo.domain.community.entity.Board"> SELECT
-		board_sq, user_sq, board_typ FROM tbl_board_m WHERE board_sq = #{boardSq} </select>
+		* FROM tbl_board_m WHERE board_sq = #{boardSq} </select>
 
 </mapper>

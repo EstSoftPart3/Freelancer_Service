@@ -8,11 +8,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.domain.admin.dto.AuditLogEventDTO;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.BoardListDTO;
@@ -39,6 +41,7 @@ import com.example.demo.domain.mypage.service.InformationEditService;
 import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.service.NotificationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +67,9 @@ public class BoardService {
 	private final InformationEditRepository informationEditRepository;
 	private final InformationEditService informationEditService;
 	private final NotificationService notificationService;
+	
+	private final ApplicationEventPublisher eventPublisher;
+	private final ObjectMapper objectMapper;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -251,7 +257,27 @@ public class BoardService {
 				}
 			}
 		}
-
+		try {
+			UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			java.util.Map<String, Object> dataMap = new java.util.HashMap<>();
+			dataMap.put("제목", board.getBoardTtl());
+			dataMap.put("내용", board.getBoardDescriptionEdt() != null ? board.getBoardDescriptionEdt().replaceAll("<[^>]*>", "") : "");
+			String afterJson = objectMapper.writeValueAsString(dataMap);
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("CREATE")
+					.targetType("게시글")
+					.targetTitle(board.getBoardTtl())
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(null)
+					.afterDataTxt(afterJson)
+					.build());
+		} catch (Exception e) {
+			log.error("게시글 생성 로그 발생 실패: {}", e.getMessage());
+		}
 		return;
 	}
 
@@ -263,9 +289,18 @@ public class BoardService {
 		} else if (boardRequest.getDescription() == null) {
 			throw new IllegalArgumentException("내용을 입력해주세요.");
 		}
-
+		
+		
 		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
-
+		
+		String beforeJson = null;
+		try {
+			java.util.Map<String, Object> beforeMap = new java.util.HashMap<>();
+			beforeMap.put("제목", board.getBoardTtl());
+			beforeMap.put("내용", board.getBoardDescriptionEdt() != null ? board.getBoardDescriptionEdt().replaceAll("<[^>]*>",""): "");
+			beforeJson = objectMapper.writeValueAsString(beforeMap);
+		} catch (Exception e) {}
+		
 		// if (board.getUserSq() != boardRequest.getUserSq()) {
 		// throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
 		// }
@@ -334,12 +369,69 @@ public class BoardService {
 				boardMapper.insertFile(board.getBoardSq(), fileInfo.getFileSq());
 			}
 		}
-
+		
+		
+		
+		try {
+			UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			java.util.Map<String, Object> afterMap = new java.util.HashMap<>();
+			afterMap.put("제목", board.getBoardTtl());
+			afterMap.put("내용", board.getBoardDescriptionEdt()!= null ? board.getBoardDescriptionEdt().replaceAll("<[^>]*>", "") : "");
+			String afterJson = objectMapper.writeValueAsString(afterMap);
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("UPDATE")
+					.targetType("게시글")
+					.targetTitle(board.getBoardTtl())
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(beforeJson)
+					.afterDataTxt(afterJson)
+					.build());
+		} catch (Exception e) {
+			log.error("게시글 수정 로그 발생 실패: {}", e.getMessage());
+		}
+		
+		
+		
 		return;
 	}
 
 	@Transactional
 	public void deleteBoard(Long userSq, Long boardSq) {
+		
+		try {
+			UserDTO userInfo = communityUserMapper.findById(userSq);
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			Board oldBoard = boardMapper.findByIdOnly(boardSq);
+			String boardTitle = (oldBoard != null) ? oldBoard.getBoardTtl() : "삭제된 게시글";
+			
+			String beforeJson = null;
+			
+			if (oldBoard != null) {
+				java.util.Map<String, Object> beforeMap = new java.util.HashMap<>();
+				beforeMap.put("제목", oldBoard.getBoardTtl());
+				beforeMap.put("내용", oldBoard.getBoardDescriptionEdt() != null ? oldBoard.getBoardDescriptionEdt().replaceAll("<[^>]*>", "") : "");
+				beforeJson = objectMapper.writeValueAsString(beforeMap);
+			}
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("DELETE")
+					.targetType("게시글")
+					.targetTitle(boardTitle)
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(beforeJson)
+					.afterDataTxt("{\"boardSq\": " + boardSq + ", \"status\":\"DELETED\"}")
+					.build());
+		} catch(Exception e) {
+			log.error("게시글 삭제 로그 발행 실패: {}", e.getMessage());
+		}
+		
 		boardMapper.delete(userSq, boardSq);
 		cmntTagMapper.deleteNT(boardSq, null);
 		cmntTagMapper.deleteST(boardSq, null);

@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.domain.admin.dto.AuditLogEventDTO;
 import com.example.demo.domain.community.dto.request.CommentRequest;
 import com.example.demo.domain.community.dto.response.CommentResponse;
 import com.example.demo.domain.community.entity.Answer;
@@ -17,8 +19,11 @@ import com.example.demo.domain.community.entity.Recommendation;
 import com.example.demo.domain.community.mapper.AnswerMapper;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.mapper.CommentMapper;
+import com.example.demo.domain.community.mapper.CommunityUserMapper;
 import com.example.demo.domain.community.mapper.RecommendationMapper;
+import com.example.demo.domain.user.dto.UserDTO;
 import com.example.demo.domain.user.service.NotificationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +38,10 @@ public class CommentService {
     private final AnswerMapper answerMapper;
     private final RecommendationMapper recommendationMapper;
     private final NotificationService notificationService;
-
+    private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    private final CommunityUserMapper communityUserMapper;
+    
     @Transactional
     public Comment getComment(Long commentSq) {
         return commentMapper.findById(commentSq);
@@ -113,6 +121,30 @@ public class CommentService {
                 }
             }
         }
+        
+        // 댓글 작성 활동 로그 기록
+        
+        try {
+        	UserDTO userInfo =
+        			communityUserMapper.findById(comment.getUserSq());
+        	String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+        	
+        	java.util.Map<String, Object> dataMap = new java.util.HashMap<>();
+        	dataMap.put("내용", comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("[<^>]", "") : "");
+        	String afterJson = objectMapper.writeValueAsString(dataMap);
+        	
+        	eventPublisher.publishEvent(AuditLogEventDTO.builder()
+        			.userTypeCd(userType)
+        			.userNm(userInfo.getUserNm())
+        			.actionType("CREATE")
+        			.targetType("댓글")
+        			.targetTitle(comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("<[^>]*>", "") : "")
+        			.ipAddress("0.0.0.0")
+        			.beforeDataTxt(null)
+        			.afterDataTxt(afterJson)
+        			.build());
+
+        } catch (Exception e) {}
     }
 
     /**
@@ -153,6 +185,15 @@ public class CommentService {
         }
 
         Comment comment = getComment(commentSq);
+        
+        // 활동 로그 수정 전 데이터 저장
+        String beforeJson = null;
+        try {
+        	java.util.Map<String, Object> beforeMap = new java.util.HashMap<>();
+        	beforeMap.put("내용", comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("<[^>]*>", "") : "");
+        	beforeJson = objectMapper.writeValueAsString(beforeMap);
+        	
+        } catch (Exception e) {}
 
         // if (comment.getUserSq() != commentRequest.getUserSq()) {
         // throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
@@ -169,6 +210,28 @@ public class CommentService {
         comment.setCommentDescriptionTxt(commentRequest.getDescription());
 
         commentMapper.update(comment);
+        
+        // 활동 로그 수정 후 데이터 저장
+        try {
+        	UserDTO userInfo = communityUserMapper.findById(comment.getUserSq());
+        	String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+        	
+        	java.util.Map<String, Object> afterMap = new java.util.HashMap<>();
+        	afterMap.put("내용", comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("<[^>]*", ""):"");
+        	String afterJson = objectMapper.writeValueAsString(afterMap);
+        	
+        	eventPublisher.publishEvent(AuditLogEventDTO.builder()
+        			.userTypeCd(userType)
+        			.userNm(userInfo.getUserNm())
+        			.actionType("UPDATE")
+        			.targetType("댓글")
+        			.targetTitle(comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("<[^>]*", "") : "")
+        			.ipAddress("0.0.0.0")
+        			.beforeDataTxt(beforeJson)
+        			.afterDataTxt(afterJson)
+        			.build());
+        	
+        } catch (Exception e) {}
 
         return;
     }
@@ -176,9 +239,25 @@ public class CommentService {
     @Transactional
     public void deleteComment(Long userSq, Long commentSq) {
         Comment comment = getComment(commentSq);
+        
+        
+        // 삭제 전 저장
+        String rawComment = comment.getCommentDescriptionTxt() != null ? comment.getCommentDescriptionTxt().replaceAll("<[^>]*", "") : "";
+        String beforeJson = null;
+        
+        try {
+        	java.util.Map<String, Object> beforeMap = new java.util.HashMap<>();
+        	beforeMap.put("내용", rawComment);
+        	beforeJson = objectMapper.writeValueAsString(beforeMap);
+        } catch(Exception e) {}
+
         commentMapper.delete(userSq, commentSq);
         recommendationMapper.deleteAll(null, null, commentSq);
 
+        
+        commentMapper.delete(userSq, commentSq);
+        recommendationMapper.deleteAll(null, null, commentSq);
+        
         // 댓글수 카운트
         if (comment.getBoardSq() != null) {
             boardMapper.updateCommentCnt(comment.getBoardSq());
@@ -186,6 +265,25 @@ public class CommentService {
         if (comment.getAnswerSq() != null) {
             answerMapper.updateCommentCnt(comment.getAnswerSq());
         }
+        
+        
+        // 로그 생성
+        
+        try {
+        	UserDTO userInfo = communityUserMapper.findById(userSq);
+        	String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+        	
+        	eventPublisher.publishEvent(AuditLogEventDTO.builder()
+        			.userTypeCd(userType)
+        			.userNm(userInfo.getUserNm())
+        			.actionType("DELETE")
+        			.targetType("댓글")
+        			.targetTitle(rawComment)
+    				.ipAddress("0.0.0.0")
+    				.beforeDataTxt(beforeJson)
+    				.afterDataTxt("{\"commentSq\": " + commentSq + ",\"status\":\"DELETED\"}")
+    				.build());
+        } catch (Exception e) {}
     }
 
     @Transactional

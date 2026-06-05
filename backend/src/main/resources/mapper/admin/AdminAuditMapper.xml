@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminAuditMapper">
+	<sql id="auditSearchCondition">
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != ''">
+			AND DATE(created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		</if>
+		
+		<if test="userType != null and userType != ''">
+			AND user_type_cd = #{userType}
+		</if>
+		
+		<if test="actionType != null and actionType != '' and actionType != 'all'">
+			AND action_type = UPPER(#{actionType}) 
+		</if>
+		
+		<if test="targetType != null and targetType != '' and targetType != 'all'">
+			AND target_type = #{targetType}
+		</if>
+		
+		<if test="keyword != null and keyword != ''">
+			AND (
+				user_nm LIKE CONCAT('%', #{keyword}, '%') OR
+				target_title LIKE CONCAT('%', #{keyword}, '%')
+			)
+		</if>
+	
+	</sql>
+	
+	<select id="findAuditLogs" resultType="com.example.demo.domain.admin.dto.AdminAuditListDTO">
+		SELECT
+			log_sq AS logSq,
+			DATE_FORMAT(created_at_dtm, '%Y-%m-%d %H:%i:%s') AS createdAt,
+			user_type_cd AS userTypeCd,
+			user_nm AS userNm,
+			action_type AS actionType,
+			target_type AS targetType,
+			target_title AS targetTitle,
+			ip_address AS ipAddress,
+			before_data_txt AS beforeData,
+			after_data_txt AS afterData
+		FROM TBL_AUDIT_LOG_M
+		WHERE 1=1
+		<include refid="auditSearchCondition" />
+		ORDER BY log_sq DESC
+		LIMIT #{size} OFFSET #{offset}
+	</select>
+	
+	<select id="countAuditLogs" resultType="Long">
+		SELECT COUNT(*)
+		FROM TBL_AUDIT_LOG_M
+		WHERE 1=1
+		<include refid="auditSearchCondition" />
+	</select>
+	
+	<select id="findAuditLogDetail" resultType="com.example.demo.domain.admin.dto.response.AdminAuditDetailResponseDTO">
+		SELECT
+			log_sq AS logSq,
+			action_type AS actionType,
+			user_type_cd AS userTypeCd,
+			target_type AS targetType,
+			target_title AS targetTitle,
+			user_nm AS userNm,
+			DATE_FORMAT(created_at_dtm, '%Y-%m-%d %H:%i:%s') AS createdAt,
+			ip_address AS ipAddress,
+			before_data_txt AS beforeData,
+			after_data_txt AS afterData
+		FROM TBL_AUDIT_LOG_M
+		WHERE log_sq = #{logSq}
+	</select>
+	
+	<insert id="insertAuditLog" parameterType="com.example.demo.domain.admin.dto.AuditLogEventDTO">
+		INSERT INTO TBL_AUDIT_LOG_M (
+			user_type_cd, user_nm, action_type, target_type,
+			target_title, ip_address, before_data_txt, after_data_txt
+		) VALUES (
+			#{userTypeCd}, #{userNm}, #{actionType}, #{targetType},
+			#{targetTitle}, #{ipAddress}, #{beforeDataTxt}, #{afterDataTxt} 
+		)
+	</insert>
+
+</mapper>
