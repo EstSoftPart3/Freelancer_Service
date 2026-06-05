@@ -44,6 +44,7 @@ public class SecurityConfigDev {
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true); // 쿠키 허용
         configuration.addAllowedOriginPattern("https://*.vercel.app");
+        configuration.addAllowedOriginPattern("https://*.netlify.app");
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

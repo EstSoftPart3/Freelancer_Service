@@ -6,7 +6,7 @@ import axios, {
 } from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
 
-export const baseUrl = 'http://localhost:8080/api'
+export const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 // export const baseUrl = 'https://job.estsw.co.kr/api'
 
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
