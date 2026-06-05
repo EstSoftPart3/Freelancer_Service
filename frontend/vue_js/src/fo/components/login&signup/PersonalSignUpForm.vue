@@ -1,7 +1,7 @@
 <template>
   <form @submit.prevent="validateAll">
     <!-- 아이디 -->
-    <div class="row">
+    <div class="row" v-show="!isSocialMode">
       <div class="form-group col-lg-6">
         <label class="form-label"
           >아이디<i
@@ -21,7 +21,7 @@
     </div>
 
     <!-- 비밀번호 -->
-    <div class="row">
+    <div class="row" v-show="!isSocialMode">
       <div class="form-group col-lg-6">
         <label class="form-label"
           >비밀번호
@@ -78,6 +78,7 @@
           v-model="form.name"
           class="form-control form-control-lg"
           @input="validateName"
+          :readonly="isSocialMode"
         />
         <div v-if="nameError" class="invalid-feedback">{{ nameError }}</div>
       </div>
@@ -190,7 +191,7 @@
     </div>
 
     <!-- 이메일 -->
-    <div class="row">
+    <div class="row" v-show="!isSocialMode">
       <div class="form-group col-lg-12">
         <label class="form-label"
           >이메일 주소
@@ -248,7 +249,7 @@
     </div>
 
     <!-- 인증번호 -->
-    <div class="row">
+    <div class="row" v-show="!isSocialMode">
       <div class="form-group col-lg-8">
         <label class="form-label"
           >인증번호
@@ -313,6 +314,7 @@
 </template>
 <script setup>
 import { reactive, ref, onMounted, defineEmits, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import Datepicker from 'vue3-datepicker'
 import { ko } from 'date-fns/locale'
 import { useModalStore } from '@/fo/stores/modalStore'
@@ -322,10 +324,36 @@ import { useAlertStore } from '@/fo/stores/alertStore'
 import { api } from '@/axios'
 import { debounce } from 'lodash'
 
+const route = useRoute()
+const isSocialMode = ref(false)
+
 const emit = defineEmits(['submit'])
 const inputFormat = ref('yyyy-MM-dd')
 
 const validateAll = async () => {
+  // 소셜 가입 모드일 때 유효성 검사
+  if (isSocialMode.value) {
+    validateDob()
+    validateGender()
+    validatePhone()
+    validateAddress()
+    validateTerms()
+
+    if (
+      dobValid.value &&
+      genderValid.value &&
+      phoneValid.value &&
+      addressValid.value &&
+      termsValid.value
+    ) {
+      emit('submit', { ...form })
+    } else {
+      console.warn('추가 정보 입력 누락')
+    }
+    return
+  }
+
+  // 기존 일반 회원가입 검사 로직
   await validateIdCore(form.id)
   validatePassword()
   validateConfirmPassword()
@@ -623,6 +651,25 @@ function openPostcode() {
 }
 
 onMounted(() => {
+  // 소셜 가입모드 판별
+  if (route.query.isSocial === 'true') {
+    isSocialMode.value = true
+
+    form.name = route.query.name
+    if (route.query.email) {
+      const emailParts = route.query.email.split('@')
+      form.emailId = emailParts[0]
+      form.emailDomain = emailParts[1]
+      isCustomDomain.value = true
+    }
+
+    form.id = 'social_' + Date.now().toString().slice(-8)
+    form.password = 'social123!@#'
+    form.confirmPassword = 'social123!@#'
+    form.verificationCode = 'SOCIAL_PASS'
+    form.signupTypeCode = 102
+  }
+
   // 1. Daum 우편번호 API 확인
   if (!window.daum) {
     console.warn('❌ Daum 우편번호 API (postcode.v2.js)가 로드되지 않았습니다.')

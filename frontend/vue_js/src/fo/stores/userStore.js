@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
+    // 가입 유형(소셜 여부 판별)
+    userSignupTypeCd: localStorage.getItem('userSignupTypeCd')
+      ? Number(localStorage.getItem('userSignupTypeCd'))
+      : null,
+
     userSq: localStorage.getItem('userSq')
       ? Number(localStorage.getItem('userSq'))
       : null,
@@ -42,6 +47,7 @@ export const useUserStore = defineStore('user', {
       isAffiliated,
       affiliatedCompanySq,
       companyAuthStatusCd, // [추가]
+      userSignupTypeCd, // 가입 유형 코드
     }) {
       const userType =
         userTypeCd === 301 ? 'PERSONAL' : userTypeCd === 302 ? 'COMPANY' : ''
@@ -55,6 +61,7 @@ export const useUserStore = defineStore('user', {
       this.isAffiliated = isAffiliated || 'N'
       this.affiliatedCompanySq = affiliatedCompanySq || null
       this.companyAuthStatusCd = companyAuthStatusCd // [추가]
+      this.userSignupTypeCd = userSignupTypeCd
 
       localStorage.setItem('userSq', userSq)
       localStorage.setItem('userNm', userNm)
@@ -69,6 +76,8 @@ export const useUserStore = defineStore('user', {
       // [추가] 로컬 스토리지 저장
       if (companyAuthStatusCd)
         localStorage.setItem('companyAuthStatusCd', companyAuthStatusCd)
+      if (userSignupTypeCd)
+        localStorage.setItem('userSignupTypeCd', userSignupTypeCd)
     },
     clearUser() {
       this.userSq = null
@@ -80,6 +89,7 @@ export const useUserStore = defineStore('user', {
       this.isAffiliated = 'N'
       this.affiliatedCompanySq = null
       this.companyAuthStatusCd = null
+      this.userSignupTypeCd = null
 
       localStorage.removeItem('userSq')
       localStorage.removeItem('userNm')
@@ -92,6 +102,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('autoLogin')
       localStorage.removeItem('companyAuthStatusCd')
+      localStorage.removeItem('userSignupTypeCd')
     },
   },
 })

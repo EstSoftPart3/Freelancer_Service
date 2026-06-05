@@ -271,6 +271,12 @@ const routes = [
         name: 'ProjectPostPage',
         component: ProjectPostPage,
       },
+      {
+        path: '/oauth2/redirect',
+        name: 'Oauth2Redirect',
+        component: () =>
+          import('@/fo/views/login&signup/OAuth2RedirectHandler.vue'),
+      },
     ],
   },
 ]
