@@ -233,7 +233,7 @@ const login = async () => {
     try {
       const attendanceResponse = await api.$post('/mypage/attendance')
 
-      if (attendanceResponse.checked) {
+      if (attendanceResponse.checked || attendanceResponse.check) {
         sessionStorage.setItem('showAttendanceCheckModal', 'Y')
       }
     } catch (attendanceError) {

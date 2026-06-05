@@ -63,8 +63,18 @@ function PointPolicyPage() {
 
       const policyData = response.output
 
-      setPolicy(policyData)
-      setForm(policyData)
+      const normalisedPolicy: PointPolicy = {
+        ...policyData,
+        attendancePoint: Number(policyData.attendancePoint),
+        streakPoint: Number(policyData.streakPoint),
+        eventPoint: Number(policyData.eventPoint),
+        autoPaymentYn: policyData.autoPaymentYn ?? 'Y',
+        duplicateBlockYn: policyData.duplicateBlockYn ?? 'Y',
+        manualAdjustYn: policyData.manualAdjustYn ?? 'Y',
+      }
+
+      setPolicy(normalisedPolicy)
+      setForm(normalisedPolicy)
     } catch (error) {
       console.error('포인트 정책 조회 실패:', error)
       alert('포인트 정책 조회에 실패했습니다.')
@@ -74,14 +84,14 @@ function PointPolicyPage() {
   }
 
   const handleChange = (key: keyof PointPolicy, value: string) => {
-    const numberValue = Number(value)
+    const cleanedValue = value.replace(/^0+(?=\d)/, '')
+    const numberValue = Number(cleanedValue)
 
     setForm((prev) => ({
       ...prev,
-      [key]: Number.isNaN(numberValue) ? 0 : numberValue,
+      [key]: cleanedValue === '' || Number.isNaN(numberValue) ? 0 : numberValue,
     }))
   }
-
   const handleReset = () => {
     setForm(policy)
   }
@@ -91,9 +101,12 @@ function PointPolicyPage() {
       setIsSaving(true)
 
       await api.$put<ApiResponse<PointPolicy>>('/admin/points/policy', {
-        attendancePoint: form.attendancePoint,
-        streakPoint: form.streakPoint,
-        eventPoint: form.eventPoint,
+        attendancePoint: Number(form.attendancePoint),
+        streakPoint: Number(form.streakPoint),
+        eventPoint: Number(form.eventPoint),
+        autoPaymentYn: form.autoPaymentYn ?? 'Y',
+        duplicateBlockYn: form.duplicateBlockYn ?? 'Y',
+        manualAdjustYn: form.manualAdjustYn ?? 'Y',
       })
 
       alert('포인트 정책이 저장되었습니다.')
@@ -296,9 +309,9 @@ function PointInputRow({
 
       <div className='flex max-w-sm items-center'>
         <Input
-          type='number'
-          min={0}
-          value={value}
+          type='text'
+          inputMode='numeric'
+          value={String(value)}
           onChange={(event) => onChange(event.target.value)}
           className='rounded-r-none'
         />

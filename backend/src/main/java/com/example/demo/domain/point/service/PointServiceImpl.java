@@ -35,7 +35,8 @@ public class PointServiceImpl implements PointService {
 	@Transactional
 	public void earnAttendancePoint(Long userSq) {
 
-		int earnPoint = 100;
+		Integer policyPoint = pointMapper.selectAttendancePointPolicy();
+		int earnPoint = policyPoint != null ? policyPoint : 100;
 
 		int pointCount = pointMapper.countPointByUserSq(userSq);
 
