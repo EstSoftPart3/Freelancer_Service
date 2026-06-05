@@ -4,49 +4,120 @@
 <mapper namespace="com.example.demo.domain.user.mapper.NotificationMapper">
 
 
-  <select id="selectNotificationList"
-    resultType="com.example.demo.domain.user.dto.response.NotificationResponseDTO"> SELECT
-    n.notification_sq, n.notification_content_txt, n.notification_target_url,
-    n.notification_read_yn, n.notification_created_at_dtm, u.user_nm AS sender_nm FROM
-    tbl_notification_m n LEFT JOIN tbl_user_m u ON n.sender_user_sq = u.user_sq WHERE
-    n.receiver_user_sq = #{receiverUserSq} AND n.notification_is_deleted_yn = 'N' ORDER BY
-    n.notification_created_at_dtm DESC LIMIT 20 </select>
+	<select id="selectNotificationList"
+		resultType="com.example.demo.domain.user.dto.response.NotificationResponseDTO">
+		SELECT n.notification_sq, n.notification_type_cd,
+		n.notification_content_txt, n.notification_target_url,
+		n.notification_read_yn, n.notification_created_at_dtm, u.user_nm AS
+		sender_nm FROM tbl_notification_m n LEFT JOIN tbl_user_m u ON
+		n.sender_user_sq = u.user_sq WHERE n.receiver_user_sq =
+		#{receiverUserSq} AND n.notification_is_deleted_yn = 'N' <if
+			test="search.searchType != null and search.searchKeyword != ''">
+			<choose>
 
-  <select id="selectUnreadNotificationCnt" resultType="int"> SELECT COUNT(*) FROM tbl_notification_m
-    WHERE receiver_user_sq = #{receiverUserSq} AND notification_read_yn = 'N' AND
-    notification_is_deleted_yn = 'N' </select>
+				<when test="search.searchType == 'CATEGORY'">
+					AND n.notification_type_cd = #{search.notificationTypeCd}
+				</when>
 
-  <insert id="insertNotification"
-    parameterType="com.example.demo.domain.user.dto.request.NotificationRequestDTO"> INSERT INTO
-    tbl_notification_m ( receiver_user_sq, sender_user_sq, notification_type_cd,
-    notification_content_txt, notification_target_url ) VALUES ( #{receiverUserSq}, #{senderUserSq},
-    #{notificationTypeCd}, #{notificationContentTxt}, #{notificationTargetUrl} ) </insert>
+				<when test="search.searchType == 'CONTENT'">
+					AND n.notification_content_txt
+					LIKE CONCAT('%', #{search.searchKeyword}, '%')
+				</when>
 
-  <update id="updateNotificationRead"> UPDATE tbl_notification_m SET notification_read_yn = 'Y'
-    WHERE notification_sq = #{notificationSq} </update>
+				<when test="search.searchType == 'ALL'">
+					AND n.notification_content_txt LIKE CONCAT('%',
+		#{search.searchKeyword}, '%')
+				</when>
+			</choose>
+		</if>
+		ORDER BY n.notification_created_at_dtm DESC LIMIT #{search.size} OFFSET
+		#{search.offset} </select>
 
-  <update id="deleteNotification"> UPDATE tbl_notification_m SET notification_is_deleted_yn = 'Y'
-    WHERE notification_sq = #{notificationSq} </update>
+	<select id="countNotificationList"
+		resultType="long">
+		SELECT COUNT(*) FROM tbl_notification_m n WHERE n.receiver_user_sq =
+		#{receiverUserSq} AND n.notification_is_deleted_yn = 'N' <if
+			test="search.searchKeyword != null and search.searchKeyword != ''">
+			<choose>
 
-  <insert id="insertNotificationBatch"> INSERT INTO tbl_notification_m ( receiver_user_sq,
-    sender_user_sq, notification_type_cd, notification_content_txt, notification_target_url ) VALUES <foreach
-      collection="list" item="item" separator=","> ( #{item.receiverSq}, #{item.senderSq},
-    #{item.typeCd}, #{item.content}, #{item.targetUrl} ) </foreach>
-  </insert>
+				<when test="search.searchType == 'CATEGORY'">
+					AND n.notification_type_cd = #{search.notificationTypeCd}
+				</when>
 
-  <update id="updateAllNotificationsRead">
-    UPDATE tbl_notification_m
-    SET notification_read_yn = 'Y'
-    WHERE receiver_user_sq = #{receiverUserSq}
-      AND notification_read_yn = 'N'
-      AND notification_is_deleted_yn = 'N'
-  </update>
+				<when test="search.searchType == 'CONTENT'">
+					AND n.notification_content_txt
+					LIKE CONCAT('%', #{search.searchKeyword}, '%')
+				</when>
 
-  <update id="deleteAllNotifications">
-    UPDATE tbl_notification_m
-    SET notification_is_deleted_yn = 'Y'
-    WHERE receiver_user_sq = #{receiverUserSq}
-      AND notification_is_deleted_yn = 'N'
-  </update>
+				<when test="search.searchType == 'ALL'">
+					AND n.notification_content_txt LIKE CONCAT('%',
+		#{search.searchKeyword}, '%')
+				</when>
+			</choose>
+		</if>
+	</select>
+
+	<select id="selectRecentNotifications"
+		resultType="com.example.demo.domain.user.dto.response.NotificationResponseDTO">
+		SELECT
+		n.notification_sq,
+		n.notification_content_txt,
+		n.notification_target_url,
+		n.notification_read_yn,
+		n.notification_created_at_dtm
+		FROM tbl_notification_m n
+		WHERE n.receiver_user_sq = #{receiverUserSq}
+		AND n.notification_is_deleted_yn = 'N'
+		AND n.notification_created_at_dtm >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+		ORDER BY n.notification_created_at_dtm DESC
+		LIMIT 5
+	</select>
+
+	<select id="selectUnreadNotificationCnt" resultType="int"> SELECT COUNT(*)
+		FROM tbl_notification_m
+		WHERE receiver_user_sq = #{receiverUserSq} AND notification_read_yn =
+		'N' AND
+		notification_is_deleted_yn = 'N' </select>
+
+	<insert id="insertNotification"
+		parameterType="com.example.demo.domain.user.dto.request.NotificationRequestDTO">
+		INSERT INTO
+		tbl_notification_m ( receiver_user_sq, sender_user_sq,
+		notification_type_cd,
+		notification_content_txt, notification_target_url ) VALUES (
+		#{receiverUserSq}, #{senderUserSq},
+		#{notificationTypeCd}, #{notificationContentTxt},
+		#{notificationTargetUrl} ) </insert>
+
+	<update id="updateNotificationRead"> UPDATE tbl_notification_m SET
+		notification_read_yn = 'Y'
+		WHERE notification_sq = #{notificationSq} </update>
+
+	<update id="deleteNotification"> UPDATE tbl_notification_m SET
+		notification_is_deleted_yn = 'Y'
+		WHERE notification_sq = #{notificationSq} </update>
+
+	<insert id="insertNotificationBatch"> INSERT INTO tbl_notification_m (
+		receiver_user_sq, sender_user_sq, notification_type_cd,
+		notification_content_txt, notification_target_url ) VALUES <foreach
+			collection="list" item="item" separator=","> ( #{item.receiverSq},
+		#{item.senderSq},
+			#{item.typeCd}, #{item.content}, #{item.targetUrl} ) </foreach>
+	</insert>
+
+	<update id="updateAllNotificationsRead">
+		UPDATE tbl_notification_m
+		SET notification_read_yn = 'Y'
+		WHERE receiver_user_sq = #{receiverUserSq}
+		AND notification_read_yn = 'N'
+		AND notification_is_deleted_yn = 'N'
+	</update>
+
+	<update id="deleteAllNotifications">
+		UPDATE tbl_notification_m
+		SET notification_is_deleted_yn = 'Y'
+		WHERE receiver_user_sq = #{receiverUserSq}
+		AND notification_is_deleted_yn = 'N'
+	</update>
 
 </mapper>
