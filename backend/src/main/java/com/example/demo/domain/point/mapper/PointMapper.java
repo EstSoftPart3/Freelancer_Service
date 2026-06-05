@@ -12,6 +12,8 @@ public interface PointMapper {
 
     int selectPointAmount(@Param("userSq") Long userSq);
     
+    Integer selectAttendancePointPolicy();
+    
     List<PointHistoryResponse> selectPointHistory(@Param("userSq") Long userSq);
     
     int countPointByUserSq(@Param("userSq") Long userSq);

@@ -48,6 +48,13 @@
 		WHERE user_sq = #{userSq}
 	</select>
 
+	<select id="selectAttendancePointPolicy" resultType="java.lang.Integer">
+		SELECT attendance_point
+		FROM TBL_POINT_POLICY_M
+		ORDER BY point_policy_sq DESC
+		LIMIT 1
+	</select>
+
 	<update id="updatePointAmount">
 		UPDATE TBL_POINT_M
 		SET point_amount = #{pointAmount},

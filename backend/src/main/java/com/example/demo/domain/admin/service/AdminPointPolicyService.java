@@ -19,6 +19,13 @@ public class AdminPointPolicyService {
     }
     
     public void updatePointPolicy(AdminPointPolicyUpdateRequest request) {
-        adminPointPolicyMapper.updatePointPolicy(request);
+        int updatedCount = adminPointPolicyMapper.updatePointPolicy(request);
+
+        System.out.println("포인트 정책 수정 요청값 = " + request);
+        System.out.println("포인트 정책 수정 row count = " + updatedCount);
+
+        if (updatedCount == 0) {
+            throw new RuntimeException("포인트 정책 수정 대상이 없습니다.");
+        }
     }
 }
