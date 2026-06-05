@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.community.mapper.CommunityUserMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
@@ -46,6 +47,10 @@ import com.example.demo.domain.project.vo.ProjectSummary;
 import com.example.demo.domain.user.dto.request.NotificationBatchRequestDTO;
 import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
+import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.admin.dto.AuditLogEventDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,6 +68,9 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
+	private final ObjectMapper objectMapper;
+	private final ApplicationEventPublisher eventPublisher;
+	private final CommunityUserMapper communityUserMapper;
 
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
@@ -136,6 +144,24 @@ public class ProjectService {
 				notificationService.insertNotificationBatch(batchList);
 			}
 		}
+		
+		try {
+			String afterJson = objectMapper.writeValueAsString(request);
+			
+			UserDTO userInfo = communityUserMapper.findById(Long.valueOf(token.getName()));
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("CREATE")
+					.targetType("프로젝트")
+					.targetTitle(request.projectTitle())
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(null)
+					.afterDataTxt(afterJson)
+					.build());
+		} catch (Exception e) {}
 	}
 
 	@Transactional
@@ -465,6 +491,12 @@ public class ProjectService {
 		if (project.getProjectIsDeletedYn().equals("Y")) {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
+		
+		// 활동 로그 수정 전 데이터 저장
+		String beforeJson = null;
+		try {
+			beforeJson = objectMapper.writeValueAsString(project);
+		} catch(Exception e) {}
 
 		long devGradeCodeSq = commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
 				ParentCodeEnum.DEVELOPER_GRADE.getCode());
@@ -479,6 +511,28 @@ public class ProjectService {
 
 		// 3. 최종 저장 (중요! 주소까지 다 바뀐 최종 객체를 이때 DB에 딱 한 번만 쏜다)
 		projectMapper.updateProject(project);
+		
+		// 활동 로그 수정 후 저장
+		
+		try { 
+		
+		String afterJson = objectMapper.writeValueAsString(request);
+			
+		Long userSq = projectMapper.findUserSqByProjectSq(request.projectId());
+		UserDTO userInfo = communityUserMapper.findById(userSq);
+		String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+		
+		eventPublisher.publishEvent(AuditLogEventDTO.builder()
+				.userTypeCd(userType)
+				.userNm(userInfo.getUserNm())
+				.actionType("UPDATE")
+				.targetType("프로젝트")
+				.targetTitle(request.projectTitle())
+				.ipAddress("0.0.0.0")
+				.beforeDataTxt(beforeJson)
+				.afterDataTxt(afterJson)
+				.build());
+	} catch (Exception e) {}
 	}
 
 	@Transactional
@@ -497,6 +551,12 @@ public class ProjectService {
 		if (project == null) {
 			throw new RuntimeException("존재하지 않는 프로젝트입니다.");
 		}
+		
+		// 활동 로그 삭제전 데이터 제작
+		String beforeJson=null;
+		try {
+			beforeJson = objectMapper.writeValueAsString(project);
+		} catch(Exception e) {}
 
 		// 2. 권한 체크 (추가된 메서드 호출)
 		validateProjectOwner(project, token);
@@ -511,6 +571,23 @@ public class ProjectService {
 
 		// 4. 프로젝트 본체 소프트 딜리트
 		projectMapper.softDeleteProject(projectSq);
+		
+		// 활동 로그 삭제전 로그 저장
+		try {
+			UserDTO userInfo = communityUserMapper.findById(Long.valueOf(token.getName()));
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("DELETE")
+					.targetType("프로젝트")
+					.targetTitle(project.getProjectTtl())
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(beforeJson)
+					.afterDataTxt("{\"projectSq\": " + projectSq + ", \"status\": \"DELETED\"}")
+					.build());
+		} catch (Exception e) {}
 	}
 
 	// 1. 권한 검증 헬퍼 메서드

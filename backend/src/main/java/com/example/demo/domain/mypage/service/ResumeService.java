@@ -8,13 +8,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.domain.admin.dto.AuditLogEventDTO;
 import com.example.demo.domain.community.entity.CommonSkillTag;
+import com.example.demo.domain.community.mapper.CommunityUserMapper;
 import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
 import com.example.demo.domain.mypage.dto.response.CertificateListResponseDTO;
@@ -23,6 +26,8 @@ import com.example.demo.domain.mypage.dto.response.ProjectHistoryTypeCodeGroupRe
 import com.example.demo.domain.mypage.dto.response.ResumeListResponse;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.repository.ResumeRepository;
+import com.example.demo.domain.user.dto.UserDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +43,9 @@ public class ResumeService {
 	// private final AddressRepository addressRepository;
 	// private final MypageAddressMapper addressMapper;
 	// private final AmazonS3 amazonS3;
+	private final ObjectMapper objectMapper;
+	private final ApplicationEventPublisher eventPublisher;
+	private final CommunityUserMapper communityUserMapper;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -182,6 +190,25 @@ public class ResumeService {
 				}
 			}
 		}
+		
+		// 이력서 생성 활동 로그
+		
+		try {
+			UserDTO userInfo = communityUserMapper.findById(userSq);
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			String afterJson = objectMapper.writeValueAsString(dto);
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("CREATE")
+					.targetType("이력서")
+					.targetTitle(dto.getResumeTtl())
+					.beforeDataTxt(null)
+					.afterDataTxt(afterJson)
+					.build());
+		} catch (Exception e) {}
 
 		return result;
 	}
@@ -195,6 +222,14 @@ public class ResumeService {
 		if (resumeSq == null) {
 			throw new IllegalArgumentException("이력서 번호(resumeSq)는 필수입니다.");
 		}
+		
+		
+		// 수정 전 이력서 활동 로그
+		String beforeJson = null;
+		try {
+			ResumeRequestDTO oldResume = getResumeDetail(resumeSq);
+			beforeJson = objectMapper.writeValueAsString(oldResume);
+		} catch (Exception e) {}
 
 		// 1. 기본 이력서 정보 업데이트
 		int result = resumeRepository.updateResume(userSq, dto);
@@ -601,6 +636,26 @@ public class ResumeService {
 			resumeRepository.insertAttachmentFile(file);
 			resumeRepository.insertResumeAttachmentMapping(resumeSq, file.getFileSq());
 		}
+		
+		
+		// 수정 후 이력서 로그 저장
+		try {
+			UserDTO userInfo = communityUserMapper.findById(userSq);
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			String afterJson = objectMapper.writeValueAsString(dto);
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("UPDATE")
+					.targetType("이력서")
+					.targetTitle(dto.getResumeTtl())
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(beforeJson)
+					.afterDataTxt(afterJson)
+					.build());
+		} catch (Exception e) {}
 
 		return result;
 
@@ -656,6 +711,17 @@ public class ResumeService {
 	// 로컬용
 	@Transactional
 	public void softDeleteResume(Long resumeSq) {
+		
+		// 활동 로그 삭제 전 저장
+		Long memberSq = resumeMapper.findUserByResumeSq(resumeSq);
+		String beforeJson = null;
+		String rawTitle = "삭제된 이력서";
+		try {
+			ResumeRequestDTO oldResume = getResumeDetail(resumeSq);
+			rawTitle = oldResume.getResumeTtl();
+			beforeJson = objectMapper.writeValueAsString(oldResume);
+		} catch (Exception e) {}
+		
 		resumeMapper.updateDeleteYn(resumeSq);
 
 		// 프로필 이미지 정리
@@ -670,6 +736,23 @@ public class ResumeService {
 		for (ResumeRequestDTO.ResumeFileDTO attachment : attachmentList) {
 			cleanupPhysicalFile(resumeSq, attachment, "ATTACHMENT");
 		}
+		
+		try {
+			UserDTO userInfo = communityUserMapper.findById(memberSq);
+			String userType = (userInfo.getUserTypeCd() != null && userInfo.getUserTypeCd() == 301L) ? "개인" : "기업";
+			
+			eventPublisher.publishEvent(AuditLogEventDTO.builder()
+					.userTypeCd(userType)
+					.userNm(userInfo.getUserNm())
+					.actionType("DELETE")
+					.targetType("이력서")
+					.targetTitle(rawTitle)
+					.ipAddress("0.0.0.0")
+					.beforeDataTxt(beforeJson)
+					.afterDataTxt("{\"resumeSq\": " + resumeSq + ", \"status\":\"DELETED\"}")
+					.build());
+			
+		} catch (Exception e) {}
 	}
 
 	// // S3용

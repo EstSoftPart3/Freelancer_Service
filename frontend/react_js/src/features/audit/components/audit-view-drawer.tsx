@@ -9,6 +9,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { useAudit } from './audit-provider'
+import { ResumeLogViewer } from './resume-log-viewer'
+import { ProjectLogViewer } from './project-log-viewer'
+import { BoardLogViewer } from './board-log-viewer'
+import { CommentLogViewer } from './comment-log-viewer'
 
 interface Props {
   open: boolean
@@ -71,7 +75,7 @@ export function AuditViewDrawer({ open, onOpenChange }: Props) {
             <div className='grid grid-cols-2 gap-4'>
               <div className='flex items-center gap-2 text-sm'>
                 <User size={14} className='text-muted-foreground' />
-                <span className='text-muted-foreground'>행위자</span>
+                <span className='text-muted-foreground'>유저명</span>
                 <span className='font-medium'>{currentRow.userNm}</span>
               </div>
               <div className='flex items-center gap-2 text-sm'>
@@ -102,54 +106,87 @@ export function AuditViewDrawer({ open, onOpenChange }: Props) {
               <h4 className='text-sm font-semibold text-muted-foreground'>
                 변경 내용
               </h4>
-              <div className='flex flex-col gap-4'>
-                {/* 수정 전 */}
-                <div className='space-y-2 rounded-lg border p-4'>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-2 w-2 rounded-full' />
-                    <span className='text-sm font-semibold'>수정 전</span>
-                  </div>
-                  {currentRow.beforeData &&
-                    (typeof currentRow.beforeData === 'string' ? (
-                      <div className='text-sm whitespace-pre-wrap'>
-                        {currentRow.beforeData}
-                      </div>
+              {currentRow.targetType === '이력서' || currentRow.targetType === '프로젝트' || currentRow.targetType === '게시글' || currentRow.targetType === '댓글' ? (
+                <div className='grid grid-cols-2 gap-6'>
+                  <div>
+                    <h4 className='text-sm font-semibold text-muted-foreground mb-2'>
+                      {`수정 전 ${currentRow.targetType}`}
+                    </h4>
+                    {currentRow.targetType === '이력서' ? (
+                      <ResumeLogViewer data={currentRow.beforeData} />
+                    ) : currentRow.targetType === '프로젝트' ? (
+                      <ProjectLogViewer data={currentRow.beforeData} />
+                    ) : currentRow.targetType === '게시글' ? (
+                      <BoardLogViewer data={currentRow.beforeData} />
                     ) : (
-                      Object.entries(currentRow.beforeData).map(
-                        ([key, value]) => (
-                          <div key={key} className='text-sm'>
-                            <span className='font-medium text-muted-foreground'>
-                              {key}:
-                            </span>{' '}
-                            <span>{value}</span>
-                          </div>
-                        )
-                      )
-                    ))}
-                </div>
-                {/* 수정 후 */}
-                <div className='space-y-2 rounded-lg border p-4'>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-2 w-2 rounded-full' />
-                    <span className='text-sm font-semibold'>수정 후</span>
+                      <CommentLogViewer data={currentRow.beforeData} />
+                    )}
                   </div>
-                  {currentRow.afterData &&
-                    (typeof currentRow.afterData === 'string' ? (
-                      <div>{currentRow.afterData}</div>
+                  <div>
+                    <h4 className='text-sm font-semibold text-blue-600 mb-2'>
+                      {`수정 후 ${currentRow.targetType}`}
+                    </h4>
+                    {currentRow.targetType === '이력서' ? (
+                      <ResumeLogViewer data={currentRow.afterData} />
+                    ) : currentRow.targetType === '프로젝트' ? (
+                      <ProjectLogViewer data={currentRow.afterData} />
+                    ) : currentRow.targetType === '게시글' ? (
+                      <BoardLogViewer data={currentRow.afterData} />
                     ) : (
-                      Object.entries(currentRow.afterData).map(
-                        ([key, value]) => (
-                          <div key={key} className='text-sm'>
-                            <span className='font-medium text-muted-foreground'>
-                              {key}:
-                            </span>{' '}
-                            <span>{value}</span>
-                          </div>
-                        )
-                      )
-                    ))}
+                      <CommentLogViewer data={currentRow.afterData} />
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className='flex flex-col gap-4'>
+                  {/* 수정 전 */}
+                  <div className='space-y-2 rounded-lg border p-4'>
+                    <div className='flex items-center gap-2'>
+                      <div className='h-2 w-2 rounded-full' />
+                      <span className='text-sm font-semibold'>수정 전</span>
+                    </div>
+                    {currentRow.beforeData &&
+                      (typeof currentRow.beforeData === 'string' ? (
+                        <div className='text-sm whitespace-pre-wrap'>
+                          {currentRow.beforeData}
+                        </div>
+                      ) : (
+                        Object.entries(currentRow.beforeData).map(
+                          ([key, value]) => (
+                            <div key={key} className='text-sm'>
+                              <span className='font-medium text-muted-foreground'>
+                                {key}:
+                              </span>{' '}
+                              <span>{value}</span>
+                            </div>
+                          )
+                        )
+                      ))}
+                  </div>
+                  {/* 수정 후 */}
+                  <div className='space-y-2 rounded-lg border p-4'>
+                    <div className='flex items-center gap-2'>
+                      <div className='h-2 w-2 rounded-full' />
+                      <span className='text-sm font-semibold'>수정 후</span>
+                    </div>
+                    {currentRow.afterData &&
+                      (typeof currentRow.afterData === 'string' ? (
+                        <div>{currentRow.afterData}</div>
+                      ) : (
+                        Object.entries(currentRow.afterData).map(
+                          ([key, value]) => (
+                            <div key={key} className='text-sm'>
+                              <span className='font-medium text-muted-foreground'>
+                                {key}:
+                              </span>{' '}
+                              <span>{value}</span>
+                            </div>
+                          )
+                        )
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -160,21 +197,29 @@ export function AuditViewDrawer({ open, onOpenChange }: Props) {
                 내용
               </h4>
               <div className='rounded-lg border p-4'>
-                {currentRow.afterData &&
-                  (typeof currentRow.afterData === 'string' ? (
-                    <div className='text-sm whitespace-pre-wrap'>
-                      {currentRow.afterData}
+                {currentRow.targetType === '이력서' ? (
+                  <ResumeLogViewer data={currentRow.afterData} />
+                ) : currentRow.targetType === '프로젝트' ? (
+                  <ProjectLogViewer data={currentRow.afterData} />
+                ) : currentRow.targetType === '게시글' ? (
+                  <BoardLogViewer data={currentRow.afterData} />
+                ) : currentRow.targetType === '댓글' ? (
+                  <CommentLogViewer data={currentRow.afterData} />
+                ) : currentRow.afterData &&
+                (typeof currentRow.afterData === 'string' ? (
+                  <div className='text-sm whitespace-pre-wrap'>
+                    {currentRow.afterData}
+                  </div>
+                ) : (
+                  Object.entries(currentRow.afterData).map(([key, value]) => (
+                    <div key={key} className='py-1 text-sm'>
+                      <span className='font-medium text-muted-foreground'>
+                        {key}:
+                      </span>{' '}
+                      <span>{value}</span>
                     </div>
-                  ) : (
-                    Object.entries(currentRow.afterData).map(([key, value]) => (
-                      <div key={key} className='py-1 text-sm'>
-                        <span className='font-medium text-muted-foreground'>
-                          {key}:
-                        </span>{' '}
-                        <span>{value}</span>
-                      </div>
-                    ))
-                  ))}
+                  ))
+                ))}
               </div>
             </div>
           )}
@@ -186,23 +231,37 @@ export function AuditViewDrawer({ open, onOpenChange }: Props) {
                 삭제된 내용
               </h4>
               <div className='rounded-lg border p-4'>
-                {currentRow.beforeData &&
-                  (typeof currentRow.beforeData === 'string' ? (
-                    <div className='text-sm whitespace-pre-wrap line-through'>
-                      {currentRow.beforeData}
+                {currentRow.targetType === '이력서' ? (
+                  <div className='opacity-60'>
+                    <ResumeLogViewer data={currentRow.beforeData} />
+                  </div>
+                ) : currentRow.targetType === '프로젝트' ? (
+                  <div className='opacity-60'>
+                    <ProjectLogViewer data={currentRow.beforeData} />
+                  </div>
+                ) : currentRow.targetType === '게시글' ? (
+                  <div className='opacity-60'>
+                    <BoardLogViewer data={currentRow.beforeData} />
+                  </div>
+                ) : currentRow.targetType === '댓글' ? (
+                  <div className='opacity-60'>
+                    <CommentLogViewer data={currentRow.beforeData} />
+                  </div>
+                ) : currentRow.beforeData &&
+                (typeof currentRow.beforeData === 'string' ? (
+                  <div className='text-sm whitespace-pre-wrap line-through'>
+                    {currentRow.beforeData}
+                  </div>
+                ) : (
+                  Object.entries(currentRow.beforeData).map(([key, value]) => (
+                    <div key={key} className='py-1 text-sm'>
+                      <span className='font-medium text-muted-foreground'>
+                        {key}:
+                      </span>{' '}
+                      <span className='line-through'>{value}</span>
                     </div>
-                  ) : (
-                    Object.entries(currentRow.beforeData).map(
-                      ([key, value]) => (
-                        <div key={key} className='py-1 text-sm'>
-                          <span className='font-medium text-muted-foreground'>
-                            {key}:
-                          </span>{' '}
-                          <span className='line-through'>{value}</span>
-                        </div>
-                      )
-                    )
-                  ))}
+                  ))
+                ))}
               </div>
             </div>
           )}
