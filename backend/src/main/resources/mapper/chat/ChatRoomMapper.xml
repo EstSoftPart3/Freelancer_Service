@@ -43,4 +43,27 @@
 	</update>
 
 
+	<update id="updateLastMessage">
+		UPDATE TBL_CHATROOM_S
+		SET
+		last_message = #{lastMessage},
+		last_message_at = #{lastMessageAt}
+		
+		WHERE chatroom_sq = #{chatroomSq}
+	</update>
+	
+	<select id="existsUserChatRoom" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_CHATROOM_S
+		WHERE chatroom_sq = #{chatroomSq} AND user_sq = #{userSq}
+	
+	</select>
+
+
+	<select id= "existsCounselerChatRoom" resultType="int">
+		SELECT COUNT(*)
+		FROM TBL_CHATROOM_S
+		WHERE chatroom_sq = #{chatroomSq}
+		AND chatroom_type = 'COUNSELOR'	
+	</select>
 </mapper>

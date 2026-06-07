@@ -56,19 +56,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/admin/login",
             "/api/admin/refresh-token",
             // ---------------- [추가] Health Check 경로 ----------------
-            "/api/actuator"
+            "/api/actuator",
 
     // 여기에 더 추가 가능
+            
+            // websocket 관련 경로
+            "/api/ws-chat"
     );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+    	
         String uri = request.getRequestURI();
-
         String token = resolveToken(request);
-
+        
         // 인증 제외 경로 처리
         if (EXCLUDE_URLS.stream().anyMatch(uri::startsWith)) {
             if (token != null && jwtProvider.validateToken(token)) {
@@ -83,8 +86,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 토큰 오류 무시하고 통과 (로그 남기고 싶으면 여기서 처리)
                 }
             }
-
+            
+            
+          
             filterChain.doFilter(request, response);
+            
+            
+       
             return;
         }
 

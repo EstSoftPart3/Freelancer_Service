@@ -47,13 +47,13 @@ public class ChatRoomController {
 	}
 
 	// 채팅방 타입 변화
-	@PatchMapping("/{chatRoomSq}/type")
+	@PatchMapping("/{chatroomSq}/type")
 	public ResponseEntity<ApiResponse<NullType>> switchChatRoomType(
 			@AuthenticationPrincipal Long userSq,
-			@PathVariable Long chatRoomSq,
+			@PathVariable Long chatroomSq,
 			@RequestBody ChatRoomTypeSwitchRequest request){
 		
-		chatRoomService.switchChatRoomType(userSq, chatRoomSq, request);
+		chatRoomService.switchChatRoomType(userSq, chatroomSq, request);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "타입 전환 완료",null));
 	}
 
