@@ -62,7 +62,7 @@ public class SecurityConfigDev {
                         // 3. 사용자 정보 조회 등은 인증 필요
                         .requestMatchers("/me").authenticated()
                         // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
-                        .requestMatchers("ws-test","/ws-chat/**").permitAll()
+                        .requestMatchers("/ws-chat/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable());
