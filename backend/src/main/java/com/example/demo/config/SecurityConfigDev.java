@@ -1,7 +1,5 @@
 package com.example.demo.config;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +42,7 @@ public class SecurityConfigDev {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    	
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
@@ -63,6 +62,7 @@ public class SecurityConfigDev {
                         // 3. 사용자 정보 조회 등은 인증 필요
                         .requestMatchers("/me").authenticated()
                         // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
+                        .requestMatchers("/ws-chat/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable());

@@ -41,12 +41,12 @@ public class ChatRoomService {
 	}
 	
 	@Transactional
-	public void switchChatRoomType(Long userSq,Long chatRoomSq, ChatRoomTypeSwitchRequest request) {
+	public void switchChatRoomType(Long userSq,Long chatroomSq, ChatRoomTypeSwitchRequest request) {
 		if(userSq == null) {
 			throw new IllegalArgumentException(" 로그인이 필요합니다.");
 		}
 		
-		if(chatRoomSq == null) {
+		if(chatroomSq == null) {
 			throw new IllegalArgumentException("없는 채팅방입니다.");
 		}
 		if(request == null || request.getChatRoomType() == null) {
@@ -55,7 +55,7 @@ public class ChatRoomService {
 		
 		
 		ChatRoomVo chatRoom = ChatRoomVo.builder()
-				.chatroomSq(chatRoomSq)
+				.chatroomSq(chatroomSq)
 				.userSq(userSq)
 				.chatRoomType(request.getChatRoomType())
 				.build();

@@ -88,7 +88,7 @@
           v-for="chat in chatMessages"
           :key="chat.chatMessageSeq"
           class="chat-message"
-          :class="chat.senderType.toLowerCase()"
+          :class="isMyMessage(chat) ? 'my-message' : 'other-message'"
         >
           <div class="chat-bubble">
             {{ chat.messageContent }}
@@ -114,8 +114,11 @@
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
+import SockJS from 'sockjs-client'
+import { Client } from '@stomp/stompjs'
+import { useUserStore } from '@/fo/stores/userStore'
 
 const modalStore = useModalStore()
 
@@ -125,6 +128,98 @@ const messageInputRef = ref(null)
 const viewMode = ref('LIST')
 const message = ref('')
 const currentRoom = ref(null)
+const chatMessages = ref([])
+
+// websocket 관련 변수
+
+const userStore = useUserStore()
+
+const WS_BASE_URL = 'http://localhost:8080'
+const stompClient = ref(null)
+const subscription = ref(null)
+const isConnected = ref(false)
+const isCounselor = computed(() => {
+  return userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
+})
+const subscribe = (chatroomSq) => {
+  if (!stompClient.value || !isConnected.value) {
+    console.error('구독 실패: websocket 연결 안됨')
+    return
+  }
+
+  if (!chatroomSq) {
+    console.error('구독 실패: chatroomSq 없음')
+    return
+  }
+
+  if (subscription.value) {
+    subscription.value.unsubscribe()
+    subscription.value = null
+  }
+
+  const destination = `/sub/chat/room/${chatroomSq}`
+
+  console.log(`구독 destination=[${destination}]`)
+
+  subscription.value = stompClient.value.subscribe(destination, (response) => {
+    const receivedMessage = JSON.parse(response.body)
+
+    chatMessages.value.push(receivedMessage)
+
+    scrollToBottom()
+  })
+}
+
+const connect = (chatroomSq) => {
+  const token = localStorage.getItem('accessToken')
+
+  if (!token) {
+    console.error('websocket 연결 실패 : accessToken 없음')
+    return
+  }
+
+  if (stompClient.value && isConnected.value) {
+    subscribe(chatroomSq)
+    return
+  }
+
+  stompClient.value = new Client({
+    webSocketFactory: () => new SockJS(`${WS_BASE_URL}/api/ws-chat`),
+
+    connectHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    reconnectDelay: 3000,
+
+    onConnect: () => {
+      console.log('websocket 연결 성공')
+      console.log('onConnect chatroomSq:', chatroomSq)
+      isConnected.value = true
+      subscribe(chatroomSq)
+    },
+
+    onStompError: (frame) => {
+      console.error('STOMP 에러', frame)
+    },
+
+    onWebSocketError: (error) => {
+      console.error('WebSocket 에러', error)
+    },
+
+    onDisconnect: () => {
+      console.log('websocket 연결 종료')
+      isConnected.value = false
+    },
+  })
+
+  stompClient.value.activate()
+}
+
+const afterChatRendered = () => {
+  scrollToBottom()
+  focusInput()
+}
 
 let chatMessageSeq = 3
 
@@ -145,56 +240,33 @@ const chatRooms = ref([
   },
 ])
 
-const chatMessages = ref([
-  {
-    chatMessageSeq: 1,
-    senderType: 'AI',
-    messageContent: '안녕하세요. 무엇을 도와드릴까요?',
-  },
-  {
-    chatMessageSeq: 2,
-    senderType: 'USER',
-    messageContent: '프로젝트 견적 문의하고 싶습니다.',
-  },
-])
-
 const startChat = () => {
   currentRoom.value = {
-    chatRoomSeq: null,
-    title: '새 상담',
+    chatroomSq: 2,
+    title: '테스트 상담',
     chatRoomType: 'AI',
   }
 
-  chatMessages.value = [
-    {
-      chatMessageSeq: chatMessageSeq++,
-      senderType: 'AI',
-      messageContent: '안녕하세요. AI 상담입니다. 무엇을 도와드릴까요?',
-    },
-  ]
-
+  chatMessages.value = []
   viewMode.value = 'CHAT'
-  scrollToBottom()
-  focusInput()
+
+  connect(currentRoom.value.chatroomSq)
+
+  afterChatRendered()
 }
 
 const openChat = (room) => {
-  currentRoom.value = room
+  currentRoom.value = {
+    ...room,
+    chatroomSq: room.chatroomSq || room.chatRoomSeq,
+  }
+
+  chatMessages.value = []
   viewMode.value = 'CHAT'
 
-  chatMessages.value = [
-    {
-      chatMessageSeq: chatMessageSeq++,
-      senderType: room.chatRoomType,
-      messageContent:
-        room.chatRoomType === 'AI'
-          ? '안녕하세요. AI 상담입니다. 무엇을 도와드릴까요?'
-          : '안녕하세요. 상담사 상담입니다. 문의 내용을 남겨주세요.',
-    },
-  ]
+  connect(currentRoom.value.chatroomSq)
 
-  scrollToBottom()
-  focusInput()
+  afterChatRendered()
 }
 
 const requestCounselor = () => {
@@ -224,33 +296,43 @@ const requestCounselor = () => {
   focusInput()
 }
 
-const sendMessage = () => {
-  if (!message.value.trim()) return
+const isMyMessage = (chat) => {
+  if (isCounselor.value) {
+    return chat.senderType === 'COUNSELOR'
+  }
 
-  chatMessages.value.push({
-    chatMessageSeq: chatMessageSeq++,
-    senderType: 'USER',
-    messageContent: message.value,
+  return chat.senderType === 'USER'
+}
+
+const sendMessage = () => {
+  const content = message.value.trim()
+
+  if (!content) return
+
+  if (!currentRoom.value) {
+    console.error('현재 채팅방 없음')
+    return
+  }
+
+  if (!stompClient.value || !isConnected.value) {
+    console.error('websocket 연결 안 됨')
+    return
+  }
+
+  const sendDestination = isCounselor.value
+    ? '/pub/counselor/chat/send'
+    : '/pub/chat/send'
+  stompClient.value.publish({
+    destination: sendDestination,
+    body: JSON.stringify({
+      chatroomSq: currentRoom.value.chatroomSq,
+      messageContent: content,
+    }),
   })
 
   message.value = ''
 
-  scrollToBottom()
   focusInput()
-
-  setTimeout(() => {
-    chatMessages.value.push({
-      chatMessageSeq: chatMessageSeq++,
-      senderType: currentRoom.value?.chatRoomType || 'AI',
-      messageContent:
-        currentRoom.value?.chatRoomType === 'AI'
-          ? '현재는 AI 데모 응답입니다.'
-          : '상담사가 확인 중입니다.',
-    })
-
-    scrollToBottom()
-    focusInput()
-  }, 150)
 }
 
 const goList = () => {
@@ -271,9 +353,28 @@ const focusInput = () => {
   })
 }
 
+const disconnect = () => {
+  if (subscription.value) {
+    subscription.value.unsubscribe()
+    subscription.value = null
+  }
+
+  if (stompClient.value) {
+    stompClient.value.deactivate()
+    stompClient.value = null
+  }
+
+  isConnected.value = false
+}
+
 const closeModal = () => {
+  disconnect()
   modalStore.closeModal()
 }
+
+onUnmounted(() => {
+  disconnect()
+})
 </script>
 
 <style>
@@ -468,5 +569,13 @@ const closeModal = () => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.my-message {
+  justify-content: flex-end;
+}
+
+.other-message {
+  justify-content: flex-start;
 }
 </style>
