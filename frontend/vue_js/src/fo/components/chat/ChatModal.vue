@@ -162,15 +162,9 @@ const subscribe = (chatroomSq) => {
   console.log(`구독 destination=[${destination}]`)
 
   subscription.value = stompClient.value.subscribe(destination, (response) => {
-    console.log('구독 콜백 탐:', response)
-    console.log('받은 body:', response.body)
     const receivedMessage = JSON.parse(response.body)
 
-    console.log('수신 메시지:', receivedMessage)
-
     chatMessages.value.push(receivedMessage)
-
-    console.log('현재 chatmessages', chatMessages.value)
 
     scrollToBottom()
   })
@@ -197,10 +191,6 @@ const connect = (chatroomSq) => {
     },
 
     reconnectDelay: 3000,
-
-    debug: (str) => {
-      console.log('STOMP DEBUG', str)
-    },
 
     onConnect: () => {
       console.log('websocket 연결 성공')
