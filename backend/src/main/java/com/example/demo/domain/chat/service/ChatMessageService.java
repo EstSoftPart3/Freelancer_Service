@@ -1,6 +1,8 @@
 package com.example.demo.domain.chat.service;
 
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.chat.dto.ChatMessagesVo;
 import com.example.demo.domain.chat.dto.SenderType;
 import com.example.demo.domain.chat.dto.request.ChatMessageSendRequest;
+import com.example.demo.domain.chat.dto.response.ChatMessageListResponse;
 import com.example.demo.domain.chat.dto.response.ChatMessageResponse;
 import com.example.demo.domain.chat.mapper.ChatMessageMapper;
 import com.example.demo.domain.chat.mapper.ChatroomMapper;
@@ -15,9 +18,11 @@ import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatMessageService {
 	
 	private final ChatMessageMapper chatMessageMapper;
@@ -65,6 +70,39 @@ public class ChatMessageService {
 	}
 	
 	
+	@Transactional(readOnly = true)
+	public ChatMessageListResponse getMessages(
+			Long chatroomSq,
+			Long userSq
+			) {
+		int exists = chatroomMapper.existsUserChatroom(chatroomSq, userSq);
+		if(exists != 1) {
+			throw new IllegalArgumentException("접근할 수 없는 채팅방입니다.");
+		}
+		
+		List<ChatMessagesVo> messageList = chatMessageMapper.selectMessageByChatroom(chatroomSq);
+		return ChatMessageListResponse.builder()
+				.messageList(messageList)
+				.build();
+	}
+	
+	
+	@Transactional(readOnly = true)
+	public ChatMessageListResponse getCounselorMessages(
+			Long chatroomSq,
+			Long counselorSq
+			) {
+		validateCounselor(counselorSq);
+		
+		List<ChatMessagesVo> messageList = chatMessageMapper.selectMessageByChatroom(chatroomSq);
+		
+		return ChatMessageListResponse.builder()
+				.messageList(messageList)
+				.build();
+	}
+	
+	
+	
 	
 	private ChatMessageResponse saveMessage(
 			Long chatroomSq,
@@ -99,6 +137,7 @@ public class ChatMessageService {
 			throw new IllegalArgumentException("메시지 요청 값이 올바르지 않습니다.");
 		}
 	}
+	
 	
 	private void validateCounselor(Long userSq) {
 		LoginResponseDTO userVo = userService.getUserInfoByUserSq(userSq);

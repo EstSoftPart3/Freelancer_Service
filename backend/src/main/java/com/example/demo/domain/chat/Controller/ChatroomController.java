@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.chat.dto.request.ChatroomTypeSwitchRequest;
 import com.example.demo.domain.chat.dto.response.ChatroomListResponse;
+import com.example.demo.domain.chat.dto.response.CreateChatroomResponse;
 import com.example.demo.domain.chat.service.ChatroomService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,12 +30,12 @@ public class ChatroomController {
 
 	// 채팅방 생성
 	@PostMapping
-	public ResponseEntity<ApiResponse<NullType>> createChatroom(@AuthenticationPrincipal Long userSq){
+	public ResponseEntity<ApiResponse<CreateChatroomResponse>> createChatroom(@AuthenticationPrincipal Long userSq){
 		
-		chatroomService.createChatroom(userSq);
+		CreateChatroomResponse response = chatroomService.createChatroom(userSq);
 		
 		
-		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "채팅방 생성 완료", null));
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "채팅방 생성 완료", response));
 	}
 
 	// 채팅방 조회

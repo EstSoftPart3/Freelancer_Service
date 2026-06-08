@@ -1,60 +1,50 @@
 package com.example.demo.domain.chat.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
-
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
-
-import com.example.demo.domain.chat.dto.request.ChatMessageSendRequest;
-import com.example.demo.domain.chat.dto.response.ChatMessageResponse;
+import com.example.demo.common.ApiResponse;
+import com.example.demo.domain.chat.dto.response.ChatMessageListResponse;
 import com.example.demo.domain.chat.service.ChatMessageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @Slf4j
+@RequestMapping("/chatmessages")
 public class ChatMessageController {
-	
 	private final ChatMessageService chatMessageService;
-	private final SimpMessagingTemplate messageingTemplate;
 	
-	@MessageMapping("/chat/send")
-	public void sendMessage(ChatMessageSendRequest request, Principal principal) {
-
-		
-		Long userSq = Long.parseLong(principal.getName());
-		
-		String destination = "/sub/chat/room/" + request.getChatroomSq();
-
-		
-		ChatMessageResponse response = chatMessageService.saveUserMessage(userSq, request);
-		
-
-		messageingTemplate.convertAndSend(
-				"/sub/chat/room/" + response.getChatroomSq(),
-				response
+	@GetMapping("/{chatroomSq}/messages")
+	public ResponseEntity<ApiResponse<ChatMessageListResponse>> getMessages(
+			@PathVariable Long chatroomSq,
+			@AuthenticationPrincipal Long userSq
+			
+			){
+		ChatMessageListResponse response = chatMessageService.getMessages(
+				chatroomSq,
+				userSq
 				);
 		
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "채팅 메시지가 조회됐습니다.", response));
+	}
+	
+	@GetMapping("/counselor/{chatroomSq}/messages")
+	public ResponseEntity<ApiResponse<ChatMessageListResponse>> getCounselorMessages(
+			@PathVariable Long chatroomSq,
+			@AuthenticationPrincipal Long userSq
+			){
 		
+		ChatMessageListResponse response = chatMessageService.getCounselorMessages(chatroomSq, userSq);
+		
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "상담방 메시지가 조회됐습니다.", response));
+	}
+	
 
-		
-	}
-	
-	
-	@MessageMapping("/counselor/chat/send")
-	public void sendCounselorMessage(
-			ChatMessageSendRequest request,
-			Principal principal
-			) {
-		Long userSq = Long.parseLong(principal.getName());
-		ChatMessageResponse response = chatMessageService.saveCounselorMessage(userSq, request);
-		messageingTemplate.convertAndSend(
-				"/sub/chat/room/" + response.getChatroomSq(),
-				response
-				);
-		
-	}
 }

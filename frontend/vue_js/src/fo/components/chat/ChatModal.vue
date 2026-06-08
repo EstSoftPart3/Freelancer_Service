@@ -29,7 +29,7 @@
           v-for="room in chatrooms"
           :key="room.chatroomSq"
           class="chat-room-item"
-          @click="openChat(room.chatroomSq)"
+          @click="openChat(room)"
         >
           <div class="chat-room-icon">
             <i
@@ -82,15 +82,19 @@
           @click.stop="requestCounselor"
         >
           {{
-            currentRoom?.chatRoomType === 'AI' ? '상담사 전환' : 'AI 상담 전환'
+            currentRoom?.chatroomType === 'AI' ? '상담사 전환' : 'AI 상담 전환'
           }}
         </button>
       </div>
 
       <div ref="chatScroll" class="chat-scroll">
+        <div v-if="chatMessages.length === 0" class="welcome-message">
+          안녕하세요. AI 상담사입니다. 궁금한 내용을 입력해주세요.
+        </div>
+
         <div
           v-for="chat in chatMessages"
-          :key="chat.chatMessageSeq"
+          :key="chat.chatMessageSq"
           class="chat-message"
           :class="isMyMessage(chat) ? 'my-message' : 'other-message'"
         >
@@ -134,8 +138,7 @@ const viewMode = ref('LIST')
 const message = ref('')
 const currentRoom = ref(null)
 const chatMessages = ref([])
-
-// websocket 관련 변수
+const chatrooms = ref([])
 
 const userStore = useUserStore()
 
@@ -146,6 +149,37 @@ const isConnected = ref(false)
 const isCounselor = computed(() => {
   return userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
 })
+
+const fetchMessages = async (chatroomSq) => {
+  try {
+    const url = isCounselor.value
+      ? `/chatmessages/counselor/${chatroomSq}/messages`
+      : `/chatmessages/${chatroomSq}/messages`
+
+    const response = await api.$get(url)
+
+    chatMessages.value = response.output?.messageList ?? []
+  } catch (e) {
+    console.error(e)
+
+    chatMessages.value = []
+  }
+}
+
+const fetchChatrooms = async () => {
+  try {
+    const isCounselor =
+      userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
+
+    const url = isCounselor ? '/chat/counselor' : '/chat'
+
+    const response = await api.$get(url)
+    chatrooms.value = response.output.chatroomList
+  } catch (e) {
+    console.log('채팅방 조회에 실패했습니다.')
+  }
+}
+
 const subscribe = (chatroomSq) => {
   if (!stompClient.value || !isConnected.value) {
     console.error('구독 실패: websocket 연결 안됨')
@@ -153,7 +187,6 @@ const subscribe = (chatroomSq) => {
   }
 
   if (!chatroomSq) {
-    console.error('구독 실패: chatroomSq 없음')
     return
   }
 
@@ -163,8 +196,6 @@ const subscribe = (chatroomSq) => {
   }
 
   const destination = `/sub/chat/room/${chatroomSq}`
-
-  console.log(`구독 destination=[${destination}]`)
 
   subscription.value = stompClient.value.subscribe(destination, (response) => {
     const receivedMessage = JSON.parse(response.body)
@@ -226,72 +257,58 @@ const afterChatRendered = () => {
   focusInput()
 }
 
-let chatMessageSeq = 3
-
-const chatrooms = ref([])
-
-const fetchChatrooms = async () => {
+const startChat = async () => {
   try {
-    const isCounselor =
-      userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
+    const response = await api.$post('/chat')
 
-    const url = isCounselor ? '/chat/counselor' : '/chat'
+    const chatroomSq = response.output.chatroomSq
 
-    const response = await api.$get(url)
-    chatrooms.value = response.output.chatroomList
+    currentRoom.value = {
+      chatroomSq,
+      chatroomType: 'AI',
+    }
+
+    chatMessages.value = []
+    message.value = ''
+    viewMode.value = 'CHAT'
+
+    connect(chatroomSq)
+
+    nextTick(() => {
+      afterChatRendered()
+    })
   } catch (e) {
-    console.log('채팅방 조회에 실패했습니다.')
+    console.error(e)
   }
 }
 
-const startChat = () => {
-  currentRoom.value = {
-    chatroomSq: 2,
-    title: '테스트 상담',
-    chatRoomType: 'AI',
-  }
+const openChat = async (room) => {
+  currentRoom.value = room
 
   chatMessages.value = []
+  message.value = ''
   viewMode.value = 'CHAT'
 
+  await fetchMessages(currentRoom.value.chatroomSq)
   connect(currentRoom.value.chatroomSq)
 
-  afterChatRendered()
-}
-
-const openChat = (room) => {
-  currentRoom.value = {
-    ...room,
-    chatroomSq: room.chatroomSq || room.chatRoomSeq,
-  }
-
-  chatMessages.value = []
-  viewMode.value = 'CHAT'
-
-  connect(currentRoom.value.chatroomSq)
-
-  afterChatRendered()
+  nextTick(() => {
+    afterChatRendered()
+  })
 }
 
 const requestCounselor = () => {
   console.log('전환 클릭', currentRoom.value)
 
-  if (!currentRoom.value) {
-    currentRoom.value = {
-      chatRoomSeq: null,
-      title: '새 상담',
-      chatRoomType: 'AI',
-    }
-  }
+  if (!currentRoom.value) return
 
-  currentRoom.value.chatRoomType =
-    currentRoom.value.chatRoomType === 'AI' ? 'COUNSELOR' : 'AI'
+  currentRoom.value.chatroomType =
+    currentRoom.value.chatroomType === 'AI' ? 'COUNSELOR' : 'AI'
 
   chatMessages.value.push({
-    chatMessageSeq: chatMessageSeq++,
-    senderType: currentRoom.value.chatRoomType,
+    senderType: currentRoom.value.chatroomType,
     messageContent:
-      currentRoom.value.chatRoomType === 'AI'
+      currentRoom.value.chatroomType === 'AI'
         ? 'AI 상담으로 전환되었습니다.'
         : '상담사 상담으로 전환되었습니다.',
   })
@@ -339,8 +356,15 @@ const sendMessage = () => {
   focusInput()
 }
 
-const goList = () => {
+const goList = async () => {
+  disconnect()
+
+  currentRoom.value = null
+  chatMessages.value = []
+  message.value = ''
   viewMode.value = 'LIST'
+
+  await fetchChatrooms()
 }
 
 const scrollToBottom = () => {
@@ -391,6 +415,7 @@ onUnmounted(() => {
   height: 650px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-modal-header {
@@ -407,6 +432,9 @@ onUnmounted(() => {
 
 .chat-modal-body {
   position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chat-room-icon {
@@ -443,9 +471,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   background: #f5f5f5;
 }
-
 .chat-status-bar {
   flex-shrink: 0;
   margin: 14px 16px 12px;
@@ -480,7 +508,6 @@ onUnmounted(() => {
   padding: 0 16px 16px;
   background: #f5f5f5;
 }
-
 .chat-modal-footer {
   display: flex;
   gap: 8px;
@@ -583,7 +610,17 @@ onUnmounted(() => {
   justify-content: flex-end;
 }
 
+.my-message .chat-bubble {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
 .other-message {
   justify-content: flex-start;
+}
+
+.other-message .chat-bubble {
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-body-color);
 }
 </style>
