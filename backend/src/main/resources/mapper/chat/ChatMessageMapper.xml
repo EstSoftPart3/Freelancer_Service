@@ -23,5 +23,19 @@
 	</insert>
 	
 	
+	<select id = "selectMessageByChatroom" resultType = "com.example.demo.domain.chat.dto.ChatMessagesVo">
+		SELECT
+			chatmessages_sq AS chatMessagesSq,
+			chatroom_sq AS chatroomSq,
+			sender_type AS senderType,
+			message_content AS messageContent,
+			message_created_at AS messageCreatedAt
+			
+		FROM TBL_CHATMESSAGES_S
+		WHERE chatroom_sq = ${chatroomSq}
+		ORDER BY message_created_at ASC
+		
+	</select>
+	
 
 </mapper>

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.chat.dto.ChatroomVo;
 import com.example.demo.domain.chat.dto.request.ChatroomTypeSwitchRequest;
 import com.example.demo.domain.chat.dto.response.ChatroomListResponse;
+import com.example.demo.domain.chat.dto.response.CreateChatroomResponse;
 import com.example.demo.domain.chat.mapper.ChatroomMapper;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.service.UserService;
@@ -22,7 +23,7 @@ public class ChatroomService {
 	private final UserService userService;
 	
 	@Transactional
-	public void createChatroom(Long userSq) {
+	public CreateChatroomResponse createChatroom(Long userSq) {
 //		isUserIdExists 사용해서 userSq 조회
 		ChatroomVo chatroom = ChatroomVo.builder().
 				userSq(userSq).
@@ -30,6 +31,11 @@ public class ChatroomService {
 				build();
 		
 		chatroomMapper.insertChatroom(chatroom);
+		
+		return CreateChatroomResponse.builder()
+				.chatroomSq(chatroom.getChatroomSq())
+				.build();
+		
 				}
 	
 	

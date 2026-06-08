@@ -30,11 +30,11 @@ public interface ChatroomMapper {
 			);
 	
 	
-	
+	// 채팅방 조회
 	List<ChatroomVo> selectChatroomByUser(
 			@Param("userSq") Long userSq
 			);
-	
+	// 상담 채팅방 조회
 	List<ChatroomVo> selectCounselorRooms();
 	
 }
