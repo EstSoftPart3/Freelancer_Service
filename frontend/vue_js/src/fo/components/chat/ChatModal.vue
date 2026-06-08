@@ -21,16 +21,20 @@
 
     <div v-if="viewMode === 'LIST'" class="modal-body chat-modal-body">
       <div class="chat-room-list">
+        <div v-if="chatrooms.length === 0" class="empty-room">
+          채팅방이 없습니다.
+        </div>
+
         <div
-          v-for="room in chatRooms"
-          :key="room.chatRoomSeq"
+          v-for="room in chatrooms"
+          :key="room.chatroomSq"
           class="chat-room-item"
-          @click="openChat(room)"
+          @click="openChat(room.chatroomSq)"
         >
           <div class="chat-room-icon">
             <i
               :class="
-                room.chatRoomType === 'AI'
+                room.chatroomType === 'AI'
                   ? 'bi bi-robot'
                   : 'bi bi-person-badge'
               "
@@ -39,9 +43,9 @@
 
           <div class="chat-room-content">
             <div class="chat-room-top">
-              <strong class="chat-room-title">
+              <!-- <strong class="chat-room-title">
                 {{ room.title }}
-              </strong>
+              </strong> -->
 
               <span class="chat-room-time">
                 {{ room.lastMessageAt }}
@@ -64,11 +68,11 @@
         <span
           class="badge chat-status-badge"
           :class="
-            currentRoom?.chatRoomType === 'AI' ? 'bg-primary' : 'bg-success'
+            currentRoom?.chatroomType === 'AI' ? 'bg-primary' : 'bg-success'
           "
         >
           {{
-            currentRoom?.chatRoomType === 'AI' ? 'AI 상담 중' : '상담사 상담 중'
+            currentRoom?.chatroomType === 'AI' ? 'AI 상담 중' : '상담사 상담 중'
           }}
         </span>
 
@@ -114,11 +118,12 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import { useUserStore } from '@/fo/stores/userStore'
+import { api } from '@/axios'
 
 const modalStore = useModalStore()
 
@@ -223,22 +228,21 @@ const afterChatRendered = () => {
 
 let chatMessageSeq = 3
 
-const chatRooms = ref([
-  {
-    chatRoomSeq: 1,
-    title: '프로젝트 견적 문의',
-    lastMessage: '프로젝트 견적 문의하고 싶습니다.',
-    lastMessageAt: '15:30',
-    chatRoomType: 'AI',
-  },
-  {
-    chatRoomSeq: 2,
-    title: '서비스 개발 문의',
-    lastMessage: '상담 가능할까요?',
-    lastMessageAt: '어제',
-    chatRoomType: 'COUNSELOR',
-  },
-])
+const chatrooms = ref([])
+
+const fetchChatrooms = async () => {
+  try {
+    const isCounselor =
+      userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
+
+    const url = isCounselor ? '/chat/counselor' : '/chat'
+
+    const response = await api.$get(url)
+    chatrooms.value = response.output.chatroomList
+  } catch (e) {
+    console.log('채팅방 조회에 실패했습니다.')
+  }
+}
 
 const startChat = () => {
   currentRoom.value = {
@@ -371,6 +375,10 @@ const closeModal = () => {
   disconnect()
   modalStore.closeModal()
 }
+
+onMounted(async () => {
+  await fetchChatrooms()
+})
 
 onUnmounted(() => {
   disconnect()

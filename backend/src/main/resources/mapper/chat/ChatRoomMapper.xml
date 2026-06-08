@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.domain.chat.mapper.ChatRoomMapper">
+<mapper namespace="com.example.demo.domain.chat.mapper.ChatroomMapper">
 
 <!--채팅방 생성-->
-	<insert id="insertChatRoom" parameterType="com.example.demo.domain.chat.dto.ChatRoomVo" useGeneratedKeys="true" keyProperty="chatroomSq"
+	<insert id="insertChatroom" parameterType="com.example.demo.domain.chat.dto.ChatroomVo" useGeneratedKeys="true" keyProperty="chatroomSq"
 	            keyColumn="chatroom_sq">
 	            INSERT INTO TBL_CHATROOM_S
 	            (
@@ -21,24 +21,10 @@
 	</insert>
 
 	
-	<select id= "selectChatRoomList" parameterType="long" resultType="com.example.demo.domain.chat.dto.ChatRoomVo">
 	
-	SELECT chatroom_sq,
-	last_message,
-	last_message_at,
-	chatroom_type,
-	chatroom_created_at
-	
-	FROM TBL_CHATROOM_S
-	WHERE user_sq = #{userSq}
-	order by last_message_at desc
-	
-	</select>
-	
-	
-	<update id="updateChatRoomType" parameterType="com.example.demo.domain.chat.dto.ChatRoomVo">
+	<update id="updateChatroomType" parameterType="com.example.demo.domain.chat.dto.ChatroomVo">
 	UPDATE TBL_CHATROOM_S
-	SET chatroom_type = #{chatRoomType}
+	SET chatroom_type = #{chatroomType}
 	where chatRoom_sq = #{chatroomSq} and user_sq = #{userSq}
 	</update>
 
@@ -52,7 +38,7 @@
 		WHERE chatroom_sq = #{chatroomSq}
 	</update>
 	
-	<select id="existsUserChatRoom" resultType="int">
+	<select id="existsUserChatroom" resultType="int">
 		SELECT COUNT(*)
 		FROM TBL_CHATROOM_S
 		WHERE chatroom_sq = #{chatroomSq} AND user_sq = #{userSq}
@@ -60,10 +46,40 @@
 	</select>
 
 
-	<select id= "existsCounselerChatRoom" resultType="int">
+	<select id= "existsCounselerChatroom" resultType="int">
 		SELECT COUNT(*)
 		FROM TBL_CHATROOM_S
 		WHERE chatroom_sq = #{chatroomSq}
 		AND chatroom_type = 'COUNSELOR'	
+	</select>
+	
+	
+	<select id="selectChatroomByUser" resultType="com.example.demo.domain.chat.dto.ChatroomVo">
+		SELECT chatroom_sq AS chatroomSq,
+		user_sq AS userSq,
+		last_message AS lastMessage,
+		last_message_at AS lastMessageAt,
+		chatroom_type AS chatroomType,
+		chatroom_created_at AS chatroomCreatedAt
+		
+		FROM TBL_CHATROOM_S
+		WHERE user_sq = #{userSq}
+		ORDER By last_message_at DESC
+	
+	</select>
+	
+	
+	<select id="selectCounselorRooms" resultType="com.example.demo.domain.chat.dto.ChatroomVo">
+		SELECT
+		chatroom_sq AS chatroomSq,
+		user_sq AS userSq,
+		last_message AS lastMessage,
+		last_message_at AS lastMessageAt,
+		chatroom_type AS chatroomType,
+		chatroom_created_at AS chatroomCreatedAt
+		
+		FROM TBL_CHATROOM_S
+		WHERE chatroom_type = 'COUNSELOR'
+		ORDER BY last_message_at DESC
 	</select>
 </mapper>

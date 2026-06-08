@@ -29,7 +29,6 @@ public class ChatMessageController {
 		
 		String destination = "/sub/chat/room/" + request.getChatroomSq();
 
-		log.info("브로드캐스트 destination=[{}]", destination);
 		
 		ChatMessageResponse response = chatMessageService.saveUserMessage(userSq, request);
 		

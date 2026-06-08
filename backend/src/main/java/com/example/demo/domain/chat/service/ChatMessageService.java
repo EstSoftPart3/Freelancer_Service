@@ -10,7 +10,7 @@ import com.example.demo.domain.chat.dto.SenderType;
 import com.example.demo.domain.chat.dto.request.ChatMessageSendRequest;
 import com.example.demo.domain.chat.dto.response.ChatMessageResponse;
 import com.example.demo.domain.chat.mapper.ChatMessageMapper;
-import com.example.demo.domain.chat.mapper.ChatRoomMapper;
+import com.example.demo.domain.chat.mapper.ChatroomMapper;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
 import com.example.demo.domain.user.service.UserService;
 
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageService {
 	
 	private final ChatMessageMapper chatMessageMapper;
-	private final ChatRoomMapper chatRoomMapper;
+	private final ChatroomMapper chatroomMapper;
 	private final UserService userService;
 	
 	@Transactional
@@ -31,7 +31,7 @@ public class ChatMessageService {
 			) {
 		validateMessage(request);
 		
-		int result = chatRoomMapper.existsUserChatRoom(request.getChatroomSq(), userSq);
+		int result = chatroomMapper.existsUserChatroom(request.getChatroomSq(), userSq);
 		if (result == 0) {
 			throw new IllegalArgumentException("채팅방 접근 권한이 없습니다.");
 		}
@@ -53,7 +53,7 @@ public class ChatMessageService {
 		validateCounselor(userSq);
 		
 		
-		if(chatRoomMapper.existsCounselerChatRoom(request.getChatroomSq()) == 0) {
+		if(chatroomMapper.existsCounselerChatroom(request.getChatroomSq()) == 0) {
 			throw new IllegalArgumentException("상담사 전환된 채팅방이 압니다.");
 		}
 		
@@ -82,7 +82,7 @@ public class ChatMessageService {
 	
 	chatMessageMapper.insertChatMessage(vo);
 	
-	chatRoomMapper.updateLastMessage(chatroomSq, messageContent, time);
+	chatroomMapper.updateLastMessage(chatroomSq, messageContent, time);
 	
 	return ChatMessageResponse.builder()
 			.chatMessagesSq(vo.getChatMessagesSq())
