@@ -15,6 +15,11 @@ const apiInstance = axios.create({
 // 요청 인터셉터 설정
 apiInstance.interceptors.request.use(
   (config) => {
+    // refresh-token은 Authorization에 refresh JWT가 들어가야 함 (access token으로 덮어쓰면 400)
+    if (config.url === '/refresh-token') {
+      return config
+    }
+
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
@@ -94,8 +99,8 @@ apiInstance.interceptors.response.use(
         )
         // console.log('refresh-token 요청 성공')
 
-        const newAccessToken = response.data.data.accessToken
-        const newRefreshToken = response.data.data.refreshToken
+        const newAccessToken = response.data.output.accessToken
+        const newRefreshToken = response.data.output.refreshToken
         localStorage.setItem('accessToken', newAccessToken)
         localStorage.setItem('refreshToken', newRefreshToken)
 
@@ -159,6 +164,15 @@ const api = {
   async $delete(url) {
     try {
       const response = await apiInstance.delete(url)
+      return response.data
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  },
+  async $getBlob(url) {
+    try {
+      const response = await apiInstance.get(url, { responseType: 'blob' })
       return response.data
     } catch (err) {
       console.error(err)
