@@ -165,6 +165,15 @@ const api = {
       throw err
     }
   },
+  async $getBlob(url) {
+    try {
+      const response = await apiInstance.get(url, { responseType: 'blob' })
+      return response.data
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  },
 }
 
 export { api, baseUrl, setClearLoginState }

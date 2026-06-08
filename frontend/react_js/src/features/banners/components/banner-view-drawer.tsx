@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { format } from 'date-fns'
-import { Calendar, ImageIcon, Link2, MousePointerClick } from 'lucide-react'
+import { Calendar, Link2, MousePointerClick } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { type Banner } from '../data/schema'
+import { BannerImage } from './banner-image'
 import { useBanner } from './banner-provider'
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
@@ -64,17 +65,12 @@ export function BannerViewDrawer() {
               </div>
             </SheetHeader>
 
-            {banner.bannerImageUrl ? (
-              <img
-                src={banner.bannerImageUrl}
-                alt={banner.bannerTitle}
-                className='w-full rounded-md border object-cover'
-              />
-            ) : (
-              <div className='flex h-40 items-center justify-center rounded-md border bg-muted'>
-                <ImageIcon className='h-8 w-8 text-muted-foreground' />
-              </div>
-            )}
+            <BannerImage
+              src={banner.bannerImageUrl}
+              alt={banner.bannerTitle}
+              className='w-full rounded-md border object-cover'
+              placeholderClassName='flex h-40 items-center justify-center rounded-md border bg-muted'
+            />
 
             <div className='space-y-4'>
               <DetailRow label='배너 ID'>{banner.bannerSq}</DetailRow>

@@ -29,6 +29,9 @@ apiInstance.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
     }
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
     return config
   },
   (error) => Promise.reject(error)
@@ -164,6 +167,10 @@ export const api = {
   },
   async $delete<T>(url: string): Promise<T> {
     const response = await apiInstance.delete(url)
+    return response.data
+  },
+  async $getBlob(url: string): Promise<Blob> {
+    const response = await apiInstance.get(url, { responseType: 'blob' })
     return response.data
   },
 }
