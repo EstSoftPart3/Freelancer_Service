@@ -43,40 +43,7 @@ public interface BannerMapper {
 
     int toggleActive(@Param("bannerSq") Long bannerSq);
 
-    /** 노출 종료일이 지난 활성 배너 일괄 비활성 (스케줄러) */
     int deactivateExpired();
 
-    /** FO 배너 클릭 수 +1 */
     int incrementClickCount(@Param("bannerSq") Long bannerSq);
 }
-
-/*
- * ========== 학습용 설명 ==========
- *
- * import java.util.List;
- *
- * // org.apache.ibatis = MyBatis (JPA 아님)
- * import org.apache.ibatis.annotations.Mapper;  // Spring Bean 등록, XML과 짝
- * import org.apache.ibatis.annotations.Param;   // XML #{이름} 과 메서드 인자 연결
- *
- * import ... BannerCreateRequest;
- * import ... ActiveBannerResponse;
- * import ... BannerResponse;
- *
- * // CompanyMapper 와 동일: interface 선언만, SQL 은 BannerMapper.xml
- * // Entity 없이 DTO + @Param 으로 DB 접근
- * @Mapper
- * public interface BannerMapper {
- *
- *     // INSERT. 반환 int = 영향받은 행 수
- *     int insert(
- *             @Param("request") BannerCreateRequest request,       // XML #{request.bannerTitle}
- *             @Param("bannerImageFileSq") Long bannerImageFileSq,  // 파일 PK (Service)
- *             @Param("bannerIsActiveYn") String bannerIsActiveYn, // "Y" or "N"
- *             @Param("linkTargetBlankYn") String linkTargetBlankYn);
- *
- *     BannerResponse selectById(@Param("bannerSq") Long bannerSq);
- *
- *     List<ActiveBannerResponse> selectActive();
- * }
- */

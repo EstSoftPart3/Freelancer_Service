@@ -27,7 +27,6 @@ public class BannerService {
     private final FileStorageService fileStorageService;
     private final InformationEditRepository informationEditRepository;
 
-    /** BO 목록 + 페이징 (GET /admin/banners) */
     @Transactional(readOnly = true)
     public BannerListResponse getBanners(
             String keyword,
@@ -56,7 +55,6 @@ public class BannerService {
                 .build();
     }
 
-    /** BO 단건 (GET /admin/banners/{bannerSq}) */
     @Transactional(readOnly = true)
     public BannerResponse getBanner(Long bannerSq) {
         BannerResponse banner = bannerMapper.selectById(bannerSq);
@@ -66,13 +64,11 @@ public class BannerService {
         return banner;
     }
 
-    /** FO 활성 배너 (GET /banners/active) */
     @Transactional(readOnly = true)
     public List<ActiveBannerResponse> getActiveBanners() {
         return bannerMapper.selectActive();
     }
 
-    /** FO 배너 클릭 수 +1 (PATCH /banners/{bannerSq}/increment-click) */
     @Transactional
     public void incrementClickCount(Long bannerSq) {
         int rows = bannerMapper.incrementClickCount(bannerSq);
@@ -81,7 +77,6 @@ public class BannerService {
         }
     }
 
-    /** BO 등록 (POST /admin/banners) */
     @Transactional
     public void createBanner(BannerCreateRequest request, MultipartFile image) {
         if (image == null || image.isEmpty()) {
@@ -111,7 +106,6 @@ public class BannerService {
         }
     }
 
-    /** BO 수정 (PATCH /admin/banners/{bannerSq}) */
     @Transactional
     public void updateBanner(Long bannerSq, BannerUpdateRequest request, MultipartFile image) {
         getBanner(bannerSq);
@@ -148,7 +142,6 @@ public class BannerService {
         }
     }
 
-    /** BO 삭제 — soft delete (DELETE /admin/banners/{bannerSq}) */
     @Transactional
     public void deleteBanner(Long bannerSq) {
         getBanner(bannerSq);
@@ -159,13 +152,11 @@ public class BannerService {
         }
     }
 
-    /** 노출 종료 배너 일괄 비활성 (스케줄러) */
     @Transactional
     public int deactivateExpiredBanners() {
         return bannerMapper.deactivateExpired();
     }
 
-    /** BO 활성 토글 (PATCH /admin/banners/{bannerSq}/toggle-active) */
     @Transactional
     public void toggleActive(Long bannerSq) {
         getBanner(bannerSq);

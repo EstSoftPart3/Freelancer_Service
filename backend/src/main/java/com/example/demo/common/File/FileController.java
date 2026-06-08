@@ -42,7 +42,7 @@ public class FileController {
     @GetMapping("/{savedName}")
     public ResponseEntity<Resource> serveFile(
             @PathVariable String savedName,
-            @RequestParam(name = "download", defaultValue = "false") boolean download) { // default -> defaultValue로 수정
+            @RequestParam(name = "download", defaultValue = "false") boolean download) {
 
         try {
             // 1. 암호화된 파일 읽기
@@ -57,7 +57,6 @@ public class FileController {
             byte[] decryptedBytes = fileCryptoUtil.decrypt(encryptedBytes);
             ByteArrayResource resource = new ByteArrayResource(decryptedBytes);
 
-            // 3. MIME 타입 (암호화 파일은 probeContentType 부정확 → 확장자 우선)
             String contentType = resolveContentType(savedName);
 
             // 4. Content-Disposition 설정

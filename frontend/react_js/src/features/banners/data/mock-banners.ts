@@ -2,7 +2,6 @@ import bannerImg1 from '@/assets/FObanner1.png'
 import bannerImg2 from '@/assets/FObanner2.png'
 import type { Banner } from './schema'
 
-/** API 연동 전 FO 메인 배너 목업 (3건: 활성 2 · 비활성 1) */
 export const INITIAL_MOCK_BANNERS: Banner[] = [
   {
     bannerSq: 1,

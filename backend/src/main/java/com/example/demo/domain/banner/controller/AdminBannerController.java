@@ -16,16 +16,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.banner.dto.request.BannerCreateRequest;
 import com.example.demo.domain.banner.dto.request.BannerUpdateRequest;
-
-import jakarta.validation.Valid;
-
-import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.banner.dto.response.BannerListResponse;
 import com.example.demo.domain.banner.dto.response.BannerResponse;
 import com.example.demo.domain.banner.service.BannerService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -35,7 +33,6 @@ public class AdminBannerController {
 
     private final BannerService bannerService;
 
-    /** BO 목록 (검색·정렬·페이징) — GET /api/admin/banners */
     @GetMapping
     public ResponseEntity<ApiResponse<BannerListResponse>> getBanners(
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -50,7 +47,6 @@ public class AdminBannerController {
                 bannerService.getBanners(keyword, sortField, sortOrder, page, size)));
     }
 
-    /** BO 단건 — GET /api/admin/banners/{bannerSq} */
     @GetMapping("/{bannerSq}")
     public ResponseEntity<ApiResponse<BannerResponse>> getBanner(
             @PathVariable("bannerSq") Long bannerSq) {
@@ -61,7 +57,6 @@ public class AdminBannerController {
                 bannerService.getBanner(bannerSq)));
     }
 
-    /** BO 등록 — POST /api/admin/banners (multipart) */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<NullType>> createBanner(
             @RequestPart("request") @Valid BannerCreateRequest request,
@@ -72,7 +67,6 @@ public class AdminBannerController {
                 .body(ApiResponse.of(HttpStatus.CREATED, "배너 등록 성공", null));
     }
 
-    /** BO 수정 — PATCH /api/admin/banners/{bannerSq} (multipart, image 선택) */
     @PatchMapping(value = "/{bannerSq}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<NullType>> updateBanner(
             @PathVariable("bannerSq") Long bannerSq,
@@ -83,7 +77,6 @@ public class AdminBannerController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "배너 수정 성공", null));
     }
 
-    /** BO 삭제 — DELETE /api/admin/banners/{bannerSq} */
     @DeleteMapping("/{bannerSq}")
     public ResponseEntity<ApiResponse<NullType>> deleteBanner(
             @PathVariable("bannerSq") Long bannerSq) {
@@ -92,7 +85,6 @@ public class AdminBannerController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "배너 삭제 성공", null));
     }
 
-    /** BO 활성 토글 — PATCH /api/admin/banners/{bannerSq}/toggle-active */
     @PatchMapping("/{bannerSq}/toggle-active")
     public ResponseEntity<ApiResponse<NullType>> toggleActive(
             @PathVariable("bannerSq") Long bannerSq) {

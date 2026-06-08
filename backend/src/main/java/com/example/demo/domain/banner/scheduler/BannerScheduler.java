@@ -15,7 +15,6 @@ public class BannerScheduler {
 
     private final BannerService bannerService;
 
-    /** 매일 01:00 — 노출 종료일이 지난 활성 배너를 비활성 처리 */
     @Scheduled(cron = "0 0 1 * * *")
     public void deactivateExpiredBanners() {
         try {

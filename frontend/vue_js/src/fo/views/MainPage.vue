@@ -21,7 +21,6 @@
               </p>
             </div>
           </div>
-          <!-- API 활성 배너 -->
           <div
             v-for="(banner, index) in banners"
             :key="banner.bannerSq"
@@ -202,7 +201,6 @@ const goToCalendar = () => {
   router.push({ name: 'ScheduleCalendar' })
 }
 
-// 1. 슬라이드 · 배너
 const currentSlide = ref(0)
 const banners = ref([])
 const bannerObjectUrls = ref([])
@@ -296,7 +294,6 @@ const fetchBannerData = async () => {
   }
 }
 
-// 2. 인기 프로젝트 데이터
 const projects = ref([])
 const currentSort = ref('views')
 

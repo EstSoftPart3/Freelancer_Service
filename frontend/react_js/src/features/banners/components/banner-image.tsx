@@ -16,7 +16,6 @@ type Props = {
   placeholderClassName?: string
 }
 
-/** BO — /files/ 이미지는 JWT 포함 blob 로드 */
 export function BannerImage({
   src,
   alt,

@@ -15,7 +15,6 @@ export type BannerListParams = {
   keyword?: string
 }
 
-/** API 경로(/files/...) → img src용 전체 URL */
 export function resolveBannerImageUrl(url?: string): string {
   if (!url) return ''
   if (
@@ -46,7 +45,6 @@ function normalizeBanner(banner: Banner): Banner {
 }
 
 export const bannerApi = {
-  /** GET /admin/banners */
   getBanners: async (params: BannerListParams = {}) => {
     const response = await api.$get<ApiResponse<BannerListResponse>>(
       '/admin/banners',
@@ -64,7 +62,6 @@ export const bannerApi = {
     return response
   },
 
-  /** GET /admin/banners/{bannerSq} */
   getBanner: async (bannerSq: number) => {
     const response = await api.$get<ApiResponse<Banner>>(
       `/admin/banners/${bannerSq}`
@@ -75,12 +72,10 @@ export const bannerApi = {
     return response
   },
 
-  /** POST /admin/banners (multipart) */
   createBanner: async (formData: FormData) => {
     return await api.$post<ApiResponse<null>>('/admin/banners', formData)
   },
 
-  /** PATCH /admin/banners/{bannerSq} (multipart) */
   updateBanner: async (bannerSq: number, formData: FormData) => {
     return await api.$patch<ApiResponse<null>>(
       `/admin/banners/${bannerSq}`,
@@ -88,12 +83,10 @@ export const bannerApi = {
     )
   },
 
-  /** DELETE /admin/banners/{bannerSq} */
   deleteBanner: async (bannerSq: number) => {
     return await api.$delete<ApiResponse<null>>(`/admin/banners/${bannerSq}`)
   },
 
-  /** PATCH /admin/banners/{bannerSq}/toggle-active */
   toggleActive: async (bannerSq: number) => {
     return await api.$patch<ApiResponse<null>>(
       `/admin/banners/${bannerSq}/toggle-active`

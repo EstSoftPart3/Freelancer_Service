@@ -151,27 +151,3 @@
     </update>
 
 </mapper>
-
-<!--
-========== 학습용 설명 (위 XML이 실제 실행 코드) ==========
-
-namespace = BannerMapper.java 전체 경로와 동일해야 함
-id="insert" = Java insert() 메서드 이름과 동일
-#{...} = SQL ? 바인딩. #{request.bannerTitle} = @Param("request") 의 bannerTitle()
-
-<insert id="insert">
-  tbl_banner_s 에 row 추가. Entity 없이 Request + @Param 사용
-  banner_is_deleted_yn='N', banner_click_cnt=0 은 고정값
-</insert>
-
-<select id="selectById" resultType="BannerResponse">
-  resultType = 조회 결과를 담을 Java 클래스
-  AS bannerTitle = DB 컬럼명과 DTO 필드명이 달라서 alias 로 연결
-  isActive = CASE 로 Y/N → 1/0 → boolean 매핑
-  bannerImageUrl = '' 임시 (파일 URL Day3)
-</select>
-
-<select id="selectActive" resultType="ActiveBannerResponse">
-  FO 활성 배너: 활성Y, 미삭제, NOW()가 노출기간 안, display_order 정렬
-</select>
--->

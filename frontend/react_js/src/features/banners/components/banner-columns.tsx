@@ -9,7 +9,6 @@ import { BannerImage } from './banner-image'
 import { useBanner } from './banner-provider'
 import { DataTableRowActions } from './data-table-row-actions'
 
-/** 헤더·셀 공통: 가운데 정렬 + 컬럼 너비 비율 */
 const colMeta = (width: string) => ({
   thClassName: cn('text-center align-middle', width),
   tdClassName: cn('text-center align-middle', width),

@@ -1,4 +1,3 @@
-// [Freelancer Service] 배너 관리 페이지
 import { useEffect } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
