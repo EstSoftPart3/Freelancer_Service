@@ -89,9 +89,12 @@
 
       <div ref="chatScroll" class="chat-scroll">
         <div v-if="chatMessages.length === 0" class="welcome-message">
-          안녕하세요. AI 상담사입니다. 궁금한 내용을 입력해주세요.
+          {{
+            currentRoom?.chatroomType === 'COUNSELOR'
+              ? '상담사 상담으로 전환되었습니다. 질문을 말씀해주세요.'
+              : '안녕하세요. AI 상담사입니다. 궁금한 내용을 입력해주세요.'
+          }}
         </div>
-
         <div
           v-for="chat in chatMessages"
           :key="chat.chatMessageSq"
@@ -297,24 +300,32 @@ const openChat = async (room) => {
   })
 }
 
-const requestCounselor = () => {
-  console.log('전환 클릭', currentRoom.value)
-
+const requestCounselor = async () => {
   if (!currentRoom.value) return
 
-  currentRoom.value.chatroomType =
-    currentRoom.value.chatroomType === 'AI' ? 'COUNSELOR' : 'AI'
+  const currentType = currentRoom.value.chatroomType
 
-  chatMessages.value.push({
-    senderType: currentRoom.value.chatroomType,
-    messageContent:
-      currentRoom.value.chatroomType === 'AI'
-        ? 'AI 상담으로 전환되었습니다.'
-        : '상담사 상담으로 전환되었습니다.',
-  })
+  const nextChatroomType = currentType === 'AI' ? 'COUNSELOR' : 'AI'
 
-  scrollToBottom()
-  focusInput()
+  try {
+    await api.$patch(`/chat/${currentRoom.value.chatroomSq}/type`, {
+      chatroomType: nextChatroomType,
+    })
+
+    currentRoom.value.chatroomType = nextChatroomType
+
+    chatMessages.value.push({
+      senderType: nextChatroomType,
+      messageContent:
+        nextChatroomType === 'COUNSELOR'
+          ? '상담사 상담으로 전환되었습니다.'
+          : 'AI 상담으로 전환되었습니다.',
+    })
+
+    afterChatRendered()
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 const isMyMessage = (chat) => {
