@@ -1,6 +1,6 @@
 package com.example.demo.domain.chat.dto;
 
-public enum ChatRoomType {
+public enum ChatroomType {
 	AI, COUNSELOR
 
 }

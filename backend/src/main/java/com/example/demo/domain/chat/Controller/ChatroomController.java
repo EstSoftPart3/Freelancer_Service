@@ -14,24 +14,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
-import com.example.demo.domain.chat.dto.request.ChatRoomTypeSwitchRequest;
-import com.example.demo.domain.chat.dto.response.ChatRoomListResponse;
-import com.example.demo.domain.chat.service.ChatRoomService;
+import com.example.demo.domain.chat.dto.request.ChatroomTypeSwitchRequest;
+import com.example.demo.domain.chat.dto.response.ChatroomListResponse;
+import com.example.demo.domain.chat.service.ChatroomService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/chat")
-public class ChatRoomController {
+public class ChatroomController {
 
-	private final ChatRoomService chatRoomService;
+	private final ChatroomService chatroomService;
 
 	// 채팅방 생성
 	@PostMapping
-	public ResponseEntity<ApiResponse<NullType>> createChatRoom(@AuthenticationPrincipal Long userSq){
+	public ResponseEntity<ApiResponse<NullType>> createChatroom(@AuthenticationPrincipal Long userSq){
 		
-		chatRoomService.createChatRoom(userSq);
+		chatroomService.createChatroom(userSq);
 		
 		
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "채팅방 생성 완료", null));
@@ -39,21 +39,30 @@ public class ChatRoomController {
 
 	// 채팅방 조회
 	@GetMapping
-	public ResponseEntity<ApiResponse<ChatRoomListResponse>> getChatRooms(@AuthenticationPrincipal Long userSq){
-		ChatRoomListResponse response = chatRoomService.getChatRoomList(userSq);
+	public ResponseEntity<ApiResponse<ChatroomListResponse>> getChatrooms(@AuthenticationPrincipal Long userSq){
+		ChatroomListResponse response = chatroomService.getChatrooms(userSq);
 		
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK," 채팅방 조회 성공",response));
 		
 	}
+	
+	@GetMapping("/counselor")
+	public ResponseEntity<ApiResponse<ChatroomListResponse>> getCounselorChatrooms(
+			@AuthenticationPrincipal Long userSq
+			){
+		
+		ChatroomListResponse response = chatroomService.getCounselorChatrooms(userSq);
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "상담방 조회 성공", response));
+	}
 
 	// 채팅방 타입 변화
 	@PatchMapping("/{chatroomSq}/type")
-	public ResponseEntity<ApiResponse<NullType>> switchChatRoomType(
+	public ResponseEntity<ApiResponse<NullType>> switchChatroomType(
 			@AuthenticationPrincipal Long userSq,
 			@PathVariable Long chatroomSq,
-			@RequestBody ChatRoomTypeSwitchRequest request){
+			@RequestBody ChatroomTypeSwitchRequest request){
 		
-		chatRoomService.switchChatRoomType(userSq, chatroomSq, request);
+		chatroomService.switchChatroomType(userSq, chatroomSq, request);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "타입 전환 완료",null));
 	}
 

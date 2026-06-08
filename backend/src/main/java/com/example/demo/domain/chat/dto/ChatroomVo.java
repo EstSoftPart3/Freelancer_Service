@@ -13,12 +13,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatRoomVo {
+public class ChatroomVo {
 
     private Long chatroomSq;
-    private LocalDateTime chatRoomCreatedAt;
+    private LocalDateTime chatroomCreatedAt;
     private LocalDateTime lastMessageAt;
     private Long userSq;
     private String lastMessage;
-    private ChatRoomType chatRoomType;
+    private ChatroomType chatroomType;
 }
