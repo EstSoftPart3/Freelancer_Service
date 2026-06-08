@@ -1,6 +1,5 @@
 // [Freelancer Service] 활동 로그 조회 (화면설계서용 더미 데이터)
 import { useState } from 'react'
-import { map } from 'zod'
 import { format } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { Download, RotateCcw, Search as SearchIcon } from 'lucide-react'
@@ -182,11 +181,11 @@ function AuditTableContent() {
         '#': log.logSq,
         '유저 유형': log.userTypeCd,
         '유저 명': log.userNm,
-        '분류': log.actionType,
+        분류: log.actionType,
         '대상 유형': log.targetType,
         '대상 제목': log.targetTitle,
         'IP 주소': log.ipAddress,
-        '일시': format(new Date(log.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+        일시: format(new Date(log.createdAt), 'yyyy-MM-dd HH:mm:ss'),
       }))
 
       const worksheet = XLSX.utils.json_to_sheet(excelData)

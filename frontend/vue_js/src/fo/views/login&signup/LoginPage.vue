@@ -327,7 +327,10 @@ const socialProviders = [
 ]
 
 const handleSocialLogin = (provider) => {
-  window.location.href = `http://localhost:8080/api/oauth2/authorization/${provider}`
+  // 환경변수에 등록된 백엔드를 먼저가져오며, 없으면 로컬 사용
+  const baseUrl =
+    process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api/'
+  window.location.href = `${baseUrl}/oauth2/authorization/${provider}`
 }
 </script>
 
