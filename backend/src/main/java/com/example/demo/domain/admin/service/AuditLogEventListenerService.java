@@ -53,6 +53,10 @@ public class AuditLogEventListenerService {
 						ip = ip.split(",")[0].trim();
 					}
 					
+					if (ip != null && (ip.contains("0:0:0:0:0:0:0:1") || ip.contains("::1") || ip.contains("localhost"))) {
+						ip = "127.0.0.1";
+					}
+					
 					if (ip != null && !ip.isEmpty()) {
 						eventDto.setIpAddress(ip);
 					}
