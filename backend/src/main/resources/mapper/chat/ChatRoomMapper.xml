@@ -82,4 +82,11 @@
 		WHERE chatroom_type = 'COUNSELOR'
 		ORDER BY last_message_at DESC
 	</select>
+	
+	<select id="selectChatroomType" resultType="string">
+		SELECT chatroom_type
+		FROM TBL_CHATROOM_S
+		WHERE chatroom_sq = #{chatroomSq}
+	
+	</select>
 </mapper>

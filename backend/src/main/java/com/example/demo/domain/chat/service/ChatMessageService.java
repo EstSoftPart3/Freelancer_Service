@@ -104,7 +104,7 @@ public class ChatMessageService {
 	
 	
 	
-	private ChatMessageResponse saveMessage(
+	public ChatMessageResponse saveMessage(
 			Long chatroomSq,
 			SenderType senderType,
 			String messageContent
