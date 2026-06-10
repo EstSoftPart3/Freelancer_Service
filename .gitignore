@@ -410,6 +410,7 @@ frontend/vue_js/src/fo/.prettierrc
 # Spring Boot 설정 파일 무시
 application.yml
 
-# Claude
+# Claude / Cursor agent (local only)
+AGENT.MD
 CLAUDE.md
 .claude/settings.local.json

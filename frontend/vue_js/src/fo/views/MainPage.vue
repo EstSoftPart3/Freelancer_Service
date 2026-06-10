@@ -7,7 +7,6 @@
         </button>
 
         <div class="carouselTrack">
-          <!-- 첫 번째 슬라이드 (일정) -->
           <div
             class="carouselSlide"
             :class="{ active: currentSlide === 0 }"
@@ -22,37 +21,21 @@
               </p>
             </div>
           </div>
-          <!-- 나머지 광고 배너 -->
-          <!-- <div
+          <!-- API 활성 배너 -->
+          <div
             v-for="(banner, index) in banners"
             :key="banner.bannerSq"
-            class="carouselSlide"
+            class="carouselSlide carouselSlide--banner"
             :class="{ active: currentSlide === index + 1 }"
-            @click="goToPage('#')"
+            @click="goToBanner(banner)"
           >
-            <div class="centerTextArea text-center cursor-pointer">
+            <div class="bannerImageWrap">
               <img
-                :src="banner.imagePath"
-                :alt="banner.title"
+                v-if="banner.displayImageUrl"
+                :src="banner.displayImageUrl"
+                :alt="`배너 ${banner.bannerSq}`"
+                class="bannerImage"
               />
-            </div>
-          </div> -->
-          <div
-            class="carouselSlide"
-            :class="{ active: currentSlide === 1 }"
-            @click="goToPage('#')"
-          >
-            <div class="centerTextArea text-center cursor-pointer">
-              <img src="@/assets/banner-ad1.png" alt="ad-image1" />
-            </div>
-          </div>
-          <div
-            class="carouselSlide"
-            :class="{ active: currentSlide === 2 }"
-            @click="goToPage('#')"
-          >
-            <div class="centerTextArea text-center cursor-pointer">
-              <img src="@/assets/banner-ad2.png" alt="광고 이미지2" />
             </div>
           </div>
         </div>
@@ -203,16 +186,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useAlertStore } from '../stores/alertStore'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useUserStore } from '../stores/userStore'
-import { api } from '@/axios'
+import { api, baseUrl } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
 import { navigateByUserTypeAndProjectSq } from '../router/userTypeRouter'
 import { useRouter } from 'vue-router'
 // import PopupModal from '../components/common/PopupModal.vue'
 
-const alertStore = useAlertStore()
 const userStore = useUserStore()
 const userType = userStore.getUserType
 const router = useRouter()
@@ -221,45 +202,99 @@ const goToCalendar = () => {
   router.push({ name: 'ScheduleCalendar' })
 }
 
-const goToPage = (path) => {
-  if (path === '#') {
-    alertStore.show('준비중입니다.', 'danger')
-    return
+// 1. 슬라이드 · 배너
+const currentSlide = ref(0)
+const banners = ref([])
+const bannerObjectUrls = ref([])
+
+const totalSlides = computed(() => banners.value.length + 1)
+
+const toApiPath = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url
   }
-  // 실제 페이지가 생기면 아래 코드로 이동 가능
-  // router.push(path);
+  return url.startsWith('/') ? url : `/${url}`
 }
 
-// 1. 슬라이드 기능 로직
-const currentSlide = ref(0)
-// const totalSlides = ref(0)
-// const banners = ref([])
+const revokeBannerObjectUrls = () => {
+  bannerObjectUrls.value.forEach((url) => URL.revokeObjectURL(url))
+  bannerObjectUrls.value = []
+}
 
-const totalSlides = 3 // 광고 1, 광고 2
+const loadBannerImages = async (list) => {
+  revokeBannerObjectUrls()
+  const loaded = await Promise.all(
+    list.map(async (banner) => {
+      const path = toApiPath(banner.bannerImageUrl)
+      if (!path) return { ...banner, displayImageUrl: '' }
+
+      try {
+        const blob = await api.$getBlob(path)
+        const objectUrl = URL.createObjectURL(blob)
+        bannerObjectUrls.value.push(objectUrl)
+        return { ...banner, displayImageUrl: objectUrl }
+      } catch (error) {
+        console.error(`배너 이미지 로드 실패 (${banner.bannerSq}):`, error)
+        return { ...banner, displayImageUrl: '' }
+      }
+    }),
+  )
+  banners.value = loaded
+}
 
 const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % totalSlides
+  const total = totalSlides.value
+  if (total <= 1) return
+  currentSlide.value = (currentSlide.value + 1) % total
 }
 const prevSlide = () => {
-  currentSlide.value = (currentSlide.value - 1 + totalSlides) % totalSlides
+  const total = totalSlides.value
+  if (total <= 1) return
+  currentSlide.value = (currentSlide.value - 1 + total) % total
 }
 const moveSlide = (index) => {
   currentSlide.value = index
 }
 
-// const fetchBannerData = async () => {
-//   try {
-//     const res = await api.$get('/banners/active')
-//     const data = res.output
+const incrementBannerClick = async (bannerSq) => {
+  try {
+    await api.$patch(`/banners/${bannerSq}/increment-click`)
+  } catch (error) {
+    console.error('배너 클릭 수 반영 실패:', error)
+  }
+}
 
-//     banners.value = data
-//     totalSlides.value = banners.value.length + 1
-//     currentSlide.value = 0
+const goToBanner = (banner) => {
+  void incrementBannerClick(banner.bannerSq)
 
-//   } catch (error) {
-//     alertStore.show('배너를 불러오는 데 실패했습니다.', error)
-//   }
-// }
+  const url = banner.bannerLinkUrl
+  if (!url || url === '#') return
+
+  if (banner.linkTargetBlankYn === 'Y') {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    window.location.href = url
+    return
+  }
+  router.push(url.startsWith('/') ? url : `/${url}`)
+}
+
+const fetchBannerData = async () => {
+  try {
+    const res = await api.$get('/banners/active')
+    const list = Array.isArray(res.output) ? res.output : []
+    await loadBannerImages(list)
+    currentSlide.value = 0
+  } catch (error) {
+    console.error('배너 로드 실패:', error)
+    revokeBannerObjectUrls()
+    banners.value = []
+    currentSlide.value = 0
+  }
+}
 
 // 2. 인기 프로젝트 데이터
 const projects = ref([])
@@ -296,8 +331,12 @@ const toggleFaq = (index) => {
 }
 
 onMounted(() => {
-  // fetchBannerData()
+  fetchBannerData()
   fetchPopularProjects('views')
+})
+
+onUnmounted(() => {
+  revokeBannerObjectUrls()
 })
 </script>
 
@@ -349,6 +388,27 @@ body {
   opacity: 1;
   visibility: visible;
   z-index: 1;
+}
+
+.carouselSlide--banner {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  cursor: pointer;
+}
+
+.bannerImageWrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bannerImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .heroTitle {

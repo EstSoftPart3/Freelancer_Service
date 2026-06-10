@@ -57,11 +57,8 @@ public class FileController {
             byte[] decryptedBytes = fileCryptoUtil.decrypt(encryptedBytes);
             ByteArrayResource resource = new ByteArrayResource(decryptedBytes);
 
-            // 3. MIME 타입 감지
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
+            // 3. MIME 타입 (암호화 파일은 probeContentType 부정확 → 확장자 우선)
+            String contentType = resolveContentType(savedName);
 
             // 4. Content-Disposition 설정
             ContentDisposition contentDisposition;
@@ -84,6 +81,26 @@ public class FileController {
             log.error("파일 처리 중 오류 발생: {}", savedName, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private String resolveContentType(String savedName) {
+        String lower = savedName.toLowerCase();
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            return "image/jpeg";
+        }
+        if (lower.endsWith(".gif")) {
+            return "image/gif";
+        }
+        if (lower.endsWith(".webp")) {
+            return "image/webp";
+        }
+        if (lower.endsWith(".svg")) {
+            return "image/svg+xml";
+        }
+        return "application/octet-stream";
     }
 
 }
