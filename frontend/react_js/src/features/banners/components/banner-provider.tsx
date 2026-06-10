@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import useDialogState from '@/hooks/use-dialog-state'
-import { INITIAL_MOCK_BANNERS } from '../data/mock-banners'
+import { bannerApi, type BannerListParams } from '../api/banner-api'
 import { type Banner } from '../data/schema'
-// import { bannerApi } from '../api/banner-api'
 
 type BannerDialogType = 'create' | 'update' | 'delete' | 'view'
 
@@ -13,8 +12,12 @@ type BannerContextType = {
   currentRow: Banner | null
   setCurrentRow: React.Dispatch<React.SetStateAction<Banner | null>>
   banners: Banner[]
-  toggleActive: (bannerSq: number) => void
-  deleteBanner: (bannerSq: number) => void
+  totalElements: number
+  isLoading: boolean
+  fetchBanners: (params: BannerListParams) => Promise<void>
+  refreshBanners: () => Promise<void>
+  toggleActive: (bannerSq: number) => Promise<void>
+  deleteBanner: (bannerSq: number) => Promise<void>
 }
 
 const BannerContext = React.createContext<BannerContextType | null>(null)
@@ -22,23 +25,61 @@ const BannerContext = React.createContext<BannerContextType | null>(null)
 export function BannerProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useDialogState<BannerDialogType>(null)
   const [currentRow, setCurrentRow] = useState<Banner | null>(null)
-  const [banners, setBanners] = useState<Banner[]>(INITIAL_MOCK_BANNERS)
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [totalElements, setTotalElements] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [listParams, setListParams] = useState<BannerListParams>({
+    page: 1,
+    size: 10,
+    sortField: 'displayOrder',
+    sortOrder: 'ASC',
+  })
 
-  const toggleActive = useCallback((bannerSq: number) => {
-    setBanners((prev) =>
-      prev.map((b) =>
-        b.bannerSq === bannerSq ? { ...b, isActive: !b.isActive } : b
-      )
-    )
-    // await bannerApi.toggleActive(bannerSq)
-    toast.success('활성 상태가 변경되었습니다. (목 데이터)')
+  const fetchBanners = useCallback(async (params: BannerListParams) => {
+    setListParams(params)
+    try {
+      setIsLoading(true)
+      const response = await bannerApi.getBanners(params)
+      if (response.output) {
+        setBanners(response.output.banners)
+        setTotalElements(response.output.totalElements)
+      }
+    } catch {
+      toast.error('배너 목록 조회에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
-  const deleteBanner = useCallback((bannerSq: number) => {
-    setBanners((prev) => prev.filter((b) => b.bannerSq !== bannerSq))
-    // await bannerApi.deleteBanner(bannerSq)
-    toast.success('배너가 삭제되었습니다. (목 데이터)')
-  }, [])
+  const refreshBanners = useCallback(async () => {
+    await fetchBanners(listParams)
+  }, [fetchBanners, listParams])
+
+  const toggleActive = useCallback(
+    async (bannerSq: number) => {
+      try {
+        await bannerApi.toggleActive(bannerSq)
+        toast.success('배너 활성 상태가 변경되었습니다.')
+        await refreshBanners()
+      } catch {
+        toast.error('활성 상태 변경에 실패했습니다.')
+      }
+    },
+    [refreshBanners]
+  )
+
+  const deleteBanner = useCallback(
+    async (bannerSq: number) => {
+      try {
+        await bannerApi.deleteBanner(bannerSq)
+        toast.success('배너가 삭제되었습니다.')
+        await refreshBanners()
+      } catch {
+        toast.error('배너 삭제에 실패했습니다.')
+      }
+    },
+    [refreshBanners]
+  )
 
   return (
     <BannerContext.Provider
@@ -48,6 +89,10 @@ export function BannerProvider({ children }: { children: React.ReactNode }) {
         currentRow,
         setCurrentRow,
         banners,
+        totalElements,
+        isLoading,
+        fetchBanners,
+        refreshBanners,
         toggleActive,
         deleteBanner,
       }}

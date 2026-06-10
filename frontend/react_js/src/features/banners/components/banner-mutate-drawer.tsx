@@ -17,6 +17,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { bannerApi } from '../api/banner-api'
+import { BannerImage } from './banner-image'
+import { useBanner } from './banner-provider'
 import { type Banner } from '../data/schema'
 
 const formSchema = z
@@ -60,10 +63,17 @@ const defaultValues: BannerForm = {
   isActive: true,
 }
 
+function toApiDateTime(value: string): string {
+  if (value.length === 16) return `${value}:00`
+  return value
+}
+
 export function BannerMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const isUpdate = !!currentRow
+  const { refreshBanners } = useBanner()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<BannerForm>({
     resolver: zodResolver(formSchema),
@@ -111,16 +121,52 @@ export function BannerMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     if (first?.message) toast.error(String(first.message))
   }
 
-  const onSubmit = (_data: BannerForm) => {
-    // const formData = new FormData()
-    // if (imageFile) formData.append('image', imageFile)
-    // isUpdate
-    //   ? await bannerApi.updateBanner(currentRow.bannerSq, formData)
-    //   : await bannerApi.createBanner(formData)
+  const onSubmit = async (data: BannerForm) => {
+    if (!isUpdate && !imageFile) {
+      toast.error('배너 이미지를 선택해주세요.')
+      return
+    }
 
-    void imageFile
-    toast.info('저장 API 연동 후 서버에 반영됩니다.')
-    onOpenChange(false)
+    try {
+      setIsSubmitting(true)
+      const formData = new FormData()
+      formData.append(
+        'request',
+        new Blob(
+          [
+            JSON.stringify({
+              bannerTitle: data.bannerTitle,
+              bannerLinkUrl: data.bannerLinkUrl || null,
+              linkTargetBlankYn: 'N',
+              displayOrder: data.displayOrder,
+              startDtm: toApiDateTime(data.startDtm),
+              endDtm: toApiDateTime(data.endDtm),
+              isActive: data.isActive,
+            }),
+          ],
+          { type: 'application/json' }
+        )
+      )
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+
+      if (isUpdate && currentRow) {
+        await bannerApi.updateBanner(currentRow.bannerSq, formData)
+        toast.success('배너가 수정되었습니다.')
+      } else {
+        await bannerApi.createBanner(formData)
+        toast.success('배너가 등록되었습니다.')
+      }
+      onOpenChange(false)
+      await refreshBanners()
+    } catch {
+      toast.error(
+        isUpdate ? '배너 수정에 실패했습니다.' : '배너 등록에 실패했습니다.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -155,11 +201,12 @@ export function BannerMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               onChange={handleImageChange}
             />
             {previewUrl ? (
-              <div className='relative inline-block'>
-                <img
+              <div className='relative inline-block w-full max-w-md'>
+                <BannerImage
                   src={previewUrl}
                   alt='미리보기'
-                  className='h-32 w-full max-w-md rounded-md border object-cover'
+                  className='h-32 w-full rounded-md border object-cover'
+                  placeholderClassName='flex h-32 w-full items-center justify-center rounded-md border bg-muted/30'
                 />
                 <Button
                   type='button'
@@ -227,7 +274,9 @@ export function BannerMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 취소
               </Button>
             </SheetClose>
-            <Button type='submit'>{isUpdate ? '수정 완료' : '등록하기'}</Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting ? '저장 중…' : isUpdate ? '수정 완료' : '등록하기'}
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>

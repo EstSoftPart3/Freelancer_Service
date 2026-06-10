@@ -52,6 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/uploads",
             "/api/download",
             "/api/files",
+            "/api/banners",
             // ---------------- [추가] 관리자용 경로 ----------------
             "/api/admin/login",
             "/api/admin/refresh-token",

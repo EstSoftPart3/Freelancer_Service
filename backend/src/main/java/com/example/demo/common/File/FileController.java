@@ -42,7 +42,7 @@ public class FileController {
     @GetMapping("/{savedName}")
     public ResponseEntity<Resource> serveFile(
             @PathVariable String savedName,
-            @RequestParam(name = "download", defaultValue = "false") boolean download) { // default -> defaultValue로 수정
+            @RequestParam(name = "download", defaultValue = "false") boolean download) {
 
         try {
             // 1. 암호화된 파일 읽기

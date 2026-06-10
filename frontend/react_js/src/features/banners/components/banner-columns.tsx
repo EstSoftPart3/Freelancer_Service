@@ -1,15 +1,14 @@
 import { format } from 'date-fns'
 import { type ColumnDef, type Row } from '@tanstack/react-table'
-import { ImageIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { cn } from '@/lib/utils'
 import { type Banner } from '../data/schema'
+import { BannerImage } from './banner-image'
 import { useBanner } from './banner-provider'
 import { DataTableRowActions } from './data-table-row-actions'
 
-/** 헤더·셀 공통: 가운데 정렬 + 컬럼 너비 비율 */
 const colMeta = (width: string) => ({
   thClassName: cn('text-center align-middle', width),
   tdClassName: cn('text-center align-middle', width),
@@ -34,23 +33,14 @@ const TitleCell = ({ row }: { row: Row<Banner> }) => {
   )
 }
 
-const ThumbnailCell = ({ row }: { row: Row<Banner> }) => {
-  const url = row.original.bannerImageUrl
-  if (!url) {
-    return (
-      <div className='mx-auto flex h-12 w-20 items-center justify-center rounded border bg-muted'>
-        <ImageIcon className='h-4 w-4 text-muted-foreground' />
-      </div>
-    )
-  }
-  return (
-    <img
-      src={url}
-      alt={row.original.bannerTitle}
-      className='mx-auto h-12 w-20 shrink-0 rounded border object-cover'
-    />
-  )
-}
+const ThumbnailCell = ({ row }: { row: Row<Banner> }) => (
+  <BannerImage
+    src={row.original.bannerImageUrl}
+    alt={row.original.bannerTitle}
+    className='mx-auto h-12 w-20 shrink-0 rounded border object-cover'
+    placeholderClassName='mx-auto flex h-12 w-20 items-center justify-center rounded border bg-muted'
+  />
+)
 
 const formatDtm = (value: string) => {
   try {

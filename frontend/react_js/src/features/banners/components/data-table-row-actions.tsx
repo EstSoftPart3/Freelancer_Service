@@ -35,8 +35,7 @@ export function DataTableRowActions<TData>({ row }: DataTableRowActionsProps<TDa
       <DropdownMenuContent align='end' className='w-[180px]'>
         <DropdownMenuItem
           onClick={() => {
-            toggleActive(banner.bannerSq)
-            // await bannerApi.toggleActive(banner.bannerSq)
+            void toggleActive(banner.bannerSq)
           }}
         >
           {banner.isActive ? '비활성화' : '활성화'}
@@ -48,7 +47,6 @@ export function DataTableRowActions<TData>({ row }: DataTableRowActionsProps<TDa
           onClick={() => {
             setCurrentRow(banner)
             setOpen('update')
-            // await bannerApi.getBanner(banner.bannerSq)
           }}
         >
           수정

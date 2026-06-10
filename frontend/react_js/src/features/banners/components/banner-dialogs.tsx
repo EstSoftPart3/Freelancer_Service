@@ -6,10 +6,9 @@ import { BannerViewDrawer } from './banner-view-drawer'
 export function BannerDialogs() {
   const { open, setOpen, currentRow, deleteBanner } = useBanner()
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!currentRow) return
-    deleteBanner(currentRow.bannerSq)
-    // await bannerApi.deleteBanner(currentRow.bannerSq)
+    await deleteBanner(currentRow.bannerSq)
     setOpen(null)
   }
 
@@ -45,7 +44,7 @@ export function BannerDialogs() {
                 정말로 <strong>{currentRow.bannerTitle}</strong> 배너를
                 삭제하시겠습니까?
                 <br />
-                (현재는 목 데이터에서만 제거됩니다.)
+                삭제 후에는 복구할 수 없습니다.
               </>
             }
             confirmText='삭제'

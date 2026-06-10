@@ -1,5 +1,4 @@
-// [Freelancer Service] 배너 관리 페이지 (목 데이터 UI)
-import { useMemo } from 'react'
+import { useEffect } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
@@ -11,55 +10,27 @@ import { BannerDialogs } from './components/banner-dialogs'
 import { BannerPrimaryButtons } from './components/banner-primary-buttons'
 import { BannerProvider, useBanner } from './components/banner-provider'
 import { BannerTable } from './components/banner-table'
-import type { Banner } from './data/schema'
-// import { bannerApi } from './api/banner-api'
 
 const routeApi = getRouteApi('/_authenticated/contents/banners/')
-
-function getSortValue(banner: Banner, field: string): string | number {
-  if (field === 'exposurePeriod') return banner.startDtm
-  const value = banner[field as keyof Banner]
-  if (typeof value === 'boolean') return value ? 1 : 0
-  if (typeof value === 'number') return value
-  return value ?? ''
-}
-
-function compareSortValues(
-  a: string | number,
-  b: string | number,
-  sortOrder: string
-): number {
-  if (a === b) return 0
-  if (a < b) return sortOrder === 'ASC' ? -1 : 1
-  return sortOrder === 'ASC' ? 1 : -1
-}
 
 function BannerListContent() {
   const navigate = routeApi.useNavigate()
   const search = routeApi.useSearch()
-  const { banners } = useBanner()
+  const { banners, totalElements, isLoading, fetchBanners } = useBanner()
 
   const page = search.page ?? 1
   const pageSize = search.pageSize ?? 10
   const sortField = search.sortField ?? 'displayOrder'
   const sortOrder = search.sortOrder ?? 'ASC'
 
-  const sorted = useMemo(() => {
-    return [...banners].sort((a, b) =>
-      compareSortValues(
-        getSortValue(a, sortField),
-        getSortValue(b, sortField),
-        sortOrder
-      )
-    )
-  }, [banners, sortField, sortOrder])
-
-  const totalCount = sorted.length
-  const data = sorted.slice((page - 1) * pageSize, page * pageSize)
-
-  // useEffect(() => {
-  //   bannerApi.getBanners({ page, size: pageSize, sortField, sortOrder })
-  // }, [page, pageSize, sortField, sortOrder])
+  useEffect(() => {
+    fetchBanners({
+      page,
+      size: pageSize,
+      sortField,
+      sortOrder,
+    })
+  }, [page, pageSize, sortField, sortOrder, fetchBanners])
 
   const handlePageChange = (newPage: number) => {
     navigate({
@@ -114,8 +85,8 @@ function BannerListContent() {
         </div>
 
         <BannerTable
-          data={data}
-          totalCount={totalCount}
+          data={isLoading ? [] : banners}
+          totalCount={totalElements}
           page={page}
           pageSize={pageSize}
           sortField={sortField}
