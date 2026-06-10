@@ -37,4 +37,7 @@ public interface ChatroomMapper {
 	// 상담 채팅방 조회
 	List<ChatroomVo> selectCounselorRooms();
 	
+	// 채팅 상담방 상태 확인
+	String selectChatroomType(Long chatroomSq);
+	
 }

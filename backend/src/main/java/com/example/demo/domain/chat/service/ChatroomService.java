@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.chat.dto.ChatroomType;
 import com.example.demo.domain.chat.dto.ChatroomVo;
 import com.example.demo.domain.chat.dto.request.ChatroomTypeSwitchRequest;
 import com.example.demo.domain.chat.dto.response.ChatroomListResponse;
@@ -101,5 +102,15 @@ public class ChatroomService {
 		if(user.getUserTypeCd() != 302L && !user.getUserNm().equals("김상담")) {
 			throw new IllegalArgumentException("상담사 권한이 없습니다");
 		}
+	}
+	
+	public boolean isAiRoom(Long chatroomSq) {
+		String chatroomType = chatroomMapper.selectChatroomType(chatroomSq);
+		
+		if(chatroomType == null) {
+			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
+		}
+		
+		return ChatroomType.AI.name().equals(chatroomType);
 	}
 }

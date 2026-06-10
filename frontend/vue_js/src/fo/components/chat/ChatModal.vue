@@ -202,7 +202,7 @@ const subscribe = (chatroomSq) => {
 
   subscription.value = stompClient.value.subscribe(destination, (response) => {
     const receivedMessage = JSON.parse(response.body)
-
+    console.log("AI 답변", receivedMessage)
     chatMessages.value.push(receivedMessage)
 
     scrollToBottom()
