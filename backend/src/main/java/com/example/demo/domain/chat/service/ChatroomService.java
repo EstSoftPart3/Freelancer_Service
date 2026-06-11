@@ -94,6 +94,12 @@ public class ChatroomService {
 		
 	}
 	
+	public Long findUserSqByChatroomSq(Long chatroomSq) {
+		return chatroomMapper.findUserSqByChatroomSq(chatroomSq);
+		
+	}
+	
+	
 	private void validateCounselor(Long userSq) {
 		LoginResponseDTO user = userService.getUserInfoByUserSq(userSq);
 		if (user == null) {

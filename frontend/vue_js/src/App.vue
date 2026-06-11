@@ -22,10 +22,12 @@ import { setClearLoginState } from '@/axios'
 import { useRoute } from 'vue-router'
 import { useModalStore } from '@/fo/stores/modalStore'
 import AttendanceCheckCompleteModal from '@/fo/components/attendance/AttendanceCheckCompleteModal.vue'
+import { useChatSocketStore } from './fo/stores/chatSocketStore.js'
 
 const userStore = useUserStore()
 const route = useRoute()
 const modalStore = useModalStore()
+const chatSocketStore = useChatSocketStore()
 
 const fetchUserInfo = async () => {
   try {
@@ -83,6 +85,31 @@ watch(
   { immediate: true },
 )
 
+// 로그인 되면 websocket 연결 시작
+
+const connectChatSocketIfPossible = () => {
+  const token = localStorage.getItem('accessToken')
+
+  if (!token) return
+  if (!userStore.userSq) return
+
+  const isCounselor =
+    userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
+
+  chatSocketStore.connectWebSocket({
+    token,
+    userSq: userStore.userSq,
+    isCounselor,
+  })
+}
+watch(
+  () => [userStore.userSq, userStore.userType, userStore.userNm],
+  () => {
+    connectChatSocketIfPossible()
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
   const token = localStorage.getItem('accessToken')
 
@@ -91,6 +118,8 @@ onMounted(() => {
   } else {
     userStore.clearUser()
   }
+
+  chatSocketStore.loadUnreadState()
 })
 </script>
 

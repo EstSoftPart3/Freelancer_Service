@@ -43,6 +43,10 @@ public class ChatMessageSocketController {
 				response
 				);
 		
+		messageingTemplate.convertAndSend(
+				"/sub/chat/notify/counselor",
+				response);
+		
 		if(!chatroomService.isAiRoom(request.getChatroomSq())) {
 			return;
 		}
@@ -72,6 +76,12 @@ public class ChatMessageSocketController {
 				"/sub/chat/room/" + response.getChatroomSq(),
 				response
 				);
+		
+		messageingTemplate.convertAndSend(
+				"/sub/chat/notify/user/" + chatroomService.findUserSqByChatroomSq(request.getChatroomSq()),
+				response
+				);
+		
 		
 	}
 }

@@ -40,4 +40,7 @@ public interface ChatroomMapper {
 	// 채팅 상담방 상태 확인
 	String selectChatroomType(Long chatroomSq);
 	
+	// 채팅방 소유주 조회
+	Long findUserSqByChatroomSq(Long chatroomSq);
+	
 }
