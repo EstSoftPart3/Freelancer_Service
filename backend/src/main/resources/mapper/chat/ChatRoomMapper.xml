@@ -89,4 +89,10 @@
 		WHERE chatroom_sq = #{chatroomSq}
 	
 	</select>
+	
+	<select id="findUserSqByChatroomSq" resultType="Long">
+		SELECT user_sq
+		FROM tbl_chatroom_s
+		where chatroom_sq = #{chatroomSq}
+	</select>
 </mapper>

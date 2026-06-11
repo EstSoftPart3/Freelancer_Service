@@ -43,9 +43,12 @@
 
           <div class="chat-room-content">
             <div class="chat-room-top">
-              <!-- <strong class="chat-room-title">
-                {{ room.title }}
-              </strong> -->
+              <span
+                v-if="chatSocketStore.unreadRoomIds.has(room.chatroomSq)"
+                class="new-badge"
+              >
+                NEW
+              </span>
 
               <span class="chat-room-time">
                 {{ room.lastMessageAt }}
@@ -58,6 +61,7 @@
           </div>
         </div>
       </div>
+
       <button type="button" class="chat-create-btn" @click="startChat">
         <i class="bi bi-plus-lg"></i>
       </button>
@@ -95,6 +99,7 @@
               : '안녕하세요. AI 상담사입니다. 궁금한 내용을 입력해주세요.'
           }}
         </div>
+
         <div
           v-for="chat in chatMessages"
           :key="chat.chatMessageSq"
@@ -127,12 +132,13 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
-import SockJS from 'sockjs-client'
-import { Client } from '@stomp/stompjs'
 import { useUserStore } from '@/fo/stores/userStore'
+import { useChatSocketStore } from '@/fo/stores/chatSocketStore'
 import { api } from '@/axios'
 
 const modalStore = useModalStore()
+const userStore = useUserStore()
+const chatSocketStore = useChatSocketStore()
 
 const chatScroll = ref(null)
 const messageInputRef = ref(null)
@@ -143,12 +149,6 @@ const currentRoom = ref(null)
 const chatMessages = ref([])
 const chatrooms = ref([])
 
-const userStore = useUserStore()
-
-const WS_BASE_URL = 'http://localhost:8080'
-const stompClient = ref(null)
-const subscription = ref(null)
-const isConnected = ref(false)
 const isCounselor = computed(() => {
   return userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
 })
@@ -160,110 +160,33 @@ const fetchMessages = async (chatroomSq) => {
       : `/chatmessages/${chatroomSq}/messages`
 
     const response = await api.$get(url)
-
     chatMessages.value = response.output?.messageList ?? []
   } catch (e) {
     console.error(e)
-
     chatMessages.value = []
   }
 }
 
 const fetchChatrooms = async () => {
   try {
-    const isCounselor =
-      userStore.userType === 'COMPANY' && userStore.userNm === '김상담'
-
-    const url = isCounselor ? '/chat/counselor' : '/chat'
-
+    const url = isCounselor.value ? '/chat/counselor' : '/chat'
     const response = await api.$get(url)
-    chatrooms.value = response.output.chatroomList
+
+    chatrooms.value = response.output?.chatroomList ?? []
   } catch (e) {
-    console.log('채팅방 조회에 실패했습니다.')
+    console.log('채팅방 조회에 실패했습니다.', e)
+    chatrooms.value = []
   }
 }
 
-const subscribe = (chatroomSq) => {
-  if (!stompClient.value || !isConnected.value) {
-    console.error('구독 실패: websocket 연결 안됨')
-    return
-  }
-
-  if (!chatroomSq) {
-    return
-  }
-
-  if (subscription.value) {
-    subscription.value.unsubscribe()
-    subscription.value = null
-  }
-
-  const destination = `/sub/chat/room/${chatroomSq}`
-
-  subscription.value = stompClient.value.subscribe(destination, (response) => {
-    const receivedMessage = JSON.parse(response.body)
-    console.log("AI 답변", receivedMessage)
-    chatMessages.value.push(receivedMessage)
-
-    scrollToBottom()
-  })
-}
-
-const connect = (chatroomSq) => {
-  const token = localStorage.getItem('accessToken')
-
-  if (!token) {
-    console.error('websocket 연결 실패 : accessToken 없음')
-    return
-  }
-
-  if (stompClient.value && isConnected.value) {
-    subscribe(chatroomSq)
-    return
-  }
-
-  stompClient.value = new Client({
-    webSocketFactory: () => new SockJS(`${WS_BASE_URL}/api/ws-chat`),
-
-    connectHeaders: {
-      Authorization: `Bearer ${token}`,
-    },
-
-    reconnectDelay: 3000,
-
-    onConnect: () => {
-      console.log('websocket 연결 성공')
-      console.log('onConnect chatroomSq:', chatroomSq)
-      isConnected.value = true
-      subscribe(chatroomSq)
-    },
-
-    onStompError: (frame) => {
-      console.error('STOMP 에러', frame)
-    },
-
-    onWebSocketError: (error) => {
-      console.error('WebSocket 에러', error)
-    },
-
-    onDisconnect: () => {
-      console.log('websocket 연결 종료')
-      isConnected.value = false
-    },
-  })
-
-  stompClient.value.activate()
-}
-
-const afterChatRendered = () => {
+const handleReceivedMessage = (receivedMessage) => {
+  chatMessages.value.push(receivedMessage)
   scrollToBottom()
-  focusInput()
 }
 
 const startChat = async () => {
   try {
     const response = await api.$post('/chat')
-
     const chatroomSq = response.output.chatroomSq
 
     currentRoom.value = {
@@ -271,11 +194,13 @@ const startChat = async () => {
       chatroomType: 'AI',
     }
 
+    chatSocketStore.markAsRead(chatroomSq)
+
     chatMessages.value = []
     message.value = ''
     viewMode.value = 'CHAT'
 
-    connect(chatroomSq)
+    chatSocketStore.subscribeRoom(chatroomSq, handleReceivedMessage)
 
     nextTick(() => {
       afterChatRendered()
@@ -288,12 +213,18 @@ const startChat = async () => {
 const openChat = async (room) => {
   currentRoom.value = room
 
+  chatSocketStore.markAsRead(room.chatroomSq)
+
   chatMessages.value = []
   message.value = ''
   viewMode.value = 'CHAT'
 
   await fetchMessages(currentRoom.value.chatroomSq)
-  connect(currentRoom.value.chatroomSq)
+
+  chatSocketStore.subscribeRoom(
+    currentRoom.value.chatroomSq,
+    handleReceivedMessage,
+  )
 
   nextTick(() => {
     afterChatRendered()
@@ -304,7 +235,6 @@ const requestCounselor = async () => {
   if (!currentRoom.value) return
 
   const currentType = currentRoom.value.chatroomType
-
   const nextChatroomType = currentType === 'AI' ? 'COUNSELOR' : 'AI'
 
   try {
@@ -346,29 +276,21 @@ const sendMessage = () => {
     return
   }
 
-  if (!stompClient.value || !isConnected.value) {
-    console.error('websocket 연결 안 됨')
-    return
-  }
-
   const sendDestination = isCounselor.value
     ? '/pub/counselor/chat/send'
     : '/pub/chat/send'
-  stompClient.value.publish({
-    destination: sendDestination,
-    body: JSON.stringify({
-      chatroomSq: currentRoom.value.chatroomSq,
-      messageContent: content,
-    }),
+
+  chatSocketStore.publishMessage(sendDestination, {
+    chatroomSq: currentRoom.value.chatroomSq,
+    messageContent: content,
   })
 
   message.value = ''
-
   focusInput()
 }
 
 const goList = async () => {
-  disconnect()
+  chatSocketStore.unsubscribeRoom()
 
   currentRoom.value = null
   chatMessages.value = []
@@ -378,10 +300,19 @@ const goList = async () => {
   await fetchChatrooms()
 }
 
+const closeModal = () => {
+  chatSocketStore.unsubscribeRoom()
+  modalStore.closeModal()
+}
+
+const afterChatRendered = () => {
+  scrollToBottom()
+  focusInput()
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (!chatScroll.value) return
-
     chatScroll.value.scrollTop = chatScroll.value.scrollHeight
   })
 }
@@ -392,31 +323,12 @@ const focusInput = () => {
   })
 }
 
-const disconnect = () => {
-  if (subscription.value) {
-    subscription.value.unsubscribe()
-    subscription.value = null
-  }
-
-  if (stompClient.value) {
-    stompClient.value.deactivate()
-    stompClient.value = null
-  }
-
-  isConnected.value = false
-}
-
-const closeModal = () => {
-  disconnect()
-  modalStore.closeModal()
-}
-
 onMounted(async () => {
   await fetchChatrooms()
 })
 
 onUnmounted(() => {
-  disconnect()
+  chatSocketStore.unsubscribeRoom()
 })
 </script>
 
@@ -485,6 +397,7 @@ onUnmounted(() => {
   min-height: 0;
   background: #f5f5f5;
 }
+
 .chat-status-bar {
   flex-shrink: 0;
   margin: 14px 16px 12px;
@@ -519,6 +432,7 @@ onUnmounted(() => {
   padding: 0 16px 16px;
   background: #f5f5f5;
 }
+
 .chat-modal-footer {
   display: flex;
   gap: 8px;
@@ -587,9 +501,9 @@ onUnmounted(() => {
 
 .chat-room-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 4px;
 }
 
@@ -605,6 +519,19 @@ onUnmounted(() => {
 .chat-room-time {
   font-size: 13px;
   color: #999999;
+  flex-shrink: 0;
+}
+
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #ff4d4f;
+  color: #ffffff;
   flex-shrink: 0;
 }
 

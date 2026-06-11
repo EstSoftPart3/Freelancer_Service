@@ -292,13 +292,24 @@
                     </li>
                   </ul>
                 </div>
-                <div class="header-chat">
+                <div class="position-relative">
                   <button
                     class="btn btn-light d-flex align-items-center justify-content-center"
                     @click="openChat"
                   >
                     <i class="bi bi-chat-right-text-fill fs-5"></i>
                   </button>
+
+                  <span
+                    v-if="chatSocketStore.unreadMessageTotalCount > 0"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  >
+                    {{
+                      chatSocketStore.unreadMessageTotalCount > 99
+                        ? '99+'
+                        : chatSocketStore.unreadMessageTotalCount
+                    }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -449,6 +460,7 @@ import { api } from '@/axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useModalStore } from '@/fo/stores/modalStore'
 import ChatModal from '../chat/ChatModal.vue'
+import { useChatSocketStore } from '@/fo/stores/chatSocketStore.js'
 
 const alertStore = useAlertStore()
 const userStore = useUserStore()
@@ -461,6 +473,7 @@ const userDropdownRef = ref(null)
 const notifications = ref([])
 const unreadCount = ref(0)
 const modalStore = useModalStore()
+const chatSocketStore = useChatSocketStore()
 
 const closeMenu = () => {
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
@@ -510,6 +523,7 @@ const logout = async () => {
     type: localStorage.getItem('savedLoginType'),
   }
 
+  chatSocketStore.disconnectWebSocket()
   localStorage.clear()
 
   // 복원
