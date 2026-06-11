@@ -43,7 +43,6 @@ public class ChatMessageSocketController {
 				response
 				);
 		
-		System.out.println("notify counselor send = " + response.getChatroomSq());
 		messageingTemplate.convertAndSend(
 				"/sub/chat/notify/counselor",
 				response);
