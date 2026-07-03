@@ -5,6 +5,7 @@ import { useBoardStore } from '@/stores/boardStore'
 import BoardPost from '@/components/community/BoardPost'
 import BoardComment from '@/components/community/BoardComment'
 import api from '@/lib/api'
+import { incrementView } from '@/lib/viewCount'
 import type { BoardDetail } from '@/types'
 
 type BoardCategory = 'board' | 'notice'
@@ -33,9 +34,9 @@ export default function BoardDetailClient({ boardSq, boardCategory }: Props) {
   }, [boardSq, boardCategory, setViewerSq])
 
   useEffect(() => {
-    api.patch(`/board/${boardSq}/increment-view`).catch(() => {})
+    incrementView(`/${boardCategory}/${boardSq}`)
     getBoard()
-  }, [boardSq, getBoard])
+  }, [boardSq, boardCategory, getBoard])
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -44,13 +45,11 @@ export default function BoardDetailClient({ boardSq, boardCategory }: Props) {
         boardType={boardCategory === 'notice' ? 'board' : 'board'}
         onRefresh={getBoard}
       />
-      {boardCategory !== 'notice' && (
-        <BoardComment
-          comments={boardInfo.comments}
-          boardSq={boardInfo.sq}
-          onRefresh={getBoard}
-        />
-      )}
+      <BoardComment
+        comments={boardInfo.comments}
+        boardSq={boardInfo.sq}
+        onRefresh={getBoard}
+      />
     </div>
   )
 }

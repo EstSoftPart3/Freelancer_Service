@@ -8,6 +8,12 @@ import { Input } from '@/components/ui/input'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 
+const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
+  <label className="mb-1 flex items-center gap-1 text-sm font-medium">
+    {label} {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+  </label>
+)
+
 export default function ResetPasswordForm() {
   const router = useRouter()
   const [password, setPassword] = useState('')
@@ -26,10 +32,10 @@ export default function ResetPasswordForm() {
     setPasswordValid(true); return true
   }
 
-  const validateConfirm = (val = confirmPassword) => {
+  const validateConfirm = (val = confirmPassword, pw = password) => {
     setConfirmError(''); setConfirmValid(false)
     if (!val) { setConfirmError('비밀번호 확인을 입력해주세요.'); return false }
-    if (val !== password) { setConfirmError('비밀번호가 일치하지 않습니다.'); return false }
+    if (val !== pw) { setConfirmError('비밀번호가 일치하지 않습니다.'); return false }
     setConfirmValid(true); return true
   }
 
@@ -40,25 +46,14 @@ export default function ResetPasswordForm() {
     if (!pwOk || !cpwOk) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
 
     try {
-      const { data } = await api.post<{ status: string; message?: string }>(
-        '/reset-password',
-        { newPassword: password },
-        { withCredentials: true },
-      )
-      if (data.status === 'OK') {
-        alertStore.show('비밀번호 재설정 완료', 'success')
-        router.push('/login')
-      } else {
-        alertStore.show(data.message ?? '비밀번호 재설정 실패', 'danger')
-      }
-    } catch { alertStore.show('서버 요청 중 오류가 발생했습니다.', 'danger') }
+      await api.post('/reset-password', { newPassword: password }, { withCredentials: true })
+      alertStore.show('비밀번호 재설정 완료', 'success')
+      router.push('/login')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '서버 요청 중 오류가 발생했습니다.'
+      alertStore.show(msg, 'danger')
+    }
   }
-
-  const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
-    <label className="mb-1 flex items-center gap-1 text-sm font-medium">
-      {label} {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
-    </label>
-  )
 
   return (
     <div className="flex min-h-[calc(100vh-200px)] items-center justify-center px-4 py-12">
@@ -72,8 +67,11 @@ export default function ResetPasswordForm() {
                 type="password"
                 value={password}
                 maxLength={32}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => validatePassword()}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  validatePassword(e.target.value)
+                  if (confirmPassword) validateConfirm(confirmPassword, e.target.value)
+                }}
               />
               {passwordError && <p className="mt-1 text-xs text-destructive">{passwordError}</p>}
             </div>
@@ -83,8 +81,7 @@ export default function ResetPasswordForm() {
                 type="password"
                 value={confirmPassword}
                 maxLength={32}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onBlur={() => validateConfirm()}
+                onChange={(e) => { setConfirmPassword(e.target.value); validateConfirm(e.target.value) }}
               />
               {confirmError && <p className="mt-1 text-xs text-destructive">{confirmError}</p>}
             </div>

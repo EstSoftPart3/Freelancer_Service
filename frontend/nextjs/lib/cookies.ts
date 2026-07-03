@@ -7,9 +7,10 @@ export function getCookie(name: string): string | undefined {
     ?.split('=')[1]
 }
 
-export function setCookie(name: string, value: string, days = 7) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`
+// days=null → 만료 미설정(세션 쿠키): 브라우저 종료 시 삭제
+export function setCookie(name: string, value: string, days: number | null = 7) {
+  const expires = days == null ? '' : `; expires=${new Date(Date.now() + days * 864e5).toUTCString()}`
+  document.cookie = `${name}=${value}${expires}; path=/; SameSite=Lax`
 }
 
 export function clearAuthCookies() {

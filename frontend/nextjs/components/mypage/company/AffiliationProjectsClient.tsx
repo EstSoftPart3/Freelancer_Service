@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import ApplyStatusModal from '@/components/mypage/company/ApplyStatusModal'
+import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import type { CompanyProject } from '@/types'
 
@@ -30,6 +32,16 @@ function getPostStatus(p: CompanyProject) {
 
 export default function AffiliationProjectsClient() {
   const router = useRouter()
+  const { companyAuthStatusCd } = useUserStore()
+  const [authConfirm, setAuthConfirm] = useState(false)
+  const [applyStatus, setApplyStatus] = useState<{ open: boolean; projectSq: number | null; projectTtl: string }>({ open: false, projectSq: null, projectTtl: '' })
+
+  // Vue ProjectListPage.handleRegisterClick — 미인증(2501)이면 인증 페이지 이동 확인 모달
+  function handleRegister() {
+    if (String(companyAuthStatusCd) === '2501') { setAuthConfirm(true); return }
+    router.push('/mypage/project-post')
+  }
+
   const [projects, setProjects] = useState<CompanyProject[]>([])
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({ allCount: 0, recruiting: 0, closed: 0, scheduled: 0 })
   const [currentFilter, setCurrentFilter] = useState('all')
@@ -114,7 +126,7 @@ export default function AffiliationProjectsClient() {
           ))}
         </div>
         <div className="flex gap-2">
-          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={searchOptions}>
             <SelectTrigger className="w-24">
               <SelectValue />
             </SelectTrigger>
@@ -159,7 +171,10 @@ export default function AffiliationProjectsClient() {
 
               <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
                 <span><span className="font-semibold text-foreground">등록일자</span> | {post.projectCreatedDt}</span>
-                <span><span className="font-semibold text-foreground">지원자 수</span> | {post.applicantCnt}</span>
+                <span className="flex items-center gap-2">
+                  <span><span className="font-semibold text-foreground">지원자 수</span> | {post.applicantCnt}</span>
+                  <Button size="sm" variant="outline" onClick={() => setApplyStatus({ open: true, projectSq: post.projectSq, projectTtl: post.projectTtl })}>지원현황 바로가기</Button>
+                </span>
               </div>
 
               <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
@@ -177,7 +192,7 @@ export default function AffiliationProjectsClient() {
       </ul>
 
       <div className="flex justify-end mt-4">
-        <Button onClick={() => router.push('/mypage/project-post')}>프로젝트 등록하기</Button>
+        <Button onClick={handleRegister}>프로젝트 등록하기</Button>
       </div>
 
       <CommonPagination currentPage={currentPage} totalPages={totalPages} onPageChange={(p) => setCurrentPage(p)} />
@@ -188,6 +203,21 @@ export default function AffiliationProjectsClient() {
         message="한 번 삭제한 프로젝트는 복구할 수 없습니다. 삭제하시겠습니까?"
         onConfirm={doDelete}
         onClose={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={authConfirm}
+        title="기업 인증 필요"
+        message="인증 페이지로 이동하시겠습니까?"
+        onConfirm={() => router.push('/mypage/affiliation-edit')}
+        onClose={() => setAuthConfirm(false)}
+      />
+
+      <ApplyStatusModal
+        open={applyStatus.open}
+        projectSq={applyStatus.projectSq}
+        projectTtl={applyStatus.projectTtl}
+        onClose={() => setApplyStatus((s) => ({ ...s, open: false }))}
       />
     </div>
   )

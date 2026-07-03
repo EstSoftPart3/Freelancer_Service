@@ -11,12 +11,20 @@ import {
 } from '@/components/ui/select'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
+import InterviewSelectModal, { type InterviewTime } from '@/components/mypage/common/InterviewSelectModal'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import type { ApplicationItem } from '@/types'
 
 interface Counts { all: number; read: number; unread: number }
 const PAGE_SIZE = 5
+
+const SEARCH_OPTIONS = [
+  { value: 'all', label: '전체' },
+  { value: 'title', label: '제목' },
+  { value: 'company', label: '회사명' },
+]
 
 function formatDate(s?: string) {
   if (!s) return ''
@@ -38,6 +46,8 @@ export default function AppliedProjectsClient() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [cancelTarget, setCancelTarget] = useState<number | null>(null)
+  const [resumeDetail, setResumeDetail] = useState<{ resumeSq: number; projectSq: number; applicationSq: number } | null>(null)
+  const [interview, setInterview] = useState<{ open: boolean; applicationSq: number | null; times: InterviewTime[] }>({ open: false, applicationSq: null, times: [] })
 
   const fetchList = useCallback(async (page = 1, rType = readType, sType = appliedSearch.type, kw = appliedSearch.keyword) => {
     try {
@@ -92,6 +102,15 @@ export default function AppliedProjectsClient() {
     router.push(path)
   }
 
+  async function openInterview(projectSq: number, applicationSq: number) {
+    try {
+      const { data } = await api.get(`/projects/applications/interviews/${projectSq}`)
+      setInterview({ open: true, applicationSq, times: data.output ?? [] })
+    } catch {
+      toast.error('인터뷰 시간을 불러올 수 없습니다.')
+    }
+  }
+
   const filterLabels: Array<{ type: string; label: string }> = [
     { type: 'all', label: '전체' },
     { type: 'read', label: '열람' },
@@ -119,13 +138,13 @@ export default function AppliedProjectsClient() {
           ))}
         </div>
         <div className="flex gap-2">
-          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={SEARCH_OPTIONS}>
             <SelectTrigger className="w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[{ v: 'all', l: '전체' }, { v: 'title', l: '제목' }, { v: 'company', l: '회사명' }].map(({ v, l }) => (
-                <SelectItem key={v} value={v}>{l}</SelectItem>
+              {SEARCH_OPTIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -161,7 +180,9 @@ export default function AppliedProjectsClient() {
                 {item.applicantType === '불합격' && <Badge variant="secondary">불합격</Badge>}
                 {item.applicantType === '지원취소' && <Badge variant="secondary">지원 취소됨</Badge>}
                 {item.applicantType === '인터뷰확정' && <Badge>인터뷰 확정 {item.interviewDt ? `(${formatDate(item.interviewDt)})` : ''}</Badge>}
-                {item.applicantType === '인터뷰요청중' && <Badge variant="outline">인터뷰 요청중</Badge>}
+                {item.applicantType === '인터뷰요청중' && (
+                  <Button variant="outline" size="sm" onClick={() => openInterview(item.projectSq, item.applicationSq)}>인터뷰 요청중</Button>
+                )}
                 {item.isRecruitEnded && <Badge variant="secondary">지원 마감</Badge>}
               </div>
             </div>
@@ -170,7 +191,15 @@ export default function AppliedProjectsClient() {
               <span><span className="font-semibold text-foreground">지원자 수</span> | {item.applicantCnt}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
-              <span><span className="font-semibold text-foreground">지원 이력서</span> | {item.resumeTitle}</span>
+              <span>
+                <span className="font-semibold text-foreground">지원 이력서</span>{' | '}
+                <button
+                  className="text-muted-foreground hover:text-primary hover:underline cursor-pointer"
+                  onClick={() => item.resumeSq && setResumeDetail({ resumeSq: item.resumeSq, projectSq: item.projectSq, applicationSq: item.applicationSq })}
+                >
+                  {userType === 'COMPANY' && item.applicantName ? `${item.applicantName} / ${item.resumeTitle}` : item.resumeTitle}
+                </button>
+              </span>
               <span><span className="font-semibold text-foreground">열람일자</span> | {item.readApplicationDt ? formatDate(item.readApplicationDt) : '미열람'}</span>
             </div>
           </li>
@@ -178,6 +207,20 @@ export default function AppliedProjectsClient() {
       </ul>
 
       <CommonPagination currentPage={currentPage} totalPages={totalPages} onPageChange={(p) => setCurrentPage(p)} />
+
+      <ResumeDetailModal
+        resumeSq={resumeDetail?.resumeSq ?? null}
+        projectSq={resumeDetail?.projectSq ?? null}
+        applicationSq={resumeDetail?.applicationSq ?? null}
+        onClose={() => setResumeDetail(null)}
+      />
+      <InterviewSelectModal
+        open={interview.open}
+        applicationSq={interview.applicationSq}
+        interviewTimes={interview.times}
+        onClose={() => setInterview((s) => ({ ...s, open: false }))}
+        onConfirm={() => fetchList(currentPage)}
+      />
 
       <ConfirmDialog
         open={cancelTarget !== null}

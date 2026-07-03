@@ -13,7 +13,6 @@ import type { AffiliationInfo } from '@/types'
 
 export default function AffiliatedInfoClient() {
   const router = useRouter()
-  const { clearUser } = useUserStore()
 
   const [info, setInfo] = useState<AffiliationInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,6 +32,8 @@ export default function AffiliatedInfoClient() {
   async function handleLeave() {
     try {
       await api.patch('/mypage/applications/withdraw', {})
+      // Vue: 탈퇴 즉시 소속 플래그 갱신(로그아웃 아님). clearUser는 전체 로그아웃이라 부적합.
+      useUserStore.setState({ isAffiliated: false, affiliatedCompanySq: undefined })
       toast.success('소속 탈퇴가 완료되었습니다.')
       router.push('/mypage')
     } catch {

@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation'
 import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import ReportModal from '@/components/community/ReportModal'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getSkillIconUrl } from '@/lib/skillIconMap'
 import type { BoardDetail } from '@/types'
 
 function fmtDate(iso?: string) {
@@ -32,16 +34,18 @@ interface Props {
   onRefresh: () => void
   onAnswerWrite?: () => void
   onAdopt?: () => void
+  onEdit?: () => void
 }
 
 export default function BoardPost({
   boardInfo, boardType, parentUserSq = 0, adoptStatusCd = 0,
-  onRefresh, onAnswerWrite, onAdopt,
+  onRefresh, onAnswerWrite, onAdopt, onEdit,
 }: Props) {
   const router = useRouter()
   const { viewerSq, setBoard, resetBoard } = useBoardStore()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [statusConfirm, setStatusConfirm] = useState<{ open: boolean; cd: number }>({ open: false, cd: 0 })
+  const [reportOpen, setReportOpen] = useState(false)
 
   const isOwner = boardInfo.userSq != null && viewerSq != null && boardInfo.userSq === viewerSq
 
@@ -127,7 +131,7 @@ export default function BoardPost({
           {!isOwner && viewerSq != null && (
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
-              onClick={() => alertStore.show('신고 기능은 준비 중입니다.', 'danger')}
+              onClick={() => setReportOpen(true)}
             >
               <Flag className="h-3.5 w-3.5" /> 신고
             </button>
@@ -173,7 +177,8 @@ export default function BoardPost({
           <h5 className="mb-2 text-sm font-semibold text-muted-foreground">태그</h5>
           <div className="flex flex-wrap gap-2">
             {boardInfo.skillTags?.map((t) => (
-              <span key={t.skillTagSq} className="rounded-full bg-primary px-3 py-1 text-xs text-primary-foreground">
+              <span key={t.skillTagSq} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs text-primary-foreground">
+                <img src={getSkillIconUrl(t.skillTagNm)} alt="" className="h-3.5 w-3.5" />
                 {t.skillTagNm}
               </span>
             ))}
@@ -200,6 +205,9 @@ export default function BoardPost({
         {isOwner && boardType !== 'answer' && (
           <Button size="sm" variant="outline" onClick={handleEdit}>수정</Button>
         )}
+        {isOwner && boardType === 'answer' && onEdit && (
+          <Button size="sm" variant="outline" onClick={onEdit}>수정</Button>
+        )}
         {isOwner && (
           <Button size="sm" variant="destructive" onClick={() => setConfirmOpen(true)}>삭제</Button>
         )}
@@ -221,6 +229,12 @@ export default function BoardPost({
         message={`${statusConfirm.cd === 1503 ? '자체해결' : '미해결'} 상태로 변경하시겠습니까?`}
         onConfirm={() => handleStatusUpdate(statusConfirm.cd)}
         onClose={() => setStatusConfirm({ open: false, cd: 0 })}
+      />
+      <ReportModal
+        open={reportOpen}
+        reportTypeCd={boardType === 'answer' ? 2002 : 2001}
+        sq={boardInfo.sq}
+        onClose={() => setReportOpen(false)}
       />
     </div>
   )

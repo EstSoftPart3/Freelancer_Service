@@ -36,6 +36,26 @@ export interface ApiResponse<T> {
   status: string
 }
 
+// Kakao Maps 인스턴스 타입 (window.kakao 선언에서 참조)
+export interface KakaoLatLngBoundsInstance {
+  getSouthWest: () => { getLat: () => number; getLng: () => number }
+  getNorthEast: () => { getLat: () => number; getLng: () => number }
+}
+export interface KakaoMapInstance {
+  setCenter: (pos: unknown) => void
+  getLevel: () => number
+  setLevel: (level: number, opts?: { anchor?: unknown; animate?: boolean }) => void
+  panTo: (pos: unknown) => void
+  getBounds: () => KakaoLatLngBoundsInstance
+  relayout: () => void
+}
+export interface KakaoMarkerInstance { setMap: (map: KakaoMapInstance | null) => void }
+export interface KakaoInfoWindowInstance { open: (map: KakaoMapInstance, marker: KakaoMarkerInstance) => void; close: () => void }
+export interface KakaoCustomOverlayInstance {
+  setMap: (map: KakaoMapInstance | null) => void
+  setZIndex: (z: number) => void
+}
+
 // Daum 우편번호 API 전역 타입
 declare global {
   interface Window {
@@ -46,11 +66,29 @@ declare global {
     }
     kakao: {
       maps: {
+        load: (callback: () => void) => void
+        Map: new (container: HTMLElement, opts: { center: unknown; level: number }) => KakaoMapInstance
+        LatLng: new (lat: number, lng: number) => unknown
+        LatLngBounds: new () => KakaoLatLngBoundsInstance
+        Marker: new (opts: { position: unknown; map: KakaoMapInstance }) => KakaoMarkerInstance
+        InfoWindow: new (opts: { content: string }) => KakaoInfoWindowInstance
+        CustomOverlay: new (opts: { position: unknown; content: HTMLElement; zIndex?: number }) => KakaoCustomOverlayInstance
+        event: {
+          addListener: (target: unknown, event: string, cb: () => void) => void
+          removeListener: (target: unknown, event: string, cb: () => void) => void
+        }
         services: {
           Geocoder: new () => {
             addressSearch: (
               addr: string,
-              cb: (result: Array<{ x: string; y: string }>, status: string) => void,
+              cb: (result: Array<{ x: string; y: string; address?: { b_code?: string } }>, status: string) => void,
+            ) => void
+          }
+          Places: new () => {
+            keywordSearch: (
+              keyword: string,
+              cb: (result: Array<{ place_name: string; address_name: string; x: string; y: string }>, status: string) => void,
+              opts?: { category_group_code?: string },
             ) => void
           }
           Status: { OK: string }
@@ -137,9 +175,10 @@ export interface ProjectItem {
   projectTtl: string
   companyNm: string
   companyImageUrl?: string
-  projectStartDt: string
-  projectEndDt: string
-  projectRecruitEndDt: string
+  projectCreatedDt: string
+  recruitStartDt: string
+  recruitEndDt: string
+  recruitStatus: string
   devGradeNm: string
   requiredEduLvl: string
   formattedSalary: string
@@ -148,9 +187,12 @@ export interface ProjectItem {
   addressTypeCd: number
   detailedAddress?: string
   subwayAddress?: string
-  projectViewCnt: number
-  projectScrapCnt: number
-  isScrap: 0 | 1
+  viewCnt: number
+  applicantCnt: number
+  hasScrapped: 'Y' | 'N'
+  latitude?: number
+  longitude?: number
+  distance?: number | null
 }
 
 export interface ProjectDetail {
@@ -173,6 +215,7 @@ export interface ProjectDetail {
   detailedAddress?: string
   detailedAddressDetail?: string
   subwayAddress?: string
+  projectAddress?: string
   formattedSalary: string
   salaryNegotiableYn: 'Y' | 'N'
   userRole: UserRole
@@ -186,7 +229,7 @@ export interface FilterOption {
   areaSq?: number
   areaName?: string
   common_code_sq?: number
-  nm?: string
+  common_code_nm?: string
 }
 
 export interface ProjectFilters {
@@ -209,6 +252,17 @@ export interface ProjectSearchParams {
   sortOrder?: string
   page?: number
   size?: number
+  minLat?: number
+  maxLat?: number
+  minLng?: number
+  maxLng?: number
+}
+
+export interface ProjectRegionGroup {
+  sigungu: string
+  projectCount: number
+  latitude: number
+  longitude: number
 }
 
 // ---------- MyPage ----------
@@ -263,6 +317,7 @@ export interface ResumeItem {
 export interface CalendarEvent {
   scheduleSq?: number
   scheduleTtl: string
+  scheduleCnt?: string
   scheduleTypeCd: number
   scheduleAllDayYn: 'Y' | 'N'
   start: string
@@ -280,6 +335,7 @@ export interface ApplicationItem {
   appliedDt: string
   readApplicationDt?: string
   applicantCnt: number
+  applicantName?: string
   resumeTitle: string
   resumeSq: number
   projectSq: number

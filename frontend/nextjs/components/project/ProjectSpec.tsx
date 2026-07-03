@@ -2,19 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, Eye, MapPin, Train } from 'lucide-react'
+import { Heart, MapPin, Train } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import ResumeSelectDialog from './ResumeSelectDialog'
+import AffiliationApplyDialog from './AffiliationApplyDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getSkillIconUrl } from '@/lib/skillIconMap'
 import type { ProjectDetail, RequiredSkillGroup } from '@/types'
 
 interface Props {
   projectSq: string
+  // UserProjectSpecPage.vue(개인 지원자 흐름) / CompanyProjectSpecPage.vue(소속원 대리지원 + 작성자 수정·삭제 흐름) 분기
+  variant: 'user' | 'company'
 }
 
 function SkillGroupList({ groups, label }: { groups: RequiredSkillGroup[]; label: string }) {
@@ -25,9 +29,12 @@ function SkillGroupList({ groups, label }: { groups: RequiredSkillGroup[]; label
       {groups.map((g) => (
         <div key={g.parentSkillTagNm} className="space-y-1">
           <p className="text-sm font-medium">{g.parentSkillTagNm}</p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-3">
             {g.childSkillTagNms.map((skill) => (
-              <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+              <span key={skill} className="flex items-center gap-1.5 text-sm">
+                <img src={getSkillIconUrl(skill)} alt={skill} width={20} height={20} />
+                {skill}
+              </span>
             ))}
           </div>
         </div>
@@ -45,53 +52,77 @@ function DateRange({ label, start, end }: { label: string; start: string; end: s
   )
 }
 
-export default function ProjectSpec({ projectSq }: Props) {
+// 근무 지역 노출 — 주소 타입에 따른 우선순위 (Vue displayAddress 그대로 이식)
+function getDisplayAddress(p: ProjectDetail): string {
+  if (p.addressTypeCd === 2701) {
+    return p.detailedAddress ? `${p.detailedAddress} ${p.detailedAddressDetail || ''}`.trim() : (p.projectAddress || '정보 없음')
+  }
+  if (p.addressTypeCd === 2702) {
+    return p.subwayAddress || p.projectAddress || '정보 없음'
+  }
+  return p.projectAddress || '정보 없음'
+}
+
+export default function ProjectSpec({ projectSq, variant }: Props) {
+  const pid = Number(projectSq) // 상세 응답에 projectSq가 없어 라우트 파라미터를 사용
   const router = useRouter()
   const { isLoggedIn } = useUserStore()
   const [project, setProject] = useState<ProjectDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [isRecruitmentEnded, setIsRecruitmentEnded] = useState(false)
 
   useEffect(() => {
     api
       .get<{ output: ProjectDetail }>(`/projects/${projectSq}/details`)
-      .then((r) => setProject(r.data.output))
-      .catch(() => toast.error('프로젝트 정보를 불러올 수 없습니다.'))
+      .then((r) => {
+        setProject(r.data.output)
+        setIsRecruitmentEnded(new Date(`${r.data.output.projectRecruitEndDt}T23:59:59`).getTime() < Date.now())
+      })
+      .catch(() => {
+        toast.error('프로젝트 정보를 불러올 수 없습니다.')
+        router.push('/projects')
+      })
       .finally(() => setLoading(false))
   }, [projectSq])
 
   async function handleScrap() {
     if (!project) return
     if (!isLoggedIn()) { toast.error('로그인이 필요합니다.'); return }
+    const wasScrapped = project.isScrap === 1
     try {
-      await api.post(`/projects/${project.projectSq}/scraps`, {
-        hasScrapped: project.isScrap === 1,
-        target: 'project',
+      const { data } = await api.post(`/projects/${pid}/scraps`, {
+        hasScrapped: wasScrapped,
+        target: '프로젝트',
       })
       setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              isScrap: (prev.isScrap === 1 ? 0 : 1) as 0 | 1,
-              projectScrapCnt: prev.projectScrapCnt + (prev.isScrap === 1 ? -1 : 1),
-            }
-          : prev,
+        prev ? { ...prev, isScrap: (wasScrapped ? 0 : 1) as 0 | 1, projectScrapCnt: data.output ?? prev.projectScrapCnt } : prev,
       )
+      toast.success(wasScrapped ? '스크랩 해제에 성공하였습니다.' : '스크랩에 성공하였습니다.')
     } catch {
-      toast.error('스크랩 처리 중 오류가 발생했습니다.')
+      toast.error('스크랩에 실패했습니다.')
     }
   }
 
-  async function handleApply() {
+  function handleApply() {
     if (!isLoggedIn()) { toast.error('로그인이 필요합니다.'); return }
-    toast.info('지원하기 기능은 준비 중입니다.')
+    if (project?.isApplied === 1) {
+      toast.error('이미 지원한 프로젝트입니다.')
+      return
+    }
+    setApplyOpen(true)
     // GA4: project_apply
+  }
+
+  function handleApplied() {
+    setProject((prev) => (prev ? { ...prev, isApplied: 1 } : prev))
   }
 
   async function handleDelete() {
     if (!project) return
     try {
-      await api.delete(`/projects/${project.projectSq}`)
+      await api.delete(`/projects/${pid}`)
       toast.success('프로젝트가 삭제되었습니다.')
       router.push('/projects')
     } catch {
@@ -99,197 +130,149 @@ export default function ProjectSpec({ projectSq }: Props) {
     }
   }
 
+  function handleEdit() {
+    if (!project) return
+    router.push(`/mypage/project-post/${pid}`)
+  }
+
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
+          <div key={i} className="h-24 animate-pulse rounded-lg bg-muted" />
         ))}
       </div>
     )
   }
 
   if (!project) {
-    return <p className="text-center text-muted-foreground py-20">프로젝트를 불러올 수 없습니다.</p>
+    return <p className="py-20 text-center text-muted-foreground">프로젝트를 불러올 수 없습니다.</p>
   }
 
-  const isRecruitmentEnded =
-    new Date(project.projectRecruitEndDt).getTime() < Date.now()
-
   const isAuthor = project.userRole === 'COMPANY_AUTHOR'
-  const isCompanyMember = project.userRole === 'COMPANY_MEMBER'
-  const isPersonal = project.userRole === 'PERSONAL' || project.userRole === 'COMPANY_EXTERNAL'
+  // 프로젝트 공고 지원 자격: 작성 소속(COMPANY_AUTHOR)만 제외. 소속(affiliation)은 '클랜'이라 고용주가 아니므로
+  // 같은 소속원(COMPANY_MEMBER)도 프로젝트 공고엔 지원 가능(Vue의 '참여 불가' 차단은 도메인상 오답이라 제거).
+  const canApply =
+    project.userRole === 'PERSONAL' ||
+    project.userRole === 'COMPANY_EXTERNAL' ||
+    project.userRole === 'COMPANY_MEMBER'
+  // Vue 원본 스크랩 노출 유지: User 페이지는 PERSONAL·COMPANY_EXTERNAL, Company 페이지는 COMPANY_EXTERNAL만
+  const canScrap =
+    variant === 'user'
+      ? project.userRole === 'PERSONAL' || project.userRole === 'COMPANY_EXTERNAL'
+      : project.userRole === 'COMPANY_EXTERNAL'
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* 헤더 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start gap-4">
-            {project.companyImageUrl && (
-              <img
-                src={project.companyImageUrl}
-                alt={project.companyNm}
-                className="w-14 h-14 rounded-full object-cover shrink-0"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">{project.companyNm}</p>
-              <CardTitle className="text-xl mt-1">{project.projectTtl}</CardTitle>
-              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" /> {project.projectViewCnt}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="h-3.5 w-3.5" /> {project.projectScrapCnt}
-                </span>
-                {isRecruitmentEnded && (
-                  <Badge variant="secondary">채용종료</Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* 일정 */}
-      <Card>
-        <CardContent className="pt-6 space-y-2">
-          <DateRange label="모집 기간" start={project.projectRecruitStartDt} end={project.projectRecruitEndDt} />
-          <DateRange label="면접 기간" start={project.interviewStartDt} end={project.interviewEndDt} />
-          <DateRange label="프로젝트 기간" start={project.projectStartDt} end={project.projectEndDt} />
-        </CardContent>
-      </Card>
-
-      {/* 근무 형태 */}
-      {project.projectWorkType.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-semibold text-muted-foreground mb-2">근무 형태</p>
-            <div className="flex flex-wrap gap-2">
-              {project.projectWorkType.map((w) => (
-                <Badge key={w} variant="outline">{w}</Badge>
-              ))}
+    <div className="mx-auto max-w-5xl">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        {/* 좌측 — 지원 자격 / 근무 조건 */}
+        <Card className="md:order-1 md:col-span-7">
+          <CardContent className="space-y-4">
+            <h2 className="mb-2 text-lg font-semibold">지원 자격 / 근무 조건</h2>
+            <SkillGroupList groups={project.projectRequiredSkills} label="필수 기술" />
+            {project.projectRequiredSkills.length > 0 && project.projectPreferredSkills.length > 0 && <Separator />}
+            <SkillGroupList groups={project.projectPreferredSkills} label="우대 기술" />
+            <Separator />
+            <div className="space-y-2 text-sm">
+              <p><strong className="text-primary">우대 사항 :</strong> {project.projectPreferredEtc}</p>
+              <p><strong className="text-primary">근무 형태 :</strong> {project.projectWorkType?.join(' / ')}</p>
+              <p className="flex items-center gap-1.5">
+                <strong className="text-primary">근무 지역 :</strong>
+                {project.addressTypeCd === 2702 ? <Train className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+                {getDisplayAddress(project)}
+              </p>
+              <p>
+                <strong className="text-primary">단가 :</strong> {project.formattedSalary}
+                {project.salaryNegotiableYn === 'Y' && ' / 단가 협의'}
+              </p>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* 근무지 */}
-      <Card>
-        <CardContent className="pt-6 space-y-2">
-          <p className="text-sm font-semibold text-muted-foreground mb-2">근무지</p>
-          {project.addressTypeCd === 2702 ? (
-            <p className="flex items-center gap-1.5 text-sm">
-              <Train className="h-4 w-4" /> {project.subwayAddress}
-            </p>
-          ) : (
-            <>
-              <p className="flex items-center gap-1.5 text-sm">
-                <MapPin className="h-4 w-4" /> {project.detailedAddress}
-              </p>
-              {project.detailedAddressDetail && (
-                <p className="text-sm text-muted-foreground pl-6">{project.detailedAddressDetail}</p>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 급여 */}
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm font-semibold text-muted-foreground mb-1">급여</p>
-          <p className="text-lg font-bold">
-            {project.salaryNegotiableYn === 'Y' ? '협의' : project.formattedSalary}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* 기술 스택 */}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <SkillGroupList groups={project.projectRequiredSkills} label="필수 기술" />
-          {project.projectRequiredSkills.length > 0 && project.projectPreferredSkills.length > 0 && (
-            <Separator />
-          )}
-          <SkillGroupList groups={project.projectPreferredSkills} label="우대 기술" />
-          {project.projectPreferredEtc && (
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground mb-1">기타 우대사항</p>
-              <p className="text-sm whitespace-pre-wrap">{project.projectPreferredEtc}</p>
+        {/* 우측 — 회사 정보 (sticky) */}
+        <div className="md:sticky md:top-24 md:order-2 md:col-span-5 md:self-start">
+          <Card className="relative">
+            <div className="absolute right-3 top-3 text-xs text-muted-foreground">
+              조회수: {project.projectViewCnt}
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <img
+                  src={project.companyImageUrl || '/img/logos/Company_logo.png'}
+                  alt={project.companyNm}
+                  className="h-[70px] w-[70px] shrink-0 rounded-full bg-muted object-contain"
+                />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-lg">{project.projectTtl}</CardTitle>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{project.companyNm}</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="whitespace-pre-wrap text-sm">{project.projectDetail}</p>
 
-      {/* 상세 설명 */}
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm font-semibold text-muted-foreground mb-2">프로젝트 상세</p>
-          <div
-            className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: project.projectDetail }}
-          />
-        </CardContent>
-      </Card>
+              <div className="space-y-1 border-t pt-4 text-sm text-primary">
+                <DateRange label="모집 기간" start={project.projectRecruitStartDt} end={project.projectRecruitEndDt} />
+                <DateRange label="인터뷰 기간" start={project.interviewStartDt} end={project.interviewEndDt} />
+                <DateRange label="수행 기간" start={project.projectStartDt} end={project.projectEndDt} />
+              </div>
 
-      {/* 액션 버튼 */}
-      <div className="flex gap-3">
-        {isAuthor && (
-          <>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => router.push(`/mypage/project-post/${project.projectSq}`)}
-            >
-              수정하기
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              onClick={() => setDeleteOpen(true)}
-            >
-              삭제하기
-            </Button>
-          </>
-        )}
+              <Separator />
 
-        {isPersonal && !isRecruitmentEnded && (
-          <>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleScrap}
-            >
-              <Heart
-                className={`h-5 w-5 ${project.isScrap === 1 ? 'fill-red-500 text-red-500' : ''}`}
-              />
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleApply}
-              disabled={project.isApplied === 1}
-            >
-              {project.isApplied === 1 ? '지원완료' : '지원하기'}
-            </Button>
-          </>
-        )}
+              {/* 액션 버튼 — Vue UserProjectSpecPage / CompanyProjectSpecPage 역할별 분기 그대로 이식 */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {canApply && project.isApplied === 0 && !isRecruitmentEnded && (
+                  <Button onClick={handleApply}>지원하기</Button>
+                )}
+                {canApply && project.isApplied === 1 && (
+                  <Button disabled>지원 완료</Button>
+                )}
+                {canApply && project.isApplied === 0 && isRecruitmentEnded && (
+                  <Button variant="secondary" disabled>지원 마감</Button>
+                )}
 
-        {isCompanyMember && !isRecruitmentEnded && (
-          <Button className="flex-1" onClick={handleApply}>
-            지원하기
-          </Button>
-        )}
+                {canScrap && (
+                  <Button variant="outline" onClick={handleScrap} className="gap-1.5">
+                    <Heart className={`h-4 w-4 ${project.isScrap === 1 ? 'fill-red-500 text-red-500' : ''}`} />
+                    {project.isScrap === 1 ? '스크랩 해제' : '스크랩'} {project.projectScrapCnt}
+                  </Button>
+                )}
+
+                {variant === 'company' && isAuthor && (
+                  <>
+                    <Button onClick={handleEdit}>수정하기</Button>
+                    <Button variant="outline" onClick={() => setDeleteOpen(true)}>삭제하기</Button>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <ConfirmDialog
         open={deleteOpen}
         title="프로젝트 삭제"
-        message="프로젝트를 삭제하면 복구할 수 없습니다. 삭제하시겠습니까?"
+        message="한 번 삭제한 프로젝트는 복구할 수 없습니다. 삭제하시겠습니까?"
         onConfirm={handleDelete}
         onClose={() => setDeleteOpen(false)}
       />
+
+      {variant === 'user' ? (
+        <ResumeSelectDialog
+          open={applyOpen}
+          projectSq={pid}
+          onClose={() => setApplyOpen(false)}
+          onApplied={handleApplied}
+        />
+      ) : (
+        <AffiliationApplyDialog
+          open={applyOpen}
+          projectSq={pid}
+          onClose={() => setApplyOpen(false)}
+          onApplied={handleApplied}
+        />
+      )}
     </div>
   )
 }

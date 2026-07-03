@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,11 +16,11 @@ import { cn } from '@/lib/utils'
 
 type LoginType = 'PERSONAL' | 'COMPANY'
 
-const DOMAIN_PROVIDERS = [
-  { label: 'naver.com', value: 'naver.com' },
-  { label: 'gmail.com', value: 'gmail.com' },
-  { label: 'kakao.com', value: 'kakao.com' },
-  { label: 'nate.com', value: 'nate.com' },
+const SOCIAL_PROVIDERS = [
+  { name: 'kakao', title: '카카오 로그인', img: '/img/social/kakao.png' },
+  { name: 'naver', title: '네이버 로그인', img: '/img/social/naver.png' },
+  { name: 'google', title: '구글 로그인', img: '/img/social/google.png' },
+  { name: 'apple', title: '애플 로그인', img: '/img/social/apple.png' },
 ]
 
 export default function LoginForm() {
@@ -68,14 +67,15 @@ export default function LoginForm() {
       const { accessToken, refreshToken } = data.output
       if (!accessToken || !refreshToken) throw new Error('토큰 정보가 응답에 없습니다.')
 
-      setCookie('accessToken', accessToken, autoLogin ? 30 : 1)
-      setCookie('refreshToken', refreshToken, autoLogin ? 30 : 1)
+      // 로그인 유지: 체크=30일 영구, 미체크=세션 쿠키(브라우저 종료 시 로그아웃)
+      setCookie('accessToken', accessToken, autoLogin ? 30 : null)
+      setCookie('refreshToken', refreshToken, autoLogin ? 30 : null)
 
       // 유저 정보 로드
       const { data: meData } = await api.post<{ output: User }>('/me')
       const user = meData.output
       setUser(user)
-      setCookie('userType', user.userTypeCd === 301 ? 'PERSONAL' : 'COMPANY', autoLogin ? 30 : 1)
+      setCookie('userType', user.userTypeCd === 301 ? 'PERSONAL' : 'COMPANY', autoLogin ? 30 : null)
 
       // 아이디 저장 처리
       if (idSave) {
@@ -110,7 +110,7 @@ export default function LoginForm() {
 
   const tabCls = (active: boolean) =>
     cn(
-      'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+      'flex-1 cursor-pointer rounded-md py-2 text-sm font-medium transition-colors',
       active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
     )
 
@@ -194,15 +194,16 @@ export default function LoginForm() {
 
           <p className="mb-3 text-center text-sm text-muted-foreground">소셜 계정으로 로그인</p>
           <div className="flex justify-center gap-3">
-            {DOMAIN_PROVIDERS.map((p) => (
+            {SOCIAL_PROVIDERS.map((p) => (
               <button
-                key={p.value}
+                key={p.name}
                 type="button"
-                onClick={() => handleSocialLogin(p.label)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border text-xs font-bold text-muted-foreground hover:bg-muted"
-                title={p.label}
+                onClick={() => handleSocialLogin(p.name)}
+                title={p.title}
+                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border hover:opacity-80"
               >
-                {p.label[0].toUpperCase()}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.img} alt={p.title} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

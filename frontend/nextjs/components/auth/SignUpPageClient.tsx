@@ -32,9 +32,11 @@ export default function SignUpPageClient() {
       zonecode: postcode,
       address,
       detailAddress: addressDetail,
-      sigunguCode,
-      latitude: latitude ? Number(latitude) : undefined,
-      longitude: longitude ? Number(longitude) : undefined,
+      // Daum sigunguCode는 문자열 "11320" 형태 — DTO Long 필드에 맞게 숫자로 변환
+      sigunguCode: sigunguCode ? Number(sigunguCode) : undefined,
+      // Kakao 지오코딩 실패 시 0 전송 (Vue 원본 동일 처리, DB NOT NULL 대응)
+      latitude: latitude ? Number(latitude) : 0,
+      longitude: longitude ? Number(longitude) : 0,
       companyNm: companyName ?? undefined,
       companyCeoNm: companyCeoName ?? undefined,
       companyOpenDt: companyOpenDate ?? undefined,

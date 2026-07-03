@@ -14,13 +14,16 @@ const PUBLIC_PATHS = [
   '/projects',
 ]
 
+// 로그인 상태에서 진입하면 홈으로 돌려보낼 인증 전용 경로
+const AUTH_ONLY_PATHS = ['/login', '/sign-up', '/find-account', '/reset-password']
+
+// Vue 가드(router/index.js)에서 appliedProjects·projectScrap은 역할 제한이 없고
+// COMPANY 사이드바도 두 메뉴를 노출하므로 PERSONAL 전용에서 제외한다.
 const PERSONAL_ONLY = [
   '/mypage/affiliated-info',
   '/mypage/affiliated-scrap',
   '/mypage/affiliated-job-applications',
   '/mypage/resume',
-  '/mypage/applied-projects',
-  '/mypage/project-scrap',
 ]
 
 const COMPANY_ONLY = [
@@ -42,6 +45,11 @@ export function proxy(req: NextRequest) {
 
   if (!isPublic && !token) {
     return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  // 이미 로그인했으면 로그인/회원가입/계정복구 재진입 차단
+  if (token && AUTH_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    return NextResponse.redirect(new URL('/', req.url))
   }
 
   if (token && PERSONAL_ONLY.some((p) => pathname.startsWith(p)) && userType !== 'PERSONAL') {

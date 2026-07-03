@@ -9,7 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserStore } from '@/stores/userStore'
+import CompanyVerificationModal from '@/components/mypage/company/CompanyVerificationModal'
 import api from '@/lib/api'
+import { loadKakaoMaps } from '@/lib/kakao'
+import { loadDaumPostcode } from '@/lib/daum'
 import type { AffiliationEditInfo } from '@/types'
 
 type EditKey = 'companyUrl' | 'userPhoneNum' | 'address' | 'companyGreetingTxt' | 'tagNm'
@@ -25,7 +28,8 @@ interface FormState extends Omit<AffiliationEditInfo, 'tagNm'> {
 
 export default function AffiliationEditClient() {
   const { companyAuthStatusCd } = useUserStore()
-  const isAuthorized = companyAuthStatusCd !== 2501
+  const isAuthorized = String(companyAuthStatusCd) !== '2501'
+  const [verifyOpen, setVerifyOpen] = useState(false)
 
   const [form, setForm] = useState<FormState | null>(null)
   const [original, setOriginal] = useState<FormState | null>(null)
@@ -101,21 +105,22 @@ export default function AffiliationEditClient() {
   }
 
   function openPostcode() {
-    if (!window.daum) { toast.error('주소 검색 서비스를 불러올 수 없습니다.'); return }
-    new window.daum.Postcode({
-      oncomplete: (data) => {
-        const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
-        setForm((prev) => prev ? { ...prev, address: addr, zonecode: data.zonecode, sigunguCode: data.sigunguCode, detailAddress: '' } : prev)
-        if (window.kakao?.maps?.services) {
-          const geocoder = new window.kakao.maps.services.Geocoder()
-          geocoder.addressSearch(addr, (result, status) => {
-            if (status === window.kakao.maps.services.Status.OK && result[0]) {
-              setForm((prev) => prev ? { ...prev, latitude: Number(result[0].y), longitude: Number(result[0].x) } : prev)
-            }
+    loadDaumPostcode().then(() => {
+      new window.daum.Postcode({
+        oncomplete: (data) => {
+          const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
+          setForm((prev) => prev ? { ...prev, address: addr, zonecode: data.zonecode, sigunguCode: data.sigunguCode, detailAddress: '' } : prev)
+          loadKakaoMaps().then(() => {
+            const geocoder = new window.kakao.maps.services.Geocoder()
+            geocoder.addressSearch(addr, (result, status) => {
+              if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                setForm((prev) => prev ? { ...prev, latitude: Number(result[0].y), longitude: Number(result[0].x) } : prev)
+              }
+            })
           })
-        }
-      },
-    }).open()
+        },
+      }).open()
+    })
   }
 
   async function onProfileImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -203,8 +208,21 @@ export default function AffiliationEditClient() {
         <div className="border rounded-md p-4 text-center space-y-2">
           <p className="font-semibold">기업 인증이 완료되지 않았습니다.</p>
           <p className="text-sm text-muted-foreground">소속 모집 공고를 등록하시려면 기업 실명 인증이 필수입니다.</p>
+          <Button size="lg" className="px-8" onClick={() => setVerifyOpen(true)}>
+            지금 바로 기업 인증하기
+          </Button>
         </div>
       )}
+
+      <CompanyVerificationModal
+        open={verifyOpen}
+        onClose={() => setVerifyOpen(false)}
+        onSuccess={() => {
+          // 인증 완료 → 전역 상태 즉시 변경(배너 제거) + 소속 정보 재조회 (Vue openVerification.onSuccess)
+          useUserStore.setState({ companyAuthStatusCd: '2502' })
+          fetchInfo()
+        }}
+      />
 
       {/* 프로필 이미지 */}
       <div className="flex justify-center">

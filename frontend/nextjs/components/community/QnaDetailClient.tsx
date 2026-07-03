@@ -7,10 +7,12 @@ import {
 } from '@/components/ui/dialog'
 import BoardPost from '@/components/community/BoardPost'
 import BoardComment from '@/components/community/BoardComment'
+import AnswerForm from '@/components/community/AnswerForm'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { incrementView } from '@/lib/viewCount'
 import type { BoardDetail, AnswerSummary } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -41,10 +43,11 @@ export default function QnaDetailClient({ boardSq }: Props) {
   const { setViewerSq, viewerSq } = useBoardStore()
   const [boardInfo, setBoardInfo] = useState<BoardDetail>(emptyBoard)
 
-  // 답변 작성 폼 상태
+  // 답변 작성 모달
   const [answerOpen, setAnswerOpen] = useState(false)
-  const [answerTtl, setAnswerTtl] = useState('')
-  const [answerDesc, setAnswerDesc] = useState('')
+
+  // 답변 수정 모달
+  const [editAnswer, setEditAnswer] = useState<BoardDetail | null>(null)
 
   // 답변 상세 모달
   const [detailAnswer, setDetailAnswer] = useState<BoardDetail | null>(null)
@@ -65,34 +68,17 @@ export default function QnaDetailClient({ boardSq }: Props) {
   }, [boardSq, setViewerSq, searchParams])
 
   useEffect(() => {
-    api.patch(`/board/${boardSq}/increment-view`).catch(() => {})
+    incrementView(`/board/${boardSq}`)
     getBoard()
   }, [boardSq, getBoard])
 
   const openAnswerDetail = async (sq: number) => {
     try {
       const { data } = await api.get<{ output: BoardDetail }>(`/answer/${sq}`)
-      api.patch(`/answer/${sq}/increment-view`).catch(() => {})
+      incrementView(`/answer/${sq}`)
       setDetailAnswer(data.output)
       setDetailOpen(true)
     } catch { alertStore.show('답변을 불러올 수 없습니다.', 'danger') }
-  }
-
-  const submitAnswer = async () => {
-    if (!answerTtl.trim()) { alertStore.show('제목을 입력해주세요.', 'danger'); return }
-    if (!answerDesc.trim()) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
-    try {
-      const formData = new FormData()
-      formData.append('ttl', answerTtl)
-      formData.append('description', answerDesc)
-      formData.append('qnaSq', boardSq)
-      const { data } = await api.post<{ status: string; message: string }>('/answer', formData)
-      if (data.status === 'CREATED') {
-        alertStore.show(data.message, 'success')
-        setAnswerOpen(false); setAnswerTtl(''); setAnswerDesc('')
-        getBoard()
-      } else alertStore.show('답변 등록에 실패하였습니다.', 'danger')
-    } catch { alertStore.show('답변 등록에 실패하였습니다.', 'danger') }
   }
 
   const handleAdopt = async (sq: number) => {
@@ -161,41 +147,40 @@ export default function QnaDetailClient({ boardSq }: Props) {
 
       {/* 답변 작성 다이얼로그 */}
       <Dialog open={answerOpen} onOpenChange={setAnswerOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>답변 작성</DialogTitle>
+            <DialogTitle>QnA 답변 작성</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <input
-              value={answerTtl}
-              onChange={(e) => setAnswerTtl(e.target.value)}
-              placeholder="제목"
-              className="flex h-8 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          {answerOpen && (
+            <AnswerForm
+              boardSq={boardSq}
+              onSuccess={() => { setAnswerOpen(false); getBoard() }}
+              onCancel={() => setAnswerOpen(false)}
             />
-            <textarea
-              value={answerDesc}
-              onChange={(e) => setAnswerDesc(e.target.value)}
-              placeholder="답변 내용을 입력해주세요."
-              rows={8}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 답변 수정 다이얼로그 */}
+      <Dialog open={editAnswer != null} onOpenChange={(o) => { if (!o) setEditAnswer(null) }}>
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>QnA 답변 수정</DialogTitle>
+          </DialogHeader>
+          {editAnswer && (
+            <AnswerForm
+              boardSq={boardSq}
+              editTarget={editAnswer}
+              onSuccess={() => { setEditAnswer(null); getBoard() }}
+              onCancel={() => setEditAnswer(null)}
             />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={submitAnswer}
-                className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >등록</button>
-              <button
-                onClick={() => setAnswerOpen(false)}
-                className="rounded-lg border px-4 py-1.5 text-sm hover:bg-muted"
-              >취소</button>
-            </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
       {/* 답변 상세 다이얼로그 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>답변 상세</DialogTitle>
           </DialogHeader>
@@ -208,6 +193,7 @@ export default function QnaDetailClient({ boardSq }: Props) {
                 adoptStatusCd={boardInfo.boardAdoptStatusCd}
                 onRefresh={() => { getBoard(); setDetailOpen(false) }}
                 onAdopt={() => setAdoptConfirm({ open: true, sq: detailAnswer.sq })}
+                onEdit={() => { setDetailOpen(false); setEditAnswer(detailAnswer) }}
               />
               <BoardComment
                 comments={detailAnswer.comments ?? []}

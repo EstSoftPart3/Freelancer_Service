@@ -14,7 +14,8 @@ interface Props {
 interface FindIdOutput {
   userId: string
   userNm?: string
-  regDt?: string
+  userType?: string          // 백엔드: 공통코드 이름(개인회원/기업회원)
+  userCreatedAtDtm?: string  // 백엔드: ISO 일시 문자열
 }
 
 export default async function FindAccountResultPage({ searchParams }: Props) {
@@ -46,10 +47,16 @@ export default async function FindAccountResultPage({ searchParams }: Props) {
                       <td className="py-2">{output.userNm}</td>
                     </tr>
                   )}
-                  {output.regDt && (
+                  {output.userType && (
+                    <tr className="border-b">
+                      <th className="py-2 pr-4 text-left font-medium text-muted-foreground">구분</th>
+                      <td className="py-2">{output.userType}</td>
+                    </tr>
+                  )}
+                  {output.userCreatedAtDtm && (
                     <tr>
                       <th className="py-2 pr-4 text-left font-medium text-muted-foreground">가입일</th>
-                      <td className="py-2">{output.regDt}</td>
+                      <td className="py-2">{output.userCreatedAtDtm.slice(0, 10)}</td>
                     </tr>
                   )}
                 </tbody>

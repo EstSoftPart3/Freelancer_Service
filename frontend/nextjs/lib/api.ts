@@ -30,7 +30,24 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 })
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // 백엔드가 HTTP 200으로 에러를 내려주는 경우 (e.g. SignUpController)
+    // ApiResponse { status: "BAD_REQUEST", message: "...", output: null }
+    const d = res.data
+    if (
+      d &&
+      typeof d === 'object' &&
+      'status' in d &&
+      d.status !== 'OK' &&
+      d.status !== 'CREATED'
+    ) {
+      const err = Object.assign(new Error(d.message ?? '요청 처리에 실패했습니다.'), {
+        response: res,
+      })
+      return Promise.reject(err)
+    }
+    return res
+  },
   async (error) => {
     const original: AxiosRequestConfig & { _retry?: boolean } = error.config
 
@@ -51,10 +68,17 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = getCookie('refreshToken')
-        const { data } = await axios.post(`/api/refresh-token`, { refreshToken })
-        const newToken: string = data.accessToken
+        // 백엔드 LoginController는 refresh token을 Authorization 헤더(Bearer)로 받는다 (body 아님)
+        // 인터셉터 없는 기본 axios를 써서 request 인터셉터가 access token으로 덮어쓰지 않도록 한다
+        const { data } = await axios.post(`/api/refresh-token`, null, {
+          headers: { Authorization: `Bearer ${refreshToken}` },
+        })
+        // 응답은 ApiResponse 래퍼: { status, message, output: { accessToken, refreshToken } }
+        const newToken: string = data.output.accessToken
+        const newRefreshToken: string | undefined = data.output.refreshToken
 
         setCookie('accessToken', newToken)
+        if (newRefreshToken) setCookie('refreshToken', newRefreshToken, 14)
         processQueue(null, newToken)
         original.headers = { ...original.headers, Authorization: `Bearer ${newToken}` }
         return api(original)

@@ -30,6 +30,7 @@ public class SecurityConfigDev {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("http://localhost:8504"); // Vue(FO)
+        configuration.addAllowedOrigin("http://localhost:3000"); // Next.js(FO 마이그레이션)
         configuration.addAllowedOrigin("http://localhost:5173"); // React(BO)
         configuration.addAllowedOrigin("https://job.estsw.co.kr");
         configuration.addAllowedOrigin("https://admin-job.estsw.co.kr");

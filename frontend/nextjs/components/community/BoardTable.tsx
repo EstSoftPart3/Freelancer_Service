@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
+import { getSkillIconUrl } from '@/lib/skillIconMap'
 import type { BoardItem } from '@/types'
 
 function fmtDate(iso: string) {
@@ -40,7 +40,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
             <th className="w-14 px-3 py-2.5 text-center font-medium">조회</th>
             <th className="hidden w-14 px-3 py-2.5 text-center font-medium md:table-cell">댓글</th>
             <th className="hidden w-14 px-3 py-2.5 text-center font-medium md:table-cell">추천</th>
-            {isQna && <th className="w-20 px-3 py-2.5 text-center font-medium">상태</th>}
+            {isQna && <th className="hidden w-20 px-3 py-2.5 text-center font-medium sm:table-cell">상태</th>}
           </tr>
         </thead>
         <tbody>
@@ -64,19 +64,28 @@ export default function BoardTable({ boardList, boardType }: Props) {
                       <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
                     )}
                   </Link>
-                  {b.normalTags && b.normalTags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {b.normalTags.map((t) => (
-                        <Link
-                          key={t}
-                          href={`/${boardType}?tag=${encodeURIComponent(t)}`}
-                          className="text-xs text-muted-foreground hover:text-primary"
-                        >
-                          #{t}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                  {/* 태그 줄 — 빈 경우에도 고정 높이를 두어 모든 로우 높이를 통일 */}
+                  <div className="mt-1 flex h-5 flex-nowrap items-center gap-1 overflow-hidden">
+                    {b.skillTags?.map((t) => (
+                      <Link
+                        key={t.skillTagSq}
+                        href={`/${boardType}?tag=${encodeURIComponent(t.skillTagNm)}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] text-primary-foreground"
+                      >
+                        <img src={getSkillIconUrl(t.skillTagNm)} alt="" className="h-3 w-3" />
+                        {t.skillTagNm}
+                      </Link>
+                    ))}
+                    {b.normalTags?.map((t) => (
+                      <Link
+                        key={t}
+                        href={`/${boardType}?tag=${encodeURIComponent(t)}`}
+                        className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground hover:text-primary"
+                      >
+                        #{t}
+                      </Link>
+                    ))}
+                  </div>
                 </td>
                 <td className="px-3 py-2.5 text-center">{b.userNm}</td>
                 <td className="px-3 py-2.5 text-center">{fmtDate(b.createdAt)}</td>
@@ -84,7 +93,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
                 <td className="hidden px-3 py-2.5 text-center md:table-cell">{b.commentCnt}</td>
                 <td className="hidden px-3 py-2.5 text-center md:table-cell">{b.recommendCnt}</td>
                 {isQna && (
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="hidden px-3 py-2.5 text-center sm:table-cell">
                     {b.boardAdoptStatusCd && STATUS[b.boardAdoptStatusCd] && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[b.boardAdoptStatusCd].cls}`}>
                         {STATUS[b.boardAdoptStatusCd].label}
