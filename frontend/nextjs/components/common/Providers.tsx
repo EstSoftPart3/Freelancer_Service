@@ -14,12 +14,13 @@ function getCookie(name: string): string | undefined {
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const { setUser, clearUser } = useUserStore()
+  const { setUser, clearUser, setAuthChecked } = useUserStore()
 
   useEffect(() => {
     const token = getCookie('accessToken')
     if (!token) {
       clearUser()
+      setAuthChecked(true)
       return
     }
 
@@ -30,6 +31,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         clearUser()
+      })
+      .finally(() => {
+        setAuthChecked(true)
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

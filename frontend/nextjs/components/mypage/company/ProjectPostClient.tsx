@@ -9,6 +9,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
+import { loadKakaoMaps } from '@/lib/kakao'
+import { loadDaumPostcode } from '@/lib/daum'
+import SubwaySearchModal from '@/components/project/SubwaySearchModal'
+import MultiSelectModal from '@/components/project/MultiSelectModal'
+import SkillSelectModal from '@/components/project/SkillSelectModal'
+import InterviewTimeModal, { type InterviewTimeEntry } from '@/components/project/InterviewTimeModal'
+import DateRangeModal from '@/components/project/DateRangeModal'
+import type { RequiredSkillGroup } from '@/types'
 
 interface FormData {
   projectTitle: string
@@ -34,7 +42,7 @@ interface FormData {
   recruitJob: string[]
   usingSkills: string[]
   preferSkills: string[]
-  preference: string
+  preferenceList: string[]
   description: string
   isNotification: boolean
 }
@@ -44,8 +52,9 @@ interface FormOptions {
   educationLevels: string[]
   workTypes: string[]
   recruitJobs: string[]
-  skills: string[]
-  preferSkillsList: string[]
+  // 백엔드 /projects/forms는 기술을 DBMS/Framework/Language/Tool 등 카테고리별로 그룹화해 내려준다 (string[] 아님)
+  skills: RequiredSkillGroup[]
+  preferSkillsList: RequiredSkillGroup[]
 }
 
 interface Props {
@@ -66,7 +75,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
     projectSalary: '',
     salaryNegotiableYn: 'N',
     workType: [], recruitJob: [], usingSkills: [], preferSkills: [],
-    preference: '', description: '',
+    preferenceList: [], description: '',
     isNotification: false,
   })
 
@@ -74,34 +83,60 @@ export default function ProjectPostClient({ projectSq }: Props) {
     devGrades: [], educationLevels: [], workTypes: [], recruitJobs: [], skills: [], preferSkillsList: [],
   })
 
-  const [skillSearch, setSkillSearch] = useState('')
-  const [preferSkillSearch, setPreferSkillSearch] = useState('')
+  const [preferenceInput, setPreferenceInput] = useState('')
+  const [interviewTimes, setInterviewTimes] = useState<InterviewTimeEntry[]>([])
+
+  const [subwayModalOpen, setSubwayModalOpen] = useState(false)
+  const [workTypeModalOpen, setWorkTypeModalOpen] = useState(false)
+  const [jobModalOpen, setJobModalOpen] = useState(false)
+  const [skillModalOpen, setSkillModalOpen] = useState(false)
+  const [preferSkillModalOpen, setPreferSkillModalOpen] = useState(false)
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false)
+  const [projectPeriodModalOpen, setProjectPeriodModalOpen] = useState(false)
+  const [recruitPeriodModalOpen, setRecruitPeriodModalOpen] = useState(false)
 
   const setF = (patch: Partial<FormData>) => setForm((prev) => ({ ...prev, ...patch }))
 
-  const toggleArrayItem = (key: keyof Pick<FormData, 'workType' | 'recruitJob' | 'usingSkills' | 'preferSkills'>, item: string) => {
-    setForm((prev) => {
-      const arr = prev[key] as string[]
-      return { ...prev, [key]: arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item] }
-    })
+  // 우대사항 — 쉼표(,) 입력 시 태그로 전환 (Vue 원본 watch(preferContent) 이식)
+  function handlePreferenceInputChange(value: string) {
+    if (value.endsWith(',')) {
+      const tag = value.slice(0, -1).trim()
+      if (tag && !form.preferenceList.includes(tag)) {
+        setF({ preferenceList: [...form.preferenceList, tag] })
+      }
+      setPreferenceInput('')
+    } else {
+      setPreferenceInput(value)
+    }
+  }
+  function removePreference(idx: number) {
+    setF({ preferenceList: form.preferenceList.filter((_, i) => i !== idx) })
   }
 
+  // 단가 입력 — 숫자만 추출해 저장, 화면엔 1,000 단위 콤마를 붙여 표시 (백엔드 전송 시엔 콤마 제거된 순수 숫자 문자열)
+  function handleSalaryChange(value: string) {
+    const digitsOnly = value.replace(/[^0-9]/g, '')
+    setF({ projectSalary: digitsOnly })
+  }
+  const salaryDisplay = form.projectSalary ? Number(form.projectSalary).toLocaleString('ko-KR') : ''
+
   const openPostcode = () => {
-    if (!window.daum) { toast.error('주소 검색 서비스를 불러올 수 없습니다.'); return }
-    new window.daum.Postcode({
-      oncomplete: (data) => {
-        const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
-        setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode })
-        if (window.kakao?.maps?.services) {
-          const geocoder = new window.kakao.maps.services.Geocoder()
-          geocoder.addressSearch(addr, (result, status) => {
-            if (status === window.kakao.maps.services.Status.OK && result[0]) {
-              setF({ latitude: result[0].y, longitude: result[0].x })
-            }
+    loadDaumPostcode().then(() => {
+      new window.daum.Postcode({
+        oncomplete: (data) => {
+          const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
+          setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode })
+          loadKakaoMaps().then(() => {
+            const geocoder = new window.kakao.maps.services.Geocoder()
+            geocoder.addressSearch(addr, (result, status) => {
+              if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                setF({ latitude: result[0].y, longitude: result[0].x })
+              }
+            })
           })
-        }
-      },
-    }).open()
+        },
+      }).open()
+    })
   }
 
   const loadFormData = useCallback(async () => {
@@ -142,7 +177,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
           recruitJob: Array.isArray(exist.jobs) ? [...exist.jobs] : [],
           usingSkills: (exist.reqSkills ?? []).map((s: { name?: string } | string) => typeof s === 'string' ? s : s?.name ?? ''),
           preferSkills: (exist.preferSkills ?? []).map((s: { name?: string } | string) => typeof s === 'string' ? s : s?.name ?? ''),
-          preference: exist.preferredEtc ?? '',
+          preferenceList: (exist.preferredEtc ?? '').split(',').map((s: string) => s.trim()).filter(Boolean),
           description: exist.description ?? '',
         }))
       }
@@ -153,30 +188,66 @@ export default function ProjectPostClient({ projectSq }: Props) {
 
   useEffect(() => { loadFormData() }, [loadFormData])
 
+  function openInterviewModal() {
+    if (!form.recruitStartDt || !form.recruitEndDt) {
+      toast.error('모집 기간을 먼저 설정해주세요.')
+      return
+    }
+    setInterviewModalOpen(true)
+  }
+
+  // 모집 기간이 줄어들면 범위 밖 인터뷰 일정은 자동 제거 (Vue 원본 watcher 이식)
+  useEffect(() => {
+    if (!form.recruitStartDt || !form.recruitEndDt) return
+    setInterviewTimes((prev) => {
+      const filtered = prev.filter((e) => e.date >= form.recruitStartDt && e.date <= form.recruitEndDt)
+      if (filtered.length !== prev.length) toast.warning('모집 기간 변경으로 일부 인터뷰 일정이 제거되었습니다.')
+      return filtered
+    })
+  }, [form.recruitStartDt, form.recruitEndDt])
+
   async function handleSubmit() {
-    if (!form.projectTitle.trim()) { toast.error('프로젝트 제목을 입력해주세요.'); return }
-    if (!form.address && !form.subwayAddressName) { toast.error('근무지 주소 또는 지하철역을 입력해주세요.'); return }
+    const preference = [...form.preferenceList, ...preferenceInput.split(',')].map((s) => s.trim()).filter(Boolean).join(',')
+    const interviewTime = interviewTimes.flatMap((e) => e.times.map((t) => `${e.date}T${t}`))
+    const salaryNum = Number(form.projectSalary)
+
+    // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단)
+    if (form.projectTitle.trim().length < 5) { toast.error('프로젝트 제목을 5자 이상 입력해주세요.'); return }
+    if (!form.address && !form.subwayAddressName) { toast.error('근무지 주소 또는 지하철역 중 하나는 필수입니다.'); return }
     if (!form.devGrade) { toast.error('개발자 등급을 선택해주세요.'); return }
     if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
     if (!form.projectStartDt || !form.projectEndDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
     if (!form.recruitStartDt || !form.recruitEndDt) { toast.error('모집 기간을 설정해주세요.'); return }
+    if (form.workType.length === 0) { toast.error('근무 형태를 최소 하나 선택해주세요.'); return }
+    if (form.recruitJob.length === 0) { toast.error('모집 직군을 최소 하나 선택해주세요.'); return }
+    if (form.usingSkills.length === 0) { toast.error('사용 기술을 최소 하나 선택해주세요.'); return }
+    if (form.preferSkills.length === 0) { toast.error('우대 기술을 최소 하나 선택해주세요.'); return }
+    if (preference.length > 255) { toast.error(`우대 사항이 너무 깁니다. (최대 255자 / 현재: ${preference.length}자)`); return }
+    if (!form.description.trim()) { toast.error('상세 내용을 작성해주세요.'); return }
+    if (interviewTimes.length === 0) { toast.error('인터뷰 가능 시간을 설정해주세요.'); return }
+    if (!form.projectSalary || isNaN(salaryNum) || salaryNum <= 0) { toast.error('올바른 단가(숫자)를 입력해주세요.'); return }
+    if (salaryNum > 100000000) { toast.error('단가는 1억 원 이하로 입력해주세요.'); return }
+
+    // 비어있는 숫자 필드는 빈 문자열('') 대신 undefined로 보낸다 — 백엔드 Double/Long 필드가 ''를 파싱 못 해 400 에러 발생
+    const numOrUndef = (v: string) => v === '' ? undefined : v
 
     const requestBody = {
-      projectId: projectSq ?? null,
+      // 백엔드 ProjectCreateRequest.projectId가 primitive long이라 신규 등록 시 null을 보내면 역직렬화에서 실패한다
+      projectId: projectSq ?? 0,
       projectTitle: form.projectTitle,
       projectSalary: form.projectSalary,
       projectSalaryNegotiableYn: form.salaryNegotiableYn,
       projectImageUrl: '',
       detailedAddressName: form.address,
       detailedAddressDetail: form.detailAddress,
-      detailedZonecode: form.postcode,
-      detailedLat: form.latitude,
-      detailedLon: form.longitude,
-      detailedSigunguCode: form.sigunguCode,
+      detailedZonecode: numOrUndef(form.postcode),
+      detailedLat: numOrUndef(form.latitude),
+      detailedLon: numOrUndef(form.longitude),
+      detailedSigunguCode: numOrUndef(form.sigunguCode),
       subwayAddressName: form.subwayAddressName,
-      subwayLat: form.subwayLat,
-      subwayLon: form.subwayLon,
-      subwaySigunguCode: form.subwaySigunguCode,
+      subwayLat: numOrUndef(form.subwayLat),
+      subwayLon: numOrUndef(form.subwayLon),
+      subwaySigunguCode: numOrUndef(form.subwaySigunguCode),
       devGrade: form.devGrade,
       educationLvl: form.educationLvl,
       projectStartDt: form.projectStartDt,
@@ -187,9 +258,9 @@ export default function ProjectPostClient({ projectSq }: Props) {
       recruitJob: form.recruitJob,
       usingSkills: form.usingSkills,
       preferSkills: form.preferSkills,
-      preference: form.preference,
+      preference,
       description: form.description,
-      interviewTime: [],
+      interviewTime,
       isNotification: form.isNotification ? 'Y' : 'N',
     }
 
@@ -202,13 +273,11 @@ export default function ProjectPostClient({ projectSq }: Props) {
         toast.success('프로젝트가 등록되었습니다.')
       }
       router.push('/mypage/affiliation-projects')
-    } catch {
-      toast.error(`프로젝트 ${isEdit ? '수정' : '등록'}에 실패했습니다.`)
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(message || `프로젝트 ${isEdit ? '수정' : '등록'}에 실패했습니다.`)
     }
   }
-
-  const filteredSkills = options.skills.filter((s) => s.toLowerCase().includes(skillSearch.toLowerCase()))
-  const filteredPreferSkills = options.preferSkillsList.filter((s) => s.toLowerCase().includes(preferSkillSearch.toLowerCase()))
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -219,16 +288,47 @@ export default function ProjectPostClient({ projectSq }: Props) {
         <Input value={form.projectTitle} onChange={(e) => setF({ projectTitle: e.target.value })} placeholder="예: 쇼핑몰 관리자 시스템 구축" />
       </div>
 
-      {/* 주소 */}
-      <div className="space-y-2">
-        <label className="text-sm font-semibold">근무지 주소</label>
-        <div className="flex gap-2">
-          <Input value={form.address} readOnly placeholder="주소 검색" className="cursor-pointer" onClick={openPostcode} />
-          <Button type="button" variant="outline" size="sm" onClick={openPostcode}>검색</Button>
-          {form.address && <Button type="button" variant="ghost" size="sm" onClick={() => setF({ address: '', latitude: '', longitude: '' })}>×</Button>}
+      {/* 주소 — Vue 원본: 근무지 주소/지하철역 둘 다 독립 입력 가능, 최소 1개만 필수 (서로 비활성화 안 함) */}
+      <div className="space-y-1">
+        <p className="text-xs text-muted-foreground">근무지 주소 또는 지하철역 중 최소 1개는 입력해주세요. (둘 다 입력 가능)</p>
+      </div>
+      <div className="space-y-4 rounded-lg border p-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">근무지 주소</label>
+          <div className="flex gap-2">
+            <Input
+              value={form.address}
+              readOnly
+              placeholder="클릭하여 주소 검색"
+              className="cursor-pointer"
+              onClick={openPostcode}
+            />
+            {form.address && <Button type="button" variant="ghost" size="sm" onClick={() => setF({ address: '', postcode: '', latitude: '', longitude: '', sigunguCode: '' })}>×</Button>}
+          </div>
+          {form.address && (
+            <Input
+              value={form.detailAddress}
+              onChange={(e) => setF({ detailAddress: e.target.value })}
+              placeholder="상세 주소"
+            />
+          )}
         </div>
-        <Input value={form.detailAddress} onChange={(e) => setF({ detailAddress: e.target.value })} placeholder="상세 주소" />
-        <Input value={form.subwayAddressName} readOnly placeholder="지하철역 주소 (미구현 - 직접 입력)" onChange={(e) => setF({ subwayAddressName: e.target.value })} />
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">지하철역 주소</label>
+          <div className="flex gap-2">
+            <Input
+              value={form.subwayAddressName}
+              readOnly
+              placeholder="클릭하여 지하철역 검색"
+              className="cursor-pointer"
+              onClick={() => setSubwayModalOpen(true)}
+            />
+            {form.subwayAddressName && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setF({ subwayAddressName: '', subwayLat: '', subwayLon: '', subwaySigunguCode: '' })}>×</Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 개발자 등급 / 학력 */}
@@ -257,31 +357,48 @@ export default function ProjectPostClient({ projectSq }: Props) {
         </div>
       </div>
 
-      {/* 기간 */}
+      {/* 기간 — Vue 원본처럼 듀얼월 캘린더에서 한 번에 범위 선택, 입력창은 읽기전용 표시 */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-semibold">프로젝트 시작일</label>
-          <Input type="date" value={form.projectStartDt} onChange={(e) => setF({ projectStartDt: e.target.value })} />
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold">프로젝트 기간</label>
+          </div>
+          <Input
+            readOnly
+            value={form.projectStartDt && form.projectEndDt ? `${form.projectStartDt} ~ ${form.projectEndDt}` : ''}
+            placeholder="예: 2026-04 ~ 2026-10"
+            className="cursor-pointer"
+            onClick={() => setProjectPeriodModalOpen(true)}
+          />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold">프로젝트 종료일</label>
-          <Input type="date" value={form.projectEndDt} onChange={(e) => setF({ projectEndDt: e.target.value })} />
-        </div>
-        <div className="space-y-1">
-          <label className="text-sm font-semibold">모집 시작일</label>
-          <Input type="date" value={form.recruitStartDt} onChange={(e) => setF({ recruitStartDt: e.target.value })} />
-        </div>
-        <div className="space-y-1">
-          <label className="text-sm font-semibold">모집 종료일</label>
-          <Input type="date" value={form.recruitEndDt} onChange={(e) => setF({ recruitEndDt: e.target.value })} />
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold">모집 기간</label>
+          </div>
+          <Input
+            readOnly
+            value={form.recruitStartDt && form.recruitEndDt ? `${form.recruitStartDt} ~ ${form.recruitEndDt}` : ''}
+            placeholder="예: 2026-04 ~ 2026-10"
+            className="cursor-pointer"
+            onClick={() => setRecruitPeriodModalOpen(true)}
+          />
         </div>
       </div>
 
-      {/* 단가 */}
+      {/* 단가 — 입력은 숫자만 받고, 화면엔 1,000단위 콤마로 표시 */}
       <div className="space-y-1">
         <label className="text-sm font-semibold">단가</label>
         <div className="flex items-center gap-3">
-          <Input value={form.projectSalary} onChange={(e) => setF({ projectSalary: e.target.value })} placeholder="예: 5000000" className="w-48" />
+          <div className="relative w-48">
+            <Input
+              value={salaryDisplay}
+              onChange={(e) => handleSalaryChange(e.target.value)}
+              placeholder="예: 5,000,000"
+              className="pr-8"
+              inputMode="numeric"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">원</span>
+          </div>
           <div className="flex items-center gap-2">
             <Checkbox
               id="salary-neg"
@@ -294,65 +411,78 @@ export default function ProjectPostClient({ projectSq }: Props) {
       </div>
 
       {/* 근무 형태 */}
-      <CheckboxGroup
+      <PickerField
         label="근무 형태"
-        options={options.workTypes}
         selected={form.workType}
-        onToggle={(item) => toggleArrayItem('workType', item)}
+        onOpen={() => setWorkTypeModalOpen(true)}
+        onRemove={(item) => setF({ workType: form.workType.filter((x) => x !== item) })}
       />
 
       {/* 모집 직군 */}
-      <CheckboxGroup
+      <PickerField
         label="모집 직군"
-        options={options.recruitJobs}
         selected={form.recruitJob}
-        onToggle={(item) => toggleArrayItem('recruitJob', item)}
+        onOpen={() => setJobModalOpen(true)}
+        onRemove={(item) => setF({ recruitJob: form.recruitJob.filter((x) => x !== item) })}
       />
 
       {/* 사용 기술 */}
-      <div className="space-y-2">
-        <label className="text-sm font-semibold">사용 기술</label>
-        <Input value={skillSearch} onChange={(e) => setSkillSearch(e.target.value)} placeholder="기술 검색" className="w-48" />
-        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border rounded p-2">
-          {filteredSkills.map((s) => (
-            <button
-              key={s}
-              className={`px-2 py-1 text-xs border rounded transition-colors ${form.usingSkills.includes(s) ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-              onClick={() => toggleArrayItem('usingSkills', s)}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {form.usingSkills.map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
-        </div>
-      </div>
+      <PickerField
+        label="사용 기술"
+        selected={form.usingSkills}
+        onOpen={() => setSkillModalOpen(true)}
+        onRemove={(item) => setF({ usingSkills: form.usingSkills.filter((x) => x !== item) })}
+      />
 
       {/* 우대 기술 */}
+      <PickerField
+        label="우대 기술"
+        selected={form.preferSkills}
+        onOpen={() => setPreferSkillModalOpen(true)}
+        onRemove={(item) => setF({ preferSkills: form.preferSkills.filter((x) => x !== item) })}
+      />
+
+      {/* 우대 사항 — 쉼표(,)로 구분 입력 시 태그로 전환 */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold">우대 기술</label>
-        <Input value={preferSkillSearch} onChange={(e) => setPreferSkillSearch(e.target.value)} placeholder="기술 검색" className="w-48" />
-        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border rounded p-2">
-          {filteredPreferSkills.map((s) => (
-            <button
-              key={s}
-              className={`px-2 py-1 text-xs border rounded transition-colors ${form.preferSkills.includes(s) ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-              onClick={() => toggleArrayItem('preferSkills', s)}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {form.preferSkills.map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
-        </div>
+        <label className="text-sm font-semibold">우대 사항</label>
+        <Input
+          value={preferenceInput}
+          onChange={(e) => handlePreferenceInputChange(e.target.value)}
+          placeholder="쉼표(,)로 구분하여 입력 (예: 스타트업 경험,)"
+        />
+        {form.preferenceList.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {form.preferenceList.map((p, idx) => (
+              <button
+                key={`${p}-${idx}`}
+                type="button"
+                onClick={() => removePreference(idx)}
+                className="cursor-pointer rounded bg-primary px-2 py-1 text-xs text-primary-foreground"
+                title="클릭하여 삭제"
+              >
+                {p} ×
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* 우대 사항 */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold">우대 사항</label>
-        <Input value={form.preference} onChange={(e) => setF({ preference: e.target.value })} placeholder="예: 스타트업 경험, 원격 근무 가능" />
+      {/* 인터뷰 가능시간 */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-semibold">인터뷰 가능시간</label>
+          <button type="button" onClick={openInterviewModal} className="text-xs text-muted-foreground hover:text-primary">+ 추가하기</button>
+        </div>
+        {interviewTimes.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {interviewTimes.map((e) => (
+              <span key={e.date} className="flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs">
+                {e.date.replaceAll('-', '.')} ({e.times.length}건)
+                <button onClick={() => setInterviewTimes((prev) => prev.filter((x) => x.date !== e.date))} className="text-muted-foreground hover:text-foreground">×</button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 상세 내용 */}
@@ -375,30 +505,87 @@ export default function ProjectPostClient({ projectSq }: Props) {
         <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
         <Button variant="outline" onClick={() => router.push('/mypage/affiliation-projects')}>취소</Button>
       </div>
+
+      <SubwaySearchModal
+        open={subwayModalOpen}
+        onClose={() => setSubwayModalOpen(false)}
+        onSelect={(s) => setF({ subwayAddressName: s.placeName, subwayLat: String(s.lat), subwayLon: String(s.lng), subwaySigunguCode: s.sigunguCode })}
+      />
+      <MultiSelectModal
+        open={workTypeModalOpen}
+        title="근무 형태 선택"
+        options={options.workTypes}
+        selected={form.workType}
+        onClose={() => setWorkTypeModalOpen(false)}
+        onConfirm={(v) => setF({ workType: v })}
+      />
+      <MultiSelectModal
+        open={jobModalOpen}
+        title="모집 직군 선택"
+        options={options.recruitJobs}
+        selected={form.recruitJob}
+        onClose={() => setJobModalOpen(false)}
+        onConfirm={(v) => setF({ recruitJob: v })}
+      />
+      <SkillSelectModal
+        open={skillModalOpen}
+        title="사용 기술 선택"
+        groups={options.skills}
+        selected={form.usingSkills}
+        onClose={() => setSkillModalOpen(false)}
+        onConfirm={(v) => setF({ usingSkills: v })}
+      />
+      <SkillSelectModal
+        open={preferSkillModalOpen}
+        title="우대 기술 선택"
+        groups={options.preferSkillsList}
+        selected={form.preferSkills}
+        onClose={() => setPreferSkillModalOpen(false)}
+        onConfirm={(v) => setF({ preferSkills: v })}
+      />
+      <InterviewTimeModal
+        open={interviewModalOpen}
+        minDate={form.recruitStartDt}
+        maxDate={form.recruitEndDt}
+        entries={interviewTimes}
+        onClose={() => setInterviewModalOpen(false)}
+        onConfirm={setInterviewTimes}
+      />
+      <DateRangeModal
+        open={projectPeriodModalOpen}
+        onClose={() => setProjectPeriodModalOpen(false)}
+        onConfirm={({ start, end }) => setF({ projectStartDt: start, projectEndDt: end })}
+      />
+      <DateRangeModal
+        open={recruitPeriodModalOpen}
+        onClose={() => setRecruitPeriodModalOpen(false)}
+        onConfirm={({ start, end }) => setF({ recruitStartDt: start, recruitEndDt: end })}
+      />
     </div>
   )
 }
 
-function CheckboxGroup({ label, options, selected, onToggle }: {
+function PickerField({ label, selected, onOpen, onRemove }: {
   label: string
-  options: string[]
   selected: string[]
-  onToggle: (item: string) => void
+  onOpen: () => void
+  onRemove: (item: string) => void
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-semibold">{label}</label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <button
-            key={opt}
-            className={`px-3 py-1.5 text-sm border rounded transition-colors ${selected.includes(opt) ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent'}`}
-            onClick={() => onToggle(opt)}
-          >
-            {opt}
-          </button>
-        ))}
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-semibold">{label}</label>
+        <button type="button" onClick={onOpen} className="text-xs text-muted-foreground hover:text-primary">+ 추가하기</button>
       </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((item) => (
+            <Badge key={item} variant="secondary" className="cursor-pointer gap-1" onClick={() => onRemove(item)}>
+              {item} ×
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -91,11 +91,13 @@ export default function MyPageSidebar({ onNavigate }: Props) {
   const userType = getUserType()
   const navGroups = userType === 'COMPANY' ? COMPANY_NAV : PERSONAL_NAV
 
+  // Vue router-link-exact-active와 동일하게 정확 일치만 강조한다.
+  // (startsWith를 쓰면 /mypage/resume/new 에서 '/mypage/resume'(이력서 목록)까지 활성화됨)
   function isActive(href: string) {
     if (href === '/mypage/information-edit') {
       return pathname === '/mypage' || pathname === '/mypage/information-edit'
     }
-    return pathname === href || pathname.startsWith(href + '/')
+    return pathname === href
   }
 
   return (

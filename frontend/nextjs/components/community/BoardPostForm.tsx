@@ -69,7 +69,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
     const formData = new FormData()
     formData.append('ttl', ttl)
     formData.append('description', description)
-    normalTags.forEach((t) => formData.append('normalTags', t))
+    // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
+    formData.append('normalTags', normalTags.join(','))
     formData.append('skillTagsJson', JSON.stringify([]))
     existingAttachments.forEach((a) => formData.append('attachments', String(a.fileSq)))
     newFiles.forEach((f) => formData.append('files', f))

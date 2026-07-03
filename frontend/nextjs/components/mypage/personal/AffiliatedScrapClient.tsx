@@ -67,7 +67,7 @@ export default function AffiliatedScrapClient() {
       <h2 className="text-xl font-bold">소속 스크랩 내역</h2>
 
       <div className="flex gap-2 justify-end flex-wrap">
-        <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+        <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={searchOptions}>
           <SelectTrigger className="w-28">
             <SelectValue />
           </SelectTrigger>

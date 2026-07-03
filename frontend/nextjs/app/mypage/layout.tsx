@@ -1,25 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import MyPageSidebar from '@/components/mypage/MyPageSidebar'
-import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
 export default function MyPageLayout({ children }: { children: React.ReactNode }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* 모바일: Sheet 햄버거 */}
+      {/* 모바일: Sheet 햄버거 — 메뉴 선택 시 닫힘 (Vue 오프캔버스 @navigate 동작) */}
       <div className="md:hidden mb-4">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Menu className="h-4 w-4 mr-2" />
-              마이페이지 메뉴
-            </Button>
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent">
+            <Menu className="h-4 w-4" />
+            마이페이지 메뉴
           </SheetTrigger>
           <SheetContent side="left" className="w-72 pt-10">
-            <MyPageSidebar />
+            <MyPageSidebar onNavigate={() => setMenuOpen(false)} />
           </SheetContent>
         </Sheet>
       </div>

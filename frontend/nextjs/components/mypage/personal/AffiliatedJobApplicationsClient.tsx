@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import AffiliationRequestDetailModal from '@/components/mypage/personal/AffiliationRequestDetailModal'
 import api from '@/lib/api'
 import type { AffiliationApplyItem } from '@/types'
 
@@ -30,6 +31,7 @@ export default function AffiliatedJobApplicationsClient() {
   const [totalPages, setTotalPages] = useState(1)
   const [counts, setCounts] = useState({ all: 0, read: 0, unread: 0 })
   const [cancelTarget, setCancelTarget] = useState<number | null>(null)
+  const [detailTarget, setDetailTarget] = useState<number | null>(null)
 
   const fetchApplies = useCallback(async (page = 1, rType = readType, sType = searchType, kw = keyword) => {
     try {
@@ -99,7 +101,7 @@ export default function AffiliatedJobApplicationsClient() {
           ))}
         </div>
         <div className="flex gap-2">
-          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={searchOptions}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -124,7 +126,7 @@ export default function AffiliatedJobApplicationsClient() {
         {applies.map((apply) => (
           <li key={apply.applicationSq} className="py-4 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-base font-medium">{apply.companyNm}</span>
+              <button type="button" className="text-base font-medium text-primary hover:underline text-left" onClick={() => setDetailTarget(apply.applicationSq)}>{apply.companyNm}</button>
               <div className="flex gap-2">
                 {apply.isDeleted === 'Y' && <Badge variant="secondary">지원 취소 완료</Badge>}
                 {apply.isDeleted !== 'Y' && apply.statusCd === 501 && (
@@ -159,6 +161,8 @@ export default function AffiliatedJobApplicationsClient() {
         onConfirm={doCancel}
         onClose={() => setCancelTarget(null)}
       />
+
+      <AffiliationRequestDetailModal applicationSq={detailTarget} onClose={() => setDetailTarget(null)} />
     </div>
   )
 }

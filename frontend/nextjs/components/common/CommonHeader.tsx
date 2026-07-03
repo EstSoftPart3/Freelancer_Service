@@ -38,7 +38,7 @@ function clearAuthCookies() {
 export default function CommonHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { userNm, isLoggedIn, clearUser } = useUserStore()
+  const { userNm, isLoggedIn, clearUser, authChecked } = useUserStore()
   const loggedIn = isLoggedIn()
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -295,14 +295,14 @@ export default function CommonHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : (
+          ) : authChecked ? (
             <Link
               href="/login"
               className="hidden text-sm text-muted-foreground hover:text-foreground md:block"
             >
               로그인
             </Link>
-          )}
+          ) : null}
 
           {/* 모바일 Sheet */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -386,11 +386,11 @@ export default function CommonHeader() {
                       로그아웃
                     </button>
                   </>
-                ) : (
+                ) : authChecked ? (
                   <Link href="/login" className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
                     로그인
                   </Link>
-                )}
+                ) : null}
               </div>
             </SheetContent>
           </Sheet>

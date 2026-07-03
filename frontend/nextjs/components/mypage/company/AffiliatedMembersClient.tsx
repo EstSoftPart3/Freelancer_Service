@@ -68,7 +68,7 @@ export default function AffiliatedMembersClient() {
       <h2 className="text-xl font-bold">소속 인원 목록</h2>
 
       <div className="flex gap-2 justify-end flex-wrap">
-        <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+        <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={searchOptions}>
           <SelectTrigger className="w-24">
             <SelectValue />
           </SelectTrigger>
@@ -90,7 +90,7 @@ export default function AffiliatedMembersClient() {
 
       <ul className="divide-y">
         {members.map((member) => (
-          <li key={member.id} className="py-4 space-y-2">
+          <li key={member.userSq} className="py-4 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{member.userNm}</span>

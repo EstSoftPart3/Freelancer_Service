@@ -128,3 +128,129 @@
     @apply font-sans;
   }
 }
+
+/* ── 프로젝트 지도(CustomOverlay) 마커 스타일 — Kakao Maps가 React 트리 밖에 직접 삽입하는 raw DOM이라 Tailwind 클래스가 닿지 않는다 ── */
+.cluster-pin {
+  cursor: pointer;
+  background: #0088cc;
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.marker-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.marker-pin {
+  background: #0088cc;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.marker-pin i,
+.marker-pin svg {
+  transform: rotate(45deg);
+  color: white;
+  font-size: 14px;
+}
+.marker-pin.subway {
+  background: #28a745 !important;
+}
+
+.marker-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(33, 37, 41, 0.95);
+  color: white;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  min-width: 180px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: auto;
+}
+.marker-wrapper:hover .marker-tooltip,
+.marker-wrapper.active .marker-tooltip {
+  display: block;
+}
+
+.tt-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 4px;
+  margin-bottom: 5px;
+}
+.tt-badge {
+  background: #0088cc;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.tt-ttl {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.tt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tt-item {
+  display: flex;
+  align-items: center;
+  color: #ccc;
+  font-size: 10px;
+}
+.text-primary-light {
+  color: #4ebced !important;
+}
+
+.btn-route-search {
+  width: 100%;
+  background: #0088cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.btn-route-search:hover {
+  transform: translateY(-1px);
+}
+.btn-route-search:active {
+  transform: translateY(0);
+}

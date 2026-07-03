@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import ProjectSpec from '@/components/project/ProjectSpec'
 
+// 사용자별(isApplied/userRole) 데이터라 정적 생성 부적합 — Windows dev의 static-paths worker 크래시(Jest worker) 회피
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ project_sq: string }>
 }
@@ -22,7 +25,7 @@ export default async function UserProjectSpecPage({ params }: Props) {
   const { project_sq } = await params
   return (
     <div className="container mx-auto px-4 py-8">
-      <ProjectSpec projectSq={project_sq} />
+      <ProjectSpec projectSq={project_sq} variant="user" />
     </div>
   )
 }

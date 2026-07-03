@@ -70,7 +70,7 @@
 				) DESC
 			</when>
 
-			<otherwise> ORDER BY board_created_at_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
+			<otherwise> ORDER BY company_recruit_start_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
 		</choose>
 		LIMIT #{size} OFFSET #{offset}
 	</select>

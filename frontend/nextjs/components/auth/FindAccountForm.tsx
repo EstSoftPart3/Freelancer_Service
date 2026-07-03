@@ -11,16 +11,19 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 
-const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com']
+const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
 
-function EmailInput({
-  emailId, setEmailId, domain, setDomain, customDomain, setCustomDomain,
-  isCustom, setIsCustom, onBlur, error, valid,
+// 이메일 입력 + 도메인 선택 + 인증 요청 버튼 인라인 (Vue 원본과 동일)
+function EmailVerifyRow({
+  emailId, setEmailId, domain, setDomain,
+  customDomain, setCustomDomain, isCustom, setIsCustom,
+  onSendCode, sending, onBlur, error, valid,
 }: {
   emailId: string; setEmailId: (v: string) => void
   domain: string; setDomain: (v: string) => void
   customDomain: string; setCustomDomain: (v: string) => void
   isCustom: boolean; setIsCustom: (v: boolean) => void
+  onSendCode: () => void; sending: boolean
   onBlur?: () => void; error: string; valid: boolean
 }) {
   const handleDomain = (val: string) => {
@@ -36,11 +39,14 @@ function EmailInput({
         <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => setEmailId(e.target.value)} onBlur={onBlur} placeholder="아이디" />
         <span className="flex items-center px-1 text-sm">@</span>
         <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => setCustomDomain(e.target.value)} placeholder="도메인" />
-        <select value={isCustom ? 'custom' : domain} onChange={(e) => handleDomain(e.target.value)} className="h-8 rounded-lg border border-border bg-background px-2 text-sm">
+        <select value={isCustom ? 'custom' : domain} onChange={(e) => handleDomain(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
           <option value="" disabled>선택</option>
           {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
           <option value="custom">직접입력</option>
         </select>
+        <Button type="button" size="sm" onClick={onSendCode} disabled={sending}>
+          {sending ? '전송 중...' : '인증'}
+        </Button>
       </div>
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
@@ -96,7 +102,10 @@ function FindIdForm() {
       } else {
         alertStore.show('일치하는 회원 정보를 찾을 수 없습니다.', 'danger')
       }
-    } catch { alertStore.show('아이디 찾기에 실패했습니다.', 'danger') }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '아이디 찾기에 실패했습니다.'
+      alertStore.show(msg, 'danger')
+    }
   }
 
   return (
@@ -106,22 +115,22 @@ function FindIdForm() {
         <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={vName} />
         {nameError && <p className="mt-1 text-xs text-destructive">{nameError}</p>}
       </div>
-      <EmailInput emailId={emailId} setEmailId={setEmailId} domain={domain} setDomain={setDomain}
-        customDomain={customDomain} setCustomDomain={setCustomDomain} isCustom={isCustom} setIsCustom={setIsCustom}
-        onBlur={vEmail} error={emailError} valid={emailValid} />
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }} disabled={ev.sending}>
-          {ev.sending ? '전송 중...' : '인증 요청'}
-        </Button>
-      </div>
+      <EmailVerifyRow
+        emailId={emailId} setEmailId={setEmailId}
+        domain={domain} setDomain={setDomain}
+        customDomain={customDomain} setCustomDomain={setCustomDomain}
+        isCustom={isCustom} setIsCustom={setIsCustom}
+        onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
+        sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
+      />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
           인증번호 {ev.verified && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </label>
         <div className="flex gap-2">
-          <Input value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="인증번호 입력" />
-          <Button type="button" size="sm" onClick={() => ev.verifyCode(fullEmail(), verifyCode)} disabled={ev.verifying}>
-            {ev.verifying ? '확인 중...' : '확인'}
+          <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
+          <Button type="button" size="sm" onClick={async () => { const ok = await ev.verifyCode(fullEmail(), verifyCode); if (ok) setVerifyError('') }} disabled={ev.verifying || ev.verified}>
+            {ev.verified ? '인증 완료' : ev.verifying ? '확인 중...' : '확인'}
           </Button>
         </div>
         {verifyError && <p className="mt-1 text-xs text-destructive">{verifyError}</p>}
@@ -151,30 +160,31 @@ function ResetPasswordVerifyForm() {
   const vEmail = () => {
     setEmailError(''); setEmailValid(false)
     const email = fullEmail()
-    if (!emailId || !/\S+@\S+\.\S+/.test(email)) { setEmailError('올바른 이메일 주소 형식이 아닙니다.'); return false }
+    if (!emailId) { setEmailError('이메일 아이디를 입력해주세요.'); return false }
+    if (!domain && !customDomain) { setEmailError('이메일 도메인을 선택해주세요.'); return false }
+    if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('올바른 이메일 주소 형식이 아닙니다.'); return false }
     setEmailValid(true); return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs: Record<string, string> = {}
-    if (!userId) errs.userId = '아이디를 입력해주세요.'
-    if (!name) errs.name = '이름을 입력해주세요.'
+    if (!userId || userId.length < 4) errs.userId = '아이디를 입력해주세요.'
+    if (!name || name.length < 2) errs.name = '이름을 입력해주세요.'
     if (!vEmail()) errs.email = emailError
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); errs.verify = '인증 필요' }
     setErrors(errs)
     if (Object.keys(errs).length) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
 
     try {
-      const { data } = await api.post<{ status: string }>('/reset-password/verify',
-        { userId, name, email: fullEmail() }, { withCredentials: true })
-      if (data.status === 'OK') {
-        alertStore.show('비밀번호 재설정 페이지로 이동합니다.', 'success')
-        router.push('/reset-password')
-      } else {
-        alertStore.show('일치하는 회원 정보를 찾을 수 없습니다.', 'danger')
-      }
-    } catch { alertStore.show('서버 요청 중 오류가 발생했습니다.', 'danger') }
+      await api.post('/reset-password/verify', { userId, name, email: fullEmail() }, { withCredentials: true })
+      // 인터셉터가 OK 상태만 통과시키므로 catch 없이 바로 이동
+      alertStore.show('비밀번호 재설정 페이지로 이동합니다.', 'success')
+      router.push('/reset-password')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '일치하는 회원 정보를 찾을 수 없습니다.'
+      alertStore.show(msg, 'danger')
+    }
   }
 
   return (
@@ -189,22 +199,22 @@ function ResetPasswordVerifyForm() {
         <Input value={name} onChange={(e) => setName(e.target.value)} />
         {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
       </div>
-      <EmailInput emailId={emailId} setEmailId={setEmailId} domain={domain} setDomain={setDomain}
-        customDomain={customDomain} setCustomDomain={setCustomDomain} isCustom={isCustom} setIsCustom={setIsCustom}
-        onBlur={vEmail} error={emailError} valid={emailValid} />
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }} disabled={ev.sending}>
-          {ev.sending ? '전송 중...' : '인증 요청'}
-        </Button>
-      </div>
+      <EmailVerifyRow
+        emailId={emailId} setEmailId={setEmailId}
+        domain={domain} setDomain={setDomain}
+        customDomain={customDomain} setCustomDomain={setCustomDomain}
+        isCustom={isCustom} setIsCustom={setIsCustom}
+        onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
+        sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
+      />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
           인증번호 {ev.verified && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </label>
         <div className="flex gap-2">
-          <Input value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="인증번호 입력" />
-          <Button type="button" size="sm" onClick={() => ev.verifyCode(fullEmail(), verifyCode)} disabled={ev.verifying}>
-            {ev.verifying ? '확인 중...' : '확인'}
+          <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
+          <Button type="button" size="sm" onClick={async () => { const ok = await ev.verifyCode(fullEmail(), verifyCode); if (ok) setVerifyError('') }} disabled={ev.verifying || ev.verified}>
+            {ev.verified ? '인증 완료' : ev.verifying ? '확인 중...' : '확인'}
           </Button>
         </div>
         {verifyError && <p className="mt-1 text-xs text-destructive">{verifyError}</p>}
@@ -227,7 +237,7 @@ export default function FindAccountForm() {
   }
 
   const tabCls = (active: boolean) =>
-    cn('flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+    cn('flex-1 cursor-pointer rounded-md py-2 text-sm font-medium transition-colors',
       active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')
 
   return (

@@ -6,7 +6,11 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import type { ResumeItem } from '@/types'
@@ -21,6 +25,8 @@ export default function ResumeListClient() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [copyTarget, setCopyTarget] = useState<number | null>(null)
+  const [detailTarget, setDetailTarget] = useState<number | null>(null)
 
   const fetchResumes = useCallback(async (page = 1) => {
     try {
@@ -59,13 +65,16 @@ export default function ResumeListClient() {
     }
   }
 
-  async function handleCopy(resumeSq: number, withFiles: boolean) {
+  async function handleCopy(withFiles: boolean) {
+    if (copyTarget === null) return
     try {
-      await api.post(`/mypage/resume/${resumeSq}/copy`, { withFiles })
+      await api.post(`/mypage/resume/${copyTarget}/copy`, { withFiles })
       toast.success(`이력서 복사(${withFiles ? '파일 포함' : '파일 제외'})가 완료되었습니다.`)
       fetchResumes(currentPage)
     } catch {
       toast.error('이력서 복사에 실패했습니다.')
+    } finally {
+      setCopyTarget(null)
     }
   }
 
@@ -91,7 +100,7 @@ export default function ResumeListClient() {
             <div className="flex items-center gap-2 pr-8">
               <button
                 className="text-base font-medium hover:underline text-left"
-                onClick={() => router.push(`/mypage/resume/${resume.resumeSq}`)}
+                onClick={() => setDetailTarget(resume.resumeSq)}
               >
                 {resume.resumeTtl}
               </button>
@@ -126,7 +135,7 @@ export default function ResumeListClient() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleCopy(resume.resumeSq, true)}
+                  onClick={() => setCopyTarget(resume.resumeSq)}
                 >
                   복사하기
                 </Button>
@@ -146,6 +155,8 @@ export default function ResumeListClient() {
         onPageChange={(p) => setCurrentPage(p)}
       />
 
+      <ResumeDetailModal resumeSq={detailTarget} onClose={() => setDetailTarget(null)} />
+
       <ConfirmDialog
         open={deleteTarget !== null}
         title="이력서 삭제"
@@ -153,6 +164,21 @@ export default function ResumeListClient() {
         onConfirm={handleDelete}
         onClose={() => setDeleteTarget(null)}
       />
+
+      {/* 복사: Vue copyResume — 첨부파일 포함 여부 선택 */}
+      <Dialog open={copyTarget !== null} onOpenChange={(o) => { if (!o) setCopyTarget(null) }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>이력서 복사</DialogTitle>
+            <DialogDescription>프로필 이미지와 첨부파일도 같이 복사하시겠습니까?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCopyTarget(null)}>취소</Button>
+            <Button variant="outline" onClick={() => handleCopy(false)}>파일 제외</Button>
+            <Button onClick={() => handleCopy(true)}>파일 포함</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

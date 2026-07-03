@@ -30,7 +30,7 @@ const PAGE_SIZE = 10
 export default function BoardListClient({ boardCategory }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { isLoggedIn } = useUserStore()
+  const { isLoggedIn, authChecked } = useUserStore()
 
   const [boardList, setBoardList] = useState<BoardItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
@@ -46,7 +46,8 @@ export default function BoardListClient({ boardCategory }: Props) {
 
   const isQna = boardCategory === 'qna'
   const isNotice = boardCategory === 'notice'
-  const canRegister = !isNotice && isLoggedIn()
+  // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
+  const canRegister = authChecked && !isNotice && isLoggedIn()
 
   const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string) => {
     setIsLoading(true)

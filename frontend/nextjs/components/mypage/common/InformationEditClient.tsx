@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import PasswordCheck from '@/components/mypage/PasswordCheck'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { loadKakaoMaps } from '@/lib/kakao'
+import { loadDaumPostcode } from '@/lib/daum'
 import type { UserInfo, DaumPostcodeResult } from '@/types'
 
 type EditKey = 'userPw' | 'userEmail' | 'userPhoneNum' | 'address' | 'userNm'
@@ -131,6 +133,10 @@ export default function InformationEditClient() {
   }
 
   function confirmField(field: EditKey) {
+    if (field === 'userPw' && !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(form.userPw)) {
+      toast.error('8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.')
+      return
+    }
     if (field === 'userEmail' && !isVerified) {
       toast.error('이메일 인증을 완료해주세요.')
       return
@@ -145,32 +151,36 @@ export default function InformationEditClient() {
   }
 
   function openPostcode() {
-    new window.daum.Postcode({
-      oncomplete(data: DaumPostcodeResult) {
-        const addr =
-          data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
-        setForm((prev) => ({
-          ...prev,
-          address: addr,
-          detailAddress: '',
-          zonecode: data.zonecode,
-          sigunguCode: data.sigunguCode,
-        }))
-        const geocoder = new window.kakao.maps.services.Geocoder()
-        geocoder.addressSearch(
-          addr,
-          (result: Array<{ x: string; y: string }>, status: string) => {
-            if (status === window.kakao.maps.services.Status.OK) {
-              setForm((prev) => ({
-                ...prev,
-                latitude: Number(result[0].y),
-                longitude: Number(result[0].x),
-              }))
-            }
-          },
-        )
-      },
-    }).open()
+    loadDaumPostcode().then(() => {
+      new window.daum.Postcode({
+        oncomplete(data: DaumPostcodeResult) {
+          const addr =
+            data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
+          setForm((prev) => ({
+            ...prev,
+            address: addr,
+            detailAddress: '',
+            zonecode: data.zonecode,
+            sigunguCode: data.sigunguCode,
+          }))
+          loadKakaoMaps().then(() => {
+            const geocoder = new window.kakao.maps.services.Geocoder()
+            geocoder.addressSearch(
+              addr,
+              (result: Array<{ x: string; y: string }>, status: string) => {
+                if (status === window.kakao.maps.services.Status.OK) {
+                  setForm((prev) => ({
+                    ...prev,
+                    latitude: Number(result[0].y),
+                    longitude: Number(result[0].x),
+                  }))
+                }
+              },
+            )
+          })
+        },
+      }).open()
+    })
   }
 
   async function sendVerification() {
@@ -229,10 +239,29 @@ export default function InformationEditClient() {
     }
   }
 
+  function isFormChanged() {
+    return (
+      form.userPw !== '' ||
+      form.userEmail !== original.userEmail ||
+      form.userPhoneNum !== original.userPhoneNum ||
+      form.zonecode !== original.zonecode ||
+      form.address !== original.address ||
+      form.detailAddress !== original.detailAddress ||
+      form.sigunguCode !== original.sigunguCode ||
+      form.latitude !== original.latitude ||
+      form.longitude !== original.longitude ||
+      (!isPersonal && form.userNm !== original.userNm)
+    )
+  }
+
   async function handleSave() {
     const anyEditing = Object.values(editing).some(Boolean)
     if (anyEditing) {
       toast.error('수정 중인 항목을 먼저 저장하거나 취소해주세요.')
+      return
+    }
+    if (!isFormChanged()) {
+      toast.error('변경된 정보가 없습니다.')
       return
     }
     const payload = isPersonal
@@ -267,8 +296,10 @@ export default function InformationEditClient() {
       await api.post('/mypage/edit/update', payload)
       toast.success('회원 정보가 수정되었습니다.')
       await fetchInfo()
-    } catch {
-      toast.error('회원 정보 수정에 실패했습니다.')
+    } catch (err) {
+      // Vue saveAll: 400이면 백엔드 검증 message(비밀번호 규칙 등)를 그대로 노출
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || '회원 정보 수정에 실패했습니다.')
     }
   }
 

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import api from '@/lib/api'
+import { useUserStore } from '@/stores/userStore'
 import type { ProjectFilters, ProjectSearchParams, FilterOption } from '@/types'
 
 interface Props {
@@ -20,13 +21,14 @@ interface Props {
 }
 
 const DISTANCE_OPTIONS = [
+  { label: '전체', value: 0 },
   { label: '3km', value: 3 },
   { label: '5km', value: 5 },
   { label: '10km', value: 10 },
-  { label: '전체', value: 999 },
 ]
 
 const PRICE_OPTIONS = [
+  { label: '전체', value: 0 },
   { label: '200만원', value: 2000000 },
   { label: '300만원', value: 3000000 },
   { label: '400만원', value: 4000000 },
@@ -42,6 +44,9 @@ const SORT_OPTIONS = [
 const SEARCH_TYPES = ['전체', '제목', '회사명', '내용', '태그']
 
 export default function ProjectFilterBar({ onSearch }: Props) {
+  const { isLoggedIn, latitude } = useUserStore()
+  const canUseDistance = isLoggedIn() && latitude != null
+
   const [filters, setFilters] = useState<ProjectFilters>({
     regions: [],
     careers: [],
@@ -54,8 +59,8 @@ export default function ProjectFilterBar({ onSearch }: Props) {
   const [selectedCareers, setSelectedCareers] = useState<number[]>([])
   const [selectedEducations, setSelectedEducations] = useState<number[]>([])
   const [selectedJobTypes, setSelectedJobTypes] = useState<number[]>([])
-  const [distance, setDistance] = useState<number>(999)
-  const [minPrice, setMinPrice] = useState<number | undefined>()
+  const [distance, setDistance] = useState(0)
+  const [minPrice, setMinPrice] = useState(0)
   const [searchKeyword, setSearchKeyword] = useState('')
   const [searchType, setSearchType] = useState('전체')
   const [sortIdx, setSortIdx] = useState(0)
@@ -64,8 +69,8 @@ export default function ProjectFilterBar({ onSearch }: Props) {
     const types = ['지역', '경력', '학력', '직종']
     Promise.all(
       types.map((type) =>
-        api
-          .get<{ output: FilterOption[] }>(`/projects/filters?type=${type}`)
+        // params 객체 사용 → Axios가 한글을 URL 인코딩 처리
+        api.get<{ output: FilterOption[] }>('/projects/filters', { params: { type } })
           .then((r) => r.data.output),
       ),
     )
@@ -75,25 +80,31 @@ export default function ProjectFilterBar({ onSearch }: Props) {
       .catch(() => {})
   }, [])
 
-  function toggle(list: number[], setList: (v: number[]) => void, val: number) {
-    setList(list.includes(val) ? list.filter((x) => x !== val) : [...list, val])
-  }
-
-  function handleSearch() {
-    const sort = SORT_OPTIONS[sortIdx]
-    onSearch({
+  function buildParams(overrideSortIdx?: number): ProjectSearchParams {
+    const sort = SORT_OPTIONS[overrideSortIdx ?? sortIdx]
+    return {
       addressCodeSq: selectedRegions[0],
       projectDeveloperGradeCd: selectedCareers[0],
       educationCd: selectedEducations[0],
       jobRoleCd: selectedJobTypes[0],
-      minPrice,
-      distance: distance !== 999 ? distance : undefined,
+      minPrice: minPrice > 0 ? minPrice : undefined,
+      distance: distance > 0 ? distance : undefined,
       searchKeyword: searchKeyword || undefined,
       searchType: searchType !== '전체' ? searchType : undefined,
       sortBy: sort.sortBy,
       sortOrder: sort.sortOrder,
       page: 1,
-    })
+    }
+  }
+
+  // 정렬 클릭 → 즉시 검색 (Vue 원본과 동일)
+  function handleSortClick(idx: number) {
+    setSortIdx(idx)
+    onSearch(buildParams(idx))
+  }
+
+  function handleSearch() {
+    onSearch(buildParams())
   }
 
   function handleReset() {
@@ -101,8 +112,8 @@ export default function ProjectFilterBar({ onSearch }: Props) {
     setSelectedCareers([])
     setSelectedEducations([])
     setSelectedJobTypes([])
-    setDistance(999)
-    setMinPrice(undefined)
+    setDistance(0)
+    setMinPrice(0)
     setSearchKeyword('')
     setSearchType('전체')
     setSortIdx(0)
@@ -110,14 +121,15 @@ export default function ProjectFilterBar({ onSearch }: Props) {
     onSearch({ sortBy: sort.sortBy, sortOrder: sort.sortOrder, page: 1 })
   }
 
+  function toggle(list: number[], setList: (v: number[]) => void, val: number) {
+    setList(list.includes(val) ? list.filter((x) => x !== val) : [...list, val])
+  }
+
   return (
-    <div className="border rounded-lg p-4 space-y-4 bg-card">
+    <div className="rounded-lg border bg-card p-4 space-y-4">
       {/* 검색바 */}
       <div className="flex gap-2">
-        <Select
-          value={searchType}
-          onValueChange={(v) => { if (v !== null) setSearchType(v) }}
-        >
+        <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
           <SelectTrigger className="w-28 shrink-0">
             <SelectValue />
           </SelectTrigger>
@@ -139,14 +151,15 @@ export default function ProjectFilterBar({ onSearch }: Props) {
         </Button>
       </div>
 
-      {/* 정렬 */}
+      {/* 정렬 버튼 — 클릭 즉시 검색 실행 */}
       <div className="flex gap-2 flex-wrap">
         {SORT_OPTIONS.map((opt, i) => (
           <Button
             key={opt.label}
             variant={sortIdx === i ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSortIdx(i)}
+            className="cursor-pointer"
+            onClick={() => handleSortClick(i)}
           >
             {opt.label}
           </Button>
@@ -154,18 +167,15 @@ export default function ProjectFilterBar({ onSearch }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          className="ml-auto"
+          className="ml-auto cursor-pointer"
           onClick={() => setExpanded((v) => !v)}
         >
           상세 필터
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 ml-1" />
-          ) : (
-            <ChevronDown className="h-4 w-4 ml-1" />
-          )}
+          {expanded ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
         </Button>
       </div>
 
+      {/* 상세 필터 */}
       {expanded && (
         <div className="space-y-4 pt-2 border-t">
           {filters.regions.length > 0 && (
@@ -188,11 +198,9 @@ export default function ProjectFilterBar({ onSearch }: Props) {
                 <CheckItem
                   key={c.common_code_sq}
                   id={`career-${c.common_code_sq}`}
-                  label={c.nm ?? ''}
+                  label={c.common_code_nm ?? ''}
                   checked={selectedCareers.includes(c.common_code_sq!)}
-                  onToggle={() =>
-                    toggle(selectedCareers, setSelectedCareers, c.common_code_sq!)
-                  }
+                  onToggle={() => toggle(selectedCareers, setSelectedCareers, c.common_code_sq!)}
                 />
               ))}
             </FilterSection>
@@ -204,11 +212,9 @@ export default function ProjectFilterBar({ onSearch }: Props) {
                 <CheckItem
                   key={e.common_code_sq}
                   id={`edu-${e.common_code_sq}`}
-                  label={e.nm ?? ''}
+                  label={e.common_code_nm ?? ''}
                   checked={selectedEducations.includes(e.common_code_sq!)}
-                  onToggle={() =>
-                    toggle(selectedEducations, setSelectedEducations, e.common_code_sq!)
-                  }
+                  onToggle={() => toggle(selectedEducations, setSelectedEducations, e.common_code_sq!)}
                 />
               ))}
             </FilterSection>
@@ -220,65 +226,52 @@ export default function ProjectFilterBar({ onSearch }: Props) {
                 <CheckItem
                   key={j.common_code_sq}
                   id={`job-${j.common_code_sq}`}
-                  label={j.nm ?? ''}
+                  label={j.common_code_nm ?? ''}
                   checked={selectedJobTypes.includes(j.common_code_sq!)}
-                  onToggle={() =>
-                    toggle(selectedJobTypes, setSelectedJobTypes, j.common_code_sq!)
-                  }
+                  onToggle={() => toggle(selectedJobTypes, setSelectedJobTypes, j.common_code_sq!)}
                 />
               ))}
             </FilterSection>
           )}
 
-          {/* 거리 */}
+          {/* 거리 — Vue 원본과 동일하게 항상 선택 가능 (좌표 없으면 백엔드가 필터 무시) */}
           <FilterSection label="거리">
             <div className="flex flex-wrap gap-2">
               {DISTANCE_OPTIONS.map((opt) => (
-                <button
+                <PillButton
                   key={opt.value}
-                  type="button"
+                  active={distance === opt.value}
                   onClick={() => setDistance(opt.value)}
-                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                    distance === opt.value
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-input bg-background text-foreground hover:bg-muted'
-                  }`}
                 >
                   {opt.label}
-                </button>
+                </PillButton>
               ))}
             </div>
+            {!canUseDistance && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                ※ 거리 필터는 로그인 후 내 주소 등록 시 적용됩니다.
+              </p>
+            )}
           </FilterSection>
 
-          {/* 금액 */}
-          <FilterSection label="금액 (이상)">
+          {/* 단가 — 전체 포함 */}
+          <FilterSection label="단가 (이상)">
             <div className="flex flex-wrap gap-2">
               {PRICE_OPTIONS.map((opt) => (
-                <button
+                <PillButton
                   key={opt.value}
-                  type="button"
-                  onClick={() =>
-                    setMinPrice((prev) => (prev === opt.value ? undefined : opt.value))
-                  }
-                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                    minPrice === opt.value
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-input bg-background text-foreground hover:bg-muted'
-                  }`}
+                  active={minPrice === opt.value}
+                  onClick={() => setMinPrice(opt.value)}
                 >
                   {opt.label}
-                </button>
+                </PillButton>
               ))}
             </div>
           </FilterSection>
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleSearch} className="flex-1">
-              검색
-            </Button>
-            <Button variant="outline" onClick={handleReset}>
-              초기화
-            </Button>
+            <Button onClick={handleSearch} className="flex-1">검색</Button>
+            <Button variant="outline" onClick={handleReset}>초기화</Button>
           </div>
         </div>
       )}
@@ -286,13 +279,7 @@ export default function ProjectFilterBar({ onSearch }: Props) {
   )
 }
 
-function FilterSection({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
+function FilterSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">{label}</p>
@@ -302,22 +289,30 @@ function FilterSection({
 }
 
 function CheckItem({
-  id,
-  label,
-  checked,
-  onToggle,
-}: {
-  id: string
-  label: string
-  checked: boolean
-  onToggle: () => void
-}) {
+  id, label, checked, onToggle,
+}: { id: string; label: string; checked: boolean; onToggle: () => void }) {
   return (
     <div className="flex items-center gap-1.5">
       <Checkbox id={id} checked={checked} onCheckedChange={() => onToggle()} />
-      <label htmlFor={id} className="cursor-pointer text-sm">
-        {label}
-      </label>
+      <label htmlFor={id} className="cursor-pointer text-sm">{label}</label>
     </div>
+  )
+}
+
+function PillButton({
+  active, onClick, children,
+}: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors ${
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-input bg-background text-foreground hover:bg-muted'
+      }`}
+    >
+      {children}
+    </button>
   )
 }

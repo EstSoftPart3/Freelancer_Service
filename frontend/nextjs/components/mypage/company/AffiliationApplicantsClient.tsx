@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import AffiliationRequestDetailModal from '@/components/mypage/personal/AffiliationRequestDetailModal'
 import api from '@/lib/api'
 import type { AffiliationApplicant } from '@/types'
 
@@ -37,6 +38,7 @@ export default function AffiliationApplicantsClient() {
   const [totalPages, setTotalPages] = useState(1)
   const [counts, setCounts] = useState({ all: 0, read: 0, unread: 0 })
   const [passTarget, setPassTarget] = useState<{ sq: number; cd: number } | null>(null)
+  const [detailSq, setDetailSq] = useState<number | null>(null)
 
   const fetchApplicants = useCallback(async (page = 1, rType = readType, sType = searchType, kw = keyword) => {
     try {
@@ -59,13 +61,12 @@ export default function AffiliationApplicantsClient() {
 
   useEffect(() => { fetchApplicants(currentPage) }, [fetchApplicants, currentPage])
 
-  async function openApplicant(applicationSq: number) {
-    try {
-      await api.put(`/mypage/applications/read/${applicationSq}`)
-      fetchApplicants(currentPage)
-    } catch {
-      // silent — non-critical
-    }
+  function openApplicant(applicationSq: number) {
+    // Vue handleOpenApplicant: 열람 처리 → 목록 갱신 → 상세 모달 오픈
+    setDetailSq(applicationSq)
+    api.put(`/mypage/applications/read/${applicationSq}`)
+      .then(() => fetchApplicants(currentPage))
+      .catch(() => {}) // 열람 처리 실패는 비치명적 — 모달은 그대로 노출
   }
 
   async function doPassFail() {
@@ -114,7 +115,7 @@ export default function AffiliationApplicantsClient() {
           ))}
         </div>
         <div className="flex gap-2">
-          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }}>
+          <Select value={searchType} onValueChange={(v) => { if (v) setSearchType(v) }} items={searchOptions}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -185,6 +186,8 @@ export default function AffiliationApplicantsClient() {
         onConfirm={doPassFail}
         onClose={() => setPassTarget(null)}
       />
+
+      <AffiliationRequestDetailModal applicationSq={detailSq} onClose={() => setDetailSq(null)} />
     </div>
   )
 }

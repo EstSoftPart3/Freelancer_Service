@@ -6,17 +6,29 @@ import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEmailVerification } from '@/hooks/useEmailVerification'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { loadKakaoMaps } from '@/lib/kakao'
+import { personalAgreementText } from '@/lib/terms'
 import { DaumPostcodeResult } from '@/types'
-import { cn } from '@/lib/utils'
 
-const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com']
+const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
 
 interface Props {
   onSubmit: (data: Record<string, unknown>) => void
 }
+
+const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
+  <label className="mb-1 flex items-center gap-1 text-sm font-medium">
+    {label}
+    {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+  </label>
+)
+
+const ErrorMsg = ({ msg }: { msg: string }) =>
+  msg ? <p className="mt-1 text-xs text-destructive">{msg}</p> : null
 
 // 필드별 에러 + 유효 상태를 단순화한 훅
 function useField(initialValue = '') {
@@ -50,6 +62,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   const [verifyError, setVerifyError] = useState('')
   const [terms, setTerms] = useState(false)
   const [termsError, setTermsError] = useState('')
+  const [termsOpen, setTermsOpen] = useState(false)
   const idDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const emailVerify = useEmailVerification({ sendCodeEndpoint: '/email/send-code' })
@@ -57,20 +70,18 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   const fullEmail = () =>
     `${emailIdField.value}@${isCustomDomain ? customDomain : emailDomain}`
 
-  // --- 유효성 검사 함수들 ---
-  const validateId = useCallback(async (val: string) => {
-    idField.setError('')
-    idField.setValid(false)
-    if (!val) { idField.setError('아이디를 입력해주세요.'); return }
+  // --- 유효성 검사 함수들 (실시간 검증: 인자로 받은 값을 검사하고 boolean 반환) ---
+  // 비동기 setState 직후 stale 플래그를 읽지 않도록, 검사 결과를 반환값으로도 돌려준다.
+  const validateId = useCallback(async (val: string): Promise<boolean> => {
+    if (!val) { idField.setError('아이디를 입력해주세요.'); idField.setValid(false); return false }
     if (!/^[a-zA-Z0-9]{5,20}$/.test(val)) {
-      idField.setError('영문 또는 숫자 5~20자로 입력해주세요.')
-      return
+      idField.setError('영문 또는 숫자 5~20자로 입력해주세요.'); idField.setValid(false); return false
     }
     try {
       const { data } = await api.get<boolean>(`/check-id?userId=${val}`)
-      if (data) { idField.setError('이미 사용 중인 아이디입니다.') }
-      else idField.setValid(true)
-    } catch { idField.setError('서버 오류가 발생했습니다.') }
+      if (data) { idField.setError('이미 사용 중인 아이디입니다.'); idField.setValid(false); return false }
+      idField.setError(''); idField.setValid(true); return true
+    } catch { idField.setError('서버 오류가 발생했습니다.'); idField.setValid(false); return false }
   }, [idField])
 
   const onIdChange = (val: string) => {
@@ -79,86 +90,70 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
     idDebounce.current = setTimeout(() => validateId(val), 500)
   }
 
-  const validatePw = () => {
-    pwField.setError('')
-    pwField.setValid(false)
-    if (!pwField.value) { pwField.setError('비밀번호를 입력해주세요.'); return }
-    if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(pwField.value)) {
-      pwField.setError('8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.')
-      return
+  const validatePw = (val = pwField.value) => {
+    if (!val) { pwField.setError('비밀번호를 입력해주세요.'); pwField.setValid(false); return false }
+    if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(val)) {
+      pwField.setError('8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.'); pwField.setValid(false); return false
     }
-    pwField.setValid(true)
+    pwField.setError(''); pwField.setValid(true); return true
   }
 
-  const validateCpw = () => {
-    cpwField.setError('')
-    cpwField.setValid(false)
-    if (!cpwField.value) { cpwField.setError('비밀번호 확인을 입력해주세요.'); return }
-    if (cpwField.value !== pwField.value) { cpwField.setError('비밀번호가 일치하지 않습니다.'); return }
-    cpwField.setValid(true)
+  const validateCpw = (val = cpwField.value, pw = pwField.value) => {
+    if (!val) { cpwField.setError('비밀번호 확인을 입력해주세요.'); cpwField.setValid(false); return false }
+    if (val !== pw) { cpwField.setError('비밀번호가 일치하지 않습니다.'); cpwField.setValid(false); return false }
+    cpwField.setError(''); cpwField.setValid(true); return true
   }
 
-  const validateName = () => {
-    nameField.setError('')
-    nameField.setValid(false)
-    if (!nameField.value) { nameField.setError('이름을 입력해주세요.'); return }
-    if (nameField.value.length < 2) { nameField.setError('이름은 두 글자 이상 입력해주세요.'); return }
-    nameField.setValid(true)
-  }
-
-  const validateDob = () => {
-    dobField.setError('')
-    dobField.setValid(false)
-    if (!dobField.value) { dobField.setError('생년월일을 입력해주세요.'); return }
-    dobField.setValid(true)
-  }
-
-  const validateGender = () => {
-    setGenderError('')
-    setGenderValid(false)
-    if (!gender) { setGenderError('성별을 선택해주세요.'); return }
-    setGenderValid(true)
-  }
-
-  const validatePhone = () => {
-    phoneField.setError('')
-    phoneField.setValid(false)
-    if (!phoneField.value) { phoneField.setError('휴대폰 번호를 입력해주세요.'); return }
-    if (!/^\d{10,11}$/.test(phoneField.value)) {
-      phoneField.setError('올바른 휴대폰 번호 형식이 아닙니다. (하이픈 제외)')
-      return
+  const validateName = (val = nameField.value) => {
+    if (!val) { nameField.setError('이름을 입력해주세요.'); nameField.setValid(false); return false }
+    if (!/^[가-힣a-zA-Z]{2,20}$/.test(val)) {
+      nameField.setError('한글 또는 영문 2~20자로 입력해주세요. (숫자·특수문자·공백 불가)')
+      nameField.setValid(false); return false
     }
-    phoneField.setValid(true)
+    nameField.setError(''); nameField.setValid(true); return true
   }
 
-  const validateAddress = () => {
-    addressField.setError('')
-    addressField.setValid(false)
-    if (!addressField.value) { addressField.setError('주소를 입력해주세요.'); return }
-    addressField.setValid(true)
+  const validateDob = (val = dobField.value) => {
+    if (!val) { dobField.setError('생년월일을 입력해주세요.'); dobField.setValid(false); return false }
+    dobField.setError(''); dobField.setValid(true); return true
   }
 
-  const validateEmail = () => {
-    emailIdField.setError('')
-    emailIdField.setValid(false)
-    const email = fullEmail()
-    if (!emailIdField.value) { emailIdField.setError('이메일 아이디를 입력해주세요.'); return }
-    if (isCustomDomain && !customDomain) { emailIdField.setError('도메인을 입력해주세요.'); return }
-    if (!/\S+@\S+\.\S+/.test(email)) { emailIdField.setError('올바른 이메일 주소 형식이 아닙니다.'); return }
-    emailIdField.setValid(true)
+  const validateGender = (val = gender) => {
+    if (!val) { setGenderError('성별을 선택해주세요.'); setGenderValid(false); return false }
+    setGenderError(''); setGenderValid(true); return true
+  }
+
+  const validatePhone = (val = phoneField.value) => {
+    if (!val) { phoneField.setError('휴대폰 번호를 입력해주세요.'); phoneField.setValid(false); return false }
+    if (!/^01\d{8,9}$/.test(val)) {
+      phoneField.setError('올바른 휴대폰 번호가 아닙니다. (01로 시작, 10~11자리 숫자)')
+      phoneField.setValid(false); return false
+    }
+    phoneField.setError(''); phoneField.setValid(true); return true
+  }
+
+  const validateAddress = (val = addressField.value) => {
+    if (!val) { addressField.setError('주소를 입력해주세요.'); addressField.setValid(false); return false }
+    addressField.setError(''); addressField.setValid(true); return true
+  }
+
+  const validateEmail = (val = emailIdField.value) => {
+    const email = `${val}@${isCustomDomain ? customDomain : emailDomain}`
+    if (!val) { emailIdField.setError('이메일 아이디를 입력해주세요.'); emailIdField.setValid(false); return false }
+    if (isCustomDomain && !customDomain) { emailIdField.setError('도메인을 입력해주세요.'); emailIdField.setValid(false); return false }
+    if (!/\S+@\S+\.\S+/.test(email)) { emailIdField.setError('올바른 이메일 주소 형식이 아닙니다.'); emailIdField.setValid(false); return false }
+    emailIdField.setError(''); emailIdField.setValid(true); return true
   }
 
   const validateVerifyCode = () => {
-    setVerifyError('')
     if (!verifyCode) { setVerifyError('인증번호를 입력하세요.'); return false }
     if (!emailVerify.verified) { setVerifyError('인증을 완료해주세요.'); return false }
-    return true
+    setVerifyError(''); return true
   }
 
   const validateTerms = () => {
-    setTermsError('')
     if (!terms) { setTermsError('필수 약관에 동의해주세요.'); return false }
-    return true
+    setTermsError(''); return true
   }
 
   const openPostcode = () => {
@@ -172,7 +167,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         addressField.setValid(true)
         setSigunguCode(data.sigunguCode)
         setAddressDetail('')
-        if (window.kakao?.maps) {
+        loadKakaoMaps().then(() => {
           const geocoder = new window.kakao.maps.services.Geocoder()
           geocoder.addressSearch(addr, (result, status) => {
             if (status === window.kakao.maps.services.Status.OK) {
@@ -180,7 +175,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
               setLongitude(result[0].x)
             }
           })
-        }
+        })
       },
     }).open()
   }
@@ -203,21 +198,28 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   }
 
   const handleVerifyCode = async () => {
-    await emailVerify.verifyCode(fullEmail(), verifyCode)
+    const ok = await emailVerify.verifyCode(fullEmail(), verifyCode)
+    if (ok) setVerifyError('')   // 인증 성공 시 이전 에러 문구 제거
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await validateId(idField.value)
-    validatePw(); validateCpw(); validateName(); validateDob()
-    validateGender(); validatePhone(); validateAddress(); validateEmail()
+    // stale state를 읽지 않도록 각 검사의 반환값으로 판정한다.
+    const okId = await validateId(idField.value)
+    const okPw = validatePw()
+    const okCpw = validateCpw()
+    const okName = validateName()
+    const okDob = validateDob()
+    const okGender = validateGender()
+    const okPhone = validatePhone()
+    const okAddr = validateAddress()
+    const okEmail = validateEmail()
     const vcOk = validateVerifyCode()
     const tOk = validateTerms()
 
     const isValid =
-      idField.valid && pwField.valid && cpwField.valid && nameField.valid &&
-      dobField.valid && genderValid && phoneField.valid && addressField.valid &&
-      emailIdField.valid && emailVerify.verified && vcOk && tOk
+      okId && okPw && okCpw && okName && okDob && okGender &&
+      okPhone && okAddr && okEmail && emailVerify.verified && vcOk && tOk
 
     if (!isValid) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
 
@@ -242,16 +244,6 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
     })
   }
 
-  const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
-    <label className="mb-1 flex items-center gap-1 text-sm font-medium">
-      {label}
-      {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
-    </label>
-  )
-
-  const ErrorMsg = ({ msg }: { msg: string }) =>
-    msg ? <p className="mt-1 text-xs text-destructive">{msg}</p> : null
-
   return (
     <>
       {/* Daum 우편번호 API */}
@@ -273,12 +265,25 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <FieldLabel label="비밀번호" valid={pwField.valid} />
-            <Input type="password" value={pwField.value} onChange={(e) => pwField.setValue(e.target.value)} onBlur={validatePw} />
+            <Input
+              type="password"
+              value={pwField.value}
+              onChange={(e) => {
+                const v = e.target.value
+                pwField.setValue(v)
+                validatePw(v)
+                if (cpwField.value) validateCpw(cpwField.value, v)
+              }}
+            />
             <ErrorMsg msg={pwField.error} />
           </div>
           <div>
             <FieldLabel label="비밀번호 확인" valid={cpwField.valid} />
-            <Input type="password" value={cpwField.value} onChange={(e) => cpwField.setValue(e.target.value)} onBlur={validateCpw} />
+            <Input
+              type="password"
+              value={cpwField.value}
+              onChange={(e) => { cpwField.setValue(e.target.value); validateCpw(e.target.value) }}
+            />
             <ErrorMsg msg={cpwField.error} />
           </div>
         </div>
@@ -286,7 +291,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         {/* 이름 */}
         <div>
           <FieldLabel label="이름" valid={nameField.valid} />
-          <Input value={nameField.value} onChange={(e) => nameField.setValue(e.target.value)} onBlur={validateName} />
+          <Input value={nameField.value} onChange={(e) => { nameField.setValue(e.target.value); validateName(e.target.value) }} />
           <ErrorMsg msg={nameField.error} />
         </div>
 
@@ -294,7 +299,15 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <FieldLabel label="생년월일" valid={dobField.valid} />
-            <Input type="date" value={dobField.value} onChange={(e) => dobField.setValue(e.target.value)} onBlur={validateDob} max={new Date().toISOString().split('T')[0]} />
+            <Input
+              type="date"
+              value={dobField.value}
+              onChange={(e) => { dobField.setValue(e.target.value); validateDob(e.target.value) }}
+              onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+              onKeyDown={(e) => e.preventDefault()}
+              max={new Date().toISOString().split('T')[0]}
+              className="cursor-pointer"
+            />
             <ErrorMsg msg={dobField.error} />
           </div>
           <div>
@@ -315,7 +328,17 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         {/* 휴대폰 */}
         <div>
           <FieldLabel label="휴대폰 번호" valid={phoneField.valid} />
-          <Input value={phoneField.value} onChange={(e) => phoneField.setValue(e.target.value)} onBlur={validatePhone} placeholder="하이픈 제외" />
+          <Input
+            value={phoneField.value}
+            inputMode="numeric"
+            maxLength={11}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 11)
+              phoneField.setValue(v)
+              validatePhone(v)
+            }}
+            placeholder="숫자만 입력 (하이픈 제외)"
+          />
           <ErrorMsg msg={phoneField.error} />
         </div>
 
@@ -336,13 +359,13 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="이메일 주소" valid={emailIdField.valid} />
           <div className="flex flex-wrap gap-1">
-            <Input className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => emailIdField.setValue(e.target.value)} onBlur={validateEmail} placeholder="아이디" />
+            <Input className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value) }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
             <Input
               className="w-28 min-w-0 flex-1"
               value={isCustomDomain ? customDomain : emailDomain}
               readOnly={!isCustomDomain}
-              onChange={(e) => setCustomDomain(e.target.value)}
+              onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value) }}
               placeholder="도메인"
             />
             <select
@@ -365,9 +388,9 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="인증번호" valid={emailVerify.verified} />
           <div className="flex gap-2">
-            <Input value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} placeholder="인증번호 입력" />
-            <Button type="button" size="sm" onClick={handleVerifyCode} disabled={emailVerify.verifying}>
-              {emailVerify.verifying ? '확인 중...' : '확인'}
+            <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={emailVerify.verified} />
+            <Button type="button" size="sm" onClick={handleVerifyCode} disabled={emailVerify.verifying || emailVerify.verified}>
+              {emailVerify.verified ? '인증 완료' : emailVerify.verifying ? '확인 중...' : '확인'}
             </Button>
           </div>
           <ErrorMsg msg={verifyError} />
@@ -375,15 +398,41 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
 
         {/* 약관 */}
         <div>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm">
             <Checkbox checked={terms} onCheckedChange={(v) => { setTerms(!!v); if (v) setTermsError('') }} />
-            약관에 동의합니다.
-          </label>
+            <span>약관에 동의합니다.</span>
+            <button
+              type="button"
+              onClick={() => setTermsOpen(true)}
+              className="cursor-pointer text-primary underline underline-offset-2 hover:opacity-80"
+            >
+              이용약관
+            </button>
+          </div>
           <ErrorMsg msg={termsError} />
         </div>
 
         <Button type="submit" className="w-full">회원가입</Button>
       </form>
+
+      {/* 이용약관 Dialog */}
+      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>개인정보 수집 및 이용 동의서</DialogTitle>
+          </DialogHeader>
+          <div
+            className="prose prose-sm max-w-none text-sm leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: personalAgreementText }}
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setTermsOpen(false)}>닫기</Button>
+            <Button onClick={() => { setTerms(true); setTermsError(''); setTermsOpen(false) }}>
+              동의합니다
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
