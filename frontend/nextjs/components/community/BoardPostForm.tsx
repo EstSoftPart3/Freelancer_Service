@@ -80,7 +80,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
     formData.append('normalTags', normalTags.join(','))
     formData.append('skillTagsJson', JSON.stringify(skillTags))
-    existingAttachments.forEach((a) => formData.append('attachments', String(a.fileSq)))
+    formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
     newFiles.forEach((f) => formData.append('files', f))
 
     try {
