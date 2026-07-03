@@ -60,6 +60,21 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/mypage', req.url))
   }
 
+  // 프로젝트 상세: 로그인 상태에서 반대 역할 경로로 직접 진입하면 자기 역할 경로로 교정한다.
+  // (Vue 원본은 role 불일치를 홈으로 차단했으나, /projects는 SEO 목적 public 유지 → 비로그인은 통과)
+  if (token) {
+    if (userType === 'COMPANY' && pathname.startsWith('/projects/user/')) {
+      const url = req.nextUrl.clone()
+      url.pathname = pathname.replace('/projects/user/', '/projects/company/')
+      return NextResponse.redirect(url)
+    }
+    if (userType === 'PERSONAL' && pathname.startsWith('/projects/company/')) {
+      const url = req.nextUrl.clone()
+      url.pathname = pathname.replace('/projects/company/', '/projects/user/')
+      return NextResponse.redirect(url)
+    }
+  }
+
   return NextResponse.next()
 }
 
