@@ -19,6 +19,17 @@ import com.example.demo.domain.user.util.JwtProvider;
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 개발(dev) 프로파일 전용 Security 설정.
+ *
+ * <p>경계 정책: 아래 {@code anyRequest().permitAll()}은 개발 편의를 위한 인증 완화이며,
+ * 운영(prod)에 그대로 옮기면 안 된다. 운영 경계는 {@link SecurityConfigProd} 참고.
+ *
+ * <p>경로 매칭 주의: {@code server.servlet.context-path=/api}가 적용되어 클라이언트 실제 URL은
+ * 모두 {@code /api/...}이지만, Spring Security {@code requestMatchers}는 context-path를 벗긴
+ * 경로로 매칭한다. 즉 아래 {@code "/admin/**"}, {@code "/me"}는 실제 {@code /api/admin/**},
+ * {@code /api/me}에 해당한다(prod 설정이 여기서 어긋나 있으니 배포 전 반드시 정합화할 것).
+ */
 @Configuration
 @Profile("dev")
 @RequiredArgsConstructor
