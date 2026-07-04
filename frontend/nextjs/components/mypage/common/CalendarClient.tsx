@@ -73,7 +73,8 @@ export default function CalendarClient() {
           extendedProps: e,
         })),
       )
-    } catch {
+    } catch (error) {
+      console.error('일정 조회 실패:', error)
       toast.error('일정을 불러올 수 없습니다.')
     }
   }, [userSq, userType, searchType, searchKeyword])

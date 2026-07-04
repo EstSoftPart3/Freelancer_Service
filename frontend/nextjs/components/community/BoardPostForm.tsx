@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import SkillTagModal from '@/components/community/SkillTagModal'
+import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
-import type { Attachment } from '@/types'
+import type { SkillTag, Attachment } from '@/types'
 import 'react-quill-new/dist/quill.snow.css'
 
 // SSR 비활성화 — Quill은 browser-only
@@ -33,13 +35,17 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const [ttl, setTtl] = useState(boardData.ttl)
   const [description, setDescription] = useState(boardData.description)
   const [normalTags, setNormalTags] = useState<string[]>(boardData.normalTags)
+  const [skillTags, setSkillTags] = useState<SkillTag[]>(boardData.skillTags)
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>(boardData.attachments)
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [skillOpen, setSkillOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 수정 모드: editSq > 0이면 PUT, 아니면 POST
   const isEdit = editSq > 0
+  // 기술태그는 QnA에서만 노출 (Vue 원본 isQna/skillActive 대응)
+  const isQna = boardCategory === 'qna'
 
   useEffect(() => {
     return () => { resetBoard() }
@@ -52,6 +58,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
   }
 
   const removeTag = (tag: string) => setNormalTags((prev) => prev.filter((t) => t !== tag))
+
+  const removeSkillTag = (sq: number) => setSkillTags((prev) => prev.filter((t) => t.skillTagSq !== sq))
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
@@ -71,8 +79,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
     formData.append('description', description)
     // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
     formData.append('normalTags', normalTags.join(','))
-    formData.append('skillTagsJson', JSON.stringify([]))
-    existingAttachments.forEach((a) => formData.append('attachments', String(a.fileSq)))
+    formData.append('skillTagsJson', JSON.stringify(skillTags))
+    formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
     newFiles.forEach((f) => formData.append('files', f))
 
     try {
@@ -120,7 +128,14 @@ export default function BoardPostForm({ boardCategory }: Props) {
 
       {/* 태그 */}
       <div>
-        <label className="mb-1 block text-sm font-medium">태그</label>
+        <div className="mb-1 flex items-center gap-2">
+          <label className="text-sm font-medium">태그</label>
+          {isQna && (
+            <Button type="button" size="sm" variant="secondary" onClick={() => setSkillOpen(true)}>
+              기술 태그 선택하기
+            </Button>
+          )}
+        </div>
         <Input
           value={tagInput}
           onChange={(e) => setTagInput(e.target.value)}
@@ -129,8 +144,15 @@ export default function BoardPostForm({ boardCategory }: Props) {
           }}
           placeholder="태그 입력 후 엔터를 입력해주세요."
         />
-        {normalTags.length > 0 && (
+        {((isQna && skillTags.length > 0) || normalTags.length > 0) && (
           <div className="mt-2 flex flex-wrap gap-2">
+            {isQna && skillTags.map((t) => (
+              <span key={t.skillTagSq} className="flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs text-primary-foreground">
+                <img src={getSkillIconUrl(t.skillTagNm)} alt="" className="h-3.5 w-3.5" />
+                {t.skillTagNm}
+                <button type="button" onClick={() => removeSkillTag(t.skillTagSq)}><X className="h-3 w-3" /></button>
+              </span>
+            ))}
             {normalTags.map((t) => (
               <span key={t} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs">
                 #{t}
@@ -177,6 +199,15 @@ export default function BoardPostForm({ boardCategory }: Props) {
         <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
         <Button variant="outline" onClick={() => router.back()}>취소</Button>
       </div>
+
+      {isQna && (
+        <SkillTagModal
+          open={skillOpen}
+          selected={skillTags}
+          onClose={() => setSkillOpen(false)}
+          onConfirm={setSkillTags}
+        />
+      )}
     </div>
   )
 }

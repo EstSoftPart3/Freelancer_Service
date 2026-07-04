@@ -35,6 +35,30 @@ function clearAuthCookies() {
   document.cookie = 'userType=; Max-Age=0; path=/'
 }
 
+// 백엔드가 알림 targetUrl을 Vue 라우터 camelCase로 저장 → Next kebab 라우트와 불일치(하드 404).
+// 단순 camelCase→kebab이 아니라(예: affiliationProjectList → affiliation-projects) 명시적 매핑 필요.
+const NOTI_LEGACY_MYPAGE_MAP: Record<string, string> = {
+  appliedProjects: 'applied-projects',
+  affiliationProjectList: 'affiliation-projects',
+  affiliationApplicantList: 'affiliation-applicants',
+  affiliatedMembers: 'affiliated-members',
+  affiliatedJobApplications: 'affiliated-job-applications',
+}
+
+function normalizeNotificationUrl(url?: string): string {
+  if (!url) return '#'
+  const [path, query] = url.split('?')
+  const match = path.match(/^\/mypage\/([^/]+)$/)
+  if (match) {
+    const kebab = NOTI_LEGACY_MYPAGE_MAP[match[1]]
+    if (kebab) {
+      const rebuilt = `/mypage/${kebab}`
+      return query ? `${rebuilt}?${query}` : rebuilt
+    }
+  }
+  return url
+}
+
 export default function CommonHeader() {
   const pathname = usePathname()
   const router = useRouter()
@@ -175,7 +199,7 @@ export default function CommonHeader() {
                   : 'opacity-80',
               )}
             >
-              <Link href={noti.notificationTargetUrl ?? '#'} className="block no-underline">
+              <Link href={normalizeNotificationUrl(noti.notificationTargetUrl)} className="block no-underline">
                 <div className="flex items-start justify-between gap-2">
                   <p
                     className={cn(
