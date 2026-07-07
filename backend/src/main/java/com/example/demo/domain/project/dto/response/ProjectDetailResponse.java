@@ -46,6 +46,8 @@ public class ProjectDetailResponse {
     private List<GroupSkillInfoResponse> projectPreferredSkills;
     private String projectPreferredEtc;
 
+    private String projectCreatedDt;
+
     private Long projectSalary;
     private String formattedSalary;
     private List<String> projectJobRole;
@@ -88,6 +90,8 @@ public class ProjectDetailResponse {
                 .projectRequiredSkills(req)
                 .projectPreferredSkills(prefer)
                 .projectPreferredEtc(p.getProjectPreferenceTxt())
+
+                .projectCreatedDt(p.getProjectCreatedAtDtm().toLocalDate().toString())
 
                 .formattedSalary(formattedSalary)
                 .projectSalary(p.getProjectSalary())

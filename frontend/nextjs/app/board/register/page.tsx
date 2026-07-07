@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import BoardPostForm from '@/components/community/BoardPostForm'
 
-export const metadata: Metadata = { title: '게시글 등록' }
+// 로그인 필요한 작성 폼 — 색인 불필요 (robots.txt disallow와 이중 방어)
+export const metadata: Metadata = { title: '게시글 등록', robots: { index: false } }
 
 export default function BoardRegisterPage() {
   return (

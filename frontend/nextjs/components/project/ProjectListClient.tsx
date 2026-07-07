@@ -49,13 +49,21 @@ function getDisplayAddress(project: ProjectItem): string {
   return (isSubway ? project.subwayAddress : project.detailedAddress) || '주소 정보 없음'
 }
 
-export default function ProjectListClient() {
+interface Props {
+  // 서버에서 미리 조회한 첫 페이지(기본 정렬) — SEO용으로 초기 HTML에 목록을 포함시킨다.
+  // 마운트 후 fetchProjects가 위치정보/필터 기준으로 1회 갱신한다(기존 동작 유지).
+  initialData?: { projects: ProjectItem[]; totalCount: number } | null
+}
+
+export default function ProjectListClient({ initialData }: Props = {}) {
   const router = useRouter()
   const { isLoggedIn, userTypeCd, getUserType, latitude, longitude, companyAuthStatusCd } = useUserStore()
   const [authConfirm, setAuthConfirm] = useState(false)
-  const [projects, setProjects] = useState<ProjectItem[]>([])
+  const [projects, setProjects] = useState<ProjectItem[]>(initialData?.projects ?? [])
   const [regionGroups, setRegionGroups] = useState<ProjectRegionGroup[]>([])
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(
+    initialData ? Math.max(1, Math.ceil(initialData.totalCount / PAGE_SIZE)) : 1,
+  )
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [isMapView, setIsMapView] = useState(false)
@@ -431,13 +439,14 @@ export default function ProjectListClient() {
       {/* 목록 뷰 */}
       {!isMapView && (
         <>
-          {loading ? (
+          {loading && projects.length === 0 ? (
+            // SSR된 초기 목록이 있으면 스켈레톤으로 덮지 않고 갱신 완료 시 교체
             <div className="space-y-4">
               {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <div key={i} className="h-36 animate-pulse rounded-xl bg-muted" />
               ))}
             </div>
-          ) : projects.length === 0 ? (
+          ) : !loading && projects.length === 0 ? (
             <div className="space-y-4">
               <p className="rounded border bg-muted/40 py-10 text-center text-sm text-muted-foreground">
                 검색 결과가 없습니다.

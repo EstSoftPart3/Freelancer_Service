@@ -6,8 +6,13 @@ import CommunityBestSection from '@/components/community/hub/CommunityBestSectio
 import LatestFeed from '@/components/community/hub/LatestFeed'
 import CommunitySearchSidebar from '@/components/community/hub/CommunitySearchSidebar'
 import { fetchCommunityBest, fetchLatestBoards, fetchSkillTagShortcuts } from '@/lib/community'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = { title: '커뮤니티' }
+export const metadata: Metadata = buildPageMetadata({
+  title: '커뮤니티',
+  description: '개발자 커뮤니티 허브 — 베스트글, 최신글, 인기 기술 태그를 한눈에.',
+  path: '/community',
+})
 
 export default async function CommunityHubPage() {
   const [bestMonthly, bestWeekly, bestDaily, latest, skillTags] = await Promise.all([

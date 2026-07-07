@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: '아이디 찾기 결과',
+  robots: { index: false }, // 인증 페이지 — 색인 불필요 (robots.txt disallow와 이중 방어)
 }
 
 interface Props {

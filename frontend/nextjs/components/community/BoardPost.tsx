@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
-import { enhanceBoardHtml } from '@/lib/htmlContent'
+import { enhanceBoardLinksInPlace } from '@/lib/htmlContent'
 import type { BoardDetail } from '@/types'
 
 function fmtDate(iso?: string) {
@@ -49,7 +49,12 @@ export default function BoardPost({
   const [reportOpen, setReportOpen] = useState(false)
 
   const isOwner = boardInfo.userSq != null && viewerSq != null && boardInfo.userSq === viewerSq
-  const safeDescription = useMemo(() => enhanceBoardHtml(boardInfo.description), [boardInfo.description])
+
+  // 본문은 SSR 원본 그대로 렌더하고(hydration mismatch 방지) 링크 교정은 DOM에서 후처리
+  const descriptionRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (descriptionRef.current) enhanceBoardLinksInPlace(descriptionRef.current)
+  }, [boardInfo.description])
 
   const handleRecommend = async () => {
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
@@ -148,8 +153,9 @@ export default function BoardPost({
 
       {/* 본문 */}
       <div
+        ref={descriptionRef}
         className="prose prose-sm mt-6 mb-6 max-w-none"
-        dangerouslySetInnerHTML={{ __html: safeDescription }}
+        dangerouslySetInnerHTML={{ __html: boardInfo.description }}
       />
 
       {/* 첨부파일 */}
