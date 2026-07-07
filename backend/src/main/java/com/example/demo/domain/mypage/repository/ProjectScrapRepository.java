@@ -54,4 +54,8 @@ public class ProjectScrapRepository {
     public int deleteByUserAndProject(Long userSq, Long projectSq) {
         return mapper.deleteByUserAndProject(userSq, projectSq);
     }
+
+    public void decreaseScrapCnt(Long projectSq) {
+        mapper.decreaseScrapCnt(projectSq);
+    }
 }

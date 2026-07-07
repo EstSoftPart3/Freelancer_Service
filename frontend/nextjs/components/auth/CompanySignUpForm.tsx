@@ -90,6 +90,9 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
   const validateCpw = (val = cpwField.value, pw = pwField.value) => {
     if (!val) { cpwField.setError('비밀번호 확인을 입력해주세요.'); cpwField.setValid(false); return false }
     if (val !== pw) { cpwField.setError('비밀번호가 일치하지 않습니다.'); cpwField.setValid(false); return false }
+    if (!validatePw(pw)) {
+      cpwField.setError('비밀번호가 조건을 만족하지 않습니다.'); cpwField.setValid(false); return false
+    }
     cpwField.setError(''); cpwField.setValid(true); return true
   }
 
@@ -150,7 +153,16 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
     }).open()
   }
 
+  // 이메일 주소가 바뀌면 이전 인증 상태가 새 주소에 그대로 남아 인증번호 입력이
+  // "인증 완료"로 잠기는 문제를 막기 위해 인증 상태를 초기화한다.
+  const resetEmailVerification = () => {
+    emailVerify.reset()
+    setVerifyCode('')
+    setVerifyError('')
+  }
+
   const handleDomainChange = (val: string) => {
+    resetEmailVerification()
     if (val === 'custom') { setIsCustomDomain(true); setCustomDomain(''); setEmailDomain('custom') }
     else { setIsCustomDomain(false); setEmailDomain(val) }
   }
@@ -272,9 +284,9 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="이메일 주소" valid={emailIdField.valid} />
           <div className="flex flex-wrap gap-1">
-            <Input className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value) }} placeholder="아이디" />
+            <Input className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
-            <Input className="w-28 min-w-0 flex-1" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value) }} placeholder="도메인" />
+            <Input className="w-28 min-w-0 flex-1" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value); resetEmailVerification() }} placeholder="도메인" />
             <select value={isCustomDomain ? 'custom' : emailDomain} onChange={(e) => handleDomainChange(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
               <option value="" disabled>선택</option>
               {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}

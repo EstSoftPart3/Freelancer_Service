@@ -11,7 +11,7 @@ function fmtDate(iso: string) {
   return `${yy}-${mm}-${dd}`
 }
 
-type BoardType = 'board' | 'qna' | 'notice'
+type BoardType = 'board' | 'qna' | 'notice' | 'all'
 
 const STATUS: Record<number, { label: string; cls: string }> = {
   1501: { label: '진행중', cls: 'bg-yellow-100 text-yellow-800' },
@@ -27,6 +27,7 @@ interface Props {
 
 export default function BoardTable({ boardList, boardType }: Props) {
   const isQna = boardType === 'qna'
+  const isAll = boardType === 'all'
 
   return (
     <div className="w-full overflow-x-auto rounded-lg border">
@@ -40,27 +41,30 @@ export default function BoardTable({ boardList, boardType }: Props) {
             <th className="w-14 px-3 py-2.5 text-center font-medium">조회</th>
             <th className="hidden w-14 px-3 py-2.5 text-center font-medium md:table-cell">댓글</th>
             <th className="hidden w-14 px-3 py-2.5 text-center font-medium md:table-cell">추천</th>
-            {isQna && <th className="hidden w-20 px-3 py-2.5 text-center font-medium sm:table-cell">상태</th>}
+            {(isQna || isAll) && <th className="hidden w-20 px-3 py-2.5 text-center font-medium sm:table-cell">상태</th>}
           </tr>
         </thead>
         <tbody>
           {boardList.length === 0 ? (
             <tr>
-              <td colSpan={isQna ? 8 : 7} className="py-12 text-center text-muted-foreground">
+              <td colSpan={isQna || isAll ? 8 : 7} className="py-12 text-center text-muted-foreground">
                 게시글이 없습니다.
               </td>
             </tr>
           ) : (
-            boardList.map((b) => (
+            boardList.map((b) => {
+              const resolvedType = b.boardType ?? (boardType === 'all' ? 'board' : boardType)
+              const isRowQna = resolvedType === 'qna'
+              return (
               <tr key={b.sq} className="border-b transition-colors hover:bg-muted/30">
                 <td className="px-3 py-2.5 text-center text-muted-foreground">{b.sq}</td>
                 <td className="px-3 py-2.5">
                   <Link
-                    href={`/${boardType}/${b.sq}`}
+                    href={`/${resolvedType}/${b.sq}`}
                     className="font-medium hover:text-primary hover:underline"
                   >
                     {b.ttl}
-                    {isQna && b.answerCnt && b.answerCnt > 0 && (
+                    {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
                       <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
                     )}
                   </Link>
@@ -69,7 +73,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
                     {b.skillTags?.map((t) => (
                       <Link
                         key={t.skillTagSq}
-                        href={`/${boardType}?tag=${encodeURIComponent(t.skillTagNm)}`}
+                        href={`/${resolvedType}?tag=${encodeURIComponent(t.skillTagNm)}`}
                         className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] text-primary-foreground"
                       >
                         <img src={getSkillIconUrl(t.skillTagNm)} alt="" className="h-3 w-3" />
@@ -79,7 +83,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
                     {b.normalTags?.map((t) => (
                       <Link
                         key={t}
-                        href={`/${boardType}?tag=${encodeURIComponent(t)}`}
+                        href={`/${resolvedType}?tag=${encodeURIComponent(t)}`}
                         className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground hover:text-primary"
                       >
                         #{t}
@@ -92,9 +96,9 @@ export default function BoardTable({ boardList, boardType }: Props) {
                 <td className="px-3 py-2.5 text-center">{b.viewCnt}</td>
                 <td className="hidden px-3 py-2.5 text-center md:table-cell">{b.commentCnt}</td>
                 <td className="hidden px-3 py-2.5 text-center md:table-cell">{b.recommendCnt}</td>
-                {isQna && (
+                {(isQna || isAll) && (
                   <td className="hidden px-3 py-2.5 text-center sm:table-cell">
-                    {b.boardAdoptStatusCd && STATUS[b.boardAdoptStatusCd] && (
+                    {isRowQna && b.boardAdoptStatusCd && STATUS[b.boardAdoptStatusCd] && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[b.boardAdoptStatusCd].cls}`}>
                         {STATUS[b.boardAdoptStatusCd].label}
                       </span>
@@ -102,7 +106,8 @@ export default function BoardTable({ boardList, boardType }: Props) {
                   </td>
                 )}
               </tr>
-            ))
+              )
+            })
           )}
         </tbody>
       </table>

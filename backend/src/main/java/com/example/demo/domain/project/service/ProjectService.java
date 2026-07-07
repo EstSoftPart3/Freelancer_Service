@@ -529,6 +529,10 @@ public class ProjectService {
 
 	@Transactional
 	public void createProjectApplication(long projectSq, ProjectApplyRequest request, Long userSq) {
+		if (projectMapper.isUserWithdrawn(userSq)) {
+			throw new IllegalArgumentException("탈퇴한 회원은 프로젝트에 지원할 수 없습니다.");
+		}
+
 		Optional<Long> userCompanySq = Optional.ofNullable(companyService.fetchCompanySq(userSq));
 
 		request.getResumeSq().forEach(rSq -> {

@@ -254,3 +254,20 @@
 .btn-route-search:active {
   transform: translateY(0);
 }
+
+/* 일정관리(FullCalendar) 모바일 툴바 — 좁은 화면에서 prev/next/today/title/뷰전환 버튼이
+   한 줄에 다 들어가지 못해 서로 밀리는 문제 대응: 줄바꿈 허용 + 폰트/여백 축소 */
+@media (max-width: 480px) {
+  .fc .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    row-gap: 0.5rem;
+  }
+  .fc .fc-toolbar-title {
+    font-size: 1rem;
+  }
+  .fc .fc-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}

@@ -113,6 +113,23 @@ public class FileStorageService {
         }
     }
 
+    public String copyFile(String sourceFileName) {
+        if (sourceFileName == null)
+            return null;
+
+        String newFileName = createFileName(sourceFileName);
+        try {
+            Path sourcePath = Paths.get(uploadDir).resolve(sourceFileName);
+            Path destPath = Paths.get(uploadDir).resolve(newFileName);
+            Files.copy(sourcePath, destPath);
+            log.info("파일 복사 성공: {} -> {}", sourceFileName, newFileName);
+            return newFileName;
+        } catch (IOException e) {
+            log.error("파일 복사 실패: {}", sourceFileName, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 복사에 실패했습니다.");
+        }
+    }
+
     public void deleteFile(String fileName) {
         if (fileName == null)
             return;

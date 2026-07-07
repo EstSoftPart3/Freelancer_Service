@@ -146,6 +146,20 @@ export interface BoardItem {
   normalTags: string[]
   answerCnt?: number
   boardAdoptStatusCd?: number
+  // 전체보기(통합 목록)에서만 채워짐 — 'board' | 'qna', 상세/태그 링크 분기용
+  boardType?: 'board' | 'qna'
+}
+
+export interface CommunityBestItem {
+  sq: number
+  boardType: 'board' | 'qna'
+  ttl: string
+  userNm: string
+  viewCnt: number
+  commentCnt: number
+  recommendCnt: number
+  createdAt: string
+  score: number
 }
 
 export interface BoardDetail extends BoardItem {
@@ -322,6 +336,10 @@ export interface CalendarEvent {
   scheduleAllDayYn: 'Y' | 'N'
   start: string
   end: string
+  // 원본 데이터 — FullCalendar가 뷰(월/주)에 따라 재해석하는 info.event.startStr/allDay 대신
+  // 여기서 시작/종료/종일 여부를 그대로 읽어야 뷰 전환 후에도 값이 바뀌지 않는다.
+  scheduleStartDtm?: string
+  scheduleEndDtm?: string
   projectSq?: number
   resumeSq?: number
   applicationSq?: number

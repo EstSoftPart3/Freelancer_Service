@@ -80,6 +80,9 @@ export default function ProjectListClient() {
   const displayMarkersFnRef = useRef<() => void>(() => {})
   const selectProjectFnRef = useRef<(p: ProjectItem) => void>(() => {})
   const updateBoundsFnRef = useRef<() => void>(() => {})
+  // 지도→목록 전환 시 "bounds 포함 재조회"와 "bounds 제거 후 재조회" 두 요청이 경합할 수 있어,
+  // 나중에 시작된 요청만 결과를 반영하도록 순번을 매긴다.
+  const fetchSeqRef = useRef(0)
 
   const isCompany = getUserType() === 'COMPANY'
 
@@ -98,6 +101,7 @@ export default function ProjectListClient() {
   }, [])
 
   const fetchProjects = useCallback(async (params: ProjectSearchParams, mapMode = false) => {
+    const seq = ++fetchSeqRef.current
     setLoading(true)
     try {
       const size = mapMode ? 1000 : PAGE_SIZE
@@ -108,6 +112,7 @@ export default function ProjectListClient() {
         ...(longitude != null && { userLng: longitude }),
       }
       const { data } = await api.get('/projects', { params: requestParams })
+      if (seq !== fetchSeqRef.current) return // 이후에 시작된 요청이 있으면 이 결과는 폐기
       const output = data.output ?? data
       setProjects(output.projects ?? [])
       if (!mapMode) {
@@ -117,9 +122,9 @@ export default function ProjectListClient() {
         fetchRegionGroups(requestParams)
       }
     } catch {
-      toast.error('프로젝트 목록을 불러올 수 없습니다.')
+      if (seq === fetchSeqRef.current) toast.error('프로젝트 목록을 불러올 수 없습니다.')
     } finally {
-      setLoading(false)
+      if (seq === fetchSeqRef.current) setLoading(false)
     }
   }, [latitude, longitude, fetchRegionGroups])
 
@@ -433,9 +438,19 @@ export default function ProjectListClient() {
               ))}
             </div>
           ) : projects.length === 0 ? (
-            <p className="rounded border bg-muted/40 py-10 text-center text-sm text-muted-foreground">
-              검색 결과가 없습니다.
-            </p>
+            <div className="space-y-4">
+              <p className="rounded border bg-muted/40 py-10 text-center text-sm text-muted-foreground">
+                검색 결과가 없습니다.
+              </p>
+              {isCompany && (
+                <div className="flex justify-center py-2">
+                  <Button onClick={handleRegisterClick} className="rounded-full px-8 shadow-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    프로젝트 등록하기
+                  </Button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <div className="space-y-4">

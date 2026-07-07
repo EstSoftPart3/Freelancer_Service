@@ -180,6 +180,14 @@ export default function ProjectPostClient({ projectSq }: Props) {
           preferenceList: (exist.preferredEtc ?? '').split(',').map((s: string) => s.trim()).filter(Boolean),
           description: exist.description ?? '',
         }))
+        // Vue 원본 ProjectPostPage.vue: 수정 모드에서 기존 인터뷰 가능시간도 폼에 복원
+        if (exist.interviewTimes) {
+          setInterviewTimes(
+            Object.entries(exist.interviewTimes as Record<string, string[]>).map(
+              ([date, times]) => ({ date, times }),
+            ),
+          )
+        }
       }
     } catch {
       toast.error('프로젝트 정보를 불러올 수 없습니다.')

@@ -24,6 +24,8 @@ interface Props {
 const API_KEY = '28c12cecb3e103d5b10acd6a0e76209f'
 const PER_PAGE = 3
 
+const todayMonth = () => new Date().toISOString().slice(0, 7)
+
 export default function EducationModal({ open, onClose, onComplete }: Props) {
   const [tab, setTab] = useState<'high' | 'univ'>('high')
   const [search, setSearch] = useState('')
@@ -123,9 +125,9 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
               <div className="font-semibold">{selected.name}</div>
               <div className="text-xs text-muted-foreground">{selected.address}</div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><label className="text-sm text-muted-foreground">입학년월 <span className="text-destructive">*</span></label><Input type="month" max="9999-12" value={admissionDt} onChange={(e) => setAdmissionDt(e.target.value)} onKeyDown={(e) => e.preventDefault()} /></div>
-              <div className="space-y-1"><label className="text-sm text-muted-foreground">졸업년월</label><Input type="month" max="9999-12" value={graduationDt} onChange={(e) => setGraduationDt(e.target.value)} onKeyDown={(e) => e.preventDefault()} /></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1"><label className="text-sm text-muted-foreground">입학년월 <span className="text-destructive">*</span></label><Input type="month" max={todayMonth()} value={admissionDt} onChange={(e) => setAdmissionDt(e.target.value)} /></div>
+              <div className="space-y-1"><label className="text-sm text-muted-foreground">졸업년월</label><Input type="month" max={todayMonth()} value={graduationDt} onChange={(e) => setGraduationDt(e.target.value)} /></div>
             </div>
             <div className="space-y-1"><label className="text-sm text-muted-foreground">전공명 <span className="text-destructive">*</span></label><Input value={major} onChange={(e) => setMajor(e.target.value)} placeholder="전공명을 입력하세요" /></div>
             <DialogFooter>

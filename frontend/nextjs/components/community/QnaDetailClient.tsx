@@ -68,7 +68,7 @@ export default function QnaDetailClient({ boardSq }: Props) {
   }, [boardSq, setViewerSq, searchParams])
 
   useEffect(() => {
-    incrementView(`/board/${boardSq}`)
+    incrementView(`/qna/${boardSq}`)
     getBoard()
   }, [boardSq, getBoard])
 

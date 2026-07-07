@@ -27,11 +27,14 @@ import org.springframework.web.util.UriUtils;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.File.FileCryptoUtil;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
 import com.example.demo.domain.community.dto.response.BoardResponse;
 import com.example.demo.domain.community.entity.BoardAttachment;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.service.BoardService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,7 @@ public class NoticeController {
     private final BoardService boardService;
     private final BoardMapper boardMapper;
     private final FileCryptoUtil fileCryptoUtil;
+    private final ViewCountDedupService viewCountDedupService;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -83,8 +87,13 @@ public class NoticeController {
      * 공지사항 조회수 증가
      */
     @PatchMapping("/{boardSq}/increment-view")
-    public ResponseEntity<ApiResponse<NullType>> addViewCntNotice(@PathVariable("boardSq") Long boardSq) {
-        boardService.addViewCntBoard(boardSq);
+    public ResponseEntity<ApiResponse<NullType>> addViewCntNotice(
+            @AuthenticationPrincipal Long userSq,
+            @PathVariable("boardSq") Long boardSq,
+            HttpServletRequest request) {
+        if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
+            boardService.addViewCntBoard(boardSq);
+        }
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가 완료", null));
     }
 

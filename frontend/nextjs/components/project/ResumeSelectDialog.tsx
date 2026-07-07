@@ -2,6 +2,7 @@
 
 // Vue 원본 ResumeSelectModal.vue(role=PERSONAL) 이식 — 이력서 제목 클릭 시 상세 미리보기(A1)
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied }: Props) {
+  const router = useRouter()
   const [resumes, setResumes] = useState<ResumeItem[]>([])
   const [selected, setSelected] = useState<number | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -60,8 +62,11 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
       toast.success('프로젝트 지원에 성공하였습니다.')
       onApplied()
       onClose()
-    } catch {
-      toast.error('프로젝트 지원에 실패했습니다.')
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        '프로젝트 지원에 실패했습니다.'
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -75,7 +80,12 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
         </DialogHeader>
 
         {resumes.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">등록된 이력서가 없습니다.</p>
+          <div className="space-y-3 py-8 text-center">
+            <p className="text-sm text-muted-foreground">등록된 이력서가 없습니다.</p>
+            <Button onClick={() => { onClose(); router.push('/mypage/resume/new') }}>
+              이력서 등록하러 가기
+            </Button>
+          </div>
         ) : (
           <ul className="divide-y">
             {resumes.map((resume) => (

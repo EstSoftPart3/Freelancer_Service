@@ -31,6 +31,7 @@ import {
 // 1. [에러 해결] boardApi와 AdminBoard로 임포트 변경
 import { boardApi } from '../api/board-api'
 import { type AdminBoard } from '../data/schema'
+import { SkillTagSelectModal } from './skill-tag-select-modal'
 
 interface Attachment {
   fileSq: number
@@ -73,6 +74,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const [files, setFiles] = useState<File[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [isFetching, setIsFetching] = useState(false)
+  const [skillTagModalOpen, setSkillTagModalOpen] = useState(false)
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<BoardForm>(
     {
@@ -300,27 +302,39 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                   <Label className='font-bold text-orange-600'>
                     기술 태그 (Skill Tags)
                   </Label>
-                  <Input
-                    placeholder='기술 태그 선택 기능은 준비 중입니다.'
-                    readOnly
-                    onClick={() =>
-                      toast.info(
-                        '기술 태그 선택 기능은 아직 준비 중입니다. (모달 추가 예정)'
-                      )
-                    }
-                    className='cursor-not-allowed bg-slate-50'
-                  />
-                  {/* 기존에 저장된 태그가 있다면 보여는 줌 */}
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setSkillTagModalOpen(true)}
+                  >
+                    기술 태그 선택
+                  </Button>
                   <div className='mt-2 flex flex-wrap gap-2'>
                     {skillTags.map((tag, index) => (
                       <Badge
                         key={`${tag.skillTagSq}-${index}`}
-                        className='bg-orange-400'
+                        className='gap-1 bg-orange-400 pr-1'
                       >
-                        {tag.skillTagNm} {/* tag 자체가 아니라 속성 출력 */}
+                        {tag.skillTagNm}
+                        <button
+                          type='button'
+                          className='ml-1 rounded-full p-0.5 transition-colors outline-none hover:bg-orange-500'
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setSkillTags((prev) => prev.filter((_, i) => i !== index))
+                          }}
+                        >
+                          <X size={12} />
+                        </button>
                       </Badge>
                     ))}
                   </div>
+                  <SkillTagSelectModal
+                    open={skillTagModalOpen}
+                    selected={skillTags}
+                    onClose={() => setSkillTagModalOpen(false)}
+                    onConfirm={(skills) => setSkillTags(skills)}
+                  />
                 </div>
               )}
 

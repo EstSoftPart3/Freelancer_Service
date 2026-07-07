@@ -20,9 +20,10 @@
     TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
 
   <select id="countUsersBySearch" resultType="Long"> SELECT COUNT(DISTINCT cm.user_sq) FROM
-    TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
+    TBL_COMPANY_MEMBER_R cm JOIN TBL_USER_M u ON cm.user_sq = u.user_sq JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
     TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq}
-    AND cm.company_member_status_cd = 401 AND cm.company_member_leave_dt IS NULL <if
+    AND cm.company_member_status_cd = 401 AND cm.company_member_leave_dt IS NULL
+    AND u.user_is_deleted_yn = 'N' <if
       test="request.keyword != null and request.searchType == 'skill'"> AND rs.skill_tag_nm LIKE
     CONCAT('%', #{request.keyword}, '%') </if>
   <if
@@ -36,9 +37,10 @@
 
 
   <select id="findUserSqsByCompanySqAndSearch" resultType="Long"> SELECT DISTINCT cm.user_sq FROM
-    TBL_COMPANY_MEMBER_R cm JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
+    TBL_COMPANY_MEMBER_R cm JOIN TBL_USER_M u ON cm.user_sq = u.user_sq JOIN TBL_RESUME_M r ON cm.user_sq = r.user_sq LEFT JOIN
     TBL_RESUME_SKILL_TAG_S rs ON r.resume_sq = rs.resume_sq WHERE cm.company_sq = #{companySq} AND
-    cm.company_member_status_cd = 401 AND cm.company_member_leave_dt IS NULL <if
+    cm.company_member_status_cd = 401 AND cm.company_member_leave_dt IS NULL
+    AND u.user_is_deleted_yn = 'N' <if
       test="request.keyword != null and request.searchType == 'skill'"> AND rs.skill_tag_nm LIKE
     CONCAT('%', #{request.keyword}, '%') </if>
   <if

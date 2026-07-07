@@ -20,6 +20,8 @@ interface Props {
 
 const EMPTY: TrainingItem = { trainingProgramNm: '', trainingInstitutionNm: '', trainingStartDt: '', trainingEndDt: '' }
 
+const todayMonth = () => new Date().toISOString().slice(0, 7)
+
 export default function TrainingModal({ open, onClose, onComplete }: Props) {
   const [form, setForm] = useState<TrainingItem>(EMPTY)
   const set = (k: keyof TrainingItem, v: string) => setForm((p) => ({ ...p, [k]: v }))
@@ -39,16 +41,16 @@ export default function TrainingModal({ open, onClose, onComplete }: Props) {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>교육 이력 추가하기</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1"><label className="text-sm font-medium">교육명</label><Input value={form.trainingProgramNm} onChange={(e) => set('trainingProgramNm', e.target.value)} placeholder="교육명" /></div>
             <div className="space-y-1"><label className="text-sm font-medium">교육 기관</label><Input value={form.trainingInstitutionNm} onChange={(e) => set('trainingInstitutionNm', e.target.value)} placeholder="교육 기관" /></div>
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium">교육 기간</label>
-            <div className="flex items-center gap-2">
-              <Input type="month" max="9999-12" value={form.trainingStartDt} onChange={(e) => set('trainingStartDt', e.target.value)} onKeyDown={(e) => e.preventDefault()} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Input type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.trainingStartDt} onChange={(e) => set('trainingStartDt', e.target.value)} />
               <span>~</span>
-              <Input type="month" max="9999-12" value={form.trainingEndDt} onChange={(e) => set('trainingEndDt', e.target.value)} onKeyDown={(e) => e.preventDefault()} />
+              <Input type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.trainingEndDt} onChange={(e) => set('trainingEndDt', e.target.value)} />
             </div>
           </div>
         </div>

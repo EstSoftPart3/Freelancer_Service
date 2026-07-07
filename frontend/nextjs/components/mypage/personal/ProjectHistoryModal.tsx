@@ -35,6 +35,8 @@ interface Props {
 
 const EMPTY = { name: '', startDate: '', endDate: '', client: '', workUnit: '' as number | '', role: '' as number | '' }
 
+const today = () => new Date().toISOString().slice(0, 10)
+
 export default function ProjectHistoryModal({ open, allSkills, roleTypes, taskTypes, onClose, onComplete }: Props) {
   const [form, setForm] = useState(EMPTY)
   const [selectedSkills, setSelectedSkills] = useState<SkillTag[]>([])
@@ -79,14 +81,14 @@ export default function ProjectHistoryModal({ open, allSkills, roleTypes, taskTy
         <div className="space-y-4">
           <div className="space-y-2">
             <p className="text-sm font-semibold">프로젝트 내용</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1"><label className="text-sm">프로젝트명</label><Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="예: 금융 시스템 구축" /></div>
               <div className="space-y-1">
                 <label className="text-sm">참여기간</label>
-                <div className="flex items-center gap-1">
-                  <Input type="date" max="9999-12-31" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} onKeyDown={(e) => e.preventDefault()} />
+                <div className="flex flex-wrap items-center gap-1">
+                  <Input type="date" max={today()} className="min-w-0 flex-1" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} />
                   <span>~</span>
-                  <Input type="date" max="9999-12-31" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} onKeyDown={(e) => e.preventDefault()} />
+                  <Input type="date" max={today()} className="min-w-0 flex-1" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} />
                 </div>
               </div>
               <div className="space-y-1"><label className="text-sm">고객사</label><Input value={form.client} onChange={(e) => set('client', e.target.value)} placeholder="예: OO은행" /></div>

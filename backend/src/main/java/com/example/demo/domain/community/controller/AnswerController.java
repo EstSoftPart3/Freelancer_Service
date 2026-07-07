@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.*;
 import com.example.demo.domain.community.service.*;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.domain.community.dto.response.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -27,6 +29,7 @@ import javax.lang.model.type.NullType;
 @RequiredArgsConstructor
 public class AnswerController {
     private final AnswerService answerService;
+    private final ViewCountDedupService viewCountDedupService;
     
 //    답변 하나 조회
     @GetMapping("/{answerSq}")
@@ -83,8 +86,13 @@ public class AnswerController {
     
 //    답변 조회수 증가
     @PatchMapping("/{answerSq}/increment-view")
-    public ResponseEntity<ApiResponse<NullType>> addViewCntAnswer(@PathVariable("answerSq") Long answerSq){
-    	answerService.addViewCntAnswer(answerSq);
+    public ResponseEntity<ApiResponse<NullType>> addViewCntAnswer(
+            @AuthenticationPrincipal Long userSq,
+            @PathVariable("answerSq") Long answerSq,
+            HttpServletRequest request){
+    	if (viewCountDedupService.isFirstView("answer", answerSq, userSq, request)) {
+    		answerService.addViewCntAnswer(answerSq);
+    	}
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
     }
     

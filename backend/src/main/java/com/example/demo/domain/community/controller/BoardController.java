@@ -30,6 +30,7 @@ import org.springframework.web.util.UriUtils;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.File.FileCryptoUtil;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
@@ -38,6 +39,8 @@ import com.example.demo.domain.community.entity.BoardAttachment;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.service.BoardService;
+
+import jakarta.servlet.http.HttpServletRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +57,7 @@ public class BoardController {
 	private final BoardMapper boardMapper;
 	// private final AmazonS3 amazonS3;
 	private final FileCryptoUtil fileCryptoUtil;
+	private final ViewCountDedupService viewCountDedupService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -140,8 +144,13 @@ public class BoardController {
 
 	// 게시글 조회수 증가
 	@PatchMapping("/{boardSq}/increment-view")
-	public ResponseEntity<ApiResponse<NullType>> addViewCntBoard(@PathVariable("boardSq") Long boardSq) {
-		boardService.addViewCntBoard(boardSq);
+	public ResponseEntity<ApiResponse<NullType>> addViewCntBoard(
+			@AuthenticationPrincipal Long userSq,
+			@PathVariable("boardSq") Long boardSq,
+			HttpServletRequest request) {
+		if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
+			boardService.addViewCntBoard(boardSq);
+		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
 	}
 

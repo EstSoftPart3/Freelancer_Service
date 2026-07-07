@@ -137,7 +137,21 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
               <Input value={form.scheduleTtl} onChange={(e) => set('scheduleTtl', e.target.value)} placeholder="일정 제목을 입력하세요" />
             </div>
             <div className="flex items-center gap-2">
-              <Checkbox id="allDay" checked={isAllDay} onCheckedChange={(v) => setIsAllDay(v === true)} />
+              <Checkbox
+                id="allDay"
+                checked={isAllDay}
+                onCheckedChange={(v) => {
+                  const next = v === true
+                  setIsAllDay(next)
+                  // 종일 여부가 바뀌면 input type(date ↔ datetime-local)도 바뀌므로
+                  // 기존 값을 새 포맷에 맞게 다시 잘라줘야 값이 비거나 깨지지 않는다.
+                  setForm((p) => ({
+                    ...p,
+                    scheduleStartDtm: trimDt(p.scheduleStartDtm, next),
+                    scheduleEndDtm: trimDt(p.scheduleEndDtm, next),
+                  }))
+                }}
+              />
               <label htmlFor="allDay" className="text-sm cursor-pointer">종일</label>
             </div>
             <div className="grid grid-cols-2 gap-3">

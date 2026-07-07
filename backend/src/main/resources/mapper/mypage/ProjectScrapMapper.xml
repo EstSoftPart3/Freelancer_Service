@@ -34,6 +34,9 @@
     <delete id="deleteByUserAndProject" parameterType="map"> DELETE FROM TBL_SCRAP_S WHERE user_sq =
         #{userSq} AND project_sq = #{projectSq} AND scrap_type_cd = 601 </delete>
 
+    <update id="decreaseScrapCnt" parameterType="long"> UPDATE TBL_PROJECT_M SET project_scrap_cnt =
+        GREATEST(project_scrap_cnt - 1, 0) WHERE project_sq = #{projectSq} </update>
+
     <!-- 페이징 + 검색조건 반영 프로젝트 스크랩 조회 -->
     <select id="findScrappedProjectSqsByUserSqWithPaging" resultType="long"> SELECT s.project_sq
         FROM TBL_SCRAP_S s JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq =

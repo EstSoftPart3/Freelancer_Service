@@ -62,8 +62,10 @@
 				open="(" separator="," close=")">#{item}</foreach> ) ) OR p.subway_address_sq IN (
 		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM
 		TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq"
-				open="(" separator="," close=")">#{item}</foreach> ) ) ) </if> /* [필터 2] 거리 내 검색 */ <if
+				open="(" separator="," close=")">#{item}</foreach> ) ) )
+		AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL </if> /* [필터 2] 거리 내 검색 */ <if
 			test="userLat != null and userLng != null and distance != null">
+			AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL
 			<choose>
 				<when test="distance == 999"> AND ST_Distance_Sphere( POINT(#{userLng}, #{userLat}),
 		POINT( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
@@ -159,8 +161,10 @@
 				separator="," close=")">#{item}</foreach>)) OR p.subway_address_sq IN (SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (SELECT area_code_sq FROM TBL_AREA_C
 		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")">#{item}</foreach>)) ) </if> /* [필터 2] 거리 내 검색 */ <if
+				separator="," close=")">#{item}</foreach>)) )
+		AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL </if> /* [필터 2] 거리 내 검색 */ <if
 			test="userLat != null and userLng != null and distance != null">
+			AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL
 			<choose>
 				<when test="distance == 999"> AND ST_Distance_Sphere(POINT(#{userLng}, #{userLat}),
 		POINT(CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
@@ -602,6 +606,9 @@
 	<select id="findUserSqByProjectSq" resultType="Long"> SELECT c.user_sq FROM tbl_project_m p JOIN
 		tbl_company_s c ON p.company_sq = c.company_sq WHERE p.project_sq = #{projectSq} AND
 		p.project_is_deleted_yn = 'N' </select>
+
+	<select id="isUserWithdrawn" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_USER_M
+		WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'Y' ) </select>
 
 	<select id="findMemberTypeByApplicationSq" resultType="Long"> SELECT
 		project_application_member_type_cd FROM tbl_project_application_h WHERE

@@ -258,12 +258,15 @@ export default function CommonHeader() {
             <DropdownMenuTrigger
               className={cn(
                 'flex items-center gap-1 text-sm font-medium outline-none transition-colors hover:text-primary',
-                isActive(['/board', '/qna']) ? 'text-primary' : 'text-foreground/70',
+                isActive(['/community', '/board', '/qna']) ? 'text-primary' : 'text-foreground/70',
               )}
             >
               커뮤니티 <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => router.push('/community')}>
+                커뮤니티 홈
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/board')}>
                 일반 게시판
               </DropdownMenuItem>
@@ -361,7 +364,7 @@ export default function CommonHeader() {
                 <button
                   className={cn(
                     'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/board', '/qna'])
+                    isActive(['/community', '/board', '/qna'])
                       ? 'bg-primary/10 text-primary'
                       : 'hover:bg-muted',
                   )}
@@ -374,6 +377,9 @@ export default function CommonHeader() {
                 </button>
                 {mobileCommunityOpen && (
                   <div className="ml-4 flex flex-col gap-1 border-l pl-3">
+                    <Link href="/community" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                      커뮤니티 홈
+                    </Link>
                     <Link href="/board" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
                       일반 게시판
                     </Link>

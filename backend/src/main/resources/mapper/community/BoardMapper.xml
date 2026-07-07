@@ -7,7 +7,10 @@
 		FROM TBL_BOARD_M WHERE board_sq = #{boardSq} AND board_type_cd = #{boardTypeCd} </select>
 
 	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board"> SELECT * FROM
-		TBL_BOARD_M WHERE board_is_deleted_yn = 'N' AND board_type_cd = #{boardTypeCd} <if
+		TBL_BOARD_M WHERE board_is_deleted_yn = 'N' <choose>
+			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
+			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
+		</choose> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
 			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
@@ -39,7 +42,10 @@
 		LIMIT #{size} OFFSET #{offset} </select>
 
 	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
-		board_is_deleted_yn = 'N' AND board_type_cd = #{boardTypeCd} <if
+		board_is_deleted_yn = 'N' <choose>
+			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
+			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
+		</choose> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
 			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
@@ -103,5 +109,28 @@
 
 	<select id="findByIdOnly" resultType="com.example.demo.domain.community.entity.Board"> SELECT
 		board_sq, user_sq, board_typ FROM tbl_board_m WHERE board_sq = #{boardSq} </select>
+
+	<!-- 베스트글/인기글/추천글 공용 — 조회수*1 + 댓글수*2 + 추천수*3 복합 점수. 태그는 포함하지 않아 N+1 없음 -->
+	<select id="findBestBoards" resultType="com.example.demo.domain.community.dto.CommunityBestItemDTO">
+		SELECT b.board_sq AS sq,
+		       CASE WHEN b.board_type_cd = 1402 THEN 'qna' ELSE 'board' END AS boardType,
+		       b.board_ttl AS ttl,
+		       COALESCE(u.user_nm, '존재하지 않는 사용자') AS userNm,
+		       b.board_view_cnt AS viewCnt,
+		       b.board_comment_cnt AS commentCnt,
+		       b.board_recommend_cnt AS recommendCnt,
+		       b.board_created_at_dtm AS createdAt,
+		       (b.board_view_cnt * 1 + b.board_comment_cnt * 2 + b.board_recommend_cnt * 3) AS score
+		FROM TBL_BOARD_M b
+		LEFT JOIN TBL_USER_M u ON u.user_sq = b.user_sq AND u.user_is_deleted_yn = 'N'
+		WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd IN (1401, 1402)
+		<choose>
+			<when test="period == 'daily'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 1 DAY) </when>
+			<when test="period == 'weekly'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 7 DAY) </when>
+			<when test="period == 'monthly'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 30 DAY) </when>
+		</choose>
+		ORDER BY score DESC, b.board_created_at_dtm DESC
+		LIMIT #{size}
+	</select>
 
 </mapper>

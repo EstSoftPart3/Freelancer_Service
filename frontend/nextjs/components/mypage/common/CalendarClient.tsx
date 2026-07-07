@@ -45,7 +45,7 @@ function prefixOf(typeCd: number, userType?: string | null): string {
 
 export default function CalendarClient() {
   const router = useRouter()
-  const { userSq, getUserType } = useUserStore()
+  const { userSq, getUserType, authChecked } = useUserStore()
   const userType = getUserType()
   const [searchType, setSearchType] = useState('전체')
   const [searchKeyword, setSearchKeyword] = useState('')
@@ -55,6 +55,7 @@ export default function CalendarClient() {
   const [schedule, setSchedule] = useState<{ open: boolean; mode: 'REGISTER' | 'VIEW'; event: ScheduleEventData | null }>({ open: false, mode: 'REGISTER', event: null })
 
   const fetchSchedules = useCallback(async () => {
+    if (!authChecked) return
     try {
       const { data } = await api.get('/mypage/schedule/list', {
         params: { userSq, userType, searchType, searchKeyword },
@@ -77,7 +78,7 @@ export default function CalendarClient() {
       console.error('일정 조회 실패:', error)
       toast.error('일정을 불러올 수 없습니다.')
     }
-  }, [userSq, userType, searchType, searchKeyword])
+  }, [authChecked, userSq, userType, searchType, searchKeyword])
 
   useEffect(() => { fetchSchedules() }, [fetchSchedules])
 
@@ -107,6 +108,11 @@ export default function CalendarClient() {
       return
     }
     // 일반 일정(2401) → 상세(VIEW) 모달
+    // FullCalendar의 info.event.startStr/endStr/allDay는 현재 뷰(월/주)에 따라 재해석되어
+    // 달라질 수 있으므로, 백엔드 원본 값(extendedProps)을 그대로 사용해 뷰 전환과 무관하게
+    // 저장된 시간·종일 여부가 유지되도록 한다.
+    const rawStart = props.scheduleStartDtm || info.event.startStr
+    const rawEnd = props.scheduleEndDtm || info.event.endStr || rawStart
     setSchedule({
       open: true,
       mode: 'VIEW',
@@ -114,12 +120,12 @@ export default function CalendarClient() {
         scheduleSq: props.scheduleSq,
         scheduleTtl: props.scheduleTtl,
         scheduleCnt: props.scheduleCnt,
-        scheduleStartDtm: info.event.startStr,
-        scheduleEndDtm: info.event.endStr || info.event.startStr,
+        scheduleStartDtm: rawStart,
+        scheduleEndDtm: rawEnd,
         scheduleTypeCd: props.scheduleTypeCd,
         scheduleAllDayYn: props.scheduleAllDayYn,
         projectSq: props.projectSq ?? null,
-        allDay: info.event.allDay,
+        allDay: props.scheduleAllDayYn === 'Y',
       },
     })
   }
@@ -147,19 +153,17 @@ export default function CalendarClient() {
           onChange={(e) => setSearchKeyword(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && fetchSchedules()}
           placeholder="검색어 입력"
-          className="w-48"
+          className="w-full min-w-0 flex-1 sm:w-48 sm:flex-none"
         />
         <Button onClick={fetchSchedules} size="sm">검색</Button>
       </div>
 
-      <div className="min-h-[500px]">
-        {typeof window !== 'undefined' && (
-          <FullCalendarWrapper
-            events={events}
-            onEventClick={handleEventClick}
-            onDateClick={handleDateClick}
-          />
-        )}
+      <div className="min-h-[500px] overflow-x-auto">
+        <FullCalendarWrapper
+          events={events}
+          onEventClick={handleEventClick}
+          onDateClick={handleDateClick}
+        />
       </div>
 
       <ScheduleRegisterModal
