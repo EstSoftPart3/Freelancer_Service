@@ -26,18 +26,23 @@ const STATUS_OPTIONS = [
 
 interface Props {
   boardCategory: BoardCategory
+  // 서버에서 미리 조회한 첫 페이지(기본 정렬) — SEO용으로 초기 HTML에 목록을 포함시킨다.
+  // 마운트 후 fetchList가 URL/스토어 필터 기준으로 1회 갱신한다(기존 동작 유지).
+  initialData?: BoardListResponse | null
 }
 
 const PAGE_SIZE = 10
 
-export default function BoardListClient({ boardCategory }: Props) {
+export default function BoardListClient({ boardCategory, initialData }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isLoggedIn, authChecked } = useUserStore()
   const setCommunityFilters = useCommunityStore((s) => s.setFilters)
 
-  const [boardList, setBoardList] = useState<BoardItem[]>([])
-  const [totalPages, setTotalPages] = useState(1)
+  const [boardList, setBoardList] = useState<BoardItem[]>(initialData?.boards ?? [])
+  const [totalPages, setTotalPages] = useState(
+    initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
+  )
   const [isLoading, setIsLoading] = useState(false)
 
   // 필터 state — URL 우선, 없으면 탭 전환 간 보존되는 communityStore 값으로 폴백
@@ -181,8 +186,8 @@ export default function BoardListClient({ boardCategory }: Props) {
         </form>
       </div>
 
-      {/* 리스트 */}
-      {isLoading ? (
+      {/* 리스트 — SSR된 초기 목록이 있으면 로딩 문구로 덮지 않고 갱신 완료 시 교체 */}
+      {isLoading && boardList.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">게시글을 불러오는 중입니다...</div>
       ) : (
         <>

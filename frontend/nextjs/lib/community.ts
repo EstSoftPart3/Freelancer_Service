@@ -2,20 +2,7 @@
 // 선례: app/board/[board_sq]/page.tsx의 generateMetadata — 서버에서는 인증 불필요한
 // 공개 GET만 native fetch로 직접 호출한다(클라이언트 상호작용은 기존 axios lib/api.ts 유지).
 import type { BoardItem, BoardListResponse, CommunityBestItem } from '@/types'
-
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api'
-
-async function safeGet<T>(path: string, fallback: T): Promise<T> {
-  try {
-    const res = await fetch(`${baseUrl}${path}`, { cache: 'no-store' })
-    if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`)
-    const data = (await res.json()) as { output: T }
-    return data.output ?? fallback
-  } catch (err) {
-    console.error(`[community] ${path} 조회 실패`, err)
-    return fallback
-  }
-}
+import { safeGet } from '@/lib/fetchers'
 
 export function fetchCommunityBest(period: 'daily' | 'weekly' | 'monthly' | 'all', size: number) {
   return safeGet<CommunityBestItem[]>(`/community/best?period=${period}&size=${size}`, [])

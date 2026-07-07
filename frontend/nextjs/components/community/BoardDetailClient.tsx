@@ -13,6 +13,9 @@ type BoardCategory = 'board' | 'notice'
 interface Props {
   boardSq: string
   boardCategory: BoardCategory
+  // 서버에서 미리 조회한 초기 데이터 — SEO용으로 초기 HTML에 본문을 포함시킨다.
+  // viewerSq 등 사용자별 필드가 없으므로 마운트 후 getBoard()로 1회 갱신한다(기존 동작 유지).
+  initialData?: BoardDetail | null
 }
 
 const emptyBoard: BoardDetail = {
@@ -21,9 +24,9 @@ const emptyBoard: BoardDetail = {
   attachments: [], comments: [],
 }
 
-export default function BoardDetailClient({ boardSq, boardCategory }: Props) {
+export default function BoardDetailClient({ boardSq, boardCategory, initialData }: Props) {
   const { setViewerSq } = useBoardStore()
-  const [boardInfo, setBoardInfo] = useState<BoardDetail>(emptyBoard)
+  const [boardInfo, setBoardInfo] = useState<BoardDetail>(initialData ?? emptyBoard)
 
   const getBoard = useCallback(async () => {
     try {

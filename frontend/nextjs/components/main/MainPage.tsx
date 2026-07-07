@@ -10,7 +10,7 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 
-interface PopularProject {
+export interface PopularProject {
   projectSq: number
   projectTtl: string
   companyNm: string
@@ -52,13 +52,18 @@ const FAQS = [
   },
 ]
 
-export default function MainPage() {
+interface Props {
+  // 서버에서 미리 조회한 인기 프로젝트(조회순) — SEO용으로 초기 HTML에 포함시킨다.
+  initialProjects?: PopularProject[]
+}
+
+export default function MainPage({ initialProjects }: Props = {}) {
   const router = useRouter()
   const { getUserType, userTypeCd, isLoggedIn } = useUserStore()
   const userType = getUserType()
 
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [projects, setProjects] = useState<PopularProject[]>([])
+  const [projects, setProjects] = useState<PopularProject[]>(initialProjects ?? [])
   const [currentSort, setCurrentSort] = useState<SortType>('views')
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -119,6 +124,9 @@ export default function MainPage() {
 
   return (
     <div className="bg-[#f8f9fa]">
+      {/* 페이지 대표 h1 — 슬라이드 제목은 h2로 강등(페이지당 h1 1개 원칙), 시각적으로는 숨김 */}
+      <h1 className="sr-only">Freelancer Service — 프리랜서와 기업을 연결하는 매칭 플랫폼</h1>
+
       {/* ── 배너 캐러셀 ── */}
       <section className="relative h-[64vh] w-full overflow-hidden">
         {SLIDES.map((slide, i) => (
@@ -130,9 +138,9 @@ export default function MainPage() {
               i === currentSlide ? 'z-10 opacity-100' : 'z-0 opacity-0',
             )}
           >
-            <h1 className="mb-6 whitespace-pre-line text-center text-3xl font-bold leading-snug text-[#2c3e50] md:text-4xl">
+            <h2 className="mb-6 whitespace-pre-line text-center text-3xl font-bold leading-snug text-[#2c3e50] md:text-4xl">
               {slide.title}
-            </h1>
+            </h2>
             <p className="text-center text-base text-muted-foreground md:text-lg">
               {slide.subtitle}
             </p>

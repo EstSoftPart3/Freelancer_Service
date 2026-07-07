@@ -20,7 +20,7 @@ interface AreaCode {
   children?: AreaCode[]
 }
 
-interface AffiliationItem {
+export interface AffiliationItem {
   sq: number
   companyNm: string
   profileImg?: string
@@ -53,13 +53,21 @@ const removeAllTxt = (str: string) =>
 
 const PAGE_SIZE = 8
 
-export default function AffiliationListPage() {
+interface Props {
+  // 서버에서 미리 조회한 첫 페이지(기본 정렬) — SEO용으로 초기 HTML에 목록을 포함시킨다.
+  // 마운트 후 fetchList가 1회 갱신한다(기존 동작 유지).
+  initialData?: { companies: AffiliationItem[]; totalElements: number } | null
+}
+
+export default function AffiliationListPage({ initialData }: Props = {}) {
   const { affiliatedCompanySq, isLoggedIn, getUserType } = useUserStore()
 
   const [isLoading, setIsLoading] = useState(false)
-  const [list, setList] = useState<AffiliationItem[]>([])
+  const [list, setList] = useState<AffiliationItem[]>(initialData?.companies ?? [])
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(
+    initialData && initialData.totalElements > 0 ? Math.ceil(initialData.totalElements / PAGE_SIZE) : 1,
+  )
 
   // 필터 UI 상태
   const [sortType, setSortType] = useState<SortType>('latest')
@@ -283,7 +291,8 @@ export default function AffiliationListPage() {
       </div>
 
       {/* 목록 — 이슈 1: Vue 원본과 동일한 카드 계층 구조 */}
-      {isLoading ? (
+      {isLoading && list.length === 0 ? (
+        // SSR된 초기 목록이 있으면 스켈레톤으로 덮지 않고 갱신 완료 시 교체
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-72 rounded-xl" />
@@ -301,7 +310,7 @@ export default function AffiliationListPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.profileImg || '/img/logos/Company_logo.png'}
-                  alt="기업 이미지"
+                  alt={`${item.companyNm} 로고`}
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => { (e.target as HTMLImageElement).src = '/img/logos/Company_logo.png' }}
                 />

@@ -12,6 +12,7 @@ import ResumeSelectDialog from './ResumeSelectDialog'
 import AffiliationApplyDialog from './AffiliationApplyDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { incrementView } from '@/lib/viewCount'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import type { ProjectDetail, RequiredSkillGroup } from '@/types'
 
@@ -19,6 +20,9 @@ interface Props {
   projectSq: string
   // UserProjectSpecPage.vue(개인 지원자 흐름) / CompanyProjectSpecPage.vue(소속원 대리지원 + 작성자 수정·삭제 흐름) 분기
   variant: 'user' | 'company'
+  // 서버에서 미리 조회한 초기 데이터 — SEO용으로 초기 HTML에 본문을 포함시킨다.
+  // isApplied/userRole/isScrap 등 사용자별 필드가 비로그인 기본값이므로 마운트 후 재조회로 갱신한다.
+  initialData?: ProjectDetail | null
 }
 
 function SkillGroupList({ groups, label }: { groups: RequiredSkillGroup[]; label: string }) {
@@ -63,17 +67,21 @@ function getDisplayAddress(p: ProjectDetail): string {
   return p.projectAddress || '정보 없음'
 }
 
-export default function ProjectSpec({ projectSq, variant }: Props) {
+export default function ProjectSpec({ projectSq, variant, initialData }: Props) {
   const pid = Number(projectSq) // 상세 응답에 projectSq가 없어 라우트 파라미터를 사용
   const router = useRouter()
   const { isLoggedIn } = useUserStore()
-  const [project, setProject] = useState<ProjectDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [project, setProject] = useState<ProjectDetail | null>(initialData ?? null)
+  const [loading, setLoading] = useState(!initialData)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [applyOpen, setApplyOpen] = useState(false)
-  const [isRecruitmentEnded, setIsRecruitmentEnded] = useState(false)
+  const [isRecruitmentEnded, setIsRecruitmentEnded] = useState(
+    initialData ? new Date(`${initialData.projectRecruitEndDt}T23:59:59`).getTime() < Date.now() : false,
+  )
 
   useEffect(() => {
+    // 조회수는 상세 GET에서 분리된 별도 API로 집계 — 실제 브라우저 방문만 카운트(크롤러/SSR 제외)
+    incrementView(`/projects/${projectSq}`)
     api
       .get<{ output: ProjectDetail }>(`/projects/${projectSq}/details`)
       .then((r) => {
@@ -199,11 +207,14 @@ export default function ProjectSpec({ projectSq, variant }: Props) {
               <div className="flex items-center gap-4">
                 <img
                   src={project.companyImageUrl || '/img/logos/Company_logo.png'}
-                  alt={project.companyNm}
+                  alt={`${project.companyNm} 로고`}
                   className="h-[70px] w-[70px] shrink-0 rounded-full bg-muted object-contain"
                 />
                 <div className="min-w-0 flex-1">
-                  <CardTitle className="text-lg">{project.projectTtl}</CardTitle>
+                  {/* 페이지 대표 헤딩 — 프로젝트 상세엔 h1이 없어 SEO상 제목 계층이 비어 있었다 */}
+                  <CardTitle className="text-lg">
+                    <h1>{project.projectTtl}</h1>
+                  </CardTitle>
                   <p className="mt-0.5 text-sm text-muted-foreground">{project.companyNm}</p>
                 </div>
               </div>

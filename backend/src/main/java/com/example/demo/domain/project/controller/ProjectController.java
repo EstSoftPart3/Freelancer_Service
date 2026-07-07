@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.lang.model.type.NullType;
+
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
@@ -34,6 +37,7 @@ import com.example.demo.domain.project.service.ProjectService;
 
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(value = "http://localhost:8504")
 public class ProjectController {
 	private final ProjectService projectService;
+	private final ViewCountDedupService viewCountDedupService;
 
 	@PostMapping
 	public ResponseEntity<ApiResponse<Void>> postProject(@Valid @RequestBody ProjectCreateRequest request,
@@ -118,6 +123,18 @@ public class ProjectController {
 		}
 		return ResponseEntity
 				.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 상세 내역 반환 성공", projectService.fetchProject(projectSq, token)));
+	}
+
+	// 프로젝트 조회수 증가 (BoardController.addViewCntBoard와 동일 패턴 — 상세 GET에서 분리)
+	@PatchMapping("/{projectSq}/increment-view")
+	public ResponseEntity<ApiResponse<NullType>> addViewCntProject(
+			@AuthenticationPrincipal Long userSq,
+			@PathVariable("projectSq") Long projectSq,
+			HttpServletRequest request) {
+		if (viewCountDedupService.isFirstView("project", projectSq, userSq, request)) {
+			projectService.addViewCntProject(projectSq);
+		}
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
 	}
 
 	@GetMapping("/forms")

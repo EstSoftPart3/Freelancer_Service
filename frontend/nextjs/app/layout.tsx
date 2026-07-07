@@ -27,6 +27,15 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     type: 'website',
   },
+  // 네이버 서치어드바이저 소유확인 — searchadvisor.naver.com에서 사이트 등록 후 발급되는
+  // content 값을 NEXT_PUBLIC_NAVER_SITE_VERIFICATION 환경변수로 주입하면 메타태그가 렌더된다.
+  ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+    ? {
+        verification: {
+          other: { 'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION },
+        },
+      }
+    : {}),
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

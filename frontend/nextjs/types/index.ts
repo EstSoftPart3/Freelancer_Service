@@ -237,6 +237,9 @@ export interface ProjectDetail {
   isScrap: 0 | 1
   projectScrapCnt: number
   projectViewCnt: number
+  projectCreatedDt: string
+  /** 월 단가(원 단위 KRW). 0 또는 null이면 단가 협의 */
+  projectSalary?: number | null
 }
 
 export interface FilterOption {

@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   boardSq: string
+  // 서버에서 미리 조회한 초기 데이터 — SEO용으로 초기 HTML에 본문을 포함시킨다.
+  // viewerSq 등 사용자별 필드가 없으므로 마운트 후 getBoard()로 1회 갱신한다(기존 동작 유지).
+  initialData?: BoardDetail | null
 }
 
 const emptyBoard: BoardDetail = {
@@ -38,10 +41,10 @@ function fmtDate(iso: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function QnaDetailClient({ boardSq }: Props) {
+export default function QnaDetailClient({ boardSq, initialData }: Props) {
   const searchParams = useSearchParams()
   const { setViewerSq, viewerSq } = useBoardStore()
-  const [boardInfo, setBoardInfo] = useState<BoardDetail>(emptyBoard)
+  const [boardInfo, setBoardInfo] = useState<BoardDetail>(initialData ?? emptyBoard)
 
   // 답변 작성 모달
   const [answerOpen, setAnswerOpen] = useState(false)

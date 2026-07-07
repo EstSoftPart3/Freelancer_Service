@@ -310,6 +310,12 @@ public class ProjectService {
 		return new ProjectListResponse(page, request.getSize(), totalCount, totalPages, responses);
 	}
 
+	// 프로젝트 조회수 증가 (게시판 addViewCntBoard와 동일 패턴)
+	@Transactional
+	public void addViewCntProject(Long projectSq) {
+		projectMapper.updateViewCnt(projectSq);
+	}
+
 	@Transactional
 	public ProjectRecruitStatus fetchCompanyProjectCount(CompanyFilterRequest request,
 			JwtAuthenticationToken jwtAuthenticationToken) {
@@ -322,9 +328,10 @@ public class ProjectService {
 		return projectMapper.countCompanyProjectsByStatus(request, companySq);
 	}
 
+	// 조회수 증가는 incrementView API로 분리 — 상세 GET은 SEO용 서버 렌더링/크롤러 방문에도 쓰여
+	// 여기서 올리면 페이지뷰당 중복 집계되고 봇 방문까지 집계된다.
 	@Transactional
 	public ProjectDetailResponse fetchProject(Long projectSq, JwtAuthenticationToken token) {
-		projectMapper.updateViewCnt(projectSq);
 		Project p = projectMapper.findBySq(projectSq);
 
 		if (p.getProjectIsDeletedYn().equals("Y")) {
