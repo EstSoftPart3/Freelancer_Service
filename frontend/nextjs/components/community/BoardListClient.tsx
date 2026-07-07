@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import BoardTable from '@/components/community/BoardTable'
 import CommonPagination from '@/components/community/CommonPagination'
+import CategoryTabs from '@/components/community/CategoryTabs'
+import PopularWidget from '@/components/community/PopularWidget'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
+import { useCommunityStore } from '@/stores/communityStore'
 import api from '@/lib/api'
 import type { BoardItem, BoardListResponse } from '@/types'
 
-type BoardCategory = 'board' | 'qna' | 'notice'
+type BoardCategory = 'board' | 'qna' | 'notice' | 'all'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: '상태' },
@@ -31,28 +34,36 @@ export default function BoardListClient({ boardCategory }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isLoggedIn, authChecked } = useUserStore()
+  const setCommunityFilters = useCommunityStore((s) => s.setFilters)
 
   const [boardList, setBoardList] = useState<BoardItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
 
-  // 필터 state — URL searchParams에서 초기화
+  // 필터 state — URL 우선, 없으면 탭 전환 간 보존되는 communityStore 값으로 폴백
+  // (getState()로 스냅샷만 읽어 store 변경에 이 컴포넌트가 불필요하게 재구독되지 않게 한다)
   const [page, setPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1))
-  const [sortType, setSortType] = useState(() => searchParams.get('sort') || 'latest')
-  const [searchType, setSearchType] = useState(() => searchParams.get('searchType') || 'all')
-  const [keyword, setKeyword] = useState(() => searchParams.get('keyword') || '')
-  const [statusCd, setStatusCd] = useState(() => searchParams.get('status') || 'all')
+  const [sortType, setSortType] = useState(() => searchParams.get('sort') || useCommunityStore.getState().sort)
+  const [searchType, setSearchType] = useState(() => searchParams.get('searchType') || useCommunityStore.getState().searchType)
+  const [keyword, setKeyword] = useState(() => searchParams.get('keyword') || useCommunityStore.getState().keyword)
+  const [statusCd, setStatusCd] = useState(() => searchParams.get('status') || useCommunityStore.getState().status)
   const [tag, setTag] = useState(() => searchParams.get('tag') || '')
 
   const isQna = boardCategory === 'qna'
   const isNotice = boardCategory === 'notice'
+  const isAll = boardCategory === 'all'
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
-  const canRegister = authChecked && !isNotice && isLoggedIn()
+  // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
+  const canRegister = authChecked && !isNotice && !isAll && isLoggedIn()
+
+  const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
   const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string) => {
     setIsLoading(true)
     try {
-      let url = `/${boardCategory}?page=${p}&size=${PAGE_SIZE}&sortType=${sort}`
+      let url = isAll
+        ? `/community/boards?boardType=all&page=${p}&size=${PAGE_SIZE}&sortType=${sort}`
+        : `/${boardCategory}?page=${p}&size=${PAGE_SIZE}&sortType=${sort}`
       if (kw.trim()) url += `&searchType=${sType}&keyword=${encodeURIComponent(kw.trim())}`
       if (isQna && status !== 'all') url += `&boardAdoptStatusCd=${status}`
       if (t) url += `&tag=${encodeURIComponent(t)}`
@@ -64,13 +75,13 @@ export default function BoardListClient({ boardCategory }: Props) {
       setBoardList(out.boards)
     } catch { alertStore.show('게시글을 불러올 수 없습니다.', 'danger') }
     finally { setIsLoading(false) }
-  }, [boardCategory, isQna])
+  }, [boardCategory, isQna, isAll])
 
   // URL 반영
   const syncUrl = useCallback((params: Record<string, string>) => {
     const qs = new URLSearchParams({ ...Object.fromEntries(searchParams), ...params })
-    router.replace(`/${boardCategory}?${qs.toString()}`)
-  }, [boardCategory, router, searchParams])
+    router.replace(`${basePath}?${qs.toString()}`)
+  }, [basePath, router, searchParams])
 
   // 초기 + tag 변경 감지
   useEffect(() => {
@@ -85,18 +96,21 @@ export default function BoardListClient({ boardCategory }: Props) {
   const onSort = (val: string) => {
     setSortType(val); setPage(1)
     syncUrl({ sort: val, page: '1' })
+    setCommunityFilters({ sort: val })
     fetchList(1, val, searchType, keyword, statusCd, tag)
   }
 
   const onStatus = (val: string) => {
     setStatusCd(val); setPage(1)
     syncUrl({ status: val, page: '1' })
+    setCommunityFilters({ status: val })
     fetchList(1, sortType, searchType, keyword, val, tag)
   }
 
   const onSearch = () => {
     setPage(1)
     syncUrl({ page: '1', searchType, keyword: keyword.trim() || '' })
+    setCommunityFilters({ searchType, keyword: keyword.trim() })
     fetchList(1, sortType, searchType, keyword, statusCd, tag)
   }
 
@@ -106,13 +120,17 @@ export default function BoardListClient({ boardCategory }: Props) {
   }
 
   const title = tag
-    ? `${boardCategory === 'board' ? '일반' : boardCategory === 'qna' ? 'QnA' : '공지'} 게시판 (#${tag})`
+    ? `${boardCategory === 'board' ? '일반' : boardCategory === 'qna' ? 'QnA' : boardCategory === 'notice' ? '공지' : '전체'} 게시판 (#${tag})`
     : boardCategory === 'board' ? '일반 게시판'
     : boardCategory === 'qna' ? 'QnA 게시판'
-    : '공지사항'
+    : boardCategory === 'notice' ? '공지사항'
+    : '커뮤니티 전체글'
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
+    <div className="container mx-auto max-w-6xl px-4 py-8">
+      {!isNotice && <CategoryTabs />}
+      <div className="lg:flex lg:gap-6">
+      <main className="min-w-0 flex-1">
       <h1 className="mb-6 text-2xl font-bold">{title}</h1>
 
       {/* 필터 영역 */}
@@ -182,6 +200,14 @@ export default function BoardListClient({ boardCategory }: Props) {
           <CommonPagination currentPage={page} totalPages={totalPages} onPageChange={onPageChange} />
         </>
       )}
+      </main>
+
+      {!isNotice && (
+        <aside className="mt-6 hidden w-[300px] shrink-0 lg:mt-0 lg:block">
+          <PopularWidget />
+        </aside>
+      )}
+      </div>
     </div>
   )
 }

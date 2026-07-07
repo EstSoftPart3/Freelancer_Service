@@ -1,5 +1,7 @@
 // Mirrors vue_js/src/axios.js — Bearer token injection + 401 refresh queue
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
+import { getCookie, setCookie, clearAuthCookies } from '@/lib/cookies'
+import { alertStore } from '@/stores/alertStore'
 
 // 브라우저: /api/* → Next.js rewrites → 백엔드 (CORS 우회)
 // 서버 컴포넌트: 직접 백엔드 호출
@@ -53,6 +55,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
+        // 새 토큰으로 재시도했는데도 401이면(예: 이미 로그아웃된 계정) 재차 refresh를
+        // 시도하지 않도록 큐에 넣는 시점에 _retry를 미리 표시해 무한 루프를 막는다.
+        original._retry = true
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         })
@@ -74,18 +79,28 @@ api.interceptors.response.use(
           headers: { Authorization: `Bearer ${refreshToken}` },
         })
         // 응답은 ApiResponse 래퍼: { status, message, output: { accessToken, refreshToken } }
-        const newToken: string = data.output.accessToken
-        const newRefreshToken: string | undefined = data.output.refreshToken
+        const newToken: string | undefined = data?.output?.accessToken
+        const newRefreshToken: string | undefined = data?.output?.refreshToken
+        if (!newToken) throw new Error('토큰 재발급 응답이 올바르지 않습니다.')
 
-        setCookie('accessToken', newToken)
-        if (newRefreshToken) setCookie('refreshToken', newRefreshToken, 14)
+        // 로그인 시 선택한 로그인 유지 여부를 그대로 따른다 (재발급이 세션 쿠키를
+        // 영구 쿠키로 바꾸거나, 자동로그인 쿠키를 조기 만료시키지 않도록).
+        const rememberMe =
+          typeof window !== 'undefined' && localStorage.getItem('autoLogin') === 'true'
+        const days = rememberMe ? 30 : null
+
+        setCookie('accessToken', newToken, days)
+        if (newRefreshToken) setCookie('refreshToken', newRefreshToken, days)
         processQueue(null, newToken)
         original.headers = { ...original.headers, Authorization: `Bearer ${newToken}` }
         return api(original)
       } catch (err) {
         processQueue(err, null)
         clearAuthCookies()
-        if (typeof window !== 'undefined') window.location.href = '/login'
+        if (typeof window !== 'undefined') {
+          alertStore.show('세션이 만료되었습니다. 다시 로그인해 주세요.', 'danger')
+          window.location.href = '/login'
+        }
         return Promise.reject(err)
       } finally {
         isRefreshing = false
@@ -95,24 +110,5 @@ api.interceptors.response.use(
     return Promise.reject(error)
   },
 )
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') return undefined
-  return document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${name}=`))
-    ?.split('=')[1]
-}
-
-function setCookie(name: string, value: string, days = 1) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`
-}
-
-function clearAuthCookies() {
-  document.cookie = 'accessToken=; Max-Age=0; path=/'
-  document.cookie = 'refreshToken=; Max-Age=0; path=/'
-  document.cookie = 'userType=; Max-Age=0; path=/'
-}
 
 export default api

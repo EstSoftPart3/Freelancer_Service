@@ -27,6 +27,8 @@ public interface ProjectScrapMapper {
 
     int deleteByUserAndProject(@Param("userSq") Long userSq, @Param("projectSq") Long projectSq);
 
+    void decreaseScrapCnt(@Param("projectSq") Long projectSq);
+
     List<Long> findScrappedProjectSqsByUserSqWithPaging(
             @Param("userSq") Long userSq,
             @Param("searchType") String searchType,

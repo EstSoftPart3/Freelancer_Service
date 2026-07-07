@@ -40,9 +40,10 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
       className="relative flex cursor-pointer flex-row items-start gap-4 rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md"
       onClick={() => onClick(project.projectSq)}
     >
-      {/* 스크랩 버튼 — 우측 상단 절대 위치 */}
+      {/* 스크랩 버튼 — 우측 상단 절대 위치. z-10 + 텍스트 영역의 넉넉한 pr로 상태 뱃지(D-Day)와
+          겹쳐 클릭이 막히지 않도록 한다. */}
       <button
-        className="absolute right-3 top-3 cursor-pointer"
+        className="absolute right-3 top-3 z-10 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
           onScrap(project.projectSq, project.hasScrapped)
@@ -69,10 +70,10 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
       </div>
 
       {/* 우측 — 텍스트 정보 */}
-      <div className="min-w-0 flex-1 pr-6">
+      <div className="min-w-0 flex-1 pr-8">
         {/* 제목 + 채용 상태 */}
-        <div className="mb-1 flex flex-wrap items-center gap-2">
-          <h4 className="truncate font-bold">{project.projectTtl}</h4>
+        <div className="mb-1 flex min-w-0 flex-wrap items-center gap-2">
+          <h4 className="min-w-0 truncate font-bold">{project.projectTtl}</h4>
           <span
             className={cn(
               'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold',

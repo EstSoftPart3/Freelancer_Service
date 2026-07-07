@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
+import { enhanceBoardHtml } from '@/lib/htmlContent'
 import type { BoardDetail } from '@/types'
 
 function fmtDate(iso?: string) {
@@ -24,7 +25,7 @@ const STATUS: Record<number, { label: string; cls: string }> = {
   1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
 }
 
-type BoardType = 'board' | 'qna' | 'answer'
+type BoardType = 'board' | 'qna' | 'answer' | 'notice'
 
 interface Props {
   boardInfo: BoardDetail
@@ -48,6 +49,7 @@ export default function BoardPost({
   const [reportOpen, setReportOpen] = useState(false)
 
   const isOwner = boardInfo.userSq != null && viewerSq != null && boardInfo.userSq === viewerSq
+  const safeDescription = useMemo(() => enhanceBoardHtml(boardInfo.description), [boardInfo.description])
 
   const handleRecommend = async () => {
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
@@ -116,19 +118,18 @@ export default function BoardPost({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h1 className="text-xl font-semibold text-primary">{boardInfo.ttl}</h1>
         <div className="flex flex-wrap gap-2">
-          <button
-            className="flex items-center gap-1 text-xs text-muted-foreground"
-            onClick={handleRecommend}
-          >
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Eye className="h-3.5 w-3.5" /> 조회 {boardInfo.viewCnt}
-          </button>
-          <button
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-            onClick={handleRecommend}
-          >
-            <ThumbsUp className="h-3.5 w-3.5" /> 추천 {boardInfo.recommendCnt}
-          </button>
-          {!isOwner && viewerSq != null && (
+          </span>
+          {boardType !== 'notice' && (
+            <button
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+              onClick={handleRecommend}
+            >
+              <ThumbsUp className="h-3.5 w-3.5" /> 추천 {boardInfo.recommendCnt}
+            </button>
+          )}
+          {boardType !== 'notice' && !isOwner && viewerSq != null && (
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
               onClick={() => setReportOpen(true)}
@@ -148,7 +149,7 @@ export default function BoardPost({
       {/* 본문 */}
       <div
         className="prose prose-sm mt-6 mb-6 max-w-none"
-        dangerouslySetInnerHTML={{ __html: boardInfo.description }}
+        dangerouslySetInnerHTML={{ __html: safeDescription }}
       />
 
       {/* 첨부파일 */}
@@ -202,13 +203,13 @@ export default function BoardPost({
             <Button size="sm" variant="outline" onClick={() => setStatusConfirm({ open: true, cd: 1504 })}>미해결</Button>
           </>
         )}
-        {isOwner && boardType !== 'answer' && (
+        {isOwner && boardType !== 'answer' && boardType !== 'notice' && (
           <Button size="sm" variant="outline" onClick={handleEdit}>수정</Button>
         )}
         {isOwner && boardType === 'answer' && onEdit && (
           <Button size="sm" variant="outline" onClick={onEdit}>수정</Button>
         )}
-        {isOwner && (
+        {isOwner && boardType !== 'notice' && (
           <Button size="sm" variant="destructive" onClick={() => setConfirmOpen(true)}>삭제</Button>
         )}
         {boardType === 'answer' && parentUserSq === viewerSq && adoptStatusCd === 1501 && (

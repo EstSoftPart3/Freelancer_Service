@@ -91,7 +91,12 @@ export default function ResumeDetailModal({ resumeSq, projectSq, applicationSq, 
           <div className="space-y-5 text-sm">
             {/* 제목 + 사진 + 기본정보 */}
             <div className="flex items-start gap-4">
-              <img src={info.resumePhotoUrl || '/img/logos/Company_logo.png'} alt="" className="h-24 w-24 shrink-0 rounded-md border bg-muted object-cover" />
+              <img
+                src={info.resumePhotoUrl || '/img/default-avatar.svg'}
+                alt=""
+                className="h-24 w-24 shrink-0 rounded-md border bg-muted object-cover"
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/img/default-avatar.svg' }}
+              />
               <div className="min-w-0 space-y-1">
                 <p className="text-base font-semibold">{info.resumeTtl}</p>
                 <p>{info.resumeNm} · {info.resumeBirthDt}</p>

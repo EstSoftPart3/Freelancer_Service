@@ -120,6 +120,9 @@ public interface ProjectMapper {
 	// 프로젝트 번호로 해당 기업의 유저 번호 조회
 	Long findUserSqByProjectSq(@Param("projectSq") Long projectSq);
 
+	// 탈퇴한 회원인지 확인 (지원 시 차단용)
+	boolean isUserWithdrawn(@Param("userSq") Long userSq);
+
 	Long findMemberTypeByApplicationSq(@Param("applicationSq") Long applicationSq);
 
 	// ProjectMapper.java 내부

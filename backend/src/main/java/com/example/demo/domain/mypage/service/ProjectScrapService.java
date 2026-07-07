@@ -65,6 +65,9 @@ public class ProjectScrapService {
     @Transactional
     public boolean deleteProjectScrap(Long userSq, Long projectSq) {
         int affected = repository.deleteByUserAndProject(userSq, projectSq);
+        if (affected > 0) {
+            repository.decreaseScrapCnt(projectSq);
+        }
         return affected > 0;
     }
 }

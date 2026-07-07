@@ -1,6 +1,5 @@
 package com.example.demo.domain.user.controller;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +24,12 @@ public class EmailVerificationController {
 
     // 1. 이메일 인증 코드 전송
     @PostMapping("/send-code")
-    public ResponseEntity<ApiResponse<Map<String, String>>> sendCode(@RequestBody Map<String, String> request) {
-        Map<String, String> data = new HashMap<>();
+    public ResponseEntity<ApiResponse<Void>> sendCode(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
-            String code = verificationService.sendVerificationCode(email);
-            data.put("code", code); // 테스트용 코드 포함
+            verificationService.sendVerificationCode(email);
 
-            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인증 코드가 이메일로 발송되었습니다.", data));
+            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인증 코드가 이메일로 발송되었습니다.", null));
         } catch (MessagingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 발송에 실패했습니다: " + e.getMessage(), null));
@@ -40,14 +37,12 @@ public class EmailVerificationController {
     }
 
     @PostMapping("/find/send-code")
-    public ResponseEntity<ApiResponse<Map<String, String>>> findBysendCode(@RequestBody Map<String, String> request) {
-        Map<String, String> data = new HashMap<>();
+    public ResponseEntity<ApiResponse<Void>> findBysendCode(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
-            String code = verificationService.findBysendVerificationCode(email);
-            data.put("code", code); // 테스트용 코드 포함
+            verificationService.findBysendVerificationCode(email);
 
-            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인증 코드가 이메일로 발송되었습니다.", data));
+            return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인증 코드가 이메일로 발송되었습니다.", null));
         } catch (MessagingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 발송에 실패했습니다: " + e.getMessage(), null));

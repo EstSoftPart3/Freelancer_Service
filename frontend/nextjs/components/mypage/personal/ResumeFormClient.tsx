@@ -84,6 +84,7 @@ interface Props {
 // yyyy-MM → yyyy-MM-01 (백엔드 LocalDate)
 const toFirstDay = (ym: string) => (ym && /^\d{4}-\d{2}$/.test(ym) ? `${ym}-01` : ym || null)
 const toMonth = (d?: string) => (d ? d.substring(0, 7) : '')
+const today = () => new Date().toISOString().slice(0, 10)
 
 export default function ResumeFormClient({ resumeSq }: Props) {
   const router = useRouter()
@@ -252,8 +253,9 @@ export default function ResumeFormClient({ resumeSq }: Props) {
         latitude: d.latitude != null ? String(d.latitude) : '',
         longitude: d.longitude != null ? String(d.longitude) : '',
       }))
-    } catch {
-      // 기본정보 미조회 시 빈 폼 유지
+    } catch (err) {
+      // 회원 기본정보 프리필 실패 — 빈 폼은 유지하되 원인을 조용히 삼키지 않는다.
+      console.error('회원 기본정보를 불러오지 못했습니다.', err)
     }
   }, [])
 
@@ -399,7 +401,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold">생년월일</label>
-            <Input type="date" value={resumeBirthDt} onChange={(e) => setResumeBirthDt(e.target.value)} onKeyDown={(e) => e.preventDefault()} className="cursor-pointer" />
+            <Input type="date" max={today()} value={resumeBirthDt} onChange={(e) => setResumeBirthDt(e.target.value)} className="cursor-pointer" />
 
           </div>
           <div className="space-y-1">

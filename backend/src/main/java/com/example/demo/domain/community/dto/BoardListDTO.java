@@ -23,6 +23,7 @@ public class BoardListDTO{
     private LocalDateTime createdAt;
     private List<String> normalTags;  // 일반 태그
     private List<SkillTagDTO> skillTags;
+    private String boardType; // "board" | "qna" — 전체보기(통합 목록)에서 상세 링크 분기용
 
     public static BoardListDTO fromEntity(Board board, String userNm, Integer boardAnswerCnt, List<String> normalTags, List<SkillTagDTO> skillTags) {
         return new BoardListDTO(
@@ -37,7 +38,8 @@ public class BoardListDTO{
 			board.getBoardAdoptStatusCd(),
 			board.getBoardCreatedAtDtm(),
 			normalTags,
-			skillTags
+			skillTags,
+			Long.valueOf(1402L).equals(board.getBoardTypeCd()) ? "qna" : "board"
         );
     }
 	

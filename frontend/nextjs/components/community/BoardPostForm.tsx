@@ -67,6 +67,12 @@ export default function BoardPostForm({ boardCategory }: Props) {
     e.target.value = ''
   }
 
+  const handleCancel = () => {
+    // 새 탭/직접 진입 등으로 히스토리가 없으면 router.back()이 무반응이므로 목록으로 이동한다.
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back()
+    else router.push(`/${boardCategory}`)
+  }
+
   const handleSubmit = async () => {
     if (!ttl.trim()) { alertStore.show('제목을 입력해주세요.', 'danger'); return }
     if (isHtmlEmpty(description)) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
@@ -197,7 +203,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
       {/* 버튼 */}
       <div className="flex justify-end gap-2">
         <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
-        <Button variant="outline" onClick={() => router.back()}>취소</Button>
+        <Button variant="outline" onClick={handleCancel}>취소</Button>
       </div>
 
       {isQna && (

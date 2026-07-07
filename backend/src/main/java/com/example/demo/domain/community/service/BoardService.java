@@ -16,6 +16,7 @@ import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.BoardListDTO;
+import com.example.demo.domain.community.dto.CommunityBestItemDTO;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
 import com.example.demo.domain.community.dto.response.AnswerListResponse;
@@ -110,6 +111,14 @@ public class BoardService {
 				.collect(Collectors.toList());
 
 		return BoardListResponse.builder().page(page).size(size).totalElements(totalElements).boards(responses).build();
+	}
+
+	private static final Set<String> ALLOWED_BEST_PERIODS = Set.of("daily", "weekly", "monthly", "all");
+
+	public List<CommunityBestItemDTO> getBestBoards(String period, int size) {
+		String safePeriod = ALLOWED_BEST_PERIODS.contains(period) ? period : "all";
+		int safeSize = Math.max(1, Math.min(size, 20));
+		return boardMapper.findBestBoards(safePeriod, safeSize);
 	}
 
 	@Transactional

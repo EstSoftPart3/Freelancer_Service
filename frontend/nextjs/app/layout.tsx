@@ -14,11 +14,19 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 
 // SEO placeholder — 각 page.tsx에서 generateMetadata()로 오버라이드
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://freelancer-service.com'),
   title: {
     default: 'Freelancer Service',
     template: '%s | Freelancer Service',
   },
   description: '프리랜서와 기업을 연결하는 서비스',
+  openGraph: {
+    title: 'Freelancer Service',
+    description: '프리랜서와 기업을 연결하는 서비스',
+    siteName: 'Freelancer Service',
+    locale: 'ko_KR',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

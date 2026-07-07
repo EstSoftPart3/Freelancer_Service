@@ -123,4 +123,17 @@ export const boardApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+
+  /** * 기술 태그 트리 조회 (Q&A 게시글용) — FO와 동일 공개 엔드포인트 재사용
+   */
+  getSkillTags: async () => {
+    return await api.$get<ApiResponse<RawSkillTag[]>>('/board/skill-tags')
+  },
+}
+
+export interface RawSkillTag {
+  skillTagSq: number
+  skillTagNm: string
+  skillTagLvl: number
+  parentSkillTagSq: number | null
 }

@@ -82,6 +82,11 @@ public class ResumeService {
 			}
 		}
 
+		// 대표 이력서로 등록 시 기존 대표 해제 (대표 이력서는 1건만 유지)
+		if ("Y".equals(dto.getResumeIsRepresentativeYn())) {
+			resumeMapper.updateAllRepresentativeN(userSq);
+		}
+
 		// 이력서 저장
 		int result = resumeRepository.insertResume(userSq, dto);
 		if (result <= 0) {
@@ -194,6 +199,11 @@ public class ResumeService {
 		Long resumeSq = dto.getResumeSq();
 		if (resumeSq == null) {
 			throw new IllegalArgumentException("이력서 번호(resumeSq)는 필수입니다.");
+		}
+
+		// 대표 이력서로 수정 시 기존 대표 해제 (대표 이력서는 1건만 유지)
+		if ("Y".equals(dto.getResumeIsRepresentativeYn())) {
+			resumeMapper.updateAllRepresentativeN(userSq);
 		}
 
 		// 1. 기본 이력서 정보 업데이트
@@ -963,17 +973,32 @@ public class ResumeService {
 			resumeRepository.insertResumeSkillTag(tag);
 		}
 
-		// 9. 파일 매핑만 (withFiles=true일 경우)
+		// 9. 파일 복제 (withFiles=true일 경우) — 원본과 물리 파일을 공유하면 한쪽 삭제 시 다른 쪽도 유실되므로
+		// 물리 파일과 TBL_COMMON_FILE_S 레코드를 실제로 복제해 새 file_sq로 매핑한다.
 		if (withFiles) {
-			// 9-1. 프로필 이미지 매핑만
+			// 9-1. 프로필 이미지 복제
 			ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(originResumeSq);
 			if (profileImage != null) {
-				resumeRepository.insertResumeProfileImageMapping(newResumeSq, profileImage.getFileSq());
+				String copiedSaveNm = fileStorageService.copyFile(profileImage.getFileSaveNm());
+				ResumeRequestDTO.ResumeFileDTO newProfileImage = new ResumeRequestDTO.ResumeFileDTO();
+				newProfileImage.setFileOriginalNm(profileImage.getFileOriginalNm());
+				newProfileImage.setFileSaveNm(copiedSaveNm);
+				newProfileImage.setFileTyp(profileImage.getFileTyp());
+				newProfileImage.setFileSize(profileImage.getFileSize());
+				resumeRepository.insertProfileImage(newProfileImage);
+				resumeRepository.insertResumeProfileImageMapping(newResumeSq, newProfileImage.getFileSq());
 			}
 
-			// 9-2. 첨부파일 매핑만
+			// 9-2. 첨부파일 복제
 			for (ResumeRequestDTO.ResumeFileDTO file : resumeRepository.findAttachmentList(originResumeSq)) {
-				resumeRepository.insertResumeAttachmentMapping(newResumeSq, file.getFileSq());
+				String copiedSaveNm = fileStorageService.copyFile(file.getFileSaveNm());
+				ResumeRequestDTO.ResumeFileDTO newFile = new ResumeRequestDTO.ResumeFileDTO();
+				newFile.setFileOriginalNm(file.getFileOriginalNm());
+				newFile.setFileSaveNm(copiedSaveNm);
+				newFile.setFileTyp(file.getFileTyp());
+				newFile.setFileSize(file.getFileSize());
+				resumeRepository.insertAttachmentFile(newFile);
+				resumeRepository.insertResumeAttachmentMapping(newResumeSq, newFile.getFileSq());
 			}
 		}
 

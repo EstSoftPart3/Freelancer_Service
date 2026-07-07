@@ -37,7 +37,9 @@ import lombok.RequiredArgsConstructor;
  *       걸려 관리자 로그인도 401이고 권한 경계도 흐려진다.</li>
  *   <li><b>FO public GET 정책</b> — FO 마이그레이션은 {@code /projects}·{@code /board}·
  *       {@code /notice} 목록 등을 비로그인 SEO public으로 설계했다. {@code anyRequest().authenticated()}는
- *       이 조회들을 401로 막으므로, public 조회 경로를 permitAll로 분류해야 한다.</li>
+ *       이 조회들을 401로 막으므로, public 조회 경로를 permitAll로 분류해야 한다.
+ *       (커뮤니티 고도화로 추가된 {@code /community/boards}, {@code /community/best}도
+ *       동일하게 비로그인 public GET이어야 한다.)</li>
  *   <li>actuator 헬스체크·OPTIONS preflight permitAll도 dev 기준으로 추가 필요.</li>
  * </ol>
  *

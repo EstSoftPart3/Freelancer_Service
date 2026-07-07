@@ -3,6 +3,7 @@ package com.example.demo.domain.community.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.community.dto.CommunityBestItemDTO;
 import com.example.demo.domain.community.entity.*;
 import java.util.*;
 
@@ -53,5 +54,7 @@ public interface BoardMapper {
       void deleteFile(@Param("fileSq") Long fileSq);
 
       Board findByIdOnly(@Param("boardSq") Long boardSq);
+
+      List<CommunityBestItemDTO> findBestBoards(@Param("period") String period, @Param("size") int size);
 
 }

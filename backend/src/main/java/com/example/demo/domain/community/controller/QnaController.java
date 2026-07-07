@@ -5,6 +5,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.*;
 import com.example.demo.domain.community.service.BoardService;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.domain.community.dto.response.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import javax.lang.model.type.NullType;
@@ -23,6 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class QnaController {
     private final BoardService boardService;
+    private final ViewCountDedupService viewCountDedupService;
 
     // 전체 QnA 조회
     @GetMapping
@@ -105,8 +108,13 @@ public class QnaController {
 
     // QnA 조회수 증가
     @PatchMapping("/{boardSq}/increment-view")
-    public ResponseEntity<ApiResponse<NullType>> addViewCntQna(@PathVariable("boardSq") Long boardSq) {
-        boardService.addViewCntBoard(boardSq);
+    public ResponseEntity<ApiResponse<NullType>> addViewCntQna(
+            @AuthenticationPrincipal Long userSq,
+            @PathVariable("boardSq") Long boardSq,
+            HttpServletRequest request) {
+        if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
+            boardService.addViewCntBoard(boardSq);
+        }
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
     }
 

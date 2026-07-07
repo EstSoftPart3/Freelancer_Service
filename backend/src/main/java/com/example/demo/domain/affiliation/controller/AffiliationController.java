@@ -6,11 +6,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.affiliation.service.AffiliationService;
 import com.example.demo.domain.affiliation.dto.response.*;
 import com.example.demo.domain.affiliation.dto.request.*;
 import com.example.demo.domain.affiliation.entity.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import javax.lang.model.type.NullType;
@@ -23,6 +25,7 @@ import java.util.*;
 public class AffiliationController {
 
     private final AffiliationService affiliationService;
+    private final ViewCountDedupService viewCountDedupService;
     
     // 소속 공고 리스트 조회
     @GetMapping
@@ -49,8 +52,13 @@ public class AffiliationController {
     
     // 소속 조회수 증가
     @PatchMapping("/{companySq}/increment-view")
-    public ResponseEntity<ApiResponse<NullType>> addAffiliationViewCnt(@PathVariable("companySq") Long companySq) {
-    	affiliationService.addCompanyViewCnt(companySq);
+    public ResponseEntity<ApiResponse<NullType>> addAffiliationViewCnt(
+    		@AuthenticationPrincipal Long userSq,
+    		@PathVariable("companySq") Long companySq,
+    		HttpServletRequest request) {
+    	if (viewCountDedupService.isFirstView("affiliation", companySq, userSq, request)) {
+    		affiliationService.addCompanyViewCnt(companySq);
+    	}
     	return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
     }
     

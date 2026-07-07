@@ -42,7 +42,7 @@ export default function BoardDetailClient({ boardSq, boardCategory }: Props) {
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <BoardPost
         boardInfo={boardInfo}
-        boardType={boardCategory === 'notice' ? 'board' : 'board'}
+        boardType={boardCategory === 'notice' ? 'notice' : 'board'}
         onRefresh={getBoard}
       />
       <BoardComment

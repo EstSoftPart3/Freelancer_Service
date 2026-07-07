@@ -104,14 +104,17 @@ export default function AffiliatedMembersClient() {
             </div>
 
             <div className="flex items-center justify-between text-sm text-muted-foreground flex-wrap gap-2">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <span><span className="font-semibold text-foreground">경력</span> | {member.careerYr}년차</span>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   <span className="font-semibold text-foreground">사용 기술</span>
                   <span>|</span>
-                  {member.skillTagNms.map((s) => (
+                  {member.skillTagNms.slice(0, 6).map((s) => (
                     <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
                   ))}
+                  {member.skillTagNms.length > 6 && (
+                    <Badge variant="outline" className="text-xs">+{member.skillTagNms.length - 6}</Badge>
+                  )}
                 </div>
               </div>
               <span className="whitespace-nowrap">

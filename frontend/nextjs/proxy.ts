@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/sign-up',
   '/find-account',
   '/reset-password',
+  '/community',
   '/board',
   '/qna',
   '/notice',
