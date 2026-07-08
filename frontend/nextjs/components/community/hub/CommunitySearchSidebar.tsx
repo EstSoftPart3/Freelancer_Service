@@ -1,9 +1,7 @@
 'use client'
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
+import CommunitySearchForm from '@/components/community/hub/CommunitySearchForm'
 import type { SkillTagShortcut } from '@/lib/community'
 
 interface Props {
@@ -12,26 +10,13 @@ interface Props {
 
 export default function CommunitySearchSidebar({ tags }: Props) {
   const router = useRouter()
-  const [keyword, setKeyword] = useState('')
-
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const kw = keyword.trim()
-    if (!kw) return
-    router.push(`/community/list?searchType=all&keyword=${encodeURIComponent(kw)}`)
-  }
 
   return (
     <div className="space-y-4">
-      <form onSubmit={onSearch} className="flex items-center gap-1 rounded-lg border px-2">
-        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <Input
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="검색어를 입력하세요"
-          className="h-9 border-none px-1 shadow-none focus-visible:ring-0"
-        />
-      </form>
+      {/* 모바일은 본문 상단의 CommunitySearchForm이 담당 — 중복 노출 방지 */}
+      <div className="hidden lg:block">
+        <CommunitySearchForm />
+      </div>
 
       {tags.length > 0 && (
         <div className="rounded-lg border p-3">

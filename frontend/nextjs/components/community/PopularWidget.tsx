@@ -13,19 +13,23 @@ const PERIOD_TABS: { value: Period; label: string }[] = [
 ]
 
 interface Props {
+  // 미지정 시 제목 없이 탭만 한 줄로 노출 (목록 사이드바용)
   title?: string
   size?: number
   showTabs?: boolean
   initialPeriod?: Period
   initialItems?: CommunityBestItem[]
+  // true면 리스트에 max-height + 세로 스크롤 적용 (허브 우측 추천글용)
+  scrollable?: boolean
 }
 
 export default function PopularWidget({
-  title = '인기 게시물',
+  title,
   size = 10,
   showTabs = true,
   initialPeriod = 'daily',
   initialItems,
+  scrollable = false,
 }: Props) {
   const [period, setPeriod] = useState<Period>(initialPeriod)
   const [items, setItems] = useState<CommunityBestItem[]>(initialItems ?? [])
@@ -51,7 +55,7 @@ export default function PopularWidget({
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        {title && <h3 className="text-sm font-semibold">{title}</h3>}
         {showTabs && (
           <div className="flex gap-1 text-xs">
             {PERIOD_TABS.map((t) => (
@@ -59,7 +63,7 @@ export default function PopularWidget({
                 key={t.value}
                 type="button"
                 onClick={() => setPeriod(t.value)}
-                className={`rounded-full px-2 py-1 cursor-pointer transition-colors ${
+                className={`whitespace-nowrap rounded-full px-2 py-1 cursor-pointer transition-colors ${
                   period === t.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
                 }`}
               >
@@ -75,7 +79,7 @@ export default function PopularWidget({
       ) : items.length === 0 ? (
         <p className="py-6 text-center text-xs text-muted-foreground">게시글이 없습니다.</p>
       ) : (
-        <ol className="space-y-2">
+        <ol className={`space-y-2 ${scrollable ? 'max-h-[420px] overflow-y-auto pr-1' : ''}`}>
           {items.map((item, i) => (
             <li key={`${item.boardType}-${item.sq}`} className="flex items-start gap-2 text-sm">
               <span className="w-4 shrink-0 font-bold text-primary">{i + 1}</span>

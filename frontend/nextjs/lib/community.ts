@@ -16,6 +16,14 @@ export async function fetchLatestBoards(size: number): Promise<BoardItem[]> {
   return res.boards
 }
 
+export async function fetchNotices(size: number): Promise<BoardItem[]> {
+  const res = await safeGet<BoardListResponse>(
+    `/notice?page=1&size=${size}&sortType=latest`,
+    { boards: [], totalElements: 0 },
+  )
+  return res.boards
+}
+
 export interface SkillTagShortcut {
   skillTagSq: number
   skillTagNm: string

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import BoardTable from '@/components/community/BoardTable'
+import BoardCardList from '@/components/community/BoardCardList'
 import CommonPagination from '@/components/community/CommonPagination'
 import CategoryTabs from '@/components/community/CategoryTabs'
 import PopularWidget from '@/components/community/PopularWidget'
@@ -131,67 +132,77 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     : boardCategory === 'notice' ? '공지사항'
     : '커뮤니티 전체글'
 
+  // 탭 줄 오른쪽(공지는 단독 줄)에 들어가는 필터·검색 컨트롤
+  const filterControls = (
+    <>
+      <select
+        value={sortType}
+        onChange={(e) => onSort(e.target.value)}
+        className="h-8 shrink-0 rounded-lg border border-border bg-background px-2 text-sm"
+      >
+        <option value="latest">최신순</option>
+        <option value="oldest">오래된순</option>
+        <option value="view">조회순</option>
+        <option value="comment">댓글순</option>
+        <option value="recommend">추천순</option>
+      </select>
+      {isQna && (
+        <select
+          value={statusCd}
+          onChange={(e) => onStatus(e.target.value)}
+          className="h-8 shrink-0 rounded-lg border border-border bg-background px-2 text-sm"
+        >
+          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      )}
+      <form
+        onSubmit={(e) => { e.preventDefault(); onSearch() }}
+        className="flex w-full gap-2 md:w-auto"
+      >
+        <select
+          value={searchType}
+          onChange={(e) => setSearchType(e.target.value)}
+          className="h-8 shrink-0 rounded-lg border border-border bg-background px-2 text-sm"
+        >
+          <option value="all">전체</option>
+          <option value="title">제목</option>
+          <option value="content">내용</option>
+        </select>
+        <Input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="검색어 입력"
+          className="h-8 w-full min-w-0 flex-1 md:w-36 md:flex-none"
+        />
+        <Button type="submit" size="sm" className="shrink-0">검색</Button>
+      </form>
+    </>
+  )
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
-      {!isNotice && <CategoryTabs />}
+      {!isNotice && <CategoryTabs rightSlot={filterControls} />}
       <div className="lg:flex lg:gap-6">
       <main className="min-w-0 flex-1">
       <h1 className="mb-6 text-2xl font-bold">{title}</h1>
 
-      {/* 필터 영역 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={sortType}
-            onChange={(e) => onSort(e.target.value)}
-            className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
-          >
-            <option value="latest">최신순</option>
-            <option value="oldest">오래된순</option>
-            <option value="view">조회순</option>
-            <option value="comment">댓글순</option>
-            <option value="recommend">추천순</option>
-          </select>
-          {isQna && (
-            <select
-              value={statusCd}
-              onChange={(e) => onStatus(e.target.value)}
-              className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
-            >
-              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          )}
-        </div>
+      {/* 공지는 카테고리 탭이 없으므로 필터를 단독 줄로 노출 */}
+      {isNotice && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 border-b pb-4">{filterControls}</div>
+      )}
 
-        <form
-          onSubmit={(e) => { e.preventDefault(); onSearch() }}
-          className="flex flex-wrap gap-2"
-        >
-          <select
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
-            className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
-          >
-            <option value="all">전체</option>
-            <option value="title">제목</option>
-            <option value="content">내용</option>
-          </select>
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="검색어 입력"
-            className="h-8 w-36"
-          />
-          <Button type="submit" size="sm">검색</Button>
-        </form>
-      </div>
-
-      {/* 리스트 — SSR된 초기 목록이 있으면 로딩 문구로 덮지 않고 갱신 완료 시 교체 */}
+      {/* 리스트 — SSR된 초기 목록이 있으면 로딩 문구로 덮지 않고 갱신 완료 시 교체.
+          md 미만 카드 / md 이상 리스트형 행 — CSS 이중 렌더로 SSR·hydration 안전 */}
       {isLoading && boardList.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">게시글을 불러오는 중입니다...</div>
       ) : (
         <>
-          <BoardTable boardList={boardList} boardType={boardCategory} />
+          <div className="md:hidden">
+            <BoardCardList boardList={boardList} boardType={boardCategory} />
+          </div>
+          <div className="hidden md:block">
+            <BoardTable boardList={boardList} boardType={boardCategory} />
+          </div>
           {canRegister && (
             <div className="mt-3 flex justify-end">
               <Link
