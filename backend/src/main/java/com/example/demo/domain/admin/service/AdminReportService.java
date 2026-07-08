@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.admin.dto.AdminReportListDTO;
 import com.example.demo.domain.admin.dto.response.AdminReportListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminBoardMapper;
@@ -23,8 +24,9 @@ public class AdminReportService {
             String sortField, String sortOrder) {
         Long offset = (page - 1) * size;
 
+        // sortOrder는 AdminReportMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
         List<AdminReportListDTO> reports = adminReportMapper.findAllReports(statusCds, keyword, offset, size, sortField,
-                sortOrder);
+                SortDirectionUtil.normalize(sortOrder));
         Long totalElements = adminReportMapper.countReports(statusCds, keyword);
 
         return AdminReportListResponseDTO.builder()

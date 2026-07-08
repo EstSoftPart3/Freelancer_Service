@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.admin.dto.AdminUsersListDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersListResponseDTO;
@@ -41,8 +42,10 @@ public class AdminUsersService {
         Long offset = (page - 1) * size;
 
         // 2. Admin 전용 DTO 리스트 조회
+        // sortOrder는 AdminUsersMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
         List<AdminUsersListDTO> users = adminUsersMapper.findAllUsers(
-                typeCds, companySqs, userGenderCds, keyword, tagKeyword, sortField, sortOrder, offset, size);
+                typeCds, companySqs, userGenderCds, keyword, tagKeyword, sortField,
+                SortDirectionUtil.normalize(sortOrder), offset, size);
 
         // 3. 전체 개수 조회
         Long totalElements = adminUsersMapper.findAllUsersCnt(typeCds, companySqs, userGenderCds, keyword, tagKeyword);
