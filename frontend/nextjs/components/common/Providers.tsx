@@ -1,17 +1,12 @@
 'use client'
 // App.vue onMounted 로직을 담당 — 토큰 존재 시 /me 호출해 userStore 초기화
 import { useEffect } from 'react'
+import { isAxiosError } from 'axios'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
+import { getCookie, clearAuthCookies } from '@/lib/cookies'
 import api from '@/lib/api'
 import { User } from '@/types'
-
-function getCookie(name: string): string | undefined {
-  return document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${name}=`))
-    ?.split('=')[1]
-}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const { setUser, clearUser, setAuthChecked } = useUserStore()
@@ -29,8 +24,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       .then(({ data }) => {
         setUser(data.output)
       })
-      .catch(() => {
+      .catch((e) => {
         clearUser()
+        // 서버가 거부한 토큰(400/401 등)은 쿠키도 제거 — 남겨두면 proxy.ts가
+        // 쿠키 존재만 보고 /login 진입을 홈으로 돌려보내는 불일치가 생긴다.
+        // (네트워크 일시 장애는 제외해 불필요한 로그아웃을 피한다)
+        if (isAxiosError(e) && e.response) clearAuthCookies()
       })
       .finally(() => {
         setAuthChecked(true)
