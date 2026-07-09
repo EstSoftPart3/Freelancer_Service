@@ -3,10 +3,14 @@ package com.example.demo.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.demo.domain.user.util.JwtAuthenticationFilter;
 import com.example.demo.domain.user.util.JwtProvider;
@@ -16,34 +20,26 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 운영(prod) 프로파일 전용 Security 설정.
+ * 운영(prod) 프로파일 전용 Security 설정. (#290)
  *
- * <p><b>현재 미배포 상태</b>(application.yml {@code active: dev}). 아래 설정은
- * {@link SecurityConfigDev}와 정합하지 않으므로, prod로 실제 배포하기 전 다음 항목을
- * 반드시 정리해야 한다(정리 전 배포 시 로그인·관리자·CORS가 모두 깨진다):
+ * <p><b>경계 정책</b> — dev({@link SecurityConfigDev})는 개발 편의상 {@code anyRequest().permitAll()}이지만
+ * 운영은 기본 차단({@code anyRequest().authenticated()}) 위에 필요한 경로만 연다:
  *
- * <ol>
- *   <li><b>로그인 경로 오기입</b> — {@code server.servlet.context-path=/api} 때문에
- *       {@code requestMatchers}는 context-path를 벗긴 경로로 매칭한다. 아래
- *       {@code "/api/login"}, {@code "/api/refresh-token"}은 실제 매칭 경로
- *       {@code "/login"}, {@code "/refresh-token"}과 어긋나 permitAll이 적용되지 않고
- *       {@code anyRequest().authenticated()}에 걸린다 → prod 로그인 전면 401.
- *       dev처럼 {@code /api} 접두어를 빼야 한다.</li>
- *   <li><b>CORS 소스 빈 부재</b> — {@code .cors()}만 호출하고
- *       {@code CorsConfigurationSource} 빈이 없어 실제 CORS가 동작하지 않는다.
- *       dev의 {@code corsConfigurationSource()}에 해당하는 운영 도메인 허용 빈이 필요하다.</li>
- *   <li><b>관리자 가드 부재</b> — dev의 {@code "/admin/**" → hasAuthority("ROLE_ADMIN")}와
- *       {@code "/admin/login"} permitAll이 없다. 현재는 {@code anyRequest().authenticated()}로만
- *       걸려 관리자 로그인도 401이고 권한 경계도 흐려진다.</li>
- *   <li><b>FO public GET 정책</b> — FO 마이그레이션은 {@code /projects}·{@code /board}·
- *       {@code /notice} 목록 등을 비로그인 SEO public으로 설계했다. {@code anyRequest().authenticated()}는
- *       이 조회들을 401로 막으므로, public 조회 경로를 permitAll로 분류해야 한다.
- *       (커뮤니티 고도화로 추가된 {@code /community/boards}, {@code /community/best}도
- *       동일하게 비로그인 public GET이어야 한다.)</li>
- *   <li>actuator 헬스체크·OPTIONS preflight permitAll도 dev 기준으로 추가 필요.</li>
- * </ol>
+ * <ul>
+ *   <li><b>비로그인 계정 플로우</b> — 로그인·토큰재발급·회원가입·이메일 인증·아이디/비밀번호 찾기</li>
+ *   <li><b>SEO public GET</b> — 프로젝트·게시판·QnA·공지·커뮤니티·소속 조회. Next.js FO의
+ *       SSR/generateMetadata/sitemap/RSS가 비로그인으로 호출하므로 막히면 검색엔진 노출이 무력화된다.</li>
+ *   <li><b>익명 조회수</b> — FO가 로그인 여부와 무관하게 각 리소스의 {@code increment-view} PATCH를 호출한다
+ *       (frontend/nextjs/lib/viewCount.ts).</li>
+ *   <li><b>관리자(BO)</b> — {@code /admin/login}·{@code /admin/refresh-token}만 공개,
+ *       나머지 {@code /admin/**}는 ROLE_ADMIN.</li>
+ * </ul>
  *
- * <p>본 이슈(#290)에서는 배포 계획이 없어 인증 로직은 변경하지 않고 위 경계 의도만 문서화한다.
+ * <p><b>경로 매칭 주의</b>: {@code server.servlet.context-path=/api}가 적용되어 클라이언트 실제 URL은
+ * {@code /api/...}이지만 {@code requestMatchers}는 context-path를 벗긴 경로로 매칭한다.
+ * 또한 matcher는 선언 순서대로 first-match-wins이므로, 인증이 필요한
+ * {@code /projects/applications/**}·{@code /projects/companies*}를 공개 {@code GET /projects/**}보다
+ * 먼저 선언해야 한다.
  */
 @Configuration
 @Profile("prod") // 운영 환경일 때만 활성화
@@ -53,20 +49,67 @@ public class SecurityConfigProd {
     private final JwtProvider jwtProvider;
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("https://job.estsw.co.kr"); // FO(Next.js)
+        configuration.addAllowedOrigin("https://admin-job.estsw.co.kr"); // BO(React)
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true); // refresh 쿠키 허용
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // FIXME(#290): CorsConfigurationSource 빈이 없어 CORS 미동작 — 배포 전 운영 도메인 허용 빈 추가
-                .cors()
-                .and()
-                .csrf().disable()
-                .formLogin().disable()
-                .httpBasic().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeHttpRequests(authorize -> authorize
-                        // FIXME(#290): context-path(/api) 때문에 매칭 경로는 "/login"·"/refresh-token"이어야 함. 현재 "/api" 접두어 오기입으로 prod 로그인 401
-                        .requestMatchers("/api/login", "/api/refresh-token").permitAll()
-                        // FIXME(#290): "/admin/**" ROLE_ADMIN 가드·"/admin/login" permitAll 부재, FO public GET(projects/board/notice) 미분류 — 클래스 주석 참고
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // ---- preflight·인프라 ----
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // 게시글 이미지 등 정적 리소스
+
+                        // ---- 비로그인 계정 플로우 ----
+                        .requestMatchers(HttpMethod.POST, "/login", "/refresh-token", "/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/check-id").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/email/send-code", "/email/find/send-code", "/email/verify-code").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/find-id", "/reset-password/verify", "/reset-password").permitAll()
+
+                        // ---- 관리자(BO) ----
+                        .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+
+                        // ---- 프로젝트: 인증 필요 경로를 공개 GET보다 먼저 선언 ----
+                        .requestMatchers("/projects/applications/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/projects/companies", "/projects/companies/status").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/projects/**").permitAll()
+
+                        // ---- SEO public GET: 커뮤니티·공지·소속 ----
+                        .requestMatchers(HttpMethod.GET,
+                                "/board/**", "/qna/**", "/notice/**", "/community/**", "/answer/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/affiliation", "/affiliation/address").permitAll()
+
+                        // ---- 익명 조회수 (FO가 비로그인에도 호출) ----
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/projects/*/increment-view",
+                                "/board/*/increment-view",
+                                "/qna/*/increment-view",
+                                "/answer/*/increment-view",
+                                "/notice/*/increment-view",
+                                "/affiliation/*/increment-view").permitAll()
+
+                        // ---- 그 외 전부 인증 필요 ----
+                        .requestMatchers("/me").authenticated()
                         .anyRequest().authenticated())
                 // 인증 실패(로그인 안된 상태) 시 처리
                 .exceptionHandling(exception -> exception

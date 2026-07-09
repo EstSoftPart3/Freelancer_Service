@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import DOMPurify from 'isomorphic-dompurify'
 import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
@@ -151,11 +152,11 @@ export default function BoardPost({
         <span className="ml-3">{fmtDate(boardInfo.createdAt)}</span>
       </div>
 
-      {/* 본문 */}
+      {/* 본문 — Quill HTML을 정제해서 렌더링 (저장된 원본에 스크립트가 섞여도 실행 차단) */}
       <div
         ref={descriptionRef}
         className="prose prose-sm mt-6 mb-6 max-w-none"
-        dangerouslySetInnerHTML={{ __html: boardInfo.description }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(boardInfo.description) }}
       />
 
       {/* 첨부파일 */}

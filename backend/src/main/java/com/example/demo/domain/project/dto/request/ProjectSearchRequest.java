@@ -2,8 +2,10 @@ package com.example.demo.domain.project.dto.request;
 
 import java.util.List;
 
+import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.company.dto.request.BaseRequest;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +20,14 @@ public class ProjectSearchRequest extends BaseRequest {
     private List<Long> addressCodeSq;
 
     private String sortBy; // 예: "project_start_dt"
+
+    // MyBatis에서 ${sortOrder}로 ORDER BY에 직접 삽입되므로(ProjectMapper.xml) ASC/DESC만 허용
+    @Setter(AccessLevel.NONE)
     private String sortOrder; // 예: "asc" 또는 "desc"
+
+    public void setSortOrder(String sortOrder) {
+        this.sortOrder = SortDirectionUtil.normalize(sortOrder);
+    }
     private List<Long> projectDeveloperGradeCd; // 예: 700
     private String projectIsDeletedYn; // "Y" or "N"
     private String experience; // 예: "3년 이상"

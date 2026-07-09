@@ -8,6 +8,7 @@ import javax.management.Notification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.admin.mapper.AdminNoticeMapper;
 import com.example.demo.domain.community.dto.BoardListDTO;
 import com.example.demo.domain.community.dto.request.CommentRequest;
@@ -39,8 +40,9 @@ public class AdminNoticeService {
 
                 Long offset = (page - 1) * size;
                 Long totalElements = adminNoticeMapper.countNotices(boardTypeCd, keyword);
+                // sortOrder는 AdminNoticeMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
                 List<BoardListDTO> notices = adminNoticeMapper.findAllNotices(boardTypeCd, keyword, sortField,
-                                sortOrder, offset, size);
+                                SortDirectionUtil.normalize(sortOrder), offset, size);
 
                 // ZodError 방지: null인 리스트를 빈 리스트로 초기화
                 for (BoardListDTO dto : notices) {
