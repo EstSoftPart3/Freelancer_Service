@@ -71,12 +71,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
         String token = resolveToken(request);
-        System.out.println("필터 전"+uri);
+     
         // 인증 제외 경로 처리
         if (EXCLUDE_URLS.stream().anyMatch(uri::startsWith)) {
             if (token != null && jwtProvider.validateToken(token)) {
                 try {
-                	System.out.println("필터 후"+uri);
+                	
                     Long userSq = jwtProvider.getUserSqFromToken(token);
                     Long userTypeCd = jwtProvider.getUserTypeCdFromToken(token);
 
