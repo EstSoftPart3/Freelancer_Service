@@ -18,6 +18,8 @@ public class DemoApplication {
 	public static void main(String[] args) {
 		logger.debug(">>> 애플리케이션 시작됨");
 		SpringApplication.run(DemoApplication.class, args);
+		System.out.println("JSON Swagger : http://localhost:8080/api/v3/api-docs");
+		System.out.println("HTML Swagger : http://localhost:8080/api/swagger-ui/index.html");
 	}
 
 }

@@ -56,9 +56,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/admin/login",
             "/api/admin/refresh-token",
             // ---------------- [추가] Health Check 경로 ----------------
-            "/api/actuator"
+            "/api/actuator",
 
     // 여기에 더 추가 가능
+            // ---------------- [추가] Swagger 경로 ---------------- 
+            "/api/swagger-ui",
+            "/api/v3/api-docs",
+            "/api/swagger-ui/index.html"
     );
 
     @Override
@@ -66,13 +70,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
-
         String token = resolveToken(request);
-
+        System.out.println("필터 전"+uri);
         // 인증 제외 경로 처리
         if (EXCLUDE_URLS.stream().anyMatch(uri::startsWith)) {
             if (token != null && jwtProvider.validateToken(token)) {
                 try {
+                	System.out.println("필터 후"+uri);
                     Long userSq = jwtProvider.getUserSqFromToken(token);
                     Long userTypeCd = jwtProvider.getUserTypeCdFromToken(token);
 
@@ -83,11 +87,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 토큰 오류 무시하고 통과 (로그 남기고 싶으면 여기서 처리)
                 }
             }
-
             filterChain.doFilter(request, response);
             return;
         }
-
+        
         // 인증 필수 경로
         if (token == null || !jwtProvider.validateToken(token)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");

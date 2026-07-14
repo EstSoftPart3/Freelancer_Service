@@ -57,7 +57,14 @@ public class SecurityConfigDev {
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         // 3. 사용자 정보 조회 등은 인증 필요
                         .requestMatchers("/me").authenticated()
-                        // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
+                        // 4. Swagger 접근 허용
+                        .requestMatchers(
+                            "/swagger-ui/**",
+                            "/swagger-ui/index.html",
+                            "/v3/api-docs/**",
+                            "/v3/api-docs.yaml"
+                        ).permitAll()
+                        // 5. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable());
