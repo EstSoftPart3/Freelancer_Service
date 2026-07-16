@@ -129,6 +129,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     watch,
     reset,
     setError,
+    control,
     formState: { errors, dirtyFields },
   } = useForm<UserMutateForm>({
     resolver: zodResolver(schema),

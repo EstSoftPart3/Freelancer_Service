@@ -52,6 +52,8 @@ export function UsersTable({
   setPage,
   onSort,
   onFilterType,
+  onFilterCompany,
+  onFilterGender,
   setTagKeyword: _setTagKeyword,
 }: UserTableProps) {
   const { setOpen, setCurrentRow } = useUsers()
