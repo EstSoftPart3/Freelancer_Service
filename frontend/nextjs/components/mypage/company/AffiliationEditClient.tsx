@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Building2 } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
 import CompanyVerificationModal from '@/components/mypage/company/CompanyVerificationModal'
 import api from '@/lib/api'
@@ -229,7 +230,7 @@ export default function AffiliationEditClient() {
         <div className="relative group">
           {profileImageUrl
             ? <img src={profileImageUrl} alt="프로필" className="w-24 h-24 rounded-full object-cover" />
-            : <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-4xl">🏢</div>
+            : <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Building2 className="w-10 h-10" /></div>
           }
           {profileImageUrl && (
             <button onClick={removeProfileImage} className="absolute top-0 right-0 bg-background rounded-full w-5 h-5 text-xs flex items-center justify-center border">×</button>
@@ -315,31 +316,33 @@ export default function AffiliationEditClient() {
       {/* 태그 */}
       <div className="grid grid-cols-3 items-start gap-4">
         <label className="text-sm font-semibold pt-1">태그</label>
-        <div className="col-span-2 space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {form.tagNm.map((tag) => (
-              <Badge key={tag} variant="secondary" className="gap-1">
-                {tag}
-                {editing.tagNm && (
-                  <button onClick={() => setForm((p) => p ? { ...p, tagNm: p.tagNm.filter((t) => t !== tag) } : p)} className="ml-1 hover:text-destructive">×</button>
-                )}
-              </Badge>
-            ))}
+        <div className="col-span-2 flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {form.tagNm.map((tag) => (
+                <Badge key={tag} variant="secondary" className="gap-1">
+                  {tag}
+                  {editing.tagNm && (
+                    <button onClick={() => setForm((p) => p ? { ...p, tagNm: p.tagNm.filter((t) => t !== tag) } : p)} className="ml-1 hover:text-destructive">×</button>
+                  )}
+                </Badge>
+              ))}
+            </div>
+            {editing.tagNm && (
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && tagInput.trim()) {
+                    setForm((p) => p ? { ...p, tagNm: [...p.tagNm, tagInput.trim()] } : p)
+                    setTagInput('')
+                  }
+                }}
+                placeholder="태그 입력 후 Enter"
+              />
+            )}
           </div>
-          {editing.tagNm && (
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && tagInput.trim()) {
-                  setForm((p) => p ? { ...p, tagNm: [...p.tagNm, tagInput.trim()] } : p)
-                  setTagInput('')
-                }
-              }}
-              placeholder="태그 입력 후 Enter"
-            />
-          )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {!editing.tagNm
               ? <Button size="sm" variant="outline" disabled={isDisabled} onClick={() => toggleEdit('tagNm')}>수정</Button>
               : (
@@ -376,9 +379,11 @@ function EditableRow({
   return (
     <div className="grid grid-cols-3 items-start gap-4">
       <label className="text-sm font-semibold pt-1">{label}</label>
-      <div className="col-span-2 space-y-1">
-        {editing ? editContent : viewContent}
-        <div className="flex gap-2 mt-1">
+      <div className="col-span-2 flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0 pt-1">
+          {editing ? editContent : viewContent}
+        </div>
+        <div className="flex gap-2 shrink-0">
           {!editing
             ? <Button size="sm" variant="outline" disabled={disabled} onClick={onToggle}>수정</Button>
             : (

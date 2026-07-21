@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Building2 } from 'lucide-react'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
@@ -78,11 +79,14 @@ export default function AffiliatedInfoClient() {
       <h2 className="text-xl font-bold">소속 정보</h2>
       <hr />
 
-      {info.profileImageUrl && (
-        <div className="flex justify-center">
-          <img src={info.profileImageUrl} alt="프로필" className="w-24 h-24 rounded-full object-cover" />
-        </div>
-      )}
+      <div className="flex justify-center">
+        {info.profileImageUrl
+          ? <img src={info.profileImageUrl} alt="프로필" className="w-24 h-24 rounded-full object-cover" />
+          : <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+              <Building2 className="w-10 h-10" />
+            </div>
+        }
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
+import BestCriteriaInfo from '@/components/community/BestCriteriaInfo'
 import type { CommunityBestItem } from '@/types'
 
 type Period = 'daily' | 'weekly' | 'monthly'
@@ -55,7 +56,10 @@ export default function PopularWidget({
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        {title && <h3 className="text-sm font-semibold">{title}</h3>}
+        <div className="flex min-w-0 items-center gap-1">
+          {title && <h3 className="truncate text-sm font-semibold">{title}</h3>}
+          <BestCriteriaInfo />
+        </div>
         {showTabs && (
           <div className="flex gap-1 text-xs">
             {PERIOD_TABS.map((t) => (

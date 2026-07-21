@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Trophy } from 'lucide-react'
+import BestCriteriaInfo from '@/components/community/BestCriteriaInfo'
 import type { CommunityBestItem } from '@/types'
 
 interface Props {
@@ -12,6 +13,7 @@ export default function CommunityBestSection({ items }: Props) {
       <div className="mb-2 flex items-center justify-between">
         <h2 className="flex items-center gap-1.5 text-lg font-bold">
           <Trophy className="h-4 w-4 text-amber-500" /> 베스트글
+          <BestCriteriaInfo />
         </h2>
         <Link href="/community/list?sort=recommend" className="text-xs text-muted-foreground hover:text-primary hover:underline">
           전체보기

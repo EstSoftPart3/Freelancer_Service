@@ -60,7 +60,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>대표 이력서 변경</DialogTitle>
         </DialogHeader>

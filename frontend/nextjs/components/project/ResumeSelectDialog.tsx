@@ -74,7 +74,7 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>이력서 선택</DialogTitle>
         </DialogHeader>

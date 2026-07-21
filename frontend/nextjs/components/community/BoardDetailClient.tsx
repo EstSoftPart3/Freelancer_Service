@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { alertStore } from '@/stores/alertStore'
 import { useBoardStore } from '@/stores/boardStore'
 import BoardPost from '@/components/community/BoardPost'
@@ -25,6 +26,7 @@ const emptyBoard: BoardDetail = {
 }
 
 export default function BoardDetailClient({ boardSq, boardCategory, initialData }: Props) {
+  const router = useRouter()
   const { setViewerSq } = useBoardStore()
   const [boardInfo, setBoardInfo] = useState<BoardDetail>(initialData ?? emptyBoard)
 
@@ -33,8 +35,18 @@ export default function BoardDetailClient({ boardSq, boardCategory, initialData 
       const { data } = await api.get<{ output: BoardDetail }>(`/${boardCategory}/${boardSq}`)
       setBoardInfo(data.output)
       setViewerSq(data.output.viewerSq ?? null)
-    } catch { alertStore.show('게시글을 불러올 수 없습니다.', 'danger') }
-  }, [boardSq, boardCategory, setViewerSq])
+    } catch (err: unknown) {
+      // 삭제됐거나 유효하지 않은 게시글은 백엔드가 400을 반환한다.
+      // 이 경우 안내 후 해당 게시판 목록으로 되돌린다(그 외 일시적 오류는 이동하지 않음).
+      const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
+      if (res?.status === 400) {
+        alertStore.show(res.data?.message ?? '삭제되었거나 존재하지 않는 게시글입니다.', 'danger')
+        router.replace(boardCategory === 'notice' ? '/notice' : '/board')
+      } else {
+        alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+      }
+    }
+  }, [boardSq, boardCategory, setViewerSq, router])
 
   useEffect(() => {
     incrementView(`/${boardCategory}/${boardSq}`)
