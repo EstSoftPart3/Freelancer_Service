@@ -40,5 +40,8 @@ public interface ResumeDetailMapper {
     String selectResumePhotoSaveName(Long resumeSq);
 
     void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq);
+    
+    // 대표 이력서 조회
+    ResumeDetailResponseDTO selectMainResume(@Param("userSq") Long userSq);
 
 }

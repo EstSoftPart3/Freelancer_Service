@@ -7,6 +7,7 @@
     type="com.example.demo.domain.mypage.dto.response.ResumeDetailResponseDTO">
     <id property="resumeSq" column="resume_sq" />
     <result property="resumeTtl" column="resume_ttl" />
+    <result property="userSq" column="user_sq" />
     <result property="resumePhotoUrl" column="resume_photo_url" />
     <result property="resumeNm" column="resume_nm" />
     <result property="resumeBirthDt" column="resume_birth_dt" />
@@ -91,6 +92,14 @@
   <update id="updateReadApplicationDtmIfNull" parameterType="map"> UPDATE TBL_PROJECT_APPLICATION_H
     SET read_application_dtm = NOW() WHERE resume_sq = #{resumeSq} AND project_sq = #{projectSq} AND
     project_application_sq = #{applicationSq} AND read_application_dtm IS NULL </update>
+    
+<select id="selectMainResume" parameterType="long" resultMap="resumeResultMap">
+    SELECT resume_sq, resume_ttl, resume_nm, resume_birth_dt, resume_phone_num, resume_email
+    FROM TBL_RESUME_M 
+    WHERE user_sq = #{userSq} 
+      AND resume_is_representative_yn = 'Y' 
+      AND resume_is_deleted_yn = 'N'
+</select>
 
 
 </mapper>

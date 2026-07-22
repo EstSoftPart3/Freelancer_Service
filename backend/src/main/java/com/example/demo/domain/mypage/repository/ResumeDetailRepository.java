@@ -72,5 +72,9 @@ public class ResumeDetailRepository {
     public void updateReadApplicationDtmIfNull(Long resumeSq, Long projectSq, Long applicationSq) {
         mapper.updateReadApplicationDtmIfNull(resumeSq, projectSq, applicationSq);
     }
+    // 프로젝트 추천 | 대표이력서 조회
+    public ResumeDetailResponseDTO getMainResumDetail(Long userSq) {
+    	return mapper.selectMainResume(userSq);
+    }
 
 }

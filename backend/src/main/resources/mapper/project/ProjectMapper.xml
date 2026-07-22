@@ -606,4 +606,32 @@
 	<select id="findMemberTypeByApplicationSq" resultType="Long"> SELECT
 		project_application_member_type_cd FROM tbl_project_application_h WHERE
 		project_application_sq = #{applicationSq} </select>
+			
+	<select id="selectCandidateProjectSqList" resultType="Long">
+	    SELECT DISTINCT prs.project_sq
+	    FROM tbl_project_required_skill_tag_s prs
+		    JOIN tbl_resume_skill_tag_s rst ON rst.skill_tag_sq = prs.skill_tag_sq
+		    JOIN tbl_project_m p ON p.project_sq = prs.project_sq
+	    WHERE rst.resume_sq = #{resumeSq}
+			AND p.project_is_deleted_yn = 'N'
+			AND p.project_recruit_end_dt >= NOW()
+	</select>
+	<select id="selectCandidateProjectSummaryList" resultType="com.example.demo.domain.project.vo.ProjectRecommendationVo">
+	    SELECT
+	        p.project_sq                    AS projectSq,
+	        p.project_ttl                   AS projectTtl,
+	        c.company_nm                    AS companyNm,
+	        a.sigungu                       AS addressNm,
+	        p.project_salary                AS projectSalary,
+	        p.project_developer_grade_cd    AS projectDeveloperGradeCd,
+	        p.project_required_education_cd AS projectRequiredEducationCd,
+	        p.project_preference_txt        AS projectPreferenceTxt
+	    FROM tbl_project_m p
+	    JOIN tbl_company_s c ON p.company_sq = c.company_sq
+	    LEFT JOIN tbl_address_s a ON p.address_sq = a.address_sq
+	    WHERE p.project_sq IN
+	    <foreach item="sq" collection="projectSqList" open="(" separator="," close=")">
+	        #{sq}
+	    </foreach>
+	</select>
 </mapper>
