@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.chatroom.mapper.ChatroomMapper">
+
+	<select id="selectChatRoomSqByProjectAndUser" resultType="java.lang.Long">
+		SELECT chatroom_sq
+		FROM tbl_chatroom_s
+		WHERE project_sq = #{projectSq}
+		AND user_sq = #{userSq}
+	</select>
+
+	<select id="selectChatRoomUserDeletedYn" resultType="java.lang.String">
+		SELECT chatroom_user_is_deleted_yn
+		FROM tbl_chatroom_s
+		WHERE chatroom_sq = #{chatRoomSq}
+	</select>
+
+	<update id="updateChatRoomUserDeletedYnToN">
+		UPDATE tbl_chatroom_s
+		SET chatroom_user_is_deleted_yn = 'N'
+		WHERE chatroom_sq = #{chatRoomSq}
+	</update>
+
+	<select id="selectCompanySqByProjectSq" resultType="java.lang.Long">
+		SELECT company_sq
+		FROM tbl_project_m
+		WHERE project_sq = #{projectSq}
+	</select>
+
+	<insert id="insertChatRoom" useGeneratedKeys="true" keyProperty="chatRoomSq"
+		keyColumn="chatroom_sq">
+		INSERT INTO tbl_chatroom_s (
+		project_sq, company_sq, user_sq, chatroom_created_at,
+		chatroom_user_is_deleted_yn, chatroom_company_is_deleted_yn
+		)
+		VALUES (
+		#{projectSq}, #{companySq}, #{userSq}, NOW(),
+		'N', 'N'
+		)
+	</insert>
+
+	<select id="selectChatRoomDetailBySq"
+	        resultType="com.example.demo.domain.chatroom.dto.ChatRoomListItemDto">
+	    SELECT
+	        cr.chatroom_sq                      AS chatRoomSq,
+	        cr.project_sq                       AS projectSq,
+	        p.project_ttl                        AS projectNm,
+	        cr.company_sq                       AS companySq,
+	        c.company_nm                        AS companyNm,
+	        cr.user_sq                          AS userSq,
+	        ur.user_nm                          AS userNm,
+	        cr.chatroom_created_at              AS chatroomCreatedDt,
+	        cr.last_message                     AS lastMsg,
+	        cr.last_message_at                  AS lastMsgAt,
+	        cr.chatroom_user_is_deleted_yn      AS chatroomUserDeletedYn,
+	        cr.chatroom_company_is_deleted_yn   AS chatroomCompanyDeletedYn,
+	        cr.user_lastmessage_sq              AS userLastReadMsgSq,
+        	cr.company_lastmessage_sq           AS companyLastReadMsgSq
+	    FROM tbl_chatroom_s cr
+	    JOIN tbl_project_m p ON cr.project_sq = p.project_sq
+	    JOIN tbl_company_s c ON cr.company_sq = c.company_sq
+	    JOIN tbl_user_m ur ON cr.user_sq = ur.user_sq
+	    WHERE cr.chatroom_sq = #{chatRoomSq}
+	</select>
+
+	<update id="updateLastMessage">
+		UPDATE tbl_chatroom_s
+		SET last_message = #{lastMessage},
+		last_message_at = #{lastMessageAt}
+		WHERE chatroom_sq = #{chatRoomSq}
+	</update>
+	
+	<select id="selectCompanySqByUserSq" resultType="java.lang.Long">
+	    SELECT company_sq
+	    FROM tbl_company_s
+	    WHERE user_sq = #{userSq}
+	</select>
+	
+	<select id="selectChatRoomListForUser" resultType="com.example.demo.domain.chatroom.dto.ChatRoomListItemDto">
+	    SELECT
+	        cr.chatroom_sq                      AS chatRoomSq,
+	        cr.project_sq                       AS projectSq,
+	        p.project_ttl                       AS projectNm,
+	        cr.company_sq                       AS companySq,
+	        c.company_nm                        AS companyNm,
+	        cr.user_sq                          AS userSq,
+	        ur.user_nm                          AS userNm,
+	        cr.chatroom_created_at              AS chatroomCreatedDt,
+	        cr.last_message                     AS lastMsg,
+	        cr.last_message_at                  AS lastMsgAt,
+	        cr.chatroom_user_is_deleted_yn      AS chatroomUserDeletedYn,
+	        cr.chatroom_company_is_deleted_yn   AS chatroomCompanyDeletedYn,
+	        cr.user_lastmessage_sq              AS userLastReadMsgSq,
+        	cr.company_lastmessage_sq           AS companyLastReadMsgSq
+	    FROM tbl_chatroom_s cr
+	    JOIN tbl_project_m p ON cr.project_sq = p.project_sq
+	    JOIN tbl_company_s c ON cr.company_sq = c.company_sq
+	    JOIN tbl_user_m ur ON cr.user_sq = ur.user_sq
+	    WHERE cr.user_sq = #{userSq}
+	      AND cr.chatroom_user_is_deleted_yn = 'N'
+	    ORDER BY cr.last_message_at DESC, cr.chatroom_created_at DESC
+	    LIMIT #{size} OFFSET #{offset}
+	</select>
+	
+	<select id="countChatRoomListForUser" resultType="int">
+	    SELECT COUNT(*)
+	    FROM tbl_chatroom_s
+	    WHERE user_sq = #{userSq}
+	      AND chatroom_user_is_deleted_yn = 'N'
+	</select>
+	
+	<select id="selectChatRoomListForCompany" resultType="com.example.demo.domain.chatroom.dto.ChatRoomListItemDto">
+	    SELECT
+	        cr.chatroom_sq                      AS chatRoomSq,
+	        cr.project_sq                       AS projectSq,
+	        p.project_ttl                       AS projectNm,
+	        cr.company_sq                       AS companySq,
+	        c.company_nm                        AS companyNm,
+	        cr.user_sq                          AS userSq,
+	        ur.user_nm                          AS userNm,
+	        cr.chatroom_created_at              AS chatroomCreatedDt,
+	        cr.last_message                     AS lastMsg,
+	        cr.last_message_at                  AS lastMsgAt,
+	        cr.chatroom_user_is_deleted_yn      AS chatroomUserDeletedYn,
+	        cr.chatroom_company_is_deleted_yn   AS chatroomCompanyDeletedYn,
+	        cr.user_lastmessage_sq              AS userLastReadMsgSq,
+        	cr.company_lastmessage_sq           AS companyLastReadMsgSq
+	    FROM tbl_chatroom_s cr
+	    JOIN tbl_project_m p ON cr.project_sq = p.project_sq
+	    JOIN tbl_company_s c ON cr.company_sq = c.company_sq
+	    JOIN tbl_user_m ur ON cr.user_sq = ur.user_sq
+	    WHERE cr.company_sq = #{companySq}
+	      AND cr.chatroom_company_is_deleted_yn = 'N'
+	    ORDER BY cr.last_message_at DESC, cr.chatroom_created_at DESC
+	    LIMIT #{size} OFFSET #{offset}
+	</select>
+	
+	<select id="countChatRoomListForCompany" resultType="int">
+	    SELECT COUNT(*)
+	    FROM tbl_chatroom_s
+	    WHERE company_sq = #{companySq}
+	      AND chatroom_company_is_deleted_yn = 'N'
+	</select>
+	
+	<update id="updateUserLastReadMsgSq">
+	    UPDATE tbl_chatroom_s
+	    SET user_lastmessage_sq = #{lastReadMsgSq}
+	    WHERE chatroom_sq = #{chatRoomSq}
+	</update>
+	
+	<update id="updateCompanyLastReadMsgSq">
+	    UPDATE tbl_chatroom_s
+	    SET company_lastmessage_sq = #{lastReadMsgSq}
+	    WHERE chatroom_sq = #{chatRoomSq}
+	</update>
+</mapper>

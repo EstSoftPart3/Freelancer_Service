@@ -62,7 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // ---------------- [추가] Swagger 경로 ---------------- 
             "/api/swagger-ui",
             "/api/v3/api-docs",
-            "/api/swagger-ui/index.html"
+            "/api/swagger-ui/index.html",
+         // ---------------- [추가] WebSocket 경로 ---------------- 
+            "/api/ws"
     );
 
     @Override

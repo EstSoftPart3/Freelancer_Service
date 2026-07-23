@@ -5,3 +5,4 @@ folder/my.txt
 folder/**/fileName_2.txt
 *.txt
 !filename.txt
+.env

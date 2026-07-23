@@ -64,6 +64,8 @@ public class SecurityConfigDev {
                             "/v3/api-docs/**",
                             "/v3/api-docs.yaml"
                         ).permitAll()
+                        // 5. WebSocket 접근 허용
+                        .requestMatchers("/ws/**").permitAll()
                         // 5. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

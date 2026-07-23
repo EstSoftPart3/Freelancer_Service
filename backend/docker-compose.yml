@@ -1,0 +1,31 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: freelancer-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"   # 로컬에서 직접 접속 확인용 - 운영에서는 제거 권장
+
+  backend:
+    build: .
+    container_name: freelancer-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/${MONGO_DB_NAME}?authSource=admin
+    ports:
+      - "8080:8080"
+
+volumes:
+  mongo-data:

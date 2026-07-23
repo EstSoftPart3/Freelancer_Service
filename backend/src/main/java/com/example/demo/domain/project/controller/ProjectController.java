@@ -1,11 +1,13 @@
 package com.example.demo.domain.project.controller;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +31,9 @@ import com.example.demo.domain.project.dto.response.MainProjectResponse;
 import com.example.demo.domain.project.dto.response.ProjectDetailResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectListResponse;
+import com.example.demo.domain.project.dto.response.ProjectRecommandationResponse;
 import com.example.demo.domain.project.dto.response.ProjectRecruitStatus;
+import com.example.demo.domain.project.service.ProjectRecommandationService;
 import com.example.demo.domain.project.service.ProjectService;
 
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
@@ -43,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(value = "http://localhost:8504")
 public class ProjectController {
 	private final ProjectService projectService;
+	private final ProjectRecommandationService projectRecommandationService;
 
 	@PostMapping
 	public ResponseEntity<ApiResponse<Void>> postProject(@Valid @RequestBody ProjectCreateRequest request,
@@ -155,4 +160,24 @@ public class ProjectController {
 				ApiResponse.of(HttpStatus.OK, "지역별 프로젝트 그룹 조회 성공",
 						projectService.fetchProjectRegionGroups(request)));
 	}
+	// 매칭률 기반 프로젝트 추천
+    @GetMapping("/recommendations")
+    public ResponseEntity<ApiResponse<List<ProjectRecommandationResponse>>> getRecommendations(
+    		Authentication authentication) {
+    	JwtAuthenticationToken token = null;
+		if (authentication != null) {
+			token = (JwtAuthenticationToken) authentication;
+		}
+    	
+        Long userSq = (Long) token.getPrincipal();
+        
+        List<ProjectRecommandationResponse> result =
+                projectRecommandationService.getRecommendations(userSq);
+        
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK,"매칭률 기반 프로젝트 추천 성공",result)) ;
+    }
 }

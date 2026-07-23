@@ -74,6 +74,14 @@
                 >스크랩 내역</router-link
               >
             </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/projectInquerys"
+                @click="handleNavigate"
+                >문의 내역</router-link
+              >
+            </li>
           </ul>
         </li>
         <li class="nav-item">
@@ -191,6 +199,14 @@
                 to="/mypage/projectScrap"
                 @click="handleNavigate"
                 >스크랩 내역</router-link
+              >
+            </li>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/projectInquerys"
+                @click="handleNavigate"
+                >문의 내역</router-link
               >
             </li>
           </ul>

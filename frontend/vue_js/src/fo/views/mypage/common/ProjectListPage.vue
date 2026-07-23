@@ -43,6 +43,8 @@
       </div>
 
       <div v-show="!isMapView">
+        <!-- 프로젝트 추천 -->
+        <ProjectRecommandGroup :projects="projects" />
         <!-- 선택된 기술 태그 표시 -->
         <div
           v-if="selectedSkillTags.length > 0"
@@ -184,6 +186,7 @@ import MapProjectCardGroup from '@/fo/components/project/MapProjectCardGroup.vue
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import { navigateByUserTypeAndProjectSq } from '@/fo/router/userTypeRouter'
 import skillIconMap from '@/assets/skillIconMap.js'
+import ProjectRecommandGroup from '@/fo/components/project/ProjectRecommandGroup.vue'
 
 const userStore = useUserStore()
 const modalStore = useModalStore()

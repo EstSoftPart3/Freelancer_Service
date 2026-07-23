@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.demo.domain.project.entity.ProjectApplicationEntity;
+import com.example.demo.domain.project.vo.ProjectRecommendationVo;
+import com.example.demo.domain.project.vo.ProjectSummary;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,6 +21,7 @@ import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
 import com.example.demo.domain.project.dto.request.SkillInsertRequest;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
+import com.example.demo.domain.project.dto.response.ProjectListResponse;
 import com.example.demo.domain.project.dto.response.ProjectRecruitStatus;
 import com.example.demo.domain.project.dto.response.SingleSkillInfoResponse;
 import com.example.demo.domain.project.entity.Project;
@@ -124,4 +128,10 @@ public interface ProjectMapper {
 
 	// ProjectMapper.java 내부
 	List<ProjectRegionGroupDTO> findProjectGroupsByRegion(ProjectSearchRequest request);
+	
+	// 매칭률 계산 후보군 프로젝트 조회
+		
+	List<Long> selectCandidateProjectSqList(@Param("resumeSq") Long resumeSq);
+	
+	List<ProjectRecommendationVo> selectCandidateProjectSummaryList(@Param("projectSqList") List<Long> projectSqList);
 }

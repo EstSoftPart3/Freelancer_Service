@@ -11,6 +11,7 @@ import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.company.service.CompanyService;
+import com.example.demo.domain.mypage.service.ResumeDetailService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.UserRole;
@@ -63,6 +64,7 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
+	private final ResumeDetailService resumeDetailService;
 
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
@@ -793,5 +795,16 @@ public class ProjectService {
 			return "단가 협의";
 		return "월 " + (salary / 10000) + "만원";
 	}
+	// 매칭률 후보군 조회
+	public List<Long> getCandidateProjectList(Long userSq) {
+        Long resumeSq = resumeDetailService.getMainResumeDetail(userSq).getResumeSq(); // 기존 서비스 재사용
+
+        if (resumeSq == null) {
+            // TODO : 대표 이력서 없음 예외처리
+        }
+
+        List<Long> candidateList = projectMapper.selectCandidateProjectSqList(resumeSq);
+        return candidateList != null ? candidateList : Collections.emptyList();
+    }
 
 }

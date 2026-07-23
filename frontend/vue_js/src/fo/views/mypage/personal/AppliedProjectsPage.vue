@@ -145,6 +145,18 @@
                   <template v-if="item.isRecruitEnded === true">
                     <span class="btn btn-light btn-sm">지원 마감</span>
                   </template>
+                  <button
+                    class="btn btn-primary btn-sm inquiry"
+                    @click="
+                      openChatModal(
+                        item.projectSq,
+                        item.projectTitle,
+                        item.companyTitle,
+                      )
+                    "
+                  >
+                    문의하기
+                  </button>
                 </div>
               </div>
 
@@ -251,12 +263,15 @@ import InterviewTimeModal from '@/fo/components/mypage/common/InterviewSelectMod
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
 import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.vue'
 import { api } from '@/axios.js'
+import ChatModal from '@/fo/components/mypage/common/ChatModal.vue'
+import { useChatStore } from '@/fo/stores/ChatStore'
 
 const userStore = useUserStore()
 const userType = userStore.getUserType
 const modalStore = useModalStore()
 const route = useRoute()
 const router = useRouter()
+const chatStore = useChatStore()
 
 // 검색 조건
 const searchType = ref(route.query.searchType || 'all')
@@ -274,7 +289,10 @@ const readFilters = [
 
 // 페이징
 const currentPage = ref(Math.max(1, Number(route.query.page) || 1))
-if (route.query.page !== undefined && Number(route.query.page) !== currentPage.value) {
+if (
+  route.query.page !== undefined &&
+  Number(route.query.page) !== currentPage.value
+) {
   router.replace({ query: { ...route.query, page: currentPage.value } })
 }
 const itemsPerPage = 5
@@ -476,6 +494,31 @@ const openResumeDetailModal = (item) => {
     isFromApplicationList: true,
     size: 'modal-xl',
   })
+}
+
+// 채팅 모달 열기
+
+const openChatModal = async (projectSq, projectTitle, companyTitle) => {
+  try {
+    const response = await api.$post('/chatrooms', null, {
+      params: { projectSq },
+    })
+    const room = response.output
+
+    const token = localStorage.getItem('accessToken')
+    await chatStore.connect(token)
+
+    modalStore.openModal(ChatModal, {
+      chatRoomSq: room.chatRoomSq,
+      isNewRoom: room.isNewRoom,
+      projectTitle,
+      companyTitle,
+      userLastReadMsgSq: room.userLastReadMsgSq,
+      companyLastReadMsgSq: room.companyLastReadMsgSq,
+    })
+  } catch (error) {
+    console.error('채팅방 생성 실패', error)
+  }
 }
 </script>
 

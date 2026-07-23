@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,5 +150,65 @@ public class ResumeDetailService {
 
         // 이력서 상세 조회
         return getResumeDetail(dto.getResumeSq());
+    }
+    public ResumeDetailResponseDTO getMainResumeDetail(Long userSq) {
+    	ResumeDetailResponseDTO mainResume = repository.getMainResumDetail(userSq);
+    	if (mainResume == null) {
+            return null;
+        }
+    	Long resumeSq = mainResume.getResumeSq();
+
+    	// 학력
+        List<ResumeDetailResponseDTO.EducationDTO> educationList = repository.getEducationList(resumeSq);
+        for (ResumeDetailResponseDTO.EducationDTO edu : educationList) {
+            String codeNm = repository.findCommonCodeName((long) edu.getEducationStatusCd());
+            edu.setEducationStatusNm(codeNm);
+        }
+        mainResume.setEducationList(educationList);
+        // 경력
+        mainResume.setCareerList(repository.getCareerList(resumeSq));
+        // 프로젝트 + 기술태그
+        List<ResumeDetailResponseDTO.ProjectDTO> projects = repository.getProjectList(resumeSq);
+        for (ResumeDetailResponseDTO.ProjectDTO project : projects) {
+            // repository에서 원본 데이터 받아오기 (List<Map<String, Object>> 형태)
+            List<Map<String, Object>> rawGroupedSkillTags = repository
+                    .selectGroupedSkillTagsByProjectHistorySq(project.getProjectHistorySq());
+
+            // 부모 태그별로 자식 태그 리스트를 모으기 위한 Map (키: 부모 태그명, 값: 자식 태그 리스트)
+            Map<String, List<String>> groupedMap = new LinkedHashMap<>();
+
+            for (Map<String, Object> row : rawGroupedSkillTags) {
+                String parent = (String) row.get("parentSkillTagName");
+                String child = (String) row.get("skillTagName");
+
+                groupedMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(child);
+            }
+
+            // Map을 List<Map<String, List<String>>> 구조로 변환
+            List<Map<String, List<String>>> groupedSkillTags = new ArrayList<>();
+            for (Map.Entry<String, List<String>> entry : groupedMap.entrySet()) {
+                Map<String, List<String>> map = new HashMap<>();
+                map.put(entry.getKey(), entry.getValue());
+                groupedSkillTags.add(map);
+            }
+
+            project.setGroupedSkillTags(groupedSkillTags);
+
+            project.setProjectHistoryTypeNm(repository.findCommonCodeName((long) project.getProjectHistoryTypeCd()));
+            project.setProjectHistoryJobPositionTypeNm(
+                    repository.findCommonCodeName((long) project.getProjectHistoryJobPositionTypeCd()));
+        }
+        mainResume.setProjectList(projects);
+
+        // 전체 기술 태그 리스트
+        List<String> skillTagList = repository.getSkillTagNamesByResumeSq(resumeSq);
+        mainResume.setSkillTagList(skillTagList);
+
+        // 자격증
+        mainResume.setCertificationList(repository.getCertificationList(resumeSq));
+
+        // 교육 이력
+        mainResume.setTrainingList(repository.getTrainingList(resumeSq));
+    	return mainResume;
     }
 }
