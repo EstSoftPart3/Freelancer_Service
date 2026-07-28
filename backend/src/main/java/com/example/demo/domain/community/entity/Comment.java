@@ -1,19 +1,15 @@
 package com.example.demo.domain.community.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Comment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentSq;
     private Long parentCommentSq; // 부모 댓글 번호 추가
     private Long userSq;

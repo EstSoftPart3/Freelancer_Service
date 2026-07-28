@@ -58,7 +58,7 @@ public class ExistProjectVo {
 
 				// [추가] 엔티티에서 지하철 및 좌표 정보 매핑
 				// [핵심] 엔티티에서 근무지 주소 문자열 매핑
-				.detailedAddress(p.getDetailedAddress()) // 엔티티의 @Transient 필드 혹은 DB 컬럼
+				.detailedAddress(p.getDetailedAddress()) // 조인으로 채워지는 필드
 				.detailedAddressDetail(p.getDetailedAddressDetail())
 				.subwayAddress(p.getSubwayAddress())
 				.latitude(p.getLatitude())

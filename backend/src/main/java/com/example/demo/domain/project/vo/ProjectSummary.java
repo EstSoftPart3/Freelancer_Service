@@ -78,7 +78,7 @@ public class ProjectSummary {
 				// 파라미터로 받은 가공된 급여 문자열 매핑
 				.formattedSalary(formattedSalary)
 
-				// Project 엔티티에 @Transient로 추가한 필드들 매핑
+				// Project 의 조인 전용 필드 매핑
 				.latitude(project.getLatitude())
 				.longitude(project.getLongitude())
 				.distance(project.getDistance())

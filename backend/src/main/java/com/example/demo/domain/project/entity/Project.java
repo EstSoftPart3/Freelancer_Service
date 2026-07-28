@@ -1,116 +1,82 @@
 package com.example.demo.domain.project.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import org.hibernate.annotations.DynamicUpdate;
 import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
 
-@Entity
-@Table(name = "TBL_PROJECT_M")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@DynamicUpdate
 public class Project {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "project_sq")
     private Long projectSq;
 
-    @Column(name = "company_sq", nullable = false)
     private Long companySq;
 
-    @Column(name = "address_sq") // 상세 주소 SQ (Nullable)
+    // 상세 주소 SQ (Nullable)
     private Long addressSq;
 
-    @Column(name = "subway_address_sq") // 지하철 주소 SQ (Nullable)
+    // 지하철 주소 SQ (Nullable)
     private Long subwayAddressSq;
 
-    @Column(name = "address_type_cd") // 2701: 상세주소 우선, 2702: 지하철 우선
+    // 2701: 상세주소 우선, 2702: 지하철 우선
     private Long addressTypeCd;
 
-    @Column(name = "project_ttl", nullable = false, length = 50)
     private String projectTtl;
 
-    @Column(name = "project_image_url", length = 255)
     private String projectImageUrl;
 
-    @Column(name = "project_developer_grade_cd")
     private Long projectDeveloperGradeCd;
 
-    @Column(name = "project_required_education_cd")
     private Long projectRequiredEducationCd;
 
-    @Column(name = "project_salary", nullable = false)
     private Long projectSalary;
 
-    @Column(name = "project_salary_negotiable_yn", length = 1)
     private String projectSalaryNegotiableYn;
 
-    @Column(name = "project_start_dt")
     private LocalDate projectStartDt;
 
-    @Column(name = "project_end_dt")
     private LocalDate projectEndDt;
 
-    @Column(name = "project_recruit_start_dt")
     private LocalDate projectRecruitStartDt;
 
-    @Column(name = "project_recruit_end_dt")
     private LocalDate projectRecruitEndDt;
 
-    @Column(name = "project_preference_txt", length = 255)
     private String projectPreferenceTxt;
 
-    @Column(name = "project_description_txt", columnDefinition = "TEXT")
     private String projectDescriptionTxt;
 
-    @Column(name = "project_created_at_dtm", nullable = false, updatable = false)
     private LocalDateTime projectCreatedAtDtm;
 
-    @Column(name = "project_modified_at_dtm", nullable = false)
     private LocalDateTime projectModifiedAtDtm;
 
-    @Column(name = "project_candidate_cnt")
     private Integer projectCandidateCnt;
 
-    @Column(name = "project_scrap_cnt")
     private Integer projectScrapCnt;
 
-    @Column(name = "project_is_notification_yn", length = 1)
     private String projectIsNotificationYn;
 
-    @Column(name = "project_is_deleted_yn", length = 1)
     private String projectIsDeletedYn;
 
-    @Column(name = "project_view_cnt")
     private Integer projectViewCnt;
 
     // =========================================================================
     // MyBatis 조인 결과 매핑용 (DB 컬럼 아님)
     // =========================================================================
-    @Transient
     private Double latitude;
 
-    @Transient
     private Double longitude;
 
-    @Transient
     private Double distance;
 
-    @Transient
     private String detailedAddress; // 시/도 시/군/구
 
-    @Transient
     private String detailedAddressDetail; // 사용자 입력 상세주소
 
-    @Transient
     private String subwayAddress; // 지하철역 명칭/주소
 
     // =========================================================================
@@ -147,7 +113,6 @@ public class Project {
                 .build();
     }
 
-    @PrePersist
     public void prePersist() {
         this.projectCreatedAtDtm = LocalDateTime.now();
         this.projectModifiedAtDtm = LocalDateTime.now();
@@ -160,7 +125,6 @@ public class Project {
         this.projectViewCnt = 0;
     }
 
-    @PreUpdate
     public void preUpdate() {
         this.projectModifiedAtDtm = LocalDateTime.now();
     }
