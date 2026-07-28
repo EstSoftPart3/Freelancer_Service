@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,15 @@ import net.coobird.thumbnailator.Thumbnails;
 @RequiredArgsConstructor
 public class FileStorageService {
 
+    // 업로드 허용 확장자 화이트리스트.
+    // 기존엔 확장자 검사가 전혀 없어 .jsp/.php/.exe 같은 실행 가능 파일도 그대로 저장됐다(현존 취약점).
+    // 블랙리스트가 아니라 화이트리스트여야 신규 위험 확장자에도 자동으로 안전하다.
+    // svg는 스크립트를 품을 수 있어(저장형 XSS) 이미지지만 의도적으로 제외한다.
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "jpg", "jpeg", "png", "gif", "webp", "bmp",
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "txt", "csv", "hwp", "hwpx", "zip");
+
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -34,6 +44,7 @@ public class FileStorageService {
             return null;
 
         String originalName = multipartFile.getOriginalFilename();
+        validateExtension(originalName);
         String savedName = createFileName(originalName);
 
         try {
@@ -110,6 +121,22 @@ public class FileStorageService {
             return fileName.substring(fileName.lastIndexOf("."));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 형식의 파일입니다.");
+        }
+    }
+
+    /**
+     * 업로드 시점에만 검사한다. copyFile은 이미 검증을 통과해 저장된 UUID 파일명을 다루므로 대상이 아니다.
+     */
+    private void validateExtension(String originalName) {
+        if (originalName == null || originalName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 이름이 없습니다.");
+        }
+        // 저장 파일명은 UUID + 확장자라 이중 확장자(a.php.png)로 우회되지 않는다 — 마지막 확장자만 보면 충분하다.
+        String ext = getFileExtension(originalName).substring(1).toLowerCase();
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            log.warn("허용되지 않는 확장자 업로드 시도: {}", originalName);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "허용되지 않는 파일 형식입니다. (." + ext + ") 이미지·문서·압축 파일만 업로드할 수 있습니다.");
         }
     }
 

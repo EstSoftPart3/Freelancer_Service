@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
+import { getDirectionsPath } from '@/lib/kakaoMap'
 import { cn } from '@/lib/utils'
 import type {
   ProjectItem,
@@ -28,6 +29,17 @@ const SVG_PIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" str
 const SVG_TRAIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1"/><path d="m15 15 1-1"/><path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/><path d="m8 19-2 3"/><path d="m16 19 2 3"/></svg>'
 const SVG_BUILDING = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12h4"/><path d="M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/></svg>'
 const SVG_NAV = '<svg viewBox="0 0 24 24" width="12" height="12" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>'
+
+// CustomOverlay 내용은 innerHTML로 주입되는 raw DOM이라 React의 자동 이스케이프가 없다.
+// 프로젝트명·회사명·주소는 사용자 입력에서 오므로 그대로 넣으면 stored XSS가 된다.
+function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 interface ProjectStatus {
   status: '채용예정' | '채용중' | '채용종료'
@@ -165,14 +177,10 @@ export default function ProjectListClient({ initialData }: Props = {}) {
     setConfirmProject(project)
   }, [])
 
+  // 좌표·프로젝트명을 클라이언트에서 URL로 만들지 않는다 — 서버 라우트가 조회 후 카카오로 리다이렉트한다.
   const openKakaoRoute = useCallback((project: ProjectItem) => {
-    const destName = encodeURIComponent(project.projectTtl)
-    let url = `https://map.kakao.com/link/to/${destName},${project.latitude},${project.longitude}`
-    if (latitude != null && longitude != null) {
-      url += `/from/${encodeURIComponent('내 위치')},${latitude},${longitude}`
-    }
-    window.open(url, '_blank')
-  }, [latitude, longitude])
+    window.open(getDirectionsPath(project.projectSq), '_blank')
+  }, [])
 
   // ── 핀 선택 — 같은 핀을 다시 누르면 상세 이동 확인, 처음 누르면 panTo + 활성화 ──
   const selectProject = useCallback((project: ProjectItem) => {
@@ -217,7 +225,7 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         const coords = new kakaoMaps.LatLng(group.latitude, group.longitude)
         const content = document.createElement('div')
         content.className = 'cluster-pin'
-        content.innerHTML = `${group.sigungu}<br><b>${group.projectCount}</b>`
+        content.innerHTML = `${escapeHtml(group.sigungu)}<br><b>${escapeHtml(String(group.projectCount))}</b>`
         content.onclick = () => {
           map.setLevel(level - 2, { anchor: coords, animate: true })
           setTimeout(() => updateBoundsFnRef.current(), 350)
@@ -240,17 +248,18 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         content.setAttribute('data-id', String(project.projectSq))
         if (selectedProjectIdRef.current === project.projectSq) content.classList.add('active')
 
+        // 사용자 입력에서 온 값(제목·회사명·주소·단가·등급)은 전부 escapeHtml을 거친다.
         content.innerHTML = `
           <div class="marker-pin ${isSubway ? 'subway' : ''}">${isSubway ? SVG_TRAIN : SVG_PIN}</div>
           <div class="marker-tooltip">
             <div class="tt-header">
-              <span class="tt-badge">${project.devGradeNm || '등급미정'}</span>
-              <span class="tt-ttl">${project.projectTtl}</span>
+              <span class="tt-badge">${escapeHtml(project.devGradeNm || '등급미정')}</span>
+              <span class="tt-ttl">${escapeHtml(project.projectTtl)}</span>
             </div>
             <div class="tt-body">
-              <div class="tt-item">${SVG_BUILDING}&nbsp;${project.companyNm}</div>
-              <div class="tt-item">${isSubway ? SVG_TRAIN : SVG_PIN}&nbsp;${displayAddress}</div>
-              <div class="tt-item text-primary-light" style="font-weight:700;margin-bottom:6px">${project.formattedSalary || '단가협의'}</div>
+              <div class="tt-item">${SVG_BUILDING}&nbsp;${escapeHtml(project.companyNm)}</div>
+              <div class="tt-item">${isSubway ? SVG_TRAIN : SVG_PIN}&nbsp;${escapeHtml(displayAddress)}</div>
+              <div class="tt-item text-primary-light" style="font-weight:700;margin-bottom:6px">${escapeHtml(project.formattedSalary || '단가협의')}</div>
               <button type="button" class="btn-route-search">${SVG_NAV}&nbsp;경로 찾기</button>
             </div>
           </div>`

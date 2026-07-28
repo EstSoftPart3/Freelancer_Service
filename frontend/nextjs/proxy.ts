@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/notice',
   '/affiliation',
   '/projects',
+  // 길찾기 리다이렉트 — 프로젝트 목록이 비로그인 공개라 여기도 공개여야 한다(막으면 로그인으로 튕김)
+  '/directions',
 ]
 
 // 로그인 상태에서 진입하면 홈으로 돌려보낼 인증 전용 경로

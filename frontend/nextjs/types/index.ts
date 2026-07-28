@@ -240,6 +240,9 @@ export interface ProjectDetail {
   projectCreatedDt: string
   /** 월 단가(원 단위 KRW). 0 또는 null이면 단가 협의 */
   projectSalary?: number | null
+  /** 길찾기 리다이렉트(app/directions)에서만 사용. 클라이언트에서 링크를 조립하지 않는다. */
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export interface FilterOption {

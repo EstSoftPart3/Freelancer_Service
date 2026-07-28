@@ -38,6 +38,10 @@ public class ProjectDetailResponse {
     private String detailedAddressDetail;
     private String subwayAddress;
     private Long addressTypeCd;
+    // 길찾기 링크를 서버(Next 라우트 /directions/{sq})에서 생성하기 위해 필요.
+    // 클라이언트가 좌표를 들고 URL을 조립하면 프로젝트명·좌표가 주소창에 그대로 남는다.
+    private Double latitude;
+    private Double longitude;
     private String salaryNegotiableYn; // 단가협의 여부도 함께 추가
     private String projectExperience;
     private String projectEducation;
@@ -83,6 +87,8 @@ public class ProjectDetailResponse {
                 .detailedAddressDetail(p.getDetailedAddressDetail())
                 .subwayAddress(p.getSubwayAddress())
                 .addressTypeCd(p.getAddressTypeCd())
+                .latitude(p.getLatitude())
+                .longitude(p.getLongitude())
                 .salaryNegotiableYn(p.getProjectSalaryNegotiableYn())
                 .projectExperience(util.convertCommonCodeSqToNm(p.getProjectDeveloperGradeCd()))
                 .projectEducation(util.convertCommonCodeSqToNm(p.getProjectRequiredEducationCd()))
