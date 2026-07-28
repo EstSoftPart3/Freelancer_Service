@@ -1,19 +1,15 @@
 package com.example.demo.domain.community.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Board {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long boardSq;
     private Long userSq;
     private String boardTtl;
