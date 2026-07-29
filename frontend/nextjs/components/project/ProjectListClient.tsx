@@ -29,6 +29,17 @@ const SVG_TRAIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" s
 const SVG_BUILDING = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12h4"/><path d="M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/></svg>'
 const SVG_NAV = '<svg viewBox="0 0 24 24" width="12" height="12" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>'
 
+// CustomOverlay 내용은 innerHTML로 주입되는 raw DOM이라 React의 자동 이스케이프가 없다.
+// 프로젝트명·회사명·주소는 사용자 입력에서 오므로 그대로 넣으면 stored XSS가 된다.
+function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 interface ProjectStatus {
   status: '채용예정' | '채용중' | '채용종료'
   dDay?: string
@@ -165,13 +176,21 @@ export default function ProjectListClient({ initialData }: Props = {}) {
     setConfirmProject(project)
   }, [])
 
+  // 카카오 길찾기 링크 규격이 출발지·목적지 좌표를 URL에 요구한다. 서버 리다이렉트를 경유해도
+  // 최종적으로 브라우저가 이 URL로 이동하므로 좌표 노출은 어차피 피할 수 없다 — 그래서 직접 만든다.
+  // 대신 noopener,noreferrer로 opener 참조와 Referer 누출은 막는다.
   const openKakaoRoute = useCallback((project: ProjectItem) => {
+    // 좌표가 숫자가 아니면 링크를 만들지 않는다(경로 구분자 주입 방지)
+    if (!Number.isFinite(project.latitude) || !Number.isFinite(project.longitude)) {
+      toast.error('이 프로젝트는 위치 정보가 없어 길찾기를 제공할 수 없습니다.')
+      return
+    }
     const destName = encodeURIComponent(project.projectTtl)
     let url = `https://map.kakao.com/link/to/${destName},${project.latitude},${project.longitude}`
-    if (latitude != null && longitude != null) {
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
       url += `/from/${encodeURIComponent('내 위치')},${latitude},${longitude}`
     }
-    window.open(url, '_blank')
+    window.open(url, '_blank', 'noopener,noreferrer')
   }, [latitude, longitude])
 
   // ── 핀 선택 — 같은 핀을 다시 누르면 상세 이동 확인, 처음 누르면 panTo + 활성화 ──
@@ -217,7 +236,7 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         const coords = new kakaoMaps.LatLng(group.latitude, group.longitude)
         const content = document.createElement('div')
         content.className = 'cluster-pin'
-        content.innerHTML = `${group.sigungu}<br><b>${group.projectCount}</b>`
+        content.innerHTML = `${escapeHtml(group.sigungu)}<br><b>${escapeHtml(String(group.projectCount))}</b>`
         content.onclick = () => {
           map.setLevel(level - 2, { anchor: coords, animate: true })
           setTimeout(() => updateBoundsFnRef.current(), 350)
@@ -240,17 +259,18 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         content.setAttribute('data-id', String(project.projectSq))
         if (selectedProjectIdRef.current === project.projectSq) content.classList.add('active')
 
+        // 사용자 입력에서 온 값(제목·회사명·주소·단가·등급)은 전부 escapeHtml을 거친다.
         content.innerHTML = `
           <div class="marker-pin ${isSubway ? 'subway' : ''}">${isSubway ? SVG_TRAIN : SVG_PIN}</div>
           <div class="marker-tooltip">
             <div class="tt-header">
-              <span class="tt-badge">${project.devGradeNm || '등급미정'}</span>
-              <span class="tt-ttl">${project.projectTtl}</span>
+              <span class="tt-badge">${escapeHtml(project.devGradeNm || '등급미정')}</span>
+              <span class="tt-ttl">${escapeHtml(project.projectTtl)}</span>
             </div>
             <div class="tt-body">
-              <div class="tt-item">${SVG_BUILDING}&nbsp;${project.companyNm}</div>
-              <div class="tt-item">${isSubway ? SVG_TRAIN : SVG_PIN}&nbsp;${displayAddress}</div>
-              <div class="tt-item text-primary-light" style="font-weight:700;margin-bottom:6px">${project.formattedSalary || '단가협의'}</div>
+              <div class="tt-item">${SVG_BUILDING}&nbsp;${escapeHtml(project.companyNm)}</div>
+              <div class="tt-item">${isSubway ? SVG_TRAIN : SVG_PIN}&nbsp;${escapeHtml(displayAddress)}</div>
+              <div class="tt-item text-primary-light" style="font-weight:700;margin-bottom:6px">${escapeHtml(project.formattedSalary || '단가협의')}</div>
               <button type="button" class="btn-route-search">${SVG_NAV}&nbsp;경로 찾기</button>
             </div>
           </div>`

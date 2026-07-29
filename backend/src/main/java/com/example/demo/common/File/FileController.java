@@ -75,9 +75,21 @@ public class FileController {
                 contentDisposition = ContentDisposition.inline().build();
             }
 
+            // 5. 업로드 파일은 사용자 입력이므로 우리 오리진 권한으로 실행되면 안 된다.
+            //
+            //    이 엔드포인트는 download=false 일 때 Content-Disposition: inline 으로 응답한다.
+            //    즉 .svg / .html 류를 주소창으로 직접 열면 브라우저가 '문서'로 렌더링하고,
+            //    안에 든 <script>가 우리 오리진에서 실행된다. accessToken 쿠키가 httpOnly가 아니라
+            //    (lib/api.ts가 document.cookie로 읽는다) 토큰 탈취까지 이어질 수 있다.
+            //
+            //    CSP sandbox 는 응답을 고유한 opaque 오리진으로 격리해 스크립트 실행과
+            //    쿠키/스토리지 접근을 모두 차단한다. <img>로 삽입한 이미지 표시는 영향받지 않는다.
+            //    nosniff 는 확장자와 다른 타입으로 추측 렌더링되는 것을 막는다.
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                    .header("Content-Security-Policy", "sandbox")
+                    .header("X-Content-Type-Options", "nosniff")
                     .body(resource);
 
         } catch (Exception e) {

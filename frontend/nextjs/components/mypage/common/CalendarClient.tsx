@@ -215,6 +215,12 @@ function FullCalendarWrapper({
       initialView="dayGridMonth"
       locale="ko"
       dayMaxEvents={2}
+      // 월 뷰에서 "오전 3시" 같은 한글 시간 텍스트가 제목 앞에 붙어 칸을 넘치던 문제.
+      // 월 뷰만 시간을 숨겨 제목만 노출하고, 주 뷰는 시간대 격자가 있으므로 24시간 2자리로 표시한다.
+      views={{ dayGridMonth: { displayEventTime: false } }}
+      eventTimeFormat={{ hour: '2-digit', minute: '2-digit', meridiem: false, hour12: false }}
+      // 기본값(dot)이면 시간 텍스트가 제목과 같은 줄에 붙는다. block이면 종일 일정처럼 한 덩어리로 렌더된다.
+      eventDisplay="block"
       selectable
       events={events}
       eventClick={onEventClick}

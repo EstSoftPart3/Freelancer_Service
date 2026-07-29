@@ -172,32 +172,10 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/* DOM 순서 = 모바일 순서(제목·회사·지원버튼 먼저). 데스크톱은 md:order-*로 좌우를 되돌린다.
+          order-first/last를 덧붙이는 대신 DOM 자체를 모바일 기준으로 두면 스크린리더 낭독 순서도 맞는다. */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-        {/* 좌측 — 지원 자격 / 근무 조건 */}
-        <Card className="md:order-1 md:col-span-7">
-          <CardContent className="space-y-4">
-            <h2 className="mb-2 text-lg font-semibold">지원 자격 / 근무 조건</h2>
-            <SkillGroupList groups={project.projectRequiredSkills} label="필수 기술" />
-            {project.projectRequiredSkills.length > 0 && project.projectPreferredSkills.length > 0 && <Separator />}
-            <SkillGroupList groups={project.projectPreferredSkills} label="우대 기술" />
-            <Separator />
-            <div className="space-y-2 text-sm">
-              <p><strong className="text-primary">우대 사항 :</strong> {project.projectPreferredEtc}</p>
-              <p><strong className="text-primary">근무 형태 :</strong> {project.projectWorkType?.join(' / ')}</p>
-              <p className="flex items-center gap-1.5">
-                <strong className="text-primary">근무 지역 :</strong>
-                {project.addressTypeCd === 2702 ? <Train className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
-                {getDisplayAddress(project)}
-              </p>
-              <p>
-                <strong className="text-primary">단가 :</strong> {project.formattedSalary}
-                {project.salaryNegotiableYn === 'Y' && ' / 단가 협의'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 우측 — 회사 정보 (sticky) */}
+        {/* 회사 정보 + 지원 CTA — 모바일 최상단 / 데스크톱 우측(sticky) */}
         <div className="md:sticky md:top-24 md:order-2 md:col-span-5 md:self-start">
           <Card className="relative">
             <div className="absolute right-3 top-3 text-xs text-muted-foreground">
@@ -259,6 +237,30 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
             </CardContent>
           </Card>
         </div>
+
+        {/* 지원 자격 / 근무 조건 — 모바일 하단 / 데스크톱 좌측 */}
+        <Card className="md:order-1 md:col-span-7">
+          <CardContent className="space-y-4">
+            <h2 className="mb-2 text-lg font-semibold">지원 자격 / 근무 조건</h2>
+            <SkillGroupList groups={project.projectRequiredSkills} label="필수 기술" />
+            {project.projectRequiredSkills.length > 0 && project.projectPreferredSkills.length > 0 && <Separator />}
+            <SkillGroupList groups={project.projectPreferredSkills} label="우대 기술" />
+            <Separator />
+            <div className="space-y-2 text-sm">
+              <p><strong className="text-primary">우대 사항 :</strong> {project.projectPreferredEtc}</p>
+              <p><strong className="text-primary">근무 형태 :</strong> {project.projectWorkType?.join(' / ')}</p>
+              <p className="flex items-center gap-1.5">
+                <strong className="text-primary">근무 지역 :</strong>
+                {project.addressTypeCd === 2702 ? <Train className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+                {getDisplayAddress(project)}
+              </p>
+              <p>
+                <strong className="text-primary">단가 :</strong> {project.formattedSalary}
+                {project.salaryNegotiableYn === 'Y' && ' / 단가 협의'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <ConfirmDialog

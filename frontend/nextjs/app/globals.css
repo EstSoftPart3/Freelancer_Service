@@ -255,6 +255,19 @@
   transform: translateY(0);
 }
 
+/* 일정 제목이 날짜 칸을 넘어가 옆 칸까지 침범하던 문제 대응.
+   말머리([면접 진행] 등)까지 붙어 제목이 길어지므로 칸 안에서 말줄임 처리한다. */
+.fc .fc-daygrid-event {
+  overflow: hidden;
+}
+.fc .fc-event-title,
+.fc .fc-event-title-container {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 /* 일정관리(FullCalendar) 모바일 툴바 — 좁은 화면에서 prev/next/today/title/뷰전환 버튼이
    한 줄에 다 들어가지 못해 서로 밀리는 문제 대응: 줄바꿈 허용 + 폰트/여백 축소 */
 @media (max-width: 480px) {
