@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -61,4 +62,41 @@ public record ProjectCreateRequest(
 		@NotNull(message = "인터뷰 가능 시간은 필수입니다.") List<LocalDateTime> interviewTime,
 
 		@NotNull(message = "알림 여부는 필수입니다.") String isNotification) {
+
+	/*
+	 * 날짜 4개의 관계 검증. 종전에는 @NotNull만 있어 "3월에 끝나는 프로젝트를 12월까지 모집"하는
+	 * 공고가 실제로 등록돼 있었다(sq 105·108). 프런트도 두 개의 DateRangeModal이 서로의 값을
+	 * 모르는 구조라 막지 못했으므로, 최종 방어선은 여기다.
+	 *
+	 * 필드가 null이면 통과시킨다 — 그건 위의 @NotNull이 잡을 몫이고, 여기서 또 잡으면
+	 * 사용자에게 원인과 무관한 메시지가 나간다.
+	 */
+
+	@AssertTrue(message = "모집 시작일은 모집 종료일보다 늦을 수 없습니다.")
+	public boolean isRecruitPeriodOrdered() {
+		if (recruitStartDt == null || recruitEndDt == null) {
+			return true;
+		}
+		return !recruitStartDt.isAfter(recruitEndDt);
+	}
+
+	@AssertTrue(message = "프로젝트 시작일은 종료일보다 늦을 수 없습니다.")
+	public boolean isProjectPeriodOrdered() {
+		if (projectStartDt == null || projectEndDt == null) {
+			return true;
+		}
+		return !projectStartDt.isAfter(projectEndDt);
+	}
+
+	/*
+	 * 모집 종료가 수행 시작보다 뒤인 것은 허용한다 — 수행 중 인력을 추가 모집하는 공고가 정상적으로
+	 * 존재한다. 다만 수행이 끝난 뒤까지 모집하는 것은 어떤 해석으로도 성립하지 않는다.
+	 */
+	@AssertTrue(message = "모집 종료일은 프로젝트 수행 종료일보다 늦을 수 없습니다.")
+	public boolean isRecruitEndWithinProjectPeriod() {
+		if (recruitEndDt == null || projectEndDt == null) {
+			return true;
+		}
+		return !recruitEndDt.isAfter(projectEndDt);
+	}
 }

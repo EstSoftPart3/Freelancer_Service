@@ -84,10 +84,12 @@ public class ProjectController {
 				projectService.fetchCompanyProjectCount(request, token)));
 	}
 
+	// @Valid가 빠져 있어 수정 시에는 필수값·날짜 정합성이 전혀 검증되지 않았다.
+	// 등록과 같은 DTO·같은 payload를 쓰므로 붙여도 기존 흐름이 깨지지 않는다.
 	@PatchMapping
 	public ResponseEntity<ApiResponse<Void>> patchProject(
 			Authentication authentication,
-			@RequestBody ProjectCreateRequest request) {
+			@Valid @RequestBody ProjectCreateRequest request) {
 		projectService.updateProject(request);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 수정 성공", null));
 	}

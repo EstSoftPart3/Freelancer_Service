@@ -226,6 +226,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
     if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
     if (!form.projectStartDt || !form.projectEndDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
     if (!form.recruitStartDt || !form.recruitEndDt) { toast.error('모집 기간을 설정해주세요.'); return }
+    // 두 DateRangeModal이 서로의 값을 모르기 때문에 여기서 관계를 본다(백엔드 @AssertTrue와 같은 규칙).
+    // 모집 종료가 수행 시작보다 뒤인 것은 허용 — 수행 중 인력 추가 모집이 정상 케이스다.
+    if (form.recruitEndDt > form.projectEndDt) {
+      toast.error('모집 종료일이 프로젝트 종료일보다 늦습니다. 이미 끝난 프로젝트를 모집할 수는 없습니다.')
+      return
+    }
     if (form.workType.length === 0) { toast.error('근무 형태를 최소 하나 선택해주세요.'); return }
     if (form.recruitJob.length === 0) { toast.error('모집 직군을 최소 하나 선택해주세요.'); return }
     if (form.usingSkills.length === 0) { toast.error('사용 기술을 최소 하나 선택해주세요.'); return }

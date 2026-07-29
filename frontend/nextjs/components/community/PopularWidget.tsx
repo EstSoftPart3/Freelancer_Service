@@ -61,9 +61,9 @@ export default function PopularWidget({
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
           {title && <h3 className="truncate text-sm font-semibold">{title}</h3>}
-          {/* 탭이 있으면 탭 자체가 기준을 드러내므로, 탭이 없을 때만 현재 기간을 안내한다 */}
+          {/* 탭 유무와 무관하게 지금 보고 있는 목록의 집계 기간을 알려준다(탭 전환 시 함께 갱신된다) */}
           <BestCriteriaInfo
-            note={showTabs ? undefined : `이 목록은 ${PERIOD_TABS.find((t) => t.value === period)?.label}(최근 ${PERIOD_DAYS[period]}일 작성글) 기준입니다.`}
+            note={`이 목록은 ${PERIOD_TABS.find((t) => t.value === period)?.label}(최근 ${PERIOD_DAYS[period]}일 작성글) 기준입니다.`}
           />
         </div>
         {showTabs && (

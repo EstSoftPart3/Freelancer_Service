@@ -1,9 +1,14 @@
 package com.example.demo.common;
 
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -41,6 +46,29 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(status)
                 .body(ApiResponse.error(HttpStatus.valueOf(status.value()), message));
+    }
+
+    /**
+     * @Valid 검증 실패. 이 핸들러가 없으면 handleGeneralException이 잡아
+     * 500 + "Validation failed for argument [0] in public org.springframework..."라는
+     * 내부 메시지가 그대로 프런트 토스트에 뜬다 — DTO에 적어둔 한글 사유가 사용자에게
+     * 도달하지 못한다. 프로젝트 등록·수정의 필수값 안내가 전부 이 상태였다.
+     *
+     * 여러 필드가 동시에 틀렸을 수 있으므로 사유를 모두 이어 붙인다.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getAllErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining(" "));
+        if (message.isBlank()) {
+            message = "입력값이 올바르지 않습니다.";
+        }
+        log.warn("입력값 검증 실패: {}", message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
