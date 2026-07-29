@@ -76,12 +76,12 @@ export const noticeColumns: ColumnDef<Notice>[] = [
     cell: ({ row }) => <TitleCell row={row} />,
   },
   {
-    accessorKey: 'userNm', // 작성자
+    accessorKey: 'userId', // 작성자 — 실명·닉네임은 바뀔 수 있어 목록에서는 아이디로 식별한다
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='작성자' />
     ),
     cell: ({ row }) => (
-      <div className='w-[80px] text-center'>{row.getValue('userNm')}</div>
+      <div className='w-[80px] text-center'>{row.getValue('userId') ?? '-'}</div>
     ),
   },
   {
