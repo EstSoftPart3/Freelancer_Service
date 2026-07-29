@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.example.demo.domain.community.dto.BoardListDTO;
+import com.example.demo.domain.admin.dto.AdminBoardListDTO;
 import com.example.demo.domain.community.entity.Comment;
 
 @Mapper
@@ -16,7 +16,7 @@ public interface AdminNoticeMapper {
                         @Param("keyword") String keyword);
 
         // 검색 + 정렬 + 페이징이 적용된 목록 조회
-        List<BoardListDTO> findAllNotices(
+        List<AdminBoardListDTO> findAllNotices(
                         @Param("boardTypeCd") Long boardTypeCd,
                         @Param("keyword") String keyword,
                         @Param("sortField") String sortField,

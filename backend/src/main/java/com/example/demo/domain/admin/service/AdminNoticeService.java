@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.admin.mapper.AdminNoticeMapper;
-import com.example.demo.domain.community.dto.BoardListDTO;
+import com.example.demo.domain.admin.dto.AdminBoardListDTO;
 import com.example.demo.domain.community.dto.request.CommentRequest;
-import com.example.demo.domain.community.dto.response.BoardListResponse;
+import com.example.demo.domain.admin.dto.response.AdminBoardListResponseDTO;
 import com.example.demo.domain.community.entity.Comment;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.mapper.CommentMapper;
@@ -34,18 +34,18 @@ public class AdminNoticeService {
         private final NotificationService notificationService;
 
         @Transactional(readOnly = true)
-        public BoardListResponse getAdminNotices(Long boardTypeCd, String keyword,
+        public AdminBoardListResponseDTO getAdminNotices(Long boardTypeCd, String keyword,
                         String sortField, String sortOrder,
                         Long page, Long size) {
 
                 Long offset = (page - 1) * size;
                 Long totalElements = adminNoticeMapper.countNotices(boardTypeCd, keyword);
                 // sortOrder는 AdminNoticeMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
-                List<BoardListDTO> notices = adminNoticeMapper.findAllNotices(boardTypeCd, keyword, sortField,
+                List<AdminBoardListDTO> notices = adminNoticeMapper.findAllNotices(boardTypeCd, keyword, sortField,
                                 SortDirectionUtil.normalize(sortOrder), offset, size);
 
                 // ZodError 방지: null인 리스트를 빈 리스트로 초기화
-                for (BoardListDTO dto : notices) {
+                for (AdminBoardListDTO dto : notices) {
                         if (dto.getNormalTags() == null) {
                                 dto.setNormalTags(new ArrayList<>());
                         }
@@ -54,7 +54,7 @@ public class AdminNoticeService {
                         }
                 }
 
-                return BoardListResponse.builder()
+                return AdminBoardListResponseDTO.builder()
                                 .boards(notices)
                                 .totalElements(totalElements)
                                 .page(page)

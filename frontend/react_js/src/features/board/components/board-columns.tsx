@@ -96,14 +96,15 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
     cell: ({ row }) => <TitleCell row={row} />,
   },
   {
-    id: 'userNickname',
-    accessorKey: 'userNickname',
+    id: 'userId',
+    accessorKey: 'userId',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='작성자' />
     ),
-    // 실명(userNm)은 상세 드로어에서 확인한다. 목록은 FO와 대조하기 쉽도록 닉네임을 보여준다.
+    // 실명·닉네임은 바뀔 수 있어 식별이 흔들린다. 목록은 변하지 않는 아이디로 보여주고,
+    // 실명은 상세 드로어에서 확인한다.
     cell: ({ row }) => (
-      <div className='w-[80px] text-center'>{row.getValue('userNickname') ?? '-'}</div>
+      <div className='w-[80px] text-center'>{row.getValue('userId') ?? '-'}</div>
     ),
   },
   {

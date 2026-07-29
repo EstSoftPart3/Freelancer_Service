@@ -42,6 +42,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userTypeCd',
+    meta: { title: '회원유형' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -76,6 +77,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'profileImageUrl',
+    meta: { title: '프로필' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -100,6 +102,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userId',
+    meta: { title: '아이디' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -114,6 +117,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
 
   {
     accessorKey: 'userNm',
+    meta: { title: '이름' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -127,10 +131,13 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userNickname',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='닉네임' />
-    ),
     meta: { title: '닉네임' },
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={column.columnDef.meta?.title as string}
+      />
+    ),
     cell: ({ row }) => {
       const { userNickname } = row.original
       return <LongText className='max-w-36'>{userNickname ?? '-'}</LongText>
@@ -138,6 +145,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'companyNm',
+    meta: { title: '기업명' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -151,6 +159,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userEmail',
+    meta: { title: '이메일' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -164,6 +173,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userPhoneNum',
+    meta: { title: '휴대폰' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -182,6 +192,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userGenderCd',
+    meta: { title: '성별' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -222,6 +233,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userCreatedDtm',
+    meta: { title: '가입일' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -239,6 +251,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userModifiedDtm',
+    meta: { title: '수정일' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -256,6 +269,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userSignupTypeCd',
+    meta: { title: '가입경로' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -279,6 +293,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userIsActivateYn',
+    meta: { title: '활성' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -296,6 +311,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userIsDeletedYn',
+    meta: { title: '삭제' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -314,6 +330,7 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
   },
   {
     accessorKey: 'userAgreedPrivacyPolicyYn',
+    meta: { title: '약관동의' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
