@@ -12,7 +12,6 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
-import { getDirectionsPath } from '@/lib/kakaoMap'
 import { cn } from '@/lib/utils'
 import type {
   ProjectItem,
@@ -177,10 +176,22 @@ export default function ProjectListClient({ initialData }: Props = {}) {
     setConfirmProject(project)
   }, [])
 
-  // 좌표·프로젝트명을 클라이언트에서 URL로 만들지 않는다 — 서버 라우트가 조회 후 카카오로 리다이렉트한다.
+  // 카카오 길찾기 링크 규격이 출발지·목적지 좌표를 URL에 요구한다. 서버 리다이렉트를 경유해도
+  // 최종적으로 브라우저가 이 URL로 이동하므로 좌표 노출은 어차피 피할 수 없다 — 그래서 직접 만든다.
+  // 대신 noopener,noreferrer로 opener 참조와 Referer 누출은 막는다.
   const openKakaoRoute = useCallback((project: ProjectItem) => {
-    window.open(getDirectionsPath(project.projectSq), '_blank')
-  }, [])
+    // 좌표가 숫자가 아니면 링크를 만들지 않는다(경로 구분자 주입 방지)
+    if (!Number.isFinite(project.latitude) || !Number.isFinite(project.longitude)) {
+      toast.error('이 프로젝트는 위치 정보가 없어 길찾기를 제공할 수 없습니다.')
+      return
+    }
+    const destName = encodeURIComponent(project.projectTtl)
+    let url = `https://map.kakao.com/link/to/${destName},${project.latitude},${project.longitude}`
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      url += `/from/${encodeURIComponent('내 위치')},${latitude},${longitude}`
+    }
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }, [latitude, longitude])
 
   // ── 핀 선택 — 같은 핀을 다시 누르면 상세 이동 확인, 처음 누르면 panTo + 활성화 ──
   const selectProject = useCallback((project: ProjectItem) => {

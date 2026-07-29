@@ -24,7 +24,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_TOTAL_SIZE = 20 * 1024 * 1024 // 20MB
 const ALLOWED_EXTENSIONS: readonly string[] = [
-  'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg',
   'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
   'txt', 'csv', 'hwp', 'hwpx', 'zip',
 ]
@@ -262,7 +262,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
             </ul>
             <p className="mt-1.5 font-semibold">가능한 형식</p>
             <p className="mt-0.5 break-keep">
-              이미지(jpg·png·gif·webp·bmp), 문서(pdf·doc·docx·xls·xlsx·ppt·pptx·txt·csv·hwp·hwpx), 압축(zip)
+              이미지(jpg·png·gif·webp·bmp·svg), 문서(pdf·doc·docx·xls·xlsx·ppt·pptx·txt·csv·hwp·hwpx), 압축(zip)
             </p>
           </InfoTooltip>
         </div>

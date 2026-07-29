@@ -28,9 +28,12 @@ public class FileStorageService {
     // 업로드 허용 확장자 화이트리스트.
     // 기존엔 확장자 검사가 전혀 없어 .jsp/.php/.exe 같은 실행 가능 파일도 그대로 저장됐다(현존 취약점).
     // 블랙리스트가 아니라 화이트리스트여야 신규 위험 확장자에도 자동으로 안전하다.
-    // svg는 스크립트를 품을 수 있어(저장형 XSS) 이미지지만 의도적으로 제외한다.
+    //
+    // svg는 내부에 <script>를 품을 수 있어 그 자체로는 저장형 XSS 벡터다. 업무상 필요해 허용하되,
+    // FileController가 응답에 `Content-Security-Policy: sandbox` 를 붙여 스크립트 실행을 차단한다.
+    // 둘은 한 쌍이다 — 그 헤더를 지우면 svg 허용이 곧바로 취약점이 된다.
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif", "webp", "bmp",
+            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg",
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
             "txt", "csv", "hwp", "hwpx", "zip");
 
