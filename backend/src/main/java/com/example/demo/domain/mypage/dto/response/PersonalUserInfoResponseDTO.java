@@ -12,6 +12,7 @@ public class PersonalUserInfoResponseDTO {
     private String userId;
     private String userEmail;
     private String userNm;
+    private String userNickname;
     private Date userBirthDt;
     private String userGenderNm;
     private String userPhoneNum;

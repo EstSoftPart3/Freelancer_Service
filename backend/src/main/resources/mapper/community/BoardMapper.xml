@@ -115,7 +115,7 @@
 		SELECT b.board_sq AS sq,
 		       CASE WHEN b.board_type_cd = 1402 THEN 'qna' ELSE 'board' END AS boardType,
 		       b.board_ttl AS ttl,
-		       COALESCE(u.user_nm, '존재하지 않는 사용자') AS userNm,
+		       COALESCE(u.user_nickname, '탈퇴한 사용자') AS userNickname,
 		       b.board_view_cnt AS viewCnt,
 		       b.board_comment_cnt AS commentCnt,
 		       b.board_recommend_cnt AS recommendCnt,

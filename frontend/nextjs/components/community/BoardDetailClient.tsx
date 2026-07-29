@@ -20,7 +20,7 @@ interface Props {
 }
 
 const emptyBoard: BoardDetail = {
-  sq: 0, ttl: '', description: '', userSq: 0, userNm: '', createdAt: '',
+  sq: 0, ttl: '', description: '', userSq: 0, userNickname: '', createdAt: '',
   viewCnt: 0, recommendCnt: 0, commentCnt: 0, skillTags: [], normalTags: [],
   attachments: [], comments: [],
 }

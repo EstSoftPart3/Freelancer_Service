@@ -62,7 +62,7 @@ function normalizeNotificationUrl(url?: string): string {
 export default function CommonHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { userNm, isLoggedIn, clearUser, authChecked } = useUserStore()
+  const { userNickname, isLoggedIn, clearUser, authChecked } = useUserStore()
   const loggedIn = isLoggedIn()
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -308,7 +308,7 @@ export default function CommonHeader() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  <span>{userNm}</span>
+                  <span>{userNickname}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => router.push('/mypage')}>
@@ -406,7 +406,7 @@ export default function CommonHeader() {
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                     >
                       <User className="h-4 w-4" />
-                      {userNm} · 마이페이지
+                      {userNickname} · 마이페이지
                     </Link>
                     <button
                       onClick={logout}

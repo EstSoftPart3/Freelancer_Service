@@ -5,7 +5,7 @@ export const commentSchema = z.object({
   sq: z.number(), // commentSq -> sq
   parentCommentSq: z.number().nullable(), // parentSq -> parentCommentSq
   description: z.string(), // content -> description
-  userNm: z.string(),
+  userNickname: z.string(),
   createdAt: z.string(),
   isDeletedYn: z.enum(['Y', 'N']).optional(), // 백엔드 결과에 없을 수 있으므로 optional
   childComments: z.array(z.any()).optional(), // children -> childComments

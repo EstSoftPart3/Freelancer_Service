@@ -79,7 +79,7 @@ public class SecurityConfigProd {
                         // ---- 비로그인 계정 플로우 ----
                         .requestMatchers(HttpMethod.POST, "/login", "/refresh-token", "/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/signup").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/check-id").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/check-id", "/check-nickname").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/email/send-code", "/email/find/send-code", "/email/verify-code").permitAll()
                         .requestMatchers(HttpMethod.POST,

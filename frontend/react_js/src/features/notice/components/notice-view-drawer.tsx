@@ -39,7 +39,7 @@ interface Comment {
   sq: number
   parentCommentSq: number | null
   description: string
-  userNm: string
+  userNickname: string
   createdAt: string
   isDeletedYn?: 'Y' | 'N' // '?'를 붙여서 optional로 변경!
   childComments?: Comment[] // 트리 구조용
@@ -85,7 +85,7 @@ function CommentItem({
         <div className='flex-1 space-y-2'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2 text-sm'>
-              <span className='font-semibold'>{comment.userNm}</span>
+              <span className='font-semibold'>{comment.userNickname}</span>
               <span className='text-xs text-muted-foreground'>
                 {comment.createdAt}
               </span>

@@ -3,7 +3,7 @@
 <mapper namespace="com.example.demo.domain.admin.mapper.AdminReportMapper">
 
     <sql id="reportColumns"> r.report_sq AS reportSq, r.report_user_sq AS reporterSq, u.user_nm AS
-        reporterNm, r.report_target_type_cd AS targetTypeCd, CASE WHEN r.report_target_type_cd =
+        reporterNm, u.user_nickname AS reporterNickname, r.report_target_type_cd AS targetTypeCd, CASE WHEN r.report_target_type_cd =
         2001 THEN b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1404 WHEN
         r.report_target_type_cd IN (2003, 2004) THEN 1405 ELSE NULL END AS originTypeCd, CASE WHEN
         r.report_target_type_cd = 2001 AND b.board_type_cd = 1401 THEN '일반 게시글' WHEN
@@ -18,7 +18,7 @@
         (2003, 2004) THEN cmt.comment_description_txt ELSE NULL END AS targetDescription,
         r.report_reason_cd AS reasonCd, c2.common_code_nm AS reasonNm, r.report_content_txt AS
         content, r.report_process_status_cd AS statusCd, c3.common_code_nm AS statusNm,
-        r.report_process_desc_edt AS processDesc, u2.user_nm AS processorNm, r.report_created_at_dtm
+        r.report_process_desc_edt AS processDesc, u2.user_nm AS processorNm, u2.user_nickname AS processorNickname, r.report_created_at_dtm
         AS createdAt, r.report_processed_at_dtm AS processedAt </sql>
 
     <sql id="reportJoins"> FROM tbl_report_s r JOIN tbl_user_m u ON r.report_user_sq = u.user_sq
@@ -37,7 +37,7 @@
         </if>
         <if
             test="keyword != null and keyword != ''"> AND ( u.user_nm LIKE CONCAT('%', #{keyword},
-        '%') OR r.report_content_txt LIKE CONCAT('%', #{keyword}, '%') OR b.board_ttl LIKE
+        '%') OR u.user_nickname LIKE CONCAT('%', #{keyword}, '%') OR r.report_content_txt LIKE CONCAT('%', #{keyword}, '%') OR b.board_ttl LIKE
         CONCAT('%', #{keyword}, '%') OR a.answer_ttl LIKE CONCAT('%', #{keyword}, '%') OR
         cmt.comment_description_txt LIKE CONCAT('%', #{keyword}, '%') ) </if>
     </sql>

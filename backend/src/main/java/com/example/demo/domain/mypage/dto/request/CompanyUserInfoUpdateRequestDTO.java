@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class CompanyUserInfoUpdateRequestDTO {
     private String userNm;
+    private String userNickname;
     private String userPw;
     private String userEmail;
     private String userPhoneNum;

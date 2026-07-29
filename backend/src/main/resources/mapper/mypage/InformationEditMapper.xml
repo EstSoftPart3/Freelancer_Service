@@ -9,7 +9,7 @@
 
     <select id="findUserInfoByUserSq" parameterType="long"
         resultType="com.example.demo.domain.mypage.dto.UserInfoDTO"> SELECT user_sq, user_id,
-        user_email, user_nm, user_birth_dt, user_gender_cd, user_phone_num, user_type_cd, address_sq
+        user_email, user_nm, user_nickname, user_birth_dt, user_gender_cd, user_phone_num, user_type_cd, address_sq
         FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
 
     <select id="findAddressByAddressSq" parameterType="long"
@@ -25,18 +25,26 @@
     <select id="selectCompanyNameByUserSq" resultType="string"> SELECT company_nm FROM TBL_COMPANY_S
         WHERE user_sq = #{userSq} </select>
 
+    <!-- 닉네임 중복 확인 (본인 제외). UNIQUE 제약이 탈퇴 회원 행에도 걸리므로 삭제여부는 보지 않는다 -->
+    <select id="existsNicknameExcludingUser" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM
+        TBL_USER_M WHERE user_nickname = #{userNickname} AND user_sq != #{userSq} ) </select>
+
     <update id="updateUserInfo"> UPDATE TBL_USER_M <set>
             <if test="userPw != null and userPw != ''"> user_pw = #{userPw}, </if>
     <if
                 test="userEmail != null"> user_email = #{userEmail}, </if>
     <if
                 test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+    <if
+                test="userNickname != null and userNickname != ''"> user_nickname = #{userNickname}, </if>
         user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
 
     <update id="updateUserInfoWithoutPw"> UPDATE TBL_USER_M <set>
             <if test="userEmail != null"> user_email = #{userEmail}, </if>
     <if
                 test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+    <if
+                test="userNickname != null and userNickname != ''"> user_nickname = #{userNickname}, </if>
         user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
 
     <update id="updateCompanyInfo"> UPDATE TBL_USER_M <set>
@@ -47,6 +55,8 @@
                 test="userEmail != null"> user_email = #{userEmail}, </if>
     <if
                 test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+    <if
+                test="userNickname != null and userNickname != ''"> user_nickname = #{userNickname}, </if>
         user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
 
     <update id="updateCompanyInfoWithoutPw"> UPDATE TBL_USER_M <set>
@@ -56,6 +66,8 @@
         user_email = #{userEmail}, </if>
     <if
                 test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+    <if
+                test="userNickname != null and userNickname != ''"> user_nickname = #{userNickname}, </if>
         user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
 
     <update id="updateAddress"> UPDATE TBL_ADDRESS_S SET zonecode = #{zonecode}, address =

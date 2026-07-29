@@ -32,7 +32,7 @@ export default function CommunityBestSection({ items }: Props) {
                 {item.ttl}
               </Link>
               <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                <span>{item.userNm}</span>
+                <span>{item.userNickname}</span>
                 <span>조회 {item.viewCnt}</span>
                 <span>추천 {item.recommendCnt}</span>
                 <span>댓글 {item.commentCnt}</span>

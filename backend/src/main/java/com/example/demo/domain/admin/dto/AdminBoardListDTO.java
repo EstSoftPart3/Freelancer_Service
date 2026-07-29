@@ -20,6 +20,7 @@ public class AdminBoardListDTO {
     private Long sq;
     private Long userSq;
     private String userNm;
+    private String userNickname;
     private String ttl;
     private Integer boardTypeCd; // [필수 추가] 유형 코드 (1401, 1402 등)
     private Integer viewCnt;

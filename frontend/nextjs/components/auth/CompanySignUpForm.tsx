@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEmailVerification } from '@/hooks/useEmailVerification'
 import { alertStore } from '@/stores/alertStore'
+import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { companyAgreementText } from '@/lib/terms'
@@ -40,6 +41,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
   const pwField = useField()
   const cpwField = useField()
   const nameField = useField()        // 담당자 이름
+  const nicknameField = useField()    // 공개 화면용 닉네임
   const phoneField = useField()
   const companyNameField = useField() // 기업명
   const addressField = useField()
@@ -58,6 +60,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
   const [termsError, setTermsError] = useState('')
   const [termsOpen, setTermsOpen] = useState(false)
   const idDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const nicknameDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const emailVerify = useEmailVerification({ sendCodeEndpoint: '/email/send-code' })
   const fullEmail = () => `${emailIdField.value}@${isCustomDomain ? customDomain : emailDomain}`
@@ -103,6 +106,18 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
       nameField.setValid(false); return false
     }
     nameField.setError(''); nameField.setValid(true); return true
+  }
+
+  const validateNickname = useCallback(async (val: string): Promise<boolean> => {
+    const reason = await checkNicknameAvailable(val)
+    if (reason) { nicknameField.setError(reason); nicknameField.setValid(false); return false }
+    nicknameField.setError(''); nicknameField.setValid(true); return true
+  }, [nicknameField])
+
+  const onNicknameChange = (val: string) => {
+    nicknameField.setValue(val)
+    if (nicknameDebounce.current) clearTimeout(nicknameDebounce.current)
+    nicknameDebounce.current = setTimeout(() => validateNickname(val), 500)
   }
 
   const validateCompanyName = (val = companyNameField.value) => {
@@ -179,6 +194,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
     const okPw = validatePw()
     const okCpw = validateCpw()
     const okName = validateName()
+    const okNickname = await validateNickname(nicknameField.value)
     const okPhone = validatePhone()
     const okCompany = validateCompanyName()
     const okAddr = validateAddress()
@@ -187,13 +203,14 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
     const tOk = terms || (setTermsError('필수 약관에 동의해주세요.'), false)
 
     const allValid =
-      okId && okPw && okCpw && okName && okPhone && okCompany && okAddr &&
+      okId && okPw && okCpw && okName && okNickname && okPhone && okCompany && okAddr &&
       okEmail && vcOk && tOk
 
     if (!allValid) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
 
     onSubmit({
       id: idField.value, password: pwField.value, name: nameField.value,
+      nickname: nicknameField.value,
       phone: phoneField.value, companyName: companyNameField.value,
       address: addressField.value, addressDetail, postcode, sigunguCode, latitude, longitude,
       emailId: emailIdField.value,
@@ -242,6 +259,16 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
             <FieldLabel label="담당자 이름" valid={nameField.valid} />
             <Input value={nameField.value} onChange={(e) => { nameField.setValue(e.target.value); validateName(e.target.value) }} />
             <ErrorMsg msg={nameField.error} />
+          </div>
+          <div>
+            <FieldLabel label="닉네임" valid={nicknameField.valid} />
+            <Input
+              value={nicknameField.value}
+              onChange={(e) => onNicknameChange(e.target.value)}
+              maxLength={20}
+              placeholder={NICKNAME_HINT}
+            />
+            <ErrorMsg msg={nicknameField.error} />
           </div>
           <div>
             <FieldLabel label="휴대폰 번호" valid={phoneField.valid} />

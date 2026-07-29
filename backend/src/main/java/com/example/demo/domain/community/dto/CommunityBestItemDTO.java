@@ -19,7 +19,7 @@ public class CommunityBestItemDTO {
     private Long sq;
     private String boardType; // "board" | "qna"
     private String ttl;
-    private String userNm;
+    private String userNickname;
     private Integer viewCnt;
     private Integer commentCnt;
     private Integer recommendCnt;

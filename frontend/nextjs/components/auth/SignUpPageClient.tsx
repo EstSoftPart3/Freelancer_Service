@@ -12,7 +12,7 @@ export default function SignUpPageClient() {
 
   const handleSubmit = async (data: Record<string, unknown>) => {
     const {
-      id, password, name, dob, gender, phone,
+      id, password, name, nickname, dob, gender, phone,
       address, addressDetail, postcode, sigunguCode, latitude, longitude,
       emailId, emailDomain, terms, typeCode, signupTypeCode,
       companyName, companyCeoName, companyBizNumber, companyOpenDate,
@@ -22,6 +22,7 @@ export default function SignUpPageClient() {
       userId: id,
       userPw: password,
       userNm: name,
+      userNickname: nickname,
       userGenderCd: gender ? Number(gender) : undefined,
       userPhoneNum: phone,
       userEmail: `${emailId}@${emailDomain}`,
@@ -44,7 +45,13 @@ export default function SignUpPageClient() {
     }
 
     try {
-      await api.post('/signup', payload)
+      // /signup은 실패해도 ApiResponse를 그대로 반환해 HTTP는 200이다 — body의 status를 봐야
+      // 중복 닉네임·아이디 같은 거절이 "가입 완료"로 표시되지 않는다.
+      const { data } = await api.post<{ status?: string; message?: string }>('/signup', payload)
+      if (data?.status && data.status !== 'OK') {
+        alertStore.show(data.message ?? '회원가입에 실패했습니다.', 'danger')
+        return
+      }
       alertStore.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
       router.push('/login')
     } catch (err: unknown) {

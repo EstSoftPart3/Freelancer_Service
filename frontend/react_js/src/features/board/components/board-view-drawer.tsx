@@ -48,7 +48,7 @@ interface SkillTag {
 interface AnswerDetail {
   sq: number
   ttl: string
-  userNm: string
+  userNickname: string
   createdAt: string
   isAdoptedYn: 'Y' | 'N'
   recommendCnt?: number
@@ -59,7 +59,7 @@ interface Comment {
   sq: number
   parentCommentSq: number | null
   description: string
-  userNm: string
+  userNickname: string
   createdAt: string
   isDeletedYn?: 'Y' | 'N'
   childComments?: Comment[]
@@ -114,7 +114,7 @@ function CommentItem({
         <div className='flex-1 space-y-2'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2 text-sm'>
-              <span className='font-semibold'>{comment.userNm}</span>
+              <span className='font-semibold'>{comment.userNickname}</span>
               <span className='text-xs text-muted-foreground'>
                 {comment.createdAt}
               </span>
@@ -546,7 +546,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                         </div>
                         <div className='flex items-center justify-between'>
                           <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-                            <User size={12} /> {answer.userNm}
+                            <User size={12} /> {answer.userNickname}
                           </div>
                           <div className='flex items-center gap-3 text-[11px] text-muted-foreground'>
                             <span>추천 {answer.recommendCnt || 0}</span>

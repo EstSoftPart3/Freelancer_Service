@@ -102,12 +102,12 @@ public class BoardService {
 
 					// 각 게시글의 작성자 조회
 					UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-					String userNm = Optional.ofNullable(userInfo)
-							.map(UserDTO::getUserNm)
-							.orElse("존재하지 않는 사용자");
+					String userNickname = Optional.ofNullable(userInfo)
+							.map(UserDTO::getUserNickname)
+							.orElse("탈퇴한 사용자");
 
 					// BoardListResponse 생성 (태그 포함)
-					return BoardListDTO.fromEntity(board, userNm, boardAnswerCnt, normalTags, skillTags);
+					return BoardListDTO.fromEntity(board, userNickname, boardAnswerCnt, normalTags, skillTags);
 				})
 				.collect(Collectors.toList());
 
@@ -136,9 +136,9 @@ public class BoardService {
 
 		// 게시글의 작성자 조회
 		UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-		String userNm = Optional.ofNullable(userInfo)
-				.map(UserDTO::getUserNm)
-				.orElse("존재하지 않는 사용자");
+		String userNickname = Optional.ofNullable(userInfo)
+				.map(UserDTO::getUserNickname)
+				.orElse("탈퇴한 사용자");
 
 		List<AnswerListResponse> answerListResponses = answerService.getAllAnswers(board.getBoardSq());
 
@@ -177,7 +177,7 @@ public class BoardService {
 				.collect(Collectors.toList());
 
 		// 변환된 commentTree를 넘겨줍니다.
-		return BoardResponse.fromEntity(board, userNm, normalTags, skillTags, answerListResponses, commentTree, userSq,
+		return BoardResponse.fromEntity(board, userNickname, normalTags, skillTags, answerListResponses, commentTree, userSq,
 				files);
 	}
 

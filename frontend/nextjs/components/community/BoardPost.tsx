@@ -148,7 +148,7 @@ export default function BoardPost({
 
       {/* 메타 */}
       <div className="mt-1 text-sm text-muted-foreground">
-        By <span className="font-medium">{boardInfo.userNm}</span>
+        By <span className="font-medium">{boardInfo.userNickname}</span>
         <span className="ml-3">{fmtDate(boardInfo.createdAt)}</span>
       </div>
 

@@ -135,7 +135,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
               </Link>
               <TagRow skillTags={b.skillTags} normalTags={b.normalTags} resolvedType={resolvedType} />
             </div>
-            <span className="w-20 shrink-0 truncate text-center text-sm">{b.userNm}</span>
+            <span className="w-20 shrink-0 truncate text-center text-sm">{b.userNickname}</span>
             <span className="w-16 shrink-0 text-center text-xs text-muted-foreground">{fmtDate(b.createdAt)}</span>
             <div className="flex w-44 shrink-0 items-center gap-3 text-xs text-muted-foreground">
               <span className="flex w-12 items-center gap-1"><Eye className="h-3.5 w-3.5" />{b.viewCnt}</span>

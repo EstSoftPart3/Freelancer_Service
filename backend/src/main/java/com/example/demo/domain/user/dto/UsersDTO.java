@@ -12,6 +12,7 @@ public class UsersDTO {
     private String userEmail;
     private String userPw;
     private String userNm;
+    private String userNickname;
     private Long userGenderCd;
     private String userPhoneNum;
     private LocalDate userBirthDt;

@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.user.constant.NicknamePolicy;
 import com.example.demo.domain.user.dto.AddressDTO;
 import com.example.demo.domain.user.dto.CompanyProfileDTO;
 import com.example.demo.domain.user.dto.UserDTO;
@@ -29,6 +30,15 @@ public class UserService {
         return userRepository.existsByUserId(userId);
     }
 
+    /**
+     * 형식 위반이면 IllegalArgumentException, 형식은 맞지만 이미 쓰이는 중이면 true.
+     */
+    @Transactional(readOnly = true)
+    public boolean isUserNicknameExists(String userNickname) {
+        NicknamePolicy.validate(userNickname);
+        return userRepository.existsByUserNickname(userNickname);
+    }
+
     @Transactional
     public void signUp(SignUpRequestDTO requestDto) {
 
@@ -41,6 +51,10 @@ public class UserService {
         }
         if (userRepository.existsByUserPhoneNum(requestDto.getUserPhoneNum())) {
             throw new IllegalArgumentException("이미 사용 중인 휴대폰 번호입니다.");
+        }
+        NicknamePolicy.validate(requestDto.getUserNickname());
+        if (userRepository.existsByUserNickname(requestDto.getUserNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
         // 2. 지역 코드 조회
@@ -64,6 +78,7 @@ public class UserService {
         userDTO.setUserEmail(requestDto.getUserEmail());
         userDTO.setUserPw(passwordEncoder.encode(requestDto.getUserPw())); // 암호화된 비밀번호
         userDTO.setUserNm(requestDto.getUserNm());
+        userDTO.setUserNickname(requestDto.getUserNickname());
         userDTO.setUserGenderCd(requestDto.getUserGenderCd());
         userDTO.setUserPhoneNum(requestDto.getUserPhoneNum());
         userDTO.setUserBirthDt(requestDto.getUserBirthDt());

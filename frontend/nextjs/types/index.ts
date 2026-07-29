@@ -3,6 +3,7 @@ export type UserType = 'PERSONAL' | 'COMPANY'
 export interface User {
   userSq: number
   userNm: string
+  userNickname: string
   userTypeCd: number        // 301 = PERSONAL, 302 = COMPANY (API 응답값)
   address?: string
   latitude?: number
@@ -112,7 +113,7 @@ export interface Attachment {
 export interface Comment {
   sq: number
   userSq: number
-  userNm: string
+  userNickname: string
   userProfileImgUrl?: string
   description: string
   createdAt: string
@@ -124,7 +125,7 @@ export interface Comment {
 export interface AnswerSummary {
   sq: number | null
   ttl: string
-  userNm: string
+  userNickname: string
   createdAt: string
   viewCnt: number
   commentCnt: number
@@ -137,7 +138,7 @@ export interface BoardItem {
   sq: number
   ttl: string
   userSq: number
-  userNm: string
+  userNickname: string
   createdAt: string
   viewCnt: number
   commentCnt: number
@@ -154,7 +155,7 @@ export interface CommunityBestItem {
   sq: number
   boardType: 'board' | 'qna'
   ttl: string
-  userNm: string
+  userNickname: string
   viewCnt: number
   commentCnt: number
   recommendCnt: number
@@ -287,6 +288,7 @@ export interface UserInfo {
   userId: string
   userPw: string
   userNm: string
+  userNickname: string
   userEmail: string
   userBirthDt?: string
   userGenderNm?: string

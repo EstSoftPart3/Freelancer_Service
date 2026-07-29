@@ -15,6 +15,7 @@ interface UserState extends Partial<User> {
 export const useUserStore = create<UserState>((set, get) => ({
   userSq: undefined,
   userNm: undefined,
+  userNickname: undefined,
   userTypeCd: undefined,
   address: undefined,
   latitude: undefined,
@@ -39,6 +40,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({
       userSq: undefined,
       userNm: undefined,
+      userNickname: undefined,
       userTypeCd: undefined,
       address: undefined,
       latitude: undefined,

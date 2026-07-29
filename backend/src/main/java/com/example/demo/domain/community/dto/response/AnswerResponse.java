@@ -15,7 +15,7 @@ public class AnswerResponse{
 	private Long sq;
     private Long userSq;
     private Long boardSq;
-    private String userNm; // 사용자 이름
+    private String userNickname; // 사용자 이름
     private String ttl;
     private String description;
     private Integer viewCnt;
@@ -29,12 +29,12 @@ public class AnswerResponse{
     private List<CommentResponse> comments;
 
     
-    public static AnswerResponse fromEntity(Answer answer, String userNm, List<String> normalTags, List<SkillTagDTO> skillTags, List<CommentResponse> comments, List<BoardAttachmentResponse> files) {
+    public static AnswerResponse fromEntity(Answer answer, String userNickname, List<String> normalTags, List<SkillTagDTO> skillTags, List<CommentResponse> comments, List<BoardAttachmentResponse> files) {
         return new AnswerResponse(
     		answer.getAnswerSq(),
     		answer.getUserSq(),
     		answer.getBoardSq(),
-    		userNm,
+    		userNickname,
     		answer.getAnswerTtl(),
     		answer.getAnswerDescriptionEdt(),
     		answer.getAnswerViewCnt(),

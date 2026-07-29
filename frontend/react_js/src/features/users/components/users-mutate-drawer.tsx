@@ -70,6 +70,11 @@ const validateBirthDate = ({
 
 const schema = z.object({
   userNm: z.string().min(1, '이름을 입력해주세요.'),
+  userNickname: z
+    .string()
+    .refine((v) => v === '' || /^[가-힣a-zA-Z0-9_]{2,20}$/.test(v), {
+      message: '닉네임은 한글·영문·숫자·밑줄 2~20자로 입력해주세요.',
+    }),
   userEmail: z.string(),
   userPw: z
     .string()
@@ -135,6 +140,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       userNm: '',
+      userNickname: '',
       userEmail: '',
       userPw: '',
       userPhoneNum: '',
@@ -156,6 +162,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
         const sq = currentRow.companySq ?? null
         reset({
           userNm: currentRow.userNm,
+          userNickname: currentRow.userNickname ?? '',
           userEmail: currentRow.userEmail,
           userPw: '', //빈 문자열로 둬서 입력 시 수정 되도록 변경
           userPhoneNum: currentRow.userPhoneNum,
@@ -179,6 +186,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       } else {
         reset({
           userNm: '',
+          userNickname: '',
           userEmail: '',
           userPw: '',
           userPhoneNum: '',
@@ -234,6 +242,8 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
 
     const formData = new FormData()
     formData.append('userNm', data.userNm)
+    // 빈 값이면 보내지 않는다 — 백엔드 UPDATE가 UNIQUE 컬럼을 건드리지 않도록
+    if (data.userNickname) formData.append('userNickname', data.userNickname)
     formData.append('userEmail', data.userEmail)
     formData.append('userPhoneNum', data.userPhoneNum)
     if (data.userBirthDt) {
@@ -332,6 +342,24 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
             {errors.userNm && (
               <p className='text-sm text-destructive'>
                 {errors.userNm.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='userNickname'>닉네임</Label>
+            <Input
+              id='userNickname'
+              autoComplete='off'
+              maxLength={20}
+              {...register('userNickname')}
+            />
+            <p className='text-muted-foreground text-xs'>
+              커뮤니티 게시글·댓글에 표시되는 이름입니다.
+            </p>
+            {errors.userNickname && (
+              <p className='text-sm text-destructive'>
+                {errors.userNickname.message}
               </p>
             )}
           </div>

@@ -24,25 +24,31 @@ public interface InformationEditMapper {
 
         String selectCompanyNameByUserSq(@Param("userSq") Long userSq);
 
+        boolean existsNicknameExcludingUser(@Param("userNickname") String userNickname, @Param("userSq") Long userSq);
+
         int updateUserInfo(@Param("userSq") Long userSq,
                         @Param("userPw") String userPw,
                         @Param("userEmail") String userEmail,
-                        @Param("userPhoneNum") String userPhoneNum);
+                        @Param("userPhoneNum") String userPhoneNum,
+                        @Param("userNickname") String userNickname);
 
         int updateUserInfoWithoutPw(@Param("userSq") Long userSq,
                         @Param("userEmail") String userEmail,
-                        @Param("userPhoneNum") String userPhoneNum);
+                        @Param("userPhoneNum") String userPhoneNum,
+                        @Param("userNickname") String userNickname);
 
         int updateCompanyInfo(@Param("userSq") Long userSq,
                         @Param("userPw") String userPw,
                         @Param("userEmail") String userEmail,
                         @Param("userPhoneNum") String userPhoneNum,
-                        @Param("userNm") String userNm);
+                        @Param("userNm") String userNm,
+                        @Param("userNickname") String userNickname);
 
         int updateCompanyInfoWithoutPw(@Param("userSq") Long userSq,
                         @Param("userEmail") String userEmail,
                         @Param("userPhoneNum") String userPhoneNum,
-                        @Param("userNm") String userNm);
+                        @Param("userNm") String userNm,
+                        @Param("userNickname") String userNickname);
 
         String findSigunguByAreaCodeSq(@Param("areaCodeSq") Long areaCodeSq);
 

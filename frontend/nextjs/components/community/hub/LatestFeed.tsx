@@ -32,7 +32,7 @@ export default function LatestFeed({ items }: Props) {
               >
                 {item.ttl}
               </Link>
-              <div className="mt-1 text-xs text-muted-foreground">{item.userNm}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{item.userNickname}</div>
             </li>
           ))}
         </ul>
