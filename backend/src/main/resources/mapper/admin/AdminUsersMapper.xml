@@ -28,9 +28,15 @@
         FROM TBL_USER_M u
         LEFT JOIN TBL_COMPANY_S c
         ON c.user_sq = u.user_sq
+        <!--
+            활성 소속 판정은 반드시 status=401 + leave_dt IS NULL 두 조건이다.
+            leave_dt 조건을 빼면 퇴사 이력까지 매칭되어 유저 한 명이 여러 행으로 늘어난다
+            (CompanyMapper·UserMapper·ApplicationMapper 등 다른 쿼리는 전부 두 조건을 함께 본다).
+        -->
         LEFT JOIN TBL_COMPANY_MEMBER_R cm
         ON cm.user_sq = u.user_sq
         AND cm.company_member_status_cd = 401
+        AND cm.company_member_leave_dt IS NULL
         LEFT JOIN TBL_COMPANY_S c2
         ON c2.company_sq = cm.company_sq
         LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
@@ -58,6 +64,12 @@
             AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%')
             OR u.user_nickname LIKE CONCAT('%', #{keyword}, '%'))
         </if>
+        <!--
+            유저 1명 = 1행 보장. 소유 회사(c)·프로필 이미지(up/f)는 개수 제약이 없어
+            여러 건이면 JOIN 이 행을 곱한다(관리자 계정이 테스트로 만든 회사 8개가 8행이 되던 사례).
+            목록은 유저 단위이므로 여기서 접는다.
+        -->
+        GROUP BY u.user_sq
         ORDER BY
         <choose>
             <when test="sortField == 'userTypeCd'">u.user_type_cd</when>
@@ -84,13 +96,15 @@
 
     <select id="findAllUsersCnt" resultType="Long">
         SELECT
-        COUNT(*)
+        <!-- 목록이 GROUP BY u.user_sq 로 접히므로 카운트도 유저 단위여야 페이징이 맞는다 -->
+        COUNT(DISTINCT u.user_sq)
         FROM TBL_USER_M u
         LEFT JOIN TBL_COMPANY_S c
         ON c.user_sq = u.user_sq
         LEFT JOIN TBL_COMPANY_MEMBER_R cm
         ON cm.user_sq = u.user_sq
         AND cm.company_member_status_cd = 401
+        AND cm.company_member_leave_dt IS NULL
         LEFT JOIN TBL_COMPANY_S c2 ON c2.company_sq = cm.company_sq
         LEFT JOIN TBL_USER_PROFILE_IMAGE_S up
         ON up.user_sq = u.user_sq
