@@ -40,6 +40,15 @@
 		<result property="distance" column="distance" />
 	</resultMap>
 
+	<!--
+		모집중(=채용중) 판정 조건. judgeProjectRecruitStatus의 '채용중' 분기와 반드시 같은 기준이어야
+		한다(NOW() 기준, 시작·종료 포함). 별칭이 다른 쿼리에서 재사용할 수 있도록 alias를 property로 받는다.
+		  <include refid="recruitingCondition"><property name="alias" value="p."/></include>
+	-->
+	<sql id="recruitingCondition">
+		AND NOW() BETWEEN ${alias}project_recruit_start_dt AND ${alias}project_recruit_end_dt
+	</sql>
+
 
 	<select id="findProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
@@ -202,19 +211,20 @@
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
-				<when test="searchType == '작성자명'"> AND EXISTS (SELECT 1 FROM TBL_COMPANY_S c JOIN
-		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
-		CONCAT('%', #{searchKeyword}, '%')) </when>
+				<when test="searchType == '회사명'"> AND EXISTS (SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
 				<when test="searchType == '내용'"> AND (p.project_preference_txt LIKE CONCAT('%',
 		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
 				<when test="searchType == '태그'"> AND EXISTS (SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{searchKeyword}, '%')) </when>
-				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
+				<!-- '전체'는 개별 타입의 합집합이어야 한다 — 회사명이 빠져 있어 함께 채웠다 -->
+			<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_preference_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR EXISTS (SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
-		LIKE CONCAT('%', #{searchKeyword}, '%')) ) </otherwise>
+		LIKE CONCAT('%', #{searchKeyword}, '%')) OR EXISTS (SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%')) ) </otherwise>
 			</choose>
 		</if> /*
 		[필터 6] 지도 영역(Bounds) 내 검색 */ <if
@@ -239,9 +249,9 @@
 		'%') ) </if>
 	
 	<if test="request.status == 'recruiting'">
-    <![CDATA[
-      AND NOW() BETWEEN project_recruit_start_dt AND project_recruit_end_dt
-    ]]>
+		<include refid="recruitingCondition">
+			<property name="alias" value="" />
+		</include>
 	  </if>
 	
 	  <if
@@ -299,20 +309,21 @@
 			<choose>
 				<when test="searchType == '제목'"> AND p.project_ttl LIKE CONCAT('%',
 		#{searchKeyword}, '%') </when>
-				<when test="searchType == '작성자명'"> AND EXISTS ( SELECT * FROM TBL_COMPANY_S c JOIN
-		TBL_USER_M u ON c.user_sq = u.user_sq WHERE c.company_sq = p.company_sq AND u.user_nm LIKE
-		CONCAT('%', #{searchKeyword}, '%') ) </when>
+				<when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
 				<when test="searchType == '내용'"> AND ( p.project_preference_txt LIKE CONCAT('%',
 		#{searchKeyword}, '%') OR p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%')
 		) </when>
 				<when test="searchType == '태그'"> AND EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
 		LIKE CONCAT('%', #{searchKeyword}, '%') ) </when>
-				<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
+				<!-- '전체'는 개별 타입의 합집합이어야 한다 — 회사명이 빠져 있어 함께 채웠다 -->
+			<otherwise> AND ( p.project_ttl LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_description_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR
 		p.project_preference_txt LIKE CONCAT('%', #{searchKeyword}, '%') OR EXISTS ( SELECT 1 FROM
 		TBL_PROJECT_REQUIRED_SKILL_TAG_S rs WHERE rs.project_sq = p.project_sq AND rs.skill_tag_nm
-		LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
+		LIKE CONCAT('%', #{searchKeyword}, '%') ) OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
 	</select>
@@ -334,9 +345,9 @@
 
 		<!-- ✅ status 조건 추가 -->
   <if test="request.status == 'recruiting'">
-    <![CDATA[
-      AND NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt
-    ]]>
+		<include refid="recruitingCondition">
+			<property name="alias" value="p." />
+		</include>
   </if>
 
   <if
@@ -594,7 +605,12 @@
 	<select id="selectMainPopularProjects" resultMap="projectMap"> SELECT project_sq, company_sq,
 		address_sq, project_ttl, project_developer_grade_cd, project_salary, project_view_cnt,
 		project_scrap_cnt, project_candidate_cnt FROM TBL_PROJECT_M WHERE project_is_deleted_yn =
-		'N' <choose>
+		'N'
+		<!-- 메인에는 지금 지원할 수 있는 공고만 노출한다(요구 2-①). 마감된 공고가 조회수만 높아 상단을 차지하던 문제 -->
+		<include refid="recruitingCondition">
+			<property name="alias" value="" />
+		</include>
+		<choose>
 			<when test="sortType == 'views'"> ORDER BY project_view_cnt DESC </when>
 			<when test="sortType == 'scraps'"> ORDER BY project_scrap_cnt DESC </when>
 			<when test="sortType == 'apps'"> ORDER BY project_candidate_cnt DESC </when>

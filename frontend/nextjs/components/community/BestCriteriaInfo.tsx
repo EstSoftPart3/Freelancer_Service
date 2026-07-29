@@ -27,6 +27,11 @@ export default function BestCriteriaInfo({ note }: { note?: string }) {
           <li>· 월간 인기: 최근 30일 이내 작성글</li>
         </ul>
         <p className="mt-1.5">점수가 높은 순으로 정렬되며, 동점이면 최신글이 우선입니다.</p>
+        <ul className="mt-1.5 space-y-0.5 text-muted-foreground">
+          <li>· 기간은 <span className="font-medium text-foreground">작성일</span> 기준입니다(댓글·추천이 달린 날 기준이 아닙니다).</li>
+          <li>· 자유게시판·Q&amp;A 글만 집계하며, 공지사항은 제외됩니다.</li>
+          <li>· 삭제된 글은 집계에서 빠집니다.</li>
+        </ul>
         {note && <p className="mt-1.5 text-foreground">{note}</p>}
       </PopoverContent>
     </Popover>

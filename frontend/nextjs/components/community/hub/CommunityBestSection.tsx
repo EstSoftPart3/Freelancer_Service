@@ -13,7 +13,8 @@ export default function CommunityBestSection({ items }: Props) {
       <div className="mb-2 flex items-center justify-between">
         <h2 className="flex items-center gap-1.5 text-lg font-bold">
           <Trophy className="h-4 w-4 text-amber-500" /> 베스트글
-          <BestCriteriaInfo />
+          {/* 허브 베스트글은 app/community/page.tsx에서 monthly로 조회한다 — 탭이 없어 기준을 명시한다 */}
+          <BestCriteriaInfo note="이 목록은 월간 인기(최근 30일 작성글) 기준입니다." />
         </h2>
         <Link href="/community/list?sort=recommend" className="text-xs text-muted-foreground hover:text-primary hover:underline">
           전체보기
