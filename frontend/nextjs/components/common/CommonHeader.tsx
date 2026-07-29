@@ -62,7 +62,9 @@ function normalizeNotificationUrl(url?: string): string {
 export default function CommonHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { userNickname, isLoggedIn, clearUser, authChecked } = useUserStore()
+  // 헤더는 본인에게만 보이는 개인 영역이라 실명을 쓴다(공개 노출 지점이 아니다).
+  // 커뮤니티 게시글·댓글 등 남에게 보이는 곳만 닉네임으로 치환했다.
+  const { userNm, isLoggedIn, clearUser, authChecked } = useUserStore()
   const loggedIn = isLoggedIn()
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -308,7 +310,7 @@ export default function CommonHeader() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  <span>{userNickname}</span>
+                  <span>{userNm}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => router.push('/mypage')}>
@@ -406,7 +408,7 @@ export default function CommonHeader() {
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                     >
                       <User className="h-4 w-4" />
-                      {userNickname} · 마이페이지
+                      {userNm} · 마이페이지
                     </Link>
                     <button
                       onClick={logout}
