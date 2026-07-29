@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.BoardListDTO;
@@ -189,12 +190,9 @@ public class BoardService {
 			throw new IllegalArgumentException("내용을 입력해주세요.");
 		}
 
-		String typeStr = "normal";
-		if (BoardTypeCd == 1402L) {
-			typeStr = "qna";
-		} else if (BoardTypeCd == 1403L) {
-			typeStr = "notice";
-		}
+		// board_type_cd(숫자) ↔ board_typ(문자열) 대응은 BoardTypeCode가 단독으로 책임진다.
+		// 기존 if-else는 1404(고객의소리)가 들어오면 조용히 "normal"로 저장돼 Phase 5에서 문제가 된다.
+		String typeStr = BoardTypeCode.typOf(BoardTypeCd);
 
 		Board board = Board.builder()
 				.userSq(boardRequest.getUserSq())
