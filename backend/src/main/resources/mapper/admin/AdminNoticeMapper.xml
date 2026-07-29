@@ -12,8 +12,13 @@
             refid="noticeWhereClause" />
     </select>
 
-    <select id="findAllNotices" resultType="com.example.demo.domain.community.dto.BoardListDTO">
-        SELECT b.board_sq AS sq, b.user_sq AS userSq, u.user_nm AS userNm, b.board_ttl AS ttl,
+    <!--
+        커뮤니티 BoardListDTO 를 재사용하지 않는다 — 그쪽은 FO 공개 응답이라 로그인 아이디를 실을 수 없고,
+        필드명이 바뀌면(userNm → userNickname) 여기 별칭과 조용히 어긋나 값이 null 로 빠진다.
+    -->
+    <select id="findAllNotices" resultType="com.example.demo.domain.admin.dto.AdminBoardListDTO">
+        SELECT b.board_sq AS sq, b.user_sq AS userSq, u.user_id AS userId, u.user_nm AS userNm,
+        u.user_nickname AS userNickname, b.board_ttl AS ttl,
         b.board_view_cnt AS viewCnt, b.board_comment_cnt AS commentCnt, b.board_recommend_cnt AS
         recommendCnt, b.board_created_at_dtm AS createdAt, b.board_adopt_status_cd AS
         boardAdoptStatusCd, 0 AS answerCnt FROM TBL_BOARD_M b LEFT JOIN TBL_USER_M u ON b.user_sq =

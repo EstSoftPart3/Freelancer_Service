@@ -19,6 +19,7 @@ import lombok.Setter;
 public class AdminBoardListDTO {
     private Long sq;
     private Long userSq;
+    private String userId; // BO 목록의 작성자 표시용 — 닉네임/실명과 달리 변경되지 않아 식별이 명확하다
     private String userNm;
     private String userNickname;
     private String ttl;

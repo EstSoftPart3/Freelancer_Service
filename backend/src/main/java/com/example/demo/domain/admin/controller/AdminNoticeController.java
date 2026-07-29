@@ -21,7 +21,7 @@ import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.admin.service.AdminNoticeService;
 import com.example.demo.domain.community.dto.request.BoardRequest;
 import com.example.demo.domain.community.dto.request.CommentRequest;
-import com.example.demo.domain.community.dto.response.BoardListResponse;
+import com.example.demo.domain.admin.dto.response.AdminBoardListResponseDTO;
 import com.example.demo.domain.community.dto.response.BoardResponse;
 import com.example.demo.domain.community.service.BoardService;
 import com.example.demo.domain.community.service.CommentService;
@@ -42,7 +42,7 @@ public class AdminNoticeController {
      * 공지사항 목록 조회 (검색 + 정렬 적용)
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<BoardListResponse>> getNotices(
+    public ResponseEntity<ApiResponse<AdminBoardListResponseDTO>> getNotices(
             @RequestParam(value = "keyword", required = false) String keyword, // 제목 검색용
             @RequestParam(value = "sortField", defaultValue = "createdAt") String sortField, // 정렬 컬럼 (sq, ttl,
                                                                                              // createdAt 등)

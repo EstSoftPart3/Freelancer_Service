@@ -5,17 +5,17 @@
 
     <sql id="adminBoardWhere">
         <if test="keyword != null and keyword != ''"> AND ( ttl LIKE CONCAT('%', #{keyword}, '%') OR
-        description LIKE CONCAT('%', #{keyword}, '%') OR userNm LIKE CONCAT('%', #{keyword}, '%') OR userNickname LIKE CONCAT('%', #{keyword}, '%') ) </if>
+        description LIKE CONCAT('%', #{keyword}, '%') OR userNm LIKE CONCAT('%', #{keyword}, '%') OR userNickname LIKE CONCAT('%', #{keyword}, '%') OR userId LIKE CONCAT('%', #{keyword}, '%') ) </if>
     </sql>
 
     <select id="findAllUnified" resultType="com.example.demo.domain.admin.dto.AdminBoardListDTO">
-        SELECT * FROM ( SELECT b.board_sq AS sq, b.board_ttl AS ttl, u.user_nm AS userNm, u.user_nickname AS userNickname,
+        SELECT * FROM ( SELECT b.board_sq AS sq, b.board_ttl AS ttl, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname,
         b.board_type_cd AS boardTypeCd, b.board_created_at_dtm AS createdAt, b.board_view_cnt AS
         viewCnt, b.board_comment_cnt AS commentCnt, b.board_recommend_cnt AS recommendCnt, CASE WHEN
         b.board_type_cd = 1401 THEN NULL ELSE b.board_adopt_status_cd END AS boardAdoptStatusCd,
         b.board_description_edt AS description, 'BOARD' AS mainType FROM TBL_BOARD_M b JOIN
         TBL_USER_M u ON b.user_sq = u.user_sq WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd
-        != 1403 UNION ALL SELECT a.answer_sq AS sq, a.answer_ttl AS ttl, u.user_nm AS userNm, u.user_nickname AS userNickname, 1404
+        != 1403 UNION ALL SELECT a.answer_sq AS sq, a.answer_ttl AS ttl, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname, 1404
         AS boardTypeCd, a.answer_created_at_dtm AS createdAt, a.answer_view_cnt AS viewCnt,
         a.answer_comment_cnt AS commentCnt, a.answer_recommend_cnt AS recommendCnt, CASE WHEN
         a.answer_is_adopted_yn = 'Y' THEN 1502 ELSE 1504 END AS boardAdoptStatusCd,
@@ -29,7 +29,11 @@
             refid="adminBoardWhere" /> ORDER BY <choose>
             <when test="sortField == 'boardTypeCd'"> boardTypeCd </when>
             <when test="sortField == 'ttl'"> ttl </when>
+            <!-- BO 목록 컬럼 id 가 곧 sortField 로 온다. 컬럼을 바꾸면 여기도 함께 바꿔야
+                 정렬이 otherwise 로 조용히 폴백되지 않는다. -->
+            <when test="sortField == 'userId'"> userId </when>
             <when test="sortField == 'userNm'"> userNm </when>
+            <when test="sortField == 'userNickname'"> userNickname </when>
             <when test="sortField == 'boardAdoptStatusCd'"> boardAdoptStatusCd </when>
             <when test="sortField == 'viewCnt'"> viewCnt </when>
             <when test="sortField == 'recommendCnt'"> recommendCnt </when>
@@ -38,10 +42,10 @@
         #{offset} </select>
 
     <select id="findAllUnifiedCnt" resultType="Long"> SELECT COUNT(*) FROM ( SELECT b.board_sq AS
-        sq, b.board_ttl AS ttl, b.board_description_edt AS description, u.user_nm AS userNm, u.user_nickname AS userNickname,
+        sq, b.board_ttl AS ttl, b.board_description_edt AS description, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname,
         b.board_type_cd AS boardTypeCd FROM TBL_BOARD_M b JOIN TBL_USER_M u ON b.user_sq = u.user_sq
         WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd != 1403 UNION ALL SELECT a.answer_sq
-        AS sq, a.answer_ttl AS ttl, a.answer_description_edt AS description, u.user_nm AS userNm, u.user_nickname AS userNickname,
+        AS sq, a.answer_ttl AS ttl, a.answer_description_edt AS description, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname,
         1404 AS boardTypeCd FROM TBL_BOARD_ANSWER_S a JOIN TBL_USER_M u ON a.user_sq = u.user_sq
         WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE 1=1 <if
             test="typeCds != null and typeCds.size > 0"> AND boardTypeCd IN <foreach item="t"
