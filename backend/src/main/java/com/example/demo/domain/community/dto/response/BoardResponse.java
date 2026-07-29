@@ -14,7 +14,7 @@ import java.util.*;
 public class BoardResponse{
 	private Long sq;
     private Long userSq;
-    private String userNm; // 사용자 이름
+    private String userNickname; // 사용자 이름
     private String ttl;
     private String description;
     private Integer viewCnt;
@@ -30,11 +30,11 @@ public class BoardResponse{
     private Long viewerSq;
 
     
-    public static BoardResponse fromEntity(Board board, String userNm, List<String> normalTags, List<SkillTagDTO> skillTags, List<AnswerListResponse> answers, List<CommentResponse> comments, Long viewerSq, List<BoardAttachmentResponse> files) {
+    public static BoardResponse fromEntity(Board board, String userNickname, List<String> normalTags, List<SkillTagDTO> skillTags, List<AnswerListResponse> answers, List<CommentResponse> comments, Long viewerSq, List<BoardAttachmentResponse> files) {
         return new BoardResponse(
 			board.getBoardSq(),
 			board.getUserSq(),
-			userNm,
+			userNickname,
 			board.getBoardTtl(),
 			board.getBoardDescriptionEdt(),
 			board.getBoardViewCnt(),

@@ -126,6 +126,17 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
     },
   },
   {
+    accessorKey: 'userNickname',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='닉네임' />
+    ),
+    meta: { title: '닉네임' },
+    cell: ({ row }) => {
+      const { userNickname } = row.original
+      return <LongText className='max-w-36'>{userNickname ?? '-'}</LongText>
+    },
+  },
+  {
     accessorKey: 'companyNm',
     header: ({ column }) => (
       <DataTableColumnHeader

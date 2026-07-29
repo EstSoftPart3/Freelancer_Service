@@ -20,6 +20,8 @@ import com.example.demo.domain.admin.dto.AdminUsersListDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminUsersMapper;
+import com.example.demo.domain.user.constant.NicknamePolicy;
+import com.example.demo.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
@@ -30,6 +32,7 @@ public class AdminUsersService {
 	private final AdminUsersMapper adminUsersMapper;
 	private final PasswordEncoder passwordEncoder;
 	private final FileStorageService fileStorageService;
+	private final UserRepository userRepository;
 	
 	@Value("${admin.master-password}")
 	private String masterPassword;
@@ -70,6 +73,14 @@ public class AdminUsersService {
 
 	@Transactional
 	public void updateUser(Long userSq, AdminUsersUpdateRequestDTO dto) {
+
+		// 0. 닉네임이 넘어온 경우에만 형식·중복 검증 (UNIQUE 위반이 500으로 새어나가는 것을 막는다)
+		if (StringUtils.hasText(dto.getUserNickname())) {
+			NicknamePolicy.validate(dto.getUserNickname());
+			if (userRepository.existsByUserNicknameExcludingUser(dto.getUserNickname(), userSq)) {
+				throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+			}
+		}
 
 		// 1. 비밀번호 인코딩 (입력된  경우에만 !!!)
 		String encodePw = null;

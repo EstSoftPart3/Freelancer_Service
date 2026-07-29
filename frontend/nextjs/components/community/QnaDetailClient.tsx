@@ -24,7 +24,7 @@ interface Props {
 }
 
 const emptyBoard: BoardDetail = {
-  sq: 0, ttl: '', description: '', userSq: 0, userNm: '', createdAt: '',
+  sq: 0, ttl: '', description: '', userSq: 0, userNickname: '', createdAt: '',
   viewCnt: 0, recommendCnt: 0, commentCnt: 0, skillTags: [], normalTags: [],
   attachments: [], comments: [], answers: [],
 }
@@ -143,7 +143,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
               <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                 <span>
                   <MessageSquare className="mr-1 inline h-3 w-3" />
-                  By {answer.userNm} · {fmtDate(answer.createdAt)}
+                  By {answer.userNickname} · {fmtDate(answer.createdAt)}
                 </span>
                 <span>조회 {answer.viewCnt} · 댓글 {answer.commentCnt} · 추천 {answer.recommendCnt}</span>
               </div>

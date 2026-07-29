@@ -22,6 +22,7 @@ public class AdminBoardDetailResponseDTO {
     private Long sq;
     private Long userSq;
     private String userNm;
+    private String userNickname;
     private String ttl;
     private String description;
     private Integer viewCnt;

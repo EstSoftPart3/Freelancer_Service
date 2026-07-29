@@ -19,9 +19,10 @@
   <insert
     id="insertUser" parameterType="com.example.demo.domain.user.dto.UserDTO"
     useGeneratedKeys="true" keyProperty="userSq"> INSERT INTO TBL_USER_M ( address_sq, user_id,
-    user_email, user_pw, user_nm, user_gender_cd, user_phone_num, user_birth_dt, user_type_cd,
-    user_signup_type_cd ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw}, #{userNm},
-    #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd}, #{userSignupTypeCd} ) </insert>
+    user_email, user_pw, user_nm, user_nickname, user_gender_cd, user_phone_num, user_birth_dt,
+    user_type_cd, user_signup_type_cd ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw},
+    #{userNm}, #{userNickname}, #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd},
+    #{userSignupTypeCd} ) </insert>
 
   <!-- 기업 프로필 INSERT -->
   <insert id="insertCompanyProfile"
@@ -44,20 +45,31 @@
     id="existsByUserPhoneNum" parameterType="string" resultType="boolean"> SELECT EXISTS ( SELECT 1
     FROM TBL_USER_M WHERE user_phone_num = #{userPhoneNum} AND user_is_deleted_yn = 'N' ) </select>
 
+  <!-- 닉네임 중복 확인 (UNIQUE 제약이 탈퇴 회원도 포함하므로 user_is_deleted_yn 조건을 두지 않는다) -->
+  <select
+    id="existsByUserNickname" parameterType="string" resultType="boolean"> SELECT EXISTS ( SELECT 1
+    FROM TBL_USER_M WHERE user_nickname = #{userNickname} ) </select>
+
+  <!-- 닉네임 중복 확인 (본인 제외 — 마이페이지 수정용) -->
+  <select id="existsByUserNicknameExcludingUser" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM
+    TBL_USER_M WHERE user_nickname = #{userNickname} AND user_sq != #{userSq} ) </select>
+
 
   <!-- JWT 토큰 -->
 
   <select
     id="findByUserId" parameterType="string"
     resultType="com.example.demo.domain.user.dto.UserDTO"> SELECT user_sq AS userSq, user_id AS
-    userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
+    userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_nickname AS
+    userNickname, user_type_cd AS
     userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken FROM
     TBL_USER_M WHERE user_id = #{userId} </select>
     
    <select
 		id="findUserByUserId" parameterType="string"
 		resultType="com.example.demo.domain.user.dto.UsersDTO"> SELECT user_sq AS userSq, user_id AS
-		userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_type_cd AS
+		userId, user_email AS userEmail, user_pw AS userPw, user_nm AS userNm, user_nickname AS
+		userNickname, user_type_cd AS
 		userTypeCd, user_is_deleted_yn AS userIsDeletedYn, user_refresh_token AS userRefreshToken, user_is_activate_yn AS userIsActivateYn FROM
 		TBL_USER_M WHERE user_id = #{userId} 
    </select> 
@@ -76,7 +88,8 @@
 
   <select id="findUserInfoByUserSq"
     resultType="com.example.demo.domain.user.dto.response.LoginResponseDTO"> SELECT u.user_sq AS
-    userSq, u.user_nm AS userNm, u.user_type_cd AS userTypeCd, a.latitude, a.longitude,
+    userSq, u.user_nm AS userNm, u.user_nickname AS userNickname, u.user_type_cd AS userTypeCd,
+    a.latitude, a.longitude,
     c.company_auth_status_cd AS companyAuthStatusCd, (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE
     'N' END FROM tbl_company_member_r cm WHERE cm.user_sq = u.user_sq AND cm.company_member_leave_dt
     IS NULL) AS isAffiliated,
@@ -114,7 +127,7 @@
 
 
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
-    parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_type_cd,
+    parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_nickname, user_type_cd,
     user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
 
   <select id="selectEmailByUserSq" resultType="string"> SELECT user_email FROM TBL_USER_M WHERE

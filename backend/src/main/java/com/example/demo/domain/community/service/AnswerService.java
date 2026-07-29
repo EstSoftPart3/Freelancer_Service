@@ -75,12 +75,12 @@ public class AnswerService {
 						return AnswerListResponse.builder().isDeletedYn("Y").build();
 					} else {
 						UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-						String userNm = "존재하지 않는 사용자";
-						if (userInfo != null && userInfo.getUserNm() != null) {
-							userNm = userInfo.getUserNm();
+						String userNickname = "탈퇴한 사용자";
+						if (userInfo != null && userInfo.getUserNickname() != null) {
+							userNickname = userInfo.getUserNickname();
 						}
 
-						return AnswerListResponse.fromEntity(answer, userNm);
+						return AnswerListResponse.fromEntity(answer, userNickname);
 					}
 				})
 				.collect(Collectors.toList());
@@ -102,9 +102,9 @@ public class AnswerService {
 		List<SkillTagDTO> skillTags = skillTagConverter.convertSkillTagsToStrings(cmntTagMapper.findST(null, answerSq));
 
 		UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-		String userNm = Optional.ofNullable(userInfo)
-				.map(UserDTO::getUserNm)
-				.orElse("존재하지 않는 사용자");
+		String userNickname = Optional.ofNullable(userInfo)
+				.map(UserDTO::getUserNickname)
+				.orElse("탈퇴한 사용자");
 
 		// --- [댓글 조회 및 트리 구조 변환 로직 시작] ---
 
@@ -135,7 +135,7 @@ public class AnswerService {
 		}).collect(Collectors.toList());
 
 		// 변환된 commentTree를 최종 응답에 담아 반환
-		return AnswerResponse.fromEntity(answer, userNm, normalTags, skillTags, commentTree, files);
+		return AnswerResponse.fromEntity(answer, userNickname, normalTags, skillTags, commentTree, files);
 	}
 
 	// 답변 등록

@@ -12,6 +12,7 @@
         THEN CONCAT('/api/files/', f.file_save_nm)
         ELSE NULL END AS profileImageUrl,
         u.user_nm AS userNm,
+        u.user_nickname AS userNickname,
         COALESCE(c.company_sq, c2.company_sq) AS companySq,
         COALESCE(c.company_nm, c2.company_nm) AS companyNm,
         u.user_email AS userEmail,
@@ -54,7 +55,8 @@
             <foreach item="t" collection="userGenderCds" open="(" separator="," close=")">#{t}</foreach>
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%'))
+            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%')
+            OR u.user_nickname LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY
         <choose>
@@ -62,6 +64,7 @@
             <when test="sortField == 'userId'">u.user_id</when>
             <when test="sortField == 'profileImageUrl'">up.file_sq</when>
             <when test="sortField == 'userNm'">u.user_nm</when>
+            <when test="sortField == 'userNickname'">u.user_nickname</when>
             <when test="sortField == 'companyNm'">COALESCE(c.company_nm, c2.company_nm)</when>
             <when test="sortField == 'userEmail'">u.user_email</when>
             <when test="sortField == 'userPhoneNum'">u.user_phone_num</when>
@@ -109,7 +112,8 @@
             <foreach item="t" collection="userGenderCds" open="(" separator="," close=")">#{t}</foreach>
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%'))
+            AND (u.user_nm LIKE CONCAT('%', #{keyword}, '%')
+            OR u.user_nickname LIKE CONCAT('%', #{keyword}, '%'))
         </if>
     </select>
 
@@ -166,6 +170,10 @@
         TBL_USER_M
         <set>
             user_nm = #{dto.userNm},
+            <!-- 닉네임은 UNIQUE라 빈 값으로 덮어쓰면 안 된다. 값이 온 경우에만 반영 -->
+            <if test="dto.userNickname != null and dto.userNickname != ''">
+                user_nickname = #{dto.userNickname},
+            </if>
             user_email = #{dto.userEmail},
             user_phone_num = #{dto.userPhoneNum},
             user_type_cd = #{dto.userTypeCd},

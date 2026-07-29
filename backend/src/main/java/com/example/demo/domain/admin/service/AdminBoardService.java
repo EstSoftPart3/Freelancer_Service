@@ -271,7 +271,8 @@ public class AdminBoardService {
 
                         // 작성자 이름 조회
                         UserDTO userInfo = communityUserMapper.findById(answer.getUserSq());
-                        String userNm = (userInfo != null) ? userInfo.getUserNm() : "존재하지 않는 사용자";
+                        String userNm = (userInfo != null) ? userInfo.getUserNm() : "탈퇴한 사용자";
+                        String userNickname = (userInfo != null) ? userInfo.getUserNickname() : "탈퇴한 사용자";
 
                         // 답변 전용 댓글 조회 및 트리 변환
                         List<CommentResponse> flatComments = commentMapper.findByAnswerSq(sq).stream()
@@ -288,6 +289,7 @@ public class AdminBoardService {
                                         .sq(answer.getAnswerSq())
                                         .userSq(answer.getUserSq())
                                         .userNm(userNm)
+                                        .userNickname(userNickname)
                                         .ttl(answer.getAnswerTtl())
                                         .description(answer.getAnswerDescriptionEdt())
                                         .boardTypeCd(1404L)
@@ -310,7 +312,8 @@ public class AdminBoardService {
 
                         // 작성자 이름 조회
                         UserDTO userInfo = communityUserMapper.findById(board.getUserSq());
-                        String userNm = (userInfo != null) ? userInfo.getUserNm() : "존재하지 않는 사용자";
+                        String userNm = (userInfo != null) ? userInfo.getUserNm() : "탈퇴한 사용자";
+                        String userNickname = (userInfo != null) ? userInfo.getUserNickname() : "탈퇴한 사용자";
 
                         // 게시글 전용 댓글 조회 및 트리 변환
                         List<CommentResponse> flatComments = commentMapper.findByBoardSq(sq).stream()
@@ -332,6 +335,7 @@ public class AdminBoardService {
                                         .sq(board.getBoardSq())
                                         .userSq(board.getUserSq())
                                         .userNm(userNm)
+                                        .userNickname(userNickname)
                                         .ttl(board.getBoardTtl())
                                         .description(board.getBoardDescriptionEdt())
                                         .boardAdoptStatusCd(board.getBoardAdoptStatusCd())

@@ -17,6 +17,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AdminUsersUpdateRequestDTO {
     private String userNm;
+    private String userNickname;
     private String userEmail;
     private String userPhoneNum;
     private Long userTypeCd;

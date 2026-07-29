@@ -23,6 +23,7 @@ public class AdminUsersListDTO {
     private String userId;
     private String profileImageUrl;
     private String userNm;
+    private String userNickname;
     private String companyNm;
     private Long companySq;
     private String userEmail;

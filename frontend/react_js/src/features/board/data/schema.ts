@@ -6,6 +6,7 @@ export const adminBoardSchema = z.object({
   sq: z.number(),
   userSq: z.number().nullable().optional(), // JSON에 추가됨
   userNm: z.string(),
+  userNickname: z.string().nullable().optional(),
   ttl: z.string(),
 
   // [주의] 현재 목록 JSON에는 boardTypeCd가 없습니다.

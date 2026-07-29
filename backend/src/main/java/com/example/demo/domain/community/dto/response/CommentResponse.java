@@ -17,7 +17,7 @@ public class CommentResponse {
     private Long parentCommentSq; // 부모 댓글 번호 추가
     private Long userSq;
     private String userProfileImgUrl;
-    private String userNm;
+    private String userNickname;
     private String description;
     private LocalDateTime createdAt;
     private Integer recommendCnt;
@@ -27,10 +27,10 @@ public class CommentResponse {
     private List<CommentResponse> childComments = new ArrayList<>();
 
     public static CommentResponse fromEntity(Comment comment, UserDTO userDto, String profileImageUrl) {
-        String userNm = "존재하지 않는 사용자";
+        String userNickname = "탈퇴한 사용자";
 
-        if (userDto != null && userDto.getUserNm() != null) {
-            userNm = userDto.getUserNm();
+        if (userDto != null && userDto.getUserNickname() != null) {
+            userNickname = userDto.getUserNickname();
         }
 
         return CommentResponse.builder()
@@ -38,7 +38,7 @@ public class CommentResponse {
                 .parentCommentSq(comment.getParentCommentSq()) // 엔티티에서 부모 번호 가져오기
                 .userSq(comment.getUserSq())
                 .userProfileImgUrl(profileImageUrl)
-                .userNm(userNm)
+                .userNickname(userNickname)
                 .description(comment.getCommentDescriptionTxt())
                 .createdAt(comment.getCommentCreatedAtDtm())
                 .recommendCnt(comment.getCommentRecommendCnt())

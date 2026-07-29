@@ -12,6 +12,7 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { personalAgreementText } from '@/lib/terms'
+import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 import { DaumPostcodeResult } from '@/types'
 
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
@@ -43,6 +44,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   const pwField = useField()
   const cpwField = useField()
   const nameField = useField()
+  const nicknameField = useField()
   const dobField = useField()
   const [gender, setGender] = useState('')
   const [genderError, setGenderError] = useState('')
@@ -64,6 +66,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   const [termsError, setTermsError] = useState('')
   const [termsOpen, setTermsOpen] = useState(false)
   const idDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const nicknameDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const emailVerify = useEmailVerification({ sendCodeEndpoint: '/email/send-code' })
 
@@ -114,6 +117,18 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
       nameField.setValid(false); return false
     }
     nameField.setError(''); nameField.setValid(true); return true
+  }
+
+  const validateNickname = useCallback(async (val: string): Promise<boolean> => {
+    const reason = await checkNicknameAvailable(val)
+    if (reason) { nicknameField.setError(reason); nicknameField.setValid(false); return false }
+    nicknameField.setError(''); nicknameField.setValid(true); return true
+  }, [nicknameField])
+
+  const onNicknameChange = (val: string) => {
+    nicknameField.setValue(val)
+    if (nicknameDebounce.current) clearTimeout(nicknameDebounce.current)
+    nicknameDebounce.current = setTimeout(() => validateNickname(val), 500)
   }
 
   const validateDob = (val = dobField.value) => {
@@ -221,6 +236,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
     const okPw = validatePw()
     const okCpw = validateCpw()
     const okName = validateName()
+    const okNickname = await validateNickname(nicknameField.value)
     const okDob = validateDob()
     const okGender = validateGender()
     const okPhone = validatePhone()
@@ -230,7 +246,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
     const tOk = validateTerms()
 
     const isValid =
-      okId && okPw && okCpw && okName && okDob && okGender &&
+      okId && okPw && okCpw && okName && okNickname && okDob && okGender &&
       okPhone && okAddr && okEmail && emailVerify.verified && vcOk && tOk
 
     if (!isValid) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
@@ -239,6 +255,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
       id: idField.value,
       password: pwField.value,
       name: nameField.value,
+      nickname: nicknameField.value,
       dob: dobField.value,
       gender,
       phone: phoneField.value,
@@ -305,6 +322,19 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
           <FieldLabel label="이름" valid={nameField.valid} />
           <Input value={nameField.value} onChange={(e) => { nameField.setValue(e.target.value); validateName(e.target.value) }} />
           <ErrorMsg msg={nameField.error} />
+        </div>
+
+        {/* 닉네임 — 커뮤니티 등 공개 화면에 표시되는 이름 */}
+        <div>
+          <FieldLabel label="닉네임" valid={nicknameField.valid} />
+          <Input
+            value={nicknameField.value}
+            onChange={(e) => onNicknameChange(e.target.value)}
+            maxLength={20}
+            placeholder={NICKNAME_HINT}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">커뮤니티 게시글·댓글에는 실명 대신 닉네임이 표시됩니다.</p>
+          <ErrorMsg msg={nicknameField.error} />
         </div>
 
         {/* 생년월일 / 성별 */}

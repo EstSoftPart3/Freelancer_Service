@@ -66,7 +66,7 @@ export default function BoardCardList({ boardList, boardType }: Props) {
               </div>
             )}
             <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="truncate">{b.userNm}</span>
+              <span className="truncate">{b.userNickname}</span>
               <span className="shrink-0">{fmtDate(b.createdAt)}</span>
               <span className="ml-auto flex shrink-0 items-center gap-1"><Eye className="h-3.5 w-3.5" />{b.viewCnt}</span>
               <span className="flex shrink-0 items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />{b.commentCnt}</span>

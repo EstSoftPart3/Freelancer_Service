@@ -12,8 +12,9 @@ import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
 import type { UserInfo, DaumPostcodeResult } from '@/types'
+import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 
-type EditKey = 'userPw' | 'userEmail' | 'userPhoneNum' | 'address' | 'userNm'
+type EditKey = 'userPw' | 'userEmail' | 'userPhoneNum' | 'address' | 'userNm' | 'userNickname'
 
 interface FormData extends Omit<UserInfo, 'userProfileImageUrl'> {
   detailAddress: string
@@ -23,6 +24,7 @@ const INITIAL_FORM: FormData = {
   userId: '',
   userPw: '',
   userNm: '',
+  userNickname: '',
   userEmail: '',
   userBirthDt: '',
   userGenderNm: '',
@@ -67,6 +69,7 @@ export default function InformationEditClient() {
     userPhoneNum: false,
     address: false,
     userNm: false,
+    userNickname: false,
   })
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
   const [editEmail, setEditEmail] = useState({ emailId: '', emailDomain: '', code: '' })
@@ -86,6 +89,7 @@ export default function InformationEditClient() {
         userId: d.userId ?? '',
         userPw: '',
         userNm: d.userNm ?? '',
+        userNickname: d.userNickname ?? '',
         userEmail: d.userEmail ?? '',
         userBirthDt: d.userBirthDt ?? '',
         userGenderNm: d.userGenderNm ?? '',
@@ -132,10 +136,14 @@ export default function InformationEditClient() {
     setErrors((prev) => ({ ...prev, [field]: undefined }))
   }
 
-  function confirmField(field: EditKey) {
+  async function confirmField(field: EditKey) {
     if (field === 'userPw' && !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(form.userPw)) {
       toast.error('8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.')
       return
+    }
+    if (field === 'userNickname' && form.userNickname !== original.userNickname) {
+      const reason = await checkNicknameAvailable(form.userNickname)
+      if (reason) { toast.error(reason); return }
     }
     if (field === 'userEmail' && !isVerified) {
       toast.error('이메일 인증을 완료해주세요.')
@@ -250,6 +258,7 @@ export default function InformationEditClient() {
       form.sigunguCode !== original.sigunguCode ||
       form.latitude !== original.latitude ||
       form.longitude !== original.longitude ||
+      form.userNickname !== original.userNickname ||
       (!isPersonal && form.userNm !== original.userNm)
     )
   }
@@ -267,6 +276,7 @@ export default function InformationEditClient() {
     const payload = isPersonal
       ? {
           personal: {
+            userNickname: form.userNickname,
             userPw: form.userPw || undefined,
             userEmail: form.userEmail,
             userPhoneNum: form.userPhoneNum,
@@ -281,6 +291,7 @@ export default function InformationEditClient() {
       : {
           company: {
             userNm: form.userNm,
+            userNickname: form.userNickname,
             userPw: form.userPw || undefined,
             userEmail: form.userEmail,
             userPhoneNum: form.userPhoneNum,
@@ -399,6 +410,30 @@ export default function InformationEditClient() {
               onCancel={() => cancelEdit('userNm')}
             />
           )}
+        </InfoRow>
+
+        {/* 닉네임 — 커뮤니티 등 공개 화면에 표시되는 이름 */}
+        <InfoRow label="닉네임">
+          <EditableField
+            editing={editing.userNickname}
+            readonlyContent={<Input value={form.userNickname} readOnly className="bg-muted border-0" />}
+            editContent={
+              <div>
+                <Input
+                  value={form.userNickname}
+                  maxLength={20}
+                  onChange={(e) => setForm((p) => ({ ...p, userNickname: e.target.value }))}
+                  placeholder={NICKNAME_HINT}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  커뮤니티 게시글·댓글에는 실명 대신 닉네임이 표시됩니다.
+                </p>
+              </div>
+            }
+            onToggle={() => toggleEdit('userNickname')}
+            onConfirm={() => confirmField('userNickname')}
+            onCancel={() => cancelEdit('userNickname')}
+          />
         </InfoRow>
 
         {/* 기업명 (COMPANY only) */}
@@ -531,7 +566,7 @@ export default function InformationEditClient() {
 
       <div className="flex gap-2 pt-4">
         <Button onClick={handleSave}>저장</Button>
-        <Button variant="outline" onClick={() => { setForm(original); setEditing({ userPw: false, userEmail: false, userPhoneNum: false, address: false, userNm: false }) }}>
+        <Button variant="outline" onClick={() => { setForm(original); setEditing({ userPw: false, userEmail: false, userPhoneNum: false, address: false, userNm: false, userNickname: false }) }}>
           초기화
         </Button>
       </div>

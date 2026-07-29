@@ -10,6 +10,7 @@ public class UserInfoDTO {
     private String userId;
     private String userEmail;
     private String userNm;
+    private String userNickname;
     private Date userBirthDt;
     private Long userGenderCd;
     private String userPhoneNum;

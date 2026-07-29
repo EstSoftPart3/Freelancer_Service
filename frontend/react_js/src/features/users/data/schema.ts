@@ -6,6 +6,7 @@ export const adminUserSchema = z.object({
   profileImageUrl: z.string().nullable(),
   profileImageSq: z.number().nullable().optional(),
   userNm: z.string(),
+  userNickname: z.string().nullable().optional(),
   userEmail: z.string(),
   userPhoneNum: z.string(),
   userBirthDt: z.coerce.date().optional(),

@@ -17,6 +17,7 @@ public class AdminReportListDTO {
     private Long reportSq;
     private Long reporterSq;
     private String reporterNm;
+    private String reporterNickname;
 
     private Long targetTypeCd;
     private String targetTypeNm;
@@ -37,6 +38,7 @@ public class AdminReportListDTO {
     private String processDesc;
 
     private String processorNm;
+    private String processorNickname;
     private LocalDateTime createdAt;
     private LocalDateTime processedAt;
 }

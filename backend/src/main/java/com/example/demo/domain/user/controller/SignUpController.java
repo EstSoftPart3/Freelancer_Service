@@ -25,6 +25,22 @@ public class SignUpController {
         return userService.isUserIdExists(userId);
     }
 
+    /**
+     * 닉네임 사용 가능 여부. output=true 면 사용 가능.
+     * 기존 /check-id는 원시 boolean(=중복 여부)을 반환해 의미가 반대이지만, 신규 API는 ApiResponse 래핑 + 사용가능 기준으로 통일한다.
+     */
+    @GetMapping("/check-nickname")
+    public ApiResponse<Boolean> checkUserNickname(@RequestParam(name = "userNickname") String userNickname) {
+        try {
+            boolean exists = userService.isUserNicknameExists(userNickname);
+            return exists
+                    ? ApiResponse.of(HttpStatus.OK, "이미 사용 중인 닉네임입니다.", false)
+                    : ApiResponse.of(HttpStatus.OK, "사용 가능한 닉네임입니다.", true);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.of(HttpStatus.BAD_REQUEST, e.getMessage(), false);
+        }
+    }
+
     @PostMapping("/signup")
     public ApiResponse<?> signUp(@RequestBody SignUpRequestDTO dto) {
         try {

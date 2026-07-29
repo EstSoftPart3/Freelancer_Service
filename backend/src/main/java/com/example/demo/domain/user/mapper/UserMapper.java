@@ -26,6 +26,10 @@ public interface UserMapper {
 
     boolean existsByUserPhoneNum(String userPhoneNum);
 
+    boolean existsByUserNickname(String userNickname);
+
+    boolean existsByUserNicknameExcludingUser(@Param("userNickname") String userNickname, @Param("userSq") Long userSq);
+
     int insertCompanyProfile(CompanyProfileDTO dto);
 
     UserDTO findByUserId(@Param("userId") String userId);

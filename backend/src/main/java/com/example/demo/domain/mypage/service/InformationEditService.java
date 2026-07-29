@@ -25,6 +25,7 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.domain.mypage.dto.CompanyInfoDTO;
 import com.example.demo.domain.mypage.dto.InformationEditAddressDTO;
+import com.example.demo.domain.user.constant.NicknamePolicy;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 import com.example.demo.domain.mypage.dto.request.AffiliationInfoUpdateRequestDTO;
@@ -74,6 +75,21 @@ public class InformationEditService {
         return informationEditRepository.getCompanyNameByUserSq(userSq);
     }
 
+    /**
+     * 닉네임 변경 요청이 온 경우에만 형식·중복을 검증하고 그 값을 돌려준다.
+     * 비어 있으면 null을 반환해 UPDATE 문의 &lt;if&gt;가 컬럼을 건드리지 않게 한다(기존 값 유지).
+     */
+    private String validateNicknameForUpdate(String userNickname, Long userSq) {
+        if (userNickname == null || userNickname.isBlank()) {
+            return null;
+        }
+        NicknamePolicy.validate(userNickname);
+        if (informationEditRepository.existsNicknameExcludingUser(userNickname, userSq)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+        return userNickname;
+    }
+
     @Transactional
     public void updatePersonalInfo(Long userSq, PersonalUserInfoUpdateRequestDTO dto) {
         // 이메일 중복 검사
@@ -88,15 +104,18 @@ public class InformationEditService {
             throw new IllegalArgumentException("이미 사용 중인 휴대폰 번호입니다.");
         }
 
+        // 닉네임 중복 검사 (변경 요청이 온 경우에만)
+        String nicknameToUpdate = validateNicknameForUpdate(dto.getUserNickname(), userSq);
+
         // null일 경우 기존 값과 동일하므로 업데이트에서 제외할 수도 있음
         String emailToUpdate = dto.getUserEmail();
         String phoneToUpdate = dto.getUserPhoneNum();
 
         if (dto.getUserPw() != null && !dto.getUserPw().isBlank()) {
             String encryptedPw = passwordEncoder.encode(dto.getUserPw());
-            informationEditRepository.updateUser(userSq, encryptedPw, emailToUpdate, phoneToUpdate);
+            informationEditRepository.updateUser(userSq, encryptedPw, emailToUpdate, phoneToUpdate, nicknameToUpdate);
         } else {
-            informationEditRepository.updateUserWithoutPw(userSq, emailToUpdate, phoneToUpdate);
+            informationEditRepository.updateUserWithoutPw(userSq, emailToUpdate, phoneToUpdate, nicknameToUpdate);
         }
 
         String sigungu = informationEditRepository.findSigunguByAreaCodeSq(dto.getSigunguCode());
@@ -126,6 +145,9 @@ public class InformationEditService {
             throw new IllegalArgumentException("이미 사용 중인 휴대폰 번호입니다.");
         }
 
+        // 닉네임 중복 검사 (변경 요청이 온 경우에만)
+        String nicknameToUpdate = validateNicknameForUpdate(dto.getUserNickname(), userSq);
+
         // null일 경우 기존 값과 동일하므로 업데이트에서 제외할 수도 있음
         String emailToUpdate = dto.getUserEmail();
         String phoneToUpdate = dto.getUserPhoneNum();
@@ -133,9 +155,11 @@ public class InformationEditService {
 
         if (dto.getUserPw() != null && !dto.getUserPw().isBlank()) {
             String encryptedPw = passwordEncoder.encode(dto.getUserPw());
-            informationEditRepository.updateCompany(userSq, encryptedPw, emailToUpdate, phoneToUpdate, nameToUpdate);
+            informationEditRepository.updateCompany(userSq, encryptedPw, emailToUpdate, phoneToUpdate, nameToUpdate,
+                    nicknameToUpdate);
         } else {
-            informationEditRepository.updateCompanyWithoutPw(userSq, emailToUpdate, phoneToUpdate, nameToUpdate);
+            informationEditRepository.updateCompanyWithoutPw(userSq, emailToUpdate, phoneToUpdate, nameToUpdate,
+                    nicknameToUpdate);
         }
 
         String sigungu = informationEditRepository.findSigunguByAreaCodeSq(dto.getSigunguCode());

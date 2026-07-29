@@ -13,7 +13,7 @@ import java.util.*;
 public class BoardListDTO{
 	private Long sq;
     private Long userSq;
-    private String userNm; // 사용자 이름
+    private String userNickname; // 사용자 이름
     private String ttl;
     private Integer viewCnt;
     private Integer commentCnt;
@@ -25,11 +25,11 @@ public class BoardListDTO{
     private List<SkillTagDTO> skillTags;
     private String boardType; // "board" | "qna" — 전체보기(통합 목록)에서 상세 링크 분기용
 
-    public static BoardListDTO fromEntity(Board board, String userNm, Integer boardAnswerCnt, List<String> normalTags, List<SkillTagDTO> skillTags) {
+    public static BoardListDTO fromEntity(Board board, String userNickname, Integer boardAnswerCnt, List<String> normalTags, List<SkillTagDTO> skillTags) {
         return new BoardListDTO(
 			board.getBoardSq(),
 			board.getUserSq(),
-			userNm,
+			userNickname,
 			board.getBoardTtl(),
 			board.getBoardViewCnt(),
 			board.getBoardCommentCnt(),

@@ -85,7 +85,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
           {!editMode ? (
             <>
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="font-medium text-primary text-sm">{comment.userNm}</span>
+                <span className="font-medium text-primary text-sm">{comment.userNickname}</span>
                 <div className="flex items-center gap-2">
                   {!comment.parentCommentSq && (
                     <button

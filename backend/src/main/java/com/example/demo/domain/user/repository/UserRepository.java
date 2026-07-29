@@ -31,6 +31,14 @@ public class UserRepository {
         return userMapper.existsByUserPhoneNum(userPhoneNum);
     }
 
+    public boolean existsByUserNickname(String userNickname) {
+        return userMapper.existsByUserNickname(userNickname);
+    }
+
+    public boolean existsByUserNicknameExcludingUser(String userNickname, Long userSq) {
+        return userMapper.existsByUserNicknameExcludingUser(userNickname, userSq);
+    }
+
     public String findSigunguByAreaCode(Long areaCodeSq) {
         return userMapper.selectSigunguByAreaCode(areaCodeSq);
     }

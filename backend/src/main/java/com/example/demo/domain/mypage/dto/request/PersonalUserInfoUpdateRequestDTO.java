@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class PersonalUserInfoUpdateRequestDTO {
+    private String userNickname;
     private String userPw;
     private String userEmail;
     private String userPhoneNum;

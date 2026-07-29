@@ -41,20 +41,26 @@ public class InformationEditRepository {
         return informationEditMapper.selectCompanyNameByUserSq(userSq);
     }
 
-    public void updateUser(Long userSq, String userPw, String userEmail, String userPhoneNum) {
-        informationEditMapper.updateUserInfo(userSq, userPw, userEmail, userPhoneNum);
+    public void updateUser(Long userSq, String userPw, String userEmail, String userPhoneNum, String userNickname) {
+        informationEditMapper.updateUserInfo(userSq, userPw, userEmail, userPhoneNum, userNickname);
     }
 
-    public void updateUserWithoutPw(Long userSq, String userEmail, String userPhoneNum) {
-        informationEditMapper.updateUserInfoWithoutPw(userSq, userEmail, userPhoneNum);
+    public void updateUserWithoutPw(Long userSq, String userEmail, String userPhoneNum, String userNickname) {
+        informationEditMapper.updateUserInfoWithoutPw(userSq, userEmail, userPhoneNum, userNickname);
     }
 
-    public void updateCompany(Long userSq, String userPw, String userEmail, String userPhoneNum, String userNm) {
-        informationEditMapper.updateCompanyInfo(userSq, userPw, userEmail, userPhoneNum, userNm);
+    public void updateCompany(Long userSq, String userPw, String userEmail, String userPhoneNum, String userNm,
+            String userNickname) {
+        informationEditMapper.updateCompanyInfo(userSq, userPw, userEmail, userPhoneNum, userNm, userNickname);
     }
 
-    public void updateCompanyWithoutPw(Long userSq, String userEmail, String userPhoneNum, String userNm) {
-        informationEditMapper.updateCompanyInfoWithoutPw(userSq, userEmail, userPhoneNum, userNm);
+    public void updateCompanyWithoutPw(Long userSq, String userEmail, String userPhoneNum, String userNm,
+            String userNickname) {
+        informationEditMapper.updateCompanyInfoWithoutPw(userSq, userEmail, userPhoneNum, userNm, userNickname);
+    }
+
+    public boolean existsNicknameExcludingUser(String userNickname, Long userSq) {
+        return informationEditMapper.existsNicknameExcludingUser(userNickname, userSq);
     }
 
     public void updateAddress(Long userSq, String zonecode, String address, String detailAddress, String sigungu,
