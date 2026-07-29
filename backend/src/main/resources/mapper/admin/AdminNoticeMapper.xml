@@ -24,6 +24,8 @@
         boardAdoptStatusCd, 0 AS answerCnt FROM TBL_BOARD_M b LEFT JOIN TBL_USER_M u ON b.user_sq =
         u.user_sq <include refid="noticeWhereClause" /> ORDER BY <choose>
             <when test="sortField == 'sq'"> b.board_sq </when>
+            <!-- BO 컬럼 id 가 그대로 sortField 로 온다. 컬럼을 바꾸면 여기도 함께 바꿀 것 -->
+            <when test="sortField == 'userId'"> u.user_id </when>
             <when test="sortField == 'ttl'"> b.board_ttl </when>
             <when test="sortField == 'viewCnt'"> b.board_view_cnt </when>
             <when test="sortField == 'recommendCnt'"> b.board_recommend_cnt </when>

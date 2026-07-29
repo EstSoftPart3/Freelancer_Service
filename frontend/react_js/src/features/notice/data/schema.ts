@@ -15,6 +15,8 @@ export const noticeSchema = z.object({
   sq: z.number(),
   userSq: z.number(),
   userNm: z.string(),
+  userId: z.string().nullable().optional(),
+  userNickname: z.string().nullable().optional(),
   ttl: z.string(),
   viewCnt: z.number(),
   commentCnt: z.number(),
