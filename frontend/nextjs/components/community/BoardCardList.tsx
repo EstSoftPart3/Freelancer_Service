@@ -30,6 +30,12 @@ export default function BoardCardList({ boardList, boardType }: Props) {
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {BOARD_TYPE_LABEL[resolvedType]}
               </span>
+              {/* 카테고리 뱃지 — 미분류(null)인 기존 글에는 아무것도 그리지 않는다 */}
+              {b.categoryNm && (
+                <span className="rounded-full border border-primary/40 px-2 py-0.5 text-xs font-medium text-primary">
+                  {b.categoryNm}
+                </span>
+              )}
               {status && (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}>
                   {status.label}

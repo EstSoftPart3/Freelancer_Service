@@ -124,6 +124,12 @@ export default function BoardTable({ boardList, boardType }: Props) {
         return (
           <li key={b.sq} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40">
             <div className="min-w-0 flex-1">
+              {/* 카테고리 뱃지 — 미분류(null)인 기존 글에는 아무것도 그리지 않는다 */}
+              {b.categoryNm && (
+                <span className="mr-1.5 align-middle text-xs font-medium text-primary">
+                  [{b.categoryNm}]
+                </span>
+              )}
               <Link
                 href={`/${resolvedType}/${b.sq}`}
                 className="font-medium hover:text-primary hover:underline"

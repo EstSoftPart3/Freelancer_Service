@@ -11,8 +11,11 @@ import java.util.*;
 public interface BoardMapper {
       Board findByIdBoard(@Param("boardSq") Long boardSq, @Param("boardTypeCd") Long boardTypeCd);
 
+      // 목록과 카운트는 같은 동적 조건을 공유한다 — 한쪽만 파라미터를 늘리면
+      // 목록은 필터링되는데 총 건수는 전체 기준이라 뒷 페이지가 비는 증상이 난다(Phase 3 사례).
       List<Board> findAll(
                   @Param("boardTypeCd") Long boardTypeCd,
+                  @Param("boardCategoryCd") Long boardCategoryCd,
                   @Param("boardAdoptStatusCd") Long boardAdoptStatusCd,
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,
@@ -24,6 +27,7 @@ public interface BoardMapper {
 
       Long findAllCnt(
                   @Param("boardTypeCd") Long boardTypeCd,
+                  @Param("boardCategoryCd") Long boardCategoryCd,
                   @Param("boardAdoptStatusCd") Long boardAdoptStatusCd,
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,

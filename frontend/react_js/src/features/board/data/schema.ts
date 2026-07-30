@@ -14,6 +14,10 @@ export const adminBoardSchema = z.object({
   // 백엔드 수정 전까지 에러 방지를 위해 optional로 변경합니다.
   boardTypeCd: z.number().optional(),
 
+  // 게시판 카테고리 (공통코드 3200 하위). 일반 게시글에만 값이 있고 Q&A·답변은 null.
+  boardCategoryCd: z.number().nullable().optional(),
+  boardCategoryNm: z.string().nullable().optional(),
+
   createdAt: z.string(),
   viewCnt: z.number(),
   commentCnt: z.number(),

@@ -30,6 +30,8 @@ public class AdminBoardDetailResponseDTO {
     private Integer recommendCnt;
     private Long boardAdoptStatusCd;
     private Long boardTypeCd;
+    // 게시판 카테고리 (공통코드 3200 하위). 일반 게시글에만 값이 있고, 수정 폼 초기값으로 쓰인다.
+    private Long boardCategoryCd;
     private String mainType;
     private java.time.LocalDateTime createdAt;
 

@@ -31,6 +31,7 @@ import org.springframework.web.util.UriUtils;
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.File.FileCryptoUtil;
 import com.example.demo.common.viewcount.ViewCountDedupService;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
@@ -59,6 +60,9 @@ public class BoardController {
 	private final FileCryptoUtil fileCryptoUtil;
 	private final ViewCountDedupService viewCountDedupService;
 
+	/** 이 컨트롤러는 일반게시판 전용이다. 흩어져 있던 1401L 매직넘버를 enum으로 모았다. */
+	private static final Long NORMAL_BOARD = BoardTypeCode.NORMAL.getCode();
+
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
 
@@ -69,6 +73,7 @@ public class BoardController {
 	// 전체 게시글 조회
 	@GetMapping
 	public ResponseEntity<ApiResponse<BoardListResponse>> getAllBoards(
+			@RequestParam(value = "category", required = false) Long category,
 			@RequestParam(value = "searchType", required = false) String searchType,
 			@RequestParam(value = "keyword", required = false) String keyword,
 			@RequestParam(value = "tag", required = false) String tag, // [추가] 태그 파라미터
@@ -76,9 +81,9 @@ public class BoardController {
 			@RequestParam(value = "page", defaultValue = "1") Long page,
 			@RequestParam(value = "size", defaultValue = "10") Long size) {
 
-		// 서비스 호출: (1401L, null, 검색타입, 키워드, 태그, null(스킬태그), 정렬, 페이지, 사이즈)
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공",
-				boardService.getAllBoards(1401L, null, searchType, keyword, tag, null, sortType, page, size)));
+				boardService.getAllBoards(NORMAL_BOARD, category, null, searchType, keyword, tag, null, sortType, page,
+						size)));
 	}
 
 	// 게시글 하나 조회
@@ -86,7 +91,7 @@ public class BoardController {
 	public ResponseEntity<ApiResponse<BoardResponse>> getBoard(@AuthenticationPrincipal Long userSq,
 			@PathVariable("boardSq") Long boardSq) {
 		return ResponseEntity
-				.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공", boardService.getBoard(userSq, boardSq, 1401L)));
+				.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공", boardService.getBoard(userSq, boardSq, NORMAL_BOARD)));
 	}
 
 	// 게시글 등록
@@ -107,7 +112,7 @@ public class BoardController {
 			boardRequest.setSkillTags(skillTags);
 		}
 		boardRequest.setUserSq(userSq);
-		boardService.createBoard(boardRequest, 1401L);
+		boardService.createBoard(boardRequest, NORMAL_BOARD);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED, "게시글 등록이 완료되었습니다.", null));
 	}
 
@@ -130,7 +135,7 @@ public class BoardController {
 			boardRequest.setSkillTags(skillTags);
 		}
 		boardRequest.setUserSq(userSq);
-		boardService.updateBoard(boardRequest, boardSq, 1401L);
+		boardService.updateBoard(boardRequest, boardSq, NORMAL_BOARD);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 수정이 완료되었습니다.", null));
 	}
 

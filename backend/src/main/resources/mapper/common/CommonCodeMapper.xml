@@ -5,6 +5,16 @@
 
 <mapper namespace="com.example.demo.common.mapper.CommonCodeMapper">
 
+	<!-- 활성 하위 코드만, 코드 순서대로. map-underscore-to-camel-case 로 DTO에 자동 매핑된다 -->
+	<select id="findActiveChildrenByParent" parameterType="Long"
+		resultType="com.example.demo.domain.community.dto.CommonCodeDTO">
+    SELECT common_code_sq, common_code_nm, parent_common_code_sq
+    FROM TBL_COMMON_CODE_C
+    WHERE PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+      AND COMMON_CODE_IS_ACTIVE_YN = 'Y'
+    ORDER BY common_code_sq
+	</select>
+
 	<select id="findCommonCodeSqAndNmByParent" parameterType="Long" resultType="map">
     SELECT common_code_sq, common_code_nm
     FROM TBL_COMMON_CODE_C

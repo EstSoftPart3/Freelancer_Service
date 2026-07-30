@@ -16,6 +16,7 @@ export interface BoardQueryParams {
   page: number
   size: number
   typeCds?: number[] // 여러 유형 필터링용
+  categoryCds?: number[] // 게시판 카테고리 필터링용
   keyword?: string // 통합 검색용
   tagKeyword?: string // 태그 검색용
   sortField?: string

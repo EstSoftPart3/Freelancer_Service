@@ -40,6 +40,7 @@ public class AdminBoardController {
     @GetMapping
     public ResponseEntity<ApiResponse<AdminBoardListResponseDTO>> getBoards(
             @RequestParam(value = "typeCds", required = false) List<Long> typeCds,
+            @RequestParam(value = "categoryCds", required = false) List<Long> categoryCds,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "tagKeyword", required = false) String tagKeyword,
             @RequestParam(value = "sortField", defaultValue = "createdAt") String sortField,
@@ -51,7 +52,8 @@ public class AdminBoardController {
 
         // AdminBoardListResponse를 반환하도록 서비스 호출
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 목록 조회 성공",
-                adminBoardService.getAdminBoards(typeCds, keyword, tagKeyword, sortField, sortOrder, page, size)));
+                adminBoardService.getAdminBoards(typeCds, categoryCds, keyword, tagKeyword, sortField, sortOrder, page,
+                        size)));
     }
 
     // AdminBoardController.java 의 50라인 근처

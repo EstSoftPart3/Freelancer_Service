@@ -38,6 +38,7 @@ export function BoardList() {
         page: search.page || 1,
         size: search.pageSize || 10,
         typeCds: search.typeCds?.length ? search.typeCds : undefined,
+        categoryCds: search.categoryCds?.length ? search.categoryCds : undefined,
         keyword: search.keyword || undefined,
         tagKeyword: search.tagKeyword || undefined,
         sortField: search.sortField || 'createdAt',
@@ -90,6 +91,16 @@ export function BoardList() {
     })
   }
 
+  const handleFilterCategory = (categories: number[]) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        categoryCds: categories.length ? categories : undefined,
+        page: 1,
+      }),
+    })
+  }
+
   const handleSort = (field: string, order: string) => {
     navigate({
       search: (prev) => ({ ...prev, sortField: field, sortOrder: order }),
@@ -128,12 +139,14 @@ export function BoardList() {
             totalCount={totalCount}
             page={search.page || 1}
             typeCds={search.typeCds || []}
+            categoryCds={search.categoryCds || []}
             keyword={keyword}
             // [추가] 현재 URL의 정렬 상태를 전달합니다.
             sortField={search.sortField || 'createdAt'}
             sortOrder={search.sortOrder || 'DESC'}
             setKeyword={setKeyword}
             onFilterType={handleFilterType}
+            onFilterCategory={handleFilterCategory}
             setPage={handlePageChange}
             onSort={handleSort}
             setTagKeyword={(tag) =>

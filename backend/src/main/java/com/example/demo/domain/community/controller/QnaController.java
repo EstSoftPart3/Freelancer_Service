@@ -41,7 +41,7 @@ public class QnaController {
 
         // 서비스 호출 시 인자 순서 주의: (1402L, 채택상태, 검색타입, 키워드, 태그, 스킬태그리스트, 정렬, 페이지, 사이즈)
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공",
-                boardService.getAllBoards(1402L, boardAdoptStatusCd, searchType, keyword, tag, skillTags, sortType,
+                boardService.getAllBoards(1402L, null, boardAdoptStatusCd, searchType, keyword, tag, skillTags, sortType,
                         page, size)));
     }
 

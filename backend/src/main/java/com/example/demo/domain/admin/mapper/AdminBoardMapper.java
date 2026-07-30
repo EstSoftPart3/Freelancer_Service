@@ -12,6 +12,7 @@ import com.example.demo.domain.community.entity.Comment;
 public interface AdminBoardMapper {
         List<AdminBoardListDTO> findAllUnified(
                         @Param("typeCds") List<Long> typeCds,
+                        @Param("categoryCds") List<Long> categoryCds,
                         @Param("keyword") String keyword,
                         @Param("tagKeyword") String tagKeyword,
                         @Param("sortField") String sortField,
@@ -21,6 +22,7 @@ public interface AdminBoardMapper {
 
         Long findAllUnifiedCnt(
                         @Param("typeCds") List<Long> typeCds,
+                        @Param("categoryCds") List<Long> categoryCds,
                         @Param("keyword") String keyword,
                         @Param("tagKeyword") String tagKeyword);
 

@@ -43,8 +43,19 @@ interface SkillTag {
   skillTagNm: string
 }
 
+// 카테고리 코드 목록. FO는 공통코드 API를 쓰지만 BO 작성 폼은 한 곳뿐이라 상수로 둔다.
+const CATEGORY_OPTIONS = [
+  { value: '3201', label: '자유' },
+  { value: '3202', label: '일반' },
+  { value: '3203', label: '현장정보' },
+  { value: '3204', label: '기능요청' },
+]
+// Select 는 빈 문자열 value 를 허용하지 않으므로 '선택 안 함'에 별도 토큰을 쓴다.
+const CATEGORY_NONE = 'none'
+
 const schema = z.object({
   boardTypeCd: z.string().optional(),
+  categoryCd: z.string().optional(),
   title: z
     .string()
     .transform((val) => val.trim())
@@ -79,12 +90,13 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const { register, handleSubmit, setValue, watch, reset } = useForm<BoardForm>(
     {
       resolver: zodResolver(schema),
-      defaultValues: { boardTypeCd: '1401' }, // 기본값 일반게시글
+      defaultValues: { boardTypeCd: '1401', categoryCd: CATEGORY_NONE }, // 기본값 일반게시글
     }
   )
 
   const descriptionContent = watch('description')
   const boardTypeCdValue = watch('boardTypeCd') // 유형 모니터링
+  const categoryCdValue = watch('categoryCd')
 
   const removeNormalTag = (index: number) => {
     setNormalTags((prev) => prev.filter((_, i) => i !== index))
@@ -103,6 +115,9 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
 
         reset({
           boardTypeCd: String(detail.boardTypeCd),
+          categoryCd: detail.boardCategoryCd
+            ? String(detail.boardCategoryCd)
+            : CATEGORY_NONE,
           title: detail.ttl,
           description: detail.description || '',
         })
@@ -122,7 +137,12 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
     if (open) {
       if (isUpdate) fetchDetail()
       else {
-        reset({ boardTypeCd: isAnswerMode ? '1404' : '1401', title: '', description: '' })
+        reset({
+          boardTypeCd: isAnswerMode ? '1404' : '1401',
+          categoryCd: CATEGORY_NONE,
+          title: '',
+          description: '',
+        })
         setNormalTags([])
         setSkillTags([])
         setFiles([])
@@ -163,6 +183,11 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
       const formData = new FormData()
       formData.append('ttl', data.title)
       formData.append('description', data.description)
+      // 백엔드는 일반게시글(1401) 외에는 카테고리를 무시하지만, 빈 문자열을 보내면
+      // Long 변환 실패로 400 이 되므로 값이 있을 때만 싣는다.
+      if (data.categoryCd && data.categoryCd !== CATEGORY_NONE) {
+        formData.append('categoryCd', data.categoryCd)
+      }
 
       // 일반 태그: List<String>
       normalTags.forEach((tag) => formData.append('normalTags', tag))
@@ -243,6 +268,29 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                   </SelectContent>
                 </Select>
               </div>
+              )}
+
+              {/* 카테고리 — 일반 게시글에만 있는 축이다 */}
+              {!isAnswerMode && boardTypeCdValue === '1401' && (
+                <div className='space-y-2'>
+                  <Label>카테고리</Label>
+                  <Select
+                    value={categoryCdValue}
+                    onValueChange={(val) => setValue('categoryCd', val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='카테고리 선택' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={CATEGORY_NONE}>선택 안 함</SelectItem>
+                      {CATEGORY_OPTIONS.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {/* 제목/내용 필드는 사용자님 기존 코드와 동일 */}

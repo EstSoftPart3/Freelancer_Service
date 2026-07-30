@@ -8,6 +8,7 @@ import BoardTable from '@/components/community/BoardTable'
 import BoardCardList from '@/components/community/BoardCardList'
 import CommonPagination from '@/components/community/CommonPagination'
 import CategoryTabs from '@/components/community/CategoryTabs'
+import BoardCategoryTabs from '@/components/community/BoardCategoryTabs'
 import PopularWidget from '@/components/community/PopularWidget'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
@@ -34,6 +35,14 @@ interface Props {
 
 const PAGE_SIZE = 10
 
+// URL 파라미터는 문자열이라 그대로 두면 `categoryCd === 3203` 비교가 항상 거짓이 된다.
+// 숫자가 아니면 전체(null)로 떨어뜨린다 — 손으로 고친 URL에 빈 목록을 주지 않기 위해서다.
+function parseCategory(raw: string | null): number | null {
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
 export default function BoardListClient({ boardCategory, initialData }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -54,8 +63,13 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const [keyword, setKeyword] = useState(() => searchParams.get('keyword') || useCommunityStore.getState().keyword)
   const [statusCd, setStatusCd] = useState(() => searchParams.get('status') || useCommunityStore.getState().status)
   const [tag, setTag] = useState(() => searchParams.get('tag') || '')
+  // 카테고리는 일반게시판 전용 필터 — URL(?category=)만을 출처로 삼는다.
+  // communityStore에 넣지 않는 이유: 탭을 Q&A로 옮겼다 돌아왔을 때 필터가 살아 있으면
+  // 사용자가 "글이 없어졌다"고 느낀다(게시판 종류와 카테고리는 다른 축이다).
+  const [categoryCd, setCategoryCd] = useState(() => parseCategory(searchParams.get('category')))
 
   const isQna = boardCategory === 'qna'
+  const isBoard = boardCategory === 'board'
   const isNotice = boardCategory === 'notice'
   const isAll = boardCategory === 'all'
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
@@ -64,7 +78,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
 
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
-  const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string) => {
+  const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string, cat: number | null) => {
     setIsLoading(true)
     try {
       let url = isAll
@@ -73,6 +87,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       if (kw.trim()) url += `&searchType=${sType}&keyword=${encodeURIComponent(kw.trim())}`
       if (isQna && status !== 'all') url += `&boardAdoptStatusCd=${status}`
       if (t) url += `&tag=${encodeURIComponent(t)}`
+      if (isBoard && cat !== null) url += `&category=${cat}`
 
       const { data } = await api.get<{ output: BoardListResponse }>(url)
       const out = data.output
@@ -81,7 +96,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       setBoardList(out.boards)
     } catch { alertStore.show('게시글을 불러올 수 없습니다.', 'danger') }
     finally { setIsLoading(false) }
-  }, [boardCategory, isQna, isAll])
+  }, [boardCategory, isQna, isAll, isBoard])
 
   // URL 반영
   const syncUrl = useCallback((params: Record<string, string>) => {
@@ -93,36 +108,48 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   useEffect(() => {
     const t = searchParams.get('tag') || ''
     setTag(t)
+    const cat = parseCategory(searchParams.get('category'))
+    setCategoryCd(cat)
     const p = Math.max(1, Number(searchParams.get('page')) || 1)
     setPage(p)
-    fetchList(p, sortType, searchType, keyword, statusCd, t)
+    fetchList(p, sortType, searchType, keyword, statusCd, t, cat)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.get('tag'), searchParams.get('page')])
+  }, [searchParams.get('tag'), searchParams.get('page'), searchParams.get('category')])
 
   const onSort = (val: string) => {
     setSortType(val); setPage(1)
     syncUrl({ sort: val, page: '1' })
     setCommunityFilters({ sort: val })
-    fetchList(1, val, searchType, keyword, statusCd, tag)
+    fetchList(1, val, searchType, keyword, statusCd, tag, categoryCd)
   }
 
   const onStatus = (val: string) => {
     setStatusCd(val); setPage(1)
     syncUrl({ status: val, page: '1' })
     setCommunityFilters({ status: val })
-    fetchList(1, sortType, searchType, keyword, val, tag)
+    fetchList(1, sortType, searchType, keyword, val, tag, categoryCd)
   }
 
   const onSearch = () => {
     setPage(1)
     syncUrl({ page: '1', searchType, keyword: keyword.trim() || '' })
     setCommunityFilters({ searchType, keyword: keyword.trim() })
-    fetchList(1, sortType, searchType, keyword, statusCd, tag)
+    fetchList(1, sortType, searchType, keyword, statusCd, tag, categoryCd)
   }
 
   const onPageChange = (p: number) => {
     setPage(p); syncUrl({ page: String(p) })
-    fetchList(p, sortType, searchType, keyword, statusCd, tag)
+    fetchList(p, sortType, searchType, keyword, statusCd, tag, categoryCd)
+  }
+
+  // 카테고리만은 URL 변경에 반응하는 위 useEffect가 조회까지 맡는다.
+  // 여기서 fetchList를 또 부르면 같은 목록을 두 번 요청하게 된다.
+  const onCategory = (cat: number | null) => {
+    const qs = new URLSearchParams(Object.fromEntries(searchParams))
+    if (cat === null) qs.delete('category')
+    else qs.set('category', String(cat))
+    qs.set('page', '1')
+    router.replace(`${basePath}?${qs.toString()}`)
   }
 
   const title = tag
@@ -190,6 +217,9 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       {isNotice && (
         <div className="mb-4 flex flex-wrap items-center gap-2 border-b pb-4">{filterControls}</div>
       )}
+
+      {/* 게시판 카테고리 — 일반게시판에만 있는 축이라 Q&A·공지·전체보기에는 렌더하지 않는다 */}
+      {isBoard && <BoardCategoryTabs selected={categoryCd} onSelect={onCategory} />}
 
       {/* 리스트 — SSR된 초기 목록이 있으면 로딩 문구로 덮지 않고 갱신 완료 시 교체.
           md 미만 카드 / md 이상 리스트형 행 — CSS 이중 렌더로 SSR·hydration 안전 */}

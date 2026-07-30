@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.domain.community.constant.BoardCategoryCode;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
@@ -71,7 +72,8 @@ public class BoardService {
 	// private String bucket;
 
 	@Transactional
-	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
+	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardCategoryCd, Long boardAdoptStatusCd,
+			String searchType, String keyword,
 			String tag,
 			List<Long> searchSkillTags, String sortType, Long page, Long size) {
 		if (page < 1)
@@ -80,10 +82,16 @@ public class BoardService {
 		if (sortType == null || sortType.isEmpty())
 			sortType = "latest";
 
-		List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+		// 알 수 없는 카테고리 코드는 무시하고 전체를 보여준다 — URL을 손으로 고친 경우
+		// 빈 목록보다 전체 목록이 덜 혼란스럽고, 검색 조건이라 예외로 막을 성질은 아니다.
+		Long safeCategoryCd = BoardCategoryCode.isValid(boardCategoryCd) ? boardCategoryCd : null;
+
+		List<Board> boards = boardMapper.findAll(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
+				tag,
 				searchSkillTags,
 				sortType, size, offset);
-		Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+		Long totalElements = boardMapper.findAllCnt(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
+				tag,
 				searchSkillTags);
 
 		List<BoardListDTO> responses = boards.stream()
@@ -181,6 +189,26 @@ public class BoardService {
 				files);
 	}
 
+	/**
+	 * 카테고리는 일반게시판(1401)에만 쓴다. Q&A·공지·고객의소리는 카테고리 개념이 없으므로
+	 * 값이 실려 와도 무시한다(FO 실수로 엉뚱한 게시판에 카테고리가 박히는 것을 막는다).
+	 *
+	 * <p>
+	 * 미선택(null)은 정상이며 '미분류'로 저장된다 — 카테고리 도입 전 기존 글도 같은 상태다.
+	 * 반면 목록에 없는 코드가 오면 조용히 삼키지 않고 거절한다. 저장은 되돌리기 어렵고,
+	 * 잘못된 코드가 들어가면 어느 탭에서도 보이지 않는 유령 글이 된다.
+	 * </p>
+	 */
+	private Long resolveCategoryCd(Long boardTypeCd, Long categoryCd) {
+		if (!BoardTypeCode.NORMAL.getCode().equals(boardTypeCd) || categoryCd == null) {
+			return null;
+		}
+		if (!BoardCategoryCode.isValid(categoryCd)) {
+			throw new IllegalArgumentException("존재하지 않는 게시판 카테고리입니다.");
+		}
+		return categoryCd;
+	}
+
 	@Transactional
 	public void createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
 		// 게시글 오류 처리
@@ -199,6 +227,7 @@ public class BoardService {
 				.boardTtl(boardRequest.getTtl())
 				.boardDescriptionEdt(boardRequest.getDescription())
 				.boardTyp(typeStr)
+				.boardCategoryCd(resolveCategoryCd(BoardTypeCd, boardRequest.getCategoryCd()))
 				.boardTypeCd(BoardTypeCd).build();
 
 		boardMapper.insert(board);
@@ -284,6 +313,10 @@ public class BoardService {
 
 		board.setBoardTtl(boardRequest.getTtl());
 		board.setBoardDescriptionEdt(boardRequest.getDescription());
+		// 카테고리를 보내지 않는 호출부(공지 수정 등)가 기존 값을 null로 지우지 않도록 보낸 경우에만 덮어쓴다.
+		if (boardRequest.getCategoryCd() != null) {
+			board.setBoardCategoryCd(resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
+		}
 
 		if (boardRequest.getBoardAdoptStatusCd() != null) {
 			board.setBoardAdoptStatusCd(boardRequest.getBoardAdoptStatusCd());

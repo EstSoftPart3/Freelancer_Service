@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import SkillTagModal from '@/components/community/SkillTagModal'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import { templateFor } from '@/components/community/boardTemplates'
+import { useBoardCategories } from '@/hooks/useBoardCategories'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
@@ -64,16 +67,36 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [tagInput, setTagInput] = useState('')
   const [skillOpen, setSkillOpen] = useState(false)
+  const [categoryCd, setCategoryCd] = useState<number | null>(boardData.categoryCd)
+  // 작성 중인 내용이 있을 때 양식을 덧붙일지 물어보는 확인 창 (덮어쓰기 사고 방지)
+  const [templateConfirm, setTemplateConfirm] = useState<{ open: boolean; html: string }>({ open: false, html: '' })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const categories = useBoardCategories()
 
   // 수정 모드: editSq > 0이면 PUT, 아니면 POST
   const isEdit = editSq > 0
   // 기술태그는 QnA에서만 노출 (Vue 원본 isQna/skillActive 대응)
   const isQna = boardCategory === 'qna'
+  // 카테고리는 일반게시판에만 있는 축이다 (백엔드도 1401 외에는 값을 무시한다)
+  const isBoard = boardCategory === 'board'
 
   useEffect(() => {
     return () => { resetBoard() }
   }, [resetBoard])
+
+  // 카테고리를 고르면 그 카테고리의 기본 양식을 에디터에 넣어준다.
+  //  - 비어 있을 때만 즉시 주입 (쓰던 글을 말없이 날리지 않는다)
+  //  - 내용이 있으면 확인을 받고 아래에 덧붙인다
+  //  - 수정 모드에서는 아예 주입하지 않는다 (기존 글에 양식이 끼어들면 사고다)
+  const onCategoryChange = (raw: string) => {
+    const next = raw === '' ? null : Number(raw)
+    setCategoryCd(next)
+    if (isEdit) return
+    const tpl = templateFor(next)
+    if (!tpl) return
+    if (isHtmlEmpty(description)) setDescription(tpl)
+    else setTemplateConfirm({ open: true, html: tpl })
+  }
 
   const addTag = (val: string) => {
     const tag = val.trim()
@@ -148,6 +171,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     formData.append('ttl', ttl)
     formData.append('description', description)
     // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
+    if (isBoard && categoryCd !== null) formData.append('categoryCd', String(categoryCd))
     formData.append('normalTags', normalTags.join(','))
     formData.append('skillTagsJson', JSON.stringify(skillTags))
     formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
@@ -181,6 +205,34 @@ export default function BoardPostForm({ boardCategory }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* 카테고리 — 일반게시판 전용 */}
+      {isBoard && (
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <label className="text-sm font-medium" htmlFor="board-category">카테고리</label>
+            <InfoTooltip label="카테고리 안내">
+              <p className="font-semibold">카테고리</p>
+              <ul className="mt-1 space-y-0.5">
+                <li>· 목록에서 카테고리별로 모아 볼 수 있습니다.</li>
+                <li>· 선택하지 않아도 등록됩니다.</li>
+                <li>· <span className="font-medium">현장정보</span>를 고르면 기본 양식이 채워집니다.</li>
+              </ul>
+            </InfoTooltip>
+          </div>
+          <select
+            id="board-category"
+            value={categoryCd === null ? '' : String(categoryCd)}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-48"
+          >
+            <option value="">선택 안 함</option>
+            {categories.map((c) => (
+              <option key={c.commonCodeSq} value={c.commonCodeSq}>{c.commonCodeNm}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* 제목 */}
       <div>
         <label className="mb-1 block text-sm font-medium">제목</label>
@@ -325,6 +377,17 @@ export default function BoardPostForm({ boardCategory }: Props) {
         <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
         <Button variant="outline" onClick={handleCancel}>취소</Button>
       </div>
+
+      <ConfirmDialog
+        open={templateConfirm.open}
+        title="기본 양식 추가"
+        message="이미 작성한 내용이 있습니다. 아래에 기본 양식을 추가하시겠습니까?"
+        onConfirm={() => {
+          setDescription((prev) => prev + templateConfirm.html)
+          setTemplateConfirm({ open: false, html: '' })
+        }}
+        onClose={() => setTemplateConfirm({ open: false, html: '' })}
+      />
 
       {isQna && (
         <SkillTagModal

@@ -28,3 +28,21 @@ export const BOARD_TYPE_LABEL: Record<'board' | 'qna' | 'notice', string> = {
 export function resolveBoardType(item: BoardItem, listType: BoardType): 'board' | 'qna' | 'notice' {
   return item.boardType ?? (listType === 'all' ? 'board' : listType)
 }
+
+// ── 게시판 카테고리 (공통코드 3200 하위) ──────────────────────────────────
+// 목록은 GET /community/board-categories 가 정본이다. 아래 상수는 서버 응답을 기다리는 동안의
+// 초기 렌더용 폴백일 뿐이므로, 카테고리를 추가할 때 이 배열을 고치는 것이 아니라 공통코드에 넣는다.
+export interface BoardCategory {
+  commonCodeSq: number
+  commonCodeNm: string
+}
+
+export const BOARD_CATEGORY_FALLBACK: readonly BoardCategory[] = [
+  { commonCodeSq: 3201, commonCodeNm: '자유' },
+  { commonCodeSq: 3202, commonCodeNm: '일반' },
+  { commonCodeSq: 3203, commonCodeNm: '현장정보' },
+  { commonCodeSq: 3204, commonCodeNm: '기능요청' },
+]
+
+/** 현장정보 — 작성 폼에서 기본 양식을 주입하는 카테고리. boardTemplates 와 짝을 이룬다. */
+export const CATEGORY_FIELD_INFO = 3203
