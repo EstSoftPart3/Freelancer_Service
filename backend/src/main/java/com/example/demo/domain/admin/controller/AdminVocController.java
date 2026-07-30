@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.admin.dto.response.AdminBoardListResponseDTO;
@@ -21,11 +22,17 @@ import com.example.demo.domain.community.dto.response.BoardResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * BO 고객의 소리 관리. {@code /admin/**} 이라 SecurityConfig 가 ROLE_ADMIN 을 요구한다.
+ * BO 고객의 소리 관리.
+ *
+ * <p>
+ * 보호가 두 겹이다 — {@code SecurityConfigProd} 의 {@code /admin/**} URL 매칭과, 클래스에 붙은
+ * {@code @PreAuthorize}. URL 만 믿으면 경로를 옮기는 순간 무방비가 된다({@code MethodSecurityConfig} 참조).
+ * </p>
  */
 @RestController
 @RequestMapping("/admin/voc")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminVocController {
 
     private final AdminVocService adminVocService;

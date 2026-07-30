@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminProjectMapper">
+
+    <!--
+        모집 상태는 저장된 컬럼이 아니라 NOW() 와 모집기간을 비교해 계산한다.
+        FO 목록의 판정(ProjectMapper 의 recruitingCondition — NOW() BETWEEN 시작 AND 종료)과
+        같은 기준을 써야 한다. 한쪽만 고치면 "BO 에서는 모집중인데 FO 목록에는 없는" 공고가 생긴다.
+    -->
+    <sql id="recruitStatusExpr">
+        CASE
+            WHEN NOW() &lt; p.project_recruit_start_dt THEN 'SCHEDULED'
+            WHEN NOW() &gt; p.project_recruit_end_dt   THEN 'CLOSED'
+            ELSE 'RECRUITING'
+        END
+    </sql>
+
+    <!--
+        목록·카운트가 공유하는 조건. 한쪽만 늘리면 "목록은 맞는데 총 건수만 전체 기준이라
+        뒷 페이지가 비는" 증상이 난다(Phase 3 사례).
+
+        삭제된 공고는 기본으로 감춘다. 관리 화면에서는 되살릴 대상을 찾아야 할 때가 있어
+        includeDeleted 로 열어 볼 수 있게 했다.
+    -->
+    <sql id="projectWhere">
+        WHERE 1 = 1
+        <if test="!includeDeleted"> AND p.project_is_deleted_yn = 'N' </if>
+        <if test="keyword != null and keyword != ''">
+            AND ( p.project_ttl LIKE CONCAT('%', #{keyword}, '%')
+               OR c.company_nm LIKE CONCAT('%', #{keyword}, '%')
+               OR u.user_id LIKE CONCAT('%', #{keyword}, '%') )
+        </if>
+        <if test="recruitStatus != null and recruitStatus != ''">
+            <choose>
+                <when test="recruitStatus == 'RECRUITING'">
+                    AND NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt </when>
+                <when test="recruitStatus == 'SCHEDULED'">
+                    AND NOW() &lt; p.project_recruit_start_dt </when>
+                <when test="recruitStatus == 'CLOSED'">
+                    AND NOW() &gt; p.project_recruit_end_dt </when>
+            </choose>
+        </if>
+    </sql>
+
+    <sql id="projectJoins">
+        FROM TBL_PROJECT_M p
+        LEFT JOIN TBL_COMPANY_S c ON c.company_sq = p.company_sq
+        LEFT JOIN TBL_USER_M u ON u.user_sq = c.user_sq
+    </sql>
+
+    <select id="findAllProjects" resultType="com.example.demo.domain.admin.dto.response.AdminProjectListDTO">
+        SELECT p.project_sq AS projectSq,
+               p.project_ttl AS projectTtl,
+               p.company_sq AS companySq,
+               c.company_nm AS companyNm,
+               u.user_sq AS userSq,
+               u.user_id AS userId,
+               p.project_recruit_start_dt AS recruitStartDt,
+               p.project_recruit_end_dt AS recruitEndDt,
+               p.project_start_dt AS projectStartDt,
+               p.project_end_dt AS projectEndDt,
+               <include refid="recruitStatusExpr" /> AS recruitStatus,
+               p.project_salary AS projectSalary,
+               p.project_salary_negotiable_yn AS salaryNegotiableYn,
+               p.project_view_cnt AS viewCnt,
+               p.project_scrap_cnt AS scrapCnt,
+               (SELECT COUNT(*) FROM TBL_PROJECT_APPLICATION_H a
+                 WHERE a.project_sq = p.project_sq) AS applicationCnt,
+               p.project_is_deleted_yn AS isDeletedYn,
+               p.project_created_at_dtm AS createdAt
+        <include refid="projectJoins" />
+        <include refid="projectWhere" />
+        ORDER BY <choose>
+            <!-- BO 컬럼 id 가 그대로 sortField 로 온다. 컬럼을 바꾸면 여기도 함께 바꿀 것 -->
+            <when test="sortField == 'projectSq'"> p.project_sq </when>
+            <when test="sortField == 'projectTtl'"> p.project_ttl </when>
+            <when test="sortField == 'companyNm'"> c.company_nm </when>
+            <when test="sortField == 'recruitEndDt'"> p.project_recruit_end_dt </when>
+            <when test="sortField == 'projectSalary'"> p.project_salary </when>
+            <when test="sortField == 'viewCnt'"> p.project_view_cnt </when>
+            <when test="sortField == 'applicationCnt'"> applicationCnt </when>
+            <otherwise> p.project_created_at_dtm </otherwise>
+        </choose> ${sortOrder} LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countProjects" resultType="Long">
+        SELECT COUNT(*)
+        <include refid="projectJoins" />
+        <include refid="projectWhere" />
+    </select>
+
+    <select id="findProject" resultType="com.example.demo.domain.admin.dto.response.AdminProjectDetailDTO">
+        SELECT p.project_sq AS projectSq,
+               p.project_ttl AS projectTtl,
+               p.company_sq AS companySq,
+               c.company_nm AS companyNm,
+               u.user_sq AS userSq,
+               u.user_id AS userId,
+               p.project_recruit_start_dt AS recruitStartDt,
+               p.project_recruit_end_dt AS recruitEndDt,
+               p.project_start_dt AS projectStartDt,
+               p.project_end_dt AS projectEndDt,
+               <include refid="recruitStatusExpr" /> AS recruitStatus,
+               p.project_salary AS projectSalary,
+               p.project_salary_negotiable_yn AS salaryNegotiableYn,
+               p.project_description_txt AS descriptionTxt,
+               p.project_preference_txt AS preferenceTxt,
+               a.address AS address,
+               a.detail_address AS detailAddress,
+               p.project_view_cnt AS viewCnt,
+               p.project_scrap_cnt AS scrapCnt,
+               (SELECT COUNT(*) FROM TBL_PROJECT_APPLICATION_H ap
+                 WHERE ap.project_sq = p.project_sq) AS applicationCnt,
+               p.project_is_deleted_yn AS isDeletedYn,
+               p.project_created_at_dtm AS createdAt,
+               p.project_modified_at_dtm AS modifiedAt
+        <include refid="projectJoins" />
+        LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = p.address_sq
+        WHERE p.project_sq = #{projectSq}
+    </select>
+
+    <!--
+        관리자 수정 — 작성자 조건이 없다. null 인 필드는 건드리지 않는다(<set> 이 해당 줄을 통째로 뺀다).
+        FO 의 수정 쿼리를 재사용하지 않는 이유는 그쪽에 소유자 조건이 붙어 있어
+        관리자가 부르면 0행 반영 후 조용히 성공하기 때문이다.
+    -->
+    <update id="updateProject">
+        UPDATE TBL_PROJECT_M
+        <set>
+            <if test="dto.projectTtl != null"> project_ttl = #{dto.projectTtl}, </if>
+            <if test="dto.projectSalary != null"> project_salary = #{dto.projectSalary}, </if>
+            <if test="dto.salaryNegotiableYn != null"> project_salary_negotiable_yn = #{dto.salaryNegotiableYn}, </if>
+            <if test="dto.recruitStartDt != null"> project_recruit_start_dt = #{dto.recruitStartDt}, </if>
+            <if test="dto.recruitEndDt != null"> project_recruit_end_dt = #{dto.recruitEndDt}, </if>
+            <if test="dto.projectStartDt != null"> project_start_dt = #{dto.projectStartDt}, </if>
+            <if test="dto.projectEndDt != null"> project_end_dt = #{dto.projectEndDt}, </if>
+            <if test="dto.descriptionTxt != null"> project_description_txt = #{dto.descriptionTxt}, </if>
+            <if test="dto.preferenceTxt != null"> project_preference_txt = #{dto.preferenceTxt}, </if>
+            project_modified_at_dtm = NOW()
+        </set>
+        WHERE project_sq = #{projectSq}
+    </update>
+
+    <update id="softDeleteProject">
+        UPDATE TBL_PROJECT_M
+           SET project_is_deleted_yn = <choose><when test="deleted">'Y'</when><otherwise>'N'</otherwise></choose>,
+               project_modified_at_dtm = NOW()
+         WHERE project_sq = #{projectSq}
+    </update>
+
+</mapper>

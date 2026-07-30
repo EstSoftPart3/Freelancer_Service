@@ -131,6 +131,12 @@
         </if>
     </select>
 
+    <!--
+        소속(기업) 목록. BO 소속 관리 화면과 유저 화면의 소속 검색 다이얼로그가 함께 쓴다.
+        인증상태·소속원 수는 소속 관리 화면에서 추가한 컬럼이다 — 기존 소비자(검색 다이얼로그)는
+        모르는 필드를 무시하므로 안전하다.
+        소속원 수는 재직 중(401)만 센다. 탈퇴자를 포함하면 "인원 3명"인데 아무도 없는 소속이 생긴다.
+    -->
     <select id="findAllCompanies"
             resultType="com.example.demo.domain.admin.dto.response.AdminUsersCompanyListResponseDTO">
         SELECT c.company_sq      AS companySq,
@@ -139,18 +145,26 @@
                c.company_open_dt AS companyOpenDt,
                c.company_url     AS companyUrl,
                c.company_biz_num AS companyBizNum,
+               c.company_auth_status_cd AS companyAuthStatusCd,
                a.address         AS companyAddress,
                a.detail_address  AS companyDetailAddress,
                u.user_type_cd    AS userTypeCd,
                u.user_sq         AS userSq,
                u.user_id         AS userId,
                u.user_nm         AS userNm,
-               u.user_phone_num  AS userPhoneNum
+               u.user_phone_num  AS userPhoneNum,
+               (SELECT COUNT(*) FROM TBL_COMPANY_MEMBER_R cm
+                 WHERE cm.company_sq = c.company_sq
+                   AND cm.company_member_status_cd = 401
+                   AND cm.company_member_leave_dt IS NULL) AS memberCnt
         FROM TBL_COMPANY_S c
                  JOIN TBL_USER_M u ON u.user_sq = c.user_sq
                  LEFT JOIN TBL_ADDRESS_S a ON a.address_sq = c.address_sq
         <if test="keyword != null and keyword != ''">
-            WHERE (c.company_nm LIKE CONCAT('%', #{keyword}, '%'))
+            WHERE (c.company_nm LIKE CONCAT('%', #{keyword}, '%')
+                OR c.company_ceo_nm LIKE CONCAT('%', #{keyword}, '%')
+                OR c.company_biz_num LIKE CONCAT('%', #{keyword}, '%')
+                OR u.user_id LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY c.company_sq ASC
     </select>
