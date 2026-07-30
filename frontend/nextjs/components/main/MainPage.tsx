@@ -64,6 +64,8 @@ export default function MainPage({ initialProjects }: Props = {}) {
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [projects, setProjects] = useState<PopularProject[]>(initialProjects ?? [])
+  // 모집중 공고만 노출하므로 정말 0건일 수 있다 — "불러오는 중"과 "없음"을 구분한다
+  const [loading, setLoading] = useState(!initialProjects?.length)
   const [currentSort, setCurrentSort] = useState<SortType>('views')
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -94,6 +96,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
 
   const fetchPopularProjects = useCallback(async (sortType: SortType) => {
     setCurrentSort(sortType)
+    setLoading(true)
     try {
       // /projects/popular 는 ApiResponse 없이 List<> 직접 반환
       const { data } = await api.get<PopularProject[]>('/projects/popular', {
@@ -102,6 +105,8 @@ export default function MainPage({ initialProjects }: Props = {}) {
       setProjects(Array.isArray(data) ? data : [])
     } catch {
       console.error('[MainPage] 인기 프로젝트 로드 실패')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -181,7 +186,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="mb-0 text-xl font-bold">인기 프로젝트</h2>
-            <p className="text-sm text-muted-foreground">많은 관심을 받고 있는 프로젝트들을 확인해보세요</p>
+            <p className="text-sm text-muted-foreground">지금 모집 중인 공고 가운데 관심이 높은 프로젝트입니다</p>
           </div>
           <div className="flex gap-2">
             {(['views', 'scraps', 'apps'] as SortType[]).map((sort) => (
@@ -231,8 +236,23 @@ export default function MainPage({ initialProjects }: Props = {}) {
               </div>
             ))}
           </div>
-        ) : (
+        ) : loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">프로젝트를 불러오는 중...</p>
+        ) : (
+          // 모집중 공고가 하나도 없을 때. 가짜로 채우지 않고 다음 행동을 제시한다
+          <div className="rounded-xl border border-dashed bg-white py-12 text-center">
+            <p className="text-sm font-medium">지금 모집 중인 프로젝트가 없습니다</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              새 공고가 등록되면 이곳에 바로 노출됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/projects')}
+              className="mt-4 cursor-pointer rounded-full border border-input bg-background px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              전체 프로젝트 보기
+            </button>
+          </div>
         )}
       </section>
 

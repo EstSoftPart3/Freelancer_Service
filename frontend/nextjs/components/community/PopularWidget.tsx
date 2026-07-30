@@ -13,6 +13,9 @@ const PERIOD_TABS: { value: Period; label: string }[] = [
   { value: 'monthly', label: '월간 인기' },
 ]
 
+// 백엔드 findBestBoards의 DATE_SUB INTERVAL과 일치시킨다
+const PERIOD_DAYS: Record<Period, number> = { daily: 1, weekly: 7, monthly: 30 }
+
 interface Props {
   // 미지정 시 제목 없이 탭만 한 줄로 노출 (목록 사이드바용)
   title?: string
@@ -58,7 +61,10 @@ export default function PopularWidget({
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
           {title && <h3 className="truncate text-sm font-semibold">{title}</h3>}
-          <BestCriteriaInfo />
+          {/* 탭 유무와 무관하게 지금 보고 있는 목록의 집계 기간을 알려준다(탭 전환 시 함께 갱신된다) */}
+          <BestCriteriaInfo
+            note={`이 목록은 ${PERIOD_TABS.find((t) => t.value === period)?.label}(최근 ${PERIOD_DAYS[period]}일 작성글) 기준입니다.`}
+          />
         </div>
         {showTabs && (
           <div className="flex gap-1 text-xs">
