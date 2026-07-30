@@ -1,6 +1,5 @@
 package com.example.demo.domain.community.dto;
 
-import com.example.demo.domain.community.constant.BoardCategoryCode;
 import com.example.demo.domain.community.entity.*;
 
 import lombok.*;
@@ -44,9 +43,9 @@ public class BoardListDTO{
 			skillTags,
 			Long.valueOf(1402L).equals(board.getBoardTypeCd()) ? "qna" : "board",
 			board.getBoardCategoryCd(),
-			// null(미분류)은 라벨도 null로 둔다 — 뱃지를 그리지 않을지 FO가 판단해야 하므로
-			// 여기서 '자유'로 임의 승격하면 미분류와 실제 '자유' 선택을 구분할 수 없다.
-			board.getBoardCategoryCd() == null ? null : BoardCategoryCode.labelOf(board.getBoardCategoryCd())
+			// 미분류(null)면 라벨도 null이다 — 뱃지를 그리지 않을지는 FO가 판단한다.
+			// '자유'로 임의 승격하면 미분류와 실제 '자유' 선택을 구분할 수 없다.
+			board.getBoardCategoryNm()
         );
     }
 	

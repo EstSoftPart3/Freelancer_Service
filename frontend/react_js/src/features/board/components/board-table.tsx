@@ -140,9 +140,9 @@ export function BoardTable({
   // 공통코드 조회를 새로 붙이지 않고 상수로 둔다. 코드 값이 바뀌면 여기도 함께 고칠 것.
   const categoryOptions = [
     { label: '자유', value: '3201' },
-    { label: '일반', value: '3202' },
     { label: '현장정보', value: '3203' },
     { label: '기능요청', value: '3204' },
+    { label: '정보', value: '3205' },
   ]
 
   return (

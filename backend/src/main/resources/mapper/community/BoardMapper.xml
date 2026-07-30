@@ -3,11 +3,17 @@
 
 <mapper namespace="com.example.demo.domain.community.mapper.BoardMapper">
 
-	<select id="findByIdBoard" resultType="com.example.demo.domain.community.entity.Board"> SELECT *
-		FROM TBL_BOARD_M WHERE board_sq = #{boardSq} AND board_type_cd = #{boardTypeCd} </select>
+	<!-- 카테고리 표시명은 공통코드에서 JOIN 한다 — 라벨의 출처를 코드(enum)로 두면
+	     공통코드 이름을 바꿔도 뱃지가 옛 값으로 남는다 -->
+	<sql id="boardSelectBase"> SELECT b.*, cc.common_code_nm AS board_category_nm FROM TBL_BOARD_M b
+		LEFT JOIN TBL_COMMON_CODE_C cc ON cc.common_code_sq = b.board_category_cd </sql>
 
-	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board"> SELECT * FROM
-		TBL_BOARD_M WHERE board_is_deleted_yn = 'N' <choose>
+	<select id="findByIdBoard" resultType="com.example.demo.domain.community.entity.Board">
+		<include refid="boardSelectBase" /> WHERE b.board_sq = #{boardSq} AND b.board_type_cd =
+		#{boardTypeCd} </select>
+
+	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
+		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if

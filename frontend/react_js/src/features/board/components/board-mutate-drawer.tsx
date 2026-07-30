@@ -44,14 +44,13 @@ interface SkillTag {
 }
 
 // 카테고리 코드 목록. FO는 공통코드 API를 쓰지만 BO 작성 폼은 한 곳뿐이라 상수로 둔다.
+// 3202 '일반'은 제외됐다(공통코드에서도 비활성) — 게시판 이름이 "일반 게시판"이라 중복된다.
 const CATEGORY_OPTIONS = [
   { value: '3201', label: '자유' },
-  { value: '3202', label: '일반' },
   { value: '3203', label: '현장정보' },
   { value: '3204', label: '기능요청' },
+  { value: '3205', label: '정보' },
 ]
-// Select 는 빈 문자열 value 를 허용하지 않으므로 '선택 안 함'에 별도 토큰을 쓴다.
-const CATEGORY_NONE = 'none'
 
 const schema = z.object({
   boardTypeCd: z.string().optional(),
@@ -90,7 +89,8 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const { register, handleSubmit, setValue, watch, reset } = useForm<BoardForm>(
     {
       resolver: zodResolver(schema),
-      defaultValues: { boardTypeCd: '1401', categoryCd: CATEGORY_NONE }, // 기본값 일반게시글
+      // 카테고리는 필수라 미선택 상태를 두지 않고 '자유'로 시작한다
+      defaultValues: { boardTypeCd: '1401', categoryCd: '3201' }, // 기본값 일반게시글·자유
     }
   )
 
@@ -115,9 +115,8 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
 
         reset({
           boardTypeCd: String(detail.boardTypeCd),
-          categoryCd: detail.boardCategoryCd
-            ? String(detail.boardCategoryCd)
-            : CATEGORY_NONE,
+          // 카테고리 도입 전 글은 null 일 수 있다 — 필수 항목이므로 '자유'로 채워 보여준다
+          categoryCd: detail.boardCategoryCd ? String(detail.boardCategoryCd) : '3201',
           title: detail.ttl,
           description: detail.description || '',
         })
@@ -139,7 +138,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
       else {
         reset({
           boardTypeCd: isAnswerMode ? '1404' : '1401',
-          categoryCd: CATEGORY_NONE,
+          categoryCd: '3201',
           title: '',
           description: '',
         })
@@ -185,7 +184,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
       formData.append('description', data.description)
       // 백엔드는 일반게시글(1401) 외에는 카테고리를 무시하지만, 빈 문자열을 보내면
       // Long 변환 실패로 400 이 되므로 값이 있을 때만 싣는다.
-      if (data.categoryCd && data.categoryCd !== CATEGORY_NONE) {
+      if (data.categoryCd) {
         formData.append('categoryCd', data.categoryCd)
       }
 
@@ -273,7 +272,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
               {/* 카테고리 — 일반 게시글에만 있는 축이다 */}
               {!isAnswerMode && boardTypeCdValue === '1401' && (
                 <div className='space-y-2'>
-                  <Label>카테고리</Label>
+                  <Label>카테고리 <span className='text-destructive'>*</span></Label>
                   <Select
                     value={categoryCdValue}
                     onValueChange={(val) => setValue('categoryCd', val)}
@@ -282,7 +281,6 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                       <SelectValue placeholder='카테고리 선택' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={CATEGORY_NONE}>선택 안 함</SelectItem>
                       {CATEGORY_OPTIONS.map((c) => (
                         <SelectItem key={c.value} value={c.value}>
                           {c.label}

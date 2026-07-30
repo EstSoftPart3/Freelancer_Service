@@ -1,6 +1,5 @@
 package com.example.demo.domain.community.dto.response;
 
-import com.example.demo.domain.community.constant.BoardCategoryCode;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.entity.Board;
 
@@ -52,7 +51,7 @@ public class BoardResponse{
 			comments,
 			viewerSq,
 			board.getBoardCategoryCd(),
-			board.getBoardCategoryCd() == null ? null : BoardCategoryCode.labelOf(board.getBoardCategoryCd())
+			board.getBoardCategoryNm()
         );
     }
 	
