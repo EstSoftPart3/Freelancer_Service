@@ -1,6 +1,6 @@
 // [Freelancer Service]
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -29,7 +29,13 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 // 1. [에러 해결] boardApi와 AdminBoard로 임포트 변경
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { boardApi } from '../api/board-api'
+import {
+  templateFor,
+  isHtmlEmpty,
+  plainText,
+} from '../data/board-templates'
 import { type AdminBoard } from '../data/schema'
 import { SkillTagSelectModal } from './skill-tag-select-modal'
 
@@ -85,6 +91,14 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [isFetching, setIsFetching] = useState(false)
   const [skillTagModalOpen, setSkillTagModalOpen] = useState(false)
+  // 작성 중인 내용이 있을 때 양식을 덧붙일지 물어보는 확인 창 (덮어쓰기 사고 방지)
+  const [templateConfirm, setTemplateConfirm] = useState<{
+    open: boolean
+    html: string
+  }>({ open: false, html: '' })
+  // 마지막으로 주입한 양식의 본문 텍스트. 현재 내용이 이것과 같으면 "아직 손대지 않은
+  // 껍데기"라는 뜻이라 카테고리를 바꿀 때 안심하고 치울 수 있다.
+  const injectedTemplateRef = useRef<string | null>(null)
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<BoardForm>(
     {
@@ -100,6 +114,39 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
 
   const removeNormalTag = (index: number) => {
     setNormalTags((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  /**
+   * 카테고리 변경 시 기본 양식 처리. FO BoardPostForm 의 규칙을 그대로 옮겼다.
+   *
+   * 판단 기준은 "카테고리가 바뀌었는지"가 아니라 "지금 내용이 사용자가 쓴 것인지"다.
+   *  - 내용이 비었거나 손대지 않은 양식 → 새 카테고리의 양식으로 교체(없으면 비움)
+   *  - 사용자가 쓴 내용이 있음 → 보존. 새 카테고리에 양식이 있으면 확인받고 덧붙인다
+   *  - 수정 모드 → 주입도 제거도 하지 않는다 (관리자가 남의 글을 건드리면 사고다)
+   */
+  const onCategoryChange = (val: string) => {
+    setValue('categoryCd', val)
+    if (isUpdate) return
+
+    const tpl = templateFor(val)
+    const current = descriptionContent ?? ''
+    const untouched =
+      isHtmlEmpty(current) || plainText(current) === injectedTemplateRef.current
+
+    if (untouched) {
+      setValue('description', tpl ?? '')
+      injectedTemplateRef.current = tpl === null ? null : plainText(tpl)
+      return
+    }
+    if (tpl) setTemplateConfirm({ open: true, html: tpl })
+  }
+
+  // 확인 창에서 '추가'를 고른 경우 — 쓰던 내용 아래에 양식을 덧붙인다.
+  // 덧붙인 결과는 사용자 글과 섞였으므로 "손대지 않은 껍데기" 추적을 포기한다(ref 초기화).
+  const appendTemplate = () => {
+    setValue('description', `${descriptionContent ?? ''}${templateConfirm.html}`)
+    injectedTemplateRef.current = null
+    setTemplateConfirm({ open: false, html: '' })
   }
   useEffect(() => {
     const fetchDetail = async () => {
@@ -146,6 +193,8 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
         setSkillTags([])
         setFiles([])
         setAttachments([])
+        // 새 글이므로 이전 세션에서 주입했던 양식 기억은 버린다
+        injectedTemplateRef.current = null
       }
     }
   }, [open, isUpdate, isAnswerMode, currentRow, reset])
@@ -275,7 +324,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                   <Label>카테고리 <span className='text-destructive'>*</span></Label>
                   <Select
                     value={categoryCdValue}
-                    onValueChange={(val) => setValue('categoryCd', val)}
+                    onValueChange={onCategoryChange}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder='카테고리 선택' />
@@ -459,6 +508,19 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
           </>
         )}
       </SheetContent>
+
+      {/* 쓰던 내용이 있는데 양식이 있는 카테고리로 바꿨을 때 — 덮어쓰지 않고 물어본다 */}
+      <ConfirmDialog
+        open={templateConfirm.open}
+        onOpenChange={(v) =>
+          setTemplateConfirm((prev) => ({ ...prev, open: v }))
+        }
+        title='기본 양식 추가'
+        desc='이미 작성한 내용이 있습니다. 아래에 기본 양식을 추가하시겠습니까?'
+        cancelBtnText='취소'
+        confirmText='추가'
+        handleConfirm={appendTemplate}
+      />
     </Sheet>
   )
 }

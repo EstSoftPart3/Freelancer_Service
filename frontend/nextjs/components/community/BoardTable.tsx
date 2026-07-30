@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { fmtDate, STATUS, resolveBoardType, type BoardType } from '@/components/community/boardMeta'
+import { CategoryBadge, BoardTypeBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
 interface Props {
@@ -124,21 +125,21 @@ export default function BoardTable({ boardList, boardType }: Props) {
         return (
           <li key={b.sq} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40">
             <div className="min-w-0 flex-1">
-              {/* 카테고리 뱃지 — 미분류(null)인 기존 글에는 아무것도 그리지 않는다 */}
-              {b.categoryNm && (
-                <span className="mr-1.5 align-middle text-xs font-medium text-primary">
-                  [{b.categoryNm}]
-                </span>
-              )}
-              <Link
-                href={`/${resolvedType}/${b.sq}`}
-                className="font-medium hover:text-primary hover:underline"
-              >
-                {b.ttl}
-                {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
-                  <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
-                )}
-              </Link>
+              {/* 뱃지 줄 — 전체보기에서는 유형 뱃지를 먼저 달아 카테고리 없는 Q&A 행도 줄을 맞춘다.
+                  카테고리는 미분류(null)면 그리지 않는다 */}
+              <div className="mb-0.5 flex items-center gap-1.5">
+                {isAll && <BoardTypeBadge type={resolvedType} />}
+                <CategoryBadge name={b.categoryNm} />
+                <Link
+                  href={`/${resolvedType}/${b.sq}`}
+                  className="min-w-0 truncate font-medium hover:text-primary hover:underline"
+                >
+                  {b.ttl}
+                  {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
+                    <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
+                  )}
+                </Link>
+              </div>
               <TagRow skillTags={b.skillTags} normalTags={b.normalTags} resolvedType={resolvedType} />
             </div>
             <span className="w-20 shrink-0 truncate text-center text-sm">{b.userNickname}</span>

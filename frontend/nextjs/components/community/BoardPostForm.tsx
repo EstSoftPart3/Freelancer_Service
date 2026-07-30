@@ -92,7 +92,14 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const categories = useBoardCategories()
 
   // 수정 모드: editSq > 0이면 PUT, 아니면 POST
-  const isEdit = editSq > 0
+  //
+  // 스토어의 editSq 를 그대로 쓰면 안 된다. 아래 언마운트 cleanup 의 resetBoard() 가
+  // StrictMode 이중 마운트(mount→unmount→mount)에서 한 번 먼저 돌아 editSq 를 0으로 민다.
+  // 제목·본문은 useState 초기값으로 첫 렌더에 이미 복사돼 화면에 남기 때문에 프리필은
+  // 멀쩡해 보이는데 editSq 만 죽어, 수정 저장이 PUT 이 아니라 POST 로 새어나가
+  // 원본은 그대로 둔 채 새 글이 하나 더 생겼다. 다른 필드와 똑같이 첫 렌더에 붙잡아 둔다.
+  const [editTargetSq] = useState(editSq)
+  const isEdit = editTargetSq > 0
   // 기술태그는 QnA에서만 노출 (Vue 원본 isQna/skillActive 대응)
   const isQna = boardCategory === 'qna'
   // 카테고리는 일반게시판에만 있는 축이다 (백엔드도 1401 외에는 값을 무시한다)
@@ -213,7 +220,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     try {
       if (isEdit) {
         const { data } = await api.put<{ status: string; message: string }>(
-          `/${boardCategory}/${editSq}`, formData,
+          `/${boardCategory}/${editTargetSq}`, formData,
         )
         if (data.status === 'OK') {
           alertStore.show(data.message, 'success')

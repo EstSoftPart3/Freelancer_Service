@@ -6,6 +6,7 @@ import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import ReportModal from '@/components/community/ReportModal'
+import { CategoryBadge } from '@/components/community/CategoryBadge'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -124,9 +125,7 @@ export default function BoardPost({
       {/* 카테고리 배지 — 일반게시판에만 있는 축이고, 미분류(null)면 그리지 않는다 */}
       {boardType === 'board' && boardInfo.categoryNm && (
         <div className="mb-2">
-          <span className="rounded-full border border-primary/40 px-2 py-0.5 text-xs font-medium text-primary">
-            {boardInfo.categoryNm}
-          </span>
+          <CategoryBadge name={boardInfo.categoryNm} />
         </div>
       )}
 
