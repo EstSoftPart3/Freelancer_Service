@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.common.ApiResponse;
+import com.example.demo.common.ParentCodeEnum;
+import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.domain.community.dto.CommonCodeDTO;
 import com.example.demo.domain.community.dto.CommunityBestItemDTO;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
 import com.example.demo.domain.community.service.BoardService;
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
  * 커뮤니티 고도화용 통합 목록/베스트글 API.
  * - GET /community/boards: 전체보기(일반+Q&A) 통합 목록
  * - GET /community/best: 베스트글/인기 위젯/추천글 공용(복합 점수, 기간 파라미터만 다름)
+ * - GET /community/board-categories: 게시판 카테고리 목록(공통코드 3200 하위)
  */
 @RestController
 @RequestMapping("/community")
@@ -27,10 +31,12 @@ import lombok.RequiredArgsConstructor;
 public class CommunityController {
 
 	private final BoardService boardService;
+	private final CommonCodeMapper commonCodeMapper;
 
 	@GetMapping("/boards")
 	public ResponseEntity<ApiResponse<BoardListResponse>> getCommunityBoards(
 			@RequestParam(value = "boardType", defaultValue = "all") String boardType,
+			@RequestParam(value = "category", required = false) Long category,
 			@RequestParam(value = "boardAdoptStatusCd", required = false) Long boardAdoptStatusCd,
 			@RequestParam(value = "searchType", required = false) String searchType,
 			@RequestParam(value = "keyword", required = false) String keyword,
@@ -51,8 +57,23 @@ public class CommunityController {
 		}
 
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "커뮤니티 통합 목록 조회 성공",
-				boardService.getAllBoards(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag, null, sortType,
+				boardService.getAllBoards(boardTypeCd, category, boardAdoptStatusCd, searchType, keyword, tag, null,
+						sortType,
 						page, size)));
+	}
+
+	/**
+	 * 게시판 카테고리 목록 (공통코드 3200 하위).
+	 *
+	 * <p>
+	 * FO 탭·작성 폼이 코드와 라벨을 하드코딩하지 않도록 서버가 내려준다. 공통코드 이름만 바꾸면
+	 * 재배포 없이 라벨이 따라오고, 비활성(`is_active_yn='N'`) 처리로 노출을 끌 수도 있다.
+	 * </p>
+	 */
+	@GetMapping("/board-categories")
+	public ResponseEntity<ApiResponse<List<CommonCodeDTO>>> getBoardCategories() {
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시판 카테고리 조회 성공",
+				commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())));
 	}
 
 	@GetMapping("/best")

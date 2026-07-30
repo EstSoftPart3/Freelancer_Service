@@ -9,6 +9,7 @@ const boardSearchSchema = z.object({
   pageSize: z.number().optional().catch(10),
   keyword: z.string().optional().catch(''), // 통합 검색어
   typeCds: z.array(z.number()).optional().catch([]), // 게시글 유형 필터
+  categoryCds: z.array(z.number()).optional().catch([]), // 게시판 카테고리 필터 (공통코드 3200 하위)
   tagKeyword: z.string().optional().catch(''), // 태그 검색어
   sortField: z.string().optional().catch('createdAt'),
   sortOrder: z.string().optional().catch('DESC'),

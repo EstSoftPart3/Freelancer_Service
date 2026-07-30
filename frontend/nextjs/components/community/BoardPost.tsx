@@ -6,6 +6,7 @@ import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import ReportModal from '@/components/community/ReportModal'
+import { CategoryBadge } from '@/components/community/CategoryBadge'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -74,6 +75,7 @@ export default function BoardPost({
       sq: boardInfo.sq, ttl: boardInfo.ttl, description: boardInfo.description,
       normalTags: boardInfo.normalTags, skillTags: boardInfo.skillTags,
       attachments: boardInfo.attachments,
+      categoryCd: boardInfo.categoryCd ?? null,
     })
     router.push(`/${boardType}/register`)
   }
@@ -117,6 +119,13 @@ export default function BoardPost({
       {boardInfo.isAdoptedYn === 'Y' && (
         <div className="mb-2 flex items-center gap-1 text-sm font-medium text-primary">
           <CheckCircle2 className="h-4 w-4" /> 채택 답변
+        </div>
+      )}
+
+      {/* 카테고리 배지 — 일반게시판에만 있는 축이고, 미분류(null)면 그리지 않는다 */}
+      {boardType === 'board' && boardInfo.categoryNm && (
+        <div className="mb-2">
+          <CategoryBadge name={boardInfo.categoryNm} />
         </div>
       )}
 

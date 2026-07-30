@@ -18,11 +18,21 @@ import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { type AdminBoard } from '../data/schema'
 import { boardColumns as columns } from './board-columns'
 
+// 서버 필터링이므로 테이블의 columnFilters 는 URL 상태를 그대로 비추는 파생값이다.
+function buildColumnFilters(typeCds: number[], categoryCds: number[]) {
+  const filters: { id: string; value: string[] }[] = []
+  if (typeCds.length) filters.push({ id: 'boardTypeCd', value: typeCds.map(String) })
+  if (categoryCds.length)
+    filters.push({ id: 'boardCategoryCd', value: categoryCds.map(String) })
+  return filters
+}
+
 interface BoardTableProps {
   data: AdminBoard[]
   totalCount: number
   page: number
   typeCds: number[]
+  categoryCds: number[]
   keyword: string
   sortField: string
   sortOrder: string
@@ -30,6 +40,7 @@ interface BoardTableProps {
   setPage: (page: number) => void
   onSort: (field: string, order: string) => void
   onFilterType: (types: number[]) => void
+  onFilterCategory: (categories: number[]) => void
   setTagKeyword: (val: string) => void
 }
 
@@ -38,6 +49,7 @@ export function BoardTable({
   totalCount,
   page,
   typeCds,
+  categoryCds,
   keyword,
   sortField,
   sortOrder,
@@ -45,6 +57,7 @@ export function BoardTable({
   setPage,
   onSort,
   onFilterType,
+  onFilterCategory,
   setTagKeyword: _setTagKeyword,
 }: BoardTableProps) {
   const [rowSelection, setRowSelection] = useState({})
@@ -65,9 +78,7 @@ export function BoardTable({
         pageIndex: page - 1,
         pageSize: 10,
       },
-      columnFilters: typeCds.length
-        ? [{ id: 'boardTypeCd', value: typeCds.map(String) }]
-        : [],
+      columnFilters: buildColumnFilters(typeCds, categoryCds),
     },
     enableRowSelection: true, // 행 선택 기능 활성화
     onRowSelectionChange: setRowSelection, // [연결] 행 선택 변경 함수 연결
@@ -102,18 +113,18 @@ export function BoardTable({
     },
 
     onColumnFiltersChange: (updater) => {
-      const currentFilters = typeCds.length
-        ? [{ id: 'boardTypeCd', value: typeCds.map(String) }]
-        : []
+      const currentFilters = buildColumnFilters(typeCds, categoryCds)
       const nextFilters =
         typeof updater === 'function' ? updater(currentFilters) : updater
 
+      // 필터는 서버(URL 파라미터)가 정본이므로, 변경된 것만 골라 올리지 않고
+      // 두 축을 매번 함께 반영한다. 한쪽만 올리면 다른 축이 조용히 초기화된다.
       const typeFilter = nextFilters.find((f) => f.id === 'boardTypeCd')
-      if (typeFilter) {
-        onFilterType((typeFilter.value as string[]).map(Number))
-      } else {
-        onFilterType([])
-      }
+      const categoryFilter = nextFilters.find((f) => f.id === 'boardCategoryCd')
+      onFilterType(typeFilter ? (typeFilter.value as string[]).map(Number) : [])
+      onFilterCategory(
+        categoryFilter ? (categoryFilter.value as string[]).map(Number) : []
+      )
     },
 
     getCoreRowModel: getCoreRowModel(),
@@ -123,6 +134,15 @@ export function BoardTable({
     { label: '일반 게시글', value: '1401' },
     { label: 'Q&A 질문', value: '1402' },
     { label: '답변', value: '1404' },
+  ]
+
+  // FO는 공통코드 API에서 카테고리를 받아오지만, BO 필터는 목록 화면 하나뿐이라
+  // 공통코드 조회를 새로 붙이지 않고 상수로 둔다. 코드 값이 바뀌면 여기도 함께 고칠 것.
+  const categoryOptions = [
+    { label: '자유', value: '3201' },
+    { label: '현장정보', value: '3203' },
+    { label: '기능요청', value: '3204' },
+    { label: '정보', value: '3205' },
   ]
 
   return (
@@ -137,6 +157,11 @@ export function BoardTable({
             columnId: 'boardTypeCd',
             title: '게시글 유형',
             options: typeOptions,
+          },
+          {
+            columnId: 'boardCategoryCd',
+            title: '카테고리',
+            options: categoryOptions,
           },
         ]}
       />

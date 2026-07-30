@@ -11,8 +11,20 @@ export const metadata: Metadata = buildPageMetadata({
   path: '/board',
 })
 
-export default async function BoardPage() {
+interface Props {
+  searchParams: Promise<{ category?: string }>
+}
+
+export default async function BoardPage({ searchParams }: Props) {
+  const params = await searchParams
+  // 서버 fetch URL에 붙는 값이라 문자열을 그대로 흘리지 않고 정수만 통과시킨다.
+  const category = Number(params.category)
+  const categoryQs = Number.isInteger(category) && category > 0 ? `&category=${category}` : ''
+
   // 첫 페이지(기본 정렬)를 서버에서 조회해 초기 HTML에 목록 포함 — 크롤러가 상세 링크를 발견하는 경로
-  const initial = await safeGet<BoardListResponse | null>('/board?page=1&size=10&sortType=latest', null)
+  const initial = await safeGet<BoardListResponse | null>(
+    `/board?page=1&size=10&sortType=latest${categoryQs}`,
+    null,
+  )
   return <Suspense><BoardListClient boardCategory="board" initialData={initial} /></Suspense>
 }

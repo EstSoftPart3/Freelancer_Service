@@ -24,6 +24,9 @@ public class AdminBoardListDTO {
     private String userNickname;
     private String ttl;
     private Integer boardTypeCd; // [필수 추가] 유형 코드 (1401, 1402 등)
+    // 게시판 카테고리 (공통코드 3200 하위). 일반게시글에만 값이 있고, Q&A·답변은 항상 null이다.
+    private Long boardCategoryCd;
+    private String boardCategoryNm;
     private Integer viewCnt;
     private Integer commentCnt;
     private Integer recommendCnt;

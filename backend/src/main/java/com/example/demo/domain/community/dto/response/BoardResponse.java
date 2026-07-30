@@ -28,8 +28,10 @@ public class BoardResponse{
     private List<AnswerListResponse> answers;
     private List<CommentResponse> comments;
     private Long viewerSq;
+    private Long categoryCd;   // 게시판 카테고리 코드. 카테고리 도입 전 글은 null(미분류)
+    private String categoryNm; // 코드 라벨 — 상세 화면 뱃지 및 수정 폼 초기값에 쓰인다
 
-    
+
     public static BoardResponse fromEntity(Board board, String userNickname, List<String> normalTags, List<SkillTagDTO> skillTags, List<AnswerListResponse> answers, List<CommentResponse> comments, Long viewerSq, List<BoardAttachmentResponse> files) {
         return new BoardResponse(
 			board.getBoardSq(),
@@ -47,7 +49,9 @@ public class BoardResponse{
 			skillTags,
 			answers,
 			comments,
-			viewerSq
+			viewerSq,
+			board.getBoardCategoryCd(),
+			board.getBoardCategoryNm()
         );
     }
 	

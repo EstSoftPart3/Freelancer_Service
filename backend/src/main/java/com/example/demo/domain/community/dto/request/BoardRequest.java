@@ -14,6 +14,8 @@ public class BoardRequest{
     private String ttl;
     private String description;
     private Long boardAdoptStatusCd;
+    /** 게시판 카테고리 (공통코드 3200 하위). 일반게시판에서만 쓰이고, 미선택 시 null = 미분류. */
+    private Long categoryCd;
     private List<String> normalTags;
     private List<SkillTagDTO> skillTags;
     private List<Long> attachments;

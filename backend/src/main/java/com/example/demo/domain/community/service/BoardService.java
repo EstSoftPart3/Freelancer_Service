@@ -8,15 +8,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.common.ParentCodeEnum;
+import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.BoardListDTO;
+import com.example.demo.domain.community.dto.CommonCodeDTO;
 import com.example.demo.domain.community.dto.CommunityBestItemDTO;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.BoardRequest;
@@ -66,12 +71,14 @@ public class BoardService {
 	private final InformationEditRepository informationEditRepository;
 	private final InformationEditService informationEditService;
 	private final NotificationService notificationService;
+	private final CommonCodeMapper commonCodeMapper;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
 
 	@Transactional
-	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardAdoptStatusCd, String searchType, String keyword,
+	public BoardListResponse getAllBoards(Long boardTypeCd, Long boardCategoryCd, Long boardAdoptStatusCd,
+			String searchType, String keyword,
 			String tag,
 			List<Long> searchSkillTags, String sortType, Long page, Long size) {
 		if (page < 1)
@@ -80,10 +87,18 @@ public class BoardService {
 		if (sortType == null || sortType.isEmpty())
 			sortType = "latest";
 
-		List<Board> boards = boardMapper.findAll(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+		// 알 수 없는 카테고리 코드는 무시하고 전체를 보여준다 — URL을 손으로 고친 경우
+		// 빈 목록보다 전체 목록이 덜 혼란스럽고, 검색 조건이라 예외로 막을 성질은 아니다.
+		Long safeCategoryCd = (boardCategoryCd != null && activeCategoryCds().contains(boardCategoryCd))
+				? boardCategoryCd
+				: null;
+
+		List<Board> boards = boardMapper.findAll(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
+				tag,
 				searchSkillTags,
 				sortType, size, offset);
-		Long totalElements = boardMapper.findAllCnt(boardTypeCd, boardAdoptStatusCd, searchType, keyword, tag,
+		Long totalElements = boardMapper.findAllCnt(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
+				tag,
 				searchSkillTags);
 
 		List<BoardListDTO> responses = boards.stream()
@@ -181,8 +196,72 @@ public class BoardService {
 				files);
 	}
 
+	/**
+	 * 작성자 확인. {@code @AuthenticationPrincipal}이 null이면 여기서 401로 끊는다.
+	 *
+	 * <p>
+	 * {@code JwtAuthenticationFilter.EXCLUDE_URLS}에 {@code /api/board}가 들어 있어
+	 * <b>토큰이 없거나 만료된 POST도 필터를 통과한다.</b> 그래서 지금까지는 userSq가 null인 채로
+	 * INSERT까지 내려가 {@code Column 'user_sq' cannot be null} SQL 예외가
+	 * <b>500 + 원본 스택으로 사용자에게 노출</b>됐다. 게다가 401이 아니어서
+	 * FO의 refresh 인터셉터도 동작하지 않아, 토큰이 만료되면 재로그인 전까지 글쓰기가 막혔다.
+	 * </p>
+	 *
+	 * <p>
+	 * 401로 바꾸면 FO {@code lib/api.ts}가 토큰을 재발급해 자동 재시도한다.
+	 * 컨트롤러가 아니라 서비스에 두는 이유는 게시판·Q&A·BO가 모두 이 메서드를 지나기 때문이다.
+	 * </p>
+	 */
+	private void requireWriter(Long userSq) {
+		if (userSq == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
+		}
+	}
+
+	/**
+	 * 카테고리는 일반게시판(1401)에만 쓴다. Q&A·공지·고객의소리는 카테고리 개념이 없으므로
+	 * 값이 실려 와도 무시한다(FO 실수로 엉뚱한 게시판에 카테고리가 박히는 것을 막는다).
+	 *
+	 * <p>
+	 * 미선택(null)은 정상이며 '미분류'로 저장된다 — 카테고리 도입 전 기존 글도 같은 상태다.
+	 * 반면 목록에 없는 코드가 오면 조용히 삼키지 않고 거절한다. 저장은 되돌리기 어렵고,
+	 * 잘못된 코드가 들어가면 어느 탭에서도 보이지 않는 유령 글이 된다.
+	 * </p>
+	 */
+	private Long resolveCategoryCd(Long boardTypeCd, Long categoryCd) {
+		if (!BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
+			return null;
+		}
+		if (categoryCd == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
+		}
+		if (!activeCategoryCds().contains(categoryCd)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 게시판 카테고리입니다.");
+		}
+		return categoryCd;
+	}
+
+	/**
+	 * 현재 노출 중인 카테고리 코드 집합. <b>공통코드가 유일한 출처다.</b>
+	 *
+	 * <p>
+	 * 하드코딩된 enum으로 검증하면 공통코드를 비활성(`is_active_yn='N'`)으로 내려도
+	 * 그 코드로 계속 글을 쓸 수 있고, 이름을 바꿔도 뱃지 라벨은 옛 값이 남는다.
+	 * 목록·뱃지·검증이 전부 같은 표를 보게 해서 그 어긋남을 없앤다.
+	 * 글쓰기는 드문 요청이라 여기서 매번 조회해도 비용이 문제되지 않는다.
+	 * </p>
+	 */
+	private Set<Long> activeCategoryCds() {
+		return commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())
+				.stream()
+				.map(CommonCodeDTO::getCommonCodeSq)
+				.collect(Collectors.toSet());
+	}
+
 	@Transactional
 	public void createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
+		requireWriter(boardRequest.getUserSq());
+
 		// 게시글 오류 처리
 		if (boardRequest.getTtl() == null) {
 			throw new IllegalArgumentException("제목을 입력해주세요.");
@@ -199,6 +278,7 @@ public class BoardService {
 				.boardTtl(boardRequest.getTtl())
 				.boardDescriptionEdt(boardRequest.getDescription())
 				.boardTyp(typeStr)
+				.boardCategoryCd(resolveCategoryCd(BoardTypeCd, boardRequest.getCategoryCd()))
 				.boardTypeCd(BoardTypeCd).build();
 
 		boardMapper.insert(board);
@@ -264,6 +344,8 @@ public class BoardService {
 
 	@Transactional
 	public void updateBoard(BoardRequest boardRequest, Long boardSq, Long boardTypeCd) {
+		requireWriter(boardRequest.getUserSq());
+
 		// 게시글 업데이트
 		if (boardRequest.getTtl() == null) {
 			throw new IllegalArgumentException("제목을 입력해주세요.");
@@ -284,6 +366,12 @@ public class BoardService {
 
 		board.setBoardTtl(boardRequest.getTtl());
 		board.setBoardDescriptionEdt(boardRequest.getDescription());
+		// 일반게시판은 카테고리가 필수라 수정에서도 검증한다.
+		// 카테고리 개념이 없는 게시판(공지 등)은 resolveCategoryCd가 null을 돌려주므로,
+		// 그쪽 호출부가 기존 값을 지우지 않도록 1401일 때만 대입한다.
+		if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
+			board.setBoardCategoryCd(resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
+		}
 
 		if (boardRequest.getBoardAdoptStatusCd() != null) {
 			board.setBoardAdoptStatusCd(boardRequest.getBoardAdoptStatusCd());

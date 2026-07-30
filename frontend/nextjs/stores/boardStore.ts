@@ -7,10 +7,12 @@ interface BoardData {
   normalTags: string[]
   skillTags: SkillTag[]
   attachments: Attachment[]
+  // 게시판 카테고리 코드. null = 미분류(카테고리 도입 전 글도 이 상태다)
+  categoryCd: number | null
 }
 
 const empty: BoardData = {
-  ttl: '', description: '', normalTags: [], skillTags: [], attachments: [],
+  ttl: '', description: '', normalTags: [], skillTags: [], attachments: [], categoryCd: null,
 }
 
 interface BoardState {
@@ -22,6 +24,7 @@ interface BoardState {
   setBoard: (payload: {
     sq: number; ttl: string; description: string
     normalTags: string[]; skillTags: SkillTag[]; attachments: Attachment[]
+    categoryCd?: number | null
   }) => void
 }
 
@@ -38,6 +41,7 @@ export const useBoardStore = create<BoardState>((set) => ({
       normalTags: [...payload.normalTags],
       skillTags: [...payload.skillTags],
       attachments: [...payload.attachments],
+      categoryCd: payload.categoryCd ?? null,
     },
     editSq: payload.sq,
   }),

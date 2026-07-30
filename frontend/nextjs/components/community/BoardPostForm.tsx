@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import SkillTagModal from '@/components/community/SkillTagModal'
+import ConfirmDialog from '@/components/common/ConfirmDialog'
+import { templateFor } from '@/components/community/boardTemplates'
+import { BOARD_CATEGORY_TIPS } from '@/components/community/boardMeta'
+import { useBoardCategories } from '@/hooks/useBoardCategories'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
@@ -41,6 +45,19 @@ function isHtmlEmpty(html: string) {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim() === ''
 }
 
+/**
+ * 태그를 벗기고 공백을 눌러 정규화한 본문 텍스트.
+ *
+ * "주입한 양식을 사용자가 손댔는지"를 HTML 문자열끼리 비교해서는 판정할 수 없다 —
+ * Quill은 넘겨준 HTML을 자기 방식으로 다시 써서(속성 순서·빈 태그·클래스) onChange로
+ * 돌려주므로, 아무것도 건드리지 않아도 원본과 문자열이 달라진다.
+ * 눈에 보이는 텍스트로 비교하면 그 정규화 차이를 흡수하면서, 양식 빈칸을 채우는 순간
+ * 텍스트가 달라져 "사용자가 썼다"를 정확히 잡아낸다.
+ */
+function plainText(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim()
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`
@@ -64,16 +81,61 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [tagInput, setTagInput] = useState('')
   const [skillOpen, setSkillOpen] = useState(false)
+  const [categoryCd, setCategoryCd] = useState<number | null>(boardData.categoryCd)
+  // 작성 중인 내용이 있을 때 양식을 덧붙일지 물어보는 확인 창 (덮어쓰기 사고 방지)
+  const [templateConfirm, setTemplateConfirm] = useState<{ open: boolean; html: string }>({ open: false, html: '' })
+  // 마지막으로 주입한 양식의 본문 텍스트(plainText). 현재 내용이 이것과 같으면
+  // "사용자가 아직 손대지 않았다"는 뜻이라 카테고리를 바꿀 때 안심하고 치울 수 있다.
+  // 빈칸을 하나라도 채우면 텍스트가 달라져 사용자 글로 취급된다.
+  const injectedTemplateRef = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const categories = useBoardCategories()
 
   // 수정 모드: editSq > 0이면 PUT, 아니면 POST
-  const isEdit = editSq > 0
+  //
+  // 스토어의 editSq 를 그대로 쓰면 안 된다. 아래 언마운트 cleanup 의 resetBoard() 가
+  // StrictMode 이중 마운트(mount→unmount→mount)에서 한 번 먼저 돌아 editSq 를 0으로 민다.
+  // 제목·본문은 useState 초기값으로 첫 렌더에 이미 복사돼 화면에 남기 때문에 프리필은
+  // 멀쩡해 보이는데 editSq 만 죽어, 수정 저장이 PUT 이 아니라 POST 로 새어나가
+  // 원본은 그대로 둔 채 새 글이 하나 더 생겼다. 다른 필드와 똑같이 첫 렌더에 붙잡아 둔다.
+  const [editTargetSq] = useState(editSq)
+  const isEdit = editTargetSq > 0
   // 기술태그는 QnA에서만 노출 (Vue 원본 isQna/skillActive 대응)
   const isQna = boardCategory === 'qna'
+  // 카테고리는 일반게시판에만 있는 축이다 (백엔드도 1401 외에는 값을 무시한다)
+  const isBoard = boardCategory === 'board'
 
   useEffect(() => {
     return () => { resetBoard() }
   }, [resetBoard])
+
+  /**
+   * 카테고리 변경 시 기본 양식 처리.
+   *
+   * 판단 기준은 "카테고리가 바뀌었는지"가 아니라 **"지금 내용이 사용자가 쓴 것인지"**다.
+   * 카테고리가 바뀌면 무조건 비우면 사용자가 쓴 글이 날아가고, 무조건 남기면 안 쓰는
+   * 양식이 계속 따라다닌다. 그래서 주입한 양식 원문을 기억해 두고 그것과 똑같으면
+   * "아직 손대지 않은 껍데기"로 보고 버린다.
+   *
+   *  - 내용이 비었거나 손대지 않은 양식 → 새 카테고리의 양식으로 교체(없으면 비움)
+   *  - 사용자가 쓴 내용이 있음 → 보존. 새 카테고리에 양식이 있으면 확인받고 덧붙인다
+   *  - 수정 모드 → 주입도 제거도 하지 않는다 (기존 글에 손대면 사고다)
+   */
+  const onCategoryChange = (raw: string) => {
+    const next = raw === '' ? null : Number(raw)
+    setCategoryCd(next)
+    if (isEdit) return
+
+    const tpl = templateFor(next)
+    const untouched = isHtmlEmpty(description) || plainText(description) === injectedTemplateRef.current
+
+    if (untouched) {
+      setDescription(tpl ?? '')
+      injectedTemplateRef.current = tpl === null ? null : plainText(tpl)
+      return
+    }
+    if (tpl) setTemplateConfirm({ open: true, html: tpl })
+  }
 
   const addTag = (val: string) => {
     const tag = val.trim()
@@ -130,6 +192,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
   }
 
   const handleSubmit = async () => {
+    if (isBoard && categoryCd === null) { alertStore.show('카테고리를 선택해주세요.', 'danger'); return }
     if (!ttl.trim()) { alertStore.show('제목을 입력해주세요.', 'danger'); return }
     if (isHtmlEmpty(description)) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
     // 선택 시점에 이미 걸렀지만, 상태가 다른 경로로 채워졌을 경우를 대비한 최종 확인
@@ -148,6 +211,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     formData.append('ttl', ttl)
     formData.append('description', description)
     // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
+    if (isBoard && categoryCd !== null) formData.append('categoryCd', String(categoryCd))
     formData.append('normalTags', normalTags.join(','))
     formData.append('skillTagsJson', JSON.stringify(skillTags))
     formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
@@ -156,7 +220,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     try {
       if (isEdit) {
         const { data } = await api.put<{ status: string; message: string }>(
-          `/${boardCategory}/${editSq}`, formData,
+          `/${boardCategory}/${editTargetSq}`, formData,
         )
         if (data.status === 'OK') {
           alertStore.show(data.message, 'success')
@@ -181,6 +245,44 @@ export default function BoardPostForm({ boardCategory }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* 카테고리 — 일반게시판 전용 */}
+      {isBoard && (
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <label className="text-sm font-medium" htmlFor="board-category">
+              카테고리 <span className="text-destructive">*</span>
+            </label>
+            <InfoTooltip label="카테고리 안내">
+              <p className="font-semibold">카테고리</p>
+              <ul className="mt-1 space-y-1">
+                {categories.map((c) => (
+                  <li key={c.commonCodeSq}>
+                    · <span className="font-medium">{c.commonCodeNm}</span>
+                    {BOARD_CATEGORY_TIPS[c.commonCodeSq] ? ` — ${BOARD_CATEGORY_TIPS[c.commonCodeSq]}` : ''}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5">목록에서 카테고리별로 모아 볼 수 있습니다.</p>
+            </InfoTooltip>
+          </div>
+          <select
+            id="board-category"
+            value={categoryCd === null ? '' : String(categoryCd)}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-48"
+          >
+            {/* 필수 항목이라 빈 값은 선택할 수 없다. 초기 상태 표시용으로만 남긴다 */}
+            <option value="" disabled>카테고리를 선택하세요</option>
+            {categories.map((c) => (
+              <option key={c.commonCodeSq} value={c.commonCodeSq}>{c.commonCodeNm}</option>
+            ))}
+          </select>
+          {categoryCd !== null && BOARD_CATEGORY_TIPS[categoryCd] && (
+            <p className="mt-1 text-xs text-muted-foreground">{BOARD_CATEGORY_TIPS[categoryCd]}</p>
+          )}
+        </div>
+      )}
+
       {/* 제목 */}
       <div>
         <label className="mb-1 block text-sm font-medium">제목</label>
@@ -325,6 +427,20 @@ export default function BoardPostForm({ boardCategory }: Props) {
         <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
         <Button variant="outline" onClick={handleCancel}>취소</Button>
       </div>
+
+      <ConfirmDialog
+        open={templateConfirm.open}
+        title="기본 양식 추가"
+        message="이미 작성한 내용이 있습니다. 아래에 기본 양식을 추가하시겠습니까?"
+        onConfirm={() => {
+          setDescription((prev) => prev + templateConfirm.html)
+          // 사용자 글 + 양식이 섞였으니 더는 "손대지 않은 양식"이 아니다 —
+          // 이후 카테고리를 바꿔도 이 내용을 지우면 안 된다.
+          injectedTemplateRef.current = null
+          setTemplateConfirm({ open: false, html: '' })
+        }}
+        onClose={() => setTemplateConfirm({ open: false, html: '' })}
+      />
 
       {isQna && (
         <SkillTagModal

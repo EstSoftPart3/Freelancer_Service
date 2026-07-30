@@ -42,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/notice/*/increment-view",
             "/api/community/boards",
             "/api/community/best",
+            // 주의: 이 목록은 접두사 매칭이라 "/api/community/boards" 가
+            // "/api/community/board-categories" 를 덮지 않는다. 새 공개 엔드포인트는
+            // SecurityConfig 의 permitAll 과 **이 목록 양쪽**에 넣어야 한다 —
+            // 한쪽만 넣으면 설정상 공개인데 실제로는 401 이 나간다.
+            "/api/community/board-categories",
             "/api/affiliation",
             "/api/affiliation/*/increment-view",
             "/api/affiliation/address",

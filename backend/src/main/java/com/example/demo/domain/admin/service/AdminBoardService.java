@@ -61,7 +61,8 @@ public class AdminBoardService {
         private final NotificationService notificationService;
 
         @Transactional(readOnly = true)
-        public AdminBoardListResponseDTO getAdminBoards(List<Long> typeCds, String keyword, String tagKeyword,
+        public AdminBoardListResponseDTO getAdminBoards(List<Long> typeCds, List<Long> categoryCds, String keyword,
+                        String tagKeyword,
                         String sortField, String sortOrder, Long page, Long size) {
 
                 // 1. 페이징 시작점(Offset) 계산
@@ -71,10 +72,11 @@ public class AdminBoardService {
                 // (Mapper 인터페이스의 반환 타입도 AdminBoardListDTO로 맞춰야 합니다.)
                 // sortOrder는 AdminBoardMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
                 List<AdminBoardListDTO> boards = adminBoardMapper.findAllUnified(
-                                typeCds, keyword, tagKeyword, sortField, SortDirectionUtil.normalize(sortOrder), offset, size);
+                                typeCds, categoryCds, keyword, tagKeyword, sortField,
+                                SortDirectionUtil.normalize(sortOrder), offset, size);
 
                 // 3. 전체 개수 조회
-                Long totalElements = adminBoardMapper.findAllUnifiedCnt(typeCds, keyword, tagKeyword);
+                Long totalElements = adminBoardMapper.findAllUnifiedCnt(typeCds, categoryCds, keyword, tagKeyword);
 
                 // 4. Admin 전용 응답 DTO 조립
                 return AdminBoardListResponseDTO.builder()
@@ -340,6 +342,7 @@ public class AdminBoardService {
                                         .description(board.getBoardDescriptionEdt())
                                         .boardAdoptStatusCd(board.getBoardAdoptStatusCd())
                                         .boardTypeCd(board.getBoardTypeCd())
+                                        .boardCategoryCd(board.getBoardCategoryCd())
                                         .mainType("BOARD")
                                         .attachments(getBoardAttachments(sq))
                                         .normalTags(normalTagConverter

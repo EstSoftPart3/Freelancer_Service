@@ -3,14 +3,21 @@
 
 <mapper namespace="com.example.demo.domain.community.mapper.BoardMapper">
 
-	<select id="findByIdBoard" resultType="com.example.demo.domain.community.entity.Board"> SELECT *
-		FROM TBL_BOARD_M WHERE board_sq = #{boardSq} AND board_type_cd = #{boardTypeCd} </select>
+	<!-- 카테고리 표시명은 공통코드에서 JOIN 한다 — 라벨의 출처를 코드(enum)로 두면
+	     공통코드 이름을 바꿔도 뱃지가 옛 값으로 남는다 -->
+	<sql id="boardSelectBase"> SELECT b.*, cc.common_code_nm AS board_category_nm FROM TBL_BOARD_M b
+		LEFT JOIN TBL_COMMON_CODE_C cc ON cc.common_code_sq = b.board_category_cd </sql>
 
-	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board"> SELECT * FROM
-		TBL_BOARD_M WHERE board_is_deleted_yn = 'N' <choose>
+	<select id="findByIdBoard" resultType="com.example.demo.domain.community.entity.Board">
+		<include refid="boardSelectBase" /> WHERE b.board_sq = #{boardSq} AND b.board_type_cd =
+		#{boardTypeCd} </select>
+
+	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
+		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if
+			test="boardCategoryCd != null"> AND board_category_cd = #{boardCategoryCd} </if> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
 			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
@@ -41,11 +48,13 @@
 		</choose>
 		LIMIT #{size} OFFSET #{offset} </select>
 
+	<!-- findAll 과 동적 조건이 1:1로 대응해야 한다. 조건을 추가할 때는 반드시 양쪽을 함께 고칠 것 -->
 	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
 		board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if
+			test="boardCategoryCd != null"> AND board_category_cd = #{boardCategoryCd} </if> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
 		    <if
 			test="tag != null and tag != ''"> AND ( board_sq IN (SELECT board_sq FROM
@@ -69,12 +78,15 @@
 
 	<insert id="insert" parameterType="com.example.demo.domain.community.entity.Board"
 		useGeneratedKeys="true" keyProperty="boardSq" keyColumn="board_sq"> INSERT INTO TBL_BOARD_M
-		(user_sq, board_ttl, board_description_edt, board_adopt_status_cd, board_typ, board_type_cd)
-		VALUES (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, 1501, #{boardTyp}, #{boardTypeCd}) </insert>
+		(user_sq, board_ttl, board_description_edt, board_adopt_status_cd, board_typ, board_type_cd,
+		board_category_cd)
+		VALUES (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, 1501, #{boardTyp}, #{boardTypeCd},
+		#{boardCategoryCd}) </insert>
 
 	<update id="update" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE
 		TBL_BOARD_M SET board_ttl = #{boardTtl}, board_description_edt = #{boardDescriptionEdt},
-		board_adopt_status_cd = #{boardAdoptStatusCd}, board_modified_at_dtm = NOW() WHERE board_sq =
+		board_adopt_status_cd = #{boardAdoptStatusCd}, board_category_cd = #{boardCategoryCd},
+		board_modified_at_dtm = NOW() WHERE board_sq =
 		#{boardSq} </update>
 
 	<update id="delete" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE

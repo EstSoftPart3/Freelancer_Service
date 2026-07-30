@@ -67,7 +67,7 @@ public class NoticeController {
 
         // 공지사항 타입 코드인 1403L을 고정하여 호출합니다.
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "공지사항 조회 성공",
-                boardService.getAllBoards(1403L, null, searchType, keyword, tag, null, sortType, page, size)));
+                boardService.getAllBoards(1403L, null, null, searchType, keyword, tag, null, sortType, page, size)));
     }
 
     /**

@@ -88,6 +88,30 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
     },
   },
   {
+    id: 'boardCategoryCd',
+    accessorKey: 'boardCategoryCd',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='카테고리' />
+    ),
+    // 라벨은 서버가 공통코드에서 조인해 내려준다(코드→라벨 표를 BO가 따로 들지 않는다).
+    // 일반 게시글이 아니거나 미분류면 빈 칸이 정상이다.
+    cell: ({ row }) => {
+      const name = row.original.boardCategoryNm
+      if (!name) return <div className='w-[70px] text-center text-muted-foreground'>-</div>
+      return (
+        <div className='w-[70px] text-center'>
+          <Badge variant='outline' className='whitespace-nowrap'>
+            {name}
+          </Badge>
+        </div>
+      )
+    },
+    filterFn: (row, id, value) => {
+      const rowValue = row.getValue(id)
+      return Array.isArray(value) ? value.includes(rowValue) : value === rowValue
+    },
+  },
+  {
     id: 'ttl',
     accessorKey: 'ttl',
     header: ({ column }) => (
