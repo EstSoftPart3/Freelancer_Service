@@ -1,5 +1,7 @@
 package com.example.demo.domain.community.service;
 
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,6 +13,8 @@ import com.example.demo.domain.community.dto.response.BoardListResponse;
 import com.example.demo.domain.community.dto.response.BoardResponse;
 import com.example.demo.domain.community.entity.Board;
 import com.example.demo.domain.community.mapper.BoardMapper;
+import com.example.demo.domain.community.mapper.CommunityUserMapper;
+import com.example.demo.domain.user.dto.UserDTO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +47,8 @@ public class VocService {
 
     private final BoardService boardService;
     private final BoardMapper boardMapper;
+    private final CommunityUserMapper communityUserMapper;
+    private final VocMailNotifier vocMailNotifier;
 
     /**
      * 목록. 비공개 필터는 {@code BoardService.getAllBoards} 안에서 SecurityContext 기준으로 걸린다
@@ -69,8 +75,29 @@ public class VocService {
         return boardService.getBoard(userSq, boardSq, VOC);
     }
 
+    /**
+     * 등록. 저장이 끝난 뒤 운영자에게 메일로 접수 사실을 알린다 —
+     * VOC 는 운영자가 BO 를 열어보기 전까지 아무도 모르는 채널이라 밀어서 알려야 한다.
+     *
+     * <p>
+     * 메일 발송은 저장 성공 이후에만 하고, 실패해도 등록을 되돌리지 않는다
+     * ({@link VocMailNotifier} 안에서 삼킨다). 알림이 늦는 것과 글이 사라지는 것 중
+     * 후자가 훨씬 나쁘다.
+     * </p>
+     */
     public void createVoc(BoardRequest boardRequest) {
-        boardService.createBoard(boardRequest, VOC);
+        Long boardSq = boardService.createBoard(boardRequest, VOC);
+
+        UserDTO writer = communityUserMapper.findById(boardRequest.getUserSq());
+        String nickname = Optional.ofNullable(writer)
+                .map(UserDTO::getUserNickname)
+                .orElse("알 수 없음");
+
+        vocMailNotifier.notifyCreated(
+                boardSq,
+                boardRequest.getTtl(),
+                nickname,
+                Boolean.TRUE.equals(boardRequest.getIsSecret()));
     }
 
     /**

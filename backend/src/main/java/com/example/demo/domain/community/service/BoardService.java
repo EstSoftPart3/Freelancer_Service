@@ -283,8 +283,13 @@ public class BoardService {
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * 게시글 등록. 생성된 {@code board_sq} 를 돌려준다 — 등록 직후 그 글을 가리키는 링크나 알림을
+	 * 만들어야 하는 호출부(고객의 소리 메일 알림)가 있어서다. 반환값을 무시해도 되므로
+	 * 기존 호출부는 손대지 않았다.
+	 */
 	@Transactional
-	public void createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
+	public Long createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
 		requireWriter(boardRequest.getUserSq());
 
 		// 게시글 오류 처리
@@ -365,7 +370,7 @@ public class BoardService {
 			}
 		}
 
-		return;
+		return board.getBoardSq();
 	}
 
 	@Transactional
