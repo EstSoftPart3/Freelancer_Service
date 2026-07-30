@@ -35,7 +35,7 @@ const ALLOWED_EXTENSIONS: readonly string[] = [
 // accept는 OS 파일 선택창의 1차 필터일 뿐 우회 가능하므로, 실제 차단은 아래 검증 로직이 한다.
 const ACCEPT_ATTR = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(',')
 
-type BoardCategory = 'board' | 'qna'
+type BoardCategory = 'board' | 'qna' | 'voc'
 
 interface Props {
   boardCategory: BoardCategory
@@ -82,6 +82,11 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const [tagInput, setTagInput] = useState('')
   const [skillOpen, setSkillOpen] = useState(false)
   const [categoryCd, setCategoryCd] = useState<number | null>(boardData.categoryCd)
+  // 고객의 소리 전용. 기본값을 비공개(true)로 둔다 — 문의 내용에는 계약·급여 같은
+  // 사적인 정보가 섞이기 쉬워서, 공개가 기본이면 실수로 노출되는 쪽이 되돌릴 수 없다.
+  // 수정 모드에서는 기존 글의 설정을 그대로 이어받는다. editSq 를 첫 렌더에 읽는 것은
+  // 아래 editTargetSq 와 같은 이유다(언마운트 cleanup 의 resetBoard 가 값을 지우기 전에 붙잡는다).
+  const [secret, setSecret] = useState<boolean>(editSq > 0 ? boardData.secret : true)
   // 작성 중인 내용이 있을 때 양식을 덧붙일지 물어보는 확인 창 (덮어쓰기 사고 방지)
   const [templateConfirm, setTemplateConfirm] = useState<{ open: boolean; html: string }>({ open: false, html: '' })
   // 마지막으로 주입한 양식의 본문 텍스트(plainText). 현재 내용이 이것과 같으면
@@ -104,6 +109,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const isQna = boardCategory === 'qna'
   // 카테고리는 일반게시판에만 있는 축이다 (백엔드도 1401 외에는 값을 무시한다)
   const isBoard = boardCategory === 'board'
+  // 고객의 소리 — 태그·기술태그 없이 제목/본문/첨부/공개여부만 받는다
+  const isVoc = boardCategory === 'voc'
 
   useEffect(() => {
     return () => { resetBoard() }
@@ -212,8 +219,11 @@ export default function BoardPostForm({ boardCategory }: Props) {
     formData.append('description', description)
     // Vue 원본과 동일하게 콤마조인 단일 필드로 전송 — 빈 배열이어도 필드가 존재해야 백엔드 null(NPE) 방지
     if (isBoard && categoryCd !== null) formData.append('categoryCd', String(categoryCd))
+    if (isVoc) formData.append('isSecret', String(secret))
     formData.append('normalTags', normalTags.join(','))
-    formData.append('skillTagsJson', JSON.stringify(skillTags))
+    // 고객의 소리 API는 skillTagsJson 을 받지 않는다(스킬태그 축이 없다). 보내도 무시되지만
+    // 계약에 없는 필드를 흘리지 않도록 여기서 끊는다.
+    if (!isVoc) formData.append('skillTagsJson', JSON.stringify(skillTags))
     formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
     newFiles.forEach((f) => formData.append('files', f))
 
@@ -283,6 +293,26 @@ export default function BoardPostForm({ boardCategory }: Props) {
         </div>
       )}
 
+      {/* 공개 범위 — 고객의 소리 전용 */}
+      {isVoc && (
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={secret}
+              onChange={(e) => setSecret(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+            />
+            <span>
+              <span className="font-medium">비공개로 등록</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                체크하면 작성자와 운영자만 볼 수 있습니다. 해제하면 다른 이용자도 목록과 내용을 볼 수 있습니다.
+              </span>
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* 제목 */}
       <div>
         <label className="mb-1 block text-sm font-medium">제목</label>
@@ -303,8 +333,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
         </div>
       </div>
 
-      {/* 태그 */}
-      <div>
+      {/* 태그 — 고객의 소리는 분류 축이 없어 노출하지 않는다 */}
+      <div className={isVoc ? 'hidden' : undefined}>
         <div className="mb-1 flex items-center gap-2">
           <label className="text-sm font-medium">태그</label>
           <InfoTooltip label="태그 작성법 안내">

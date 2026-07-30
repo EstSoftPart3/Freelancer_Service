@@ -2,10 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.domain.admin.mapper.AdminReportMapper">
 
+    <!--
+        originTypeCd: 신고 대상의 "원본 콘텐츠 유형". 게시글이면 board_type_cd 를 그대로 쓰고,
+        답변·댓글은 대응하는 공통코드가 없어 의사코드를 쓴다(AdminBoardPseudoType 참조).
+        예전에는 답변 1404 / 댓글 1405 였는데 1404 는 Phase 1 에서 공통코드 '고객의소리'가
+        차지했다. 의사코드는 1490 이상 예약 구간으로 옮겼다.
+    -->
     <sql id="reportColumns"> r.report_sq AS reportSq, r.report_user_sq AS reporterSq, u.user_nm AS
         reporterNm, u.user_nickname AS reporterNickname, r.report_target_type_cd AS targetTypeCd, CASE WHEN r.report_target_type_cd =
-        2001 THEN b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1404 WHEN
-        r.report_target_type_cd IN (2003, 2004) THEN 1405 ELSE NULL END AS originTypeCd, CASE WHEN
+        2001 THEN b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1499 WHEN
+        r.report_target_type_cd IN (2003, 2004) THEN 1498 ELSE NULL END AS originTypeCd, CASE WHEN
         r.report_target_type_cd = 2001 AND b.board_type_cd = 1401 THEN '일반 게시글' WHEN
         r.report_target_type_cd = 2001 AND b.board_type_cd = 1402 THEN 'Q&amp;A 질문' WHEN
         r.report_target_type_cd = 2002 THEN '답변' WHEN r.report_target_type_cd = 2003 THEN '댓글' WHEN

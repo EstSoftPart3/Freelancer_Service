@@ -17,6 +17,7 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.common.security.CurrentUser;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
@@ -93,13 +94,18 @@ public class BoardService {
 				? boardCategoryCd
 				: null;
 
+		// 비공개(고객의 소리) 필터는 목록·카운트가 함께 받는다. 호출부 네 곳(게시판·Q&A·공지·커뮤니티)의
+		// 시그니처를 늘리지 않으려고 SecurityContext 에서 직접 꺼낸다 — CurrentUser 주석 참조.
+		Long viewerSq = CurrentUser.sq();
+		boolean isAdmin = CurrentUser.isAdmin();
+
 		List<Board> boards = boardMapper.findAll(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
 				searchSkillTags,
-				sortType, size, offset);
+				sortType, size, offset, viewerSq, isAdmin);
 		Long totalElements = boardMapper.findAllCnt(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
-				searchSkillTags);
+				searchSkillTags, viewerSq, isAdmin);
 
 		List<BoardListDTO> responses = boards.stream()
 				.filter(Objects::nonNull)
@@ -251,6 +257,25 @@ public class BoardService {
 	 * 글쓰기는 드문 요청이라 여기서 매번 조회해도 비용이 문제되지 않는다.
 	 * </p>
 	 */
+	/**
+	 * 비공개 플래그를 'Y'/'N' 으로 환산한다. <b>고객의 소리(1404)에서만 유효</b>하고
+	 * 다른 게시판은 값이 실려 와도 'N' 으로 눌러 담는다 — 일반 게시판에 비공개 글이 생기면
+	 * 목록 필터가 조용히 그 글을 숨겨 "글이 사라졌다"는 신고로 돌아온다.
+	 *
+	 * <p>
+	 * 반환값 null 은 "건드리지 않음"이다(수정 시 기존 값 유지). 등록은 매퍼의 COALESCE 가 'N' 으로 채운다.
+	 * </p>
+	 */
+	private String resolveSecretYn(Long boardTypeCd, Boolean isSecret) {
+		if (!BoardTypeCode.VOC.getCode().equals(boardTypeCd)) {
+			return "N";
+		}
+		if (isSecret == null) {
+			return null;
+		}
+		return isSecret ? "Y" : "N";
+	}
+
 	private Set<Long> activeCategoryCds() {
 		return commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())
 				.stream()
@@ -279,6 +304,7 @@ public class BoardService {
 				.boardDescriptionEdt(boardRequest.getDescription())
 				.boardTyp(typeStr)
 				.boardCategoryCd(resolveCategoryCd(BoardTypeCd, boardRequest.getCategoryCd()))
+				.boardIsSecretYn(resolveSecretYn(BoardTypeCd, boardRequest.getIsSecret()))
 				.boardTypeCd(BoardTypeCd).build();
 
 		boardMapper.insert(board);
@@ -371,6 +397,10 @@ public class BoardService {
 		// 그쪽 호출부가 기존 값을 지우지 않도록 1401일 때만 대입한다.
 		if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
 			board.setBoardCategoryCd(resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
+		}
+		// 고객의 소리만 공개/비공개 전환을 허용한다. null 이면 기존 값을 유지한다(매퍼 COALESCE).
+		if (BoardTypeCode.VOC.getCode().equals(boardTypeCd)) {
+			board.setBoardIsSecretYn(resolveSecretYn(boardTypeCd, boardRequest.getIsSecret()));
 		}
 
 		if (boardRequest.getBoardAdoptStatusCd() != null) {

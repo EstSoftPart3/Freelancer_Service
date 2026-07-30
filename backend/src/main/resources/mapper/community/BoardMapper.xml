@@ -12,8 +12,20 @@
 		<include refid="boardSelectBase" /> WHERE b.board_sq = #{boardSq} AND b.board_type_cd =
 		#{boardTypeCd} </select>
 
+	<!--
+		비공개 필터(고객의 소리). 상세 API 를 막는 것만으로는 부족하다 — 목록에 제목이 그대로
+		노출되면 "누가 무엇을 문의했는지"가 드러난다. 관리자는 조건을 붙이지 않고, 그 외에는
+		공개글 + 내가 쓴 글만 본다. 비로그인이면 viewerSq 가 null 이라 공개글만 남는다.
+		다른 게시판은 board_is_secret_yn 이 전부 'N' 이라 이 조건에 영향받지 않는다.
+	-->
+	<sql id="secretFilter">
+		<if test="isAdmin == false"> AND ( board_is_secret_yn = 'N' <if test="viewerSq != null"> OR
+			user_sq = #{viewerSq} </if> ) </if>
+	</sql>
+
 	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
-		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <choose>
+		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <include
+			refid="secretFilter" /> <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if
@@ -50,7 +62,7 @@
 
 	<!-- findAll 과 동적 조건이 1:1로 대응해야 한다. 조건을 추가할 때는 반드시 양쪽을 함께 고칠 것 -->
 	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
-		board_is_deleted_yn = 'N' <choose>
+		board_is_deleted_yn = 'N' <include refid="secretFilter" /> <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if
@@ -79,13 +91,17 @@
 	<insert id="insert" parameterType="com.example.demo.domain.community.entity.Board"
 		useGeneratedKeys="true" keyProperty="boardSq" keyColumn="board_sq"> INSERT INTO TBL_BOARD_M
 		(user_sq, board_ttl, board_description_edt, board_adopt_status_cd, board_typ, board_type_cd,
-		board_category_cd)
+		board_category_cd, board_is_secret_yn)
 		VALUES (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, 1501, #{boardTyp}, #{boardTypeCd},
-		#{boardCategoryCd}) </insert>
+		#{boardCategoryCd}, COALESCE(#{boardIsSecretYn}, 'N')) </insert>
 
+	<!-- board_is_secret_yn 은 NULL 이 오면 기존 값을 유지한다 — 이 update 는 게시판·Q&A·공지·BO가
+	     모두 지나가는데, 그쪽 호출부는 비공개 개념이 없어 엔티티에 값을 채우지 않는다.
+	     COALESCE 없이 그대로 대입하면 관리자가 BO에서 VOC 를 수정하는 순간 비공개가 풀린다. -->
 	<update id="update" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE
 		TBL_BOARD_M SET board_ttl = #{boardTtl}, board_description_edt = #{boardDescriptionEdt},
 		board_adopt_status_cd = #{boardAdoptStatusCd}, board_category_cd = #{boardCategoryCd},
+		board_is_secret_yn = COALESCE(#{boardIsSecretYn}, board_is_secret_yn),
 		board_modified_at_dtm = NOW() WHERE board_sq =
 		#{boardSq} </update>
 

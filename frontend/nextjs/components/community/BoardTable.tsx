@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { fmtDate, STATUS, resolveBoardType, type BoardType } from '@/components/community/boardMeta'
-import { CategoryBadge, BoardTypeBadge } from '@/components/community/CategoryBadge'
+import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
 interface Props {
@@ -129,6 +129,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
                   카테고리는 미분류(null)면 그리지 않는다 */}
               <div className="mb-0.5 flex items-center gap-1.5">
                 {isAll && <BoardTypeBadge type={resolvedType} />}
+                {b.secret && <SecretBadge />}
                 <CategoryBadge name={b.categoryNm} />
                 <Link
                   href={`/${resolvedType}/${b.sq}`}

@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
+import { ANSWER_TYPE_CD } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { boardColumns as columns } from './board-columns'
 
@@ -133,7 +134,7 @@ export function BoardTable({
   const typeOptions = [
     { label: '일반 게시글', value: '1401' },
     { label: 'Q&A 질문', value: '1402' },
-    { label: '답변', value: '1404' },
+    { label: '답변', value: String(ANSWER_TYPE_CD) },
   ]
 
   // FO는 공통코드 API에서 카테고리를 받아오지만, BO 필터는 목록 화면 하나뿐이라

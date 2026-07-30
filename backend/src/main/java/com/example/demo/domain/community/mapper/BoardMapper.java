@@ -13,6 +13,7 @@ public interface BoardMapper {
 
       // 목록과 카운트는 같은 동적 조건을 공유한다 — 한쪽만 파라미터를 늘리면
       // 목록은 필터링되는데 총 건수는 전체 기준이라 뒷 페이지가 비는 증상이 난다(Phase 3 사례).
+      // viewerSq/isAdmin 은 비공개(고객의 소리) 필터용 — 둘 다 <sql id="secretFilter"> 가 쓴다.
       List<Board> findAll(
                   @Param("boardTypeCd") Long boardTypeCd,
                   @Param("boardCategoryCd") Long boardCategoryCd,
@@ -23,7 +24,9 @@ public interface BoardMapper {
                   @Param("skillTags") List<Long> skillTags, // 6번째: 기술 태그 리스트
                   @Param("sortType") String sortType,
                   @Param("size") Long size,
-                  @Param("offset") Long offset);
+                  @Param("offset") Long offset,
+                  @Param("viewerSq") Long viewerSq,
+                  @Param("isAdmin") boolean isAdmin);
 
       Long findAllCnt(
                   @Param("boardTypeCd") Long boardTypeCd,
@@ -32,8 +35,9 @@ public interface BoardMapper {
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,
                   @Param("tag") String tag, // [수정] tag 파라미터 추가
-                  @Param("skillTags") List<Long> skillTags // [수정] 불필요한 sortType, size, offset 제거
-      );
+                  @Param("skillTags") List<Long> skillTags, // [수정] 불필요한 sortType, size, offset 제거
+                  @Param("viewerSq") Long viewerSq,
+                  @Param("isAdmin") boolean isAdmin);
 
       void insert(Board board);
 

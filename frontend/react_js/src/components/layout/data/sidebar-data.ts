@@ -28,6 +28,7 @@ import {
   ListOrdered,
   ClipboardPen,
   ClipboardList,
+  MessageCircleQuestion,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -84,6 +85,11 @@ export const sidebarData: SidebarData = {
               title: '공지사항 관리',
               url: '/contents/notice',
               icon: Bell,
+            },
+            {
+              title: '고객의 소리',
+              url: '/contents/voc',
+              icon: MessageCircleQuestion,
             },
             {
               title: '신고 내역 관리',

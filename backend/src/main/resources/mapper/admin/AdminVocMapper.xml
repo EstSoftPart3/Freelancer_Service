@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminVocMapper">
+
+    <!--
+        고객의 소리(1404) 목록. 목록·카운트가 이 조각을 공유한다 —
+        한쪽만 조건을 늘리면 목록은 걸러지는데 총 건수는 전체 기준이라 뒷 페이지가 비는
+        증상이 난다(Phase 3 사례).
+
+        answered 는 "답변 달림/미답변" 필터다. 미답변만 골라 보는 것이 이 화면의 주 용도라
+        서브쿼리로 존재 여부를 본다(답변 수 컬럼이 TBL_BOARD_M 에 없다).
+    -->
+    <sql id="vocWhere"> WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd = 1404 <if
+            test="keyword != null and keyword != ''"> AND ( b.board_ttl LIKE CONCAT('%', #{keyword},
+        '%') OR b.board_description_edt LIKE CONCAT('%', #{keyword}, '%') OR u.user_nickname LIKE
+        CONCAT('%', #{keyword}, '%') OR u.user_id LIKE CONCAT('%', #{keyword}, '%') ) </if>
+        <if test="answered != null">
+            <choose>
+                <when test="answered"> AND EXISTS ( SELECT 1 FROM TBL_BOARD_ANSWER_S a WHERE
+                    a.board_sq = b.board_sq AND a.answer_is_deleted_yn = 'N' ) </when>
+                <otherwise> AND NOT EXISTS ( SELECT 1 FROM TBL_BOARD_ANSWER_S a WHERE a.board_sq =
+                    b.board_sq AND a.answer_is_deleted_yn = 'N' ) </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="countVocs" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M b LEFT JOIN
+        TBL_USER_M u ON b.user_sq = u.user_sq <include refid="vocWhere" />
+    </select>
+
+    <select id="findAllVocs" resultType="com.example.demo.domain.admin.dto.AdminBoardListDTO">
+        SELECT b.board_sq AS sq, b.user_sq AS userSq, u.user_id AS userId, u.user_nm AS userNm,
+        u.user_nickname AS userNickname, b.board_ttl AS ttl, b.board_description_edt AS description,
+        b.board_type_cd AS boardTypeCd, b.board_view_cnt AS viewCnt, b.board_comment_cnt AS
+        commentCnt, b.board_recommend_cnt AS recommendCnt, b.board_created_at_dtm AS createdAt,
+        b.board_is_secret_yn = 'Y' AS secret, 'BOARD' AS mainType,
+        (SELECT COUNT(*) FROM TBL_BOARD_ANSWER_S a WHERE a.board_sq = b.board_sq AND
+        a.answer_is_deleted_yn = 'N') AS answerCnt
+        FROM TBL_BOARD_M b LEFT JOIN TBL_USER_M u ON b.user_sq = u.user_sq
+        <include refid="vocWhere" /> ORDER BY <choose>
+            <when test="sortField == 'sq'"> b.board_sq </when>
+            <!-- BO 컬럼 id 가 그대로 sortField 로 온다. 컬럼을 바꾸면 여기도 함께 바꿀 것 -->
+            <when test="sortField == 'userId'"> u.user_id </when>
+            <when test="sortField == 'userNickname'"> u.user_nickname </when>
+            <when test="sortField == 'ttl'"> b.board_ttl </when>
+            <when test="sortField == 'viewCnt'"> b.board_view_cnt </when>
+            <when test="sortField == 'answerCnt'"> answerCnt </when>
+            <when test="sortField == 'createdAt'"> b.board_created_at_dtm </when>
+            <otherwise> b.board_created_at_dtm </otherwise>
+        </choose> ${sortOrder} LIMIT #{size} OFFSET #{offset} </select>
+
+</mapper>

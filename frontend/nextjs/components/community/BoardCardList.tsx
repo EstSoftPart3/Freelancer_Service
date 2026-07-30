@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { fmtDate, STATUS, resolveBoardType, type BoardType } from '@/components/community/boardMeta'
-import { CategoryBadge, BoardTypeBadge } from '@/components/community/CategoryBadge'
+import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
 interface Props {
@@ -29,6 +29,7 @@ export default function BoardCardList({ boardList, boardType }: Props) {
           <li key={b.sq} className="rounded-lg border p-3 transition-colors hover:bg-muted/30">
             <div className="mb-1 flex items-center gap-1.5">
               <BoardTypeBadge type={resolvedType} />
+              {b.secret && <SecretBadge />}
               <CategoryBadge name={b.categoryNm} />
               {status && (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}>

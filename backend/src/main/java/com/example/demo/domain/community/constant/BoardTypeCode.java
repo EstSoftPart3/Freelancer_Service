@@ -24,15 +24,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum BoardTypeCode {
 
-    NORMAL(1401L, "normal"),
-    QNA(1402L, "qna"),
-    NOTICE(1403L, "notice"),
+    NORMAL(1401L, "normal", "board"),
+    QNA(1402L, "qna", "qna"),
+    NOTICE(1403L, "notice", "notice"),
     /** 고객의 소리 — Phase 5에서 사용. 공통코드 1404. */
-    VOC(1404L, "voc");
+    VOC(1404L, "voc", "voc");
 
     private final Long code;
-    /** TBL_BOARD_M.board_typ 에 저장되는 문자열. FO 라우트 경로(/qna, /notice)와도 일치한다. */
+    /** TBL_BOARD_M.board_typ 에 저장되는 문자열. */
     private final String typ;
+    /**
+     * FO 상세 페이지 경로 세그먼트. 알림 링크를 만들 때 쓴다.
+     * 일반게시판만 {@code typ}("normal")과 경로("board")가 다르다 — 이 어긋남 때문에
+     * 알림 코드마다 {@code "normal".equals(typ) ? "/board/" : "/qna/"} 삼항식이 복제돼 있었고,
+     * 게시판이 늘 때마다 그 삼항식이 조용히 틀린 링크를 만들었다.
+     */
+    private final String path;
 
     public static BoardTypeCode fromCode(Long code) {
         return Arrays.stream(values())
@@ -51,5 +58,26 @@ public enum BoardTypeCode {
                 .findFirst()
                 .orElse(NORMAL)
                 .getTyp();
+    }
+
+    /**
+     * {@code board_typ} 문자열로 FO 상세 경로 접두를 만든다 (예: {@code "voc"} → {@code "/voc/"}).
+     * 알 수 없는 값은 일반게시판으로 본다 — 알림 링크가 깨지느니 게시판 목록으로 가는 편이 낫다.
+     */
+    public static String pathPrefixOfTyp(String typ) {
+        return "/" + Arrays.stream(values())
+                .filter(t -> t.typ.equals(typ))
+                .findFirst()
+                .orElse(NORMAL)
+                .getPath() + "/";
+    }
+
+    /** 코드로 경로 접두를 만든다. {@link #pathPrefixOfTyp(String)} 의 숫자 버전. */
+    public static String pathPrefixOfCode(Long code) {
+        return "/" + Arrays.stream(values())
+                .filter(t -> t.code.equals(code))
+                .findFirst()
+                .orElse(NORMAL)
+                .getPath() + "/";
     }
 }

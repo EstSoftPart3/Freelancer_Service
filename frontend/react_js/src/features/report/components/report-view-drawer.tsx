@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { COMMENT_TYPE_CD } from '@/features/board/data/board-type'
 import { reportApi } from '../api/report-api'
 import { type AdminReport } from '../data/schema'
 import { useReport } from './report-provider'
@@ -117,7 +118,7 @@ export function ReportViewDrawer({ open, onOpenChange }: Props) {
                 <Badge variant='secondary'>{detail.targetTypeNm}</Badge>
               </div>
               <SheetTitle className='text-xl'>
-                {detail.originTypeCd === 1405
+                {detail.originTypeCd === COMMENT_TYPE_CD
                   ? '댓글 신고 내역'
                   : detail.targetTtl}
               </SheetTitle>
@@ -137,7 +138,7 @@ export function ReportViewDrawer({ open, onOpenChange }: Props) {
                 신고된 원문 내용 확인
               </div>
               <div className='rounded border bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-sm'>
-                {detail.originTypeCd !== 1405 && (
+                {detail.originTypeCd !== COMMENT_TYPE_CD && (
                   <div className='mb-3 border-b pb-2 font-bold text-slate-900'>
                     [제목] {detail.targetTtl}
                   </div>

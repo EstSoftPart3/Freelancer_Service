@@ -33,6 +33,7 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedContentsVocIndexRouteImport } from './routes/_authenticated/contents/voc/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
@@ -164,6 +165,12 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsVocIndexRoute =
+  AuthenticatedContentsVocIndexRouteImport.update({
+    id: '/contents/voc/',
+    path: '/contents/voc/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsReportIndexRoute =
   AuthenticatedContentsReportIndexRouteImport.update({
     id: '/contents/report/',
@@ -210,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -237,6 +245,7 @@ export interface FileRoutesByTo {
   '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/voc': typeof AuthenticatedContentsVocIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -267,6 +276,7 @@ export interface FileRoutesById {
   '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/_authenticated/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/contents/board/'
     | '/contents/notice/'
     | '/contents/report/'
+    | '/contents/voc/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/contents/board'
     | '/contents/notice'
     | '/contents/report'
+    | '/contents/voc'
   id:
     | '__root__'
     | '/_authenticated'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/board/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
+    | '/_authenticated/contents/voc/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -539,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/voc/': {
+      id: '/_authenticated/contents/voc/'
+      path: '/contents/voc'
+      fullPath: '/contents/voc/'
+      preLoaderRoute: typeof AuthenticatedContentsVocIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/report/': {
       id: '/_authenticated/contents/report/'
       path: '/contents/report'
@@ -598,6 +618,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
+  AuthenticatedContentsVocIndexRoute: typeof AuthenticatedContentsVocIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -612,6 +633,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
+  AuthenticatedContentsVocIndexRoute: AuthenticatedContentsVocIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

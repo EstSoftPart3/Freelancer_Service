@@ -30,10 +30,18 @@
 		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
 	</select>
 	
+	<!--
+		게시글 지표에서 고객의 소리(1404)는 뺀다 — 1:1 문의는 커뮤니티 활동량이 아니고,
+		비공개 문의가 늘 때마다 "게시글이 늘었다"로 잡히면 지표를 믿을 수 없게 된다.
+		공지(1403)는 기존 수치를 유지하려고 그대로 포함한다.
+		블랙리스트(!= 1404) 대신 화이트리스트를 쓰는 이유는 게시판이 또 늘었을 때
+		아무도 손대지 않았는데 지표가 조용히 변하는 일을 막기 위해서다.
+	-->
 	<select id="getChartPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
-		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date 
+		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
 		FROM TBL_BOARD_M t
-		WHERE DATE(t.board_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
+		WHERE t.board_type_cd IN (1401, 1402, 1403)
+		  AND DATE(t.board_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
 		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
 	</select>
 
@@ -72,10 +80,12 @@
 		GROUP BY DATE_FORMAT(t.company_application_created_at_dtm, "%Y-%m-%d")
 	</select>
 	
+	<!-- getChartPostCount 와 같은 기준을 쓴다. 한쪽만 고치면 일간/기간 그래프가 서로 다른 수를 말한다. -->
 	<select id="getDayPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
 		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
 		FROM TBL_BOARD_M t
-		WHERE t.board_created_at_dtm >=  DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		WHERE t.board_type_cd IN (1401, 1402, 1403)
+		  AND t.board_created_at_dtm >=  DATE_SUB(CURDATE(), INTERVAL 1 DAY)
 		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
 	</select>
 	
@@ -91,10 +101,18 @@
 		VALUES (NOW(), #{user_sq})
 	</insert>
 	
+	<!--
+		대시보드 "최근 게시글" 위젯. 커뮤니티 모니터링용이므로 고객의 소리는 넣지 않는다
+		(관리자 화면이라 권한 문제는 아니지만, 1:1 문의 제목이 게시글 목록에 섞이면
+		위젯의 뜻이 흐려지고 전용 관리 화면이 따로 있다).
+		삭제된 글이 뜨던 것도 함께 고쳤다 — board_is_deleted_yn 조건이 아예 없었다.
+	-->
 	<select id="getLatestPosts" resultType="com.example.demo.domain.admin.dto.response.LatestPostsDTO">
 		SELECT t.board_sq AS id, t.board_ttl AS title, m.user_nm AS name, t.board_comment_cnt AS comments, DATE_FORMAT(t.board_created_at_dtm, "%H:%i") AS time
-		FROM TBL_BOARD_M t 
+		FROM TBL_BOARD_M t
 		LEFT JOIN TBL_USER_M m ON t.user_sq = m.user_sq
+		WHERE t.board_is_deleted_yn = 'N'
+		  AND t.board_type_cd IN (1401, 1402, 1403)
 		ORDER BY t.board_created_at_dtm DESC
 		LIMIT 5
 	</select>

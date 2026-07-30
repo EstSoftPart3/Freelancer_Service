@@ -28,5 +28,10 @@ public class Board {
      * (INSERT/UPDATE 문에는 넣지 않는다). 라벨의 유일한 출처를 공통코드로 두기 위한 필드다.
      */
     private String boardCategoryNm;
+    /**
+     * 비공개 여부 ('Y'/'N'). 고객의 소리(1404)에서만 'Y'가 될 수 있고 나머지 게시판은 항상 'N'이다.
+     * DB 기본값이 'N'이라 카테고리 도입 전 글도 전부 'N'으로 채워져 있다.
+     */
+    private String boardIsSecretYn;
     private LocalDateTime boardCreatedAtDtm;
 }

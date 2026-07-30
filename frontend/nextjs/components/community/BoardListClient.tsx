@@ -16,7 +16,7 @@ import { useCommunityStore } from '@/stores/communityStore'
 import api from '@/lib/api'
 import type { BoardItem, BoardListResponse } from '@/types'
 
-type BoardCategory = 'board' | 'qna' | 'notice' | 'all'
+type BoardCategory = 'board' | 'qna' | 'notice' | 'voc' | 'all'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: '상태' },
@@ -71,6 +71,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const isQna = boardCategory === 'qna'
   const isBoard = boardCategory === 'board'
   const isNotice = boardCategory === 'notice'
+  const isVoc = boardCategory === 'voc'
   const isAll = boardCategory === 'all'
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
   // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
@@ -153,10 +154,11 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   }
 
   const title = tag
-    ? `${boardCategory === 'board' ? '일반' : boardCategory === 'qna' ? 'QnA' : boardCategory === 'notice' ? '공지' : '전체'} 게시판 (#${tag})`
+    ? `${boardCategory === 'board' ? '일반' : boardCategory === 'qna' ? 'QnA' : boardCategory === 'notice' ? '공지' : boardCategory === 'voc' ? '고객의 소리' : '전체'} 게시판 (#${tag})`
     : boardCategory === 'board' ? '일반 게시판'
     : boardCategory === 'qna' ? 'QnA 게시판'
     : boardCategory === 'notice' ? '공지사항'
+    : boardCategory === 'voc' ? '고객의 소리'
     : '커뮤니티 전체글'
 
   // 탭 줄 오른쪽(공지는 단독 줄)에 들어가는 필터·검색 컨트롤
@@ -221,6 +223,14 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       {/* 게시판 카테고리 — 일반게시판에만 있는 축이라 Q&A·공지·전체보기에는 렌더하지 않는다 */}
       {isBoard && <BoardCategoryTabs selected={categoryCd} onSelect={onCategory} />}
 
+      {isVoc && (
+        <p className="mb-4 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          서비스 이용 중 불편한 점이나 개선 의견을 남겨주세요. 운영자가 확인 후 답변드립니다.
+          <br />
+          <span className="font-medium text-foreground">비공개</span>로 등록하면 작성자와 운영자만 볼 수 있습니다.
+        </p>
+      )}
+
       {/* 리스트 — SSR된 초기 목록이 있으면 로딩 문구로 덮지 않고 갱신 완료 시 교체.
           md 미만 카드 / md 이상 리스트형 행 — CSS 이중 렌더로 SSR·hydration 안전 */}
       {isLoading && boardList.length === 0 ? (
@@ -248,7 +258,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       )}
       </main>
 
-      {!isNotice && (
+      {!isNotice && !isVoc && (
         <aside className="mt-6 hidden w-[300px] shrink-0 lg:mt-0 lg:block">
           <PopularWidget />
         </aside>

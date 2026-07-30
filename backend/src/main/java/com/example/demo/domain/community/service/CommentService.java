@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.dto.request.CommentRequest;
 import com.example.demo.domain.community.dto.response.CommentResponse;
 import com.example.demo.domain.community.entity.Answer;
@@ -76,8 +77,9 @@ public class CommentService {
 
             if (board != null) {
                 receiverSq = board.getUserSq();
-                String pathPrefix = "normal".equals(board.getBoardTyp()) ? "/board/" : "/qna/";
-                targetUrl = pathPrefix + board.getBoardSq();
+                // 게시판이 늘어날 때마다 여기 삼항식이 틀리는 것을 막으려고 BoardTypeCode 로 옮겼다
+                // (기존: "normal" 이 아니면 전부 /qna/ 로 보내서 공지·고객의소리가 Q&A 로 갔다).
+                targetUrl = BoardTypeCode.pathPrefixOfTyp(board.getBoardTyp()) + board.getBoardSq();
                 notiContent = "내 게시글에 새로운 댓글이 달렸습니다.";
             }
         }

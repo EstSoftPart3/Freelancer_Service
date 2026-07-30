@@ -36,4 +36,6 @@ public class AdminBoardListDTO {
     private List<String> normalTags;
     private List<SkillTagDTO> skillTags; // 기존 DTO 재사용 혹은 이동
     private String mainType;
+    // 비공개 여부 (고객의 소리 전용). 관리자는 비공개 글도 전부 보므로 여기서는 표시용일 뿐이다.
+    private boolean secret;
 }

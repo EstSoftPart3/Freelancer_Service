@@ -108,6 +108,11 @@ public class SecurityConfigProd {
                                 "/notice/*/increment-view",
                                 "/affiliation/*/increment-view").permitAll()
 
+                        // ---- 고객의 소리(VOC): 목록까지 전부 로그인 필요 ----
+                        // anyRequest().authenticated() 로도 잡히지만, 위의 공개 GET 묶음 바로 아래
+                        // 명시해 "여기는 의도적으로 안 여는 것"임을 남긴다. SEO 대상이 아니다.
+                        .requestMatchers("/voc/**").authenticated()
+
                         // ---- 그 외 전부 인증 필요 ----
                         .requestMatchers("/me").authenticated()
                         .anyRequest().authenticated())

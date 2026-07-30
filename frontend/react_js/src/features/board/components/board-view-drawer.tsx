@@ -30,6 +30,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 // [해결] 명칭 및 경로 수정
 import { boardApi } from '../api/board-api'
+import { ANSWER_TYPE_CD } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { BoardMutateDrawer } from './board-mutate-drawer'
 import { useBoard } from './board-provider'
@@ -323,7 +324,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!currentRow?.sq) return
 
     try {
-      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      const targetType = currentRow.boardTypeCd === ANSWER_TYPE_CD ? 'ANSWER' : 'BOARD'
       await boardApi.createComment(
         currentRow.sq,
         content,
@@ -344,7 +345,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
     if (!newComment.trim() || !currentRow?.sq) return
 
     try {
-      const targetType = currentRow.boardTypeCd === 1404 ? 'ANSWER' : 'BOARD'
+      const targetType = currentRow.boardTypeCd === ANSWER_TYPE_CD ? 'ANSWER' : 'BOARD'
       await boardApi.createComment(
         currentRow.sq,
         newComment,
@@ -496,10 +497,10 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                             : 'bg-card'
                         }`}
                         onClick={() => {
-                          // 답변 클릭 시 해당 답변 상세(1404)로 이동
+                          // 답변 클릭 시 해당 답변 상세로 이동
                           setCurrentRow({
                             sq: answer.sq,
-                            boardTypeCd: 1404,
+                            boardTypeCd: ANSWER_TYPE_CD,
                           } as AdminBoard)
                           toast.info('답변 상세 내용으로 이동합니다.')
                         }}
@@ -524,7 +525,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                                 e.stopPropagation()
                                 setEditingAnswerForDrawer({
                                   sq: answer.sq,
-                                  boardTypeCd: 1404,
+                                  boardTypeCd: ANSWER_TYPE_CD,
                                 })
                                 setIsAnswerDrawerOpen(true)
                               }}
@@ -591,7 +592,7 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
                     editingAnswerForDrawer
                       ? ({
                           sq: editingAnswerForDrawer.sq,
-                          boardTypeCd: 1404,
+                          boardTypeCd: ANSWER_TYPE_CD,
                         } as AdminBoard)
                       : undefined
                   }
