@@ -242,6 +242,8 @@ export function ProjectViewDrawer({
             </div>
             <p className='text-xs text-muted-foreground'>
               단가를 적고 &lsquo;협의 가능&rsquo;을 함께 체크할 수 있습니다 (예: 300만원 · 협의 가능).
+              금액을 정하지 않았다면 <b>0</b>을 넣고 협의 가능을 체크하세요 — 목록에 &lsquo;협의&rsquo;로
+              표시됩니다.
             </p>
 
             <div>

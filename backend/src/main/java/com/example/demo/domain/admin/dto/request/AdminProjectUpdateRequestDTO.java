@@ -2,7 +2,7 @@ package com.example.demo.domain.admin.dto.request;
 
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +28,12 @@ public class AdminProjectUpdateRequestDTO {
 
     private String projectTtl;
 
-    @Positive(message = "단가는 0보다 커야 합니다.")
+    /**
+     * 단가. <b>0을 허용한다</b> — "금액 미정, 협의로 정함"을 표현하는 값이라
+     * 목록에서도 0은 금액이 아니라 '협의'로 표시된다. 0을 막으면 협의 전용 공고를 만들 수 없다.
+     * (음수만 거른다.)
+     */
+    @PositiveOrZero(message = "단가는 0 이상이어야 합니다.")
     private Long projectSalary;
 
     /** 'Y'/'N'. 협의 가능이면 단가가 비어 있어도 된다. */

@@ -14,11 +14,23 @@ function fmtDate(v?: string | null) {
   return Number.isNaN(d.getTime()) ? '-' : format(d, 'yy-MM-dd')
 }
 
+/**
+ * 단가 표시. 금액과 '협의 가능'은 함께 성립하므로 둘을 모두 보여준다.
+ *
+ *   3,000,000원 / 협의가능   금액 있음 + 협의 가능
+ *   3,000,000원              금액만
+ *   협의                     금액이 없거나 0 + 협의 가능
+ *   -                        둘 다 없음
+ *
+ * 0원은 "무료"가 아니라 "아직 안 정함"으로 쓰이므로 금액 없음과 같이 취급한다.
+ */
 function fmtSalary(row: AdminProject) {
-  if (row.salaryNegotiableYn === 'Y') return '협의'
-  if (row.projectSalary == null) return '-'
-  // 단가는 만원 단위로 보는 편이 읽기 쉽다(원 단위 그대로 두면 자릿수 세게 된다)
-  return `${row.projectSalary.toLocaleString()}원`
+  const negotiable = row.salaryNegotiableYn === 'Y'
+  const hasSalary = row.projectSalary != null && row.projectSalary > 0
+  const amount = hasSalary ? `${row.projectSalary!.toLocaleString()}원` : ''
+
+  if (hasSalary) return negotiable ? `${amount} / 협의가능` : amount
+  return negotiable ? '협의' : '-'
 }
 
 const TitleCell = ({ row }: { row: Row<AdminProject> }) => {
