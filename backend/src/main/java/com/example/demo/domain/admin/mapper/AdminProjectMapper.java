@@ -14,7 +14,7 @@ public interface AdminProjectMapper {
 
     List<AdminProjectListDTO> findAllProjects(
             @Param("keyword") String keyword,
-            @Param("recruitStatus") String recruitStatus,
+            @Param("recruitStatuses") List<String> recruitStatuses,
             @Param("includeDeleted") boolean includeDeleted,
             @Param("sortField") String sortField,
             @Param("sortOrder") String sortOrder,
@@ -23,7 +23,7 @@ public interface AdminProjectMapper {
 
     Long countProjects(
             @Param("keyword") String keyword,
-            @Param("recruitStatus") String recruitStatus,
+            @Param("recruitStatuses") List<String> recruitStatuses,
             @Param("includeDeleted") boolean includeDeleted);
 
     AdminProjectDetailDTO findProject(@Param("projectSq") Long projectSq);

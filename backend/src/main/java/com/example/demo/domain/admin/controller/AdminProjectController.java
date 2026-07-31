@@ -1,5 +1,7 @@
 package com.example.demo.domain.admin.controller;
 
+import java.util.List;
+
 import javax.lang.model.type.NullType;
 
 import org.springframework.http.HttpStatus;
@@ -41,13 +43,14 @@ public class AdminProjectController {
     private final AdminProjectService adminProjectService;
 
     /**
-     * 목록. {@code recruitStatus} 는 RECRUITING / SCHEDULED / CLOSED 를 받고,
-     * 그 외 값이나 미지정은 전체다. {@code includeDeleted=true} 면 삭제된 공고도 함께 본다.
+     * 목록. {@code recruitStatus} 는 RECRUITING / SCHEDULED / CLOSED 를 <b>여러 개</b> 받는다
+     * (예: {@code ?recruitStatus=RECRUITING&recruitStatus=SCHEDULED}). 미지정이면 전체다.
+     * {@code includeDeleted=true} 면 삭제된 공고도 함께 본다.
      */
     @GetMapping
     public ResponseEntity<ApiResponse<AdminProjectListResponseDTO>> getProjects(
             @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "recruitStatus", required = false) String recruitStatus,
+            @RequestParam(value = "recruitStatus", required = false) List<String> recruitStatus,
             @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted,
             @RequestParam(value = "sortField", defaultValue = "createdAt") String sortField,
             @RequestParam(value = "sortOrder", defaultValue = "DESC") String sortOrder,

@@ -25,14 +25,14 @@ interface Props {
   totalCount: number
   page: number
   keyword: string
-  recruitStatus?: string
+  recruitStatuses: string[]
   includeDeleted: boolean
   sortField: string
   sortOrder: string
   setKeyword: (v: string) => void
   setPage: (p: number) => void
   onSort: (field: string, order: string) => void
-  onFilterStatus: (status: string | undefined) => void
+  onFilterStatus: (statuses: string[]) => void
   onToggleDeleted: (v: boolean) => void
 }
 
@@ -41,7 +41,7 @@ export function ProjectTable({
   totalCount,
   page,
   keyword,
-  recruitStatus,
+  recruitStatuses,
   includeDeleted,
   sortField,
   sortOrder,
@@ -59,8 +59,11 @@ export function ProjectTable({
   )
 
   const columnFilters = useMemo(
-    () => (recruitStatus ? [{ id: 'recruitStatus', value: [recruitStatus] }] : []),
-    [recruitStatus]
+    () =>
+      recruitStatuses.length
+        ? [{ id: 'recruitStatus', value: recruitStatuses }]
+        : [],
+    [recruitStatuses]
   )
 
   const table = useReactTable({
@@ -101,8 +104,8 @@ export function ProjectTable({
       const picked = next.find((f) => f.id === 'recruitStatus')?.value as
         | string[]
         | undefined
-      // 서버는 상태 하나만 받는다. 여러 개를 고르면 필터를 걸지 않는 것과 같다.
-      onFilterStatus(picked && picked.length === 1 ? picked[0] : undefined)
+      // 여러 개를 함께 고를 수 있다(모집중 + 모집예정 등). 선택은 그대로 유지된다.
+      onFilterStatus(picked ?? [])
     },
 
     getCoreRowModel: getCoreRowModel(),

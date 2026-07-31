@@ -17,7 +17,8 @@ export interface ProjectQueryParams {
   page: number
   size: number
   keyword?: string
-  recruitStatus?: string
+  /** 모집 상태 다중 선택. 빈 배열이면 전체 */
+  recruitStatuses?: string[]
   includeDeleted?: boolean
   sortField?: string
   sortOrder?: string
@@ -29,7 +30,8 @@ export const projectApi = {
     qs.append('page', String(params.page))
     qs.append('size', String(params.size))
     if (params.keyword) qs.append('keyword', params.keyword)
-    if (params.recruitStatus) qs.append('recruitStatus', params.recruitStatus)
+    // 같은 키를 여러 번 붙인다 — 서버가 List<String> 으로 받는다
+    params.recruitStatuses?.forEach((st) => qs.append('recruitStatus', st))
     // includeDeleted 는 false 도 유효값이지만 서버 기본이 false 라 true 일 때만 보낸다.
     if (params.includeDeleted) qs.append('includeDeleted', 'true')
     if (params.sortField) qs.append('sortField', params.sortField)

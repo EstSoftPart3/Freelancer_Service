@@ -34,7 +34,11 @@ export function VocList() {
         page: search.page || 1,
         size: search.pageSize || 10,
         keyword: search.keyword || undefined,
-        answered: search.answered,
+        // 하나만 골랐을 때만 서버 필터가 의미를 갖는다(둘 다 = 전체)
+        answered:
+          search.answeredPicks?.length === 1
+            ? search.answeredPicks[0] === 'true'
+            : undefined,
         sortField: search.sortField || 'createdAt',
         sortOrder: search.sortOrder || 'DESC',
       })
@@ -99,7 +103,7 @@ export function VocList() {
             totalCount={totalCount}
             page={search.page || 1}
             keyword={keyword}
-            answered={search.answered}
+            answeredPicks={search.answeredPicks || []}
             sortField={search.sortField || 'createdAt'}
             sortOrder={search.sortOrder || 'DESC'}
             setKeyword={setKeyword}
@@ -111,8 +115,14 @@ export function VocList() {
                 search: (prev) => ({ ...prev, sortField: field, sortOrder: order }),
               })
             }
-            onFilterAnswered={(answered) =>
-              navigate({ search: (prev) => ({ ...prev, answered, page: 1 }) })
+            onFilterPicked={(picks) =>
+              navigate({
+                search: (prev) => ({
+                  ...prev,
+                  answeredPicks: picks.length ? picks : undefined,
+                  page: 1,
+                }),
+              })
             }
           />
         )}

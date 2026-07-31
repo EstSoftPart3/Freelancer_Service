@@ -33,7 +33,7 @@ export function ProjectList() {
         page: search.page || 1,
         size: 10,
         keyword: search.keyword || undefined,
-        recruitStatus: search.recruitStatus || undefined,
+        recruitStatuses: search.recruitStatuses?.length ? search.recruitStatuses : undefined,
         includeDeleted: search.includeDeleted || false,
         sortField: search.sortField || 'createdAt',
         sortOrder: search.sortOrder || 'DESC',
@@ -95,7 +95,7 @@ export function ProjectList() {
             totalCount={totalCount}
             page={search.page || 1}
             keyword={keyword}
-            recruitStatus={search.recruitStatus}
+            recruitStatuses={search.recruitStatuses || []}
             includeDeleted={search.includeDeleted || false}
             sortField={search.sortField || 'createdAt'}
             sortOrder={search.sortOrder || 'DESC'}
@@ -106,9 +106,13 @@ export function ProjectList() {
                 search: (prev) => ({ ...prev, sortField: field, sortOrder: order }),
               })
             }
-            onFilterStatus={(status) =>
+            onFilterStatus={(statuses) =>
               navigate({
-                search: (prev) => ({ ...prev, recruitStatus: status, page: 1 }),
+                search: (prev) => ({
+                  ...prev,
+                  recruitStatuses: statuses.length ? statuses : undefined,
+                  page: 1,
+                }),
               })
             }
             onToggleDeleted={(v) =>

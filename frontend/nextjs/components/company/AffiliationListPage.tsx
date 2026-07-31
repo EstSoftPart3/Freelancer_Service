@@ -29,6 +29,7 @@ export interface AffiliationItem {
   isApply: boolean
   tags: string[]
   greeting?: string
+  companyUrl?: string
   ceoNm?: string
   openYear?: number
   address?: string
@@ -421,6 +422,20 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
               <InfoRow label="대표자명" value={selectedAfltn.ceoNm} />
               <InfoRow label="개업년수" value={selectedAfltn.openYear != null ? `${selectedAfltn.openYear}년차` : undefined} />
               <InfoRow label="회사위치" value={selectedAfltn.address} />
+              {/* 기업 URL — 값이 있을 때만 새 탭 링크로 노출한다(선택 입력이라 비어 있는 소속이 많다) */}
+              {selectedAfltn.companyUrl && (
+                <div>
+                  <p className="font-semibold text-primary">기업 URL</p>
+                  <a
+                    href={withProtocol(selectedAfltn.companyUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-foreground underline hover:text-primary"
+                  >
+                    {selectedAfltn.companyUrl}
+                  </a>
+                </div>
+              )}
               <InfoRow label="회사 설명" value={selectedAfltn.greeting} />
 
               {selectedAfltn.tags.length > 0 && (
@@ -484,6 +499,14 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
       </Dialog>
     </div>
   )
+}
+
+/**
+ * 기업 URL 은 사용자가 직접 입력한 값이라 "www.example.com" 처럼 스킴이 없는 경우가 많다.
+ * 그대로 href 에 넣으면 상대경로로 해석돼 사이트 안에서 404 로 떨어진다.
+ */
+function withProtocol(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
 function InfoRow({ label, value }: { label: string; value?: string | number }) {

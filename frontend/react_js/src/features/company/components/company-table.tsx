@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react'
 import {
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
+  type SortingState,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -45,6 +47,9 @@ export function CompanyTable({
   onFilterAuth,
 }: Props) {
   const [rowSelection, setRowSelection] = useState({})
+  // 목록을 통째로 받아 화면에서 자르므로 정렬도 테이블이 직접 한다(서버 정렬 파라미터가 없다).
+  // 예전에는 sorting 상태를 주지 않아 헤더를 눌러도 아무 일이 없었다.
+  const [sorting, setSorting] = useState<SortingState>([])
 
   // 인증상태 필터는 클라이언트에서 건다(서버 파라미터가 없다).
   const filtered = useMemo(
@@ -69,11 +74,13 @@ export function CompanyTable({
     data: filtered,
     columns,
     state: {
+      sorting,
       globalFilter: keyword,
       rowSelection,
       pagination: { pageIndex: page - 1, pageSize: PAGE_SIZE },
       columnFilters,
     },
+    onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setKeyword,
     // 목록을 통째로 받으므로 페이징은 테이블이 직접 계산한다.
@@ -94,6 +101,7 @@ export function CompanyTable({
       onFilterAuth(picked ? picked.map(Number) : [])
     },
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   })
 
   return (

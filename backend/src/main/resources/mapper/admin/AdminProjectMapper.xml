@@ -4,14 +4,18 @@
 <mapper namespace="com.example.demo.domain.admin.mapper.AdminProjectMapper">
 
     <!--
-        모집 상태는 저장된 컬럼이 아니라 NOW() 와 모집기간을 비교해 계산한다.
-        FO 목록의 판정(ProjectMapper 의 recruitingCondition — NOW() BETWEEN 시작 AND 종료)과
-        같은 기준을 써야 한다. 한쪽만 고치면 "BO 에서는 모집중인데 FO 목록에는 없는" 공고가 생긴다.
+        모집 상태는 저장된 컬럼이 아니라 오늘 날짜와 모집기간을 비교해 계산한다.
+
+        NOW() 가 아니라 CURDATE() 를 쓴다. 모집일 컬럼은 날짜(시각 없음)라 NOW() 와 비교하면
+        종료일이 '그날 00:00' 으로 해석되어 <b>종료일 당일 자정부터 마감</b>으로 잡힌다 —
+        "오늘까지 모집"인 공고가 아침부터 마감으로 보였다(실제로 7/31 종료 공고가 7/31 에 마감이었다).
+        FO 목록 판정(ProjectMapper 의 recruitingCondition)도 같은 기준으로 맞췄다.
+        한쪽만 고치면 "BO 에서는 모집중인데 FO 목록에는 없는" 공고가 생긴다.
     -->
     <sql id="recruitStatusExpr">
         CASE
-            WHEN NOW() &lt; p.project_recruit_start_dt THEN 'SCHEDULED'
-            WHEN NOW() &gt; p.project_recruit_end_dt   THEN 'CLOSED'
+            WHEN CURDATE() &lt; DATE(p.project_recruit_start_dt) THEN 'SCHEDULED'
+            WHEN CURDATE() &gt; DATE(p.project_recruit_end_dt)   THEN 'CLOSED'
             ELSE 'RECRUITING'
         END
     </sql>
@@ -31,15 +35,14 @@
                OR c.company_nm LIKE CONCAT('%', #{keyword}, '%')
                OR u.user_id LIKE CONCAT('%', #{keyword}, '%') )
         </if>
-        <if test="recruitStatus != null and recruitStatus != ''">
-            <choose>
-                <when test="recruitStatus == 'RECRUITING'">
-                    AND NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt </when>
-                <when test="recruitStatus == 'SCHEDULED'">
-                    AND NOW() &lt; p.project_recruit_start_dt </when>
-                <when test="recruitStatus == 'CLOSED'">
-                    AND NOW() &gt; p.project_recruit_end_dt </when>
-            </choose>
+        <!--
+            상태 필터는 여러 개를 함께 고를 수 있다(모집중 + 모집예정 등).
+            상태 표현식과 비교하므로 위 CASE 와 자동으로 같은 기준을 쓴다 —
+            조건을 따로 적으면 표시와 필터가 어긋난다(예전에는 그랬다).
+        -->
+        <if test="recruitStatuses != null and recruitStatuses.size > 0">
+            AND <include refid="recruitStatusExpr" /> IN
+            <foreach item="st" collection="recruitStatuses" open="(" separator="," close=")">#{st}</foreach>
         </if>
     </sql>
 

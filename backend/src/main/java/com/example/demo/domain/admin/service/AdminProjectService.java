@@ -3,6 +3,7 @@ package com.example.demo.domain.admin.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,20 +29,23 @@ public class AdminProjectService {
     private final AdminProjectMapper adminProjectMapper;
 
     @Transactional(readOnly = true)
-    public AdminProjectListResponseDTO getProjects(String keyword, String recruitStatus,
+    public AdminProjectListResponseDTO getProjects(String keyword, List<String> recruitStatuses,
             boolean includeDeleted, String sortField, String sortOrder, Long page, Long size) {
 
-        // 알 수 없는 상태값은 필터를 걸지 않은 것으로 본다 — URL 을 손으로 고친 경우
-        // 빈 목록보다 전체 목록이 덜 혼란스럽다(BoardService.getAllBoards 와 같은 판단).
-        String safeStatus = (recruitStatus != null && RECRUIT_STATUSES.contains(recruitStatus))
-                ? recruitStatus
-                : null;
+        // 알 수 없는 상태값은 걸러낸다. 전부 걸러져 비면 필터를 걸지 않은 것으로 본다 —
+        // URL 을 손으로 고친 경우 빈 목록보다 전체 목록이 덜 혼란스럽다.
+        List<String> safeStatuses = (recruitStatuses == null)
+                ? null
+                : recruitStatuses.stream().filter(RECRUIT_STATUSES::contains).collect(Collectors.toList());
+        if (safeStatuses != null && safeStatuses.isEmpty()) {
+            safeStatuses = null;
+        }
 
         Long offset = (page - 1) * size;
-        Long totalElements = adminProjectMapper.countProjects(keyword, safeStatus, includeDeleted);
+        Long totalElements = adminProjectMapper.countProjects(keyword, safeStatuses, includeDeleted);
         // sortOrder 는 XML 에서 ${sortOrder} 로 직접 삽입되므로 ASC/DESC 로 정규화(SQL Injection 방지)
         List<AdminProjectListDTO> projects = adminProjectMapper.findAllProjects(
-                keyword, safeStatus, includeDeleted, sortField,
+                keyword, safeStatuses, includeDeleted, sortField,
                 SortDirectionUtil.normalize(sortOrder), offset, size);
 
         return AdminProjectListResponseDTO.builder()

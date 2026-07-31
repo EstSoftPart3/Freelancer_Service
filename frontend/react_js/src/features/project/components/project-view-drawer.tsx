@@ -92,13 +92,9 @@ export function ProjectViewDrawer({
     }
     try {
       setIsSaving(true)
-      // 협의 가능이면 단가를 보내지 않는다(서버 @Positive 에 걸린다).
-      const payload: AdminProjectUpdate = {
-        ...form,
-        projectSalary:
-          form.salaryNegotiableYn === 'Y' ? undefined : form.projectSalary,
-      }
-      await projectApi.updateProject(currentRow.projectSq, payload)
+      // 단가와 '협의 가능'은 함께 성립한다 — "300만원 (협의가능)" 같은 공고가 실제로 있다.
+      // 서버 @Positive 는 값이 있을 때만 검사하므로 비워 두는 것도 그대로 통과한다.
+      await projectApi.updateProject(currentRow.projectSq, form)
       toast.success('프로젝트가 수정되었습니다.')
       onSaved()
       onOpenChange(false)
@@ -220,7 +216,6 @@ export function ProjectViewDrawer({
                   id='p-salary'
                   type='number'
                   className='mt-1'
-                  disabled={form.salaryNegotiableYn === 'Y'}
                   value={form.projectSalary ?? ''}
                   onChange={(e) =>
                     setForm({
@@ -245,6 +240,9 @@ export function ProjectViewDrawer({
                 협의 가능
               </label>
             </div>
+            <p className='text-xs text-muted-foreground'>
+              단가를 적고 &lsquo;협의 가능&rsquo;을 함께 체크할 수 있습니다 (예: 300만원 · 협의 가능).
+            </p>
 
             <div>
               <Label htmlFor='p-desc'>상세 설명</Label>
