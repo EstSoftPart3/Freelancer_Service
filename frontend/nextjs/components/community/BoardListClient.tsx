@@ -46,7 +46,7 @@ function parseCategory(raw: string | null): number | null {
 export default function BoardListClient({ boardCategory, initialData }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { isLoggedIn, authChecked } = useUserStore()
+  const { isLoggedIn, authChecked, userSq } = useUserStore()
   const setCommunityFilters = useCommunityStore((s) => s.setFilters)
 
   const [boardList, setBoardList] = useState<BoardItem[]>(initialData?.boards ?? [])
@@ -238,10 +238,10 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       ) : (
         <>
           <div className="md:hidden">
-            <BoardCardList boardList={boardList} boardType={boardCategory} />
+            <BoardCardList boardList={boardList} boardType={boardCategory} viewerSq={userSq} />
           </div>
           <div className="hidden md:block">
-            <BoardTable boardList={boardList} boardType={boardCategory} />
+            <BoardTable boardList={boardList} boardType={boardCategory} viewerSq={userSq} />
           </div>
           {canRegister && (
             <div className="mt-3 flex justify-end">

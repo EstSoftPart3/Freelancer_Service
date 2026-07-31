@@ -17,7 +17,6 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
-import com.example.demo.common.security.CurrentUser;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
@@ -94,18 +93,13 @@ public class BoardService {
 				? boardCategoryCd
 				: null;
 
-		// 비공개(고객의 소리) 필터는 목록·카운트가 함께 받는다. 호출부 네 곳(게시판·Q&A·공지·커뮤니티)의
-		// 시그니처를 늘리지 않으려고 SecurityContext 에서 직접 꺼낸다 — CurrentUser 주석 참조.
-		Long viewerSq = CurrentUser.sq();
-		boolean isAdmin = CurrentUser.isAdmin();
-
 		List<Board> boards = boardMapper.findAll(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
 				searchSkillTags,
-				sortType, size, offset, viewerSq, isAdmin);
+				sortType, size, offset);
 		Long totalElements = boardMapper.findAllCnt(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
-				searchSkillTags, viewerSq, isAdmin);
+				searchSkillTags);
 
 		List<BoardListDTO> responses = boards.stream()
 				.filter(Objects::nonNull)

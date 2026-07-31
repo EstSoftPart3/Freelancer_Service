@@ -72,6 +72,24 @@ public enum BoardTypeCode {
                 .getPath() + "/";
     }
 
+    /**
+     * 코드 → FO 경로 세그먼트 ({@code 1404 → "voc"}).
+     *
+     * <p>
+     * 목록 응답의 {@code boardType} 이 이 값이다. FO 는 이것으로 상세 링크를 만들기 때문에
+     * 여기서 틀리면 <b>엉뚱한 게시판 상세로 이동해 400</b> 이 난다 —
+     * 실제로 {@code 1402면 qna 아니면 board} 라는 삼항식 때문에 고객의 소리 글이
+     * {@code /board/{sq}} 로 가서 "게시글이 존재하지 않습니다"가 떴다.
+     * </p>
+     */
+    public static String pathOfCode(Long code) {
+        return Arrays.stream(values())
+                .filter(t -> t.code.equals(code))
+                .findFirst()
+                .orElse(NORMAL)
+                .getPath();
+    }
+
     /** 코드로 경로 접두를 만든다. {@link #pathPrefixOfTyp(String)} 의 숫자 버전. */
     public static String pathPrefixOfCode(Long code) {
         return "/" + Arrays.stream(values())

@@ -57,7 +57,9 @@ public class VocMailNotifier {
         }
 
         String subject = "[고객의 소리] 새 문의가 접수되었습니다" + (secret ? " (비공개)" : "");
-        String link = boBaseUrl + "/contents/voc";
+        // ?view={sq} — BO 목록이 이 파라미터를 보고 해당 문의의 상세 패널을 바로 연다.
+        // 목록까지만 보내면 운영자가 방금 접수된 글을 다시 찾아야 한다.
+        String link = boBaseUrl + "/contents/voc?view=" + boardSq;
 
         String body = "<h3>새 문의가 접수되었습니다</h3>"
                 + "<table cellpadding=\"6\" style=\"border-collapse:collapse\">"

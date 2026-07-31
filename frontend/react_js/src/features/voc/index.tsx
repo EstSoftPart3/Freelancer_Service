@@ -10,6 +10,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { vocApi } from './api/voc-api'
+import { VocDeepLink } from './components/voc-deep-link'
 import { VocDialogs } from './components/voc-dialogs'
 import { VocProvider } from './components/voc-provider'
 import { VocTable } from './components/voc-table'
@@ -66,6 +67,8 @@ export function VocList() {
 
   return (
     <VocProvider refresh={fetchVocs}>
+      {/* 메일 링크(?view={sq})로 들어온 경우 해당 문의의 상세 패널을 자동으로 연다 */}
+      <VocDeepLink viewSq={search.view} rows={data} isLoading={isLoading} />
       <Header fixed>
         <Search />
         <div className='ms-auto flex items-center space-x-4'>

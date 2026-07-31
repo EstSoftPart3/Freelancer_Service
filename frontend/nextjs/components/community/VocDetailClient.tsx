@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DOMPurify from 'isomorphic-dompurify'
 import BoardPost from '@/components/community/BoardPost'
@@ -37,6 +37,9 @@ export default function VocDetailClient({ boardSq }: Props) {
   const { setViewerSq } = useBoardStore()
   const [boardInfo, setBoardInfo] = useState<BoardDetail>(emptyBoard)
   const [loading, setLoading] = useState(true)
+  // StrictMode는 개발 모드에서 이펙트를 두 번 실행한다. 가드가 없으면 실패 안내가 두 번 뜨고
+  // 리다이렉트도 두 번 걸린다(실제로 토스트가 겹쳐 보였다).
+  const failedRef = useRef(false)
 
   const getBoard = useCallback(async () => {
     try {
@@ -46,6 +49,8 @@ export default function VocDetailClient({ boardSq }: Props) {
     } catch (err: unknown) {
       // 403 = 남의 비공개 글, 404 = 없거나 삭제된 글. 둘 다 목록으로 돌려보낸다.
       // (서버도 "있는데 못 본다"와 "없다"를 구분해 알려주지 않는다 — 존재 자체가 정보다)
+      if (failedRef.current) return
+      failedRef.current = true
       const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
       alertStore.show(res?.data?.message ?? '글을 불러올 수 없습니다.', 'danger')
       router.replace('/voc')

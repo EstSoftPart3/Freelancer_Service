@@ -12,6 +12,9 @@ const vocSearchSchema = z.object({
   answered: z.boolean().optional().catch(undefined),
   sortField: z.string().optional().catch('createdAt'),
   sortOrder: z.string().optional().catch('DESC'),
+  // 접수 알림 메일의 바로가기(?view={sq})가 쓰는 파라미터.
+  // 목록만 열면 운영자가 방금 들어온 문의를 다시 찾아야 하므로, 이 값이 있으면 상세 패널까지 연다.
+  view: z.number().optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/contents/voc/')({

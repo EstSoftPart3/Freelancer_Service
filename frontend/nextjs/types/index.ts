@@ -150,8 +150,9 @@ export interface BoardItem {
   normalTags: string[]
   answerCnt?: number
   boardAdoptStatusCd?: number
-  // 전체보기(통합 목록)에서만 채워짐 — 'board' | 'qna', 상세/태그 링크 분기용
-  boardType?: 'board' | 'qna'
+  // 상세/태그 링크 분기용 경로 세그먼트. 서버가 게시판 유형에서 계산해 내려준다
+  // (BoardTypeCode.pathOfCode). 전체보기뿐 아니라 개별 게시판 목록에도 채워진다.
+  boardType?: 'board' | 'qna' | 'notice' | 'voc'
   // 게시판 카테고리 (공통코드 3200 하위). 카테고리 도입 전 글은 null = 미분류.
   // 라벨은 서버가 함께 내려주므로 FO가 코드→라벨 표를 유지할 필요가 없다.
   categoryCd?: number | null
