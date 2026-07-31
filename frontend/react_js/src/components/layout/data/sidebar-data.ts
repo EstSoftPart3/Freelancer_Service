@@ -30,6 +30,7 @@ import {
   Building2,
   Briefcase,
   FolderKanban,
+  Sprout,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -97,6 +98,11 @@ export const sidebarData: SidebarData = {
               title: '게시글 관리',
               url: '/contents/board',
               icon: ClipboardList,
+            },
+            {
+              title: '커뮤니티 시드',
+              url: '/contents/board/seed',
+              icon: Sprout,
             },
             {
               title: '공지사항 관리',
