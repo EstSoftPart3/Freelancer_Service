@@ -1,5 +1,14 @@
 import { type SeedAnswerInput, type SeedPostInput } from '../api/seed-api'
 
+/**
+ * `comment_description_txt` 가 varchar(500) 이다. 넘치면 서버 INSERT 가 실패하면서
+ * 청크 하나(최대 50건)가 통째로 롤백된다. 붙여넣는 시점에 잡아준다.
+ */
+const MAX_COMMENT_LENGTH = 500
+
+/** `board_ttl` / `answer_ttl` 이 varchar(100) 이다. */
+const MAX_TITLE_LENGTH = 100
+
 export interface SeedParseResult {
   posts: SeedPostInput[]
   /** 사람이 읽을 수 있는 실패 사유. null 이면 성공. */
@@ -65,16 +74,25 @@ export function parseSeedJson(raw: string): SeedParseResult {
     if (!title) {
       return { posts: [], error: `${label}에 title 이 없습니다.` }
     }
-    if (title.length > 100) {
+    if (title.length > MAX_TITLE_LENGTH) {
       return {
         posts: [],
-        error: `${label}의 제목이 ${title.length}자입니다. 100자 이하여야 합니다.`,
+        error: `${label}의 제목이 ${title.length}자입니다. ${MAX_TITLE_LENGTH}자 이하여야 합니다.`,
       }
     }
 
     const body = asText(item.body)
     if (!body) {
       return { posts: [], error: `${label}("${title}")에 body 가 없습니다.` }
+    }
+
+    const comments = asTexts(item.comments)
+    const tooLong = comments.find((c) => c.length > MAX_COMMENT_LENGTH)
+    if (tooLong) {
+      return {
+        posts: [],
+        error: `${label}("${title}")의 댓글이 ${tooLong.length}자입니다. ${MAX_COMMENT_LENGTH}자 이하여야 합니다.`,
+      }
     }
 
     const answers = asAnswers(item.answers)
@@ -87,7 +105,7 @@ export function parseSeedJson(raw: string): SeedParseResult {
       categoryHintCd: asNumber(item.categoryHintCd),
       title,
       body,
-      comments: asTexts(item.comments),
+      comments,
       answers: type === 'QNA' ? answers : [],
     })
   }
@@ -157,10 +175,19 @@ function asAnswers(value: unknown): SeedAnswerInput[] | string {
     const title = asText(item.title)
     // answer_ttl 은 NOT NULL 이라 서버가 거절한다. 여기서 먼저 잡아준다.
     if (!title) return `answers[${i}] 에 title 이 없습니다. (답변에도 제목이 필요합니다)`
+    if (title.length > MAX_TITLE_LENGTH) {
+      return `answers[${i}] 의 제목이 ${title.length}자입니다. ${MAX_TITLE_LENGTH}자 이하여야 합니다.`
+    }
     const body = asText(item.body)
     if (!body) return `answers[${i}] 에 body 가 없습니다.`
 
-    answers.push({ title, body, comments: asTexts(item.comments) })
+    const comments = asTexts(item.comments)
+    const tooLong = comments.find((c) => c.length > MAX_COMMENT_LENGTH)
+    if (tooLong) {
+      return `answers[${i}] 의 댓글이 ${tooLong.length}자입니다. ${MAX_COMMENT_LENGTH}자 이하여야 합니다.`
+    }
+
+    answers.push({ title, body, comments })
   }
   return answers
 }

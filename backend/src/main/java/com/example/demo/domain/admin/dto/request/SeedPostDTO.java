@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+// 컨테이너 원소 제약(List<@Size String>)은 Bean Validation 2.0 기능이다.
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,8 +40,15 @@ public class SeedPostDTO {
 	@NotBlank(message = "내용을 입력해주세요.")
 	private String body;
 
-	/** 이 글에 달릴 댓글 문구 후보. 실제 개수는 옵션이 정한다. */
-	private List<String> comments;
+	/**
+	 * 이 글에 달릴 댓글 문구 후보. 실제 개수는 옵션이 정한다.
+	 *
+	 * <p>
+	 * {@code comment_description_txt} 가 <b>varchar(500)</b> 이다. 넘치면 INSERT 가 실패하고
+	 * 청크 하나(최대 50건)가 통째로 롤백되므로 여기서 먼저 잡는다.
+	 * </p>
+	 */
+	private List<@NotBlank(message = "빈 댓글은 넣을 수 없습니다.") @Size(max = 500, message = "댓글은 500자 이하여야 합니다.") String> comments;
 
 	/**
 	 * 답변 후보. {@code QNA} 에서만 쓰인다.

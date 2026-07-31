@@ -33,7 +33,8 @@ public class SeedAnswerDTO {
 
 	/**
 	 * 이 답변에 달릴 댓글 문구 후보. 실제로 몇 개가 달릴지는 옵션이 정한다.
-	 * 댓글은 평문으로 저장된다({@code comment_description_txt}) — HTML 변환 대상이 아니다.
+	 * 댓글은 평문으로 저장된다({@code comment_description_txt}) — HTML 변환 대상이 아니고,
+	 * <b>varchar(500)</b> 이라 길이 제한이 있다.
 	 */
-	private List<String> comments;
+	private List<@NotBlank(message = "빈 댓글은 넣을 수 없습니다.") @Size(max = 500, message = "댓글은 500자 이하여야 합니다.") String> comments;
 }

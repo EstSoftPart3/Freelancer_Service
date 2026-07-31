@@ -53,11 +53,13 @@
         INSERT INTO TBL_BOARD_M
             (user_sq, board_ttl, board_description_edt, board_adopt_status_cd,
              board_typ, board_type_cd, board_category_cd, board_is_secret_yn,
-             board_view_cnt, board_comment_cnt, board_is_deleted_yn, board_created_at_dtm)
+             board_view_cnt, board_comment_cnt, board_is_deleted_yn,
+             board_created_at_dtm, board_modified_at_dtm)
         VALUES
             (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, #{boardAdoptStatusCd},
              #{boardTyp}, #{boardTypeCd}, #{boardCategoryCd}, 'N',
-             #{boardViewCnt}, #{boardCommentCnt}, 'N', #{boardCreatedAtDtm})
+             #{boardViewCnt}, #{boardCommentCnt}, 'N',
+             #{boardCreatedAtDtm}, #{boardCreatedAtDtm})
     </insert>
 
     <!--
@@ -70,11 +72,11 @@
         INSERT INTO TBL_BOARD_ANSWER_S
             (user_sq, board_sq, answer_ttl, answer_description_edt,
              answer_view_cnt, answer_comment_cnt, answer_is_adopted_yn,
-             answer_is_deleted_yn, answer_created_at_dtm)
+             answer_is_deleted_yn, answer_created_at_dtm, answer_modified_at_dtm)
         VALUES
             (#{userSq}, #{boardSq}, #{answerTtl}, #{answerDescriptionEdt},
              #{answerViewCnt}, #{answerCommentCnt}, #{answerIsAdoptedYn},
-             'N', #{answerCreatedAtDtm})
+             'N', #{answerCreatedAtDtm}, #{answerCreatedAtDtm})
     </insert>
 
     <!--
@@ -85,11 +87,13 @@
     <insert id="insertSeedComments">
         INSERT INTO TBL_BOARD_COMMENT_S
             (user_sq, parent_comment_sq, board_sq, answer_sq,
-             comment_description_txt, comment_type_cd, comment_is_deleted_yn, comment_created_at_dtm)
+             comment_description_txt, comment_type_cd, comment_is_deleted_yn,
+             comment_created_at_dtm, comment_modified_at_dtm)
         VALUES
         <foreach item="c" collection="comments" separator=",">
             (#{c.userSq}, NULL, #{c.boardSq}, #{c.answerSq},
-             #{c.commentDescriptionTxt}, #{c.commentTypeCd}, 'N', #{c.commentCreatedAtDtm})
+             #{c.commentDescriptionTxt}, #{c.commentTypeCd}, 'N',
+             #{c.commentCreatedAtDtm}, #{c.commentCreatedAtDtm})
         </foreach>
     </insert>
 
