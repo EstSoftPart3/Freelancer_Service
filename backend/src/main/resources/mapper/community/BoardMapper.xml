@@ -13,19 +13,14 @@
 		#{boardTypeCd} </select>
 
 	<!--
-		비공개 필터(고객의 소리). 상세 API 를 막는 것만으로는 부족하다 — 목록에 제목이 그대로
-		노출되면 "누가 무엇을 문의했는지"가 드러난다. 관리자는 조건을 붙이지 않고, 그 외에는
-		공개글 + 내가 쓴 글만 본다. 비로그인이면 viewerSq 가 null 이라 공개글만 남는다.
-		다른 게시판은 board_is_secret_yn 이 전부 'N' 이라 이 조건에 영향받지 않는다.
+		비공개 글(고객의 소리)도 목록에는 남긴다 — 사용자 결정.
+		"다른 사람들도 문의를 남기고 있다"는 것이 보여야 창구가 살아 있다고 느끼기 때문이다.
+		대신 내용은 잠근다: 상세 조회는 VocService.requireReadable 이 작성자·관리자만 통과시키고,
+		FO 목록도 남의 비공개 글은 링크가 아니라 잠긴 항목으로 그린다.
+		(초안에서는 목록에서 아예 감췄으나, 그러면 문의가 한 건도 없는 게시판처럼 보였다.)
 	-->
-	<sql id="secretFilter">
-		<if test="isAdmin == false"> AND ( board_is_secret_yn = 'N' <if test="viewerSq != null"> OR
-			user_sq = #{viewerSq} </if> ) </if>
-	</sql>
-
 	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
-		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <include
-			refid="secretFilter" /> <choose>
+		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if
@@ -62,7 +57,7 @@
 
 	<!-- findAll 과 동적 조건이 1:1로 대응해야 한다. 조건을 추가할 때는 반드시 양쪽을 함께 고칠 것 -->
 	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
-		board_is_deleted_yn = 'N' <include refid="secretFilter" /> <choose>
+		board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
 			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
 		</choose> <if

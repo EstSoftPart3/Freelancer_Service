@@ -19,6 +19,8 @@ public class AffiliationResponse{
     private LocalDate openDt; // 개업일자
     private Integer openYear; // 개업년수 (기업 테이블에서 company_open_dt로 계산)
     private String greeting; // 회사 설명 (기업 테이블)
+    /** 기업 홈페이지 URL (선택). 소속 상세에서 회사를 확인할 수 있게 함께 내려준다. */
+    private String companyUrl;
     private List<String> tags; // 관련 태그 (기업 태그 테이블)
     private Long viewCnt; // 조회수 (기업 테이블)
     private Long scrapCnt; // 스크랩 수 (스크랩 테이블)
@@ -42,6 +44,7 @@ public class AffiliationResponse{
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
+        		company.getCompanyUrl(),
         		tags,
         		company.getCompanyViewCnt(),
         		scrapCnt,
@@ -66,6 +69,7 @@ public class AffiliationResponse{
         		company.getCompanyOpenDt(),
         		openYear,
         		company.getCompanyGreetingTxt(),
+        		company.getCompanyUrl(),
         		tags,
         		company.getCompanyViewCnt(),
         		null,

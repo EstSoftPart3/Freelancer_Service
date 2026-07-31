@@ -16,8 +16,9 @@ import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { type AdminVoc } from '../data/schema'
 import { vocColumns as columns } from './voc-columns'
 
-// 처리 상태 필터는 answerCnt 컬럼에 얹는다 — 서버는 boolean 한 개(answered)만 받으므로
-// 두 값을 동시에 고르면 "전체"와 같다. 그 경우 필터를 보내지 않는다.
+// 처리 상태 필터는 answerCnt 컬럼에 얹는다. 서버는 boolean 한 개(answered)만 받으므로
+// 둘 다 고르면 결과적으로 "전체"지만, 선택 표시는 그대로 유지한다 —
+// 예전에는 두 번째를 고르는 순간 선택이 통째로 풀려서 조작 실수처럼 보였다.
 const ANSWERED_OPTIONS = [
   { label: '미답변', value: 'false' },
   { label: '답변완료', value: 'true' },
@@ -28,13 +29,14 @@ interface VocTableProps {
   totalCount: number
   page: number
   keyword: string
-  answered?: boolean
+  /** 선택된 처리 상태 값들('true'|'false'). 둘 다 고르면 전체와 같다 */
+  answeredPicks: string[]
   sortField: string
   sortOrder: string
   setKeyword: (val: string) => void
   setPage: (page: number) => void
   onSort: (field: string, order: string) => void
-  onFilterAnswered: (answered: boolean | undefined) => void
+  onFilterPicked: (picks: string[]) => void
 }
 
 export function VocTable({
@@ -42,13 +44,13 @@ export function VocTable({
   totalCount,
   page,
   keyword,
-  answered,
+  answeredPicks,
   sortField,
   sortOrder,
   setKeyword,
   setPage,
   onSort,
-  onFilterAnswered,
+  onFilterPicked,
 }: VocTableProps) {
   const [rowSelection, setRowSelection] = useState({})
 
@@ -58,11 +60,8 @@ export function VocTable({
   )
 
   const columnFilters = useMemo(
-    () =>
-      answered === undefined
-        ? []
-        : [{ id: 'answerCnt', value: [String(answered)] }],
-    [answered]
+    () => (answeredPicks.length ? [{ id: 'answerCnt', value: answeredPicks }] : []),
+    [answeredPicks]
   )
 
   const table = useReactTable({
@@ -103,9 +102,7 @@ export function VocTable({
       const picked = next.find((f) => f.id === 'answerCnt')?.value as
         | string[]
         | undefined
-      // 하나만 골랐을 때만 서버 필터가 의미를 갖는다(둘 다 = 아무것도 = 전체)
-      if (!picked || picked.length !== 1) onFilterAnswered(undefined)
-      else onFilterAnswered(picked[0] === 'true')
+      onFilterPicked(picked ?? [])
     },
 
     getCoreRowModel: getCoreRowModel(),

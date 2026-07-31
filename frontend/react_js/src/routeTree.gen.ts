@@ -33,6 +33,8 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
+import { Route as AuthenticatedManagementProjectIndexRouteImport } from './routes/_authenticated/management/project/index'
+import { Route as AuthenticatedManagementCompanyIndexRouteImport } from './routes/_authenticated/management/company/index'
 import { Route as AuthenticatedContentsVocIndexRouteImport } from './routes/_authenticated/contents/voc/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
@@ -165,6 +167,18 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedManagementProjectIndexRoute =
+  AuthenticatedManagementProjectIndexRouteImport.update({
+    id: '/management/project/',
+    path: '/management/project/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagementCompanyIndexRoute =
+  AuthenticatedManagementCompanyIndexRouteImport.update({
+    id: '/management/company/',
+    path: '/management/company/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsVocIndexRoute =
   AuthenticatedContentsVocIndexRouteImport.update({
     id: '/contents/voc/',
@@ -218,6 +232,8 @@ export interface FileRoutesByFullPath {
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
   '/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
+  '/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
+  '/management/project/': typeof AuthenticatedManagementProjectIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -246,6 +262,8 @@ export interface FileRoutesByTo {
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
   '/contents/voc': typeof AuthenticatedContentsVocIndexRoute
+  '/management/company': typeof AuthenticatedManagementCompanyIndexRoute
+  '/management/project': typeof AuthenticatedManagementProjectIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -277,6 +295,8 @@ export interface FileRoutesById {
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
   '/_authenticated/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
+  '/_authenticated/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
+  '/_authenticated/management/project/': typeof AuthenticatedManagementProjectIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -308,6 +328,8 @@ export interface FileRouteTypes {
     | '/contents/notice/'
     | '/contents/report/'
     | '/contents/voc/'
+    | '/management/company/'
+    | '/management/project/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -336,6 +358,8 @@ export interface FileRouteTypes {
     | '/contents/notice'
     | '/contents/report'
     | '/contents/voc'
+    | '/management/company'
+    | '/management/project'
   id:
     | '__root__'
     | '/_authenticated'
@@ -366,6 +390,8 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
     | '/_authenticated/contents/voc/'
+    | '/_authenticated/management/company/'
+    | '/_authenticated/management/project/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -552,6 +578,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/management/project/': {
+      id: '/_authenticated/management/project/'
+      path: '/management/project'
+      fullPath: '/management/project/'
+      preLoaderRoute: typeof AuthenticatedManagementProjectIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/management/company/': {
+      id: '/_authenticated/management/company/'
+      path: '/management/company'
+      fullPath: '/management/company/'
+      preLoaderRoute: typeof AuthenticatedManagementCompanyIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/voc/': {
       id: '/_authenticated/contents/voc/'
       path: '/contents/voc'
@@ -619,6 +659,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
   AuthenticatedContentsVocIndexRoute: typeof AuthenticatedContentsVocIndexRoute
+  AuthenticatedManagementCompanyIndexRoute: typeof AuthenticatedManagementCompanyIndexRoute
+  AuthenticatedManagementProjectIndexRoute: typeof AuthenticatedManagementProjectIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -634,6 +676,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
   AuthenticatedContentsVocIndexRoute: AuthenticatedContentsVocIndexRoute,
+  AuthenticatedManagementCompanyIndexRoute:
+    AuthenticatedManagementCompanyIndexRoute,
+  AuthenticatedManagementProjectIndexRoute:
+    AuthenticatedManagementProjectIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

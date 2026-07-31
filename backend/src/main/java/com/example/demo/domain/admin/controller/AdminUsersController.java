@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateRequestDTO;
@@ -31,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminUsersController {
 	private final AdminUsersService adminUsersService;
 	

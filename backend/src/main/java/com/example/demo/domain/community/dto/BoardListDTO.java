@@ -1,5 +1,6 @@
 package com.example.demo.domain.community.dto;
 
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.entity.*;
 
 import lombok.*;
@@ -44,7 +45,9 @@ public class BoardListDTO{
 			board.getBoardCreatedAtDtm(),
 			normalTags,
 			skillTags,
-			Long.valueOf(1402L).equals(board.getBoardTypeCd()) ? "qna" : "board",
+			// FO 가 이 값으로 상세 링크를 만든다. 예전 삼항식(1402면 qna, 나머지 전부 board)은
+			// 게시판이 늘자마자 틀렸다 — 고객의 소리 글이 /board/{sq} 로 가서 400 이 났다.
+			BoardTypeCode.pathOfCode(board.getBoardTypeCd()),
 			board.getBoardCategoryCd(),
 			// 미분류(null)면 라벨도 null이다 — 뱃지를 그리지 않을지는 FO가 판단한다.
 			// '자유'로 임의 승격하면 미분류와 실제 '자유' 선택을 구분할 수 없다.

@@ -18,17 +18,18 @@ import {
   // UserX,
   Users,
   // MessagesSquare,
-  Trophy,
   ShieldAlert,
   // ShieldCheck,
   // HelpCircle,
   // AudioWaveform,
   Command,
   // GalleryVerticalEnd,
-  ListOrdered,
   ClipboardPen,
   ClipboardList,
   MessageCircleQuestion,
+  Building2,
+  Briefcase,
+  FolderKanban,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -70,6 +71,22 @@ export const sidebarData: SidebarData = {
               url: '/users',
               icon: Users,
             },
+            {
+              title: '소속 관리',
+              url: '/management/company',
+              icon: Building2,
+            },
+          ],
+        },
+        {
+          title: '프로젝트 관리',
+          icon: Briefcase,
+          items: [
+            {
+              title: '프로젝트 목록',
+              url: '/management/project',
+              icon: FolderKanban,
+            },
           ],
         },
         {
@@ -100,22 +117,9 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: '프로모션 & 이벤트',
-      items: [
-        {
-          title: '이벤트 센터',
-          icon: Trophy,
-          items: [
-            {
-              title: '활동 랭킹 집계',
-              url: '/events/ranking',
-              icon: ListOrdered,
-            },
-          ],
-        },
-      ],
-    },
+    // '프로모션 & 이벤트 > 활동 랭킹 집계'(/events/ranking)는 라우트가 없는 깨진 링크였다.
+    // 누르면 404 로 떨어져 "관리자 페이지가 고장났다"로 읽히므로 메뉴에서 뺐다.
+    // 기능을 만들 때 이 자리에 다시 넣으면 된다.
     // {
     //   title: '시스템 설정',
     //   items: [

@@ -32,6 +32,18 @@ export function resolveBoardType(item: BoardItem, listType: BoardType): 'board' 
   return item.boardType ?? (listType === 'all' ? 'board' : listType)
 }
 
+/**
+ * 이 항목의 상세로 들어갈 수 있는지.
+ *
+ * 고객의 소리 비공개 글은 목록에 남기되(다른 사람도 문의를 남기고 있다는 것이 보여야 한다)
+ * 내용은 작성자와 운영자만 본다. 서버도 상세 조회를 403으로 막지만, 링크를 눌러 에러를 보는 것보다
+ * 애초에 잠긴 항목으로 그리는 편이 낫다.
+ */
+export function canOpenDetail(item: BoardItem, viewerSq?: number): boolean {
+  if (!item.secret) return true
+  return viewerSq != null && item.userSq === viewerSq
+}
+
 // ── 게시판 카테고리 (공통코드 3200 하위) ──────────────────────────────────
 // 목록은 GET /community/board-categories 가 정본이다. 아래 상수는 서버 응답을 기다리는 동안의
 // 초기 렌더용 폴백일 뿐이므로, 카테고리를 추가할 때 이 배열을 고치는 것이 아니라 공통코드에 넣는다.

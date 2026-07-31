@@ -10,6 +10,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { vocApi } from './api/voc-api'
+import { VocDeepLink } from './components/voc-deep-link'
 import { VocDialogs } from './components/voc-dialogs'
 import { VocProvider } from './components/voc-provider'
 import { VocTable } from './components/voc-table'
@@ -33,7 +34,11 @@ export function VocList() {
         page: search.page || 1,
         size: search.pageSize || 10,
         keyword: search.keyword || undefined,
-        answered: search.answered,
+        // 하나만 골랐을 때만 서버 필터가 의미를 갖는다(둘 다 = 전체)
+        answered:
+          search.answeredPicks?.length === 1
+            ? search.answeredPicks[0] === 'true'
+            : undefined,
         sortField: search.sortField || 'createdAt',
         sortOrder: search.sortOrder || 'DESC',
       })
@@ -66,6 +71,8 @@ export function VocList() {
 
   return (
     <VocProvider refresh={fetchVocs}>
+      {/* 메일 링크(?view={sq})로 들어온 경우 해당 문의의 상세 패널을 자동으로 연다 */}
+      <VocDeepLink viewSq={search.view} rows={data} isLoading={isLoading} />
       <Header fixed>
         <Search />
         <div className='ms-auto flex items-center space-x-4'>
@@ -96,7 +103,7 @@ export function VocList() {
             totalCount={totalCount}
             page={search.page || 1}
             keyword={keyword}
-            answered={search.answered}
+            answeredPicks={search.answeredPicks || []}
             sortField={search.sortField || 'createdAt'}
             sortOrder={search.sortOrder || 'DESC'}
             setKeyword={setKeyword}
@@ -108,8 +115,14 @@ export function VocList() {
                 search: (prev) => ({ ...prev, sortField: field, sortOrder: order }),
               })
             }
-            onFilterAnswered={(answered) =>
-              navigate({ search: (prev) => ({ ...prev, answered, page: 1 }) })
+            onFilterPicked={(picks) =>
+              navigate({
+                search: (prev) => ({
+                  ...prev,
+                  answeredPicks: picks.length ? picks : undefined,
+                  page: 1,
+                }),
+              })
             }
           />
         )}

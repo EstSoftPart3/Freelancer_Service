@@ -3,13 +3,15 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
-import { fmtDate, STATUS, resolveBoardType, type BoardType } from '@/components/community/boardMeta'
+import { fmtDate, STATUS, resolveBoardType, canOpenDetail, type BoardType } from '@/components/community/boardMeta'
 import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
 interface Props {
   boardList: BoardItem[]
   boardType: BoardType
+  // 비공개 글의 잠금 판정용 — 내 글이면 열 수 있다
+  viewerSq?: number
 }
 
 interface TagRowProps {
@@ -107,7 +109,7 @@ function TagRow({ skillTags, normalTags, resolvedType }: TagRowProps) {
 }
 
 // 데스크톱(md 이상) 목록 — 헤더 없는 리스트형 행. md 미만은 BoardCardList가 담당한다.
-export default function BoardTable({ boardList, boardType }: Props) {
+export default function BoardTable({ boardList, boardType, viewerSq }: Props) {
   const isQna = boardType === 'qna'
   const isAll = boardType === 'all'
   const hasStatusCol = isQna || isAll
@@ -122,6 +124,7 @@ export default function BoardTable({ boardList, boardType }: Props) {
         const resolvedType = resolveBoardType(b, boardType)
         const isRowQna = resolvedType === 'qna'
         const status = isRowQna && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
+        const locked = !canOpenDetail(b, viewerSq)
         return (
           <li key={b.sq} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40">
             <div className="min-w-0 flex-1">
@@ -131,15 +134,25 @@ export default function BoardTable({ boardList, boardType }: Props) {
                 {isAll && <BoardTypeBadge type={resolvedType} />}
                 {b.secret && <SecretBadge />}
                 <CategoryBadge name={b.categoryNm} />
-                <Link
-                  href={`/${resolvedType}/${b.sq}`}
-                  className="min-w-0 truncate font-medium hover:text-primary hover:underline"
-                >
-                  {b.ttl}
-                  {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
-                    <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
-                  )}
-                </Link>
+                {locked ? (
+                  // 잠긴 항목은 링크로 만들지 않는다 — 눌러서 403을 보는 것보다 낫다
+                  <span
+                    className="min-w-0 truncate font-medium text-muted-foreground"
+                    title="작성자와 운영자만 볼 수 있는 문의입니다."
+                  >
+                    {b.ttl}
+                  </span>
+                ) : (
+                  <Link
+                    href={`/${resolvedType}/${b.sq}`}
+                    className="min-w-0 truncate font-medium hover:text-primary hover:underline"
+                  >
+                    {b.ttl}
+                    {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
+                      <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
+                    )}
+                  </Link>
+                )}
               </div>
               <TagRow skillTags={b.skillTags} normalTags={b.normalTags} resolvedType={resolvedType} />
             </div>

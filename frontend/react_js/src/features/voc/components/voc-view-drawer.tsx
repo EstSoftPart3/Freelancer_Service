@@ -44,7 +44,10 @@ export function VocViewDrawer({
       try {
         setIsLoading(true)
         const res = await vocApi.getVocDetail(currentRow.sq)
-        if (alive) setDetail(res.output)
+        if (!alive) return
+        setDetail(res.output)
+        // 목록 행 없이 들어온 경우(메일 링크) 여기서 처음 제목을 알게 된다
+        setAnswerTtl((prev) => prev || `[답변] ${res.output.ttl ?? ''}`)
       } catch (_) {
         toast.error('상세 조회에 실패했습니다.')
       } finally {
@@ -53,7 +56,8 @@ export function VocViewDrawer({
     }
     load()
     // 드로어를 닫았다 다른 행으로 열면 이전 문의의 답변 초안이 남아 엉뚱한 글에 달릴 수 있다.
-    setAnswerTtl(`[답변] ${currentRow.ttl}`)
+    // 메일 링크로 바로 들어온 경우 목록 행이 없어 제목이 비는데, 그때는 상세를 받은 뒤 채운다.
+    setAnswerTtl(currentRow.ttl ? `[답변] ${currentRow.ttl}` : '')
     setAnswerBody('')
     return () => {
       alive = false
@@ -91,7 +95,7 @@ export function VocViewDrawer({
       <SheetContent className='flex w-full flex-col gap-0 overflow-y-auto sm:max-w-2xl'>
         <SheetHeader className='space-y-1'>
           <div className='flex items-center gap-2'>
-            {currentRow.secret && (
+            {(detail?.secret ?? currentRow.secret) && (
               <Badge variant='outline' className='gap-1 text-muted-foreground'>
                 <Lock className='h-3 w-3' /> 비공개
               </Badge>
@@ -107,12 +111,14 @@ export function VocViewDrawer({
             </Badge>
           </div>
           <SheetTitle className='text-start text-lg'>
-            {currentRow.ttl}
+            {detail?.ttl || currentRow.ttl || '불러오는 중...'}
           </SheetTitle>
           <p className='text-start text-xs text-muted-foreground'>
-            {currentRow.userNickname ?? '탈퇴한 사용자'}
+            {detail?.userNickname ?? currentRow.userNickname ?? '탈퇴한 사용자'}
             {currentRow.userId ? ` (${currentRow.userId})` : ''} ·{' '}
-            {currentRow.createdAt?.slice(0, 16).replace('T', ' ')}
+            {(detail?.createdAt ?? currentRow.createdAt ?? '')
+              .slice(0, 16)
+              .replace('T', ' ')}
           </p>
         </SheetHeader>
 

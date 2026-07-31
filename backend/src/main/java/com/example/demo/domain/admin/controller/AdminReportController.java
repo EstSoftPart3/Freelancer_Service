@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.admin.dto.response.AdminReportListResponseDTO;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/admin/report")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminReportController {
 
     private final AdminReportService adminReportService;

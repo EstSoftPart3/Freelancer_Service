@@ -2,18 +2,19 @@
 import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
-import { fmtDate, STATUS, resolveBoardType, type BoardType } from '@/components/community/boardMeta'
+import { fmtDate, STATUS, resolveBoardType, canOpenDetail, type BoardType } from '@/components/community/boardMeta'
 import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
 interface Props {
   boardList: BoardItem[]
   boardType: BoardType
+  viewerSq?: number
 }
 
 // 모바일(md 미만) 목록 — 카드형. md 이상은 BoardTable이 담당한다.
 // 카드 전체를 Link로 감싸지 않는다(내부 태그 Link와 a-in-a 중첩 방지).
-export default function BoardCardList({ boardList, boardType }: Props) {
+export default function BoardCardList({ boardList, boardType, viewerSq }: Props) {
   if (boardList.length === 0) {
     return <div className="rounded-lg border py-12 text-center text-muted-foreground">게시글이 없습니다.</div>
   }
@@ -25,6 +26,7 @@ export default function BoardCardList({ boardList, boardType }: Props) {
         const isRowQna = resolvedType === 'qna'
         const status = isRowQna && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
         const hasTags = (b.skillTags?.length ?? 0) > 0 || (b.normalTags?.length ?? 0) > 0
+        const locked = !canOpenDetail(b, viewerSq)
         return (
           <li key={b.sq} className="rounded-lg border p-3 transition-colors hover:bg-muted/30">
             <div className="mb-1 flex items-center gap-1.5">
@@ -37,12 +39,16 @@ export default function BoardCardList({ boardList, boardType }: Props) {
                 </span>
               )}
             </div>
-            <Link href={`/${resolvedType}/${b.sq}`} className="line-clamp-2 font-medium hover:text-primary hover:underline">
-              {b.ttl}
-              {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">답변 {b.answerCnt}</span>
-              )}
-            </Link>
+            {locked ? (
+              <span className="line-clamp-2 font-medium text-muted-foreground">{b.ttl}</span>
+            ) : (
+              <Link href={`/${resolvedType}/${b.sq}`} className="line-clamp-2 font-medium hover:text-primary hover:underline">
+                {b.ttl}
+                {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">답변 {b.answerCnt}</span>
+                )}
+              </Link>
+            )}
             {hasTags && (
               <div className="mt-1.5 flex flex-wrap items-center gap-1">
                 {b.skillTags?.map((t) => (
