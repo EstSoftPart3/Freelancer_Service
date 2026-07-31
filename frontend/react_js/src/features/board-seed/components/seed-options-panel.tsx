@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,46 +33,75 @@ export function SeedOptionsPanel({ value, onChange, disabled }: Props) {
       <CardContent className='grid gap-6'>
         <section className='grid gap-3'>
           <h4 className='text-sm font-medium'>작성일시</h4>
-          <div className='grid gap-4 sm:grid-cols-2'>
-            <NumberField
-              label='과거 며칠에 분산'
-              hint='오늘부터 이 기간 안에 흩뿌립니다'
-              value={value.spreadDays}
-              min={1}
-              max={730}
-              disabled={disabled}
-              onChange={(v) => set('spreadDays', v)}
-            />
-            <div className='grid gap-1.5'>
-              <Label className='text-sm'>시간대별 비중</Label>
-              <div className='grid grid-cols-4 gap-2'>
-                {(['1일내', '7일내', '30일내', '그이전'] as const).map(
-                  (label, i) => (
-                    <div key={label} className='grid gap-1'>
-                      <Input
-                        type='number'
-                        min={0}
-                        disabled={disabled}
-                        value={value.hotWindowRatio?.[i] ?? 1}
-                        onChange={(e) => {
-                          const next = [...(value.hotWindowRatio ?? [1, 1, 1, 1])]
-                          next[i] = Number(e.target.value)
-                          set('hotWindowRatio', next)
-                        }}
-                      />
-                      <span className='text-center text-xs text-muted-foreground'>
-                        {label}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-              <p className='text-xs text-muted-foreground'>
-                전부 먼 과거로 보내면 인기글 위젯이 비어 보입니다(1·7·30일 창으로
-                고르기 때문입니다).
-              </p>
+
+          <div className='grid gap-2'>
+            <div className='inline-flex w-fit rounded-md border p-0.5'>
+              <ModeButton
+                active={value.spreadMode === 'PAST'}
+                disabled={disabled}
+                onClick={() => set('spreadMode', 'PAST')}
+              >
+                과거에 분산
+              </ModeButton>
+              <ModeButton
+                active={value.spreadMode === 'TODAY'}
+                disabled={disabled}
+                onClick={() => set('spreadMode', 'TODAY')}
+              >
+                오늘 하루
+              </ModeButton>
             </div>
+            <p className='text-xs text-muted-foreground'>
+              {value.spreadMode === 'TODAY'
+                ? '오늘 08시부터 지금 사이에 흩뿌립니다. 매일 조금씩 채울 때 씁니다 — 매일 이 모드로 돌리면 날짜가 자연스럽게 쌓입니다.'
+                : '커뮤니티를 처음 채울 때 씁니다. 이 모드로 매일 돌리면 새 글이 계속 과거로 흩어져 목록 상단이 갱신되지 않습니다.'}
+            </p>
           </div>
+
+          {value.spreadMode === 'PAST' && (
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <NumberField
+                label='과거 며칠에 분산'
+                hint='오늘부터 이 기간 안에 흩뿌립니다'
+                value={value.spreadDays}
+                min={1}
+                max={730}
+                disabled={disabled}
+                onChange={(v) => set('spreadDays', v)}
+              />
+              <div className='grid gap-1.5'>
+                <Label className='text-sm'>시간대별 비중</Label>
+                <div className='grid grid-cols-4 gap-2'>
+                  {(['1일내', '7일내', '30일내', '그이전'] as const).map(
+                    (label, i) => (
+                      <div key={label} className='grid gap-1'>
+                        <Input
+                          type='number'
+                          min={0}
+                          disabled={disabled}
+                          value={value.hotWindowRatio?.[i] ?? 1}
+                          onChange={(e) => {
+                            const next = [
+                              ...(value.hotWindowRatio ?? [1, 1, 1, 1]),
+                            ]
+                            next[i] = Number(e.target.value)
+                            set('hotWindowRatio', next)
+                          }}
+                        />
+                        <span className='text-center text-xs text-muted-foreground'>
+                          {label}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+                <p className='text-xs text-muted-foreground'>
+                  전부 먼 과거로 보내면 인기글 위젯이 비어 보입니다(1·7·30일 창으로
+                  고르기 때문입니다).
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className='grid gap-3'>
@@ -176,6 +206,35 @@ export function SeedOptionsPanel({ value, onChange, disabled }: Props) {
         </section>
       </CardContent>
     </Card>
+  )
+}
+
+/** 두 모드 중 하나를 고르는 세그먼트 버튼. */
+function ModeButton({
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  active: boolean
+  disabled?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type='button'
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'rounded px-3 py-1.5 text-sm transition-colors disabled:opacity-50',
+        active
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-muted'
+      )}
+    >
+      {children}
+    </button>
   )
 }
 

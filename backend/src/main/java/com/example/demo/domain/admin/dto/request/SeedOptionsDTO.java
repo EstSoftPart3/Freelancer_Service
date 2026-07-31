@@ -2,6 +2,8 @@ package com.example.demo.domain.admin.dto.request;
 
 import java.util.List;
 
+import com.example.demo.domain.admin.constant.SeedSpreadMode;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -25,7 +27,17 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SeedOptionsDTO {
 
-	/** 작성일시를 과거 며칠 구간에 흩뿌릴지. */
+	/**
+	 * 작성일시 분산 방식. 생략하면 {@link SeedSpreadMode#PAST}(과거 구간 분산)다.
+	 *
+	 * <p>
+	 * 매일 조금씩 채울 때는 {@link SeedSpreadMode#TODAY} 를 쓴다 — PAST 로 매일 돌리면
+	 * 새 글이 계속 과거로 흩어져 목록 상단이 갱신되지 않는다.
+	 * </p>
+	 */
+	private SeedSpreadMode spreadMode;
+
+	/** 작성일시를 과거 며칠 구간에 흩뿌릴지. {@code TODAY} 모드에서는 쓰이지 않는다. */
 	@NotNull(message = "분산 기간을 입력해주세요.")
 	@Min(value = 1, message = "분산 기간은 1일 이상이어야 합니다.")
 	@Max(value = 730, message = "분산 기간은 730일 이하여야 합니다.")
@@ -96,6 +108,11 @@ public class SeedOptionsDTO {
 
 	public boolean balanceCategoriesOrDefault() {
 		return balanceCategories == null || balanceCategories;
+	}
+
+	/** 생략 시 기존 동작(과거 분산)을 유지한다. */
+	public SeedSpreadMode spreadModeOrDefault() {
+		return spreadMode == null ? SeedSpreadMode.PAST : spreadMode;
 	}
 
 	@AssertTrue(message = "댓글 최소 개수는 최대 개수보다 클 수 없습니다.")

@@ -29,7 +29,15 @@ export interface SeedAdoptRatio {
   unresolved: number
 }
 
+/**
+ * 작성일시를 어느 구간에 흩뿌릴지.
+ * - PAST  : 과거 spreadDays 일에 분산. 커뮤니티를 처음 채울 때.
+ * - TODAY : 오늘 하루에 분산. 매일 조금씩 채울 때.
+ */
+export type SeedSpreadMode = 'PAST' | 'TODAY'
+
 export interface SeedOptions {
+  spreadMode: SeedSpreadMode
   spreadDays: number
   hotWindowRatio?: number[]
   authorUserSqs?: number[] | null

@@ -34,6 +34,27 @@
     </select>
 
     <!--
+      이미 등록된 제목만 골라낸다. 매일 시드를 돌리면 외부 AI 가 비슷한 글을 다시 만든다.
+
+      회수된 글(board_is_deleted_yn='Y')은 보지 않는다 — 지웠던 주제를 다시 올리는 건
+      막을 이유가 없다. 공지(1403)·VOC(1404)도 제외한다(시드가 만들지 않는 유형이다).
+    -->
+    <select id="findExistingTitles" resultType="java.lang.String">
+        SELECT board_ttl FROM TBL_BOARD_M
+         WHERE board_is_deleted_yn = 'N'
+           AND board_type_cd IN (1401, 1402)
+           <!--
+             공백을 제거해 비교한다. SeedPlanner.normalizeTitle 과 같은 규칙이어야 하고,
+             호출부도 공백을 제거한 제목을 넘긴다. 정확일치로 두면 "단가 협상" 과
+             "단가  협상" 이 다른 값이 돼 중복을 놓친다.
+
+             board_ttl 에는 인덱스가 없어 어차피 전체 스캔이므로 함수 적용으로 잃는 것이 없다.
+           -->
+           AND REPLACE(REPLACE(REPLACE(board_ttl, ' ', ''), '\t', ''), '\n', '') IN
+        <foreach item="t" collection="titles" open="(" separator="," close=")">#{t}</foreach>
+    </select>
+
+    <!--
       게시글 INSERT.
 
       BoardMapper.insert 와 다른 점은 세 가지다.

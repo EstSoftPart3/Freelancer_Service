@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.domain.admin.constant.SeedPostType;
+import com.example.demo.domain.admin.constant.SeedSpreadMode;
 import com.example.demo.domain.admin.dto.SeedAuthorDTO;
 import com.example.demo.domain.admin.dto.request.SeedAdoptRatioDTO;
 import com.example.demo.domain.admin.dto.request.SeedAnswerDTO;
@@ -67,10 +68,15 @@ public class SeedPlanner {
 	/** 시간대 버킷 경계(일). {@code [0~1, 1~7, 7~30, 30~spreadDays]} */
 	private static final int[] WINDOW_BOUNDS = { 0, 1, 7, 30 };
 
+	/**
+	 * @param existingTitles 이미 등록돼 있는 제목(정규화된 형태). 여기 걸리는 글은 제외한다.
+	 *                       매일 돌리면 외부 AI 가 비슷한 글을 다시 만들기 때문에 필요하다.
+	 */
 	public SeedPlanResponseDTO plan(SeedCommunityRequestDTO request,
 			List<SeedAuthorDTO> authorPool,
 			List<CommonCodeDTO> activeCategories,
-			LocalDateTime now) {
+			LocalDateTime now,
+			Set<String> existingTitles) {
 
 		SeedOptionsDTO options = request.getOptions();
 		List<SeedPostDTO> posts = request.getPosts();
@@ -96,12 +102,16 @@ public class SeedPlanner {
 		List<Long> categoryCycle = new ArrayList<>(categoryNames.keySet());
 		Collections.shuffle(categoryCycle, rnd);
 
+		// 중복 제목을 먼저 걷어낸다. 카테고리 정원과 작성자 순환이 "실제로 등록될 글" 기준으로
+		// 계산돼야 하므로 배분보다 앞에 와야 한다.
+		List<Integer> liveIndexes = filterDuplicates(posts, existingTitles, warnings);
+
 		AuthorCycle authorCycle = new AuthorCycle(authorPool, rnd);
-		Map<Integer, Long> categoryByIndex = assignCategories(posts, options, categoryCycle, rnd);
+		Map<Integer, Long> categoryByIndex = assignCategories(posts, liveIndexes, options, categoryCycle, rnd);
 
 		List<SeedPlanRowDTO> rows = new ArrayList<>();
 
-		for (int i = 0; i < posts.size(); i++) {
+		for (int i : liveIndexes) {
 			SeedPostDTO post = posts.get(i);
 			boolean isBoard = post.getType() == SeedPostType.BOARD;
 
@@ -150,6 +160,57 @@ public class SeedPlanner {
 				.build();
 	}
 
+	// ── 중복 제외 ─────────────────────────────────────────────────────────────
+
+	/**
+	 * 등록할 글의 요청 인덱스만 남긴다. 이미 있는 제목과 <b>이번 입력 안에서 겹치는 제목</b>을 뺀다.
+	 *
+	 * <p>
+	 * 후자도 필요하다 — 외부 AI 는 한 번에 20건을 만들어도 비슷한 제목을 두 번 뱉는다.
+	 * </p>
+	 */
+	private List<Integer> filterDuplicates(List<SeedPostDTO> posts, Set<String> existingTitles,
+			Set<String> warnings) {
+
+		Set<String> known = existingTitles == null ? Set.of() : existingTitles;
+		Set<String> seen = new LinkedHashSet<>();
+		List<Integer> live = new ArrayList<>();
+
+		for (int i = 0; i < posts.size(); i++) {
+			String title = posts.get(i).getTitle().strip();
+			String key = normalizeTitle(title);
+
+			if (known.contains(key)) {
+				warnings.add(String.format("%d번째 \"%s\" — 이미 등록된 제목이라 제외했습니다.", i + 1, title));
+				continue;
+			}
+			if (!seen.add(key)) {
+				warnings.add(String.format("%d번째 \"%s\" — 이번 입력 안에서 제목이 겹쳐 제외했습니다.", i + 1, title));
+				continue;
+			}
+			live.add(i);
+		}
+		return live;
+	}
+
+	/**
+	 * 제목 비교용 정규화 — <b>공백을 전부 제거한다.</b>
+	 *
+	 * <p>
+	 * 공백을 하나로 줄이는 것만으로는 부족했다. DB 조회는 결국 문자열 비교라 "단가 협상" 과
+	 * "단가  협상" 을 다른 값으로 보고, 그러면 여기서 정규화해봐야 애초에 후보로 올라오지 않는다.
+	 * 양쪽(이 메서드와 {@code AdminSeedMapper.findExistingTitles} 의 SQL)이 <b>같은 규칙</b>을
+	 * 써야 하고, SQL 에서 표현하기 쉬운 규칙이 "공백 제거" 다.
+	 * </p>
+	 *
+	 * <p>
+	 * 부수 효과로 "단가협상" 과 "단가 협상" 도 같은 제목으로 본다 — 중복 판정에서는 그 편이 맞다.
+	 * </p>
+	 */
+	public static String normalizeTitle(String title) {
+		return title == null ? "" : title.replaceAll("\\s+", "");
+	}
+
 	// ── 카테고리 ──────────────────────────────────────────────────────────────
 
 	/**
@@ -167,11 +228,13 @@ public class SeedPlanner {
 	 * 1/N 이면서 본문과 카테고리가 어긋나는 글이 최소가 된다.
 	 * </p>
 	 */
-	private Map<Integer, Long> assignCategories(List<SeedPostDTO> posts, SeedOptionsDTO options,
-			List<Long> cycle, Random rnd) {
+	private Map<Integer, Long> assignCategories(List<SeedPostDTO> posts, List<Integer> liveIndexes,
+			SeedOptionsDTO options, List<Long> cycle, Random rnd) {
 
+		// 중복으로 제외된 글은 정원 계산에서도 빠져야 한다. 안 그러면 살아남은 글에
+		// 배정될 자리가 그만큼 비어 분포가 어긋난다.
 		List<Integer> boardIndexes = new ArrayList<>();
-		for (int i = 0; i < posts.size(); i++) {
+		for (int i : liveIndexes) {
 			if (posts.get(i).getType() == SeedPostType.BOARD) {
 				boardIndexes.add(i);
 			}
@@ -463,6 +526,12 @@ public class SeedPlanner {
 	 * </p>
 	 */
 	private LocalDateTime randomCreatedAt(Random rnd, SeedOptionsDTO options, LocalDateTime now) {
+		// 매일 운영 모드 — 오늘 하루 안에서만 고른다. 하루치를 나눠 넣으면
+		// "오늘도 사람들이 글을 썼다" 처럼 보이고, 매일 돌리면 날짜가 자연스럽게 쌓인다.
+		if (options.spreadModeOrDefault() == SeedSpreadMode.TODAY) {
+			return naturalTimeOn(rnd, now.toLocalDate(), now);
+		}
+
 		int spread = options.getSpreadDays();
 		List<double[]> buckets = buildBuckets(options.getHotWindowRatio(), spread);
 

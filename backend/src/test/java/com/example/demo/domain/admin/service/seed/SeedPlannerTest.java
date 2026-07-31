@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.example.demo.domain.admin.constant.SeedPostType;
+import com.example.demo.domain.admin.constant.SeedSpreadMode;
 import com.example.demo.domain.admin.dto.SeedAuthorDTO;
 import com.example.demo.domain.admin.dto.request.SeedAdoptRatioDTO;
 import com.example.demo.domain.admin.dto.request.SeedAnswerDTO;
@@ -156,6 +158,102 @@ class SeedPlannerTest {
 				}
 			}
 		}
+	}
+
+	// ── 매일 운영 모드 ────────────────────────────────────────────────────────
+
+	@Test
+	@DisplayName("TODAY 모드는 작성일시를 전부 오늘로 찍는다 — 매일 돌려야 목록이 갱신된다")
+	void todayModeKeepsEverythingOnToday() {
+		SeedOptionsDTO options = defaultOptions();
+		options.setSpreadMode(SeedSpreadMode.TODAY);
+		options.setSpreadDays(60); // TODAY 모드에서는 무시돼야 한다
+
+		SeedPlanResponseDTO plan = plan(31L, options, mixedPosts(30), authors(5));
+
+		assertThat(plan.getRows()).allSatisfy(row -> {
+			assertThat(row.getCreatedAt().toLocalDate()).isEqualTo(NOW.toLocalDate());
+			assertThat(row.getCreatedAt()).isBeforeOrEqualTo(NOW);
+		});
+	}
+
+	@Test
+	@DisplayName("모드를 지정하지 않으면 기존 동작(과거 분산)을 유지한다")
+	void defaultsToPastSpread() {
+		SeedOptionsDTO options = defaultOptions();
+		options.setSpreadDays(60);
+
+		SeedPlanResponseDTO plan = plan(31L, options, mixedPosts(30), authors(5));
+
+		// 60일에 흩뿌리면 오늘이 아닌 글이 반드시 섞인다
+		assertThat(plan.getRows())
+				.anySatisfy(row -> assertThat(row.getCreatedAt().toLocalDate())
+						.isBefore(NOW.toLocalDate()));
+	}
+
+	// ── 중복 제외 ─────────────────────────────────────────────────────────────
+
+	@Test
+	@DisplayName("이미 등록된 제목은 제외하고 경고를 남긴다")
+	void skipsAlreadyRegisteredTitles() {
+		List<SeedPostDTO> posts = List.of(
+				board("이미 있는 글", 0), board("새로운 글", 0), board("또 다른 글", 0));
+
+		SeedPlanResponseDTO plan = plan(1L, defaultOptions(), posts, authors(5),
+				existing("이미 있는 글"));
+
+		assertThat(plan.getRows()).hasSize(2);
+		assertThat(plan.getRows()).extracting(SeedPlanRowDTO::getTitle)
+				.containsExactly("새로운 글", "또 다른 글");
+		assertThat(plan.getWarnings()).anyMatch(w -> w.contains("이미 등록된 제목"));
+	}
+
+	@Test
+	@DisplayName("공백만 다른 제목도 같은 것으로 본다")
+	void normalizesWhitespaceWhenComparingTitles() {
+		SeedPlanResponseDTO plan = plan(1L, defaultOptions(),
+				List.of(board("띄어쓰기  다른   제목", 0)), authors(5),
+				existing("띄어쓰기 다른 제목"));
+
+		assertThat(plan.getRows()).isEmpty();
+	}
+
+	/**
+	 * 호출부(서비스)는 <b>정규화된 제목</b>을 넘긴다는 것이 계약이다. 테스트도 같은 경로를 쓴다 —
+	 * 원문을 그대로 넣으면 실제 동작과 다른 것을 검증하게 된다.
+	 */
+	private Set<String> existing(String... titles) {
+		return java.util.Arrays.stream(titles)
+				.map(SeedPlanner::normalizeTitle)
+				.collect(java.util.stream.Collectors.toSet());
+	}
+
+	@Test
+	@DisplayName("이번 입력 안에서 제목이 겹쳐도 뒤엣것을 제외한다 — AI 가 같은 제목을 두 번 뱉는다")
+	void skipsDuplicatesWithinTheSameBatch() {
+		List<SeedPostDTO> posts = List.of(
+				board("같은 제목", 0), board("다른 제목", 0), board("같은 제목", 0));
+
+		SeedPlanResponseDTO plan = plan(1L, defaultOptions(), posts, authors(5));
+
+		assertThat(plan.getRows()).hasSize(2);
+		assertThat(plan.getWarnings()).anyMatch(w -> w.contains("이번 입력 안에서"));
+	}
+
+	@Test
+	@DisplayName("중복으로 빠진 글은 카테고리 정원에서도 빠진다 — 살아남은 글만 1/N 이어야 한다")
+	void excludedPostsDoNotConsumeCategoryQuota() {
+		List<SeedPostDTO> posts = new ArrayList<>();
+		for (int i = 0; i < 12; i++) {
+			posts.add(board("글 " + i, 0));
+		}
+		posts.add(board("글 0", 0)); // 배치 내 중복 1건 추가 → 살아남는 건 12건
+
+		SeedPlanResponseDTO plan = plan(1L, defaultOptions(), posts, authors(5));
+
+		assertThat(plan.getRows()).hasSize(12);
+		assertThat(plan.getSummary().getCountByCategory())
+				.allSatisfy(c -> assertThat(c.getCount()).isEqualTo(3));
 	}
 
 	// ── 카테고리 ──────────────────────────────────────────────────────────────
@@ -342,11 +440,16 @@ class SeedPlannerTest {
 
 	private SeedPlanResponseDTO plan(long seed, SeedOptionsDTO options, List<SeedPostDTO> posts,
 			List<SeedAuthorDTO> authors) {
+		return plan(seed, options, posts, authors, Set.of());
+	}
+
+	private SeedPlanResponseDTO plan(long seed, SeedOptionsDTO options, List<SeedPostDTO> posts,
+			List<SeedAuthorDTO> authors, Set<String> existingTitles) {
 		SeedCommunityRequestDTO request = new SeedCommunityRequestDTO();
 		request.setRandomSeed(seed);
 		request.setOptions(options);
 		request.setPosts(posts);
-		return planner.plan(request, authors, categories(), NOW);
+		return planner.plan(request, authors, categories(), NOW, existingTitles);
 	}
 
 	private SeedOptionsDTO defaultOptions() {

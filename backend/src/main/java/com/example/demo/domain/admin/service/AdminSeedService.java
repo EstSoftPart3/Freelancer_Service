@@ -3,6 +3,7 @@ package com.example.demo.domain.admin.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import com.example.demo.domain.admin.dto.SeedAuthorDTO;
 import com.example.demo.domain.admin.dto.SeedBoardInsertDTO;
 import com.example.demo.domain.admin.dto.SeedCommentInsertDTO;
 import com.example.demo.domain.admin.dto.request.SeedCommunityRequestDTO;
+import com.example.demo.domain.admin.dto.request.SeedPostDTO;
 import com.example.demo.domain.admin.dto.request.SeedRevokeRequestDTO;
 import com.example.demo.domain.admin.dto.response.SeedCommitResponseDTO;
 import com.example.demo.domain.admin.dto.response.SeedRevokeResponseDTO;
@@ -230,7 +232,31 @@ public class AdminSeedService {
 		List<CommonCodeDTO> categories = commonCodeMapper
 				.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode());
 
-		return seedPlanner.plan(request, authors, categories, reference);
+		return seedPlanner.plan(request, authors, categories, reference,
+				findExistingTitles(request.getPosts()));
+	}
+
+	/**
+	 * 이미 등록돼 있는 제목을 찾는다.
+	 *
+	 * <p>
+	 * <b>보내는 값과 받는 값 모두 {@link SeedPlanner#normalizeTitle} 을 거친다.</b>
+	 * SQL 쪽도 같은 규칙(공백 제거)으로 비교한다 — 한쪽만 정규화하면 후보 자체가 올라오지 않아
+	 * 정규화가 무의미해진다.
+	 * </p>
+	 */
+	private Set<String> findExistingTitles(List<SeedPostDTO> posts) {
+		List<String> titles = posts.stream()
+				.map(p -> SeedPlanner.normalizeTitle(p.getTitle()))
+				.filter(t -> !t.isEmpty())
+				.distinct()
+				.toList();
+		if (titles.isEmpty()) {
+			return Set.of();
+		}
+		return adminSeedMapper.findExistingTitles(titles).stream()
+				.map(SeedPlanner::normalizeTitle)
+				.collect(Collectors.toSet());
 	}
 
 	private Long insertBoard(SeedPlanRowDTO row) {

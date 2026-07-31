@@ -28,6 +28,7 @@ import { parseSeedJson } from './data/parse-seed-json'
 import { saveBatch } from './data/seed-batch-store'
 
 const DEFAULT_OPTIONS: SeedOptions = {
+  spreadMode: 'PAST',
   spreadDays: 60,
   hotWindowRatio: [2, 3, 3, 2],
   authorUserSqs: null,

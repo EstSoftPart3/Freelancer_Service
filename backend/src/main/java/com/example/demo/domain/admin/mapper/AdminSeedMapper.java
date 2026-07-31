@@ -36,6 +36,16 @@ public interface AdminSeedMapper {
 	List<SeedAuthorDTO> findSeedAuthors(@Param("userSqs") List<Long> userSqs);
 
 	/**
+	 * 주어진 제목 중 <b>이미 등록돼 있는 것</b>만 돌려준다.
+	 *
+	 * <p>
+	 * 매일 시드를 돌리면 외부 AI 가 비슷한 글을 다시 만든다. 회수된 글(논리삭제)은 대상이 아니다 —
+	 * 지웠던 주제를 다시 올리는 건 막을 이유가 없다.
+	 * </p>
+	 */
+	List<String> findExistingTitles(@Param("titles") List<String> titles);
+
+	/**
 	 * 게시글 한 건. <b>건당 INSERT 다.</b>
 	 *
 	 * <p>
