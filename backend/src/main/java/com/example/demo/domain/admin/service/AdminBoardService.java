@@ -10,11 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.common.util.SortDirectionUtil;
+import com.example.demo.domain.admin.constant.AdminBoardPseudoType;
 import com.example.demo.domain.admin.dto.AdminBoardListDTO;
 import com.example.demo.domain.admin.dto.response.AdminBoardDetailResponseDTO;
 import com.example.demo.domain.admin.dto.response.AdminBoardListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminBoardMapper;
 import com.example.demo.domain.admin.mapper.AdminTagMapper;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.request.BoardRequest;
@@ -150,8 +152,8 @@ public class AdminBoardService {
 
         @Transactional
         public void updateBoardMaster(Long boardSq, Long boardTypeCd, BoardRequest boardRequest) {
-                // 1. 유형에 따른 분기 (1404는 답변 테이블, 나머지는 게시판 테이블)
-                if (boardTypeCd == 1404L) {
+                // 1. 유형에 따른 분기 (의사코드 ANSWER는 답변 테이블, 나머지는 게시판 테이블)
+                if (AdminBoardPseudoType.ANSWER.equals(boardTypeCd)) {
                         updateAnswerLogic(boardSq, boardRequest);
                 } else {
                         updateBoardLogic(boardSq, boardTypeCd, boardRequest);
@@ -265,7 +267,7 @@ public class AdminBoardService {
         @Transactional(readOnly = true)
         public AdminBoardDetailResponseDTO getAdminBoardDetail(Long sq, Long boardTypeCd) {
 
-                if (boardTypeCd == 1404L) {
+                if (AdminBoardPseudoType.ANSWER.equals(boardTypeCd)) {
                         // --- [1. 답변글(ANSWER) 상세 조회] ---
                         Answer answer = answerMapper.findById(sq);
                         if (answer == null)
@@ -294,7 +296,7 @@ public class AdminBoardService {
                                         .userNickname(userNickname)
                                         .ttl(answer.getAnswerTtl())
                                         .description(answer.getAnswerDescriptionEdt())
-                                        .boardTypeCd(1404L)
+                                        .boardTypeCd(AdminBoardPseudoType.ANSWER)
                                         .mainType("ANSWER")
                                         .parentBoardSq(answer.getBoardSq())
                                         .parentBoardTypeCd(1402L)
@@ -419,8 +421,7 @@ public class AdminBoardService {
 
                         if (board != null) {
                                 receiverSq = board.getUserSq();
-                                String pathPrefix = "normal".equals(board.getBoardTyp()) ? "/board/" : "/qna/";
-                                targetUrl = pathPrefix + board.getBoardSq();
+                                targetUrl = BoardTypeCode.pathPrefixOfTyp(board.getBoardTyp()) + board.getBoardSq();
                                 notiContent = "관리자가 내 게시글에 댓글을 남겼습니다."; // 관리자용 문구로 살짝 수정
                         }
                 }

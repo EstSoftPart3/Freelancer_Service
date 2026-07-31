@@ -5,6 +5,7 @@ import { type ColumnDef, type Row } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
+import { BOARD_TYPE_BADGE } from '@/features/board/data/board-type'
 import { type AdminReport } from '../data/schema'
 import { DataTableRowActions } from './data-table-row-actions'
 import { useReport } from './report-provider'
@@ -62,17 +63,11 @@ export const reportColumns: ColumnDef<AdminReport>[] = [
       const originType = row.original.originTypeCd
       const typeNm = row.original.targetTypeNm // 명칭은 쿼리에서 맵핑한 'Q&A 질문' 등 사용
 
-      // [게시판 관리 성공 로직 이식] 배지 색상을 게시판과 통일
-      const typeMap: Record<number, string> = {
-        1401: 'bg-blue-500 hover:bg-blue-600', // 일반 게시글
-        1402: 'bg-orange-500 hover:bg-orange-600', // Q&A 질문
-        1404: 'bg-green-600 hover:bg-green-700', // 답변
-        1405: 'bg-slate-500 hover:bg-slate-600', // 댓글/대댓글
-      }
-
+      // 배지 색상은 게시물 관리와 같은 표(BOARD_TYPE_BADGE)를 쓴다 — 두 화면이
+      // 같은 유형 코드 축을 공유하므로 색이 갈리면 같은 대상이 달라 보인다.
       return (
         <Badge
-          className={`${typeMap[originType || 0] || 'bg-slate-400'} border-none text-white`}
+          className={`${BOARD_TYPE_BADGE[originType || 0]?.color || 'bg-slate-400'} border-none text-white`}
         >
           {typeNm}
         </Badge>

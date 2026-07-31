@@ -5,6 +5,7 @@ import { type ColumnDef, type Row } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
+import { BOARD_TYPE_BADGE } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { useBoard } from './board-provider'
 import { DataTableRowActions } from './data-table-row-actions'
@@ -62,13 +63,7 @@ export const boardColumns: ColumnDef<AdminBoard>[] = [
       // [확인] 현재 JSON 데이터에 boardTypeCd가 없어서 undefined가 나옵니다.
       const type = row.original.boardTypeCd as number
 
-      const typeMap: Record<number, { label: string; color: string }> = {
-        1401: { label: '일반', color: 'bg-blue-500 hover:bg-blue-600' }, // 색상 조금 더 선명하게 변경
-        1402: { label: 'Q&A', color: 'bg-orange-500 hover:bg-orange-600' },
-        1404: { label: '답변', color: 'bg-green-600 hover:bg-green-700' },
-      }
-
-      const currentType = typeMap[type] || {
+      const currentType = BOARD_TYPE_BADGE[type] || {
         label: '미정', // '알 수 없음' 대신 데이터 로드 전임을 알리는 텍스트
         color: 'bg-slate-400',
       }

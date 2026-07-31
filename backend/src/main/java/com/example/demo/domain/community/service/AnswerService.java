@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
 import com.example.demo.domain.community.dto.SkillTagDTO;
@@ -164,13 +165,17 @@ public class AnswerService {
 
 			// 본인 질문에 본인이 답변을 단 경우가 아니라면 알림 발송
 			if (!questionerSq.equals(answer.getUserSq())) {
+				// 답변은 Q&A와 고객의 소리(VOC)가 공유한다. 알림 타입·문구·링크만 갈린다.
+				// VOC 상세에는 답변 모달이 없으므로 answerSq 쿼리를 붙이지 않는다.
+				boolean isVoc = BoardTypeCode.VOC.getTyp().equals(board.getBoardTyp());
+				String targetUrl = BoardTypeCode.pathPrefixOfTyp(board.getBoardTyp()) + board.getBoardSq();
+
 				notificationService.send(
-						questionerSq, // 수신자: 질문자
+						questionerSq, // 수신자: 질문자/문의자
 						answer.getUserSq(), // 발신자: 답변자
-						2605L, // 타입: Q&A 답변 등록 (새로운 공통코드 권장)
-						"내 질문에 새로운 답변이 등록되었습니다.", // 알림 문구
-						"/qna/" + board.getBoardSq() + "?answerSq=" + answer.getAnswerSq() // 클릭 시 답변 모달 자동 오픈
-				);
+						isVoc ? 2607L : 2605L, // 타입: 고객의소리 답변 / Q&A 답변
+						isVoc ? "내 문의에 답변이 등록되었습니다." : "내 질문에 새로운 답변이 등록되었습니다.",
+						isVoc ? targetUrl : targetUrl + "?answerSq=" + answer.getAnswerSq());
 			}
 		}
 		// =======================================================

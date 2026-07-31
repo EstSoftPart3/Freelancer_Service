@@ -31,6 +31,7 @@ import {
 // 1. [에러 해결] boardApi와 AdminBoard로 임포트 변경
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { boardApi } from '../api/board-api'
+import { ANSWER_TYPE_CD } from '../data/board-type'
 import {
   templateFor,
   isHtmlEmpty,
@@ -184,7 +185,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
       if (isUpdate) fetchDetail()
       else {
         reset({
-          boardTypeCd: isAnswerMode ? '1404' : '1401',
+          boardTypeCd: isAnswerMode ? String(ANSWER_TYPE_CD) : '1401',
           categoryCd: '3201',
           title: '',
           description: '',
@@ -256,7 +257,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
         )
         await boardApi.updateBoard(
           currentRow.sq,
-          isAnswerMode ? 1404 : Number(data.boardTypeCd),
+          isAnswerMode ? ANSWER_TYPE_CD : Number(data.boardTypeCd),
           formData
         )
         toast.success(isAnswerMode ? '답변이 수정되었습니다.' : '게시글이 수정되었습니다.')

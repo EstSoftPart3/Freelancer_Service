@@ -260,7 +260,7 @@ export default function CommonHeader() {
             <DropdownMenuTrigger
               className={cn(
                 'flex items-center gap-1 text-sm font-medium outline-none transition-colors hover:text-primary',
-                isActive(['/community', '/board', '/qna']) ? 'text-primary' : 'text-foreground/70',
+                isActive(['/community', '/board', '/qna', '/voc']) ? 'text-primary' : 'text-foreground/70',
               )}
             >
               커뮤니티 <ChevronDown className="h-3 w-3" />
@@ -275,6 +275,12 @@ export default function CommonHeader() {
               <DropdownMenuItem onClick={() => router.push('/qna')}>
                 Q&A 게시판
               </DropdownMenuItem>
+              {/* 고객의 소리는 로그인 전용 — 비로그인에게 노출하면 누르는 즉시 로그인으로 튕긴다 */}
+              {loggedIn && (
+                <DropdownMenuItem onClick={() => router.push('/voc')}>
+                  고객의 소리
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -388,6 +394,11 @@ export default function CommonHeader() {
                     <Link href="/qna" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
                       Q&A 게시판
                     </Link>
+                    {loggedIn && (
+                      <Link href="/voc" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                        고객의 소리
+                      </Link>
+                    )}
                   </div>
                 )}
                 <Link

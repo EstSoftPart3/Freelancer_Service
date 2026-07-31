@@ -30,6 +30,7 @@ public class BoardResponse{
     private Long viewerSq;
     private Long categoryCd;   // 게시판 카테고리 코드. 카테고리 도입 전 글은 null(미분류)
     private String categoryNm; // 코드 라벨 — 상세 화면 뱃지 및 수정 폼 초기값에 쓰인다
+    private boolean secret;    // 비공개 글 여부(고객의 소리 전용). 수정 폼의 체크박스 초기값이 된다
 
 
     public static BoardResponse fromEntity(Board board, String userNickname, List<String> normalTags, List<SkillTagDTO> skillTags, List<AnswerListResponse> answers, List<CommentResponse> comments, Long viewerSq, List<BoardAttachmentResponse> files) {
@@ -51,7 +52,8 @@ public class BoardResponse{
 			comments,
 			viewerSq,
 			board.getBoardCategoryCd(),
-			board.getBoardCategoryNm()
+			board.getBoardCategoryNm(),
+			"Y".equals(board.getBoardIsSecretYn())
         );
     }
 	

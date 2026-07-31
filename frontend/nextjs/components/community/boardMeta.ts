@@ -1,7 +1,7 @@
 // 목록 테이블(BoardTable)·모바일 카드(BoardCardList)가 공유하는 표시용 메타 유틸.
 import type { BoardItem } from '@/types'
 
-export type BoardType = 'board' | 'qna' | 'notice' | 'all'
+export type BoardType = 'board' | 'qna' | 'notice' | 'voc' | 'all'
 
 export function fmtDate(iso: string) {
   const d = new Date(iso)
@@ -18,14 +18,17 @@ export const STATUS: Record<number, { label: string; cls: string }> = {
   1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
 }
 
-export const BOARD_TYPE_LABEL: Record<'board' | 'qna' | 'notice', string> = {
+export const BOARD_TYPE_LABEL: Record<'board' | 'qna' | 'notice' | 'voc', string> = {
   board: '일반',
   qna: 'Q&A',
   notice: '공지',
+  voc: '고객의 소리',
 }
 
 // 전체보기(all)에서는 항목별 boardType이 채워지고, 개별 게시판에서는 목록 타입을 그대로 쓴다.
-export function resolveBoardType(item: BoardItem, listType: BoardType): 'board' | 'qna' | 'notice' {
+// 고객의 소리는 전체보기(/community/boards)에 아예 포함되지 않으므로 여기서 'voc'가 나오는 것은
+// /voc 목록에서 호출한 경우뿐이다.
+export function resolveBoardType(item: BoardItem, listType: BoardType): 'board' | 'qna' | 'notice' | 'voc' {
   return item.boardType ?? (listType === 'all' ? 'board' : listType)
 }
 

@@ -125,6 +125,9 @@ export interface Comment {
 export interface AnswerSummary {
   sq: number | null
   ttl: string
+  // 목록 응답에도 본문이 들어 있다. Q&A는 모달에서 따로 조회하느라 쓰지 않지만,
+  // 고객의 소리 상세는 답변을 펼쳐 보여주므로 이 값을 그대로 렌더한다.
+  description?: string
   userNickname: string
   createdAt: string
   viewCnt: number
@@ -153,6 +156,9 @@ export interface BoardItem {
   // 라벨은 서버가 함께 내려주므로 FO가 코드→라벨 표를 유지할 필요가 없다.
   categoryCd?: number | null
   categoryNm?: string | null
+  // 비공개 글 여부 — 고객의 소리(/voc)에서만 true가 될 수 있다.
+  // 남의 비공개 글은 서버 목록 쿼리에서 걸러지므로, true로 오는 것은 내 글이거나 관리자가 볼 때다.
+  secret?: boolean
 }
 
 export interface CommunityBestItem {

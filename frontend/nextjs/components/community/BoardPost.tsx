@@ -6,7 +6,7 @@ import { Eye, ThumbsUp, Flag, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import ReportModal from '@/components/community/ReportModal'
-import { CategoryBadge } from '@/components/community/CategoryBadge'
+import { CategoryBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -27,7 +27,7 @@ const STATUS: Record<number, { label: string; cls: string }> = {
   1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
 }
 
-type BoardType = 'board' | 'qna' | 'answer' | 'notice'
+type BoardType = 'board' | 'qna' | 'answer' | 'notice' | 'voc'
 
 interface Props {
   boardInfo: BoardDetail
@@ -51,6 +51,9 @@ export default function BoardPost({
   const [reportOpen, setReportOpen] = useState(false)
 
   const isOwner = boardInfo.userSq != null && viewerSq != null && boardInfo.userSq === viewerSq
+  // 고객의 소리는 운영자에게 보내는 1:1 창구다 — 추천·신고 같은 커뮤니티 상호작용을 붙이지 않는다.
+  // (신고는 "운영자에게 운영자를 신고"하는 꼴이 되고, 추천은 비공개 글에서 의미가 없다)
+  const isVocOrNotice = boardType === 'notice' || boardType === 'voc'
 
   // 본문은 SSR 원본 그대로 렌더하고(hydration mismatch 방지) 링크 교정은 DOM에서 후처리
   const descriptionRef = useRef<HTMLDivElement>(null)
@@ -76,6 +79,7 @@ export default function BoardPost({
       normalTags: boardInfo.normalTags, skillTags: boardInfo.skillTags,
       attachments: boardInfo.attachments,
       categoryCd: boardInfo.categoryCd ?? null,
+      secret: boardInfo.secret ?? false,
     })
     router.push(`/${boardType}/register`)
   }
@@ -122,6 +126,12 @@ export default function BoardPost({
         </div>
       )}
 
+      {boardType === 'voc' && boardInfo.secret && (
+        <div className="mb-2">
+          <SecretBadge />
+        </div>
+      )}
+
       {/* 카테고리 배지 — 일반게시판에만 있는 축이고, 미분류(null)면 그리지 않는다 */}
       {boardType === 'board' && boardInfo.categoryNm && (
         <div className="mb-2">
@@ -136,7 +146,7 @@ export default function BoardPost({
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Eye className="h-3.5 w-3.5" /> 조회 {boardInfo.viewCnt}
           </span>
-          {boardType !== 'notice' && (
+          {!isVocOrNotice && (
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
               onClick={handleRecommend}
@@ -144,7 +154,7 @@ export default function BoardPost({
               <ThumbsUp className="h-3.5 w-3.5" /> 추천 {boardInfo.recommendCnt}
             </button>
           )}
-          {boardType !== 'notice' && !isOwner && viewerSq != null && (
+          {!isVocOrNotice && !isOwner && viewerSq != null && (
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
               onClick={() => setReportOpen(true)}
