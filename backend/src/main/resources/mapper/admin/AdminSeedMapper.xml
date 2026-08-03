@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminSeedMapper">
+
+    <!--
+      시드 작성자 풀.
+
+      user_id LIKE 'bot!_%' ESCAPE '!' 인 이유 — 언더스코어는 LIKE 의 한 글자 와일드카드라
+      'bot_%' 로 쓰면 botA.. botX.. 같은 실제 사용자까지 걸린다. 이스케이프 문자를 백슬래시가
+      아니라 '!' 로 둔 것은, 백슬래시가 MariaDB 문자열 리터럴에서 한 번 더 해석돼
+      (NO_BACKSLASH_ESCAPES 모드 여부에 따라) 의미가 달라지기 때문이다. '!' 는 그런 중의성이 없다.
+
+      user_type_cd = 301 (개인회원) 한정 — 관리자(303) 명의로 더미글이 올라가면
+      FO 에 운영자가 쓴 글처럼 보인다.
+    -->
+    <select id="findSeedAuthors" resultType="com.example.demo.domain.admin.dto.SeedAuthorDTO">
+        SELECT user_sq AS userSq,
+               user_id AS userId,
+               user_nickname AS userNickname
+          FROM TBL_USER_M
+         WHERE user_is_deleted_yn = 'N'
+           AND user_type_cd = 301
+        <choose>
+            <when test="userSqs != null and userSqs.size > 0">
+                AND user_sq IN
+                <foreach item="sq" collection="userSqs" open="(" separator="," close=")">#{sq}</foreach>
+            </when>
+            <otherwise>
+                AND user_id LIKE 'bot!_%' ESCAPE '!'
+            </otherwise>
+        </choose>
+         ORDER BY user_sq
+    </select>
+
+    <!--
+      이미 등록된 제목만 골라낸다. 매일 시드를 돌리면 외부 AI 가 비슷한 글을 다시 만든다.
+
+      회수된 글(board_is_deleted_yn='Y')은 보지 않는다 — 지웠던 주제를 다시 올리는 건
+      막을 이유가 없다. 공지(1403)·VOC(1404)도 제외한다(시드가 만들지 않는 유형이다).
+    -->
+    <select id="findExistingTitles" resultType="java.lang.String">
+        SELECT board_ttl FROM TBL_BOARD_M
+         WHERE board_is_deleted_yn = 'N'
+           AND board_type_cd IN (1401, 1402)
+           <!--
+             공백을 제거해 비교한다. SeedPlanner.normalizeTitle 과 같은 규칙이어야 하고,
+             호출부도 공백을 제거한 제목을 넘긴다. 정확일치로 두면 "단가 협상" 과
+             "단가  협상" 이 다른 값이 돼 중복을 놓친다.
+
+             board_ttl 에는 인덱스가 없어 어차피 전체 스캔이므로 함수 적용으로 잃는 것이 없다.
+           -->
+           AND REPLACE(REPLACE(REPLACE(board_ttl, ' ', ''), '\t', ''), '\n', '') IN
+        <foreach item="t" collection="titles" open="(" separator="," close=")">#{t}</foreach>
+    </select>
+
+    <!--
+      게시글 INSERT.
+
+      BoardMapper.insert 와 다른 점은 세 가지다.
+        - board_created_at_dtm 을 직접 넣는다 (기존 INSERT 에는 이 컬럼이 아예 없다).
+          docs/seed-community-best.sql 이 이 컬럼을 직접 INSERT 할 수 있음을 이미 보였다.
+        - board_adopt_status_cd 를 파라미터로 받는다 (기존은 1501 하드코딩).
+        - board_view_cnt / board_comment_cnt 를 넣는다.
+          댓글 수는 새로 만드는 글이라 정확히 알고 있으므로 updateCommentCnt 재집계를 생략한다
+          (원격 DB 라 50건이면 왕복 50회가 그대로 절약된다).
+
+      board_recommend_cnt 는 의도적으로 넣지 않는다 — 그 컬럼은 TBL_RECOMMENDATION_S 를
+      COUNT 해서 재집계되므로, 값만 채워두면 실제 사용자가 추천을 누르는 순간 1로 무너진다.
+    -->
+    <insert id="insertSeedBoard"
+            parameterType="com.example.demo.domain.admin.dto.SeedBoardInsertDTO"
+            useGeneratedKeys="true" keyProperty="boardSq" keyColumn="board_sq">
+        INSERT INTO TBL_BOARD_M
+            (user_sq, board_ttl, board_description_edt, board_adopt_status_cd,
+             board_typ, board_type_cd, board_category_cd, board_is_secret_yn,
+             board_view_cnt, board_comment_cnt, board_is_deleted_yn,
+             board_created_at_dtm, board_modified_at_dtm)
+        VALUES
+            (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, #{boardAdoptStatusCd},
+             #{boardTyp}, #{boardTypeCd}, #{boardCategoryCd}, 'N',
+             #{boardViewCnt}, #{boardCommentCnt}, 'N',
+             #{boardCreatedAtDtm}, #{boardCreatedAtDtm})
+    </insert>
+
+    <!--
+      답변 INSERT. AnswerMapper.insert 는 user_sq/board_sq/answer_ttl/answer_description_edt
+      네 개만 넣어서 작성일시·채택여부를 지정할 수 없다.
+    -->
+    <insert id="insertSeedAnswer"
+            parameterType="com.example.demo.domain.admin.dto.SeedAnswerInsertDTO"
+            useGeneratedKeys="true" keyProperty="answerSq" keyColumn="answer_sq">
+        INSERT INTO TBL_BOARD_ANSWER_S
+            (user_sq, board_sq, answer_ttl, answer_description_edt,
+             answer_view_cnt, answer_comment_cnt, answer_is_adopted_yn,
+             answer_is_deleted_yn, answer_created_at_dtm, answer_modified_at_dtm)
+        VALUES
+            (#{userSq}, #{boardSq}, #{answerTtl}, #{answerDescriptionEdt},
+             #{answerViewCnt}, #{answerCommentCnt}, #{answerIsAdoptedYn},
+             'N', #{answerCreatedAtDtm}, #{answerCreatedAtDtm})
+    </insert>
+
+    <!--
+      댓글 배치 INSERT. 대댓글을 만들지 않으므로 parent_comment_sq 는 항상 NULL 이고,
+      그래서 생성 PK 를 되받을 필요가 없어 유일하게 묶어서 넣을 수 있다.
+      (참조 구현: NotificationMapper.xml 의 insertNotificationBatch)
+    -->
+    <insert id="insertSeedComments">
+        INSERT INTO TBL_BOARD_COMMENT_S
+            (user_sq, parent_comment_sq, board_sq, answer_sq,
+             comment_description_txt, comment_type_cd, comment_is_deleted_yn,
+             comment_created_at_dtm, comment_modified_at_dtm)
+        VALUES
+        <foreach item="c" collection="comments" separator=",">
+            (#{c.userSq}, NULL, #{c.boardSq}, #{c.answerSq},
+             #{c.commentDescriptionTxt}, #{c.commentTypeCd}, 'N',
+             #{c.commentCreatedAtDtm}, #{c.commentCreatedAtDtm})
+        </foreach>
+    </insert>
+
+    <!-- ══ 회수 ══════════════════════════════════════════════════════════════
+
+      대상 게시글 조건. 아래 모든 회수 쿼리가 이 조각 하나를 공유한다.
+
+      user_sq 조건은 절대 빠지지 않는다 — boardSqs 에 실제 사용자의 글 번호가 섞여 들어와도
+      여기서 걸러진다. 운영 도구가 실유저 데이터를 지우는 사고를 구조적으로 막는 지점이다.
+    -->
+    <sql id="revokeBoardPredicate">
+        b.board_is_deleted_yn = 'N'
+        AND b.user_sq IN
+        <foreach item="sq" collection="userSqs" open="(" separator="," close=")">#{sq}</foreach>
+        <if test="boardSqs != null and boardSqs.size > 0">
+            AND b.board_sq IN
+            <foreach item="sq" collection="boardSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+        <if test="createdFrom != null"> AND b.board_created_at_dtm &gt;= #{createdFrom} </if>
+        <if test="createdTo != null"> AND b.board_created_at_dtm &lt;= #{createdTo} </if>
+    </sql>
+
+    <sql id="revokeBoardSelect">
+        SELECT b.board_sq FROM TBL_BOARD_M b WHERE <include refid="revokeBoardPredicate"/>
+    </sql>
+
+    <!-- 광역 회수에서만 쓰는 조건 — 대상 계정이 "남의 글" 에 단 댓글까지 걷어낸다. -->
+    <sql id="revokeCommentByAuthor">
+        c.user_sq IN
+        <foreach item="sq" collection="userSqs" open="(" separator="," close=")">#{sq}</foreach>
+        <if test="createdFrom != null"> AND c.comment_created_at_dtm &gt;= #{createdFrom} </if>
+        <if test="createdTo != null"> AND c.comment_created_at_dtm &lt;= #{createdTo} </if>
+    </sql>
+
+    <select id="countRevokeBoards" resultType="int">
+        SELECT COUNT(*) FROM TBL_BOARD_M b WHERE <include refid="revokeBoardPredicate"/>
+    </select>
+
+    <select id="countRevokeAnswers" resultType="int">
+        SELECT COUNT(*) FROM TBL_BOARD_ANSWER_S a
+         WHERE a.answer_is_deleted_yn = 'N'
+           AND a.board_sq IN (<include refid="revokeBoardSelect"/>)
+    </select>
+
+    <select id="countRevokeComments" resultType="int">
+        SELECT COUNT(*) FROM TBL_BOARD_COMMENT_S c
+         WHERE c.comment_is_deleted_yn = 'N'
+           AND (
+                c.board_sq IN (<include refid="revokeBoardSelect"/>)
+                OR c.answer_sq IN (
+                    SELECT a.answer_sq FROM TBL_BOARD_ANSWER_S a
+                     WHERE a.board_sq IN (<include refid="revokeBoardSelect"/>)
+                )
+                <if test="wide"> OR (<include refid="revokeCommentByAuthor"/>) </if>
+               )
+    </select>
+
+    <select id="findRevokeSamples" resultType="com.example.demo.domain.admin.dto.response.SeedRevokeSampleDTO">
+        SELECT b.board_sq AS boardSq,
+               b.board_ttl AS title,
+               COALESCE(u.user_nickname, '(탈퇴)') AS userNickname,
+               b.board_created_at_dtm AS createdAt,
+               b.board_type_cd AS boardTypeCd
+          FROM TBL_BOARD_M b
+          LEFT JOIN TBL_USER_M u ON u.user_sq = b.user_sq
+         WHERE <include refid="revokeBoardPredicate"/>
+         ORDER BY b.board_created_at_dtm DESC
+         LIMIT #{limit}
+    </select>
+
+    <!--
+      재집계 대상. soft delete 하기 전에 불러야 한다 — 지운 뒤에는 찾을 수 없다.
+      회수 대상 글은 어차피 화면에서 사라지므로 NOT IN 으로 빼서 왕복을 줄인다.
+    -->
+    <select id="findRecalcBoardSqs" resultType="java.lang.Long">
+        SELECT DISTINCT c.board_sq
+          FROM TBL_BOARD_COMMENT_S c
+         WHERE c.comment_is_deleted_yn = 'N'
+           AND c.board_sq IS NOT NULL
+           AND (<include refid="revokeCommentByAuthor"/>)
+           AND c.board_sq NOT IN (<include refid="revokeBoardSelect"/>)
+    </select>
+
+    <select id="findRecalcAnswerSqs" resultType="java.lang.Long">
+        SELECT DISTINCT c.answer_sq
+          FROM TBL_BOARD_COMMENT_S c
+         WHERE c.comment_is_deleted_yn = 'N'
+           AND c.answer_sq IS NOT NULL
+           AND (<include refid="revokeCommentByAuthor"/>)
+           AND c.answer_sq NOT IN (
+                SELECT a.answer_sq FROM TBL_BOARD_ANSWER_S a
+                 WHERE a.board_sq IN (<include refid="revokeBoardSelect"/>)
+               )
+    </select>
+
+    <!-- 삭제 순서: 댓글 → 답변 → 게시글. 역순이면 상위가 사라진 뒤 하위를 못 찾는다. -->
+    <update id="softDeleteRevokeComments">
+        UPDATE TBL_BOARD_COMMENT_S c
+           SET c.comment_is_deleted_yn = 'Y',
+               c.comment_modified_at_dtm = NOW()
+         WHERE c.comment_is_deleted_yn = 'N'
+           AND (
+                c.board_sq IN (<include refid="revokeBoardSelect"/>)
+                OR c.answer_sq IN (
+                    SELECT a.answer_sq FROM TBL_BOARD_ANSWER_S a
+                     WHERE a.board_sq IN (<include refid="revokeBoardSelect"/>)
+                )
+                <if test="wide"> OR (<include refid="revokeCommentByAuthor"/>) </if>
+               )
+    </update>
+
+    <update id="softDeleteRevokeAnswers">
+        UPDATE TBL_BOARD_ANSWER_S a
+           SET a.answer_is_deleted_yn = 'Y',
+               a.answer_modified_at_dtm = NOW()
+         WHERE a.answer_is_deleted_yn = 'N'
+           AND a.board_sq IN (<include refid="revokeBoardSelect"/>)
+    </update>
+
+    <!--
+      게시글은 대상 조건이 곧 삭제 조건이라 서브쿼리가 필요 없다.
+      (MySQL 계열은 UPDATE 대상 테이블을 서브쿼리에서 다시 읽는 것을 막으므로, 이 편이 안전하기도 하다)
+    -->
+    <update id="softDeleteRevokeBoards">
+        UPDATE TBL_BOARD_M b
+           SET b.board_is_deleted_yn = 'Y',
+               b.board_modified_at_dtm = NOW()
+         WHERE <include refid="revokeBoardPredicate"/>
+    </update>
+
+</mapper>
