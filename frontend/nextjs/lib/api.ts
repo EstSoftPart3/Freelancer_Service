@@ -4,10 +4,13 @@ import { getCookie, setCookie, clearAuthCookies } from '@/lib/cookies'
 import { alertStore } from '@/stores/alertStore'
 
 // 브라우저: /api/* → Next.js rewrites → 백엔드 (CORS 우회)
-// 서버 컴포넌트: 직접 백엔드 호출
+// 서버 컴포넌트: 직접 백엔드 호출 — 컨테이너 내부 주소(API_INTERNAL_BASE_URL)를 쓴다.
+// 공개 도메인을 쓰면 SSR 요청이 Cloudflare 를 한 바퀴 돌아 되돌아온다.
 export const baseUrl =
   typeof window === 'undefined'
-    ? (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api')
+    ? (process.env.API_INTERNAL_BASE_URL ??
+      process.env.NEXT_PUBLIC_API_BASE_URL ??
+      'http://localhost:8080/api')
     : '/api'
 
 const api = axios.create({ baseURL: baseUrl })

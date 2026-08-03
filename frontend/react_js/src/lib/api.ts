@@ -6,8 +6,11 @@ import axios, {
 } from 'axios'
 import { useAuthStore } from '@/stores/auth-store'
 
-export const baseUrl = 'http://localhost:8080/api'
-// export const baseUrl = 'https://job.estsw.co.kr/api'
+// 빌드 타임에 인라인된다(Vite). 값을 바꾸려면 재빌드해야 한다.
+// - 로컬 개발: 미설정 → http://localhost:8080/api
+// - 운영: '/api' — BO nginx 가 같은 오리진에서 백엔드로 프록시하므로 CORS 가 아예 발생하지 않는다.
+//   백엔드를 다른 오리진으로 직접 부르려면 절대 URL 을 넣고 SecurityConfigProd 의 CORS 허용 목록을 확인할 것.
+export const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
