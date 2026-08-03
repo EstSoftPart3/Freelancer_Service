@@ -1,0 +1,110 @@
+# 실서버(CasaOS) 배포 구성.
+#
+# 서버에는 이미 CasaOS 앱으로 등록된 컨테이너들이 돌고 있다
+# (/var/lib/casaos/apps/tender_hazel/docker-compose.yml — root 소유).
+# 그것을 건드리는 대신, **여기서 정의한 컨테이너로 갈아탄다.**
+#   기존 freelancer-api-server 는 정지만 시키고 지우지 않는다 → 롤백이 "기존 것 다시 start" 로 끝난다.
+#
+# BO 는 이 파일에 없다. 정적 파일이라 /DATA/freelancer_project/admin/ 내용만 교체하면 되고,
+# 기존 nginx 컨테이너(freelancer-admin-server)를 그대로 쓴다.
+#
+# 사용:
+#   cp .env.example .env && vi .env
+#   docker compose up -d --build
+#
+# 자세한 절차·롤백은 docs/배포-가이드.md
+name: freelancer-new
+
+services:
+  # ---------------------------------------------------------------- 백엔드 (Spring Boot)
+  # 기존 컨테이너와 같은 방식(베이스 이미지 + jar 볼륨 마운트)이라 이미지를 굽지 않는다.
+  # 배포 = jar 파일 교체 + 컨테이너 재시작.
+  backend:
+    image: eclipse-temurin:21-jdk
+    container_name: freelancer-api
+    working_dir: /app
+    command: ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "backend-0.0.1-SNAPSHOT.jar"]
+    environment:
+      # 🔴 이게 없으면 SecurityConfigDev/Prod 둘 다 @Profile 로 비활성이라
+      #    Spring Security 기본 설정(전 경로 basic auth)이 걸린다.
+      SPRING_PROFILES_ACTIVE: prod
+      # 기존 포트 매핑(8081:8081)을 유지하려면 앱도 8081 로 떠야 한다.
+      SERVER_PORT: ${BACKEND_PORT:-8081}
+      TZ: Asia/Seoul
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      BUSINESS_VERIFY_API_KEY: ${BUSINESS_VERIFY_API_KEY}
+      FILE_ENCRYPT_KEY: ${FILE_ENCRYPT_KEY}
+      FILE_UPLOAD_DIR: /app/uploads
+      NAVER_MAP_CLIENT_ID: ${NAVER_MAP_CLIENT_ID}
+      NAVER_MAP_CLIENT_SECRET: ${NAVER_MAP_CLIENT_SECRET}
+      ADMIN_MASTER_PASSWORD: ${ADMIN_MASTER_PASSWORD}
+      VOC_NOTIFY_EMAIL: ${VOC_NOTIFY_EMAIL:-}
+      BO_BASE_URL: ${BO_PUBLIC_URL:-https://admin-job.estsw.co.kr}
+    volumes:
+      # 기존 컨테이너와 동일한 마운트. jar 이 여기 있다.
+      - ${BACKEND_DIR:-/DATA/freelancer_project/backend}:/app
+      # 🔴 게시글 첨부의 실체. 세 컨테이너가 공유하는 디렉터리다.
+      - ${UPLOAD_DIR:-/DATA/freelancer_project/uploads}:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-8081}:${BACKEND_PORT:-8081}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${BACKEND_PORT:-8081}/api/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    restart: unless-stopped
+    networks:
+      - freelancer-admin
+
+  # ---------------------------------------------------------------- FO (Next.js SSR)
+  # Vue 와 달리 정적 파일이 아니라 Node 프로세스가 필요해 이미지를 굽는다.
+  frontend-next:
+    build:
+      context: ../frontend/nextjs
+      dockerfile: Dockerfile
+      args:
+        # 🔴 전부 빌드 타임에 이미지로 구워진다. 값을 바꾸면 반드시 --build 로 다시 말 것.
+        API_INTERNAL_BASE_URL: ${API_INTERNAL_BASE_URL:-http://freelancer-api:8081/api}
+        NEXT_PUBLIC_SITE_URL: ${FO_PUBLIC_URL:-https://job.estsw.co.kr}
+        NEXT_PUBLIC_NAVER_SITE_VERIFICATION: ${NAVER_SITE_VERIFICATION:-}
+        NEXT_PUBLIC_GA_ID: ${GA_ID:-}
+    image: freelancer/frontend-next:${IMAGE_TAG:-latest}
+    container_name: freelancer-next
+    environment:
+      TZ: Asia/Seoul
+    ports:
+      # 8081~8083 은 기존 컨테이너가 쓴다(api·web·admin). 8084 로 뺀다.
+      - "${FO_HOST_PORT:-8084}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - freelancer-admin
+
+networks:
+  # 서버에 이미 있는 네트워크. redis 컨테이너도 여기 붙어 있어야 백엔드가 찾는다.
+  #   docker network inspect freelancer-admin
+  # redis 가 다른 네트워크에만 있으면 아래로 붙인다:
+  #   docker network connect freelancer-admin redis
+  freelancer-admin:
+    external: true
