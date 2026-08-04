@@ -1,0 +1,164 @@
+# 운영(prod) 프로파일 — 저장소에 커밋되는 유일한 설정 파일이다.
+#
+# 규칙
+#  1. **시크릿을 여기에 적지 않는다.** 값은 전부 환경변수로 주입하고, 여기엔 키 이름만 남긴다.
+#     `${VAR}` 는 기본값이 없으므로 주입을 빠뜨리면 기동이 실패한다 — 조용히 잘못된 값으로 도는 것보다 낫다.
+#  2. `application.yml`(로컬 개발용, git-ignored)은 **Docker 이미지에 넣지 않는다**(`deploy/.dockerignore`).
+#     따라서 이 파일은 자족적이어야 한다 — base 설정을 상속받지 못한다.
+#  3. 기동은 `SPRING_PROFILES_ACTIVE=prod`. 프로파일을 안 주면 SecurityConfigDev/Prod 둘 다
+#     `@Profile` 로 비활성이라 Spring Security 기본 설정(전 경로 basic auth)이 걸린다.
+
+spring:
+  application:
+    name: freelancer-service
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 540000
+      keepalive-time: 30000
+      connection-timeout: 20000
+      validation-timeout: 5000
+
+  main:
+    web-application-type: servlet
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+
+  # 데이터 접근은 전부 MyBatis. JPA 엔티티/리포지토리는 쓰지 않는다.
+  # ddl-auto 를 절대 update/create 로 되돌리지 말 것 — 고아 테이블이 운영 DB 에 생긴다.
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    generate-ddl: false
+    show_sql: false
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    tls: true
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  servlet:
+    multipart:
+      enabled: true
+      # 게시글 첨부 한도. FO(BoardPostForm)의 검증값과 반드시 같아야 한다 —
+      # FO만 올리면 백엔드가 먼저 잘라내 원인 불명 실패가 된다.
+      max-file-size: 5MB
+      max-request-size: 20MB
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  # 서버의 기존 컨테이너가 8081:8081 로 매핑돼 있어 운영은 8081 로 뜬다.
+  port: ${SERVER_PORT:8080}
+  address: 0.0.0.0
+  servlet:
+    context-path: /api
+  tomcat:
+    max-http-form-post-size: 10MB
+  # 리버스 프록시(nginx/Cloudflare) 뒤에 있으므로 X-Forwarded-* 를 신뢰해야
+  # 리다이렉트·쿠키·로그의 클라이언트 IP 가 정상이 된다.
+  forward-headers-strategy: native
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:1800000}
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:1209600000}
+
+# 기업 인증 API (공공데이터포털 사업자등록 상태조회)
+external:
+  business-verify:
+    api-key: ${BUSINESS_VERIFY_API_KEY}
+
+logging:
+  level:
+    root: INFO
+    org.mybatis: INFO
+    org.apache.ibatis: INFO
+    org.springframework.transaction: WARN
+    org.springframework.jdbc.datasource: WARN
+    com.zaxxer.hikari: WARN
+    # p6spy 는 드라이버를 감싼 채로 두되 운영에서는 SQL 을 찍지 않는다.
+    p6spy: WARN
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    stack:
+      auto: false
+
+file:
+  # 컨테이너 내부 경로. 호스트 볼륨을 여기에 마운트한다 —
+  # 마운트를 빠뜨리면 컨테이너를 새로 띄울 때마다 업로드 파일이 전부 사라진다.
+  upload-dir: ${FILE_UPLOAD_DIR:/app/uploads}
+  resource-path: /uploads/**
+  # 첨부파일 AES 키. 바꾸면 기존 파일을 복호화할 수 없다 — 절대 재발급하지 말 것.
+  encrypt-key: ${FILE_ENCRYPT_KEY}
+
+naver:
+  map:
+    client-id: ${NAVER_MAP_CLIENT_ID}
+    client-secret: ${NAVER_MAP_CLIENT_SECRET}
+
+admin:
+  master-password: ${ADMIN_MASTER_PASSWORD}
+
+# 고객의 소리(VOC) 알림
+app:
+  voc:
+    # 접수 알림을 받을 운영자 주소. 미지정 시 발신 계정 자신에게 간다.
+    notify-email: ${VOC_NOTIFY_EMAIL:${spring.mail.username}}
+  bo:
+    # 알림 메일의 BO 바로가기 링크에 쓰인다. 미지정 시 localhost 링크가 메일로 나간다.
+    base-url: ${BO_BASE_URL:https://admin-job.estsw.co.kr}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # SecurityConfigProd 가 /actuator/** 를 permitAll 로 열어두므로 always 면
+      # DB URL·Redis 상태가 인터넷에 그대로 노출된다. 운영은 UP/DOWN 만 내보낸다.
+      show-details: never
+      show-components: never
+  health:
+    mail:
+      enabled: false

@@ -1,0 +1,157 @@
+# 로컬 개발용 설정 템플릿.
+#
+#   cp application.yml.example application.yml   후 <...> 자리를 채운다.
+#   application.yml 은 git-ignored 다 — 실제 값이 들어가므로 절대 커밋하지 말 것.
+#
+# 운영 배포는 이 파일을 쓰지 않는다. `application-prod.yml`(커밋됨) + 환경변수 조합이다.
+
+spring:
+  profiles:
+    active: dev # 로컬은 dev. 운영은 SPRING_PROFILES_ACTIVE=prod 로 주입한다.
+
+  datasource:
+    url: jdbc:p6spy:mariadb://<DB_HOST>:3306/freelancer_project?useUnicode=true&characterEncoding=UTF-8
+    username: <DB_USERNAME>
+    password: <DB_PASSWORD>
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 540000
+      keepalive-time: 30000
+      connection-timeout: 20000
+      validation-timeout: 5000
+
+  main:
+    web-application-type: servlet
+
+  # 레디스는 본인 로컬에 설치 후 사용하세요.
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: <REDIS_PASSWORD>
+
+  # 이 프로젝트는 데이터 접근을 전부 MyBatis로 한다. JPA 엔티티/리포지토리는 사용하지 않는다.
+  # (과거 @Entity 잔재 때문에 Hibernate가 클래스명 그대로 빈 테이블을 자동 생성하던 문제가 있었음)
+  # ddl-auto 를 절대 update/create 로 되돌리지 말 것.
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    generate-ddl: false
+    show_sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <GMAIL_ADDRESS>
+    password: <GMAIL_APP_PASSWORD> # 구글 계정 > 보안 > 앱 비밀번호
+    protocol: smtp
+    tls: true
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  servlet:
+    multipart:
+      enabled: true
+      # 게시글 첨부 한도. FO(BoardPostForm)의 검증값과 반드시 같아야 한다 —
+      # FO만 올리면 백엔드가 먼저 잘라내 원인 불명 실패가 된다.
+      max-file-size: 5MB
+      max-request-size: 20MB
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  tomcat:
+    max-http-form-post-size: 10MB
+
+jwt:
+  secret: <JWT_SECRET> # 32바이트 이상
+  access-token-expiration: 1800000
+  refresh-token-expiration: 1209600000
+
+# 기업 인증 API (공공데이터포털 사업자등록 상태조회)
+external:
+  business-verify:
+    api-key: <BUSINESS_VERIFY_API_KEY>
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.mybatis: INFO
+    org.springframework.transaction: DEBUG
+    org.apache.ibatis: INFO
+    org.springframework.jdbc.datasource: WARN
+    com.zaxxer.hikari: WARN
+
+# AWS S3
+cloud:
+  aws:
+    credentials:
+      access-key: <AWS_ACCESS_KEY>
+      secret-key: <AWS_SECRET_KEY>
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: <AWS_S3_BUCKET>
+    stack:
+      auto: false
+
+file:
+  # 윈도우 로컬 경로 (폴더는 자동으로 생성됩니다)
+  upload-dir: C:/freelancer/uploads
+  # 브라우저에서 접근할 때 사용할 가상 경로
+  resource-path: /uploads/**
+  # 첨부파일 AES 키(32자). 운영과 값이 다르면 서로의 파일을 복호화할 수 없다.
+  encrypt-key: "<FILE_ENCRYPT_KEY_32CHARS>"
+
+# Naver 지도 API
+naver:
+  map:
+    client-id: <NAVER_MAP_CLIENT_ID>
+    client-secret: <NAVER_MAP_CLIENT_SECRET>
+
+# 관리자 마스터 비밀번호
+admin:
+  master-password: <ADMIN_MASTER_PASSWORD>
+
+# 고객의 소리(VOC) 알림 — 미지정 시 발신 계정 자신에게 가고, BO 링크는 localhost:5173 이다.
+# app:
+#   voc:
+#     notify-email: <운영자 주소>
+#   bo:
+#     base-url: http://localhost:5173
+
+# Health Check
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    mail:
+      enabled: false

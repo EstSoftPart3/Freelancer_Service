@@ -5,7 +5,11 @@
 import { cache } from 'react'
 import type { BoardDetail, ProjectDetail } from '@/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api'
+// 서버 전용이므로 컨테이너 내부 주소를 우선 쓴다(공개 도메인이면 Cloudflare 를 한 바퀴 돈다).
+const baseUrl =
+  process.env.API_INTERNAL_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  'http://localhost:8080/api'
 
 export async function safeGet<T>(path: string, fallback: T, opts?: { revalidate?: number }): Promise<T> {
   try {

@@ -27,7 +27,11 @@ export const metadata: Metadata = {
 // /projects/popular 는 ApiResponse 래퍼 없이 List<>를 직접 반환해 safeGet(output 언래핑)을 못 쓴다
 async function fetchInitialPopularProjects(): Promise<PopularProject[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api'
+    // 서버 전용 — 컨테이너 내부 주소 우선(lib/fetchers.ts 와 같은 규칙)
+    const baseUrl =
+      process.env.API_INTERNAL_BASE_URL ??
+      process.env.NEXT_PUBLIC_API_BASE_URL ??
+      'http://localhost:8080/api'
     const res = await fetch(`${baseUrl}/projects/popular?sortType=views`, { cache: 'no-store' })
     if (!res.ok) return []
     const data = (await res.json()) as PopularProject[]

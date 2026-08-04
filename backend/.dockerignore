@@ -1,0 +1,14 @@
+# 🔴 로컬 개발용 설정에는 DB·JWT·S3·Gmail 시크릿이 평문으로 들어 있다.
+#    이미지에 구워지면 이미지를 가진 누구나 읽을 수 있으므로 반드시 제외한다.
+#    운영은 application-prod.yml + 환경변수를 쓴다.
+src/main/resources/application.yml
+
+build/
+bin/
+.gradle/
+.settings/
+.vscode/
+.apt_generated/
+.apt_generated_tests/
+bootrun.log
+*.log
