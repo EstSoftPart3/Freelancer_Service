@@ -1,6 +1,6 @@
 # deploy/
 
-실서버(CasaOS) 배포 구성.
+실서버(CasaOS) 배포 구성. **2026-08-04 실제 배포 완료.**
 
 **절차·롤백·문제 해결은 `docs/배포-가이드.md` 를 볼 것.** 이 파일은 구성 요약이다.
 서버 구조(도메인·컨테이너·경로)는 `docs/서버-인프라-현황.md` 에 있다.
@@ -9,40 +9,50 @@
 
 | 파일 | 용도 |
 |---|---|
-| `docker-compose.yml` | 백엔드(jar 마운트) + FO(Next.js 이미지 빌드) |
+| `docker-compose.yml` | 백엔드(jar 마운트) + FO(Next.js 이미지) + BO(nginx + 정적파일) |
+| `bo-nginx.conf` | BO 컨테이너의 nginx 설정(SPA 폴백) |
 | `.env.example` | 운영 값 템플릿. `.env` 로 복사해 채운다(**커밋 금지**) |
+| `monitoring-uplink-patch.sh` | 서버 watchdog 에 적용한 업링크 판정 함수(적용 완료, 기록용) |
 
-BO 는 여기 없다. 정적 파일이라 `/DATA/freelancer_project/admin/` 내용만 교체하면 되고
-기존 nginx 컨테이너를 그대로 쓴다.
+## 배포 방식 — 포트를 그대로 물려받는다
 
-## 배포 방식
+기존 컨테이너를 **정지**시키고 같은 포트로 새 컨테이너를 올린다.
+→ **NPM·Cloudflare 설정 변경 0건.**
 
-```
-백엔드  jar 교체 + 새 컨테이너로 갈아타기   롤백: 기존 컨테이너 다시 start
-BO     정적 파일 교체                      롤백: 백업 tar 복원
-FO     새 컨테이너 + NPM 포트 전환          롤백: NPM 을 8082(구 Vue)로
-```
+| 포트 | 기존 (정지) | 신규 |
+|---|---|---|
+| 8081 | `freelancer-api-server` | `freelancer-api` |
+| 8082 | `freelancer-web-server` (Vue) | `freelancer-next` |
+| 8083 | `freelancer-admin-server` | `freelancer-bo` |
 
-기존 컨테이너(`freelancer-api-server` 등)는 **정지만 하고 지우지 않는다** — 그게 롤백 수단이다.
+기존 컨테이너와 `/DATA` 파일을 **전혀 건드리지 않으므로** 별도 백업이 필요 없고,
+롤백은 `docker compose down` + 기존것 `docker start` 로 끝난다.
+배포 파일은 전부 `~/freelancer/`(estsoft 소유) → **sudo 불필요.**
 
 ## 빠른 시작
 
 ```bash
 cd ~/freelancer/deploy
-cp .env.example .env && vi .env
-docker network inspect freelancer-admin --format '{{range .Containers}}{{.Name}} {{end}}'  # redis 확인
+cp .env.example .env && chmod 600 .env && vi .env
+
 docker stop freelancer-api-server
-docker compose up -d --build
-docker compose ps
+docker compose up -d backend                       # ① 백엔드 먼저
+DOCKER_BUILDKIT=0 docker compose build frontend-next   # ② FO 빌드(백엔드 필요)
+docker stop freelancer-web-server freelancer-admin-server
+docker compose up -d                               # ③ 교체
 ```
 
-전환 후 **Cloudflare Purge Everything 필수.** 잊으면 배포가 안 된 것처럼 보인다.
+## 함정 (전부 실제로 겪은 것)
 
-## 주의
-
-- `SPRING_PROFILES_ACTIVE=prod` 가 없으면 Security 설정이 아예 활성화되지 않는다
-  (`SecurityConfigDev`/`Prod` 둘 다 `@Profile` 이 걸려 있다)
-- `API_INTERNAL_BASE_URL` 에 공개 도메인을 넣으면 Next rewrite 가 자기 자신을 가리켜 무한 루프가 된다
-- `NEXT_PUBLIC_*` 과 `API_INTERNAL_BASE_URL` 은 **빌드 타임에 이미지로 구워진다** — 바꾸면 `--build` 필수
-- `FILE_ENCRYPT_KEY` 를 바꾸면 기존 첨부를 복호화할 수 없다
-- 컨테이너 시간대는 KST 고정. UTC 면 모집 마감 판정이 9시간 어긋난다
+- **`DOCKER_BUILDKIT=0` 이 필요하다** — `build.network: estsoft` 를 BuildKit 이 지원하지 않는다.
+  네트워크가 필요한 이유는 `sitemap.xml` 이 **빌드 시점에 백엔드를 호출**하는 정적 프리렌더이기 때문.
+  그래서 **백엔드를 먼저 띄워야 한다.** 안 하면 빈 sitemap 이 조용히 구워진다.
+- **`API_INTERNAL_BASE_URL` 은 빌드 ARG 와 런타임 env 양쪽 다 필요하다.**
+  `NEXT_PUBLIC_` 이 없는 변수는 번들에 인라인되지 않고 서버가 요청마다 읽는다.
+  런타임 쪽을 빠뜨리면 SSR·sitemap 이 **에러 없이** 빈 값으로 폴백한다.
+- **`~/freelancer/admin/uploads` 를 미리 만들어야 한다** — 없으면 BO 가
+  `read-only file system` 으로 기동 실패한다(ro 마운트 안에 겹쳐 마운트하기 때문).
+- **BO 는 `VITE_API_BASE_URL` 을 주고 빌드해야 한다** — 안 주면 localhost 로 나간다.
+- `SPRING_PROFILES_ACTIVE=prod` 가 없으면 Security 가 아예 비활성이다(Dev/Prod 둘 다 `@Profile`).
+- `FILE_ENCRYPT_KEY` 를 바꾸면 기존 첨부를 복호화할 수 없다.
+- 컨테이너 TZ 는 KST 고정. UTC 면 모집 마감 판정이 9시간 어긋난다.
