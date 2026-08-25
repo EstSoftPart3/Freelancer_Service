@@ -1,13 +1,13 @@
 // Schema.org JSON-LD 빌더 — components/seo/JsonLd.tsx로 렌더한다.
 // 원칙: 소스에 없는 값은 지어내지 않고 생략한다(잘못된 구조화 데이터는 없느니만 못함).
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, stripHtmlToExcerpt } from '@/lib/seo'
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, BRAND_LOGO_PATH, stripHtmlToExcerpt } from '@/lib/seo'
 import type { BoardDetail, ProjectDetail } from '@/types'
 
 const ORGANIZATION = {
   '@type': 'Organization',
   name: SITE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/img/logos/Company_logo.png`,
+  logo: `${SITE_URL}${BRAND_LOGO_PATH}`,
 } as const
 
 export function organizationJsonLd() {

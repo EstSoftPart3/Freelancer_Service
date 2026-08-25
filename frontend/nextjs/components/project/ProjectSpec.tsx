@@ -179,7 +179,7 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
         <div className="md:sticky md:top-24 md:order-2 md:col-span-5 md:self-start">
           <Card className="relative">
             <div className="absolute right-3 top-3 text-xs text-muted-foreground">
-              조회수: {project.projectViewCnt}
+              조회수: {project.projectViewCnt} · 지원 {project.projectCandidateCnt ?? 0}건
             </div>
             <CardHeader>
               <div className="flex items-center gap-4">

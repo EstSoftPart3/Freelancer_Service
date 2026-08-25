@@ -149,9 +149,9 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
           ))}
         </div>
 
-        {/* 조회수 */}
+        {/* 조회수·지원건수 — applicantCnt 는 사람 수가 아니라 이력서 건수라 "건"으로 썼다 */}
         <div className="mt-2 text-right text-xs text-muted-foreground">
-          조회수: {project.viewCnt}
+          조회수: {project.viewCnt} · 지원 {project.applicantCnt ?? 0}건
         </div>
       </div>
     </div>

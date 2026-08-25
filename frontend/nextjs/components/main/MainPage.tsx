@@ -23,21 +23,41 @@ export interface PopularProject {
 
 type SortType = 'views' | 'scraps' | 'apps'
 
-const SLIDES = [
+type Slide = {
+  title: string
+  subtitle: string
+  action: 'calendar' | 'ad'
+  /** 배너 이미지 경로. 있으면 이미지로, 없으면 텍스트로 렌더한다 */
+  imageUrl?: string
+  /** 클릭 시 열 외부 링크. 없으면 "준비중입니다" 알러트 */
+  linkUrl?: string
+}
+
+// 광고 3장은 현재 임시 소재(public/img/ads/*.svg)다.
+// 실제 소재가 나오면 이미지 파일과 linkUrl 만 교체하면 된다.
+const SLIDES: Slide[] = [
   {
     title: '관심있는 프로젝트 공고 일정\n달력에서 바로 확인하세요',
     subtitle: '스크랩한 기업 프로젝트의 모집 일정 캘린더에서 한눈에 확인하세요',
-    action: 'calendar' as const,
+    action: 'calendar',
   },
   {
-    title: '광고 1\n광고가 들어갈 예정입니다.',
-    subtitle: '광고 내용',
-    action: 'ad' as const,
+    title: '프리랜서 단가 협상 가이드',
+    subtitle: '임시 광고 배너 1',
+    action: 'ad',
+    imageUrl: '/img/ads/ad-1.svg',
   },
   {
-    title: '광고 2\n광고가 들어갈 예정입니다.',
-    subtitle: '광고 내용',
-    action: 'ad' as const,
+    title: 'IT 프리랜서 세무 상담',
+    subtitle: '임시 광고 배너 2',
+    action: 'ad',
+    imageUrl: '/img/ads/ad-2.svg',
+  },
+  {
+    title: '개발자 채용 브랜딩',
+    subtitle: '임시 광고 배너 3',
+    action: 'ad',
+    imageUrl: '/img/ads/ad-3.svg',
   },
 ]
 
@@ -81,17 +101,23 @@ export default function MainPage({ initialProjects }: Props = {}) {
     return () => { if (autoRef.current) clearInterval(autoRef.current) }
   }, [nextSlide])
 
-  const handleSlideClick = (action: 'calendar' | 'ad') => {
-    if (action === 'calendar') {
+  const handleSlideClick = (slide: Slide) => {
+    if (slide.action === 'calendar') {
       if (!isLoggedIn()) {
         alertStore.show('로그인이 필요한 서비스입니다.', 'danger')
         router.push('/login')
         return
       }
       router.push('/mypage/calendar')
-    } else {
-      alertStore.show('준비중입니다.', 'danger')
+      return
     }
+    // 광고 — 링크가 있으면 새 탭으로. noopener 는 열린 페이지가 window.opener 로
+    // 우리 탭을 조작하는 것(탭네비깅)을 막는다.
+    if (slide.linkUrl) {
+      window.open(slide.linkUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    alertStore.show('준비중입니다.', 'danger')
   }
 
   const fetchPopularProjects = useCallback(async (sortType: SortType) => {
@@ -130,25 +156,32 @@ export default function MainPage({ initialProjects }: Props = {}) {
   return (
     <div className="bg-[#f8f9fa]">
       {/* 페이지 대표 h1 — 슬라이드 제목은 h2로 강등(페이지당 h1 1개 원칙), 시각적으로는 숨김 */}
-      <h1 className="sr-only">Freelancer Service — 프리랜서와 기업을 연결하는 매칭 플랫폼</h1>
+      <h1 className="sr-only">Ctrl + F — IT 프리랜서와 기업을 연결하는 프로젝트 매칭 플랫폼</h1>
 
       {/* ── 배너 캐러셀 ── */}
       <section className="relative h-[64vh] w-full overflow-hidden">
         {SLIDES.map((slide, i) => (
           <div
             key={i}
-            onClick={() => handleSlideClick(slide.action)}
+            onClick={() => handleSlideClick(slide)}
             className={cn(
-              'absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-white px-8 transition-opacity duration-500 md:px-[140px]',
+              'absolute inset-0 cursor-pointer bg-white transition-opacity duration-500',
               i === currentSlide ? 'z-10 opacity-100' : 'z-0 opacity-0',
             )}
           >
-            <h2 className="mb-6 whitespace-pre-line text-center text-3xl font-bold leading-snug text-[#2c3e50] md:text-4xl">
-              {slide.title}
-            </h2>
-            <p className="text-center text-base text-muted-foreground md:text-lg">
-              {slide.subtitle}
-            </p>
+            {slide.imageUrl ? (
+              // object-cover 라 좌우가 잘린다 — 소재의 핵심은 가운데에 두어야 한다.
+              <img src={slide.imageUrl} alt={slide.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center px-8 md:px-[140px]">
+                <h2 className="mb-6 whitespace-pre-line text-center text-3xl font-bold leading-snug text-[#2c3e50] md:text-4xl">
+                  {slide.title}
+                </h2>
+                <p className="text-center text-base text-muted-foreground md:text-lg">
+                  {slide.subtitle}
+                </p>
+              </div>
+            )}
           </div>
         ))}
 

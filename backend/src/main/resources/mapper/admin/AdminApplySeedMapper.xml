@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminApplySeedMapper">
+
+    <!--
+      봇 판정 조건. AdminSeedMapper 와 같은 규칙을 쓴다.
+
+      ESCAPE '!' 인 이유 — 언더스코어는 LIKE 의 한 글자 와일드카드라 'bot_%' 로 두면
+      botA.., botX.. 같은 실사용자까지 걸린다. 백슬래시는 MariaDB 문자열 리터럴에서
+      한 번 더 해석돼 NO_BACKSLASH_ESCAPES 모드 여부에 따라 의미가 달라지므로 '!' 를 쓴다.
+
+      user_type_cd = 301 한정 — 관리자(303) 명의로 지원이 붙으면 기업 화면에
+      운영자가 지원한 것처럼 보인다.
+    -->
+    <sql id="botCondition">
+        u.user_is_deleted_yn = 'N'
+        AND u.user_type_cd = 301
+        AND u.user_id LIKE 'bot!_%' ESCAPE '!'
+    </sql>
+
+    <!--
+      채용중 공고.
+
+      모집중 판정은 ProjectMapper 의 조각을 그대로 가져온다. 여기서 따로 조건을 쓰면
+      FO 의 '채용중' 뱃지와 기준이 갈라져, 화면상 마감된 공고에 지원이 붙는 사고가 난다.
+    -->
+    <select id="findRecruitingProjects" resultType="com.example.demo.domain.admin.dto.ApplySeedProjectDTO">
+        SELECT p.project_sq                AS projectSq,
+               p.project_ttl               AS projectTtl,
+               c.company_nm                AS companyNm,
+               p.project_recruit_start_dt  AS recruitStartDt,
+               p.project_recruit_end_dt    AS recruitEndDt,
+               p.project_candidate_cnt     AS candidateCnt,
+               p.project_view_cnt          AS viewCnt,
+               (SELECT COUNT(*)
+                  FROM TBL_PROJECT_APPLICATION_H a
+                  JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
+                  JOIN TBL_USER_M   u ON u.user_sq   = r.user_sq
+                 WHERE a.project_sq = p.project_sq
+                   AND <include refid="botCondition" />
+               )                           AS botApplicationCnt
+          FROM TBL_PROJECT_M p
+          LEFT JOIN TBL_COMPANY_S c ON c.company_sq = p.company_sq
+         WHERE p.project_is_deleted_yn = 'N'
+         <include refid="com.example.demo.domain.project.mapper.ProjectMapper.recruitingCondition">
+             <property name="alias" value="p."/>
+         </include>
+        <if test="projectSqs != null and projectSqs.size > 0">
+            AND p.project_sq IN
+            <foreach item="sq" collection="projectSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+         ORDER BY p.project_view_cnt DESC, p.project_sq
+    </select>
+
+    <!--
+      봇 계정 + 대표 이력서.
+
+      이력서는 대표(resume_is_representative_yn='Y')를 우선하되, 없으면 가장 오래된 것을 쓴다.
+      시더가 만드는 이력서는 항상 대표라 실제로는 앞쪽이 걸린다 — 뒤쪽은 사람이 손으로
+      만들어 둔 봇 이력서까지 살려 쓰기 위한 폴백이다.
+
+      LIMIT 1 서브쿼리라 봇 하나가 이력서를 여러 개 가져도 행이 늘지 않는다.
+    -->
+    <select id="findBots" resultType="com.example.demo.domain.admin.dto.ApplySeedBotDTO">
+        SELECT u.user_sq       AS userSq,
+               u.user_id       AS userId,
+               u.user_nickname AS userNickname,
+               (SELECT r.resume_sq
+                  FROM TBL_RESUME_M r
+                 WHERE r.user_sq = u.user_sq
+                   AND r.resume_is_deleted_yn = 'N'
+                 ORDER BY r.resume_is_representative_yn DESC, r.resume_sq
+                 LIMIT 1)      AS resumeSq
+          FROM TBL_USER_M u
+         WHERE <include refid="botCondition" />
+         ORDER BY u.user_sq
+    </select>
+
+    <!-- 이미 붙어 있는 (공고, 지원자) 쌍. 봇이 아닌 실사용자 지원도 포함해야 중복을 제대로 피한다. -->
+    <select id="findExistingApplications" resultType="com.example.demo.domain.admin.dto.ApplySeedPairDTO">
+        SELECT a.project_sq AS projectSq,
+               r.user_sq    AS userSq
+          FROM TBL_PROJECT_APPLICATION_H a
+          JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
+        <if test="projectSqs != null and projectSqs.size > 0">
+         WHERE a.project_sq IN
+            <foreach item="sq" collection="projectSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+    </select>
+
+    <!--
+      지원 INSERT.
+
+      ProjectMapper.insertProjectApplication 과 다른 점은 딱 하나 —
+      project_application_created_at_dtm 을 파라미터로 받는다. 그쪽은 NOW() 하드코딩이라
+      수백 건이 전부 같은 초에 몰린다.
+
+      company_sq 는 넣지 않는다(개인 지원이라 NULL). 컬럼이 nullable 인 것을 확인했다.
+    -->
+    <insert id="insertApplication" parameterType="com.example.demo.domain.admin.dto.ApplySeedInsertDTO">
+        INSERT INTO TBL_PROJECT_APPLICATION_H (
+            project_sq,
+            resume_sq,
+            project_application_status_cd,
+            project_application_member_type_cd,
+            project_application_created_at_dtm
+        ) VALUES (
+            #{projectSq},
+            #{resumeSq},
+            #{statusCd},
+            #{memberTypeCd},
+            #{createdAtDtm}
+        )
+    </insert>
+
+    <!--
+      카운터 반영.
+
+      GREATEST(0, ...) 로 감싼 이유 — 기존 ProjectMapper.decreaseApplication 에는 음수 방어가
+      없다. 회수를 두 번 누르거나 실사용자 지원이 섞여 계산이 어긋나면 카운터가 음수로 내려가고,
+      FO 카드에 "지원 -3건" 이 뜬다. 되돌릴 방법도 없다.
+    -->
+    <update id="addCandidateCnt">
+        UPDATE TBL_PROJECT_M
+           SET project_candidate_cnt = GREATEST(0, COALESCE(project_candidate_cnt, 0) + #{delta})
+         WHERE project_sq = #{projectSq}
+    </update>
+
+    <!-- 회수 대상 집계. 미리보기와 실행이 같은 쿼리를 봐야 숫자가 어긋나지 않는다. -->
+    <select id="findBotApplicationCounts"
+            resultType="com.example.demo.domain.admin.dto.response.ApplySeedRevokeResponseDTO$Sample">
+        SELECT a.project_sq AS projectSq,
+               p.project_ttl AS projectTtl,
+               COUNT(*)      AS count
+          FROM TBL_PROJECT_APPLICATION_H a
+          JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
+          JOIN TBL_USER_M   u ON u.user_sq   = r.user_sq
+          JOIN TBL_PROJECT_M p ON p.project_sq = a.project_sq
+         WHERE <include refid="botCondition" />
+        <if test="projectSqs != null and projectSqs.size > 0">
+           AND a.project_sq IN
+            <foreach item="sq" collection="projectSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+         GROUP BY a.project_sq, p.project_ttl
+         ORDER BY COUNT(*) DESC
+    </select>
+
+    <!--
+      봇 지원 물리 삭제.
+
+      봇 조건이 절대 빠지지 않는다 — projectSqs 에 실사용자 지원이 섞인 공고가 들어와도
+      그쪽 지원은 건드리지 않는다. 운영 도구가 실데이터를 지우는 사고를 구조로 막는 지점이다.
+    -->
+    <delete id="deleteBotApplications">
+        DELETE a FROM TBL_PROJECT_APPLICATION_H a
+          JOIN TBL_RESUME_M r ON r.resume_sq = a.resume_sq
+          JOIN TBL_USER_M   u ON u.user_sq   = r.user_sq
+         WHERE <include refid="botCondition" />
+        <if test="projectSqs != null and projectSqs.size > 0">
+           AND a.project_sq IN
+            <foreach item="sq" collection="projectSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+    </delete>
+
+    <!--
+      봇 이력서에 붙일 지역코드. TBL_RESUME_M.address_sq 가 NOT NULL 이고
+      TBL_ADDRESS_S.area_code_sq 도 NOT NULL 이라 아무 값이나 넣을 수는 없다.
+
+      parent_area_code_sq IS NOT NULL 인 행만 고른다 — 부모가 없는 행은
+      시·도(서울특별시)라 시군구 자리에 들어가면 주소가 어색해진다.
+    -->
+    <select id="findAreaCodes" resultType="com.example.demo.domain.admin.dto.ApplySeedAreaDTO">
+        SELECT area_code_sq AS areaCodeSq,
+               area_sigungu AS sigungu
+          FROM TBL_AREA_C
+         WHERE parent_area_code_sq IS NOT NULL
+         ORDER BY area_code_sq
+    </select>
+
+</mapper>

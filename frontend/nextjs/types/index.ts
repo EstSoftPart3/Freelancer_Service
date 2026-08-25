@@ -249,6 +249,8 @@ export interface ProjectDetail {
   isScrap: 0 | 1
   projectScrapCnt: number
   projectViewCnt: number
+  /** 지원 건수(사람 수 아님 — 이력서 건수). 표기는 "지원 N건" */
+  projectCandidateCnt: number
   projectCreatedDt: string
   /** 월 단가(원 단위 KRW). 0 또는 null이면 단가 협의 */
   projectSalary?: number | null

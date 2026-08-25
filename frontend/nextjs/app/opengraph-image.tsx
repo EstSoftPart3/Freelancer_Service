@@ -18,9 +18,9 @@ export default function OpengraphImage() {
           color: '#fafafa',
         }}
       >
-        <div style={{ fontSize: 72, fontWeight: 700, display: 'flex' }}>Freelancer Service</div>
+        <div style={{ fontSize: 96, fontWeight: 700, display: 'flex' }}>Ctrl + F</div>
         <div style={{ fontSize: 32, color: '#a1a1aa', marginTop: 24, display: 'flex' }}>
-          프리랜서와 기업을 연결하는 서비스
+          IT 프리랜서와 기업을 연결하는 프로젝트 매칭 플랫폼
         </div>
       </div>
     ),

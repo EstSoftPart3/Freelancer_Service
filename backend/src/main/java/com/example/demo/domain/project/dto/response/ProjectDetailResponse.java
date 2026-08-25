@@ -32,6 +32,9 @@ public class ProjectDetailResponse {
 
     private Integer projectViewCnt;
     private Integer projectScrapCnt;
+    // 지원 건수. 사람 수가 아니라 이력서 건수다 — 한 명이 이력서 3개로 지원하면 3이 된다.
+    // 그래서 FO/BO 모두 "지원 N건"으로 표기한다.
+    private Integer projectCandidateCnt;
 
     private String projectAddress;
     private String detailedAddress;
@@ -77,6 +80,7 @@ public class ProjectDetailResponse {
 
                 .projectViewCnt(p.getProjectViewCnt())
                 .projectScrapCnt(p.getProjectScrapCnt())
+                .projectCandidateCnt(p.getProjectCandidateCnt())
 
                 .projectAddress(address)
                 .detailedAddress(p.getDetailedAddress())

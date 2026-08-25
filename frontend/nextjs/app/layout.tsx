@@ -9,21 +9,22 @@ import CommonFooter from '@/components/common/CommonFooter'
 import CommonModalContainer from '@/components/common/CommonModalContainer'
 import Providers from '@/components/common/Providers'
 import { Toaster } from '@/components/ui/sonner'
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 
 // SEO placeholder — 각 page.tsx에서 generateMetadata()로 오버라이드
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://freelancer-service.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Freelancer Service',
-    template: '%s | Freelancer Service',
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: '프리랜서와 기업을 연결하는 서비스',
+  description: SITE_DESCRIPTION,
   openGraph: {
-    title: 'Freelancer Service',
-    description: '프리랜서와 기업을 연결하는 서비스',
-    siteName: 'Freelancer Service',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_NAME,
     locale: 'ko_KR',
     type: 'website',
   },

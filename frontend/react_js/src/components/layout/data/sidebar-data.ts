@@ -31,6 +31,7 @@ import {
   Briefcase,
   FolderKanban,
   Sprout,
+  UserRoundPlus,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -87,6 +88,11 @@ export const sidebarData: SidebarData = {
               title: '프로젝트 목록',
               url: '/management/project',
               icon: FolderKanban,
+            },
+            {
+              title: '봇 지원 시드',
+              url: '/management/project/apply-seed',
+              icon: UserRoundPlus,
             },
           ],
         },

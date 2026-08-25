@@ -74,7 +74,14 @@ public class SecurityConfigProd {
                         // ---- preflight·인프라 ----
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // 게시글 이미지 등 정적 리소스
+                        // 업로드 파일 서빙. 프로필·기업로고·이력서 사진이 전부 <img src="/api/files/{uuid}"> 로
+                        // 나가는데, <img> 요청에는 axios 인터셉터가 붙이는 Authorization 헤더가 없다.
+                        // 여기를 안 열면 로그인 상태에서도 401 이 나가 모든 이미지가 깨진다.
+                        // JwtAuthenticationFilter.EXCLUDE_URLS 와 반드시 짝을 이뤄야 한다 — 한쪽만 넣으면
+                        // 설정상은 공개인데 실제로는 401 이 나간다.
+                        .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
+                        // WebConfig 의 정적 리소스 매핑. 현재 프론트에서 참조하는 곳은 없다.
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                         // ---- 비로그인 계정 플로우 ----
                         .requestMatchers(HttpMethod.POST, "/login", "/refresh-token", "/logout").permitAll()

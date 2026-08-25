@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -27,6 +29,33 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileController {
+
+    /**
+     * 확장자 → MIME 타입. Files.probeContentType 은 리눅스 컨테이너(eclipse-temurin)에
+     * /etc/mime.types 가 없으면 항상 null 을 돌려준다. 그러면 application/octet-stream 이
+     * 나가고, 아래의 nosniff 와 겹쳐 브라우저가 이미지 렌더링을 거부한다.
+     * 로컬 Windows 는 레지스트리에서 판정하므로 이 문제가 재현되지 않는다.
+     */
+    private static final Map<String, String> MIME_BY_EXT = Map.ofEntries(
+            Map.entry("jpg", "image/jpeg"),
+            Map.entry("jpeg", "image/jpeg"),
+            Map.entry("png", "image/png"),
+            Map.entry("gif", "image/gif"),
+            Map.entry("webp", "image/webp"),
+            Map.entry("bmp", "image/bmp"),
+            Map.entry("svg", "image/svg+xml"),
+            Map.entry("pdf", "application/pdf"),
+            Map.entry("txt", "text/plain"),
+            Map.entry("csv", "text/csv"),
+            Map.entry("hwp", "application/x-hwp"),
+            Map.entry("hwpx", "application/hwp+zip"),
+            Map.entry("doc", "application/msword"),
+            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            Map.entry("xls", "application/vnd.ms-excel"),
+            Map.entry("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            Map.entry("ppt", "application/vnd.ms-powerpoint"),
+            Map.entry("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+            Map.entry("zip", "application/zip"));
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -57,11 +86,8 @@ public class FileController {
             byte[] decryptedBytes = fileCryptoUtil.decrypt(encryptedBytes);
             ByteArrayResource resource = new ByteArrayResource(decryptedBytes);
 
-            // 3. MIME 타입 감지
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
+            // 3. MIME 타입 감지 — 확장자 우선, 모르는 것만 probeContentType 에 맡긴다.
+            String contentType = resolveContentType(filePath, savedName);
 
             // 4. Content-Disposition 설정
             ContentDisposition contentDisposition;
@@ -98,4 +124,27 @@ public class FileController {
         }
     }
 
+    /**
+     * 확장자로 MIME 타입을 정한다. 모르는 확장자는 probeContentType 에 물어보고,
+     * 그것도 null 이면 application/octet-stream 으로 둢다.
+     */
+    private String resolveContentType(Path filePath, String savedName) {
+        int dot = savedName.lastIndexOf('.');
+        if (dot >= 0 && dot < savedName.length() - 1) {
+            String ext = savedName.substring(dot + 1).toLowerCase(Locale.ROOT);
+            String mapped = MIME_BY_EXT.get(ext);
+            if (mapped != null) {
+                return mapped;
+            }
+        }
+        try {
+            String probed = Files.probeContentType(filePath);
+            if (probed != null) {
+                return probed;
+            }
+        } catch (Exception e) {
+            log.debug("probeContentType 실패: {}", savedName);
+        }
+        return "application/octet-stream";
+    }
 }

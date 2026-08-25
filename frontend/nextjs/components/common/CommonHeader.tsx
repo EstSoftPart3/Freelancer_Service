@@ -246,8 +246,10 @@ export default function CommonHeader() {
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
         {/* 로고 */}
+        {/* 로고 — 브랜딩 이미지 수령 전 임시 타이포.
+            헤더가 64px 고정(위 style)이라 이미지로 교체할 때 높이 36~40px 안에 놓어야 한다. */}
         <Link href="/" className="text-lg font-bold leading-tight text-primary">
-          Freelancer<br />Service
+          Ctrl&nbsp;+&nbsp;F
         </Link>
 
         {/* 데스크탑 네비게이션 */}
@@ -348,7 +350,7 @@ export default function CommonHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col pt-10">
               <Link href="/" className="mb-6 text-lg font-bold text-primary">
-                Freelancer Service
+                Ctrl&nbsp;+&nbsp;F
               </Link>
               <nav className="flex flex-col gap-1">
                 <Link

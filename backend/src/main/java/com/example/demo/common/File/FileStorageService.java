@@ -68,6 +68,7 @@ public class FileStorageService {
                     log.info("비트맵 이미지 최적화 시작: {}", contentType);
 
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    boolean transcodedToJpg = false;
                     try {
                         var builder = Thumbnails.of(multipartFile.getInputStream())
                                 .size(1920, 1920)
@@ -80,9 +81,18 @@ public class FileStorageService {
                         } else {
                             // 그 외 일반 이미지는 jpg로 변환하여 용량 최소화
                             builder.outputFormat("jpg").toOutputStream(outputStream);
+                            transcodedToJpg = true;
                         }
 
                         fileBytes = outputStream.toByteArray();
+
+                        // 파일명은 변환 전 원본 확장자로 만들어졌다. 여기서 맞춰주지 않으면
+                        // .gif 이름을 달고 있는 JPEG 파일이 생긴다. 그러면 서빙할 때
+                        // Content-Type: image/gif 가 나가고 nosniff 와 겹쳐 브라우저가 렌더를 거부한다.
+                        if (transcodedToJpg) {
+                            savedName = replaceExtension(savedName, ".jpg");
+                            contentType = "image/jpeg";
+                        }
                         log.info("이미지 최적화 완료: {} -> {} bytes", multipartFile.getSize(), fileBytes.length);
                     } catch (Exception e) {
                         log.warn("이미지 최적화 실패, 원본으로 저장합니다: {}", e.getMessage());
@@ -103,7 +113,8 @@ public class FileStorageService {
             UploadedFileDTO uploadedFileDTO = new UploadedFileDTO();
             uploadedFileDTO.setOriginalName(originalName);
             uploadedFileDTO.setSavedName(savedName);
-            uploadedFileDTO.setContentType(multipartFile.getContentType());
+            // 원본이 아니라 실제 저장된 포맷을 넣는다(jpg 변환 시 image/jpeg).
+            uploadedFileDTO.setContentType(contentType);
             uploadedFileDTO.setSize((long) encryptedBytes.length);
 
             log.info("CasaOS 업로드 성공: {}", savedName);
@@ -117,6 +128,12 @@ public class FileStorageService {
 
     public String createFileName(String fileName) {
         return UUID.randomUUID().toString().concat(getFileExtension(fileName));
+    }
+
+    /** 저장파일명의 확장자를 교체한다. newExt 는 점을 포함한다(예: ".jpg"). */
+    private String replaceExtension(String savedName, String newExt) {
+        int dot = savedName.lastIndexOf('.');
+        return (dot < 0 ? savedName : savedName.substring(0, dot)).concat(newExt);
     }
 
     private String getFileExtension(String fileName) {

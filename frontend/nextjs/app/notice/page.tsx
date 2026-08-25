@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import BoardListClient from '@/components/community/BoardListClient'
-import { buildPageMetadata } from '@/lib/seo'
+import { buildPageMetadata, SITE_NAME } from '@/lib/seo'
 import { safeGet } from '@/lib/fetchers'
 import type { BoardListResponse } from '@/types'
 
 export const metadata: Metadata = buildPageMetadata({
   title: '공지사항',
-  description: 'Freelancer Service 서비스 공지사항과 업데이트 소식.',
+  description: `${SITE_NAME} 서비스 공지사항과 업데이트 소식.`,
   path: '/notice',
 })
 

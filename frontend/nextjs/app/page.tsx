@@ -9,7 +9,7 @@ const HOME_DESCRIPTION =
   'IT 프리랜서와 기업을 연결하는 프로젝트 매칭 플랫폼. 프리랜서 프로젝트 공고, 개발자 커뮤니티, 소속 모집까지 한 곳에서.'
 
 export const metadata: Metadata = {
-  // 홈은 title template('%s | Freelancer Service')를 쓰지 않고 사이트명 자체를 노출
+  // 홈은 title template('%s | ' + SITE_NAME)를 쓰지 않고 사이트명 자체를 노출
   title: { absolute: `${SITE_NAME} — ${SITE_DESCRIPTION}` },
   description: HOME_DESCRIPTION,
   alternates: { canonical: '/' },
