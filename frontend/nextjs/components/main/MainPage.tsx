@@ -33,8 +33,9 @@ type Slide = {
   linkUrl?: string
 }
 
-// 광고 3장은 현재 임시 소재(public/img/ads/*.svg)다.
-// 실제 소재가 나오면 이미지 파일과 linkUrl 만 교체하면 된다.
+// 광고 3장은 실소재(public/img/ads/*.webp, 2400x900).
+// 광고주 랜딩 URL 이 아직 없어 linkUrl 은 비워 둔다 — 클릭하면 "준비중입니다" 가 뜬다.
+// URL 을 받으면 각 슬라이드에 linkUrl 만 채우면 된다.
 const SLIDES: Slide[] = [
   {
     title: '관심있는 프로젝트 공고 일정\n달력에서 바로 확인하세요',
@@ -42,22 +43,22 @@ const SLIDES: Slide[] = [
     action: 'calendar',
   },
   {
-    title: '프리랜서 단가 협상 가이드',
-    subtitle: '임시 광고 배너 1',
+    title: '단가, 제대로 받고 계신가요? — 프리랜서 단가 협상 가이드 무료 배포',
+    subtitle: '프리랜서 단가 협상 가이드 무료 배포',
     action: 'ad',
-    imageUrl: '/img/ads/ad-1.svg',
+    imageUrl: '/img/ads/ad-1.webp',
   },
   {
-    title: 'IT 프리랜서 세무 상담',
-    subtitle: '임시 광고 배너 2',
+    title: '종합소득세, 혼자 하지 마세요 — IT 프리랜서 전문 세무 상담 첫 달 무료',
+    subtitle: 'IT 프리랜서 전문 세무 상담 첫 달 무료',
     action: 'ad',
-    imageUrl: '/img/ads/ad-2.svg',
+    imageUrl: '/img/ads/ad-2.webp',
   },
   {
-    title: '개발자 채용 브랜딩',
-    subtitle: '임시 광고 배너 3',
+    title: '좋은 개발자, 어떻게 만나세요? — 개발자 채용 브랜딩 컨설팅',
+    subtitle: '개발자 채용 브랜딩 컨설팅',
     action: 'ad',
-    imageUrl: '/img/ads/ad-3.svg',
+    imageUrl: '/img/ads/ad-3.webp',
   },
 ]
 

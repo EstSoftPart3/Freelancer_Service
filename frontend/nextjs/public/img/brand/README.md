@@ -1,18 +1,28 @@
 # 브랜딩 이미지 (Ctrl + F)
 
-여기에 넣으면 된다. 파일명은 아래 그대로 쓸 것.
+**적용 완료** — 2026-08-26. 아래는 현재 들어가 있는 파일이다.
 
-| 파일명 | 규격 | 쓰이는 곳 |
+| 파일 | 규격 | 쓰이는 곳 |
 |---|---|---|
-| `logo-horizontal.svg` (또는 `.png`) | 높이 36px 기준 / PNG면 72px 이상 | 헤더·푸터 로고 |
-| `brand-logo.png` | 512×512 정사각, 투명배경 | JSON-LD 조직 로고, favicon·apple-icon 파생 |
-| `og-image.png` | 1200×630 | 카카오톡·슬랙 링크 미리보기 |
+| `logo-horizontal.png` | 720×120 (알파) | 헤더 로고(데스크탑 h-9 / 모바일 h-8), 푸터 로고(h-6) |
+| `brand-logo.png` | 512×512 (알파) | `lib/seo.ts` 의 `BRAND_LOGO_PATH` → JSON-LD organization.logo |
+| `og-image.jpg` | 1200×630 | 카카오톡·슬랙 링크 미리보기 (`app/opengraph-image.jpg` 와 같은 소스) |
 
-## 넣은 뒤 해야 할 일
+파생물 (`app/` 아래, 이 파일들에서 만들어졌다)
 
-1. `lib/seo.ts` 의 `BRAND_LOGO_PATH` 를 `/img/brand/brand-logo.png` 로 변경
-2. `components/common/CommonHeader.tsx` 의 텍스트 로고(2곳)를 `<img>` 로 교체
-   — 헤더 높이가 64px 고정이라 로고는 36~40px 안에 들어가야 한다
-3. `components/common/CommonFooter.tsx` 의 `<strong>Ctrl + F</strong>` 교체
-4. `app/icon.tsx` / `app/apple-icon.tsx` / `app/opengraph-image.tsx` 의 임시 마크 교체
-5. `app/favicon.ico` 교체
+| 파일 | 규격 | 비고 |
+|---|---|---|
+| `app/icon.png` | 512×512 | 파비콘/PWA. 여백 없이 심볼이 꽉 차게 |
+| `app/apple-icon.png` | 180×180 | iOS 는 알파를 검게 칠하므로 `#18181b` 배경을 깔았다 |
+| `app/favicon.ico` | 16/32/48/64 | PNG 를 담는 ICO. sharp 가 ico 를 못 써서 직접 조립했다 |
+| `app/opengraph-image.jpg` | 1200×630 | `og-image.jpg` 사본 |
+
+## 소재를 다시 만들 때 주의
+
+받은 원본은 "투명 배경"처럼 보였지만 **체커보드 무늬가 그려진 불투명 PNG** 였다
+(알파 채널 최솟값이 255). 그대로 헤더에 얹으면 격자가 보인다.
+테두리에서 flood fill 로 배경(밝고 무채색인 연결영역)만 골라 알파 0 으로 바꿔서 해결했다.
+키캡 안의 흰 `F` 는 어두운 키캡에 둘러싸여 테두리에서 도달하지 못하므로 안전하다.
+
+원본 4장은 `docs/오픈-준비-2026-08/브랜딩-원본/` 에 있다(git 밖).
+합계 27MB 였던 것을 약 400KB 로 줄였다.

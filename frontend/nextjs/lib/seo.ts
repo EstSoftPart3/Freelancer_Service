@@ -9,10 +9,10 @@ export const SITE_NAME = 'Ctrl + F'
 export const SITE_SLUG = 'ctrl-f'
 export const SITE_DESCRIPTION = 'IT 프리랜서와 기업을 연결하는 프로젝트 매칭 플랫폼'
 
-// 조직 로고(JSON-LD organization.logo). 현재는 기업 기본이미지와 같은 파일을 쓰고 있다.
-// 브랜딩 심볼(512×512 PNG)을 받으면 '/img/brand/brand-logo.png' 로 바꾸면 끝난다 —
-// 둘을 같은 파일로 두면 기업 프로필 이미지를 바꿀 때 서비스 로고까지 같이 바뀜다.
-export const BRAND_LOGO_PATH = '/img/logos/Company_logo.png'
+// 조직 로고(JSON-LD organization.logo). 512×512 브랜드 심볼.
+// 기업 기본이미지(/img/logos/Company_logo.png)와 일부러 분리해 둔다 —
+// 같은 파일로 두면 기업 프로필 기본이미지를 바꿀 때 서비스 로고까지 같이 바뀐다.
+export const BRAND_LOGO_PATH = '/img/brand/brand-logo.png'
 
 // HTML 본문에서 검색결과 미리보기용 발췌문 생성.
 // lib/htmlContent.ts는 DOMParser 기반(클라이언트 전용)이라 서버에서는 정규식으로 처리한다.

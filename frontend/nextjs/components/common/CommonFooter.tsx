@@ -3,9 +3,16 @@ export default function CommonFooter() {
   return (
     <footer className="border-t bg-muted/40">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <img
+            src="/img/brand/logo-horizontal.png"
+            alt="Ctrl + F"
+            width={119}
+            height={20}
+            className="h-5 w-auto opacity-60"
+          />
           <p className="text-sm text-muted-foreground">
-            <strong>Ctrl + F</strong> — © Copyright 2026. All Rights Reserved.
+            © Copyright 2026. All Rights Reserved.
           </p>
         </div>
       </div>

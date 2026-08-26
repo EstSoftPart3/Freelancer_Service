@@ -245,11 +245,16 @@ export default function CommonHeader() {
       style={{ height: '64px' }}
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
-        {/* 로고 */}
-        {/* 로고 — 브랜딩 이미지 수령 전 임시 타이포.
-            헤더가 64px 고정(위 style)이라 이미지로 교체할 때 높이 36~40px 안에 놓어야 한다. */}
-        <Link href="/" className="text-lg font-bold leading-tight text-primary">
-          Ctrl&nbsp;+&nbsp;F
+        {/* 로고 — 소재가 여백 없이 타이트 크롭이라 36px 로 두면 글자가 헤더를 압도한다.
+            28px 가 내비 텍스트와 균형이 맞았다(브라우저에서 24/28/32 비교). 원본 715x120. */}
+        <Link href="/" className="flex shrink-0 items-center" aria-label="Ctrl + F 홈">
+          <img
+            src="/img/brand/logo-horizontal.png"
+            alt="Ctrl + F"
+            width={167}
+            height={28}
+            className="h-7 w-auto"
+          />
         </Link>
 
         {/* 데스크탑 네비게이션 */}
@@ -349,8 +354,14 @@ export default function CommonHeader() {
               <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col pt-10">
-              <Link href="/" className="mb-6 text-lg font-bold text-primary">
-                Ctrl&nbsp;+&nbsp;F
+              <Link href="/" className="mb-6 flex items-center" aria-label="Ctrl + F 홈">
+                <img
+                  src="/img/brand/logo-horizontal.png"
+                  alt="Ctrl + F"
+                  width={167}
+                  height={28}
+                  className="h-7 w-auto"
+                />
               </Link>
               <nav className="flex flex-col gap-1">
                 <Link

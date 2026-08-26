@@ -1,10 +1,17 @@
 # 광고 배너 이미지
 
-메인 캐러셀(`components/main/MainPage.tsx` 의 `SLIDES`)에 들어간다.
+**적용 완료** — 2026-08-26.
 
-| 파일명 | 규격 |
+| 파일 | 규격 |
 |---|---|
-| `ad-1.png` ~ `ad-3.png` | 가로형 배너. 캐러셀이 `h-[64vh]` 라 **1920×720 내외** 권장 (16:6 전후) |
+| `ad-1.webp` ~ `ad-3.webp` | 2400×900 (26~39KB) |
 
-`object-cover` 로 잘리므로 중요한 내용은 가운데에 둘 것.
-클릭 시 이동할 링크는 `MainPage.tsx` 의 `SLIDES[].linkUrl` 에 적는다.
+메인 캐러셀(`components/main/MainPage.tsx` 의 `SLIDES`)에 들어간다.
+캐러셀이 `h-[64vh]` + `object-cover` 라 좌우가 잘린다 — 핵심은 가운데에 둘 것.
+
+## 아직 남은 것
+
+**광고주 랜딩 URL 이 없어 `linkUrl` 이 비어 있다.** 지금은 클릭하면 "준비중입니다" 알러트가 뜬다.
+URL 을 받으면 `SLIDES[].linkUrl` 만 채우면 된다(새 탭 + `noopener` 처리는 이미 돼 있다).
+
+원본 PNG(4.5MB×3)는 `docs/오픈-준비-2026-08/브랜딩-원본/` 에 있다.
