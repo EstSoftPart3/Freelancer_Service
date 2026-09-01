@@ -10,6 +10,7 @@ import PasswordCheck from '@/components/mypage/PasswordCheck'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 
 const NOTICE_TEXT = `※ 회원 탈퇴 전 꼭 확인해주세요.
 
@@ -49,8 +50,9 @@ export default function WithdrawClient() {
       clearUser()
       toast.success('회원 탈퇴가 완료되었습니다.')
       router.push('/')
-    } catch {
-      toast.error('회원 탈퇴 처리에 실패했습니다.')
+    } catch (err) {
+      // 서버가 탈퇴 거절 사유를 message에 담아 보낸다(HTTP 200 + status:"BAD_REQUEST").
+      toast.error(getApiErrorMessage(err, '회원 탈퇴 처리에 실패했습니다.'))
     }
   }
 

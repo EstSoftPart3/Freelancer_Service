@@ -12,6 +12,7 @@ import { Building2 } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
 import CompanyVerificationModal from '@/components/mypage/company/CompanyVerificationModal'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
 import type { AffiliationEditInfo } from '@/types'
@@ -133,8 +134,8 @@ export default function AffiliationEditClient() {
       await api.post('/mypage/edit/affiliation/profile-image/update', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       setProfileImageUrl(URL.createObjectURL(file))
       toast.success('프로필 이미지가 업데이트되었습니다.')
-    } catch {
-      toast.error('프로필 이미지 업데이트에 실패했습니다.')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, '프로필 이미지 업데이트에 실패했습니다.'))
     }
   }
 
@@ -143,8 +144,8 @@ export default function AffiliationEditClient() {
       await api.delete('/mypage/edit/affiliation/profile-image')
       setProfileImageUrl(null)
       toast.success('프로필 이미지가 삭제되었습니다.')
-    } catch {
-      toast.error('프로필 이미지 삭제에 실패했습니다.')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, '프로필 이미지 삭제에 실패했습니다.'))
     }
   }
 
@@ -157,8 +158,8 @@ export default function AffiliationEditClient() {
         await api.post('/mypage/edit/affiliation/recruiting/cancel')
         await fetchInfo()
         toast.success('모집이 해제되었습니다.')
-      } catch {
-        toast.error('모집 상태 해제 중 오류가 발생했습니다.')
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, '모집 상태 해제 중 오류가 발생했습니다.'))
       }
     }
   }
@@ -183,8 +184,8 @@ export default function AffiliationEditClient() {
       })
       toast.success('소속 정보가 수정되었습니다.')
       await fetchInfo()
-    } catch {
-      toast.error('소속 정보 수정에 실패했습니다.')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, '소속 정보 수정에 실패했습니다.'))
     }
   }
 

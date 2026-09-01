@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import PasswordCheck from '@/components/mypage/PasswordCheck'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
 import type { UserInfo, DaumPostcodeResult } from '@/types'
@@ -232,8 +233,8 @@ export default function InformationEditClient() {
       })
       setProfileImageUrl(URL.createObjectURL(file))
       toast.success('프로필 이미지가 업데이트되었습니다.')
-    } catch {
-      toast.error('프로필 이미지 업데이트에 실패했습니다.')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, '프로필 이미지 업데이트에 실패했습니다.'))
     }
   }
 
@@ -242,8 +243,8 @@ export default function InformationEditClient() {
       await api.delete('/mypage/edit/profile-image')
       setProfileImageUrl(null)
       toast.success('프로필 이미지가 삭제되었습니다.')
-    } catch {
-      toast.error('프로필 이미지 삭제에 실패했습니다.')
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, '프로필 이미지 삭제에 실패했습니다.'))
     }
   }
 
@@ -308,9 +309,8 @@ export default function InformationEditClient() {
       toast.success('회원 정보가 수정되었습니다.')
       await fetchInfo()
     } catch (err) {
-      // Vue saveAll: 400이면 백엔드 검증 message(비밀번호 규칙 등)를 그대로 노출
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      toast.error(msg || '회원 정보 수정에 실패했습니다.')
+      // Vue saveAll: 백엔드 검증 message(비밀번호 규칙 등)를 그대로 노출
+      toast.error(getApiErrorMessage(err, '회원 정보 수정에 실패했습니다.'))
     }
   }
 

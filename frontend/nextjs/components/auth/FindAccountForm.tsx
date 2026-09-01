@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { useEmailVerification } from '@/hooks/useEmailVerification'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
@@ -102,9 +103,8 @@ function FindIdForm() {
       } else {
         alertStore.show('일치하는 회원 정보를 찾을 수 없습니다.', 'danger')
       }
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '아이디 찾기에 실패했습니다.'
-      alertStore.show(msg, 'danger')
+    } catch (err) {
+      alertStore.show(getApiErrorMessage(err, '아이디 찾기에 실패했습니다.'), 'danger')
     }
   }
 
@@ -181,9 +181,8 @@ function ResetPasswordVerifyForm() {
       // 인터셉터가 OK 상태만 통과시키므로 catch 없이 바로 이동
       alertStore.show('비밀번호 재설정 페이지로 이동합니다.', 'success')
       router.push('/reset-password')
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '일치하는 회원 정보를 찾을 수 없습니다.'
-      alertStore.show(msg, 'danger')
+    } catch (err) {
+      alertStore.show(getApiErrorMessage(err, '일치하는 회원 정보를 찾을 수 없습니다.'), 'danger')
     }
   }
 

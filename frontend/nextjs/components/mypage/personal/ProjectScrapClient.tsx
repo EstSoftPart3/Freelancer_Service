@@ -44,19 +44,9 @@ export default function ProjectScrapClient() {
       const output = data.output ?? {}
       setScraps(Array.isArray(output.content) ? output.content : [])
       setTotalPages(Math.max(1, Math.ceil((output.totalCount ?? 0) / PAGE_SIZE)))
-    } catch (err: unknown) {
-      // 백엔드는 스크랩이 없을 때 ApiResponse(status:"NOT_FOUND")를 반환하는데,
-      // ResponseEntity가 아니라 ApiResponse를 직접 반환하므로 실제 HTTP는 200이다.
-      // (api.ts 인터셉터가 본문 status!=OK를 reject → err.response.status는 200)
-      // 따라서 HTTP 코드가 아니라 '본문의 status/message'로 빈 목록을 판별한다 — 에러 아님.
-      const res = (err as { response?: { status?: number; data?: { status?: string } } })?.response
-      const isEmpty = res?.data?.status === 'NOT_FOUND' || res?.status === 404
-      if (isEmpty) {
-        setScraps([])
-        setTotalPages(1)
-      } else {
-        toast.error('스크랩 목록을 불러올 수 없습니다.')
-      }
+    } catch {
+      // 빈 목록은 백엔드가 200 OK로 준다(ProjectScrapController) — 여기 오면 진짜 실패다.
+      toast.error('스크랩 목록을 불러올 수 없습니다.')
     }
   }, [searchType, searchKeyword])
 

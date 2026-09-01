@@ -4,6 +4,7 @@ import PersonalSignUpForm from '@/components/auth/PersonalSignUpForm'
 import CompanySignUpForm from '@/components/auth/CompanySignUpForm'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 
 export default function SignUpPageClient() {
   const searchParams = useSearchParams()
@@ -45,20 +46,15 @@ export default function SignUpPageClient() {
     }
 
     try {
-      // /signup은 실패해도 ApiResponse를 그대로 반환해 HTTP는 200이다 — body의 status를 봐야
-      // 중복 닉네임·아이디 같은 거절이 "가입 완료"로 표시되지 않는다.
-      const { data } = await api.post<{ status?: string; message?: string }>('/signup', payload)
-      if (data?.status && data.status !== 'OK') {
-        alertStore.show(data.message ?? '회원가입에 실패했습니다.', 'danger')
-        return
-      }
+      // /signup은 실패해도 ApiResponse를 그대로 반환해 HTTP는 200이다.
+      // 그 판별은 lib/api.ts의 성공 인터셉터가 이미 하므로(status!=OK면 reject),
+      // 여기서 status를 또 보면 CREATED까지 실패로 오판하는 죽은 분기가 된다 — catch만 남긴다.
+      await api.post('/signup', payload)
       alertStore.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
       router.push('/login')
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        '회원가입에 실패했습니다.'
-      alertStore.show(msg, 'danger')
+    } catch (err) {
+      // 중복 아이디·닉네임 등 서버가 보낸 가입 거절 사유를 그대로 노출한다.
+      alertStore.show(getApiErrorMessage(err, '회원가입에 실패했습니다.'), 'danger')
     }
   }
 

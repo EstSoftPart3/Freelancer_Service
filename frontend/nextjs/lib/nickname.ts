@@ -1,4 +1,5 @@
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 
 /** 백엔드 NicknamePolicy와 같은 규칙 — 한글·영문·숫자·밑줄 2~20자 */
 export const NICKNAME_PATTERN = /^[가-힣a-zA-Z0-9_]{2,20}$/
@@ -24,7 +25,8 @@ export async function checkNicknameAvailable(value: string): Promise<string> {
       `/check-nickname?userNickname=${encodeURIComponent(value)}`,
     )
     return data?.output ? '' : (data?.message ?? '이미 사용 중인 닉네임입니다.')
-  } catch {
-    return '서버 오류가 발생했습니다.'
+  } catch (err) {
+    // 형식 오류(IllegalArgumentException)는 status:"BAD_REQUEST"로 와서 인터셉터가 reject한다.
+    return getApiErrorMessage(err, '서버 오류가 발생했습니다.')
   }
 }

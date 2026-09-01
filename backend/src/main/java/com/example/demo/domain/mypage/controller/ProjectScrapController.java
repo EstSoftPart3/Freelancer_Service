@@ -31,11 +31,10 @@ public class ProjectScrapController {
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "4") int size) {
         ProjectScrapResponseDTO response = service.getScrappedProjects(userSq, searchType, searchKeyword, page, size);
-        if (response.getContent().isEmpty()) {
-            return ApiResponse.error(HttpStatus.NOT_FOUND, "스크랩한 프로젝트가 없습니다.");
-        } else {
-            return ApiResponse.of(HttpStatus.OK, "스크랩한 프로젝트 조회 완료", response);
-        }
+        // 스크랩이 0건인 것은 정상 상태다. 예전에는 여기서 NOT_FOUND를 돌려줘,
+        // 프런트가 '에러 경로에서 빈 목록을 되살리는' 우회를 해야 했다(ProjectScrapClient).
+        // 빈 목록도 200 OK로 준다. 검색 결과가 없는 경우도 마찬가지다.
+        return ApiResponse.of(HttpStatus.OK, "스크랩한 프로젝트 조회 완료", response);
     }
 
     @DeleteMapping("/projectScrap/{projectSq}")

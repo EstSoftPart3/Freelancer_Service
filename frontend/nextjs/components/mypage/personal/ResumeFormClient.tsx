@@ -99,6 +99,8 @@ export default function ResumeFormClient({ resumeSq }: Props) {
   const [emailDomain, setEmailDomain] = useState('')
   const [customDomain, setCustomDomain] = useState('')
   const [resumeGreetingTxt, setResumeGreetingTxt] = useState('')
+  // 「알림 발신 여부」는 화면에서 뺐다(아래 옵션 블록 주석 참고).
+  // 서버 값을 그대로 받아 그대로 돌려보내기 위해 state만 남긴다.
   const [resumeIsNotificationYn, setResumeIsNotificationYn] = useState(false)
   const [resumeIsRepresentativeYn, setResumeIsRepresentativeYn] = useState(false)
 
@@ -532,15 +534,15 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       </div>
 
       {/* 옵션 */}
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="flex items-center gap-2">
-          <Checkbox id="notify" checked={resumeIsNotificationYn} onCheckedChange={(v) => setResumeIsNotificationYn(v === true)} />
-          <label htmlFor="notify" className="text-sm cursor-pointer">알림 발신 여부</label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Checkbox id="rep" checked={resumeIsRepresentativeYn} onCheckedChange={(v) => setResumeIsRepresentativeYn(v === true)} />
-          <label htmlFor="rep" className="text-sm cursor-pointer">대표 이력서로 설정</label>
-        </div>
+      {/* 여기 「알림 발신 여부」 체크박스가 있었지만 화면에서 뺐다.
+          공고 등록의 같은 이름 필드는 '우리 기업을 즐겨찾기한 회원에게 새 공고 알림'이라는
+          뜻이 있는데, 기업이 개인 이력서를 즐겨찾기·스크랩하는 기능이 없어서
+          이력서 쪽은 대응하는 발송 지점이 아예 없었다 — 저장만 되고 읽는 코드가 0줄.
+          컬럼(resume_is_notification_yn)·DTO·매퍼는 그대로 두고 값도 그대로 왕복시키므로,
+          의미가 정해지면 이 블록만 되살리면 된다. — docs/후속-고도화-2026-09/인계.md */}
+      <div className="flex items-center gap-2">
+        <Checkbox id="rep" checked={resumeIsRepresentativeYn} onCheckedChange={(v) => setResumeIsRepresentativeYn(v === true)} />
+        <label htmlFor="rep" className="text-sm cursor-pointer">대표 이력서로 설정</label>
       </div>
 
       <div className="flex gap-2">

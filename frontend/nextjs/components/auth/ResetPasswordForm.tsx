@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 
 const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
   <label className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -49,9 +50,9 @@ export default function ResetPasswordForm() {
       await api.post('/reset-password', { newPassword: password }, { withCredentials: true })
       alertStore.show('비밀번호 재설정 완료', 'success')
       router.push('/login')
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '서버 요청 중 오류가 발생했습니다.'
-      alertStore.show(msg, 'danger')
+    } catch (err) {
+      // 토큰 없음 / 유효하지 않은 토큰 / 기존 비밀번호와 동일 — 사유를 그대로 보여준다.
+      alertStore.show(getApiErrorMessage(err, '서버 요청 중 오류가 발생했습니다.'), 'danger')
     }
   }
 
