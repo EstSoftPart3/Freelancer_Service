@@ -413,3 +413,6 @@ application.yml
 # Claude
 CLAUDE.md
 .claude/settings.local.json
+
+# 배포 환경 인계 문서 — 평문 자격증명 포함, 절대 커밋 금지
+docs/배포-환경-인계.md
