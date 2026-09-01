@@ -216,6 +216,8 @@ export interface ProjectItem {
   viewCnt: number
   applicantCnt: number
   hasScrapped: 'Y' | 'N'
+  /** 모집 인원. 비어 있으면 옛 공고 — devGradeNm 으로 폴백한다 */
+  recruitHeadcounts?: RecruitHeadcount[]
   latitude?: number
   longitude?: number
   distance?: number | null
@@ -254,6 +256,21 @@ export interface ProjectDetail {
   projectCreatedDt: string
   /** 월 단가(원 단위 KRW). 0 또는 null이면 단가 협의 */
   projectSalary?: number | null
+  /** 모집 인원. 비어 있으면 인원을 입력하지 않고 등록된 옛 공고 */
+  recruitHeadcounts?: RecruitHeadcount[]
+  /** 대표 개발자 등급(경력). 총원 모드에서 인원 옆에 붙인다 */
+  projectExperience?: string
+  projectEducation?: string
+}
+
+/**
+ * 공고의 모집 인원 한 줄.
+ * grade 가 null 이면 등급 구분 없는 총원("총 3명"), 값이 있으면 등급별("중상 2명").
+ */
+export interface RecruitHeadcount {
+  grade: string | null
+  /** null 이면 인원 미정 */
+  count: number | null
 }
 
 export interface FilterOption {

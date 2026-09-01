@@ -20,6 +20,9 @@ export interface ApplySeedRequest {
   normalMax?: number
   coldMin?: number
   coldMax?: number
+  /** 조회수 = 지원 건수 + (지원 건수 × 이 비율%) */
+  viewExtraMinPct?: number
+  viewExtraMaxPct?: number
 }
 
 export interface ApplySeedRevokeRequest {
@@ -66,6 +69,10 @@ export interface ApplySeedAllocation {
   tier: ApplySeedTier
   currentCnt: number
   plannedCnt: number
+  /** 이 공고에 적용된 조회수 가산 비율(%) */
+  viewExtraPct: number
+  /** 이번에 더해질 조회수 */
+  plannedViewCnt: number
   botUserSqs: number[]
 }
 
@@ -75,6 +82,7 @@ export interface ApplySeedPlan {
   summary: {
     targetProjects: number
     totalApplications: number
+    totalViews: number
     usableBots: number
     botsWithoutResume: number
   }
@@ -86,6 +94,7 @@ export interface ApplySeedCommit {
   randomSeed: number
   targetProjects: number
   insertedApplications: number
+  insertedViews: number
   createdResumes: number
 }
 

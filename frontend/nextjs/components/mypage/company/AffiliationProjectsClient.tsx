@@ -14,21 +14,12 @@ import CommonPagination from '@/components/community/CommonPagination'
 import ApplyStatusModal from '@/components/mypage/company/ApplyStatusModal'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getRecruitStatus } from '@/lib/recruit'
 import type { CompanyProject } from '@/types'
 
 const PAGE_SIZE = 5
 
 interface StatusCounts { allCount: number; recruiting: number; closed: number; scheduled: number }
-
-function getPostStatus(p: CompanyProject) {
-  const today = new Date()
-  const start = new Date(p.recruitStartDt)
-  const end = new Date(p.recruitEndDt)
-  if (today < start) return { label: '채용예정', dday: null }
-  if (today > end) return { label: '채용종료', dday: null }
-  const diff = Math.ceil((end.getTime() - today.getTime()) / 86400000)
-  return { label: '채용중', dday: `D-${diff}` }
-}
 
 export default function AffiliationProjectsClient() {
   const router = useRouter()
@@ -149,7 +140,7 @@ export default function AffiliationProjectsClient() {
 
       <ul className="divide-y">
         {projects.map((post) => {
-          const status = getPostStatus(post)
+          const status = getRecruitStatus(post.recruitStartDt, post.recruitEndDt)
           return (
             <li key={post.projectSq} className="py-4 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -160,9 +151,9 @@ export default function AffiliationProjectsClient() {
                   {post.projectTtl} / {post.companyNm}
                 </button>
                 <div className="flex gap-2">
-                  {status.label === '채용중'
-                    ? <Badge>{status.label} <span className="ml-1">{status.dday}</span></Badge>
-                    : <Badge variant="secondary">{status.label}</Badge>
+                  {status.status === '채용중'
+                    ? <Badge>{status.status} <span className="ml-1">{status.dDay}</span></Badge>
+                    : <Badge variant="secondary">{status.status}</Badge>
                   }
                   <Button variant="outline" size="sm" onClick={() => router.push(`/mypage/project-post/${post.projectSq}`)}>수정</Button>
                   <Button variant="outline" size="sm" onClick={() => setDeleteTarget(post.projectSq)}>삭제</Button>

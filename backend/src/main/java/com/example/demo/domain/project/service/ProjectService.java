@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
@@ -16,10 +18,12 @@ import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.UserRole;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
+import com.example.demo.domain.project.dto.request.HeadcountInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
 import com.example.demo.domain.project.dto.request.ProjectApplyRequest;
 import com.example.demo.domain.project.dto.request.ProjectCreateRequest;
 import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
+import com.example.demo.domain.project.dto.request.RecruitHeadcountRequest;
 import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
 import com.example.demo.domain.project.dto.request.ScrapRequest;
 import com.example.demo.domain.project.dto.request.SkillInsertRequest;
@@ -67,8 +71,9 @@ public class ProjectService {
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 
-		long devgradeCodeSq = commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
-				ParentCodeEnum.DEVELOPER_GRADE.getCode());
+		rejectPastInterviewTimes(request.interviewTime());
+
+		long devgradeCodeSq = resolveRepresentativeGradeCd(request);
 		long educationLvlSq = commonCodeMapper.findCommonCodeSqByName(request.educationLvl(),
 				ParentCodeEnum.EDUCATION.getCode());
 
@@ -198,6 +203,7 @@ public class ProjectService {
 		createReqSkills(project.getProjectSq(), request.usingSkills());
 		createPreferSkills(project.getProjectSq(), request.preferSkills());
 		createInterviewTimes(project.getProjectSq(), request.interviewTime());
+		createRecruitHeadcounts(project.getProjectSq(), request.recruitHeadcounts());
 	}
 
 	@Transactional
@@ -252,7 +258,7 @@ public class ProjectService {
 			String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
 
 			// [추가] 단가 가공 로직 적용
-			String formattedSalary = formatSalary(p.getProjectSalary());
+			String formattedSalary = formatSalary(p.getProjectSalary(), p.getProjectSalaryNegotiableYn());
 
 			String hasScrapped = "N";
 			if (userSq != null) {
@@ -291,7 +297,7 @@ public class ProjectService {
 			String status = projectMapper.judgeProjectRecruitStatus(p.getProjectSq());
 
 			// [추가] 기업 목록에서도 단가 가공 적용
-			String formattedSalary = formatSalary(p.getProjectSalary());
+			String formattedSalary = formatSalary(p.getProjectSalary(), p.getProjectSalaryNegotiableYn());
 
 			String hasScrapped = (scrapMapper.findScrapSqByUserSqAndProjectSq(userSq, p.getProjectSq()) != null)
 					? "Y"
@@ -339,7 +345,7 @@ public class ProjectService {
 		}
 
 		// 1. 단가 가공 (목록 조회와 동일하게 formatSalary 사용)
-		String formattedSalary = formatSalary(p.getProjectSalary());
+		String formattedSalary = formatSalary(p.getProjectSalary(), p.getProjectSalaryNegotiableYn());
 
 		// 2. 기업 이미지 URL만 가져오기
 		String companyImageUrl = companyService.fetchCompanyImageUrl(p.getCompanySq());
@@ -473,8 +479,7 @@ public class ProjectService {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
 
-		long devGradeCodeSq = commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
-				ParentCodeEnum.DEVELOPER_GRADE.getCode());
+		long devGradeCodeSq = resolveRepresentativeGradeCd(request);
 		long educationLvlSq = commonCodeMapper.findCommonCodeSqByName(request.educationLvl(),
 				ParentCodeEnum.EDUCATION.getCode());
 
@@ -494,6 +499,7 @@ public class ProjectService {
 		updateContracts(project, request);
 		updateJobRoles(project, request);
 		updateInterviewTimes(project, request);
+		updateRecruitHeadcounts(project, request);
 		updateAddress(project, request);
 	}
 
@@ -610,8 +616,70 @@ public class ProjectService {
 
 	@Transactional
 	public void createPreferSkills(Long projectSq, List<String> preferSkills) {
+		// 우대 기술은 선택 항목이다. 빈 리스트를 그대로 넘기면 MyBatis foreach 가
+		// VALUES 뒤가 빈 SQL 을 만들어 문법 오류가 난다. 등록/수정 양쪽이 이 메서드를 탄다.
+		if (preferSkills == null || preferSkills.isEmpty()) {
+			return;
+		}
 		List<SkillInsertRequest> skillInsertRequests = fillSkillInsertRequest(preferSkills);
 		projectMapper.insertPreferSkills(projectSq, skillInsertRequests);
+	}
+
+	/**
+	 * 모집 인원 등록. 등급 이름을 공통코드로 바꿔 넣는다.
+	 *
+	 * <p>
+	 * 등급이 비어 있으면(총원 모드) 코드도 null 로 둔다 — 그 NULL 이 곧 모드 표시다.
+	 * </p>
+	 */
+	@Transactional
+	public void createRecruitHeadcounts(Long projectSq, List<RecruitHeadcountRequest> headcounts) {
+		if (headcounts == null || headcounts.isEmpty()) {
+			return;
+		}
+		List<HeadcountInsertRequest> rows = new ArrayList<>();
+		headcounts.forEach(h -> rows.add(new HeadcountInsertRequest(
+				projectSq, findGradeCd(h.grade()), h.count())));
+		projectMapper.insertRecruitHeadcounts(rows);
+	}
+
+	@Transactional
+	public void updateRecruitHeadcounts(Project project, ProjectCreateRequest request) {
+		projectMapper.deleteRecruitHeadcounts(project.getProjectSq());
+		createRecruitHeadcounts(project.getProjectSq(), request.recruitHeadcounts());
+	}
+
+	/** 등급 이름 → 공통코드. 이름이 비어 있으면 null(총원 모드). */
+	private Long findGradeCd(String gradeName) {
+		if (gradeName == null || gradeName.isBlank()) {
+			return null;
+		}
+		return commonCodeMapper.findCommonCodeSqByName(gradeName, ParentCodeEnum.DEVELOPER_GRADE.getCode());
+	}
+
+	/**
+	 * TBL_PROJECT_M.project_developer_grade_cd 에 넣을 대표 등급.
+	 *
+	 * <p>
+	 * 등급별 모집이면 등급이 여러 개지만 이 컬럼은 하나뿐이다. 검색 필터(경력)와 목록 표시가
+	 * 계속 이 컬럼을 쓰므로, 가장 낮은 등급을 넣어 "이 등급부터 지원 가능" 으로 읽히게 한다.
+	 * 총원 모드이거나 인원이 비었으면 폼에서 고른 devGrade 를 그대로 쓴다.
+	 * </p>
+	 */
+	private long resolveRepresentativeGradeCd(ProjectCreateRequest request) {
+		if (request.recruitHeadcounts() != null) {
+			Long lowest = request.recruitHeadcounts().stream()
+					.map(RecruitHeadcountRequest::grade)
+					.map(this::findGradeCd)
+					.filter(Objects::nonNull)
+					.min(Long::compareTo)
+					.orElse(null);
+			if (lowest != null) {
+				return lowest;
+			}
+		}
+		return commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
+				ParentCodeEnum.DEVELOPER_GRADE.getCode());
 	}
 
 	@Transactional
@@ -619,12 +687,23 @@ public class ProjectService {
 		projectMapper.insertInterviewTimes(projectSq, interviewTimes);
 	}
 
-	// DB에 들어가는 형태로 변환
+	/**
+	 * 기술 이름 목록을 DB 에 넣을 형태로 바꾼다. 사용기술·우대기술이 함께 쓴다.
+	 *
+	 * <p>
+	 * 마스터에 없는 이름이면 등록자가 직접 입력한 기술로 보고 이 공고에만 붙인다.
+	 * 종전에는 조회 결과 null 을 그대로 리스트에 담아 insert 단계에서 NPE 로 터졌다.
+	 * </p>
+	 */
 	public List<SkillInsertRequest> fillSkillInsertRequest(List<String> skills) {
 		List<SkillInsertRequest> requests = new ArrayList<>();
 		skills.forEach(skillName -> {
-			SkillInsertRequest request = skillMapper.findSkillTagInfoByName(skillName);
-			requests.add(request);
+			String name = skillName == null ? "" : skillName.trim();
+			if (name.isEmpty()) {
+				return;
+			}
+			SkillInsertRequest request = skillMapper.findSkillTagInfoByName(name);
+			requests.add(request != null ? request : SkillInsertRequest.custom(name));
 		});
 		return requests;
 	}
@@ -640,13 +719,26 @@ public class ProjectService {
 		return requests;
 	}
 
+	/**
+	 * 모집 직군을 DB 에 넣을 형태로 바꾼다.
+	 *
+	 * <p>
+	 * 공통코드에 없는 이름은 등록자가 직접 입력한 직군이다. 공통코드에 새 코드를 만들지 않고
+	 * {@code recruit_job_position_type_cd = 0} + 이름 컬럼으로 이 공고에만 저장한다.
+	 * </p>
+	 */
 	@Transactional
 	public List<JobInsertRequest> fillJobInsertRequest(Long projectSq, List<String> recruitJobs) {
 		List<JobInsertRequest> requests = new ArrayList<>();
 		recruitJobs.forEach(jobName -> {
-			JobInsertRequest request = new JobInsertRequest(projectSq,
-					commonCodeMapper.findCommonCodeSqByName(jobName, ParentCodeEnum.JOB_POSITION.getCode()));
-			requests.add(request);
+			String name = jobName == null ? "" : jobName.trim();
+			if (name.isEmpty()) {
+				return;
+			}
+			Long codeSq = commonCodeMapper.findCommonCodeSqByName(name, ParentCodeEnum.JOB_POSITION.getCode());
+			requests.add(codeSq != null
+					? new JobInsertRequest(projectSq, codeSq, null)
+					: new JobInsertRequest(projectSq, 0L, name));
 		});
 		return requests;
 	}
@@ -786,7 +878,7 @@ public class ProjectService {
 					.projectAddress(address)
 					.projectExperience(experience)
 					.projectSalary(p.getProjectSalary())
-					.formattedSalary(formatSalary(p.getProjectSalary())) // 단가 가공 로직
+					.formattedSalary(formatSalary(p.getProjectSalary(), p.getProjectSalaryNegotiableYn()))
 					.projectSkills(skillNames)
 					.build();
 		}).collect(Collectors.toList());
@@ -798,11 +890,46 @@ public class ProjectService {
 		return projectMapper.findProjectGroupsByRegion(request);
 	}
 
-	// 단가 가공 로직 예시
-	private String formatSalary(Long salary) {
+	/**
+	 * 이미 지나간 인터뷰 시각을 신규 등록에서 막는다.
+	 *
+	 * <p>
+	 * 프런트가 슬롯을 비활성화하지만 API 를 직접 부르면 그만이다. 수정(updateProject)에는 걸지 않는다 —
+	 * 등록 당시엔 미래였던 슬롯이 시간이 지나 과거가 되므로, 그런 공고는 수정 자체가 불가능해진다.
+	 * </p>
+	 */
+	private void rejectPastInterviewTimes(List<LocalDateTime> interviewTimes) {
+		if (interviewTimes == null) {
+			return;
+		}
+		LocalDateTime now = LocalDateTime.now();
+		boolean hasPast = interviewTimes.stream().anyMatch(t -> t != null && t.isBefore(now));
+		if (hasPast) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"이미 지난 시각은 인터뷰 가능시간으로 등록할 수 없습니다.");
+		}
+	}
+
+	/**
+	 * 화면에 그대로 찍히는 단가 문자열. 금액과 "협의 가능" 은 세 가지 조합이 전부 유효하다.
+	 *
+	 * <ul>
+	 * <li>금액만 → {@code 월 500만원}</li>
+	 * <li>협의만(금액 0/null) → {@code 단가 협의}</li>
+	 * <li>금액 + 협의 → {@code 월 500만원 (협의 가능)}</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * 협의 표기를 화면마다 따로 붙이면 "단가 협의 / 단가협의 가능" 처럼 중복되고, 목록 응답에는
+	 * 숫자 단가가 없어 "금액이 있는지" 를 프런트가 알 수도 없다. 그래서 여기서 한 문장으로 만든다.
+	 * </p>
+	 */
+	private String formatSalary(Long salary, String negotiableYn) {
+		boolean negotiable = "Y".equals(negotiableYn);
 		if (salary == null || salary == 0)
 			return "단가 협의";
-		return "월 " + (salary / 10000) + "만원";
+		String amount = "월 " + (salary / 10000) + "만원";
+		return negotiable ? amount + " (협의 가능)" : amount;
 	}
 
 }

@@ -13,6 +13,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { ddayFromServer } from '@/lib/recruit'
 import type { ScrapProjectItem } from '@/types'
 
 const PAGE_SIZE = 5
@@ -119,8 +120,10 @@ export default function ProjectScrapClient() {
                 {item.projectTtl} / <span>{item.company.companyNm}</span>
               </button>
               <div className="flex gap-2">
+                {/* 백엔드 dday 는 ChronoUnit.DAYS.between(오늘, 마감일) 이라 마감 당일이 0.
+                    화면 표기는 마감 당일을 D-1 로 보므로 ddayFromServer 로 맞춘다. */}
                 {item.dday !== null && item.dday >= 0
-                  ? <Badge>채용중 <span className="ml-1">D-{item.dday}</span></Badge>
+                  ? <Badge>채용중 <span className="ml-1">{ddayFromServer(item.dday)}</span></Badge>
                   : <Badge variant="secondary">채용 마감</Badge>
                 }
                 <Button variant="outline" size="sm" onClick={() => setDeleteTarget(item.projectSq)}>삭제</Button>

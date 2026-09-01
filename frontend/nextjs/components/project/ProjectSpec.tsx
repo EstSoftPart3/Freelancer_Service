@@ -14,6 +14,8 @@ import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { incrementView } from '@/lib/viewCount'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
+import { isRecruitEnded } from '@/lib/recruit'
+import { formatHeadcountDetail } from '@/lib/headcount'
 import type { ProjectDetail, RequiredSkillGroup } from '@/types'
 
 interface Props {
@@ -76,7 +78,7 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [applyOpen, setApplyOpen] = useState(false)
   const [isRecruitmentEnded, setIsRecruitmentEnded] = useState(
-    initialData ? new Date(`${initialData.projectRecruitEndDt}T23:59:59`).getTime() < Date.now() : false,
+    initialData ? isRecruitEnded(initialData.projectRecruitEndDt) : false,
   )
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
       .get<{ output: ProjectDetail }>(`/projects/${projectSq}/details`)
       .then((r) => {
         setProject(r.data.output)
-        setIsRecruitmentEnded(new Date(`${r.data.output.projectRecruitEndDt}T23:59:59`).getTime() < Date.now())
+        setIsRecruitmentEnded(isRecruitEnded(r.data.output.projectRecruitEndDt))
       })
       .catch(() => {
         toast.error('프로젝트 정보를 불러올 수 없습니다.')
@@ -247,16 +249,25 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
             <SkillGroupList groups={project.projectPreferredSkills} label="우대 기술" />
             <Separator />
             <div className="space-y-2 text-sm">
-              <p><strong className="text-primary">우대 사항 :</strong> {project.projectPreferredEtc}</p>
+              {project.projectPreferredEtc && (
+                <p><strong className="text-primary">우대 사항 :</strong> {project.projectPreferredEtc}</p>
+              )}
+              {project.recruitHeadcounts && project.recruitHeadcounts.length > 0 && (
+                <p>
+                  <strong className="text-primary">모집 인원 :</strong>{' '}
+                  {formatHeadcountDetail(project.recruitHeadcounts, project.projectExperience)}
+                </p>
+              )}
               <p><strong className="text-primary">근무 형태 :</strong> {project.projectWorkType?.join(' / ')}</p>
               <p className="flex items-center gap-1.5">
                 <strong className="text-primary">근무 지역 :</strong>
                 {project.addressTypeCd === 2702 ? <Train className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
                 {getDisplayAddress(project)}
               </p>
+              {/* 협의 여부까지 포함된 문자열을 백엔드 formatSalary 가 만들어 준다
+                  ('월 500만원' / '단가 협의' / '월 500만원 (협의 가능)') */}
               <p>
                 <strong className="text-primary">단가 :</strong> {project.formattedSalary}
-                {project.salaryNegotiableYn === 'Y' && ' / 단가 협의'}
               </p>
             </div>
           </CardContent>

@@ -1,10 +1,11 @@
 'use client'
 
 import { Heart, Building2, MapPin, Train } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import type { ProjectItem } from '@/types'
 import { cn } from '@/lib/utils'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
+import { getRecruitStatus } from '@/lib/recruit'
+import { formatHeadcountShort } from '@/lib/headcount'
 
 interface Props {
   project: ProjectItem
@@ -12,25 +13,8 @@ interface Props {
   onScrap: (sq: number, current: 'Y' | 'N') => void
 }
 
-interface ProjectStatus {
-  status: '채용예정' | '채용중' | '채용종료'
-  dDay?: string
-}
-
-function getProjectStatus(project: ProjectItem): ProjectStatus {
-  const today = new Date()
-  const start = new Date(project.recruitStartDt)
-  const end = new Date(project.recruitEndDt)
-
-  if (today < start) return { status: '채용예정' }
-  if (today > end) return { status: '채용종료' }
-
-  const diff = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  return { status: '채용중', dDay: `D-${diff}` }
-}
-
 export default function ProjectCard({ project, onClick, onScrap }: Props) {
-  const { status, dDay } = getProjectStatus(project)
+  const { status, dDay } = getRecruitStatus(project.recruitStartDt, project.recruitEndDt)
 
   const address =
     project.addressTypeCd === 2702 ? project.subwayAddress : project.detailedAddress
@@ -112,21 +96,18 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
               <span className="text-muted-foreground/40">|</span>
             </>
           )}
-          <span>{project.devGradeNm}</span>
+          {/* 등급별 모집이면 등급을 전부 보여준다. 인원 정보가 없는 옛 공고는 devGradeNm 으로 폴백 */}
+          <span>{formatHeadcountShort(project.recruitHeadcounts, project.devGradeNm)}</span>
           <span className="text-muted-foreground/40">|</span>
           <span>{project.requiredEduLvl}</span>
         </div>
 
-        {/* 단가 */}
+        {/* 단가 — 협의 여부까지 포함된 문자열을 백엔드 formatSalary 가 만들어 준다
+            ('월 500만원' / '단가 협의' / '월 500만원 (협의 가능)') */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="inline-block rounded bg-blue-50 px-2 py-1 text-sm font-extrabold text-primary">
             {project.formattedSalary}
           </span>
-          {project.salaryNegotiableYn === 'Y' && (
-            <Badge variant="outline" className="text-xs text-primary">
-              단가협의 가능
-            </Badge>
-          )}
         </div>
 
         {/* 기술 태그 (아이콘 포함) */}

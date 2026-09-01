@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 
 interface Props {
   title: string
@@ -20,16 +21,12 @@ export default function PasswordCheck({ title, onConfirmed }: Props) {
     setError('')
     setLoading(true)
     try {
-      const { data } = await api.post('/mypage/edit/check-password', {
-        currentPassword: password,
-      })
-      if (data.output === true) {
-        onConfirmed()
-      } else {
-        setError(data.message || '비밀번호가 일치하지 않습니다.')
-      }
-    } catch {
-      setError('서버와 통신 중 오류가 발생했습니다.')
+      // 비밀번호가 틀리면 백엔드는 HTTP 200 + { status:"UNAUTHORIZED", message:"비밀번호가 일치하지 않습니다." }
+      // 를 준다. lib/api.ts 의 성공 인터셉터가 이를 reject 로 바꾸므로 실패는 전부 catch 로 온다.
+      await api.post('/mypage/edit/check-password', { currentPassword: password })
+      onConfirmed()
+    } catch (err) {
+      setError(getApiErrorMessage(err, '서버와 통신 중 오류가 발생했습니다.'))
     } finally {
       setLoading(false)
     }

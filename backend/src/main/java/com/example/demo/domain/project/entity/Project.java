@@ -108,9 +108,18 @@ public class Project {
                 .projectRecruitStartDt(request.recruitStartDt())
                 .projectRecruitEndDt(request.recruitEndDt())
                 .projectDescriptionTxt(request.description())
-                .projectPreferenceTxt(request.preference())
+                .projectPreferenceTxt(blankToNull(request.preference()))
                 .projectIsNotificationYn(request.isNotification())
                 .build();
+    }
+
+    /**
+     * 우대 사항은 선택 항목이다. 프런트가 태그를 하나도 만들지 않아도 join 결과인 빈 문자열이
+     * 넘어오는데, 그대로 저장하면 상세 화면에 "우대 사항 :" 라벨만 남는다. 컬럼이 NULL 을
+     * 허용하므로 빈 값은 NULL 로 눕힌다.
+     */
+    private static String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
     }
 
     public void prePersist() {
@@ -143,7 +152,7 @@ public class Project {
         this.projectEndDt = request.projectEndDt();
         this.projectRecruitStartDt = request.recruitStartDt();
         this.projectRecruitEndDt = request.recruitEndDt();
-        this.projectPreferenceTxt = request.preference();
+        this.projectPreferenceTxt = blankToNull(request.preference());
         this.projectDescriptionTxt = request.description();
         this.projectIsNotificationYn = request.isNotification();
     }

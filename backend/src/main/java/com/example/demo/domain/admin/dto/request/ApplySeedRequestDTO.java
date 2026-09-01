@@ -43,6 +43,12 @@ public class ApplySeedRequestDTO {
     @Min(0) @Max(100) private Integer coldMin;
     @Min(0) @Max(100) private Integer coldMax;
 
+    // ── 조회수 가산 비율(%) ─────────────────────────────────────────────
+    // 조회수 = 지원 건수 + (지원 건수 × 이 비율). 지원보다 항상 많게 만드는 게 목적이라
+    // 하한이 0이면 안 된다.
+    @Min(1) @Max(500) private Integer viewExtraMinPct;
+    @Min(1) @Max(500) private Integer viewExtraMaxPct;
+
     // ── 기본값 ──────────────────────────────────────────────────────────
     public int hotMinOr(int d)    { return hotMin    == null ? d : hotMin; }
     public int hotMaxOr(int d)    { return hotMax    == null ? d : hotMax; }
@@ -50,4 +56,6 @@ public class ApplySeedRequestDTO {
     public int normalMaxOr(int d) { return normalMax == null ? d : normalMax; }
     public int coldMinOr(int d)   { return coldMin   == null ? d : coldMin; }
     public int coldMaxOr(int d)   { return coldMax   == null ? d : coldMax; }
+    public int viewExtraMinPctOr(int d) { return viewExtraMinPct == null ? d : viewExtraMinPct; }
+    public int viewExtraMaxPctOr(int d) { return viewExtraMaxPct == null ? d : viewExtraMaxPct; }
 }

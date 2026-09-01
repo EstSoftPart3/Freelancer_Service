@@ -38,6 +38,8 @@ const DEFAULT_RANGES = {
   normalMax: 12,
   coldMin: 0,
   coldMax: 3,
+  viewExtraMinPct: 50,
+  viewExtraMaxPct: 100,
 }
 
 const TIER_LABEL: Record<ApplySeedTier, string> = {
@@ -121,7 +123,10 @@ export function ApplySeed() {
     try {
       const res = await applySeedApi.preview(buildRequest())
       setPlan(res.output)
-      toast.success(`공고 ${res.output.summary.targetProjects}건에 지원 ${res.output.summary.totalApplications}건을 배분했습니다.`)
+      toast.success(
+        `공고 ${res.output.summary.targetProjects}건에 지원 ${res.output.summary.totalApplications}건 / ` +
+          `조회수 ${res.output.summary.totalViews}을 배분했습니다.`,
+      )
     } catch {
       toast.error('미리보기에 실패했습니다.')
     } finally {
@@ -137,7 +142,7 @@ export function ApplySeed() {
       // plannedAt 을 그대로 실어야 미리보기에서 본 것과 같은 결과가 저장된다.
       const res = await applySeedApi.apply({ ...buildRequest(), plannedAt: plan.plannedAt })
       toast.success(
-        `지원 ${res.output.insertedApplications}건 등록 완료` +
+        `지원 ${res.output.insertedApplications}건 / 조회수 ${res.output.insertedViews} 등록 완료` +
           (res.output.createdResumes > 0 ? ` (봇 이력서 ${res.output.createdResumes}건 신규)` : '')
       )
       setPlan(null)
@@ -257,6 +262,8 @@ export function ApplySeed() {
                 ['보통 최대', 'normalMax'],
                 ['저조 최소', 'coldMin'],
                 ['저조 최대', 'coldMax'],
+                ['조회수 가산% 최소', 'viewExtraMinPct'],
+                ['조회수 가산% 최대', 'viewExtraMaxPct'],
               ] as const
             ).map(([label, key]) => (
               <div key={key} className='space-y-1'>
@@ -355,7 +362,8 @@ export function ApplySeed() {
           <Card>
             <CardHeader className='pb-3'>
               <CardTitle className='text-base'>
-                미리보기 — 공고 {plan.summary.targetProjects}건 / 지원 {plan.summary.totalApplications}건
+                미리보기 — 공고 {plan.summary.targetProjects}건 / 지원 {plan.summary.totalApplications}건 / 조회수 +
+                {plan.summary.totalViews}
               </CardTitle>
               <p className='text-sm text-muted-foreground'>
                 기준시각 {plan.plannedAt} · 이 상태로 등록됩니다. DB 에는 아직 아무것도 쓰지 않았습니다.
@@ -379,6 +387,7 @@ export function ApplySeed() {
                       <TableHead className='w-24 text-right'>현재</TableHead>
                       <TableHead className='w-24 text-right'>추가</TableHead>
                       <TableHead className='w-24 text-right'>등록 후</TableHead>
+                      <TableHead className='w-28 text-right'>조회수 추가</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -393,6 +402,10 @@ export function ApplySeed() {
                         <TableCell className='text-right font-medium'>+{a.plannedCnt}</TableCell>
                         <TableCell className='text-right font-semibold'>
                           {(a.currentCnt ?? 0) + a.plannedCnt}
+                        </TableCell>
+                        <TableCell className='text-right text-muted-foreground'>
+                          +{a.plannedViewCnt}
+                          <span className='ml-1 text-xs'>(+{a.viewExtraPct}%)</span>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -410,12 +423,14 @@ export function ApplySeed() {
         title='봇 지원을 등록할까요?'
         desc={
           <span>
-            공고 {plan?.summary.targetProjects ?? 0}건에 지원 {plan?.summary.totalApplications ?? 0}건이 등록됩니다.
+            공고 {plan?.summary.targetProjects ?? 0}건에 지원 {plan?.summary.totalApplications ?? 0}건과 조회수{' '}
+            {plan?.summary.totalViews ?? 0}이 등록됩니다.
             {(status?.botsWithoutResume ?? 0) > 0 && (
               <> 이력서가 없는 봇 {status?.botsWithoutResume}개는 이력서가 함께 만들어집니다.</>
             )}
             <br />
-            되돌리려면 이 화면의 <b>회수</b> 버튼을 쓰면 됩니다.
+            되돌리려면 이 화면의 <b>회수</b> 버튼을 쓰면 됩니다.{' '}
+            <b>다만 조회수는 회수 대상이 아닙니다</b> — 시드가 올린 몫과 실제 조회를 구분할 수 없습니다.
           </span>
         }
         confirmText='등록'
@@ -432,7 +447,7 @@ export function ApplySeed() {
             {selected.size === 0 ? '모든 공고' : `선택한 공고 ${selected.size}건`}에 붙은 봇 지원이 삭제되고
             지원 건수가 원래대로 되돌아갑니다.
             <br />
-            실제 사용자가 넣은 지원은 대상이 아닙니다.
+            실제 사용자가 넣은 지원은 대상이 아닙니다. <b>조회수는 되돌아가지 않습니다.</b>
           </span>
         }
         confirmText='회수'

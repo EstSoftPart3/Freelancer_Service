@@ -62,6 +62,12 @@ public class AdminApplySeedService {
 	private static final int NORMAL_MIN = 4, NORMAL_MAX = 12;
 	private static final int COLD_MIN = 0, COLD_MAX = 3;
 
+	/**
+	 * 조회수는 지원 건수보다 항상 많아야 한다 — "지원 20건인데 조회수 0" 이 부자연스러웠다.
+	 * 조회수 = 지원 건수 + (지원 건수 × 50~100%). 즉 지원의 1.5~2.0 배.
+	 */
+	private static final int VIEW_EXTRA_MIN_PCT = 50, VIEW_EXTRA_MAX_PCT = 100;
+
 	/** 조회수 내림차순 기준 상위 20% 는 HOT, 다음 50% 는 NORMAL, 나머지는 COLD. */
 	private static final double HOT_RATIO = 0.2;
 	private static final double NORMAL_RATIO = 0.7;
@@ -223,6 +229,11 @@ public class AdminApplySeedService {
 				default -> between(rnd, req.coldMinOr(COLD_MIN), req.coldMaxOr(COLD_MAX));
 			};
 
+			// 조회수 비율은 봇을 섞기 전에 뽑는다. 순서를 바꾸면 같은 seed 라도 결과가 달라진다.
+			int viewExtraPct = between(rnd,
+					req.viewExtraMinPctOr(VIEW_EXTRA_MIN_PCT),
+					req.viewExtraMaxPctOr(VIEW_EXTRA_MAX_PCT));
+
 			// 공고마다 봇 순서를 새로 섞는다. 안 섞으면 user_sq 가 작은 봇만 모든 공고에 등장한다.
 			List<ApplySeedBotDTO> pool = new ArrayList<>(pickable);
 			Collections.shuffle(pool, rnd);
@@ -245,10 +256,16 @@ public class AdminApplySeedService {
 					.tier(tier)
 					.currentCnt(p.getCandidateCnt())
 					.plannedCnt(picked.size())
+					.viewExtraPct(viewExtraPct)
+					.plannedViewCnt(viewsFor(picked.size(), viewExtraPct))
 					.botUserSqs(picked)
 					.build());
 			total += picked.size();
 		}
+
+		int totalViews = allocations.stream()
+				.mapToInt(ApplySeedPlanResponseDTO.Allocation::getPlannedViewCnt)
+				.sum();
 
 		return ApplySeedPlanResponseDTO.builder()
 				.randomSeed(req.getRandomSeed())
@@ -256,12 +273,24 @@ public class AdminApplySeedService {
 				.summary(ApplySeedPlanResponseDTO.Summary.builder()
 						.targetProjects(projects.size())
 						.totalApplications(total)
+						.totalViews(totalViews)
 						.usableBots(usable.size())
 						.botsWithoutResume(noResume)
 						.build())
 				.allocations(allocations)
 				.warnings(warnings)
 				.build();
+	}
+
+	/**
+	 * 지원 건수에 대응하는 조회수. 지원이 0이면 조회수도 0 이다 — 규칙이 지원 건수 기준이라
+	 * 더할 근거가 없다.
+	 */
+	private int viewsFor(int applyCnt, int extraPct) {
+		if (applyCnt <= 0) {
+			return 0;
+		}
+		return applyCnt + (int) Math.ceil(applyCnt * extraPct / 100.0);
 	}
 
 	private int between(Random rnd, int min, int max) {
@@ -315,6 +344,7 @@ public class AdminApplySeedService {
 		// 같은 난수열을 공유해 특정 봇이 항상 이른 시각에 몰린다.
 		Random rnd = new Random(req.getRandomSeed() * 31 + 7);
 		int inserted = 0;
+		int insertedViews = 0;
 
 		for (ApplySeedPlanResponseDTO.Allocation alloc : plan.getAllocations()) {
 			if (alloc.getPlannedCnt() == 0) {
@@ -341,16 +371,24 @@ public class AdminApplySeedService {
 			// 카운터는 건당이 아니라 공고당 한 번에 반영한다. 실제로 들어간 건수만 더한다.
 			if (added > 0) {
 				mapper.addCandidateCnt(alloc.getProjectSq(), added);
+				// 조회수 비율은 미리보기(buildPlan)에서 뽑은 값을 그대로 쓴다. 여기서 다시 뽑으면
+				// 화면에서 본 예상치와 실제로 들어간 값이 어긋난다.
+				int views = viewsFor(added, alloc.getViewExtraPct());
+				if (views > 0) {
+					mapper.addViewCnt(alloc.getProjectSq(), views);
+					insertedViews += views;
+				}
 			}
 		}
 
-		log.info("[apply-seed] 등록 seed={} 공고={} 지원={} 이력서신규={}",
-				req.getRandomSeed(), plan.getAllocations().size(), inserted, createdResumes);
+		log.info("[apply-seed] 등록 seed={} 공고={} 지원={} 조회수={} 이력서신규={}",
+				req.getRandomSeed(), plan.getAllocations().size(), inserted, insertedViews, createdResumes);
 
 		return ApplySeedCommitResponseDTO.builder()
 				.randomSeed(req.getRandomSeed())
 				.targetProjects(plan.getSummary().getTargetProjects())
 				.insertedApplications(inserted)
+				.insertedViews(insertedViews)
 				.createdResumes(createdResumes)
 				.build();
 	}

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.demo.domain.project.dto.response.RecruitHeadcountResponse;
 import com.example.demo.domain.project.entity.Project;
 import com.example.demo.domain.project.util.ProjectUtil;
 
@@ -25,7 +26,10 @@ public class ProjectSummary {
 	private Long addressTypeCd;
 	private String imageUrl;
 	private String requiredEduLvl;
+	/** 대표 등급(등급별 모집이면 최저 등급). 인원 정보가 없는 옛 공고의 폴백으로도 쓴다 */
 	private String devGradeNm;
+	/** 모집 인원. 목록 카드가 등급을 전부 보여주려면 필요하다 */
+	private List<RecruitHeadcountResponse> recruitHeadcounts;
 
 	private Integer viewCnt;
 	private Integer applicantCnt;
@@ -71,6 +75,7 @@ public class ProjectSummary {
 				.recruitEndDt(project.getProjectRecruitEndDt())
 				.reqSkills(util.fetchReqSkillsByProjectSq(project.getProjectSq()))
 				.devGradeNm(util.convertCommonCodeSqToNm(project.getProjectDeveloperGradeCd()))
+				.recruitHeadcounts(util.fetchRecruitHeadcountsByProjectSq(project.getProjectSq()))
 				.requiredEduLvl(util.convertCommonCodeSqToNm(project.getProjectRequiredEducationCd()))
 				.recruitStatus(status)
 				.hasScrapped(hasScrapped)

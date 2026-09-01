@@ -62,14 +62,16 @@ export function discussionForumPostingJsonLd(board: BoardDetail, path: string) {
 }
 
 // 프로젝트 공고 — 구글 채용 리치결과(JobPosting) 대응.
-// projectSalary는 원(KRW) 단위 월 단가(백엔드 formatSalary 참조). 협의(0/null)면 baseSalary 생략.
+// projectSalary는 원(KRW) 단위 월 단가(백엔드 formatSalary 참조).
+// 금액이 없으면(협의만 선택한 공고 = 0/null) baseSalary 를 생략한다.
+// 금액이 있으면 "협의 가능"이 함께 체크돼 있어도 실제 제시 금액이므로 넣는다.
 export function jobPostingJsonLd(project: ProjectDetail, path: string) {
   const isRemote = project.projectWorkType?.some((t) => /원격|재택|리모트/.test(t)) ?? false
   const streetAddress = [project.detailedAddress, project.detailedAddressDetail]
     .filter(Boolean)
     .join(' ')
     .trim()
-  const hasSalary = project.salaryNegotiableYn !== 'Y' && (project.projectSalary ?? 0) > 0
+  const hasSalary = (project.projectSalary ?? 0) > 0
 
   return {
     '@context': 'https://schema.org',

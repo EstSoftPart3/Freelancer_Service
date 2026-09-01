@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { InfoTooltip } from '@/components/ui/tooltip'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
@@ -32,6 +33,12 @@ interface FormData {
   subwaySigunguCode: string
   devGrade: string
   educationLvl: string
+  // 모집 인원 — 'grade'(등급별 여러 줄) 또는 'total'(등급 1개 + 총원)
+  headcountMode: 'grade' | 'total'
+  // count 가 빈 문자열이고 unknown 이 true 면 "인원 미정"
+  gradeCounts: { grade: string; count: string; unknown: boolean }[]
+  totalCount: string
+  totalUnknown: boolean
   projectStartDt: string
   projectEndDt: string
   recruitStartDt: string
@@ -70,6 +77,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
     address: '', detailAddress: '', postcode: '', latitude: '', longitude: '', sigunguCode: '',
     subwayAddressName: '', subwayLat: '', subwayLon: '', subwaySigunguCode: '',
     devGrade: '', educationLvl: '',
+    headcountMode: 'total', gradeCounts: [{ grade: '', count: '', unknown: false }],
+    totalCount: '', totalUnknown: false,
     projectStartDt: '', projectEndDt: '',
     recruitStartDt: '', recruitEndDt: '',
     projectSalary: '',
@@ -119,6 +128,13 @@ export default function ProjectPostClient({ projectSq }: Props) {
     setF({ projectSalary: digitsOnly })
   }
   const salaryDisplay = form.projectSalary ? Number(form.projectSalary).toLocaleString('ko-KR') : ''
+
+  const headcountTotal = form.headcountMode === 'grade'
+    ? form.gradeCounts.reduce((sum, g) => sum + (g.unknown ? 0 : Number(g.count) || 0), 0)
+    : (form.totalUnknown ? 0 : Number(form.totalCount) || 0)
+  const hasUnknownHeadcount = form.headcountMode === 'grade'
+    ? form.gradeCounts.some((g) => g.unknown)
+    : form.totalUnknown
 
   const openPostcode = () => {
     loadDaumPostcode().then(() => {
@@ -180,6 +196,31 @@ export default function ProjectPostClient({ projectSq }: Props) {
           preferenceList: (exist.preferredEtc ?? '').split(',').map((s: string) => s.trim()).filter(Boolean),
           description: exist.description ?? '',
         }))
+        // 모집 인원 복원 — grade 가 채워진 행들이면 등급별, grade 가 없는 한 줄이면 총원 모드.
+        // 인원 개념이 없던 시절 공고는 배열이 비어 있어 기본값(총원, 빈 칸)으로 남는다.
+        const heads: { grade: string | null; count: number | null }[] = exist.recruitHeadcounts ?? []
+        if (heads.length > 0) {
+          const byGrade = heads.filter((h) => h.grade)
+          if (byGrade.length > 0) {
+            setForm((prev) => ({
+              ...prev,
+              headcountMode: 'grade',
+              gradeCounts: byGrade.map((h) => ({
+                grade: h.grade as string,
+                count: h.count == null ? '' : String(h.count),
+                unknown: h.count == null,
+              })),
+            }))
+          } else {
+            setForm((prev) => ({
+              ...prev,
+              headcountMode: 'total',
+              totalCount: heads[0].count == null ? '' : String(heads[0].count),
+              totalUnknown: heads[0].count == null,
+            }))
+          }
+        }
+
         // Vue 원본 ProjectPostPage.vue: 수정 모드에서 기존 인터뷰 가능시간도 폼에 복원
         if (exist.interviewTimes) {
           setInterviewTimes(
@@ -195,6 +236,30 @@ export default function ProjectPostClient({ projectSq }: Props) {
   }, [isEdit, projectSq])
 
   useEffect(() => { loadFormData() }, [loadFormData])
+
+  // 모집 인원 — 등급별 행 조작
+  function setGradeCount(idx: number, patch: Partial<{ grade: string; count: string; unknown: boolean }>) {
+    setF({
+      gradeCounts: form.gradeCounts.map((g, i) => {
+        if (i !== idx) return g
+        const next = { ...g, ...patch }
+        // 미정으로 바꾸면 이미 적어둔 숫자는 지운다 — 저장 때 null 로 나가므로 남겨두면 헷갈린다.
+        return next.unknown ? { ...next, count: '' } : next
+      }),
+    })
+  }
+  function addGradeRow() {
+    setF({ gradeCounts: [...form.gradeCounts, { grade: '', count: '', unknown: false }] })
+  }
+  function removeGradeRow(idx: number) {
+    setF({ gradeCounts: form.gradeCounts.filter((_, i) => i !== idx) })
+  }
+
+  function removeInterviewTime(date: string, time: string) {
+    setInterviewTimes((prev) => prev
+      .map((e) => (e.date === date ? { ...e, times: e.times.filter((t) => t !== time) } : e))
+      .filter((e) => e.times.length > 0))
+  }
 
   function openInterviewModal() {
     if (!form.recruitStartDt || !form.recruitEndDt) {
@@ -217,12 +282,30 @@ export default function ProjectPostClient({ projectSq }: Props) {
   async function handleSubmit() {
     const preference = [...form.preferenceList, ...preferenceInput.split(',')].map((s) => s.trim()).filter(Boolean).join(',')
     const interviewTime = interviewTimes.flatMap((e) => e.times.map((t) => `${e.date}T${t}`))
+    // 총원 모드는 grade 를 null 로 보낸다 — 백엔드가 그 null 로 두 모드를 구분한다.
+    const recruitHeadcounts = form.headcountMode === 'grade'
+      ? form.gradeCounts.map((g) => ({ grade: g.grade, count: g.unknown ? null : Number(g.count) }))
+      : [{ grade: null, count: form.totalUnknown ? null : Number(form.totalCount) }]
     const salaryNum = Number(form.projectSalary)
 
     // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단)
     if (form.projectTitle.trim().length < 5) { toast.error('프로젝트 제목을 5자 이상 입력해주세요.'); return }
     if (!form.address && !form.subwayAddressName) { toast.error('근무지 주소 또는 지하철역 중 하나는 필수입니다.'); return }
-    if (!form.devGrade) { toast.error('개발자 등급을 선택해주세요.'); return }
+    // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
+    if (form.headcountMode === 'total') {
+      if (!form.devGrade) { toast.error('개발자 등급을 선택해주세요.'); return }
+      if (!form.totalUnknown && !(Number(form.totalCount) >= 1)) {
+        toast.error('모집 인원을 입력하거나 "인원 미정"을 선택해주세요.'); return
+      }
+    } else {
+      if (form.gradeCounts.length === 0) { toast.error('모집할 등급을 최소 하나 추가해주세요.'); return }
+      if (form.gradeCounts.some((g) => !g.grade)) { toast.error('등급을 선택해주세요.'); return }
+      if (form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1))) {
+        toast.error('등급별 인원을 입력하거나 "미정"을 선택해주세요.'); return
+      }
+      const grades = form.gradeCounts.map((g) => g.grade)
+      if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
+    }
     if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
     if (!form.projectStartDt || !form.projectEndDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
     if (!form.recruitStartDt || !form.recruitEndDt) { toast.error('모집 기간을 설정해주세요.'); return }
@@ -235,12 +318,15 @@ export default function ProjectPostClient({ projectSq }: Props) {
     if (form.workType.length === 0) { toast.error('근무 형태를 최소 하나 선택해주세요.'); return }
     if (form.recruitJob.length === 0) { toast.error('모집 직군을 최소 하나 선택해주세요.'); return }
     if (form.usingSkills.length === 0) { toast.error('사용 기술을 최소 하나 선택해주세요.'); return }
-    if (form.preferSkills.length === 0) { toast.error('우대 기술을 최소 하나 선택해주세요.'); return }
     if (preference.length > 255) { toast.error(`우대 사항이 너무 깁니다. (최대 255자 / 현재: ${preference.length}자)`); return }
     if (!form.description.trim()) { toast.error('상세 내용을 작성해주세요.'); return }
     if (interviewTimes.length === 0) { toast.error('인터뷰 가능 시간을 설정해주세요.'); return }
-    if (!form.projectSalary || isNaN(salaryNum) || salaryNum <= 0) { toast.error('올바른 단가(숫자)를 입력해주세요.'); return }
-    if (salaryNum > 100000000) { toast.error('단가는 1억 원 이하로 입력해주세요.'); return }
+    // 단가는 세 조합을 모두 허용한다 — 단가만 / 협의만 / 단가+협의.
+    // 협의를 체크하지 않았을 때만 단가가 필수다.
+    if (form.salaryNegotiableYn !== 'Y' && (!form.projectSalary || isNaN(salaryNum) || salaryNum <= 0)) {
+      toast.error('단가를 입력하거나 "단가 협의"를 선택해주세요.'); return
+    }
+    if (form.projectSalary && salaryNum > 100000000) { toast.error('단가는 1억 원 이하로 입력해주세요.'); return }
 
     // 비어있는 숫자 필드는 빈 문자열('') 대신 undefined로 보낸다 — 백엔드 Double/Long 필드가 ''를 파싱 못 해 400 에러 발생
     const numOrUndef = (v: string) => v === '' ? undefined : v
@@ -249,7 +335,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
       // 백엔드 ProjectCreateRequest.projectId가 primitive long이라 신규 등록 시 null을 보내면 역직렬화에서 실패한다
       projectId: projectSq ?? 0,
       projectTitle: form.projectTitle,
-      projectSalary: form.projectSalary,
+      // 미입력(협의만) 이면 0. 컬럼이 NOT NULL 이고, 조회 측 formatSalary 가 0을 '단가 협의'로 읽는다.
+      projectSalary: form.projectSalary || '0',
       projectSalaryNegotiableYn: form.salaryNegotiableYn,
       projectImageUrl: '',
       detailedAddressName: form.address,
@@ -262,7 +349,9 @@ export default function ProjectPostClient({ projectSq }: Props) {
       subwayLat: numOrUndef(form.subwayLat),
       subwayLon: numOrUndef(form.subwayLon),
       subwaySigunguCode: numOrUndef(form.subwaySigunguCode),
-      devGrade: form.devGrade,
+      // 등급별 모드에서는 백엔드가 가장 낮은 등급으로 대표값을 다시 잡는다(검색 필터 호환용).
+      devGrade: form.headcountMode === 'grade' ? (form.gradeCounts[0]?.grade ?? '') : form.devGrade,
+      recruitHeadcounts,
       educationLvl: form.educationLvl,
       projectStartDt: form.projectStartDt,
       projectEndDt: form.projectEndDt,
@@ -272,7 +361,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
       recruitJob: form.recruitJob,
       usingSkills: form.usingSkills,
       preferSkills: form.preferSkills,
-      preference,
+      // 빈 문자열 대신 undefined 를 보내 DB 에 NULL 이 들어가게 한다 (컬럼은 NULL 허용)
+      preference: preference || undefined,
       description: form.description,
       interviewTime,
       isNotification: form.isNotification ? 'Y' : 'N',
@@ -345,30 +435,117 @@ export default function ProjectPostClient({ projectSq }: Props) {
         </div>
       </div>
 
-      {/* 개발자 등급 / 학력 */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-semibold">개발자 등급(경력)</label>
-          <select
-            value={form.devGrade}
-            onChange={(e) => setF({ devGrade: e.target.value })}
-            className="w-full h-9 rounded-md border border-input px-2 text-sm bg-background"
-          >
-            <option value="">선택</option>
-            {options.devGrades.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
+      {/* 모집 인원 — 등급별 또는 총원. 두 방식을 섞을 수는 없다(백엔드도 같은 규칙) */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="text-sm font-semibold">모집 인원</label>
+          {([['grade', '등급별로 모집'], ['total', '총 인원으로 모집']] as const).map(([mode, label]) => (
+            <label key={mode} className="flex cursor-pointer items-center gap-1.5 text-sm">
+              <input
+                type="radio"
+                name="headcount-mode"
+                checked={form.headcountMode === mode}
+                onChange={() => setF({ headcountMode: mode })}
+              />
+              {label}
+            </label>
+          ))}
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-semibold">학력</label>
-          <select
-            value={form.educationLvl}
-            onChange={(e) => setF({ educationLvl: e.target.value })}
-            className="w-full h-9 rounded-md border border-input px-2 text-sm bg-background"
-          >
-            <option value="">선택</option>
-            {options.educationLevels.map((e) => <option key={e} value={e}>{e}</option>)}
-          </select>
-        </div>
+
+        {form.headcountMode === 'grade' ? (
+          <div className="space-y-2">
+            {form.gradeCounts.map((row, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <select
+                  value={row.grade}
+                  onChange={(e) => setGradeCount(idx, { grade: e.target.value })}
+                  className="h-9 w-40 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">등급 선택</option>
+                  {options.devGrades.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+                <Input
+                  value={row.count}
+                  onChange={(e) => setGradeCount(idx, { count: e.target.value.replace(/[^0-9]/g, '') })}
+                  className="w-20"
+                  inputMode="numeric"
+                  placeholder={row.unknown ? '—' : '0'}
+                  disabled={row.unknown}
+                />
+                <span className="text-sm text-muted-foreground">명</span>
+                <div className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`headcount-unknown-${idx}`}
+                    checked={row.unknown}
+                    onCheckedChange={(v) => setGradeCount(idx, { unknown: v === true })}
+                  />
+                  <label htmlFor={`headcount-unknown-${idx}`} className="cursor-pointer text-xs text-muted-foreground">미정</label>
+                </div>
+                {form.gradeCounts.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeGradeRow(idx)}
+                    className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <div className="flex items-center justify-between">
+              <button type="button" onClick={addGradeRow} className="cursor-pointer text-xs text-muted-foreground hover:text-primary">
+                + 등급 추가
+              </button>
+              <span className="text-sm">
+                합계 <strong>{headcountTotal}</strong>명
+                {hasUnknownHeadcount && <span className="ml-1 text-xs text-muted-foreground">(일부 미정)</span>}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={form.devGrade}
+              onChange={(e) => setF({ devGrade: e.target.value })}
+              className="h-9 w-40 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              <option value="">개발자 등급 선택</option>
+              {options.devGrades.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <div className="flex items-center gap-2">
+              <Input
+                value={form.totalCount}
+                onChange={(e) => setF({ totalCount: e.target.value.replace(/[^0-9]/g, '') })}
+                className="w-20"
+                inputMode="numeric"
+                placeholder={form.totalUnknown ? '—' : '0'}
+                disabled={form.totalUnknown}
+              />
+              <span className="text-sm text-muted-foreground">명</span>
+              <div className="ml-1 flex items-center gap-1.5">
+                <Checkbox
+                  id="headcount-unknown-total"
+                  checked={form.totalUnknown}
+                  onCheckedChange={(v) => setF({ totalUnknown: v === true, ...(v === true ? { totalCount: '' } : {}) })}
+                />
+                <label htmlFor="headcount-unknown-total" className="cursor-pointer text-xs text-muted-foreground">인원 미정</label>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 학력 */}
+      <div className="space-y-1">
+        <label className="text-sm font-semibold">학력</label>
+        <select
+          value={form.educationLvl}
+          onChange={(e) => setF({ educationLvl: e.target.value })}
+          className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-2 text-sm"
+        >
+          <option value="">선택</option>
+          {options.educationLevels.map((e) => <option key={e} value={e}>{e}</option>)}
+        </select>
       </div>
 
       {/* 기간 — Vue 원본처럼 듀얼월 캘린더에서 한 번에 범위 선택, 입력창은 읽기전용 표시 */}
@@ -407,7 +584,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
             <Input
               value={salaryDisplay}
               onChange={(e) => handleSalaryChange(e.target.value)}
-              placeholder="예: 5,000,000"
+              placeholder={form.salaryNegotiableYn === 'Y' ? '협의 후 결정' : '예: 5,000,000'}
               className="pr-8"
               inputMode="numeric"
             />
@@ -422,6 +599,9 @@ export default function ProjectPostClient({ projectSq }: Props) {
             <label htmlFor="salary-neg" className="text-sm cursor-pointer">단가 협의</label>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          단가만 입력하거나, 「단가 협의」만 선택하거나, 둘 다 지정할 수 있습니다.
+        </p>
       </div>
 
       {/* 근무 형태 */}
@@ -450,7 +630,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
 
       {/* 우대 기술 */}
       <PickerField
-        label="우대 기술"
+        label="우대 기술 (선택)"
         selected={form.preferSkills}
         onOpen={() => setPreferSkillModalOpen(true)}
         onRemove={(item) => setF({ preferSkills: form.preferSkills.filter((x) => x !== item) })}
@@ -488,12 +668,29 @@ export default function ProjectPostClient({ projectSq }: Props) {
           <button type="button" onClick={openInterviewModal} className="text-xs text-muted-foreground hover:text-primary">+ 추가하기</button>
         </div>
         {interviewTimes.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2 rounded-lg border p-3">
             {interviewTimes.map((e) => (
-              <span key={e.date} className="flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs">
-                {e.date.replaceAll('-', '.')} ({e.times.length}건)
-                <button onClick={() => setInterviewTimes((prev) => prev.filter((x) => x.date !== e.date))} className="text-muted-foreground hover:text-foreground">×</button>
-              </span>
+              <div key={e.date} className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="w-[5.5rem] shrink-0 font-medium">{e.date.replaceAll('-', '.')}</span>
+                {e.times.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    title="클릭하여 이 시각만 삭제"
+                    onClick={() => removeInterviewTime(e.date, t)}
+                    className="cursor-pointer rounded-full bg-primary px-2 py-0.5 text-[11px] text-primary-foreground"
+                  >
+                    {t} ×
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setInterviewTimes((prev) => prev.filter((x) => x.date !== e.date))}
+                  className="ml-auto cursor-pointer text-muted-foreground hover:text-foreground"
+                >
+                  날짜 삭제
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -513,6 +710,14 @@ export default function ProjectPostClient({ projectSq }: Props) {
           onCheckedChange={(v) => setF({ isNotification: v === true })}
         />
         <label htmlFor="notify" className="text-sm cursor-pointer">알림 발신 여부</label>
+        <InfoTooltip label="알림 발신 여부 안내">
+          <p className="font-semibold">알림 발신 여부</p>
+          <ul className="mt-1 space-y-0.5">
+            <li>· 우리 기업을 즐겨찾기한 회원에게 새 공고 등록 알림이 갑니다.</li>
+            <li>· 사이트 알림(상단 종 아이콘)으로만 가며 이메일·문자는 보내지 않습니다.</li>
+            <li>· 공고를 <span className="font-medium">수정</span>할 때는 발송되지 않습니다.</li>
+          </ul>
+        </InfoTooltip>
       </div>
 
       <div className="flex gap-2">
@@ -538,6 +743,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
         title="모집 직군 선택"
         options={options.recruitJobs}
         selected={form.recruitJob}
+        allowCustom
+        customPlaceholder="목록에 없는 직군 직접 입력"
         onClose={() => setJobModalOpen(false)}
         onConfirm={(v) => setF({ recruitJob: v })}
       />

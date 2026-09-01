@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.demo.domain.project.dto.response.AreaInfoResponse;
+import com.example.demo.domain.project.dto.response.RecruitHeadcountResponse;
 import com.example.demo.domain.project.entity.Project;
 import com.example.demo.domain.project.util.ProjectUtil;
 
@@ -45,6 +46,8 @@ public class ExistProjectVo {
 	private Map<String, List<String>> interviewTimes;
 	private String preferredEtc;
 	private String description;
+	/** 모집 인원. 비어 있으면 인원 개념이 없던 시절 공고다 */
+	private List<RecruitHeadcountResponse> recruitHeadcounts;
 
 	public static ExistProjectVo from(Project p, ProjectUtil util, List<String> reqSkills,
 			List<String> preferSkills, AreaInfoResponse parent, AreaInfoResponse sub) {
@@ -80,6 +83,7 @@ public class ExistProjectVo {
 				.jobs(util.fetchJobsByProjectSq(projectSq))
 				.contract(util.fetchWorkTypesByProjectSq(projectSq))
 				.interviewTimes(interviewTimes)
+				.recruitHeadcounts(util.fetchRecruitHeadcountsByProjectSq(projectSq))
 				.build();
 	}
 }

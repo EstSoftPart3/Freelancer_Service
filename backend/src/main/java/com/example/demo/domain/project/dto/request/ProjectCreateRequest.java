@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -53,7 +54,8 @@ public record ProjectCreateRequest(
 
 		@NotEmpty(message = "사용 기술은 필수입니다.") List<String> usingSkills,
 
-		@NotEmpty(message = "우대 기술은 필수입니다.") List<String> preferSkills,
+		// 우대 기술은 선택 항목이다 (없이도 등록 가능).
+		List<String> preferSkills,
 
 		@Size(max = 255, message = "우대 사항은 255자를 초과할 수 없습니다.") String preference,
 
@@ -61,7 +63,13 @@ public record ProjectCreateRequest(
 
 		@NotNull(message = "인터뷰 가능 시간은 필수입니다.") List<LocalDateTime> interviewTime,
 
-		@NotNull(message = "알림 여부는 필수입니다.") String isNotification) {
+		@NotNull(message = "알림 여부는 필수입니다.") String isNotification,
+
+		/**
+		 * 모집 인원. 등급별 여러 행이거나, 등급이 null 인 총원 한 행이다.
+		 * 인원 개념이 없던 시절에 등록된 공고가 있으므로 조회 쪽은 비어 있는 경우를 견뎌야 한다.
+		 */
+		@Valid @NotEmpty(message = "모집 인원은 필수입니다.") List<RecruitHeadcountRequest> recruitHeadcounts) {
 
 	/*
 	 * 날짜 4개의 관계 검증. 종전에는 @NotNull만 있어 "3월에 끝나는 프로젝트를 12월까지 모집"하는
@@ -98,5 +106,31 @@ public record ProjectCreateRequest(
 			return true;
 		}
 		return !recruitEndDt.isAfter(projectEndDt);
+	}
+
+	/*
+	 * 모집 인원의 두 모드가 섞이지 않게 한다. 등급이 있는 행과 없는 행이 함께 오면 화면에
+	 * 무엇을 보여줄지 정할 수 없다.
+	 */
+	@AssertTrue(message = "모집 인원은 '등급별' 또는 '총원' 중 한 방식으로만 입력할 수 있습니다.")
+	public boolean isHeadcountModeConsistent() {
+		if (recruitHeadcounts == null || recruitHeadcounts.isEmpty()) {
+			return true;
+		}
+		long byGrade = recruitHeadcounts.stream().filter(h -> h.grade() != null && !h.grade().isBlank()).count();
+		// 전부 등급별이거나, 전부 총원(=행 1개)이어야 한다.
+		return byGrade == recruitHeadcounts.size() || (byGrade == 0 && recruitHeadcounts.size() == 1);
+	}
+
+	@AssertTrue(message = "같은 등급을 두 번 입력할 수 없습니다.")
+	public boolean isHeadcountGradeUnique() {
+		if (recruitHeadcounts == null) {
+			return true;
+		}
+		List<String> grades = recruitHeadcounts.stream()
+				.map(RecruitHeadcountRequest::grade)
+				.filter(g -> g != null && !g.isBlank())
+				.toList();
+		return grades.size() == grades.stream().distinct().count();
 	}
 }

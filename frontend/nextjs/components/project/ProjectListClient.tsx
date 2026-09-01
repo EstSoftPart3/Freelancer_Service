@@ -13,6 +13,8 @@ import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { cn } from '@/lib/utils'
+import { getRecruitStatus } from '@/lib/recruit'
+import { formatGradeNames } from '@/lib/headcount'
 import type {
   ProjectItem,
   ProjectSearchParams,
@@ -38,21 +40,6 @@ function escapeHtml(value: string | null | undefined): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
-}
-
-interface ProjectStatus {
-  status: '채용예정' | '채용중' | '채용종료'
-  dDay?: string
-}
-
-function getProjectStatus(project: ProjectItem): ProjectStatus {
-  const today = new Date()
-  const start = new Date(project.recruitStartDt)
-  const end = new Date(project.recruitEndDt)
-  if (today < start) return { status: '채용예정' }
-  if (today > end) return { status: '채용종료' }
-  const diff = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  return { status: '채용중', dDay: `D-${diff}` }
 }
 
 function getDisplayAddress(project: ProjectItem): string {
@@ -264,7 +251,7 @@ export default function ProjectListClient({ initialData }: Props = {}) {
           <div class="marker-pin ${isSubway ? 'subway' : ''}">${isSubway ? SVG_TRAIN : SVG_PIN}</div>
           <div class="marker-tooltip">
             <div class="tt-header">
-              <span class="tt-badge">${escapeHtml(project.devGradeNm || '등급미정')}</span>
+              <span class="tt-badge">${escapeHtml(formatGradeNames(project.recruitHeadcounts, project.devGradeNm) || '등급미정')}</span>
               <span class="tt-ttl">${escapeHtml(project.projectTtl)}</span>
             </div>
             <div class="tt-body">
@@ -535,7 +522,7 @@ export default function ProjectListClient({ initialData }: Props = {}) {
                 <p className="p-4 text-xs text-muted-foreground">검색 결과가 없습니다.</p>
               ) : (
                 projects.map((p, idx) => {
-                  const { status, dDay } = getProjectStatus(p)
+                  const { status, dDay } = getRecruitStatus(p.recruitStartDt, p.recruitEndDt)
                   const isSubway = p.addressTypeCd === 2702
                   return (
                     <div

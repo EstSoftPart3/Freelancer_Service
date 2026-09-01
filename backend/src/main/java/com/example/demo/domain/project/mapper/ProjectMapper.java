@@ -12,6 +12,7 @@ import com.example.demo.domain.company.dto.request.BaseRequest;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
 import com.example.demo.domain.project.dto.request.CompanyFilterRequest;
 import com.example.demo.domain.project.dto.request.ContractInsertRequest;
+import com.example.demo.domain.project.dto.request.HeadcountInsertRequest;
 import com.example.demo.domain.project.dto.request.JobInsertRequest;
 import com.example.demo.domain.project.dto.request.ProjectSearchRequest;
 import com.example.demo.domain.project.dto.request.ScrapInsertRequest;
@@ -19,6 +20,7 @@ import com.example.demo.domain.project.dto.request.SkillInsertRequest;
 import com.example.demo.domain.project.dto.response.InterviewTimeInfoResponse;
 import com.example.demo.domain.project.dto.response.ProjectFormDataResponse;
 import com.example.demo.domain.project.dto.response.ProjectRecruitStatus;
+import com.example.demo.domain.project.dto.response.RecruitHeadcountResponse;
 import com.example.demo.domain.project.dto.response.SingleSkillInfoResponse;
 import com.example.demo.domain.project.entity.Project;
 
@@ -77,6 +79,14 @@ public interface ProjectMapper {
 
 	void insertJobs(@Param("projectSq") Long projectSq, @Param("recruitJobs") List<JobInsertRequest> recruitJobs);
 
+	/** 모집 인원 등록. 등급별 여러 행이거나 등급 null 인 총원 한 행이다. */
+	void insertRecruitHeadcounts(@Param("headcounts") List<HeadcountInsertRequest> headcounts);
+
+	/**
+	 * 공고의 모집 인원. 인원 개념이 없던 시절 공고는 빈 리스트가 나온다 — 화면에서 "인원 미정"으로 처리한다.
+	 */
+	List<RecruitHeadcountResponse> findRecruitHeadcountsByProjectSq(@Param("projectSq") Long projectSq);
+
 	void insertSkills(@Param("projectSq") Long projectSq, @Param("skills") List<SkillInsertRequest> skills);
 
 	void insertPreferSkills(@Param("projectSq") Long projectSq,
@@ -100,6 +110,8 @@ public interface ProjectMapper {
 	void deleteProjectContracts(@Param("projectSq") Long projectSq);
 
 	void deleteProjectJobRoles(@Param("projectSq") Long projectSq);
+
+	void deleteRecruitHeadcounts(@Param("projectSq") Long projectSq);
 
 	void deleteProjectInterviewTimes(@Param("projectSq") Long projectSq);
 

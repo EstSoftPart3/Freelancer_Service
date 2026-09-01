@@ -42,7 +42,7 @@
 
 	<!--
 		모집중(=채용중) 판정 조건. judgeProjectRecruitStatus의 '채용중' 분기와 반드시 같은 기준이어야
-		한다(NOW() 기준, 시작·종료 포함). 별칭이 다른 쿼리에서 재사용할 수 있도록 alias를 property로 받는다.
+		한다(CURDATE() 기준, 시작·종료일 당일 포함). 별칭이 다른 쿼리에서 재사용할 수 있도록 alias를 property로 받는다.
 		  <include refid="recruitingCondition"><property name="alias" value="p."/></include>
 	-->
 	<sql id="recruitingCondition">
@@ -140,16 +140,16 @@
 		END BETWEEN #{minLng} AND #{maxLng}) </if> /* 정렬 */ <choose>
 			<when test="sortBy != null and sortOrder != null">
 				<choose>
-					<when test="sortBy == 'distance' and userLat != null"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, distance ASC </when>
-					<when test="sortBy == 'project_start_dt'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm
+					<when test="sortBy == 'distance' and userLat != null"> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, distance ASC </when>
+					<when test="sortBy == 'project_start_dt'"> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm
 		${sortOrder} </when>
-					<when test="sortBy == 'view_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_view_cnt ${sortOrder} </when>
-					<when test="sortBy == 'applicant_count'"> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_candidate_cnt
+					<when test="sortBy == 'view_count'"> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_view_cnt ${sortOrder} </when>
+					<when test="sortBy == 'applicant_count'"> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_candidate_cnt
 		${sortOrder} </when>
-					<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
+					<otherwise> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 				</choose>
 			</when>
-			<otherwise> ORDER BY CASE WHEN NOW() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
+			<otherwise> ORDER BY CASE WHEN CURDATE() BETWEEN p.project_recruit_start_dt AND p.project_recruit_end_dt THEN 0 ELSE 1 END ASC, p.project_created_at_dtm DESC </otherwise>
 		</choose> /* 페이징
 		*/ <if test="size != null and offset != null"> LIMIT #{size} OFFSET #{offset} </if>
 	</select>
@@ -257,13 +257,13 @@
 	  <if
 			test="request.status == 'scheduled'">
 	    <![CDATA[
-	      AND NOW() < project_recruit_start_dt
+	      AND CURDATE() < project_recruit_start_dt
 	    ]]>
 	  </if>
 	
 	  <if test="request.status == 'closed'">
 	    <![CDATA[
-	      AND NOW() > project_recruit_end_dt
+	      AND CURDATE() > project_recruit_end_dt
 	    ]]>
 	  </if>
 		ORDER BY p.project_sq DESC <if
@@ -353,13 +353,13 @@
   <if
 			test="request.status == 'scheduled'">
     <![CDATA[
-      AND NOW() < p.project_recruit_start_dt
+      AND CURDATE() < p.project_recruit_start_dt
     ]]>
   </if>
 
   <if test="request.status == 'closed'">
     <![CDATA[
-      AND NOW() > p.project_recruit_end_dt
+      AND CURDATE() > p.project_recruit_end_dt
     ]]>
   </if>
 	</select>
@@ -389,9 +389,9 @@
   <![CDATA[
     SELECT
       COUNT(*) AS allCount,
-      SUM(CASE WHEN NOW() < project_recruit_start_dt THEN 1 ELSE 0 END) AS scheduled,
-      SUM(CASE WHEN NOW() > project_recruit_end_dt THEN 1 ELSE 0 END) AS closed,
-      SUM(CASE WHEN NOW() BETWEEN project_recruit_start_dt AND project_recruit_end_dt THEN 1 ELSE 0 END) AS recruiting
+      SUM(CASE WHEN CURDATE() < project_recruit_start_dt THEN 1 ELSE 0 END) AS scheduled,
+      SUM(CASE WHEN CURDATE() > project_recruit_end_dt THEN 1 ELSE 0 END) AS closed,
+      SUM(CASE WHEN CURDATE() BETWEEN project_recruit_start_dt AND project_recruit_end_dt THEN 1 ELSE 0 END) AS recruiting
     FROM TBL_PROJECT_M
   ]]>
 	  <where>
@@ -465,11 +465,41 @@
 	</insert>
 
 
+	<!--
+		등록자가 직접 입력한 직군은 공통코드를 만들지 않고 cd=0 + 이름으로 이 공고에만 넣는다.
+		공통코드에 있는 직군이면 이름은 null 이다.
+	-->
 	<insert id="insertJobs" parameterType="map"> INSERT INTO TBL_PROJECT_RECRUIT_JOB_ROLE_S (
-		project_sq, recruit_job_position_type_cd ) VALUES <foreach collection="recruitJobs"
-			item="type" separator=","> (#{type.projectSq}, #{type.recruitJobPosTypCd}) </foreach>
+		project_sq, recruit_job_position_type_cd, recruit_job_position_nm ) VALUES <foreach
+			collection="recruitJobs" item="type" separator=","> (#{type.projectSq},
+		#{type.recruitJobPosTypCd}, #{type.recruitJobPosNm}) </foreach>
 	</insert>
 
+
+	<!--
+		모집 인원. developer_grade_cd 가 NULL 이면 "총 N명" 모드, 값이 있으면 등급별 모드다.
+		모드 플래그 컬럼을 따로 두지 않고 이 NULL 여부로 구분한다.
+	-->
+	<insert id="insertRecruitHeadcounts" parameterType="map"> INSERT INTO
+		TBL_PROJECT_RECRUIT_HEADCOUNT_S ( project_sq, developer_grade_cd, headcount ) VALUES <foreach
+			collection="headcounts" item="h" separator=","> (#{h.projectSq}, #{h.developerGradeCd},
+		#{h.headcount}) </foreach>
+	</insert>
+
+	<!--
+		등급 코드가 NULL 인 총원 행도 함께 나와야 하므로 LEFT JOIN 이다.
+		recruit_headcount_sq 를 함께 뽑는 이유 — 총원 모드 + 인원 미정이면 grade·count 가 둘 다
+		NULL 이라 MyBatis 가 그 행을 객체 대신 null 로 만들어 리스트에 null 이 섞인다.
+	-->
+	<select id="findRecruitHeadcountsByProjectSq" parameterType="Long"
+		resultType="com.example.demo.domain.project.dto.response.RecruitHeadcountResponse"> SELECT
+		h.recruit_headcount_sq AS headcountSq, c.common_code_nm AS grade, h.headcount AS count FROM
+		TBL_PROJECT_RECRUIT_HEADCOUNT_S h LEFT JOIN TBL_COMMON_CODE_C c ON h.developer_grade_cd =
+		c.common_code_sq WHERE h.project_sq = #{projectSq} ORDER BY h.developer_grade_cd,
+		h.recruit_headcount_sq </select>
+
+	<delete id="deleteRecruitHeadcounts"> DELETE FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S WHERE
+		project_sq = #{projectSq} </delete>
 
 	<insert id="insertSkills" parameterType="map"> INSERT INTO TBL_PROJECT_REQUIRED_SKILL_TAG_S (
 		project_sq, skill_tag_sq, parent_skill_tag_sq, skill_tag_lvl, skill_tag_nm ) VALUES <foreach
@@ -512,12 +542,18 @@
 		project_scrap_cnt - 1 WHERE project_sq = #{projectSq} </update>
 
 
+	<!--
+		등록 폼에 노출할 기술 그룹. 화이트리스트인 이유는 Device(PC/노트북)를 빼기 위해서다 —
+		프로젝트 기술 스택에 들어갈 항목이 아니다.
+		종전 목록에는 존재하지도 않는 'ETC' 가 들어 있고 실재하는 'OS' 는 빠져 있어 데이터와 어긋나 있었다.
+	-->
 	<select id="findSkillFormList"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
 		p.skill_tag_nm AS parentSkillTagNm, c.skill_tag_nm AS childSkillTagNm FROM TBL_SKILL_TAG_C p
 		JOIN TBL_SKILL_TAG_C c ON p.skill_tag_sq = c.parent_skill_tag_sq WHERE
 		p.skill_tag_is_deleted_yn = 'N' AND c.skill_tag_is_deleted_yn = 'N' AND p.skill_tag_nm IN
-		('Language', 'FrameWork', 'Tool', 'DBMS', 'ETC') ORDER BY p.skill_tag_sq, c.skill_tag_sq </select>
+		('Language', 'FrameWork', 'Tool', 'DBMS', 'OS', 'Cloud/Infra') ORDER BY p.skill_tag_sq,
+		c.skill_tag_sq </select>
 
 	<select id="findSkillInfoList"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
@@ -526,30 +562,44 @@
 		p.skill_tag_is_deleted_yn = 'N' AND c.skill_tag_is_deleted_yn = 'N' ORDER BY p.skill_tag_sq,
 		c.skill_tag_sq </select>
 
+	<!--
+		LEFT JOIN 인 이유 — 등록자가 직접 입력한 기술은 마스터(TBL_SKILL_TAG_C)에 없어 skill_tag_sq 가 0 이다.
+		INNER JOIN 이면 상세 화면에서 그 기술이 통째로 사라진다. 이름은 공고 행에 저장돼 있으므로
+		마스터에 없거나 삭제된 태그도 '직접 입력' 그룹으로 보여준다.
+		삭제여부 조건을 WHERE 가 아니라 JOIN 절에 둔 것도 같은 이유다(WHERE 에 두면 LEFT JOIN 이 무력화된다).
+	-->
 	<select id="findReqSkillsByProjectSq" parameterType="Long"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
-		DISTINCT p.skill_tag_nm AS parentSkillTagNm, c.skill_tag_nm AS childSkillTagNm FROM
-		TBL_PROJECT_REQUIRED_SKILL_TAG_S r JOIN TBL_SKILL_TAG_C c ON r.skill_tag_sq = c.skill_tag_sq
-		JOIN TBL_SKILL_TAG_C p ON c.parent_skill_tag_sq = p.skill_tag_sq WHERE
-		c.skill_tag_is_deleted_yn = 'N' AND p.skill_tag_is_deleted_yn = 'N' AND r.project_sq =
-		#{projectSq} ORDER BY p.skill_tag_nm, c.skill_tag_nm </select>
+		DISTINCT COALESCE(p.skill_tag_nm, '직접 입력') AS parentSkillTagNm,
+		COALESCE(c.skill_tag_nm, r.skill_tag_nm) AS childSkillTagNm FROM
+		TBL_PROJECT_REQUIRED_SKILL_TAG_S r LEFT JOIN TBL_SKILL_TAG_C c ON r.skill_tag_sq =
+		c.skill_tag_sq AND c.skill_tag_is_deleted_yn = 'N' LEFT JOIN TBL_SKILL_TAG_C p ON
+		c.parent_skill_tag_sq = p.skill_tag_sq AND p.skill_tag_is_deleted_yn = 'N' WHERE
+		r.project_sq = #{projectSq} ORDER BY parentSkillTagNm, childSkillTagNm </select>
 
+	<!-- findReqSkillsByProjectSq 와 같은 이유로 LEFT JOIN 이다. -->
 	<select id="findPreferSkillsByProjectSq" parameterType="Long"
 		resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse"> SELECT
-		DISTINCT p.skill_tag_nm AS parentSkillTagNm, c.skill_tag_nm AS childSkillTagNm FROM
-		TBL_PROJECT_PREFERRED_SKILL_TAG_S r JOIN TBL_SKILL_TAG_C c ON r.skill_tag_sq =
-		c.skill_tag_sq JOIN TBL_SKILL_TAG_C p ON c.parent_skill_tag_sq = p.skill_tag_sq WHERE
-		c.skill_tag_is_deleted_yn = 'N' AND p.skill_tag_is_deleted_yn = 'N' AND r.project_sq =
-		#{projectSq} ORDER BY p.skill_tag_nm, c.skill_tag_nm </select>
+		DISTINCT COALESCE(p.skill_tag_nm, '직접 입력') AS parentSkillTagNm,
+		COALESCE(c.skill_tag_nm, r.skill_tag_nm) AS childSkillTagNm FROM
+		TBL_PROJECT_PREFERRED_SKILL_TAG_S r LEFT JOIN TBL_SKILL_TAG_C c ON r.skill_tag_sq =
+		c.skill_tag_sq AND c.skill_tag_is_deleted_yn = 'N' LEFT JOIN TBL_SKILL_TAG_C p ON
+		c.parent_skill_tag_sq = p.skill_tag_sq AND p.skill_tag_is_deleted_yn = 'N' WHERE
+		r.project_sq = #{projectSq} ORDER BY parentSkillTagNm, childSkillTagNm </select>
 
 
 	<select id="findWorkTypesByProjectSq" resultType="String" parameterType="Long"> SELECT
 		c.common_code_nm FROM TBL_PROJECT_CONTRACT_TYPE_S m JOIN TBL_COMMON_CODE_C c ON
 		m.contract_type_cd = c.common_code_sq WHERE m.project_sq = #{projectSq} </select>
 
+	<!--
+		LEFT JOIN 인 이유 — 직접 입력한 직군은 cd 가 0 이라 공통코드에 대응하는 행이 없다.
+		INNER JOIN 이면 그 직군이 조회에서 통째로 사라진다.
+	-->
 	<select id="findJobsByProjectSq" resultType="String" parameterType="Long"> SELECT
-		c.common_code_nm FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S m JOIN TBL_COMMON_CODE_C c ON
-		m.recruit_job_position_type_cd = c.common_code_sq WHERE m.project_sq = #{projectSq} </select>
+		COALESCE(c.common_code_nm, m.recruit_job_position_nm) FROM TBL_PROJECT_RECRUIT_JOB_ROLE_S m
+		LEFT JOIN TBL_COMMON_CODE_C c ON m.recruit_job_position_type_cd = c.common_code_sq WHERE
+		m.project_sq = #{projectSq} </select>
 
 	<select id="findInterviewTimeMinMaxBySq" resultType="map" parameterType="Long"> SELECT
 		MIN(interview_available_dtm) AS minTime, MAX(interview_available_dtm) AS maxTime FROM

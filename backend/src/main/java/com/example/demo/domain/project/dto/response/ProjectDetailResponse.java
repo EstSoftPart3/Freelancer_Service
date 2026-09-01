@@ -52,6 +52,8 @@ public class ProjectDetailResponse {
     private String projectCreatedDt;
 
     private Long projectSalary;
+    /** 모집 인원. 비어 있으면 인원을 입력하지 않고 등록된 옛 공고다 */
+    private List<RecruitHeadcountResponse> recruitHeadcounts;
     private String formattedSalary;
     private List<String> projectJobRole;
     private List<String> projectWorkType;
@@ -100,6 +102,7 @@ public class ProjectDetailResponse {
                 .formattedSalary(formattedSalary)
                 .projectSalary(p.getProjectSalary())
                 .projectJobRole(util.fetchJobsByProjectSq(projectSq))
+                .recruitHeadcounts(util.fetchRecruitHeadcountsByProjectSq(projectSq))
                 .projectWorkType(util.fetchWorkTypesByProjectSq(projectSq))
 
                 .isScrap(hasScrapped)

@@ -25,6 +25,8 @@ public class ApplySeedPlanResponseDTO {
     public static class Summary {
         private int targetProjects;
         private int totalApplications;
+        /** 이번에 더해질 조회수 합계 */
+        private int totalViews;
         private int usableBots;
         /** 이력서가 없어 이번 배분에서 빠진 봇 수 */
         private int botsWithoutResume;
@@ -42,6 +44,10 @@ public class ApplySeedPlanResponseDTO {
         private Integer currentCnt;
         /** 이번에 새로 붙일 건수 */
         private int plannedCnt;
+        /** 지원 건수에 얹을 조회수 비율(%). 미리보기와 실행이 같은 값을 써야 결과가 재현된다 */
+        private int viewExtraPct;
+        /** 이번에 더해질 조회수 = plannedCnt + ceil(plannedCnt × viewExtraPct / 100) */
+        private int plannedViewCnt;
         /** 배정된 봇 user_sq. 공고 안에서 중복은 없다 */
         private List<Long> botUserSqs;
     }

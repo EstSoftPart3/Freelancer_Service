@@ -11,6 +11,8 @@ public class ApplySeedCommitResponseDTO {
     private Long randomSeed;
     private int targetProjects;
     private int insertedApplications;
+    /** 이번에 더해진 조회수 합계 */
+    private int insertedViews;
     /** 이번 실행에서 새로 만든 봇 이력서 수 */
     private int createdResumes;
 }

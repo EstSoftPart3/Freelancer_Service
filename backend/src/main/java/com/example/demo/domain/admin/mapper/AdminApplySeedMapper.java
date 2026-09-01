@@ -50,6 +50,16 @@ public interface AdminApplySeedMapper {
 	/** {@code project_candidate_cnt} 를 delta 만큼 더한다(음수면 뺀다). 0 아래로는 내려가지 않는다. */
 	int addCandidateCnt(@Param("projectSq") Long projectSq, @Param("delta") int delta);
 
+	/**
+	 * {@code project_view_cnt} 를 delta 만큼 더한다.
+	 *
+	 * <p>
+	 * 시드는 실제 HTTP 트래픽이 아니라 조회수 증가 API 를 타지 않는다. 그래서 지원만 20건이고
+	 * 조회수는 0인 공고가 생겼다. 여기서 함께 올린다.
+	 * </p>
+	 */
+	int addViewCnt(@Param("projectSq") Long projectSq, @Param("delta") int delta);
+
 	/** 회수 대상 집계 — 공고별 봇 지원 건수. 미리보기와 실행이 같은 쿼리를 쓴다. */
 	List<ApplySeedRevokeResponseDTO.Sample> findBotApplicationCounts(@Param("projectSqs") List<Long> projectSqs);
 

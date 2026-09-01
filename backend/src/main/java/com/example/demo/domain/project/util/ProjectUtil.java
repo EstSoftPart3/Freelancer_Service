@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.project.dto.response.InterviewTimeSlot;
+import com.example.demo.domain.project.dto.response.RecruitHeadcountResponse;
 import com.example.demo.domain.project.mapper.AddressMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.mapper.SkillMapper;
@@ -53,6 +54,11 @@ public class ProjectUtil {
 	
 	public List<String> fetchJobsByProjectSq(Long projectSq) {
 		return projectMapper.findJobsByProjectSq(projectSq);
+	}
+
+	/** 공고의 모집 인원. 인원 개념이 없던 시절 공고는 빈 리스트다. */
+	public List<RecruitHeadcountResponse> fetchRecruitHeadcountsByProjectSq(Long projectSq) {
+		return projectMapper.findRecruitHeadcountsByProjectSq(projectSq);
 	}
 	
 	public Map<String, LocalDateTime> fetchInterviewTimeMinMaxBySq(Long projectSq) {
