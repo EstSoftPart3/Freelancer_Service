@@ -15,6 +15,7 @@ import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { ddayFromServer } from '@/lib/recruit'
 import type { ScrapProjectItem } from '@/types'
+import { formatGradeNames } from '@/lib/headcount'
 
 const PAGE_SIZE = 5
 
@@ -128,7 +129,7 @@ export default function ProjectScrapClient() {
             <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
               <div>
                 <span className="font-semibold text-foreground">지원 자격</span>
-                {' '}| {item.address.parentSigungu} {item.address.sigungu} / {item.developerGrade} / {item.requiredEducation}
+                {' '}| {item.address.parentSigungu} {item.address.sigungu} / {formatGradeNames(item.recruitHeadcounts, item.developerGrade)} / {item.requiredEducation}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {item.skillTags.map((s) => (
                     <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>

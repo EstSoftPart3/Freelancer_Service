@@ -15,6 +15,7 @@ import com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO;
 import com.example.demo.domain.mypage.dto.ProjectScrapDTO;
 import com.example.demo.domain.mypage.dto.response.ProjectScrapResponseDTO;
 import com.example.demo.domain.mypage.repository.ProjectScrapRepository;
+import com.example.demo.domain.project.util.ProjectUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProjectScrapService {
     private final ProjectScrapRepository repository;
+    private final ProjectUtil projectUtil;
 
     public ProjectScrapResponseDTO getScrappedProjects(Long userSq, String searchType, String searchKeyword, int page,
             int size) {
@@ -54,6 +56,8 @@ public class ProjectScrapService {
                     .address(address)
                     .requiredEducation(education)
                     .developerGrade(developer)
+                    // 등급별로 여러 명을 뽑는 공고가 대표 등급 하나로만 보이던 것을 고친다.
+                    .recruitHeadcounts(projectUtil.fetchRecruitHeadcountsByProjectSq(projectSq))
                     .skillTags(skillTags)
                     .dDay(dDay)
                     .build();

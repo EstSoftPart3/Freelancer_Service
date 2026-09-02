@@ -16,6 +16,7 @@ import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { getRecruitStatus } from '@/lib/recruit'
 import type { CompanyProject } from '@/types'
+import { formatGradeNames } from '@/lib/headcount'
 
 const PAGE_SIZE = 5
 
@@ -170,7 +171,7 @@ export default function AffiliationProjectsClient() {
 
               <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
                 <div className="space-y-1">
-                  <div><span className="font-semibold text-foreground">지원 자격</span> | {post.address} / {post.devGradeNm} / {post.requiredEduLvl}</div>
+                  <div><span className="font-semibold text-foreground">지원 자격</span> | {post.address} / {formatGradeNames(post.recruitHeadcounts, post.devGradeNm)} / {post.requiredEduLvl}</div>
                   <div className="flex flex-wrap gap-1">
                     {post.reqSkills.map((s) => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}
                   </div>

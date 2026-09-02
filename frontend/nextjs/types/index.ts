@@ -405,7 +405,9 @@ export interface ScrapProjectItem {
   createdAt: string
   candidateCnt: number
   address: { parentSigungu: string; sigungu: string }
+  /** 대표 등급(최저). 등급 목록이 없는 옛 공고의 폴백 */
   developerGrade: string
+  recruitHeadcounts?: RecruitHeadcount[]
   requiredEducation: string
   skillTags: string[]
   recruitStartDt: string
@@ -465,7 +467,9 @@ export interface CompanyProject {
   recruitEndDt: string
   applicantCnt: number
   address: string
+  /** 대표 등급(최저). 등급 목록이 없는 옛 공고의 폴백 */
   devGradeNm: string
+  recruitHeadcounts?: RecruitHeadcount[]
   requiredEduLvl: string
   reqSkills: string[]
 }
