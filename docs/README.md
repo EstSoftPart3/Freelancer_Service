@@ -26,9 +26,13 @@
 ## `도구/` — 계속 쓰는 스크립트
 
 전부 **드라이런이 기본**이고 `--apply` 를 명시해야 실제로 쓴다.
+그리고 **대상 DB 의 기본값은 개발(`freelancer_develop`)** 이다 — 운영을 건드리려면 `--prod` 를 붙인다.
 
 | 스크립트 | 용도 |
 |---|---|
+| `dbconfig.py` | **공용 접속 설정.** 기본 = 개발 DB, `--prod` 로 운영 전환. 새 스크립트는 이걸 쓴다 |
+| `db-clone-develop.py` | 운영 `freelancer_project` → 개발 `freelancer_develop` 복제 |
+| `db-diff-schema.py` | 개발 ↔ 운영 **구조 차이.** 🔴 배포 전 필수 |
 | `db-backup.py` | 전체 스키마 덤프 → `C:/dev/db-backup/YYYYMMDD-HHMM/` |
 | `db-restore.py` | 덤프 복원 |
 | `db-restore-drill.py` | 임시 스키마에 복원해 백업이 실제로 살아나는지 리허설 |
@@ -38,6 +42,13 @@
 
 ### 🔴 알아둘 것
 
+- **개발 DB 와 운영 DB 가 분리돼 있다(2026-09-01~).** 로컬 개발은 `freelancer_develop`,
+  실서버는 `freelancer_project`. **같은 서버에 이름만 다르다.**
+  개발 DB 는 버려도 되는 사본이라 꼬이면 `db-clone-develop.py --apply --drop` 으로 다시 뜬다.
+  🔴 **스키마 변경은 배포 전에 운영에 따로 적용해야 한다** — `배포-가이드.md` 0-0 장.
+- **DB 분리 이전 스크립트(`cleanup-userdata.py`·`check-*`·`phase*`·`seed-*` 등)는
+  `freelancer_project` 가 하드코딩돼 있다.** 대부분 실행이 끝난 일회성이라 그대로 뒀다.
+  재실행하려면 먼저 `dbconfig.connect()` 로 바꿀 것.
 - **공통코드(`TBL_COMMON_CODE_C`)·지역코드(`TBL_AREA_C`)는 데이터가 아니라 설정값이다.**
   게시판 카테고리·유형·회원 구분이 전부 여기 있어서 지우면 글쓰기·로그인·목록이 깨진다.
   `cleanup-userdata.py` 가 자동으로 보존한다.

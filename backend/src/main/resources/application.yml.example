@@ -10,7 +10,9 @@ spring:
     active: dev # 로컬은 dev. 운영은 SPRING_PROFILES_ACTIVE=prod 로 주입한다.
 
   datasource:
-    url: jdbc:p6spy:mariadb://<DB_HOST>:3306/freelancer_project?useUnicode=true&characterEncoding=UTF-8
+    # 🔴 개발은 freelancer_develop. freelancer_project 는 실서버 DB 이므로 여기에 적지 않는다.
+    #    개발 DB 가 아직 없다면: !python "docs/도구/db-clone-develop.py" --apply
+    url: jdbc:p6spy:mariadb://<DB_HOST>:3306/freelancer_develop?useUnicode=true&characterEncoding=UTF-8
     username: <DB_USERNAME>
     password: <DB_PASSWORD>
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
