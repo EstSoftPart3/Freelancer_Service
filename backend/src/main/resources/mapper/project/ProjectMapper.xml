@@ -86,8 +86,16 @@
 		</if>
 		/* [필터 3] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
-		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator="," close=")">#{item}</foreach>
+		(
+			EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h
+			         WHERE h.project_sq = p.project_sq
+			           AND h.developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			               open="(" separator="," close=")">#{item}</foreach> )
+			OR ( NOT EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h2
+			                  WHERE h2.project_sq = p.project_sq AND h2.developer_grade_cd IS NOT NULL )
+			     AND p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			         open="(" separator="," close=")">#{item}</foreach> )
+		)
 		</if>
 
     <if
@@ -185,8 +193,16 @@
 		</if>
 		/* [필터 3] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
-		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator="," close=")">#{item}</foreach>
+		(
+			EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h
+			         WHERE h.project_sq = p.project_sq
+			           AND h.developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			               open="(" separator="," close=")">#{item}</foreach> )
+			OR ( NOT EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h2
+			                  WHERE h2.project_sq = p.project_sq AND h2.developer_grade_cd IS NOT NULL )
+			     AND p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			         open="(" separator="," close=")">#{item}</foreach> )
+		)
 		</if>
     <if
 			test="educationCd != null and educationCd.size() > 0"> AND
@@ -281,8 +297,16 @@
 				collection="addressCodeSq" open="(" separator="," close=")"> #{item} </foreach> ) ) </if>
 		/* [필터 2] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
-		p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
-				open="(" separator="," close=")"> #{item} </foreach>
+		(
+			EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h
+			         WHERE h.project_sq = p.project_sq
+			           AND h.developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			               open="(" separator="," close=")">#{item}</foreach> )
+			OR ( NOT EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h2
+			                  WHERE h2.project_sq = p.project_sq AND h2.developer_grade_cd IS NOT NULL )
+			     AND p.project_developer_grade_cd IN <foreach item="item" collection="projectDeveloperGradeCd"
+			         open="(" separator="," close=")">#{item}</foreach> )
+		)
 		</if>
     
     <if

@@ -18,6 +18,8 @@ import lombok.Setter;
 public class ProjectFormDataResponse {
 	private List<AreaInfoResponse> cities; 
 	private List<String> devGrades;
+	/** 등급 선택용 두 층 구조(대분류 + 세부). 폼은 이걸 쓴다 — devGrades 는 하위호환으로 남겨 둔다 */
+	private List<DevGradeGroupResponse> devGradeGroups;
 	private List<String> educationLevels;
 	private List<String> workTypes;
 	private List<String> recruitJobs;
@@ -45,6 +47,7 @@ public class ProjectFormDataResponse {
 				// 등급은 코드값 순이 아니라 서열 순으로 내려준다 — 코드값 순이면 나중에 추가된
 				// 대분류(초급·중급·상급)가 목록 맨 뒤로 밀린다.
 				.devGrades(gradeSupport.sortedGradeNames())
+				.devGradeGroups(gradeSupport.gradeGroups())
 				.educationLevels(codeMapper.findByParentCode(ParentCodeEnum.EDUCATION.getCode()))
 				.workTypes(codeMapper.findByParentCode(ParentCodeEnum.CONTRACT_TYPE.getCode()))
 				.recruitJobs(codeMapper.findByParentCode(ParentCodeEnum.JOB_POSITION.getCode()))

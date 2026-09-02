@@ -33,8 +33,11 @@ interface FormData {
   subwaySigunguCode: string
   educationLvl: string
   // 모집 인원 — 등급마다 한 줄. 줄이 하나면 예전의 "총 인원으로 모집" 과 같다.
-  // count 가 빈 문자열이고 unknown 이 true 면 "인원 미정"
-  gradeCounts: { grade: string; count: string; unknown: boolean }[]
+  //  · major  = 대분류(초급/중급/상급/등급 무관). 이것만으로도 등록할 수 있다
+  //  · detail = 세부 등급(초초/초중/…). 「세부 등급 지정」을 켰을 때만 채워지고,
+  //             비어 있지 않다는 것이 곧 체크된 상태다. 서버로는 detail || major 를 보낸다
+  //  · count 가 빈 문자열이고 unknown 이 true 면 "인원 미정"
+  gradeCounts: { major: string; detail: string; count: string; unknown: boolean }[]
   projectStartDt: string
   projectEndDt: string
   recruitStartDt: string
@@ -51,7 +54,8 @@ interface FormData {
 }
 
 interface FormOptions {
-  devGrades: string[]
+  /** 등급 선택 — 대분류 넷과 그 아래 세부 등급 */
+  devGradeGroups: { major: string; details: string[] }[]
   educationLevels: string[]
   workTypes: string[]
   recruitJobs: string[]
@@ -70,6 +74,11 @@ interface Props {
  */
 const GRADE_ANY = '등급 무관'
 
+/** 서버로 보내는 등급값 — 세부를 골랐으면 그것, 아니면 대분류. */
+function gradeOf(row: { major: string; detail: string }): string {
+  return row.detail || row.major
+}
+
 export default function ProjectPostClient({ projectSq }: Props) {
   const router = useRouter()
   const isEdit = !!projectSq
@@ -79,7 +88,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
     address: '', detailAddress: '', postcode: '', latitude: '', longitude: '', sigunguCode: '',
     subwayAddressName: '', subwayLat: '', subwayLon: '', subwaySigunguCode: '',
     educationLvl: '',
-    gradeCounts: [{ grade: '', count: '', unknown: false }],
+    gradeCounts: [{ major: '', detail: '', count: '', unknown: false }],
     projectStartDt: '', projectEndDt: '',
     recruitStartDt: '', recruitEndDt: '',
     projectSalary: '',
@@ -90,7 +99,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
   })
 
   const [options, setOptions] = useState<FormOptions>({
-    devGrades: [], educationLevels: [], workTypes: [], recruitJobs: [], skills: [], preferSkillsList: [],
+    devGradeGroups: [], educationLevels: [], workTypes: [], recruitJobs: [], skills: [], preferSkillsList: [],
   })
 
   const [preferenceInput, setPreferenceInput] = useState('')
@@ -132,7 +141,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
 
   const headcountTotal = form.gradeCounts.reduce((sum, g) => sum + (g.unknown ? 0 : Number(g.count) || 0), 0)
   const hasUnknownHeadcount = form.gradeCounts.some((g) => g.unknown)
-  const hasAnyGrade = form.gradeCounts.some((g) => g.grade === GRADE_ANY)
+  const hasAnyGrade = form.gradeCounts.some((g) => g.major === GRADE_ANY)
+  const detailsOf = (major: string) => options.devGradeGroups.find((g) => g.major === major)?.details ?? []
 
   const openPostcode = () => {
     loadDaumPostcode().then(() => {
@@ -168,7 +178,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       const { data } = await api.get('/projects/forms', { params })
       const out = data.output ?? {}
       setOptions({
-        devGrades: out.devGrades ?? [],
+        devGradeGroups: out.devGradeGroups ?? [],
         educationLevels: out.educationLevels ?? [],
         workTypes: out.workTypes ?? [],
         recruitJobs: out.recruitJobs ?? [],
@@ -206,12 +216,21 @@ export default function ProjectPostClient({ projectSq }: Props) {
         // 인원 개념이 없던 시절 공고는 배열이 비어 있어 기본값(총원, 빈 칸)으로 남는다.
         // 등급이 비어 있는 행(옛 "총 인원으로 모집")은 공고의 대표 등급으로 되살린다.
         // 마이그레이션으로 대부분 채워지지만, 되돌렸거나 아직 안 넘어온 데이터가 있을 수 있다.
+        //
+        // 저장된 값은 대분류(초급)일 수도 세부(중상)일 수도 있다. 세부면 그 대분류를 찾아
+        // 「세부 등급 지정」이 켜진 상태로 되살린다 — 옛 공고는 대부분 세부 등급이다.
+        const groups: { major: string; details: string[] }[] = out.devGradeGroups ?? []
+        const splitGrade = (grade: string) => {
+          const owner = groups.find((g) => g.details.includes(grade))
+          if (owner) return { major: owner.major, detail: grade }
+          return { major: grade, detail: '' }
+        }
         const heads: { grade: string | null; count: number | null }[] = exist.recruitHeadcounts ?? []
         if (heads.length > 0) {
           setForm((prev) => ({
             ...prev,
             gradeCounts: heads.map((h) => ({
-              grade: h.grade ?? exist.devGrade ?? '',
+              ...splitGrade(h.grade ?? exist.devGrade ?? ''),
               count: h.count == null ? '' : String(h.count),
               unknown: h.count == null,
             })),
@@ -235,7 +254,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
   useEffect(() => { loadFormData() }, [loadFormData])
 
   // 모집 인원 — 등급별 행 조작
-  function setGradeCount(idx: number, patch: Partial<{ grade: string; count: string; unknown: boolean }>) {
+  function setGradeCount(idx: number, patch: Partial<{ major: string; detail: string; count: string; unknown: boolean }>) {
     setF({
       gradeCounts: form.gradeCounts.map((g, i) => {
         if (i !== idx) return g
@@ -246,7 +265,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
     })
   }
   function addGradeRow() {
-    setF({ gradeCounts: [...form.gradeCounts, { grade: '', count: '', unknown: false }] })
+    setF({ gradeCounts: [...form.gradeCounts, { major: '', detail: '', count: '', unknown: false }] })
   }
   function removeGradeRow(idx: number) {
     setF({ gradeCounts: form.gradeCounts.filter((_, i) => i !== idx) })
@@ -280,7 +299,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
     const preference = [...form.preferenceList, ...preferenceInput.split(',')].map((s) => s.trim()).filter(Boolean).join(',')
     const interviewTime = interviewTimes.flatMap((e) => e.times.map((t) => `${e.date}T${t}`))
     const recruitHeadcounts = form.gradeCounts.map((g) => ({
-      grade: g.grade,
+      grade: gradeOf(g),
       count: g.unknown ? null : Number(g.count),
     }))
     const salaryNum = Number(form.projectSalary)
@@ -299,11 +318,11 @@ export default function ProjectPostClient({ projectSq }: Props) {
     }
     // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
     if (form.gradeCounts.length === 0) { toast.error('모집할 등급을 최소 하나 추가해주세요.'); return }
-    if (form.gradeCounts.some((g) => !g.grade)) { toast.error('등급을 선택해주세요.'); return }
+    if (form.gradeCounts.some((g) => !g.major)) { toast.error('등급을 선택해주세요.'); return }
     if (form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1))) {
       toast.error('등급별 인원을 입력하거나 "미정"을 선택해주세요.'); return
     }
-    const grades = form.gradeCounts.map((g) => g.grade)
+    const grades = form.gradeCounts.map(gradeOf)
     if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
     // 「등급 무관」은 다른 등급과 같이 쓸 수 없다 — 등급을 안 따진다면서 특정 등급을 함께 적을 수는 없다.
     if (grades.includes(GRADE_ANY) && grades.length > 1) {
@@ -357,7 +376,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       // 등급별 모드에서는 백엔드가 가장 낮은 등급으로 대표값을 다시 잡는다(검색 필터 호환용).
       // 대표 등급은 백엔드가 모집 인원에서 서열이 가장 낮은 것으로 다시 잡는다(검색 필터 호환용).
       // 여기서는 첫 줄을 넣어 두기만 한다.
-      devGrade: form.gradeCounts[0]?.grade ?? '',
+      devGrade: form.gradeCounts[0] ? gradeOf(form.gradeCounts[0]) : '',
       recruitHeadcounts,
       educationLvl: form.educationLvl,
       projectStartDt: form.projectStartDt,
@@ -449,16 +468,39 @@ export default function ProjectPostClient({ projectSq }: Props) {
         <label className="text-sm font-semibold">모집 인원</label>
 
         <div className="space-y-2">
-            {form.gradeCounts.map((row, idx) => (
-              <div key={idx} className="flex items-center gap-2">
+            {form.gradeCounts.map((row, idx) => {
+              const details = detailsOf(row.major)
+              return (
+              <div key={idx} className="flex flex-wrap items-center gap-2">
                 <select
-                  value={row.grade}
-                  onChange={(e) => setGradeCount(idx, { grade: e.target.value })}
-                  className="h-9 w-40 rounded-md border border-input bg-background px-2 text-sm"
+                  value={row.major}
+                  onChange={(e) => setGradeCount(idx, { major: e.target.value, detail: '' })}
+                  className="h-9 w-32 rounded-md border border-input bg-background px-2 text-sm"
                 >
                   <option value="">등급 선택</option>
-                  {options.devGrades.map((g) => <option key={g} value={g}>{g}</option>)}
+                  {options.devGradeGroups.map((g) => <option key={g.major} value={g.major}>{g.major}</option>)}
                 </select>
+                {/* 세부 등급은 접어 둔다 — 초초·초중·초상까지 늘어놓으면 목록이 너무 길다.
+                    체크하면 그 대분류의 세부만 나오고, detail 이 비어 있지 않다는 것이 곧 체크된 상태다. */}
+                {details.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Checkbox
+                      id={`grade-detail-${idx}`}
+                      checked={!!row.detail}
+                      onCheckedChange={(v) => setGradeCount(idx, { detail: v === true ? details[0] : '' })}
+                    />
+                    <label htmlFor={`grade-detail-${idx}`} className="cursor-pointer text-xs text-muted-foreground">세부</label>
+                  </div>
+                )}
+                {!!row.detail && (
+                  <select
+                    value={row.detail}
+                    onChange={(e) => setGradeCount(idx, { detail: e.target.value })}
+                    className="h-9 w-24 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    {details.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                )}
                 <Input
                   value={row.count}
                   onChange={(e) => setGradeCount(idx, { count: e.target.value.replace(/[^0-9]/g, '') })}
@@ -486,7 +528,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
                   </button>
                 )}
               </div>
-            ))}
+              )
+            })}
           <div className="flex items-center justify-between">
             {/* 「등급 무관」은 단독으로만 쓴다 — 등급을 안 따진다면서 특정 등급을 함께 적을 수는 없다. */}
             {hasAnyGrade ? (

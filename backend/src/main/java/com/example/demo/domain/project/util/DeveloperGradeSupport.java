@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.community.dto.CommonCodeDTO;
+import com.example.demo.domain.project.dto.response.DevGradeGroupResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -171,6 +172,80 @@ public class DeveloperGradeSupport {
 								: sortKeyOf(c.getCommonCodeEnglishNm()))
 						.thenComparing(CommonCodeDTO::getCommonCodeSq))
 				.map(CommonCodeDTO::getCommonCodeNm)
+				.toList();
+	}
+
+	/** 대분류인가 — 영문명에 언더바가 없고 {@code ANY} 도 아닌 것(LOW/MID/HIGH). */
+	private static boolean isMajor(String engNm) {
+		return engNm != null && !engNm.contains("_") && !ANY.equals(engNm) && rankOf(engNm) != null;
+	}
+
+	/**
+	 * 등록 폼용 두 층 구조 — 대분류 넷과 그 아래 세부 등급.
+	 *
+	 * <p>
+	 * 13개를 한 목록에 늘어놓으면 너무 길어서, 기본은 대분류만 고르게 하고
+	 * 「세부 등급 지정」을 켰을 때만 세부를 보여준다. 세부 등급은 마스터에 그대로 남아 있으므로
+	 * 옛 공고의 {@code 중상} 같은 값도 계속 표시·검색된다.
+	 * </p>
+	 */
+	public List<DevGradeGroupResponse> gradeGroups() {
+		List<CommonCodeDTO> master = loadMaster();
+
+		List<CommonCodeDTO> majors = master.stream()
+				.filter(c -> isMajor(c.getCommonCodeEnglishNm()))
+				.sorted(Comparator.comparing(c -> rankOf(c.getCommonCodeEnglishNm())))
+				.toList();
+
+		List<DevGradeGroupResponse> groups = new ArrayList<>();
+		for (CommonCodeDTO major : majors) {
+			// 그 대분류가 포괄하는 서열에 속하는 세부 등급들.
+			Set<Integer> covered = coveredRanks(major.getCommonCodeEnglishNm());
+			List<String> details = master.stream()
+					.filter(c -> c.getCommonCodeEnglishNm() != null && c.getCommonCodeEnglishNm().contains("_"))
+					.filter(c -> covered.contains(rankOf(c.getCommonCodeEnglishNm())))
+					.sorted(Comparator.comparing(c -> rankOf(c.getCommonCodeEnglishNm())))
+					.map(CommonCodeDTO::getCommonCodeNm)
+					.toList();
+			groups.add(new DevGradeGroupResponse(major.getCommonCodeNm(), details));
+		}
+
+		// 「등급 무관」은 세부가 없다. 맨 뒤에 둔다.
+		master.stream()
+				.filter(c -> ANY.equals(c.getCommonCodeEnglishNm()))
+				.forEach(c -> groups.add(new DevGradeGroupResponse(c.getCommonCodeNm(), List.of())));
+
+		return groups;
+	}
+
+	/**
+	 * 검색 필터·목록에 보여줄 <b>대분류만</b>(초급·중급·상급·등급 무관).
+	 *
+	 * <p>
+	 * 세부 등급으로 등록된 옛 공고도 대분류 필터에 걸린다 —
+	 * {@link #expandForSearch(List)} 가 포함 관계로 넓히기 때문이다.
+	 * </p>
+	 */
+	public List<?> majorFilterOptions(List<?> rawOptions) {
+		if (rawOptions == null || rawOptions.isEmpty()) {
+			return rawOptions;
+		}
+		Map<String, String> engNmByName = loadMaster().stream()
+				.filter(c -> c.getCommonCodeEnglishNm() != null)
+				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm, CommonCodeDTO::getCommonCodeEnglishNm));
+
+		return rawOptions.stream()
+				.filter(o -> {
+					Object nm = (o instanceof Map<?, ?> row) ? row.get("common_code_nm") : null;
+					String engNm = nm == null ? null : engNmByName.get(nm.toString());
+					return engNm != null && (isMajor(engNm) || ANY.equals(engNm));
+				})
+				.sorted(Comparator.comparing(o -> {
+					Object nm = (o instanceof Map<?, ?> row) ? row.get("common_code_nm") : null;
+					String engNm = nm == null ? null : engNmByName.get(nm.toString());
+					Integer rank = engNm == null ? null : rankOf(engNm);
+					return rank == null ? Integer.MAX_VALUE : rank; // 등급 무관은 맨 뒤
+				}))
 				.toList();
 	}
 

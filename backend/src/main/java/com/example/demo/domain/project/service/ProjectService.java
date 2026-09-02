@@ -819,8 +819,10 @@ public class ProjectService {
 			case "지역":
 				return districtMapper.findAllParentDistrict();
 			case "경력":
-				// 등록 폼의 등급 select 와 같은 서열 순으로 보여준다(코드값 순이면 대분류가 맨 뒤로 밀린다).
-				return gradeSupport.sortFilterOptionsByRank(
+				// 검색 필터는 대분류 넷만 보여준다(초급·중급·상급·등급 무관). 세부 9단계까지 늘어놓으면
+				// 목록이 너무 길다. 세부 등급으로 등록된 옛 공고도 expandForSearch 의 포함 관계 덕에
+				// 대분류 필터에 그대로 걸린다.
+				return gradeSupport.majorFilterOptions(
 						commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.DEVELOPER_GRADE.getCode()));
 			case "학력":
 				return commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.EDUCATION.getCode());
