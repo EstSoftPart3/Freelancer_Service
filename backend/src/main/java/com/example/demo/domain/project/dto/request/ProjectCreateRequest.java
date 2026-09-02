@@ -80,6 +80,30 @@ public record ProjectCreateRequest(
 	 * 사용자에게 원인과 무관한 메시지가 나간다.
 	 */
 
+	/*
+	 * 주소가 있으면 좌표도 반드시 함께 와야 한다.
+	 *
+	 * 프런트는 다음 우편번호 검색으로 주소를 받고 카카오 지오코딩을 따로 호출해 좌표를 채우는데,
+	 * 그 호출이 늦거나 실패해도 화면에는 주소가 멀쩡히 보인다. 그대로 제출되면 TBL_ADDRESS_S 의
+	 * latitude NOT NULL 에서 터져 500 이 됐다(2026-09-02 운영 장애, 24시간에 95건).
+	 * 여기서 막으면 원인이 분명한 400 으로 돌려줄 수 있다.
+	 */
+	@AssertTrue(message = "주소의 좌표를 확인하지 못했습니다. 주소를 다시 검색해주세요.")
+	public boolean isDetailedAddressGeocoded() {
+		if (detailedAddressName == null || detailedAddressName.isBlank()) {
+			return true;
+		}
+		return detailedLat != null && detailedLon != null;
+	}
+
+	@AssertTrue(message = "지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.")
+	public boolean isSubwayAddressGeocoded() {
+		if (subwayAddressName == null || subwayAddressName.isBlank()) {
+			return true;
+		}
+		return subwayLat != null && subwayLon != null;
+	}
+
 	@AssertTrue(message = "모집 시작일은 모집 종료일보다 늦을 수 없습니다.")
 	public boolean isRecruitPeriodOrdered() {
 		if (recruitStartDt == null || recruitEndDt == null) {

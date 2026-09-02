@@ -112,13 +112,22 @@ export default function AffiliationEditClient() {
         oncomplete: (data) => {
           const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
           setForm((prev) => prev ? { ...prev, address: addr, zonecode: data.zonecode, sigunguCode: data.sigunguCode, detailAddress: '' } : prev)
+          // 좌표는 지오코딩으로 따로 채운다. 실패를 조용히 넘기면 주소만 있고 좌표가 빈 채로 저장된다
+          // (2026-09-02 공고 등록에서 같은 구조로 500 이 났다). 실패하면 알린다.
+          setForm((prev) => prev ? { ...prev, latitude: null, longitude: null } : prev)
           loadKakaoMaps().then(() => {
             const geocoder = new window.kakao.maps.services.Geocoder()
             geocoder.addressSearch(addr, (result, status) => {
               if (status === window.kakao.maps.services.Status.OK && result[0]) {
                 setForm((prev) => prev ? { ...prev, latitude: Number(result[0].y), longitude: Number(result[0].x) } : prev)
+              } else {
+                setForm((prev) => prev ? { ...prev, latitude: null, longitude: null } : prev)
+                toast.error('주소의 좌표를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
               }
             })
+          }).catch(() => {
+            setForm((prev) => prev ? { ...prev, latitude: null, longitude: null } : prev)
+            toast.error('지도 서비스를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.')
           })
         },
       }).open()

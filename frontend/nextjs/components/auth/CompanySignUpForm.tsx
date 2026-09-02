@@ -155,14 +155,23 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
         setPostcode(data.zonecode)
         addressField.setValue(addr); addressField.setError(''); addressField.setValid(true)
         setSigunguCode(data.sigunguCode); setAddressDetail('')
+        // 좌표를 비우기만 하면 사용자는 실패를 모른 채 제출해 서버에서 터진다
+        // (2026-09-02 공고 등록에서 실제로 발생). 주소 필드 에러로 알린다.
+        const failGeocode = (msg: string) => {
+          setLatitude(''); setLongitude('')
+          addressField.setError(msg)
+          addressField.setValid(false)
+        }
         loadKakaoMaps().then(() => {
           new window.kakao.maps.services.Geocoder().addressSearch(addr, (result, status) => {
-            if (status === window.kakao.maps.services.Status.OK) {
+            if (status === window.kakao.maps.services.Status.OK && result[0]) {
               setLatitude(result[0].y); setLongitude(result[0].x)
             } else {
-              setLatitude(''); setLongitude('')
+              failGeocode('주소의 좌표를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
             }
           })
+        }).catch(() => {
+          failGeocode('지도 서비스를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.')
         })
       },
     }).open()

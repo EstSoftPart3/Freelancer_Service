@@ -142,13 +142,22 @@ export default function ProjectPostClient({ projectSq }: Props) {
         oncomplete: (data) => {
           const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
           setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode })
+          // 좌표는 여기서 따로 채운다. 실패를 조용히 넘기면 주소만 있고 좌표가 빈 채로 제출돼
+          // 서버에서 500 이 난다(2026-09-02 운영 장애). 실패하면 반드시 알린다.
+          setF({ latitude: '', longitude: '' })
           loadKakaoMaps().then(() => {
             const geocoder = new window.kakao.maps.services.Geocoder()
             geocoder.addressSearch(addr, (result, status) => {
               if (status === window.kakao.maps.services.Status.OK && result[0]) {
                 setF({ latitude: result[0].y, longitude: result[0].x })
+              } else {
+                setF({ latitude: '', longitude: '' })
+                toast.error('주소의 좌표를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
               }
             })
+          }).catch(() => {
+            setF({ latitude: '', longitude: '' })
+            toast.error('지도 서비스를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.')
           })
         },
       }).open()
@@ -291,6 +300,15 @@ export default function ProjectPostClient({ projectSq }: Props) {
     // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단)
     if (form.projectTitle.trim().length < 5) { toast.error('프로젝트 제목을 5자 이상 입력해주세요.'); return }
     if (!form.address && !form.subwayAddressName) { toast.error('근무지 주소 또는 지하철역 중 하나는 필수입니다.'); return }
+    // 주소는 채워졌는데 좌표만 비어 있는 상태가 실제로 만들어진다 — 다음 우편번호 검색은 좌표를 주지 않아서
+    // 카카오 지오코딩을 따로 호출하는데, 그게 늦거나 실패해도 화면에는 주소가 멀쩡히 보이기 때문이다.
+    // 그대로 보내면 DB 의 latitude NOT NULL 에서 터져 500 이 됐다(2026-09-02 운영 장애).
+    if (form.address && (!form.latitude || !form.longitude)) {
+      toast.error('주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도하거나 주소를 다시 검색해주세요.'); return
+    }
+    if (form.subwayAddressName && (!form.subwayLat || !form.subwayLon)) {
+      toast.error('지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.'); return
+    }
     // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
     if (form.headcountMode === 'total') {
       if (!form.devGrade) { toast.error('개발자 등급을 선택해주세요.'); return }
@@ -744,7 +762,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
         options={options.recruitJobs}
         selected={form.recruitJob}
         allowCustom
-        customPlaceholder="목록에 없는 직군 직접 입력"
+        customPlaceholder="직군 검색 · 목록에 없으면 직접 입력"
         onClose={() => setJobModalOpen(false)}
         onConfirm={(v) => setF({ recruitJob: v })}
       />

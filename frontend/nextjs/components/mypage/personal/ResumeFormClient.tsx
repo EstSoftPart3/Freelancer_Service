@@ -155,13 +155,22 @@ export default function ResumeFormClient({ resumeSq }: Props) {
           const addr = data.roadAddress || data.jibunAddress || ''
           // Daum sigunguCode → 백엔드 TBL_AREA_C.area_code_sq (이걸로 sigungu를 서브쿼리 조회함)
           setAddress((prev) => ({ ...prev, address: addr, zonecode: data.zonecode, sigungu: data.sigungu ?? '', areaCodeSq: data.sigunguCode ? Number(data.sigunguCode) : null }))
+          // 좌표는 지오코딩으로 따로 채운다. 실패를 조용히 넘기면 주소만 있고 좌표가 빈 채로 저장돼
+          // 서버에서 터진다(2026-09-02 공고 등록에서 실제로 발생). 실패하면 알린다.
+          setAddress((prev) => ({ ...prev, longitude: '', latitude: '' }))
           loadKakaoMaps().then(() => {
             const geocoder = new window.kakao.maps.services.Geocoder()
             geocoder.addressSearch(addr, (result: Array<{ x: string; y: string }>, status: string) => {
               if (status === window.kakao.maps.services.Status.OK && result[0]) {
                 setAddress((prev) => ({ ...prev, longitude: result[0].x, latitude: result[0].y }))
+              } else {
+                setAddress((prev) => ({ ...prev, longitude: '', latitude: '' }))
+                toast.error('주소의 좌표를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
               }
             })
+          }).catch(() => {
+            setAddress((prev) => ({ ...prev, longitude: '', latitude: '' }))
+            toast.error('지도 서비스를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.')
           })
         },
       }).open()

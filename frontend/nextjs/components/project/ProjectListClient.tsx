@@ -334,6 +334,10 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         mapInstanceRef.current = map
         setMapReady(true)
       })
+    }).catch(() => {
+      // loadKakaoMaps 는 SDK 가 끝내 안 뜨면 reject 한다. 잡지 않으면 unhandled rejection 이 된다.
+      if (cancelled) return
+      toast.error('지도를 불러오지 못했습니다. 목록 보기로 확인해주세요.')
     })
 
     return () => { cancelled = true }
