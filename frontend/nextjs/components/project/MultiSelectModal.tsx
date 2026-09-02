@@ -4,6 +4,9 @@
 //
 // allowCustom 은 모집 직군에서만 켠다. 근무 형태(정규직/계약직/프리랜서)는 계약 구분이라
 // 임의값이 들어갈 자리가 아니고, 백엔드도 공통코드 조회 결과를 그대로 쓰기 때문에 켜면 안 된다.
+//
+// allowCustom 일 때 상단 입력창은 SkillSelectModal(사용기술/우대기술)과 같은 역할이다 —
+// 치는 즉시 목록이 걸러지고, 목록에 없으면 그 값을 그대로 「직접 추가」한다.
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,27 +29,32 @@ const MAX_LEN = 100
 
 export default function MultiSelectModal({
   open, title, options, selected, onClose, onConfirm,
-  allowCustom = false, customPlaceholder = '목록에 없으면 직접 입력',
+  allowCustom = false, customPlaceholder = '검색 · 목록에 없으면 직접 입력',
 }: Props) {
   const [local, setLocal] = useState<string[]>(selected)
-  const [draft, setDraft] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (open) { setLocal(selected); setDraft('') }
+    if (open) { setLocal(selected); setSearch('') }
   }, [open, selected])
 
   function toggle(item: string) {
     setLocal((prev) => prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item])
   }
 
-  const keyword = draft.trim()
-  const duplicated = [...options, ...local].some((s) => s.toLowerCase() === keyword.toLowerCase())
+  const keyword = search.trim()
+  const kw = keyword.toLowerCase()
+  // 검색은 직접 입력이 열린 모달(모집 직군)에서만 쓴다. 근무 형태는 항목이 셋뿐이라 거를 것이 없다.
+  const filteredOptions = allowCustom ? options.filter((o) => o.toLowerCase().includes(kw)) : options
+
+  // 이미 있는 이름을 또 만들지 않도록, 대소문자만 다른 경우까지 본다.
+  const duplicated = [...options, ...local].some((s) => s.toLowerCase() === kw)
   const canAddCustom = keyword.length > 0 && keyword.length <= MAX_LEN && !duplicated
 
   function addCustom() {
     if (!canAddCustom) return
     setLocal((prev) => [...prev, keyword])
-    setDraft('')
+    setSearch('')
   }
 
   // 마스터에 없는 선택값 = 직접 입력한 것 (수정 모드에서 불러온 것 포함)
@@ -59,38 +67,29 @@ export default function MultiSelectModal({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => toggle(opt)}
-              className={`cursor-pointer rounded border px-3 py-1.5 text-sm transition-colors ${
-                local.includes(opt) ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-
         {allowCustom && (
-          <div className="space-y-2 border-t pt-3">
+          <>
             <div className="flex gap-2">
               <Input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value.slice(0, MAX_LEN))}
+                value={search}
+                onChange={(e) => setSearch(e.target.value.slice(0, MAX_LEN))}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
                 placeholder={customPlaceholder}
               />
               <Button type="button" variant="outline" onClick={addCustom} disabled={!canAddCustom}>
-                <Plus className="mr-1 h-3.5 w-3.5" />추가
+                <Plus className="mr-1 h-3.5 w-3.5" />직접 추가
               </Button>
             </div>
             {keyword.length > 0 && duplicated && (
               <p className="text-xs text-muted-foreground">「{keyword}」는 이미 목록에 있습니다.</p>
             )}
-            {customSelected.length > 0 && (
+          </>
+        )}
+
+        <div className="max-h-96 space-y-4 overflow-y-auto">
+          {allowCustom && customSelected.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">직접 입력</p>
               <div className="flex flex-wrap gap-2">
                 {customSelected.map((s) => (
                   <button
@@ -104,9 +103,30 @@ export default function MultiSelectModal({
                   </button>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {filteredOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => toggle(opt)}
+                className={`cursor-pointer rounded border px-3 py-1.5 text-sm transition-colors ${
+                  local.includes(opt) ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
           </div>
-        )}
+
+          {filteredOptions.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              검색 결과가 없습니다.{canAddCustom && ' 「직접 추가」로 등록할 수 있습니다.'}
+            </p>
+          )}
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>취소</Button>
