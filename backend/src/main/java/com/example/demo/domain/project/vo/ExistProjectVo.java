@@ -30,6 +30,22 @@ public class ExistProjectVo {
 	private Double longitude;
 	private Long addressTypeCd; // 2701 혹은 2702
 
+	/*
+	 * 수정 폼 복원용 — 주소별 좌표·우편번호·시군구.
+	 *
+	 * 위의 latitude/longitude 는 목록·지도가 쓰는 대표 좌표라 두 주소를 합쳐 놓은 값이다.
+	 * 폼은 상세주소와 지하철역을 각각 되살려야 하므로 나눠서 내려준다. 이게 없으면
+	 * 수정 화면에서 지하철역 이름만 살아나고 좌표는 빈 채로 저장돼, 주소를 새로 INSERT 하는
+	 * 경로에서 latitude NOT NULL 로 터진다.
+	 */
+	private Long detailedZonecode;
+	private Double detailedLat;
+	private Double detailedLon;
+	private String detailedSigunguCode;
+	private Double subwayLat;
+	private Double subwayLon;
+	private String subwaySigunguCode;
+
 	private String devGrade;
 	private String educationLvl;
 	private Long projectSalary;
@@ -66,6 +82,14 @@ public class ExistProjectVo {
 				.subwayAddress(p.getSubwayAddress())
 				.latitude(p.getLatitude())
 				.longitude(p.getLongitude())
+				.detailedZonecode(p.getDetailedZonecode())
+				.detailedLat(p.getDetailedLat())
+				.detailedLon(p.getDetailedLon())
+				// 프런트는 시군구 코드를 문자열로 다룬다(다음 우편번호 API 가 문자열로 준다).
+				.detailedSigunguCode(p.getDetailedAreaCodeSq() == null ? null : String.valueOf(p.getDetailedAreaCodeSq()))
+				.subwayLat(p.getSubwayLat())
+				.subwayLon(p.getSubwayLon())
+				.subwaySigunguCode(p.getSubwayAreaCodeSq() == null ? null : String.valueOf(p.getSubwayAreaCodeSq()))
 				.addressTypeCd(p.getAddressTypeCd())
 				.salaryNegotiableYn(p.getProjectSalaryNegotiableYn())
 

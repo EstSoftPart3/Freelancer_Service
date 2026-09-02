@@ -38,6 +38,16 @@
 		<result property="latitude" column="latitude" />
 		<result property="longitude" column="longitude" />
 		<result property="distance" column="distance" />
+
+		<!-- 수정 폼 복원용. 위 latitude/longitude 는 두 주소를 합친 대표 좌표라
+		     어느 주소의 것인지 알 수 없어, 주소별로 따로 받는다. -->
+		<result property="detailedZonecode" column="detailedZonecode" />
+		<result property="detailedLat" column="detailedLat" />
+		<result property="detailedLon" column="detailedLon" />
+		<result property="detailedAreaCodeSq" column="detailedAreaCodeSq" />
+		<result property="subwayLat" column="subwayLat" />
+		<result property="subwayLon" column="subwayLon" />
+		<result property="subwayAreaCodeSq" column="subwayAreaCodeSq" />
 	</resultMap>
 
 	<!--
@@ -457,7 +467,12 @@
 	<select id="findBySq" resultMap="projectMap"> SELECT p.*, a1.address AS detailedAddress,
 		a1.detail_address AS detailedAddressDetail, a1.zonecode AS detailedZonecode, a2.address AS
 		subwayAddress, IFNULL(a1.latitude, a2.latitude) AS latitude, IFNULL(a1.longitude,
-		a2.longitude) AS longitude FROM TBL_PROJECT_M p LEFT JOIN TBL_ADDRESS_S a1 ON p.address_sq =
+		a2.longitude) AS longitude,
+		/* 수정 폼은 두 주소의 좌표를 구분해야 한다 — 위의 IFNULL 합본으로는
+		   지하철 좌표가 상세주소에 가려져 복원되지 않는다. */
+		a1.latitude AS detailedLat, a1.longitude AS detailedLon, a1.area_code_sq AS detailedAreaCodeSq,
+		a2.latitude AS subwayLat, a2.longitude AS subwayLon, a2.area_code_sq AS subwayAreaCodeSq
+		FROM TBL_PROJECT_M p LEFT JOIN TBL_ADDRESS_S a1 ON p.address_sq =
 		a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq = a2.address_sq WHERE
 		p.project_sq = #{projectSq} </select>
 

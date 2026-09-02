@@ -126,28 +126,40 @@ public class DeveloperGradeSupport {
 	}
 
 	/**
-	 * 「등급 무관」이 다른 등급과 섞여 있으면 막는다.
+	 * 한 공고 안에서 <b>범위가 겹치는 등급</b>을 함께 쓰지 못하게 막는다.
 	 *
 	 * <p>
-	 * 등급을 따지지 않는다면서 특정 등급을 함께 적을 수는 없다. 프런트에서도 막지만
-	 * API 를 직접 부르면 그만이라 여기서도 본다. 한글명을 하드코딩하지 않으려고
-	 * 영문명({@code ANY})으로 판정한다.
+	 * {@code 초초 2명 · 초급 1명} 같은 조합은 뜻이 모호하다 — 「초급」이 이미 초초를 포함하므로
+	 * 초초를 몇 명 뽑겠다는 것인지 읽는 사람마다 달라진다. 대표 등급 산출도 두 등급의 서열이
+	 * 같아져 마스터 조회 순서에 따라 갈린다.
 	 * </p>
 	 *
-	 * @throws IllegalArgumentException 등급 무관이 다른 등급과 함께 왔을 때
+	 * <p>
+	 * 겹치지 않는 조합은 그대로 허용한다 — {@code 초초 2명 · 중초 1명} 은 명확하다.
+	 * 「등급 무관」은 아홉 등급을 전부 포괄하므로 이 규칙 하나로 자동으로 단독이 된다.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException 포괄 범위가 겹치는 두 등급이 함께 왔을 때
 	 */
-	public void validateAnyGradeIsAlone(List<String> gradeNames) {
+	public void validateGradesDoNotOverlap(List<String> gradeNames) {
 		if (gradeNames == null || gradeNames.size() < 2) {
 			return;
 		}
-		Set<String> anyNames = loadMaster().stream()
-				.filter(c -> ANY.equals(c.getCommonCodeEnglishNm()))
-				.map(CommonCodeDTO::getCommonCodeNm)
-				.collect(Collectors.toSet());
+		Map<String, String> engNmByName = loadMaster().stream()
+				.filter(c -> c.getCommonCodeEnglishNm() != null)
+				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm, CommonCodeDTO::getCommonCodeEnglishNm));
 
-		boolean mixed = gradeNames.stream().anyMatch(anyNames::contains);
-		if (mixed) {
-			throw new IllegalArgumentException("「등급 무관」은 다른 등급과 함께 선택할 수 없습니다.");
+		for (int i = 0; i < gradeNames.size(); i++) {
+			for (int j = i + 1; j < gradeNames.size(); j++) {
+				String a = gradeNames.get(i);
+				String b = gradeNames.get(j);
+				Set<Integer> ra = coveredRanks(engNmByName.get(a));
+				Set<Integer> rb = coveredRanks(engNmByName.get(b));
+				if (ra.stream().anyMatch(rb::contains)) {
+					throw new IllegalArgumentException(
+							String.format("「%s」와 「%s」는 등급 범위가 겹쳐 함께 선택할 수 없습니다.", a, b));
+				}
+			}
 		}
 	}
 

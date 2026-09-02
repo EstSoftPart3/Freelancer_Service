@@ -642,7 +642,7 @@ public class ProjectService {
 		if (headcounts == null || headcounts.isEmpty()) {
 			return;
 		}
-		gradeSupport.validateAnyGradeIsAlone(
+		gradeSupport.validateGradesDoNotOverlap(
 				headcounts.stream().map(RecruitHeadcountRequest::grade).filter(Objects::nonNull).toList());
 		List<HeadcountInsertRequest> rows = new ArrayList<>();
 		headcounts.forEach(h -> rows.add(new HeadcountInsertRequest(

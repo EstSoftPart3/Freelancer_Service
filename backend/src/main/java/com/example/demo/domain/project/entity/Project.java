@@ -79,6 +79,24 @@ public class Project {
 
     private String subwayAddress; // 지하철역 명칭/주소
 
+    // 수정 폼 복원용 — 위의 latitude/longitude 는 목록·지도가 쓰는 "대표 좌표" 라
+    // 두 주소를 IFNULL 로 합쳐 놓는다. 폼은 어느 주소의 좌표인지 구분해야 하므로 따로 받는다.
+    // 이게 없으면 수정 화면에서 지하철역 이름만 살아나고 좌표가 빈 채로 저장돼,
+    // 주소를 새로 INSERT 하는 경로에서 latitude NOT NULL 로 터진다.
+    private Long detailedZonecode;
+
+    private Double detailedLat;
+
+    private Double detailedLon;
+
+    private Long detailedAreaCodeSq; // 시군구 코드(TBL_ADDRESS_S.area_code_sq)
+
+    private Double subwayLat;
+
+    private Double subwayLon;
+
+    private Long subwayAreaCodeSq;
+
     // =========================================================================
     // 비즈니스 로직 및 생성 메서드
     // =========================================================================

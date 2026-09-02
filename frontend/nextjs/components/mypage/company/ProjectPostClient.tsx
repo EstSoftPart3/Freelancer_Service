@@ -144,6 +144,25 @@ export default function ProjectPostClient({ projectSq }: Props) {
   const hasAnyGrade = form.gradeCounts.some((g) => g.major === GRADE_ANY)
   const detailsOf = (major: string) => options.devGradeGroups.find((g) => g.major === major)?.details ?? []
 
+  /**
+   * 등급 선택을 미리 막기 위한 판정.
+   *
+   * 범위가 겹치는 등급은 함께 쓸 수 없는데(「초초」와 「초급」), 제출해야 알 수 있으면 늦다.
+   * select 단계에서 고를 수 없게 하고 왜 안 되는지 라벨에 적는다.
+   */
+  function gradePickState(idx: number) {
+    const others = form.gradeCounts.filter((_, i) => i !== idx)
+    return {
+      // 다른 줄이 "세부 없이" 점유한 대분류 — 고르면 그 줄 전체와 겹친다
+      blockedMajors: new Set(others.filter((r) => !r.detail).map((r) => r.major).filter(Boolean)),
+      // 다른 줄이 이미 쓴 세부 등급
+      usedDetails: new Set(others.map((r) => r.detail).filter(Boolean)),
+      // 같은 대분류를 쓰는 줄이 또 있으면, 이 줄은 반드시 세부를 지정해야 한다
+      mustPickDetail: (major: string) => others.some((r) => r.major === major),
+      hasOthers: others.length > 0,
+    }
+  }
+
   const openPostcode = () => {
     loadDaumPostcode().then(() => {
       new window.daum.Postcode({
@@ -195,11 +214,16 @@ export default function ProjectPostClient({ projectSq }: Props) {
           salaryNegotiableYn: exist.salaryNegotiableYn ?? 'N',
           address: exist.detailedAddress ?? '',
           detailAddress: exist.detailedAddressDetail ?? '',
-          postcode: exist.detailedZonecode ?? '',
+          postcode: exist.detailedZonecode == null ? '' : String(exist.detailedZonecode),
           sigunguCode: exist.detailedSigunguCode ?? '',
-          latitude: exist.latitude ?? '',
-          longitude: exist.longitude ?? '',
+          // 주소별 좌표를 각각 되살린다. 예전에는 지하철역 이름만 복원돼, 역을 건드리지 않고
+          // 저장하면 좌표가 빈 채로 나갔다(주소를 새로 INSERT 하는 경로에서 500).
+          latitude: exist.detailedLat == null ? '' : String(exist.detailedLat),
+          longitude: exist.detailedLon == null ? '' : String(exist.detailedLon),
           subwayAddressName: exist.subwayAddress ?? '',
+          subwayLat: exist.subwayLat == null ? '' : String(exist.subwayLat),
+          subwayLon: exist.subwayLon == null ? '' : String(exist.subwayLon),
+          subwaySigunguCode: exist.subwaySigunguCode ?? '',
           educationLvl: exist.educationLvl ?? '',
           projectStartDt: exist.projectStartDt ?? '',
           projectEndDt: exist.projectEndDt ?? '',
@@ -324,9 +348,15 @@ export default function ProjectPostClient({ projectSq }: Props) {
     }
     const grades = form.gradeCounts.map(gradeOf)
     if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
-    // 「등급 무관」은 다른 등급과 같이 쓸 수 없다 — 등급을 안 따진다면서 특정 등급을 함께 적을 수는 없다.
-    if (grades.includes(GRADE_ANY) && grades.length > 1) {
-      toast.error('「등급 무관」은 다른 등급과 함께 선택할 수 없습니다.'); return
+    // 범위가 겹치는 등급은 함께 쓸 수 없다 — 「초초 2명 · 초급 1명」은 초급이 이미 초초를 포함해
+    // 초초를 몇 명 뽑겠다는 것인지 모호하다. 「초초 · 중초」처럼 겹치지 않으면 그대로 허용한다.
+    // 「등급 무관」은 아홉 등급을 전부 포괄하므로 이 규칙 하나로 자동으로 단독이 된다.
+    const overlap = form.gradeCounts.find((row, i) =>
+      form.gradeCounts.some((other, j) =>
+        i !== j && row.major === other.major && (!row.detail || !other.detail)))
+    if (overlap) {
+      const conflictLabel = overlap.major === GRADE_ANY ? '「등급 무관」' : `「${overlap.major}」`
+      toast.error(`${conflictLabel} 은(는) 같은 등급의 세부와 범위가 겹쳐 함께 선택할 수 없습니다.`); return
     }
     if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
     // 수행 종료일은 「미정」으로 비워 둘 수 있다. 시작일만 필수다.
@@ -470,15 +500,31 @@ export default function ProjectPostClient({ projectSq }: Props) {
         <div className="space-y-2">
             {form.gradeCounts.map((row, idx) => {
               const details = detailsOf(row.major)
+              const pick = gradePickState(idx)
+              const sameMajorElsewhere = pick.mustPickDetail(row.major)
               return (
               <div key={idx} className="flex flex-wrap items-center gap-2">
                 <select
                   value={row.major}
-                  onChange={(e) => setGradeCount(idx, { major: e.target.value, detail: '' })}
+                  onChange={(e) => {
+                    const major = e.target.value
+                    // 같은 대분류를 쓰는 줄이 이미 있으면 세부를 켜야 겹치지 않는다 — 자동으로 켜 준다.
+                    const free = detailsOf(major).find((d) => !pick.usedDetails.has(d)) ?? ''
+                    setGradeCount(idx, { major, detail: pick.mustPickDetail(major) ? free : '' })
+                  }}
                   className="h-9 w-32 rounded-md border border-input bg-background px-2 text-sm"
                 >
                   <option value="">등급 선택</option>
-                  {options.devGradeGroups.map((g) => <option key={g.major} value={g.major}>{g.major}</option>)}
+                  {options.devGradeGroups.map((g) => {
+                    // 「등급 무관」은 아홉 등급을 전부 포괄하므로 다른 줄이 하나라도 있으면 못 쓴다.
+                    const blocked = g.major !== row.major
+                      && (pick.blockedMajors.has(g.major) || (g.major === GRADE_ANY && pick.hasOthers))
+                    return (
+                      <option key={g.major} value={g.major} disabled={blocked}>
+                        {g.major}{blocked ? ' — 이미 선택됨' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
                 {/* 세부 등급은 접어 둔다 — 초초·초중·초상까지 늘어놓으면 목록이 너무 길다.
                     체크하면 그 대분류의 세부만 나오고, detail 이 비어 있지 않다는 것이 곧 체크된 상태다. */}
@@ -487,9 +533,23 @@ export default function ProjectPostClient({ projectSq }: Props) {
                     <Checkbox
                       id={`grade-detail-${idx}`}
                       checked={!!row.detail}
-                      onCheckedChange={(v) => setGradeCount(idx, { detail: v === true ? details[0] : '' })}
+                      // 같은 대분류를 쓰는 줄이 또 있으면 세부를 끌 수 없다 — 끄면 그 줄과 범위가 겹친다.
+                      // disabled 로 막으면 클릭이 아예 안 먹어 사용자는 왜 안 되는지 알 수 없다.
+                      // 그래서 누를 수는 있게 두고, 눌렀을 때 이유를 알려준 뒤 상태를 유지한다.
+                      onCheckedChange={(v) => {
+                        if (v !== true && sameMajorElsewhere) {
+                          toast.error(`다른 줄에서 「${row.major}」을(를) 쓰고 있어 세부 등급을 해제할 수 없습니다.`)
+                          return
+                        }
+                        setGradeCount(idx, {
+                          detail: v === true ? (details.find((d) => !pick.usedDetails.has(d)) ?? details[0]) : '',
+                        })
+                      }}
                     />
-                    <label htmlFor={`grade-detail-${idx}`} className="cursor-pointer text-xs text-muted-foreground">세부</label>
+                    <label
+                      htmlFor={`grade-detail-${idx}`}
+                      className="cursor-pointer text-xs text-muted-foreground"
+                    >세부</label>
                   </div>
                 )}
                 {!!row.detail && (
@@ -498,7 +558,14 @@ export default function ProjectPostClient({ projectSq }: Props) {
                     onChange={(e) => setGradeCount(idx, { detail: e.target.value })}
                     className="h-9 w-24 rounded-md border border-input bg-background px-2 text-sm"
                   >
-                    {details.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {details.map((d) => {
+                      const taken = d !== row.detail && pick.usedDetails.has(d)
+                      return (
+                        <option key={d} value={d} disabled={taken}>
+                          {d}{taken ? ' — 이미 선택됨' : ''}
+                        </option>
+                      )
+                    })}
                   </select>
                 )}
                 <Input
@@ -547,9 +614,10 @@ export default function ProjectPostClient({ projectSq }: Props) {
         </div>
       </div>
 
-      {/* 학력 */}
+      {/* 학력 — label 은 인라인이라 block 을 주지 않으면 select 와 같은 줄에 붙는다.
+          (다른 필드는 Input 이 w-full 이라 저절로 줄이 바뀌어 이 문제가 안 보였다) */}
       <div className="space-y-1">
-        <label className="text-sm font-semibold">학력</label>
+        <label className="block text-sm font-semibold">학력</label>
         <select
           value={form.educationLvl}
           onChange={(e) => setF({ educationLvl: e.target.value })}
