@@ -78,7 +78,8 @@ public class ProjectDetailResponse {
                 .projectRecruitStartDt(p.getProjectRecruitStartDt().toString())
                 .projectRecruitEndDt(p.getProjectRecruitEndDt().toString())
                 .projectStartDt(p.getProjectStartDt().toString())
-                .projectEndDt(p.getProjectEndDt().toString())
+                // 종료일은 "미정"(null)일 수 있다. 프런트가 null 을 받아 "미정"으로 표기한다.
+                .projectEndDt(p.getProjectEndDt() == null ? null : p.getProjectEndDt().toString())
 
                 .projectViewCnt(p.getProjectViewCnt())
                 .projectScrapCnt(p.getProjectScrapCnt())

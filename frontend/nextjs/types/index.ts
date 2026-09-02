@@ -234,7 +234,8 @@ export interface ProjectDetail {
   interviewStartDt: string
   interviewEndDt: string
   projectStartDt: string
-  projectEndDt: string
+  /** 수행 종료일. null 이면 「미정」 — 끝나는 날을 정하지 않고 시작하는 공고가 있다 */
+  projectEndDt: string | null
   projectRequiredSkills: RequiredSkillGroup[]
   projectPreferredSkills: RequiredSkillGroup[]
   projectPreferredEtc: string

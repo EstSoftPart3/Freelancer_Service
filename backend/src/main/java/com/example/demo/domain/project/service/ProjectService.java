@@ -44,6 +44,7 @@ import com.example.demo.domain.project.mapper.ProjectApplicationMapper;
 import com.example.demo.domain.project.mapper.ProjectMapper;
 import com.example.demo.domain.project.mapper.ScrapMapper;
 import com.example.demo.domain.project.mapper.SkillMapper;
+import com.example.demo.domain.project.util.DeveloperGradeSupport;
 import com.example.demo.domain.project.util.ProjectUtil;
 import com.example.demo.domain.project.vo.ExistProjectVo;
 import com.example.demo.domain.project.vo.ProjectSummary;
@@ -60,6 +61,7 @@ public class ProjectService {
 	private final CommonCodeMapper commonCodeMapper;
 	private final DistrictMapper districtMapper;
 	private final ProjectUtil projectUtil;
+	private final DeveloperGradeSupport gradeSupport;
 	private final SkillMapper skillMapper;
 	private final AddressMapper addressMapper;
 	private final ProjectApplicationMapper projectApplicationMapper;
@@ -247,6 +249,7 @@ public class ProjectService {
 	// 검색 조건에 따라 전체 프로젝트 목록 조회
 	public ProjectListResponse fetchAllProject(JwtAuthenticationToken token, ProjectSearchRequest request) {
 
+		expandGradeFilter(request);
 		List<Project> projects = projectMapper.findProjectsBySearch(request);
 		Long totalCount = projectMapper.countProjectsBySearch(request);
 		List<ProjectSummary> responses = new ArrayList<>();
@@ -629,7 +632,9 @@ public class ProjectService {
 	 * 모집 인원 등록. 등급 이름을 공통코드로 바꿔 넣는다.
 	 *
 	 * <p>
-	 * 등급이 비어 있으면(총원 모드) 코드도 null 로 둔다 — 그 NULL 이 곧 모드 표시다.
+	 * 등급이 비어 있으면 코드도 null 로 둔다. 예전에는 그 NULL 이 "총 인원으로 모집" 모드를
+	 * 뜻했지만, 2026-09-02 에 두 모드를 하나로 합치면서 새 공고는 항상 등급을 채워 보낸다.
+	 * 옛 클라이언트 호환을 위해 null 을 허용하는 것뿐이다.
 	 * </p>
 	 */
 	@Transactional
@@ -637,6 +642,8 @@ public class ProjectService {
 		if (headcounts == null || headcounts.isEmpty()) {
 			return;
 		}
+		gradeSupport.validateAnyGradeIsAlone(
+				headcounts.stream().map(RecruitHeadcountRequest::grade).filter(Objects::nonNull).toList());
 		List<HeadcountInsertRequest> rows = new ArrayList<>();
 		headcounts.forEach(h -> rows.add(new HeadcountInsertRequest(
 				projectSq, findGradeCd(h.grade()), h.count())));
@@ -668,18 +675,24 @@ public class ProjectService {
 	 */
 	private long resolveRepresentativeGradeCd(ProjectCreateRequest request) {
 		if (request.recruitHeadcounts() != null) {
-			Long lowest = request.recruitHeadcounts().stream()
-					.map(RecruitHeadcountRequest::grade)
-					.map(this::findGradeCd)
-					.filter(Objects::nonNull)
-					.min(Long::compareTo)
-					.orElse(null);
+			// 🔴 코드값(min)이 아니라 서열로 고른다. 대분류(초급 710 등)가 세부 등급(상상 709)보다
+			// 코드값이 크기 때문에, 코드값으로 비교하면 초급이 최고 등급으로 뒤집힌다.
+			Long lowest = gradeSupport.resolveLowestGradeCd(
+					request.recruitHeadcounts().stream()
+							.map(RecruitHeadcountRequest::grade)
+							.filter(Objects::nonNull)
+							.toList());
 			if (lowest != null) {
 				return lowest;
 			}
 		}
-		return commonCodeMapper.findCommonCodeSqByName(request.devGrade(),
-				ParentCodeEnum.DEVELOPER_GRADE.getCode());
+		Long fromForm = findGradeCd(request.devGrade());
+		if (fromForm == null) {
+			// 모집 인원에도 폼에도 등급이 없다 — 폼 검증을 통과했다면 일어나지 않지만,
+			// 원시 long 반환이라 그대로 두면 언박싱 NPE 로 터진다.
+			throw new IllegalArgumentException("개발자 등급을 확인할 수 없습니다.");
+		}
+		return fromForm;
 	}
 
 	@Transactional
@@ -772,10 +785,10 @@ public class ProjectService {
 					areaInfoResponse // 상세 주소 없으면 null
 			);
 
-			return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills, existProjectVo);
+			return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills, existProjectVo, gradeSupport);
 		}
 
-		return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills);
+		return ProjectFormDataResponse.from(commonCodeMapper, districtMapper, skills, gradeSupport);
 	}
 
 	@Transactional
@@ -806,7 +819,9 @@ public class ProjectService {
 			case "지역":
 				return districtMapper.findAllParentDistrict();
 			case "경력":
-				return commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.DEVELOPER_GRADE.getCode());
+				// 등록 폼의 등급 select 와 같은 서열 순으로 보여준다(코드값 순이면 대분류가 맨 뒤로 밀린다).
+				return gradeSupport.sortFilterOptionsByRank(
+						commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.DEVELOPER_GRADE.getCode()));
 			case "학력":
 				return commonCodeMapper.findCommonCodeSqAndNmByParent(ParentCodeEnum.EDUCATION.getCode());
 			case "직종":
@@ -886,8 +901,26 @@ public class ProjectService {
 
 	@Transactional(readOnly = true)
 	public List<ProjectRegionGroupDTO> fetchProjectRegionGroups(ProjectSearchRequest request) {
+		expandGradeFilter(request);
 		// 쿼리에서 GROUP BY를 통해 시군구별 데이터 집계
 		return projectMapper.findProjectGroupsByRegion(request);
+	}
+
+	/**
+	 * 등급 필터를 포함 관계로 넓힌다.
+	 *
+	 * <p>
+	 * 「초급」으로 등록된 공고는 초초·초중·초상을 모두 포함하므로 「초초」로 걸러도 나와야 하고,
+	 * 「등급 무관」 공고는 어떤 등급으로 걸러도 나와야 한다. 매퍼의 {@code IN} 절은 그대로 두고
+	 * 넘기는 코드 목록만 넓힌다.
+	 * </p>
+	 */
+	private void expandGradeFilter(ProjectSearchRequest request) {
+		if (request == null) {
+			return;
+		}
+		request.setProjectDeveloperGradeCd(
+				gradeSupport.expandForSearch(request.getProjectDeveloperGradeCd()));
 	}
 
 	/**

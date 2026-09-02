@@ -3,13 +3,19 @@
 // Vue 원본 CalendarModal.vue(좌우 듀얼 월 + 클릭 2회로 범위 선택) 이식 — 프로젝트 기간/모집 기간 공용
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 interface Props {
   open: boolean
   onClose: () => void
-  onConfirm: (range: { start: string; end: string }) => void
+  onConfirm: (range: { start: string; end: string | null }) => void
+  /**
+   * 「종료일 미정」을 고를 수 있게 한다. 프로젝트 수행 기간에서만 켠다 —
+   * 모집 기간의 종료일은 D-day 계산의 근거라 비면 안 된다.
+   */
+  allowUndecidedEnd?: boolean
 }
 
 interface MonthRef { month: number; year: number }
@@ -35,7 +41,7 @@ function generateCalendar(month: number, year: number) {
   return weeks
 }
 
-export default function DateRangeModal({ open, onClose, onConfirm }: Props) {
+export default function DateRangeModal({ open, onClose, onConfirm, allowUndecidedEnd = false }: Props) {
   const today = new Date()
   const [leftMonth, setLeftMonth] = useState<MonthRef>({ month: today.getMonth(), year: today.getFullYear() })
   const [rightMonth, setRightMonth] = useState<MonthRef>({
@@ -43,6 +49,8 @@ export default function DateRangeModal({ open, onClose, onConfirm }: Props) {
     year: today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear(),
   })
   const [range, setRange] = useState<[Date | null, Date | null]>([null, null])
+  // 종료일 미정 — 체크하면 시작일만 고르면 된다.
+  const [undecidedEnd, setUndecidedEnd] = useState(false)
 
   function prevMonth() {
     setLeftMonth((prev) => {
@@ -60,6 +68,8 @@ export default function DateRangeModal({ open, onClose, onConfirm }: Props) {
   }
 
   function selectDate(date: Date) {
+    // 종료일 미정이면 두 번째 클릭으로 범위를 만들지 않는다 — 시작일만 계속 바뀐다.
+    if (undecidedEnd) { setRange([date, null]); return }
     setRange(([s, e]) => {
       if (!s || (s && e)) return [date, null]
       return date < s ? [date, s] : [s, date]
@@ -84,12 +94,21 @@ export default function DateRangeModal({ open, onClose, onConfirm }: Props) {
   }
 
   const [s, e] = range
-  const selectedText = s && e ? `${formatDate(s)} ~ ${formatDate(e)}` : ''
+  const selectedText = s && undecidedEnd
+    ? `${formatDate(s)} ~ 미정`
+    : (s && e ? `${formatDate(s)} ~ ${formatDate(e)}` : '')
+  // 미정이면 시작일만 있으면 확정할 수 있다.
+  const canConfirm = undecidedEnd ? !!s : (!!s && !!e)
+
+  function reset() {
+    setRange([null, null])
+    setUndecidedEnd(false)
+  }
 
   function handleConfirm() {
-    if (!s || !e) return
-    onConfirm({ start: formatDate(s), end: formatDate(e) })
-    setRange([null, null])
+    if (!canConfirm || !s) return
+    onConfirm({ start: formatDate(s), end: undecidedEnd || !e ? null : formatDate(e) })
+    reset()
     onClose()
   }
 
@@ -133,13 +152,31 @@ export default function DateRangeModal({ open, onClose, onConfirm }: Props) {
           <MonthGrid m={rightMonth} showNext />
         </div>
 
-        <div className="flex items-center justify-between border-t pt-3 text-sm">
-          <span className="font-medium">{selectedText ? `선택 일자: ${selectedText}` : '시작일과 종료일을 순서대로 클릭하세요.'}</span>
+        <div className="flex items-center justify-between gap-4 border-t pt-3 text-sm">
+          <span className="font-medium">
+            {selectedText
+              ? `선택 일자: ${selectedText}`
+              : (undecidedEnd ? '시작일을 클릭하세요.' : '시작일과 종료일을 순서대로 클릭하세요.')}
+          </span>
+          {allowUndecidedEnd && (
+            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-muted-foreground">
+              <Checkbox
+                checked={undecidedEnd}
+                onCheckedChange={(v) => {
+                  const on = v === true
+                  setUndecidedEnd(on)
+                  // 미정으로 바꾸면 이미 고른 종료일은 버린다.
+                  if (on) setRange(([start]) => [start, null])
+                }}
+              />
+              종료일 미정
+            </label>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setRange([null, null]); onClose() }}>취소</Button>
-          <Button onClick={handleConfirm} disabled={!s || !e}>적용</Button>
+          <Button variant="outline" onClick={() => { reset(); onClose() }}>취소</Button>
+          <Button onClick={handleConfirm} disabled={!canConfirm}>적용</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

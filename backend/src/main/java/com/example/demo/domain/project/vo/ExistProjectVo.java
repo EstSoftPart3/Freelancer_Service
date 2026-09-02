@@ -74,7 +74,8 @@ public class ExistProjectVo {
 				.recruitStartDt(p.getProjectRecruitStartDt().toString())
 				.recruitEndDt(p.getProjectRecruitEndDt().toString())
 				.projectStartDt(p.getProjectStartDt().toString())
-				.projectEndDt(p.getProjectEndDt().toString())
+				// 종료일은 "미정"(null)일 수 있다. 그대로 null 을 내보내면 수정 폼이 미정 상태로 복원된다.
+				.projectEndDt(p.getProjectEndDt() == null ? null : p.getProjectEndDt().toString())
 				.devGrade(util.convertCommonCodeSqToNm(p.getProjectDeveloperGradeCd()))
 				.educationLvl(util.convertCommonCodeSqToNm(p.getProjectRequiredEducationCd()))
 				.reqSkills(reqSkills)

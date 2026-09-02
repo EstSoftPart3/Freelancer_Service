@@ -31,14 +31,10 @@ interface FormData {
   subwayLat: string
   subwayLon: string
   subwaySigunguCode: string
-  devGrade: string
   educationLvl: string
-  // 모집 인원 — 'grade'(등급별 여러 줄) 또는 'total'(등급 1개 + 총원)
-  headcountMode: 'grade' | 'total'
+  // 모집 인원 — 등급마다 한 줄. 줄이 하나면 예전의 "총 인원으로 모집" 과 같다.
   // count 가 빈 문자열이고 unknown 이 true 면 "인원 미정"
   gradeCounts: { grade: string; count: string; unknown: boolean }[]
-  totalCount: string
-  totalUnknown: boolean
   projectStartDt: string
   projectEndDt: string
   recruitStartDt: string
@@ -68,6 +64,12 @@ interface Props {
   projectSq?: number
 }
 
+/**
+ * 「등급 무관」의 표시 이름. 공통코드(700 하위, 영문명 ANY)의 한글명과 같아야 한다.
+ * 이 값만 다른 등급과 함께 고를 수 없다.
+ */
+const GRADE_ANY = '등급 무관'
+
 export default function ProjectPostClient({ projectSq }: Props) {
   const router = useRouter()
   const isEdit = !!projectSq
@@ -76,9 +78,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
     projectTitle: '',
     address: '', detailAddress: '', postcode: '', latitude: '', longitude: '', sigunguCode: '',
     subwayAddressName: '', subwayLat: '', subwayLon: '', subwaySigunguCode: '',
-    devGrade: '', educationLvl: '',
-    headcountMode: 'total', gradeCounts: [{ grade: '', count: '', unknown: false }],
-    totalCount: '', totalUnknown: false,
+    educationLvl: '',
+    gradeCounts: [{ grade: '', count: '', unknown: false }],
     projectStartDt: '', projectEndDt: '',
     recruitStartDt: '', recruitEndDt: '',
     projectSalary: '',
@@ -129,12 +130,9 @@ export default function ProjectPostClient({ projectSq }: Props) {
   }
   const salaryDisplay = form.projectSalary ? Number(form.projectSalary).toLocaleString('ko-KR') : ''
 
-  const headcountTotal = form.headcountMode === 'grade'
-    ? form.gradeCounts.reduce((sum, g) => sum + (g.unknown ? 0 : Number(g.count) || 0), 0)
-    : (form.totalUnknown ? 0 : Number(form.totalCount) || 0)
-  const hasUnknownHeadcount = form.headcountMode === 'grade'
-    ? form.gradeCounts.some((g) => g.unknown)
-    : form.totalUnknown
+  const headcountTotal = form.gradeCounts.reduce((sum, g) => sum + (g.unknown ? 0 : Number(g.count) || 0), 0)
+  const hasUnknownHeadcount = form.gradeCounts.some((g) => g.unknown)
+  const hasAnyGrade = form.gradeCounts.some((g) => g.grade === GRADE_ANY)
 
   const openPostcode = () => {
     loadDaumPostcode().then(() => {
@@ -192,7 +190,6 @@ export default function ProjectPostClient({ projectSq }: Props) {
           latitude: exist.latitude ?? '',
           longitude: exist.longitude ?? '',
           subwayAddressName: exist.subwayAddress ?? '',
-          devGrade: exist.devGrade ?? '',
           educationLvl: exist.educationLvl ?? '',
           projectStartDt: exist.projectStartDt ?? '',
           projectEndDt: exist.projectEndDt ?? '',
@@ -207,27 +204,18 @@ export default function ProjectPostClient({ projectSq }: Props) {
         }))
         // 모집 인원 복원 — grade 가 채워진 행들이면 등급별, grade 가 없는 한 줄이면 총원 모드.
         // 인원 개념이 없던 시절 공고는 배열이 비어 있어 기본값(총원, 빈 칸)으로 남는다.
+        // 등급이 비어 있는 행(옛 "총 인원으로 모집")은 공고의 대표 등급으로 되살린다.
+        // 마이그레이션으로 대부분 채워지지만, 되돌렸거나 아직 안 넘어온 데이터가 있을 수 있다.
         const heads: { grade: string | null; count: number | null }[] = exist.recruitHeadcounts ?? []
         if (heads.length > 0) {
-          const byGrade = heads.filter((h) => h.grade)
-          if (byGrade.length > 0) {
-            setForm((prev) => ({
-              ...prev,
-              headcountMode: 'grade',
-              gradeCounts: byGrade.map((h) => ({
-                grade: h.grade as string,
-                count: h.count == null ? '' : String(h.count),
-                unknown: h.count == null,
-              })),
-            }))
-          } else {
-            setForm((prev) => ({
-              ...prev,
-              headcountMode: 'total',
-              totalCount: heads[0].count == null ? '' : String(heads[0].count),
-              totalUnknown: heads[0].count == null,
-            }))
-          }
+          setForm((prev) => ({
+            ...prev,
+            gradeCounts: heads.map((h) => ({
+              grade: h.grade ?? exist.devGrade ?? '',
+              count: h.count == null ? '' : String(h.count),
+              unknown: h.count == null,
+            })),
+          }))
         }
 
         // Vue 원본 ProjectPostPage.vue: 수정 모드에서 기존 인터뷰 가능시간도 폼에 복원
@@ -291,10 +279,10 @@ export default function ProjectPostClient({ projectSq }: Props) {
   async function handleSubmit() {
     const preference = [...form.preferenceList, ...preferenceInput.split(',')].map((s) => s.trim()).filter(Boolean).join(',')
     const interviewTime = interviewTimes.flatMap((e) => e.times.map((t) => `${e.date}T${t}`))
-    // 총원 모드는 grade 를 null 로 보낸다 — 백엔드가 그 null 로 두 모드를 구분한다.
-    const recruitHeadcounts = form.headcountMode === 'grade'
-      ? form.gradeCounts.map((g) => ({ grade: g.grade, count: g.unknown ? null : Number(g.count) }))
-      : [{ grade: null, count: form.totalUnknown ? null : Number(form.totalCount) }]
+    const recruitHeadcounts = form.gradeCounts.map((g) => ({
+      grade: g.grade,
+      count: g.unknown ? null : Number(g.count),
+    }))
     const salaryNum = Number(form.projectSalary)
 
     // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단)
@@ -310,26 +298,25 @@ export default function ProjectPostClient({ projectSq }: Props) {
       toast.error('지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.'); return
     }
     // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
-    if (form.headcountMode === 'total') {
-      if (!form.devGrade) { toast.error('개발자 등급을 선택해주세요.'); return }
-      if (!form.totalUnknown && !(Number(form.totalCount) >= 1)) {
-        toast.error('모집 인원을 입력하거나 "인원 미정"을 선택해주세요.'); return
-      }
-    } else {
-      if (form.gradeCounts.length === 0) { toast.error('모집할 등급을 최소 하나 추가해주세요.'); return }
-      if (form.gradeCounts.some((g) => !g.grade)) { toast.error('등급을 선택해주세요.'); return }
-      if (form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1))) {
-        toast.error('등급별 인원을 입력하거나 "미정"을 선택해주세요.'); return
-      }
-      const grades = form.gradeCounts.map((g) => g.grade)
-      if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
+    if (form.gradeCounts.length === 0) { toast.error('모집할 등급을 최소 하나 추가해주세요.'); return }
+    if (form.gradeCounts.some((g) => !g.grade)) { toast.error('등급을 선택해주세요.'); return }
+    if (form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1))) {
+      toast.error('등급별 인원을 입력하거나 "미정"을 선택해주세요.'); return
+    }
+    const grades = form.gradeCounts.map((g) => g.grade)
+    if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
+    // 「등급 무관」은 다른 등급과 같이 쓸 수 없다 — 등급을 안 따진다면서 특정 등급을 함께 적을 수는 없다.
+    if (grades.includes(GRADE_ANY) && grades.length > 1) {
+      toast.error('「등급 무관」은 다른 등급과 함께 선택할 수 없습니다.'); return
     }
     if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
-    if (!form.projectStartDt || !form.projectEndDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
+    // 수행 종료일은 「미정」으로 비워 둘 수 있다. 시작일만 필수다.
+    if (!form.projectStartDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
     if (!form.recruitStartDt || !form.recruitEndDt) { toast.error('모집 기간을 설정해주세요.'); return }
     // 두 DateRangeModal이 서로의 값을 모르기 때문에 여기서 관계를 본다(백엔드 @AssertTrue와 같은 규칙).
     // 모집 종료가 수행 시작보다 뒤인 것은 허용 — 수행 중 인력 추가 모집이 정상 케이스다.
-    if (form.recruitEndDt > form.projectEndDt) {
+    // 수행 종료일이 미정이면 비교할 대상이 없으므로 건너뛴다.
+    if (form.projectEndDt && form.recruitEndDt > form.projectEndDt) {
       toast.error('모집 종료일이 프로젝트 종료일보다 늦습니다. 이미 끝난 프로젝트를 모집할 수는 없습니다.')
       return
     }
@@ -368,11 +355,14 @@ export default function ProjectPostClient({ projectSq }: Props) {
       subwayLon: numOrUndef(form.subwayLon),
       subwaySigunguCode: numOrUndef(form.subwaySigunguCode),
       // 등급별 모드에서는 백엔드가 가장 낮은 등급으로 대표값을 다시 잡는다(검색 필터 호환용).
-      devGrade: form.headcountMode === 'grade' ? (form.gradeCounts[0]?.grade ?? '') : form.devGrade,
+      // 대표 등급은 백엔드가 모집 인원에서 서열이 가장 낮은 것으로 다시 잡는다(검색 필터 호환용).
+      // 여기서는 첫 줄을 넣어 두기만 한다.
+      devGrade: form.gradeCounts[0]?.grade ?? '',
       recruitHeadcounts,
       educationLvl: form.educationLvl,
       projectStartDt: form.projectStartDt,
-      projectEndDt: form.projectEndDt,
+      // 「미정」이면 빈 문자열이 아니라 undefined 로 보낸다 — 백엔드 LocalDate 가 '' 를 파싱하지 못한다.
+      projectEndDt: numOrUndef(form.projectEndDt),
       recruitStartDt: form.recruitStartDt,
       recruitEndDt: form.recruitEndDt,
       workType: form.workType,
@@ -453,25 +443,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
         </div>
       </div>
 
-      {/* 모집 인원 — 등급별 또는 총원. 두 방식을 섞을 수는 없다(백엔드도 같은 규칙) */}
+      {/* 모집 인원 — 등급마다 한 줄. 줄이 하나면 예전의 "총 인원으로 모집" 과 결과가 같다.
+          두 모드를 라디오로 고르게 하던 것을 없앴다(2026-09-02) */}
       <div className="space-y-3 rounded-lg border p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="text-sm font-semibold">모집 인원</label>
-          {([['grade', '등급별로 모집'], ['total', '총 인원으로 모집']] as const).map(([mode, label]) => (
-            <label key={mode} className="flex cursor-pointer items-center gap-1.5 text-sm">
-              <input
-                type="radio"
-                name="headcount-mode"
-                checked={form.headcountMode === mode}
-                onChange={() => setF({ headcountMode: mode })}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
+        <label className="text-sm font-semibold">모집 인원</label>
 
-        {form.headcountMode === 'grade' ? (
-          <div className="space-y-2">
+        <div className="space-y-2">
             {form.gradeCounts.map((row, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <select
@@ -510,47 +487,21 @@ export default function ProjectPostClient({ projectSq }: Props) {
                 )}
               </div>
             ))}
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
+            {/* 「등급 무관」은 단독으로만 쓴다 — 등급을 안 따진다면서 특정 등급을 함께 적을 수는 없다. */}
+            {hasAnyGrade ? (
+              <span className="text-xs text-muted-foreground">「등급 무관」은 다른 등급과 함께 선택할 수 없습니다.</span>
+            ) : (
               <button type="button" onClick={addGradeRow} className="cursor-pointer text-xs text-muted-foreground hover:text-primary">
                 + 등급 추가
               </button>
-              <span className="text-sm">
-                합계 <strong>{headcountTotal}</strong>명
-                {hasUnknownHeadcount && <span className="ml-1 text-xs text-muted-foreground">(일부 미정)</span>}
-              </span>
-            </div>
+            )}
+            <span className="text-sm">
+              합계 <strong>{headcountTotal}</strong>명
+              {hasUnknownHeadcount && <span className="ml-1 text-xs text-muted-foreground">(일부 미정)</span>}
+            </span>
           </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={form.devGrade}
-              onChange={(e) => setF({ devGrade: e.target.value })}
-              className="h-9 w-40 rounded-md border border-input bg-background px-2 text-sm"
-            >
-              <option value="">개발자 등급 선택</option>
-              {options.devGrades.map((g) => <option key={g} value={g}>{g}</option>)}
-            </select>
-            <div className="flex items-center gap-2">
-              <Input
-                value={form.totalCount}
-                onChange={(e) => setF({ totalCount: e.target.value.replace(/[^0-9]/g, '') })}
-                className="w-20"
-                inputMode="numeric"
-                placeholder={form.totalUnknown ? '—' : '0'}
-                disabled={form.totalUnknown}
-              />
-              <span className="text-sm text-muted-foreground">명</span>
-              <div className="ml-1 flex items-center gap-1.5">
-                <Checkbox
-                  id="headcount-unknown-total"
-                  checked={form.totalUnknown}
-                  onCheckedChange={(v) => setF({ totalUnknown: v === true, ...(v === true ? { totalCount: '' } : {}) })}
-                />
-                <label htmlFor="headcount-unknown-total" className="cursor-pointer text-xs text-muted-foreground">인원 미정</label>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* 학력 */}
@@ -572,9 +523,10 @@ export default function ProjectPostClient({ projectSq }: Props) {
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold">프로젝트 기간</label>
           </div>
+          {/* 종료일은 미정일 수 있다 — 시작일만 있으면 「~ 미정」으로 보여준다. */}
           <Input
             readOnly
-            value={form.projectStartDt && form.projectEndDt ? `${form.projectStartDt} ~ ${form.projectEndDt}` : ''}
+            value={form.projectStartDt ? `${form.projectStartDt} ~ ${form.projectEndDt || '미정'}` : ''}
             placeholder="예: 2026-04 ~ 2026-10"
             className="cursor-pointer"
             onClick={() => setProjectPeriodModalOpen(true)}
@@ -790,15 +742,17 @@ export default function ProjectPostClient({ projectSq }: Props) {
         onClose={() => setInterviewModalOpen(false)}
         onConfirm={setInterviewTimes}
       />
+      {/* 수행 기간만 「종료일 미정」을 허용한다. 모집 종료일은 D-day 계산의 근거라 비면 안 된다. */}
       <DateRangeModal
         open={projectPeriodModalOpen}
+        allowUndecidedEnd
         onClose={() => setProjectPeriodModalOpen(false)}
-        onConfirm={({ start, end }) => setF({ projectStartDt: start, projectEndDt: end })}
+        onConfirm={({ start, end }) => setF({ projectStartDt: start, projectEndDt: end ?? '' })}
       />
       <DateRangeModal
         open={recruitPeriodModalOpen}
         onClose={() => setRecruitPeriodModalOpen(false)}
-        onConfirm={({ start, end }) => setF({ recruitStartDt: start, recruitEndDt: end })}
+        onConfirm={({ start, end }) => setF({ recruitStartDt: start, recruitEndDt: end ?? '' })}
       />
     </div>
   )

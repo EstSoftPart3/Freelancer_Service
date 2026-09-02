@@ -49,11 +49,12 @@ function SkillGroupList({ groups, label }: { groups: RequiredSkillGroup[]; label
   )
 }
 
-function DateRange({ label, start, end }: { label: string; start: string; end: string }) {
+// 수행 기간의 종료일은 「미정」(null)일 수 있다. 모집·인터뷰 기간은 항상 값이 있다.
+function DateRange({ label, start, end }: { label: string; start: string; end: string | null }) {
   return (
     <div className="flex justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span>{start} ~ {end}</span>
+      <span>{start} ~ {end || '미정'}</span>
     </div>
   )
 }

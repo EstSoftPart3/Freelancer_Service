@@ -42,7 +42,8 @@ public record ProjectCreateRequest(
 
 		@NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate projectStartDt,
 
-		@NotNull(message = "프로젝트 종료일은 필수입니다.") LocalDate projectEndDt,
+		// 종료일은 비워 둘 수 있다 — 끝나는 날을 정하지 않고 시작하는 현장이 있다. null 이면 "미정".
+		LocalDate projectEndDt,
 
 		@NotNull(message = "모집 시작일은 필수입니다.") LocalDate recruitStartDt,
 
