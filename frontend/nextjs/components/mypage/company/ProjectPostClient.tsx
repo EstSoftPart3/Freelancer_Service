@@ -495,7 +495,18 @@ export default function ProjectPostClient({ projectSq }: Props) {
       {/* 모집 인원 — 등급마다 한 줄. 줄이 하나면 예전의 "총 인원으로 모집" 과 결과가 같다.
           두 모드를 라디오로 고르게 하던 것을 없앴다(2026-09-02) */}
       <div className="space-y-3 rounded-lg border p-4">
-        <label className="text-sm font-semibold">모집 인원</label>
+        <div className="flex items-center gap-1.5">
+          <label className="text-sm font-semibold">모집 인원</label>
+          <InfoTooltip label="등급·세부 등급 안내">
+            <p className="font-semibold">등급과 「세부」</p>
+            <ul className="mt-1 space-y-0.5">
+              <li>· 기본은 <span className="font-medium">초급 · 중급 · 상급</span> 중에서 고릅니다.</li>
+              <li>· 「세부」를 켜면 <span className="font-medium">초초 · 초중 · 초상</span> 처럼 한 단계 더 좁힐 수 있습니다.</li>
+              <li>· 「등급 무관」은 등급을 따지지 않는 공고이며 다른 등급과 함께 쓸 수 없습니다.</li>
+              <li>· 범위가 겹치는 조합은 고를 수 없습니다 — 「초급」은 이미 초초를 포함하기 때문입니다.</li>
+            </ul>
+          </InfoTooltip>
+        </div>
 
         <div className="space-y-2">
             {form.gradeCounts.map((row, idx) => {
