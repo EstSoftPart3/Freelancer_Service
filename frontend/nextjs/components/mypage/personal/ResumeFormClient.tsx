@@ -19,6 +19,12 @@ import TrainingModal from '@/components/mypage/personal/TrainingModal'
 import ProjectHistoryModal from '@/components/mypage/personal/ProjectHistoryModal'
 import CertificateModal from '@/components/mypage/personal/CertificateModal'
 import SkillSelectModal from '@/components/mypage/personal/SkillSelectModal'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
+
+/** 검증 실패 시 빨간 프레임을 켤 필드 — 화면의 블록 단위와 1:1 로 맞춘다. */
+type ResumeField =
+  | 'resumeTtl' | 'resumeNm' | 'resumeBirthDt' | 'resumePhoneNum' | 'email' | 'address'
 
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net']
 
@@ -89,6 +95,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 export default function ResumeFormClient({ resumeSq }: Props) {
   const router = useRouter()
   const isEdit = !!resumeSq
+  const { validate, fieldProps, bindRef, isInvalid, clearField, clearAll } = useFormErrors<ResumeField>()
 
   // 기본 정보
   const [resumeTtl, setResumeTtl] = useState('')
@@ -162,6 +169,8 @@ export default function ResumeFormClient({ resumeSq }: Props) {
             const geocoder = new window.kakao.maps.services.Geocoder()
             geocoder.addressSearch(addr, (result: Array<{ x: string; y: string }>, status: string) => {
               if (status === window.kakao.maps.services.Status.OK && result[0]) {
+                // 좌표까지 채워진 시점에만 프레임을 걷는다 — 주소만 있고 좌표가 비면 여전히 미충족이다.
+                clearField('address')
                 setAddress((prev) => ({ ...prev, longitude: result[0].x, latitude: result[0].y }))
               } else {
                 setAddress((prev) => ({ ...prev, longitude: '', latitude: '' }))
@@ -235,10 +244,11 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       setProfileExisting(d.profileImage ?? null)
       if (d.profileImage?.url) setProfilePreview(d.profileImage.url)
       setAttachExisting(d.attachmentList ?? [])
+      clearAll()
     } catch {
       toast.error('이력서 정보를 불러올 수 없습니다.')
     }
-  }, [resumeSq])
+  }, [resumeSq, clearAll])
 
   // 신규 등록 시 회원가입 기본정보(이름/생년월일/전화/이메일/주소) 자동 불러오기
   const prefillFromMember = useCallback(async () => {
@@ -264,11 +274,14 @@ export default function ResumeFormClient({ resumeSq }: Props) {
         latitude: d.latitude != null ? String(d.latitude) : '',
         longitude: d.longitude != null ? String(d.longitude) : '',
       }))
+      // 프리필은 사용자의 입력이 아니라 clearField 를 타지 않는다. 응답이 늦게 와서
+      // 그 사이에 제출한 경우 채워진 칸에 빨간 프레임이 남으므로 여기서 걷어 준다.
+      clearAll()
     } catch (err) {
       // 회원 기본정보 프리필 실패 — 빈 폼은 유지하되 원인을 조용히 삼키지 않는다.
       console.error('회원 기본정보를 불러오지 못했습니다.', err)
     }
-  }, [])
+  }, [clearAll])
 
   useEffect(() => {
     api.get('/mypage/resume/project-history/skill-tags').then(({ data }) => setAllSkills(data.output ?? [])).catch(() => {})
@@ -281,14 +294,21 @@ export default function ResumeFormClient({ resumeSq }: Props) {
   }, [isEdit, loadDetail, prefillFromMember])
 
   async function handleSubmit() {
-    // 필수값 검증 (Vue required 대응)
-    if (!resumeTtl.trim()) { toast.error('이력서 제목을 입력해주세요.'); return }
-    if (!resumeNm.trim()) { toast.error('이름을 입력해주세요.'); return }
-    if (!resumeBirthDt) { toast.error('생년월일을 입력해주세요.'); return }
-    if (!resumePhoneNum.trim()) { toast.error('전화번호를 입력해주세요.'); return }
-    if (!emailId.trim() || !(emailDomain === 'custom' ? customDomain.trim() : emailDomain)) { toast.error('이메일을 입력해주세요.'); return }
-    if (!address.address) { toast.error('주소를 입력해주세요.'); return }
-    if (!address.latitude || !address.longitude || !address.areaCodeSq) { toast.error('주소 정보가 불완전합니다. 주소를 다시 선택해주세요.'); return }
+    // 필수값 검증 (Vue required 대응).
+    // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
+    if (!validate([
+      { key: 'resumeTtl', invalid: !resumeTtl.trim(), message: '이력서 제목을 입력해주세요.' },
+      { key: 'resumeNm', invalid: !resumeNm.trim(), message: '이름을 입력해주세요.' },
+      { key: 'resumeBirthDt', invalid: !resumeBirthDt, message: '생년월일을 입력해주세요.' },
+      { key: 'resumePhoneNum', invalid: !resumePhoneNum.trim(), message: '전화번호를 입력해주세요.' },
+      { key: 'email',
+        invalid: !emailId.trim() || !(emailDomain === 'custom' ? customDomain.trim() : emailDomain),
+        message: '이메일을 입력해주세요.' },
+      { key: 'address', invalid: !address.address, message: '주소를 입력해주세요.' },
+      // 주소만 있고 좌표가 비면 서버의 NOT NULL 에서 터진다 — 지오코딩이 늦거나 실패해도 화면엔 주소가 보인다.
+      { key: 'address', invalid: !address.latitude || !address.longitude || !address.areaCodeSq,
+        message: '주소 정보가 불완전합니다. 주소를 다시 선택해주세요.' },
+    ])) return
 
     const dto = {
       resumeSq: resumeSq ?? null,
@@ -385,7 +405,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       {/* 이력서 제목 */}
       <div className="space-y-1">
         <label className="text-sm font-semibold">이력서 제목</label>
-        <Input value={resumeTtl} onChange={(e) => setResumeTtl(e.target.value)} placeholder="예: 백엔드 개발자 이력서" />
+        <Input {...fieldProps('resumeTtl')} value={resumeTtl} onChange={(e) => { clearField('resumeTtl'); setResumeTtl(e.target.value) }} placeholder="예: 백엔드 개발자 이력서" />
       </div>
 
       {/* 프로필 사진 + 기본 정보 */}
@@ -408,31 +428,31 @@ export default function ResumeFormClient({ resumeSq }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
           <div className="space-y-1">
             <label className="text-sm font-semibold">이름</label>
-            <Input value={resumeNm} onChange={(e) => setResumeNm(e.target.value)} />
+            <Input {...fieldProps('resumeNm')} value={resumeNm} onChange={(e) => { clearField('resumeNm'); setResumeNm(e.target.value) }} />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold">생년월일</label>
-            <Input type="date" max={today()} value={resumeBirthDt} onChange={(e) => setResumeBirthDt(e.target.value)} className="cursor-pointer" />
+            <Input {...fieldProps('resumeBirthDt')} type="date" max={today()} value={resumeBirthDt} onChange={(e) => { clearField('resumeBirthDt'); setResumeBirthDt(e.target.value) }} className="cursor-pointer" />
 
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold">전화번호</label>
-            <Input value={resumePhoneNum} onChange={(e) => setResumePhoneNum(formatPhone(e.target.value))} placeholder="010-0000-0000" />
+            <Input {...fieldProps('resumePhoneNum')} value={resumePhoneNum} onChange={(e) => { clearField('resumePhoneNum'); setResumePhoneNum(formatPhone(e.target.value)) }} placeholder="010-0000-0000" />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold">이메일</label>
-            <div className="flex items-center gap-1">
-              <Input value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="아이디" className="w-24" />
+            <InvalidFrame ref={bindRef('email')} invalid={isInvalid('email')} className="flex items-center gap-1">
+              <Input value={emailId} onChange={(e) => { clearField('email'); setEmailId(e.target.value) }} placeholder="아이디" className="w-24" />
               <span>@</span>
-              <select value={emailDomain} onChange={(e) => setEmailDomain(e.target.value)} className="h-9 rounded-md border border-input px-2 text-sm">
+              <select value={emailDomain} onChange={(e) => { clearField('email'); setEmailDomain(e.target.value) }} className="h-9 rounded-md border border-input px-2 text-sm">
                 <option value="">선택</option>
                 {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
                 <option value="custom">직접입력</option>
               </select>
               {emailDomain === 'custom' && (
-                <Input value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} placeholder="도메인" className="w-24" />
+                <Input value={customDomain} onChange={(e) => { clearField('email'); setCustomDomain(e.target.value) }} placeholder="도메인" className="w-24" />
               )}
-            </div>
+            </InvalidFrame>
           </div>
         </div>
       </div>
@@ -440,7 +460,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       {/* 주소 */}
       <div className="space-y-1">
         <label className="text-sm font-semibold">주소</label>
-        <Input value={address.address} readOnly placeholder="클릭하여 주소를 검색하세요" className="cursor-pointer" onClick={openPostcode} />
+        <Input {...fieldProps('address')} value={address.address} readOnly placeholder="클릭하여 주소를 검색하세요" className="cursor-pointer" onClick={openPostcode} />
         <Input value={address.detailAddress} onChange={(e) => setAddress((p) => ({ ...p, detailAddress: e.target.value }))} placeholder="상세 주소" />
       </div>
 

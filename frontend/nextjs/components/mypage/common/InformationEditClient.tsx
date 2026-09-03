@@ -14,6 +14,8 @@ import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
 import type { UserInfo, DaumPostcodeResult } from '@/types'
 import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 type EditKey = 'userPw' | 'userEmail' | 'userPhoneNum' | 'address' | 'userNm' | 'userNickname'
 
@@ -75,7 +77,7 @@ export default function InformationEditClient() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
   const [editEmail, setEditEmail] = useState({ emailId: '', emailDomain: '', code: '' })
   const [isVerified, setIsVerified] = useState(false)
-  const [errors, setErrors] = useState<Partial<Record<EditKey | 'emailVerify', string>>>({})
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<EditKey>()
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -134,22 +136,24 @@ export default function InformationEditClient() {
     } else {
       setForm((prev) => ({ ...prev, [field]: original[field] }))
     }
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
+    clearField(field)
   }
 
   async function confirmField(field: EditKey) {
+    // markInvalid 가 토스트·빨간 프레임·커서 이동을 한 번에 처리한다(문구는 기존 그대로).
     if (field === 'userPw' && !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(form.userPw)) {
-      toast.error('8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.')
+      markInvalid([field], '8자 이상, 영문·숫자·특수문자를 조합해 입력해주세요.')
       return
     }
     if (field === 'userNickname' && form.userNickname !== original.userNickname) {
       const reason = await checkNicknameAvailable(form.userNickname)
-      if (reason) { toast.error(reason); return }
+      if (reason) { markInvalid([field], reason); return }
     }
     if (field === 'userEmail' && !isVerified) {
-      toast.error('이메일 인증을 완료해주세요.')
+      markInvalid([field], '이메일 인증을 완료해주세요.')
       return
     }
+    clearField(field)
     if (field === 'userEmail') {
       setForm((prev) => ({
         ...prev,
@@ -274,9 +278,10 @@ export default function InformationEditClient() {
   }
 
   async function handleSave() {
-    const anyEditing = Object.values(editing).some(Boolean)
-    if (anyEditing) {
-      toast.error('수정 중인 항목을 먼저 저장하거나 취소해주세요.')
+    // 열려 있는 행이 원인이므로, 그 행들을 모두 프레임 처리하고 첫 행으로 이동한다.
+    const openRows = (Object.keys(editing) as EditKey[]).filter((k) => editing[k])
+    if (openRows.length > 0) {
+      markInvalid(openRows, '수정 중인 항목을 먼저 저장하거나 취소해주세요.')
       return
     }
     if (!isFormChanged()) {
@@ -385,6 +390,8 @@ export default function InformationEditClient() {
         <InfoRow label="비밀번호">
           <EditableField
             editing={editing.userPw}
+            invalid={isInvalid('userPw')}
+            bindRef={bindRef('userPw')}
             readonlyContent={<Input type="password" value="••••••••" readOnly className="bg-muted border-0" />}
             editContent={
               <Input
@@ -407,6 +414,8 @@ export default function InformationEditClient() {
           ) : (
             <EditableField
               editing={editing.userNm}
+              invalid={isInvalid('userNm')}
+              bindRef={bindRef('userNm')}
               readonlyContent={<Input value={form.userNm} readOnly className="bg-muted border-0" />}
               editContent={
                 <Input
@@ -425,6 +434,8 @@ export default function InformationEditClient() {
         <InfoRow label="닉네임">
           <EditableField
             editing={editing.userNickname}
+            invalid={isInvalid('userNickname')}
+            bindRef={bindRef('userNickname')}
             readonlyContent={<Input value={form.userNickname} readOnly className="bg-muted border-0" />}
             editContent={
               <div>
@@ -470,6 +481,8 @@ export default function InformationEditClient() {
         <InfoRow label="이메일">
           <EditableField
             editing={editing.userEmail}
+            invalid={isInvalid('userEmail')}
+            bindRef={bindRef('userEmail')}
             readonlyContent={<Input value={form.userEmail} readOnly className="bg-muted border-0" />}
             editContent={
               <div className="space-y-2">
@@ -522,6 +535,8 @@ export default function InformationEditClient() {
         <InfoRow label="휴대폰번호">
           <EditableField
             editing={editing.userPhoneNum}
+            invalid={isInvalid('userPhoneNum')}
+            bindRef={bindRef('userPhoneNum')}
             readonlyContent={
               <Input value={formatPhone(form.userPhoneNum)} readOnly className="bg-muted border-0" />
             }
@@ -542,6 +557,8 @@ export default function InformationEditClient() {
         <InfoRow label="주소">
           <EditableField
             editing={editing.address}
+            invalid={isInvalid('address')}
+            bindRef={bindRef('address')}
             readonlyContent={
               <Input
                 value={[form.address, form.detailAddress].filter(Boolean).join(' ')}
@@ -590,6 +607,8 @@ function EditableField({
   onToggle,
   onConfirm,
   onCancel,
+  invalid,
+  bindRef,
 }: {
   editing: boolean
   readonlyContent: React.ReactNode
@@ -597,11 +616,15 @@ function EditableField({
   onToggle: () => void
   onConfirm: () => void
   onCancel: () => void
+  invalid?: boolean
+  bindRef?: (el: HTMLElement | null) => void
 }) {
   return (
     <div className="flex gap-2 items-start">
       <div className="flex-1">
-        {editing ? editContent : readonlyContent}
+        {editing
+          ? <InvalidFrame ref={bindRef} invalid={invalid}>{editContent}</InvalidFrame>
+          : readonlyContent}
       </div>
       <div className="shrink-0 flex gap-1">
         {editing ? (

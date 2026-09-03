@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -36,8 +37,11 @@ interface Props {
 
 const trimDt = (v: string, allDay: boolean) => (!v ? '' : allDay ? v.substring(0, 10) : v.substring(0, 16))
 
+type ScheduleField = 'scheduleTtl' | 'scheduleStartDtm' | 'scheduleEndDtm'
+
 export default function ScheduleRegisterModal({ open, initialMode, event, onClose, onSaved }: Props) {
   const { userSq } = useUserStore()
+  const { validate, fieldProps, clearField } = useFormErrors<ScheduleField>()
   const [mode, setMode] = useState<Mode>(initialMode)
   const [isAllDay, setIsAllDay] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -68,23 +72,25 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
   }, [open, event, initialMode])
 
   const title = mode === 'REGISTER' ? '일정 등록' : mode === 'VIEW' ? '일정 상세' : '일정 수정'
-  const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }))
+  const set = (k: keyof typeof form, v: string) => { clearField(k as ScheduleField); setForm((p) => ({ ...p, [k]: v })) }
 
   async function save() {
-    if (!form.scheduleTtl.trim()) return toast.error('제목을 입력해주세요.')
-    if (!form.scheduleStartDtm) return toast.error('시작 일시를 선택해주세요.')
-
+    // 날짜 비교는 배열 밖에서 끝내 둔다 — 배열 리터럴 안에서 예외가 나면 폼 전체가 죽는다.
     const now = new Date()
     const start = new Date(form.scheduleStartDtm)
-    if (isAllDay) {
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const target = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-      if (target < today) return toast.error('과거 날짜로 일정을 등록할 수 없습니다.')
-    } else if (start < now) {
-      return toast.error('시작 일시는 현재 시간보다 이후여야 합니다.')
-    }
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const target = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const startIsPast = !!form.scheduleStartDtm && (isAllDay ? target < today : start < now)
     const endStr = form.scheduleEndDtm || form.scheduleStartDtm
-    if (new Date(endStr) < start) return toast.error('종료 일시는 시작 일시보다 빠를 수 없습니다.')
+    const endBeforeStart = !!form.scheduleStartDtm && new Date(endStr) < start
+
+    if (!validate([
+      { key: 'scheduleTtl', invalid: !form.scheduleTtl.trim(), message: '제목을 입력해주세요.' },
+      { key: 'scheduleStartDtm', invalid: !form.scheduleStartDtm, message: '시작 일시를 선택해주세요.' },
+      { key: 'scheduleStartDtm', invalid: startIsPast,
+        message: isAllDay ? '과거 날짜로 일정을 등록할 수 없습니다.' : '시작 일시는 현재 시간보다 이후여야 합니다.' },
+      { key: 'scheduleEndDtm', invalid: endBeforeStart, message: '종료 일시는 시작 일시보다 빠를 수 없습니다.' },
+    ])) return
 
     const payload = {
       ...form,
@@ -134,7 +140,7 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
           <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
             <div className="space-y-1">
               <label className="text-sm font-semibold">제목</label>
-              <Input value={form.scheduleTtl} onChange={(e) => set('scheduleTtl', e.target.value)} placeholder="일정 제목을 입력하세요" />
+              <Input {...fieldProps('scheduleTtl')} value={form.scheduleTtl} onChange={(e) => set('scheduleTtl', e.target.value)} placeholder="일정 제목을 입력하세요" />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -157,11 +163,11 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-sm font-semibold">시작 일시</label>
-                <Input type={isAllDay ? 'date' : 'datetime-local'} value={form.scheduleStartDtm} onChange={(e) => set('scheduleStartDtm', e.target.value)} />
+                <Input {...fieldProps('scheduleStartDtm')} type={isAllDay ? 'date' : 'datetime-local'} value={form.scheduleStartDtm} onChange={(e) => set('scheduleStartDtm', e.target.value)} />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-semibold">종료 일시</label>
-                <Input type={isAllDay ? 'date' : 'datetime-local'} value={form.scheduleEndDtm} onChange={(e) => set('scheduleEndDtm', e.target.value)} />
+                <Input {...fieldProps('scheduleEndDtm')} type={isAllDay ? 'date' : 'datetime-local'} value={form.scheduleEndDtm} onChange={(e) => set('scheduleEndDtm', e.target.value)} />
               </div>
             </div>
             <div className="space-y-1">

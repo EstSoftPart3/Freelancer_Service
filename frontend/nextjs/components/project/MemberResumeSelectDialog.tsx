@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import api from '@/lib/api'
 import type { ResumeItem } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 interface Props {
   open: boolean
@@ -22,6 +24,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
   const [selected, setSelected] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'resume'>()
 
   const fetchResumes = useCallback(async () => {
     if (userSq == null) return
@@ -42,7 +45,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
 
   async function handleConfirm() {
     if (selected == null) {
-      toast.error('이력서를 선택해주세요.')
+      markInvalid(['resume'], '이력서를 선택해주세요.')
       return
     }
     setSubmitting(true)
@@ -68,6 +71,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
         {resumes.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">등록된 이력서가 없습니다.</p>
         ) : (
+          <InvalidFrame ref={bindRef('resume')} invalid={isInvalid('resume')}>
           <ul className="divide-y">
             {resumes.map((resume) => (
               <li key={resume.resumeSq} className="flex items-center justify-between gap-2 py-3">
@@ -89,13 +93,14 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
                 <Button
                   size="sm"
                   variant={selected === resume.resumeSq ? 'default' : 'outline'}
-                  onClick={() => setSelected(resume.resumeSq)}
+                  onClick={() => { clearField('resume'); setSelected(resume.resumeSq) }}
                 >
                   {selected === resume.resumeSq ? '선택됨' : '선택하기'}
                 </Button>
               </li>
             ))}
           </ul>
+          </InvalidFrame>
         )}
 
         <DialogFooter>

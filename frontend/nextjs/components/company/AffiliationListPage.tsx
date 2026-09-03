@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import CommonPagination from '@/components/community/CommonPagination'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
@@ -89,6 +90,7 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
   const [applyLoading, setApplyLoading] = useState(false)
   const [resumes, setResumes] = useState<ResumeOption[]>([])
   const [selectedResumeSq, setSelectedResumeSq] = useState<number | ''>('')
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'resume'>()
   const [applyGreeting, setApplyGreeting] = useState('')
 
   const fetchAddresses = useCallback(async () => {
@@ -197,7 +199,7 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
     if (!isLoggedIn()) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
     // Vue clickRecruit: 기업 회원은 소속(클랜) 신청 불가 — 이력서 체크보다 먼저
     if (getUserType() === 'COMPANY') { alertStore.show('기업 회원은 소속 신청할 수 없습니다.', 'danger'); return }
-    if (!selectedResumeSq) { alertStore.show('이력서를 선택해주세요.', 'danger'); return }
+    if (!selectedResumeSq) { markInvalid(['resume'], '이력서를 선택해주세요.'); return }
     setApplyLoading(true)
     try {
       const { data } = await api.post<{ message: string }>('/affiliation/apply', {
@@ -455,9 +457,11 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
                     <p className="mb-1 font-semibold text-primary">소속 신청할 이력서</p>
                     {resumes.length > 0 ? (
                       <select
+                        ref={bindRef('resume')}
+                        aria-invalid={isInvalid('resume') || undefined}
                         value={String(selectedResumeSq)}
-                        onChange={(e) => setSelectedResumeSq(Number(e.target.value))}
-                        className="w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        onChange={(e) => { clearField('resume'); setSelectedResumeSq(Number(e.target.value)) }}
+                        className="w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
                       >
                         <option value="">이력서를 선택하세요.</option>
                         {resumes.map((r) => (

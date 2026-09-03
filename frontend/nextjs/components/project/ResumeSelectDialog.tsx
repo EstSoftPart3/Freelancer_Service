@@ -11,6 +11,8 @@ import CommonPagination from '@/components/community/CommonPagination'
 import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import api from '@/lib/api'
 import type { ResumeItem } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 const PAGE_SIZE = 5
 
@@ -29,6 +31,7 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
   const [totalPages, setTotalPages] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'resume'>()
 
   const fetchResumes = useCallback(async (page = 1) => {
     try {
@@ -50,7 +53,7 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
 
   async function handleConfirm() {
     if (selected == null) {
-      toast.error('이력서를 선택해주세요.')
+      markInvalid(['resume'], '이력서를 선택해주세요.')
       return
     }
     setSubmitting(true)
@@ -87,6 +90,7 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
             </Button>
           </div>
         ) : (
+          <InvalidFrame ref={bindRef('resume')} invalid={isInvalid('resume')}>
           <ul className="divide-y">
             {resumes.map((resume) => (
               <li key={resume.resumeSq} className="flex items-center justify-between gap-2 py-3">
@@ -108,13 +112,14 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
                 <Button
                   size="sm"
                   variant={selected === resume.resumeSq ? 'default' : 'outline'}
-                  onClick={() => setSelected(resume.resumeSq)}
+                  onClick={() => { clearField('resume'); setSelected(resume.resumeSq) }}
                 >
                   {selected === resume.resumeSq ? '선택됨' : '선택하기'}
                 </Button>
               </li>
             ))}
           </ul>
+          </InvalidFrame>
         )}
 
         {totalPages > 1 && (

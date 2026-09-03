@@ -1,7 +1,7 @@
 'use client'
 // Mirrors vue_js/src/fo/views/login&signup/FindAccountPage.vue
 // + FindIdForm.vue + ResetPasswordForm.vue (탭 통합)
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,8 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
+import { focusInvalidElement } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
 
@@ -18,7 +20,7 @@ const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmai
 function EmailVerifyRow({
   emailId, setEmailId, domain, setDomain,
   customDomain, setCustomDomain, isCustom, setIsCustom,
-  onSendCode, sending, onBlur, error, valid,
+  onSendCode, sending, onBlur, error, valid, blockRef,
 }: {
   emailId: string; setEmailId: (v: string) => void
   domain: string; setDomain: (v: string) => void
@@ -26,6 +28,7 @@ function EmailVerifyRow({
   isCustom: boolean; setIsCustom: (v: boolean) => void
   onSendCode: () => void; sending: boolean
   onBlur?: () => void; error: string; valid: boolean
+  blockRef?: React.Ref<HTMLDivElement>
 }) {
   const handleDomain = (val: string) => {
     if (val === 'custom') { setIsCustom(true); setCustomDomain(''); setDomain('custom') }
@@ -36,7 +39,7 @@ function EmailVerifyRow({
       <label className="mb-1 flex items-center gap-1 text-sm font-medium">
         이메일 주소 {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
       </label>
-      <div className="flex flex-wrap gap-1">
+      <InvalidFrame ref={blockRef} invalid={!!error} className="flex flex-wrap gap-1">
         <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => setEmailId(e.target.value)} onBlur={onBlur} placeholder="아이디" />
         <span className="flex items-center px-1 text-sm">@</span>
         <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => setCustomDomain(e.target.value)} placeholder="도메인" />
@@ -48,7 +51,7 @@ function EmailVerifyRow({
         <Button type="button" size="sm" onClick={onSendCode} disabled={sending}>
           {sending ? '전송 중...' : '인증'}
         </Button>
-      </div>
+      </InvalidFrame>
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   )
@@ -68,6 +71,9 @@ function FindIdForm() {
   const [verifyCode, setVerifyCode] = useState('')
   const [verifyError, setVerifyError] = useState('')
   const ev = useEmailVerification({ sendCodeEndpoint: '/email/find/send-code' })
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const emailRef = useRef<HTMLDivElement | null>(null)
+  const verifyRef = useRef<HTMLInputElement | null>(null)
   const fullEmail = () => `${emailId}@${isCustom ? customDomain : domain}`
 
   const vName = () => {
@@ -93,7 +99,13 @@ function FindIdForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!vName() || !vEmail() || !vCode()) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
+    // 순차 판정이면 뒤 필드의 에러 문구가 안 뜬다 — 셋을 모두 실행하고 첫 미충족으로 이동한다.
+    const nameOk = vName(); const emailOk = vEmail(); const codeOk = vCode()
+    if (!nameOk || !emailOk || !codeOk) {
+      alertStore.show('입력 정보를 확인해주세요.', 'danger')
+      focusInvalidElement(!nameOk ? nameRef.current : !emailOk ? emailRef.current : verifyRef.current)
+      return
+    }
     try {
       const { data } = await api.post<{ output: { userId: string } }>('/find-id', {
         name, email: fullEmail(),
@@ -112,7 +124,7 @@ function FindIdForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-sm font-medium">이름</label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={vName} />
+        <Input ref={nameRef} aria-invalid={!!nameError || undefined} value={name} onChange={(e) => { setNameError(''); setName(e.target.value) }} onBlur={vName} />
         {nameError && <p className="mt-1 text-xs text-destructive">{nameError}</p>}
       </div>
       <EmailVerifyRow
@@ -122,13 +134,14 @@ function FindIdForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
+        blockRef={emailRef}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
           인증번호 {ev.verified && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </label>
         <div className="flex gap-2">
-          <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
+          <Input ref={verifyRef} aria-invalid={!!verifyError || undefined} value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
           <Button type="button" size="sm" onClick={async () => { const ok = await ev.verifyCode(fullEmail(), verifyCode); if (ok) setVerifyError('') }} disabled={ev.verifying || ev.verified}>
             {ev.verified ? '인증 완료' : ev.verifying ? '확인 중...' : '확인'}
           </Button>
@@ -155,6 +168,10 @@ function ResetPasswordVerifyForm() {
   const [verifyError, setVerifyError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const ev = useEmailVerification({ sendCodeEndpoint: '/email/find/send-code' })
+  const userIdRef = useRef<HTMLInputElement | null>(null)
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const emailRef = useRef<HTMLDivElement | null>(null)
+  const verifyRef = useRef<HTMLInputElement | null>(null)
   const fullEmail = () => `${emailId}@${isCustom ? customDomain : domain}`
 
   const vEmail = () => {
@@ -174,7 +191,16 @@ function ResetPasswordVerifyForm() {
     if (!vEmail()) errs.email = emailError
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); errs.verify = '인증 필요' }
     setErrors(errs)
-    if (Object.keys(errs).length) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
+    if (Object.keys(errs).length) {
+      alertStore.show('입력 정보를 확인해주세요.', 'danger')
+      // 화면 순서대로 첫 미충족 필드로 이동한다.
+      const first = ([
+        [errs.userId, userIdRef], [errs.name, nameRef],
+        [errs.email, emailRef], [errs.verify, verifyRef],
+      ] as const).find(([bad]) => bad)
+      if (first) focusInvalidElement(first[1].current)
+      return
+    }
 
     try {
       await api.post('/reset-password/verify', { userId, name, email: fullEmail() }, { withCredentials: true })
@@ -190,12 +216,12 @@ function ResetPasswordVerifyForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="mb-1 block text-sm font-medium">아이디</label>
-        <Input value={userId} onChange={(e) => setUserId(e.target.value)} />
+        <Input ref={userIdRef} aria-invalid={!!errors.userId || undefined} value={userId} onChange={(e) => { setErrors((p) => ({ ...p, userId: '' })); setUserId(e.target.value) }} />
         {errors.userId && <p className="mt-1 text-xs text-destructive">{errors.userId}</p>}
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">이름</label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <Input ref={nameRef} aria-invalid={!!errors.name || undefined} value={name} onChange={(e) => { setErrors((p) => ({ ...p, name: '' })); setName(e.target.value) }} />
         {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
       </div>
       <EmailVerifyRow
@@ -205,13 +231,14 @@ function ResetPasswordVerifyForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
+        blockRef={emailRef}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
           인증번호 {ev.verified && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </label>
         <div className="flex gap-2">
-          <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
+          <Input ref={verifyRef} aria-invalid={!!verifyError || undefined} value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={ev.verified} />
           <Button type="button" size="sm" onClick={async () => { const ok = await ev.verifyCode(fullEmail(), verifyCode); if (ok) setVerifyError('') }} disabled={ev.verifying || ev.verified}>
             {ev.verified ? '인증 완료' : ev.verifying ? '확인 중...' : '확인'}
           </Button>

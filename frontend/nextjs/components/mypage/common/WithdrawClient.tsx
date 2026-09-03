@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,8 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
+import { focusInvalidElement } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 const NOTICE_TEXT = `※ 회원 탈퇴 전 꼭 확인해주세요.
 
@@ -31,6 +33,9 @@ export default function WithdrawClient() {
   const [agreed, setAgreed] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState({ userId: false, name: false, agree: false })
+  const userIdRef = useRef<HTMLInputElement | null>(null)
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const agreeRef = useRef<HTMLDivElement | null>(null)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,7 +45,11 @@ export default function WithdrawClient() {
       agree: !agreed,
     }
     setErrors(errs)
-    if (Object.values(errs).some(Boolean)) return
+    // 화면 순서대로 첫 미충족 필드를 찾아 그리로 스크롤·포커스한다.
+    const firstInvalid = ([
+      [errs.userId, userIdRef], [errs.name, nameRef], [errs.agree, agreeRef],
+    ] as const).find(([bad]) => bad)
+    if (firstInvalid) { focusInvalidElement(firstInvalid[1].current); return }
     setShowConfirm(true)
   }
 
@@ -75,8 +84,10 @@ export default function WithdrawClient() {
         <div className="space-y-1">
           <label className="text-sm font-medium">아이디</label>
           <Input
+            ref={userIdRef}
+            aria-invalid={errors.userId || undefined}
             value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+            onChange={(e) => { setUserId(e.target.value); setErrors((p) => ({ ...p, userId: false })) }}
           />
           {errors.userId && (
             <p className="text-sm text-destructive">아이디를 입력해 주세요.</p>
@@ -86,8 +97,10 @@ export default function WithdrawClient() {
         <div className="space-y-1">
           <label className="text-sm font-medium">탈퇴 신청자</label>
           <Input
+            ref={nameRef}
+            aria-invalid={errors.name || undefined}
             value={applicantName}
-            onChange={(e) => setApplicantName(e.target.value)}
+            onChange={(e) => { setApplicantName(e.target.value); setErrors((p) => ({ ...p, name: false })) }}
           />
           {errors.name && (
             <p className="text-sm text-destructive">탈퇴 신청자명을 입력해 주세요.</p>
@@ -95,16 +108,16 @@ export default function WithdrawClient() {
         </div>
 
         <div className="space-y-1">
-          <div className="flex items-start gap-2">
+          <InvalidFrame ref={agreeRef} invalid={errors.agree} className="flex items-start gap-2 p-1">
             <Checkbox
               id="agree"
               checked={agreed}
-              onCheckedChange={(v) => setAgreed(v === true)}
+              onCheckedChange={(v) => { setAgreed(v === true); if (v === true) setErrors((p) => ({ ...p, agree: false })) }}
             />
             <label htmlFor="agree" className="text-sm cursor-pointer leading-snug">
               회원 탈퇴 안내 사항을 모두 읽었으며, 이에 동의합니다.
             </label>
-          </div>
+          </InvalidFrame>
           {errors.agree && (
             <p className="text-sm text-destructive pl-6">
               안내 사항에 동의해야 탈퇴가 가능합니다.

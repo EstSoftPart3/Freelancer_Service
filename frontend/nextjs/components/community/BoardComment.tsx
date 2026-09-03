@@ -8,6 +8,7 @@ import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import type { Comment } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
 
 function fmtTime(iso: string) {
   const d = new Date(iso)
@@ -33,6 +34,8 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
   const [replyText, setReplyText] = useState('')
   const [delConfirm, setDelConfirm] = useState(false)
   const isOwner = viewerSq != null && comment.userSq === viewerSq
+  // 한 컴포넌트에 입력이 둘(수정·답글)이라 키로 구분한다.
+  const { markInvalid, fieldProps, clearField } = useFormErrors<'edit' | 'reply'>()
 
   const recommend = async () => {
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
@@ -43,7 +46,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
   }
 
   const submitEdit = async () => {
-    if (!editText.trim()) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
+    if (!editText.trim()) { markInvalid(['edit'], '내용을 입력해주세요.'); return }
     try {
       const { data } = await api.put<{ status: string; message: string }>(`/comment/${comment.sq}`, { description: editText })
       if (data.status === 'OK') { alertStore.show(data.message, 'success'); setEditMode(false); onRefresh() }
@@ -58,7 +61,8 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
   }
 
   const submitReply = async () => {
-    if (!replyText.trim()) return
+    // 원래 조용히 돌아섰던 자리 — 문구는 그대로 두고 어느 칸이 비었는지만 보여준다.
+    if (!replyText.trim()) { markInvalid(['reply']); return }
     try {
       const { data } = await api.post<{ status: string; message: string }>('/comment', {
         parentCommentSq: comment.sq,
@@ -114,7 +118,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
             </>
           ) : (
             <div className="flex gap-2">
-              <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="flex-1" />
+              <Input {...fieldProps('edit')} value={editText} onChange={(e) => { clearField('edit'); setEditText(e.target.value) }} className="flex-1" />
               <Button size="sm" onClick={submitEdit}>수정 완료</Button>
               <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>취소</Button>
             </div>
@@ -128,8 +132,9 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
           <div className="w-10 shrink-0" />
           <div className="flex flex-1 gap-2">
             <Input
+              {...fieldProps('reply')}
               value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
+              onChange={(e) => { clearField('reply'); setReplyText(e.target.value) }}
               placeholder="답글을 입력하세요"
             />
             <Button size="sm" onClick={submitReply}>등록</Button>
@@ -178,11 +183,12 @@ export default function BoardComment({ comments, boardSq, answerSq, isAnswer = f
   const { viewerSq } = useBoardStore()
   const [newComment, setNewComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { markInvalid, fieldProps, clearField } = useFormErrors<'comment'>()
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
-    if (!newComment.trim()) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
+    if (!newComment.trim()) { markInvalid(['comment'], '내용을 입력해주세요.'); return }
     setSubmitting(true)
     try {
       const { data } = await api.post<{ status: string; message: string }>('/comment', {
@@ -217,8 +223,9 @@ export default function BoardComment({ comments, boardSq, answerSq, isAnswer = f
         <label className="mb-2 block text-sm font-medium">댓글 남기기</label>
         <div className="flex gap-2">
           <Input
+            {...fieldProps('comment')}
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => { clearField('comment'); setNewComment(e.target.value) }}
             placeholder="댓글을 입력해주세요"
           />
           <Button type="submit" disabled={submitting}>

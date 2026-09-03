@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEmailVerification } from '@/hooks/useEmailVerification'
+import { useField } from '@/hooks/useField'
+import { focusInvalidElement } from '@/hooks/useFormErrors'
+import { ErrorMsg, InvalidFrame } from '@/components/ui/invalid-frame'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
@@ -27,17 +30,6 @@ const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
     {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
   </label>
 )
-
-const ErrorMsg = ({ msg }: { msg: string }) =>
-  msg ? <p className="mt-1 text-xs text-destructive">{msg}</p> : null
-
-// 필드별 에러 + 유효 상태를 단순화한 훅
-function useField(initialValue = '') {
-  const [value, setValue] = useState(initialValue)
-  const [error, setError] = useState('')
-  const [valid, setValid] = useState(false)
-  return { value, setValue, error, setError, valid, setValid }
-}
 
 export default function PersonalSignUpForm({ onSubmit }: Props) {
   const idField = useField()
@@ -65,6 +57,10 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   const [terms, setTerms] = useState(false)
   const [termsError, setTermsError] = useState('')
   const [termsOpen, setTermsOpen] = useState(false)
+  // useField 를 쓰지 않는 세 필드는 검증 실패 시 이동할 대상을 직접 잡아 둔다.
+  const genderRef = useRef<HTMLSelectElement | null>(null)
+  const verifyRef = useRef<HTMLInputElement | null>(null)
+  const termsRef = useRef<HTMLDivElement | null>(null)
   const idDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const nicknameDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -261,7 +257,19 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
       okId && okPw && okCpw && okName && okNickname && okDob && okGender &&
       okPhone && okAddr && okEmail && emailVerify.verified && vcOk && tOk
 
-    if (!isValid) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
+    if (!isValid) {
+      alertStore.show('입력 정보를 확인해주세요.', 'danger')
+      // 화면 순서대로 첫 미충족 필드를 찾아 그리로 스크롤·포커스한다.
+      const firstInvalid = ([
+        [okId, idField.ref], [okPw, pwField.ref], [okCpw, cpwField.ref],
+        [okName, nameField.ref], [okNickname, nicknameField.ref], [okDob, dobField.ref],
+        [okGender, genderRef], [okPhone, phoneField.ref], [okAddr, addressField.ref],
+        [okEmail, emailIdField.ref], [emailVerify.verified && vcOk, verifyRef],
+        [tOk, termsRef],
+      ] as const).find(([ok]) => !ok)
+      if (firstInvalid) focusInvalidElement(firstInvalid[1].current)
+      return
+    }
 
     onSubmit({
       id: idField.value,
@@ -295,6 +303,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="아이디" valid={idField.valid} />
           <Input
+            {...idField.props}
             value={idField.value}
             onChange={(e) => onIdChange(e.target.value)}
             placeholder="영문·숫자 5~20자"
@@ -307,6 +316,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
           <div>
             <FieldLabel label="비밀번호" valid={pwField.valid} />
             <Input
+              {...pwField.props}
               type="password"
               value={pwField.value}
               onChange={(e) => {
@@ -321,6 +331,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
           <div>
             <FieldLabel label="비밀번호 확인" valid={cpwField.valid} />
             <Input
+              {...cpwField.props}
               type="password"
               value={cpwField.value}
               onChange={(e) => { cpwField.setValue(e.target.value); validateCpw(e.target.value) }}
@@ -332,7 +343,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         {/* 이름 */}
         <div>
           <FieldLabel label="이름" valid={nameField.valid} />
-          <Input value={nameField.value} onChange={(e) => { nameField.setValue(e.target.value); validateName(e.target.value) }} />
+          <Input {...nameField.props} value={nameField.value} onChange={(e) => { nameField.setValue(e.target.value); validateName(e.target.value) }} />
           <ErrorMsg msg={nameField.error} />
         </div>
 
@@ -340,6 +351,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="닉네임" valid={nicknameField.valid} />
           <Input
+            {...nicknameField.props}
             value={nicknameField.value}
             onChange={(e) => onNicknameChange(e.target.value)}
             maxLength={20}
@@ -354,6 +366,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
           <div>
             <FieldLabel label="생년월일" valid={dobField.valid} />
             <Input
+              {...dobField.props}
               type="date"
               value={dobField.value}
               onChange={(e) => { dobField.setValue(e.target.value); validateDob(e.target.value) }}
@@ -367,9 +380,11 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
           <div>
             <FieldLabel label="성별" valid={genderValid} />
             <select
+              ref={genderRef}
+              aria-invalid={!!genderError || undefined}
               value={gender}
               onChange={(e) => { setGender(e.target.value); setGenderValid(true); setGenderError('') }}
-              className="flex h-8 w-full rounded-lg border border-border bg-background px-2 text-sm"
+              className="flex h-8 w-full rounded-lg border border-border bg-background px-2 text-sm aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
             >
               <option value="">선택</option>
               <option value="101">남성</option>
@@ -383,6 +398,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="휴대폰 번호" valid={phoneField.valid} />
           <Input
+            {...phoneField.props}
             value={phoneField.value}
             inputMode="numeric"
             maxLength={11}
@@ -400,7 +416,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
             <FieldLabel label="주소" valid={addressField.valid} />
-            <Input value={addressField.value} readOnly onClick={openPostcode} placeholder="클릭하여 검색" className="cursor-pointer" />
+            <Input {...addressField.props} value={addressField.value} readOnly onClick={openPostcode} placeholder="클릭하여 검색" className="cursor-pointer" />
             <ErrorMsg msg={addressField.error} />
           </div>
           <div>
@@ -413,7 +429,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="이메일 주소" valid={emailIdField.valid} />
           <div className="flex flex-wrap gap-1">
-            <Input className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
+            <Input {...emailIdField.props} className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
             <Input
               className="w-28 min-w-0 flex-1"
@@ -442,7 +458,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="인증번호" valid={emailVerify.verified} />
           <div className="flex gap-2">
-            <Input value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={emailVerify.verified} />
+            <Input ref={verifyRef} aria-invalid={!!verifyError || undefined} value={verifyCode} onChange={(e) => { setVerifyCode(e.target.value); if (verifyError) setVerifyError('') }} placeholder="인증번호 입력" disabled={emailVerify.verified} />
             <Button type="button" size="sm" onClick={handleVerifyCode} disabled={emailVerify.verifying || emailVerify.verified}>
               {emailVerify.verified ? '인증 완료' : emailVerify.verifying ? '확인 중...' : '확인'}
             </Button>
@@ -452,7 +468,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
 
         {/* 약관 */}
         <div>
-          <div className="flex items-center gap-2 text-sm">
+          <InvalidFrame ref={termsRef} invalid={!!termsError} className="flex items-center gap-2 p-1 text-sm">
             <Checkbox checked={terms} onCheckedChange={(v) => { setTerms(!!v); if (v) setTermsError('') }} />
             <span>약관에 동의합니다.</span>
             <button
@@ -462,7 +478,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
             >
               이용약관
             </button>
-          </div>
+          </InvalidFrame>
           <ErrorMsg msg={termsError} />
         </div>
 

@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { InfoTooltip } from '@/components/ui/tooltip'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import api from '@/lib/api'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
@@ -74,6 +76,13 @@ interface Props {
  */
 const GRADE_ANY = '등급 무관'
 
+/** 검증 실패 시 빨간 프레임을 켤 필드 — 화면의 블록 단위와 1:1 로 맞춘다. */
+type ProjectField =
+  | 'projectTitle' | 'address' | 'subway' | 'gradeCounts' | 'educationLvl'
+  | 'projectPeriod' | 'recruitPeriod' | 'projectSalary'
+  | 'workType' | 'recruitJob' | 'usingSkills' | 'preference'
+  | 'description' | 'interviewTimes'
+
 /** 서버로 보내는 등급값 — 세부를 골랐으면 그것, 아니면 대분류. */
 function gradeOf(row: { major: string; detail: string }): string {
   return row.detail || row.major
@@ -114,10 +123,34 @@ export default function ProjectPostClient({ projectSq }: Props) {
   const [projectPeriodModalOpen, setProjectPeriodModalOpen] = useState(false)
   const [recruitPeriodModalOpen, setRecruitPeriodModalOpen] = useState(false)
 
-  const setF = (patch: Partial<FormData>) => setForm((prev) => ({ ...prev, ...patch }))
+  const { validate, fieldProps, bindRef, isInvalid, clearField, clearAll } = useFormErrors<ProjectField>()
+
+  /** FormData 키 → 빨간 프레임 키. 좌표·기간처럼 여러 값이 한 블록을 이루는 경우가 있어 1:1 이 아니다. */
+  const FRAME_KEY: Partial<Record<keyof FormData, ProjectField>> = {
+    projectTitle: 'projectTitle',
+    address: 'address', latitude: 'address', longitude: 'address',
+    subwayAddressName: 'subway', subwayLat: 'subway', subwayLon: 'subway',
+    gradeCounts: 'gradeCounts',
+    educationLvl: 'educationLvl',
+    projectStartDt: 'projectPeriod', projectEndDt: 'projectPeriod',
+    recruitStartDt: 'recruitPeriod', recruitEndDt: 'recruitPeriod',
+    projectSalary: 'projectSalary', salaryNegotiableYn: 'projectSalary',
+    workType: 'workType', recruitJob: 'recruitJob', usingSkills: 'usingSkills',
+    preferenceList: 'preference', description: 'description',
+  }
+
+  const setF = (patch: Partial<FormData>) => {
+    // 사용자가 고친 필드의 프레임은 바로 걷는다 — 남겨 두면 이미 채운 칸이 빨갛게 보인다.
+    for (const key of Object.keys(patch) as (keyof FormData)[]) {
+      const frame = FRAME_KEY[key]
+      if (frame) clearField(frame)
+    }
+    setForm((prev) => ({ ...prev, ...patch }))
+  }
 
   // 우대사항 — 쉼표(,) 입력 시 태그로 전환 (Vue 원본 watch(preferContent) 이식)
   function handlePreferenceInputChange(value: string) {
+    clearField('preference')
     if (value.endsWith(',')) {
       const tag = value.slice(0, -1).trim()
       if (tag && !form.preferenceList.includes(tag)) {
@@ -269,11 +302,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
             ),
           )
         }
+        clearAll()
       }
     } catch {
       toast.error('프로젝트 정보를 불러올 수 없습니다.')
     }
-  }, [isEdit, projectSq])
+  }, [isEdit, projectSq, clearAll])
 
   useEffect(() => { loadFormData() }, [loadFormData])
 
@@ -328,59 +362,66 @@ export default function ProjectPostClient({ projectSq }: Props) {
     }))
     const salaryNum = Number(form.projectSalary)
 
-    // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단)
-    if (form.projectTitle.trim().length < 5) { toast.error('프로젝트 제목을 5자 이상 입력해주세요.'); return }
-    if (!form.address && !form.subwayAddressName) { toast.error('근무지 주소 또는 지하철역 중 하나는 필수입니다.'); return }
-    // 주소는 채워졌는데 좌표만 비어 있는 상태가 실제로 만들어진다 — 다음 우편번호 검색은 좌표를 주지 않아서
-    // 카카오 지오코딩을 따로 호출하는데, 그게 늦거나 실패해도 화면에는 주소가 멀쩡히 보이기 때문이다.
-    // 그대로 보내면 DB 의 latitude NOT NULL 에서 터져 500 이 됐다(2026-09-02 운영 장애).
-    if (form.address && (!form.latitude || !form.longitude)) {
-      toast.error('주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도하거나 주소를 다시 검색해주세요.'); return
-    }
-    if (form.subwayAddressName && (!form.subwayLat || !form.subwayLon)) {
-      toast.error('지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.'); return
-    }
-    // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
-    if (form.gradeCounts.length === 0) { toast.error('모집할 등급을 최소 하나 추가해주세요.'); return }
-    if (form.gradeCounts.some((g) => !g.major)) { toast.error('등급을 선택해주세요.'); return }
-    if (form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1))) {
-      toast.error('등급별 인원을 입력하거나 "미정"을 선택해주세요.'); return
-    }
+    // Vue 원본 validateAll()과 동일 순서·규칙으로 전 필드 검증 (백엔드 @NotEmpty/@NotNull 위반을 프런트에서 선차단).
+    // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
+    // 배열 리터럴 안에서 예외가 나면 폼 전체가 죽으므로, 순회·형변환은 아래에서 미리 끝내 둔다.
     const grades = form.gradeCounts.map(gradeOf)
-    if (new Set(grades).size !== grades.length) { toast.error('같은 등급을 두 번 입력할 수 없습니다.'); return }
     // 범위가 겹치는 등급은 함께 쓸 수 없다 — 「초초 2명 · 초급 1명」은 초급이 이미 초초를 포함해
     // 초초를 몇 명 뽑겠다는 것인지 모호하다. 「초초 · 중초」처럼 겹치지 않으면 그대로 허용한다.
     // 「등급 무관」은 아홉 등급을 전부 포괄하므로 이 규칙 하나로 자동으로 단독이 된다.
     const overlap = form.gradeCounts.find((row, i) =>
       form.gradeCounts.some((other, j) =>
         i !== j && row.major === other.major && (!row.detail || !other.detail)))
-    if (overlap) {
-      const conflictLabel = overlap.major === GRADE_ANY ? '「등급 무관」' : `「${overlap.major}」`
-      toast.error(`${conflictLabel} 은(는) 같은 등급의 세부와 범위가 겹쳐 함께 선택할 수 없습니다.`); return
-    }
-    if (!form.educationLvl) { toast.error('학력을 선택해주세요.'); return }
-    // 수행 종료일은 「미정」으로 비워 둘 수 있다. 시작일만 필수다.
-    if (!form.projectStartDt) { toast.error('프로젝트 기간을 설정해주세요.'); return }
-    if (!form.recruitStartDt || !form.recruitEndDt) { toast.error('모집 기간을 설정해주세요.'); return }
-    // 두 DateRangeModal이 서로의 값을 모르기 때문에 여기서 관계를 본다(백엔드 @AssertTrue와 같은 규칙).
-    // 모집 종료가 수행 시작보다 뒤인 것은 허용 — 수행 중 인력 추가 모집이 정상 케이스다.
-    // 수행 종료일이 미정이면 비교할 대상이 없으므로 건너뛴다.
-    if (form.projectEndDt && form.recruitEndDt > form.projectEndDt) {
-      toast.error('모집 종료일이 프로젝트 종료일보다 늦습니다. 이미 끝난 프로젝트를 모집할 수는 없습니다.')
-      return
-    }
-    if (form.workType.length === 0) { toast.error('근무 형태를 최소 하나 선택해주세요.'); return }
-    if (form.recruitJob.length === 0) { toast.error('모집 직군을 최소 하나 선택해주세요.'); return }
-    if (form.usingSkills.length === 0) { toast.error('사용 기술을 최소 하나 선택해주세요.'); return }
-    if (preference.length > 255) { toast.error(`우대 사항이 너무 깁니다. (최대 255자 / 현재: ${preference.length}자)`); return }
-    if (!form.description.trim()) { toast.error('상세 내용을 작성해주세요.'); return }
-    if (interviewTimes.length === 0) { toast.error('인터뷰 가능 시간을 설정해주세요.'); return }
-    // 단가는 세 조합을 모두 허용한다 — 단가만 / 협의만 / 단가+협의.
-    // 협의를 체크하지 않았을 때만 단가가 필수다.
-    if (form.salaryNegotiableYn !== 'Y' && (!form.projectSalary || isNaN(salaryNum) || salaryNum <= 0)) {
-      toast.error('단가를 입력하거나 "단가 협의"를 선택해주세요.'); return
-    }
-    if (form.projectSalary && salaryNum > 100000000) { toast.error('단가는 1억 원 이하로 입력해주세요.'); return }
+    const conflictLabel = overlap?.major === GRADE_ANY ? '「등급 무관」' : `「${overlap?.major}」`
+
+    if (!validate([
+      { key: 'projectTitle', invalid: form.projectTitle.trim().length < 5,
+        message: '프로젝트 제목을 5자 이상 입력해주세요.' },
+      { key: 'address', invalid: !form.address && !form.subwayAddressName,
+        message: '근무지 주소 또는 지하철역 중 하나는 필수입니다.' },
+      // 주소는 채워졌는데 좌표만 비어 있는 상태가 실제로 만들어진다 — 다음 우편번호 검색은 좌표를 주지 않아서
+      // 카카오 지오코딩을 따로 호출하는데, 그게 늦거나 실패해도 화면에는 주소가 멀쩡히 보이기 때문이다.
+      // 그대로 보내면 DB 의 latitude NOT NULL 에서 터져 500 이 됐다(2026-09-02 운영 장애).
+      { key: 'address', invalid: !!form.address && (!form.latitude || !form.longitude),
+        message: '주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도하거나 주소를 다시 검색해주세요.' },
+      { key: 'subway', invalid: !!form.subwayAddressName && (!form.subwayLat || !form.subwayLon),
+        message: '지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.' },
+      // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
+      { key: 'gradeCounts', invalid: form.gradeCounts.length === 0,
+        message: '모집할 등급을 최소 하나 추가해주세요.' },
+      { key: 'gradeCounts', invalid: form.gradeCounts.some((g) => !g.major),
+        message: '등급을 선택해주세요.' },
+      { key: 'gradeCounts', invalid: form.gradeCounts.some((g) => !g.unknown && !(Number(g.count) >= 1)),
+        message: '등급별 인원을 입력하거나 "미정"을 선택해주세요.' },
+      { key: 'gradeCounts', invalid: new Set(grades).size !== grades.length,
+        message: '같은 등급을 두 번 입력할 수 없습니다.' },
+      { key: 'gradeCounts', invalid: !!overlap,
+        message: `${conflictLabel} 은(는) 같은 등급의 세부와 범위가 겹쳐 함께 선택할 수 없습니다.` },
+      { key: 'educationLvl', invalid: !form.educationLvl, message: '학력을 선택해주세요.' },
+      // 수행 종료일은 「미정」으로 비워 둘 수 있다. 시작일만 필수다.
+      { key: 'projectPeriod', invalid: !form.projectStartDt, message: '프로젝트 기간을 설정해주세요.' },
+      { key: 'recruitPeriod', invalid: !form.recruitStartDt || !form.recruitEndDt,
+        message: '모집 기간을 설정해주세요.' },
+      // 두 DateRangeModal이 서로의 값을 모르기 때문에 여기서 관계를 본다(백엔드 @AssertTrue와 같은 규칙).
+      // 모집 종료가 수행 시작보다 뒤인 것은 허용 — 수행 중 인력 추가 모집이 정상 케이스다.
+      // 수행 종료일이 미정이면 비교할 대상이 없으므로 건너뛴다.
+      { key: 'recruitPeriod', invalid: !!form.projectEndDt && form.recruitEndDt > form.projectEndDt,
+        message: '모집 종료일이 프로젝트 종료일보다 늦습니다. 이미 끝난 프로젝트를 모집할 수는 없습니다.' },
+      { key: 'workType', invalid: form.workType.length === 0, message: '근무 형태를 최소 하나 선택해주세요.' },
+      { key: 'recruitJob', invalid: form.recruitJob.length === 0, message: '모집 직군을 최소 하나 선택해주세요.' },
+      { key: 'usingSkills', invalid: form.usingSkills.length === 0, message: '사용 기술을 최소 하나 선택해주세요.' },
+      { key: 'preference', invalid: preference.length > 255,
+        message: `우대 사항이 너무 깁니다. (최대 255자 / 현재: ${preference.length}자)` },
+      { key: 'description', invalid: !form.description.trim(), message: '상세 내용을 작성해주세요.' },
+      { key: 'interviewTimes', invalid: interviewTimes.length === 0, message: '인터뷰 가능 시간을 설정해주세요.' },
+      // 단가는 세 조합을 모두 허용한다 — 단가만 / 협의만 / 단가+협의.
+      // 협의를 체크하지 않았을 때만 단가가 필수다.
+      { key: 'projectSalary',
+        invalid: form.salaryNegotiableYn !== 'Y' && (!form.projectSalary || isNaN(salaryNum) || salaryNum <= 0),
+        message: '단가를 입력하거나 "단가 협의"를 선택해주세요.' },
+      { key: 'projectSalary', invalid: !!form.projectSalary && salaryNum > 100000000,
+        message: '단가는 1억 원 이하로 입력해주세요.' },
+    ])) return
 
     // 비어있는 숫자 필드는 빈 문자열('') 대신 undefined로 보낸다 — 백엔드 Double/Long 필드가 ''를 파싱 못 해 400 에러 발생
     const numOrUndef = (v: string) => v === '' ? undefined : v
@@ -446,14 +487,14 @@ export default function ProjectPostClient({ projectSq }: Props) {
 
       <div className="space-y-1">
         <label className="text-sm font-semibold">프로젝트 제목</label>
-        <Input value={form.projectTitle} onChange={(e) => setF({ projectTitle: e.target.value })} placeholder="예: 쇼핑몰 관리자 시스템 구축" />
+        <Input {...fieldProps('projectTitle')} value={form.projectTitle} onChange={(e) => setF({ projectTitle: e.target.value })} placeholder="예: 쇼핑몰 관리자 시스템 구축" />
       </div>
 
       {/* 주소 — Vue 원본: 근무지 주소/지하철역 둘 다 독립 입력 가능, 최소 1개만 필수 (서로 비활성화 안 함) */}
       <div className="space-y-1">
         <p className="text-xs text-muted-foreground">근무지 주소 또는 지하철역 중 최소 1개는 입력해주세요. (둘 다 입력 가능)</p>
       </div>
-      <div className="space-y-4 rounded-lg border p-4">
+      <InvalidFrame ref={bindRef('address')} invalid={isInvalid('address')} className="space-y-4 rounded-lg border p-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">근무지 주소</label>
           <div className="flex gap-2">
@@ -475,7 +516,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
           )}
         </div>
 
-        <div className="space-y-2">
+        <InvalidFrame ref={bindRef('subway')} invalid={isInvalid('subway')} className="space-y-2">
           <label className="text-sm font-medium">지하철역 주소</label>
           <div className="flex gap-2">
             <Input
@@ -489,12 +530,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
               <Button type="button" variant="ghost" size="sm" onClick={() => setF({ subwayAddressName: '', subwayLat: '', subwayLon: '', subwaySigunguCode: '' })}>×</Button>
             )}
           </div>
-        </div>
-      </div>
+        </InvalidFrame>
+      </InvalidFrame>
 
       {/* 모집 인원 — 등급마다 한 줄. 줄이 하나면 예전의 "총 인원으로 모집" 과 결과가 같다.
           두 모드를 라디오로 고르게 하던 것을 없앴다(2026-09-02) */}
-      <div className="space-y-3 rounded-lg border p-4">
+      <InvalidFrame ref={bindRef('gradeCounts')} invalid={isInvalid('gradeCounts')} className="space-y-3 rounded-lg border p-4">
         <div className="flex items-center gap-1.5">
           <label className="text-sm font-semibold">모집 인원</label>
           <InfoTooltip label="등급·세부 등급 안내">
@@ -623,16 +664,18 @@ export default function ProjectPostClient({ projectSq }: Props) {
             </span>
           </div>
         </div>
-      </div>
+      </InvalidFrame>
 
       {/* 학력 — label 은 인라인이라 block 을 주지 않으면 select 와 같은 줄에 붙는다.
           (다른 필드는 Input 이 w-full 이라 저절로 줄이 바뀌어 이 문제가 안 보였다) */}
       <div className="space-y-1">
         <label className="block text-sm font-semibold">학력</label>
         <select
+          ref={bindRef('educationLvl')}
+          aria-invalid={isInvalid('educationLvl') || undefined}
           value={form.educationLvl}
           onChange={(e) => setF({ educationLvl: e.target.value })}
-          className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-2 text-sm"
+          className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-2 text-sm aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
         >
           <option value="">선택</option>
           {options.educationLevels.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -647,6 +690,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
           </div>
           {/* 종료일은 미정일 수 있다 — 시작일만 있으면 「~ 미정」으로 보여준다. */}
           <Input
+            {...fieldProps('projectPeriod')}
             readOnly
             value={form.projectStartDt ? `${form.projectStartDt} ~ ${form.projectEndDt || '미정'}` : ''}
             placeholder="예: 2026-04 ~ 2026-10"
@@ -659,6 +703,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
             <label className="text-sm font-semibold">모집 기간</label>
           </div>
           <Input
+            {...fieldProps('recruitPeriod')}
             readOnly
             value={form.recruitStartDt && form.recruitEndDt ? `${form.recruitStartDt} ~ ${form.recruitEndDt}` : ''}
             placeholder="예: 2026-04 ~ 2026-10"
@@ -674,6 +719,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
         <div className="flex items-center gap-3">
           <div className="relative w-48">
             <Input
+              {...fieldProps('projectSalary')}
               value={salaryDisplay}
               onChange={(e) => handleSalaryChange(e.target.value)}
               placeholder={form.salaryNegotiableYn === 'Y' ? '협의 후 결정' : '예: 5,000,000'}
@@ -699,6 +745,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
       {/* 근무 형태 */}
       <PickerField
         label="근무 형태"
+        invalid={isInvalid('workType')}
+        bindRef={bindRef('workType')}
         selected={form.workType}
         onOpen={() => setWorkTypeModalOpen(true)}
         onRemove={(item) => setF({ workType: form.workType.filter((x) => x !== item) })}
@@ -707,6 +755,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
       {/* 모집 직군 */}
       <PickerField
         label="모집 직군"
+        invalid={isInvalid('recruitJob')}
+        bindRef={bindRef('recruitJob')}
         selected={form.recruitJob}
         onOpen={() => setJobModalOpen(true)}
         onRemove={(item) => setF({ recruitJob: form.recruitJob.filter((x) => x !== item) })}
@@ -715,6 +765,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
       {/* 사용 기술 */}
       <PickerField
         label="사용 기술"
+        invalid={isInvalid('usingSkills')}
+        bindRef={bindRef('usingSkills')}
         selected={form.usingSkills}
         onOpen={() => setSkillModalOpen(true)}
         onRemove={(item) => setF({ usingSkills: form.usingSkills.filter((x) => x !== item) })}
@@ -732,6 +784,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       <div className="space-y-2">
         <label className="text-sm font-semibold">우대 사항</label>
         <Input
+          {...fieldProps('preference')}
           value={preferenceInput}
           onChange={(e) => handlePreferenceInputChange(e.target.value)}
           placeholder="쉼표(,)로 구분하여 입력 (예: 스타트업 경험,)"
@@ -754,7 +807,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       </div>
 
       {/* 인터뷰 가능시간 */}
-      <div className="space-y-2">
+      <InvalidFrame ref={bindRef('interviewTimes')} invalid={isInvalid('interviewTimes')} className="space-y-2">
         <div className="flex items-center gap-2">
           <label className="text-sm font-semibold">인터뷰 가능시간</label>
           <button type="button" onClick={openInterviewModal} className="text-xs text-muted-foreground hover:text-primary">+ 추가하기</button>
@@ -786,12 +839,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
             ))}
           </div>
         )}
-      </div>
+      </InvalidFrame>
 
       {/* 상세 내용 */}
       <div className="space-y-1">
         <label className="text-sm font-semibold">상세 내용</label>
-        <Textarea value={form.description} onChange={(e) => setF({ description: e.target.value })} rows={8} placeholder="프로젝트 상세 내용을 입력해주세요." />
+        <Textarea {...fieldProps('description')} value={form.description} onChange={(e) => setF({ description: e.target.value })} rows={8} placeholder="프로젝트 상세 내용을 입력해주세요." />
       </div>
 
       {/* 알림 여부 */}
@@ -862,7 +915,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
         maxDate={form.recruitEndDt}
         entries={interviewTimes}
         onClose={() => setInterviewModalOpen(false)}
-        onConfirm={setInterviewTimes}
+        onConfirm={(entries) => { clearField('interviewTimes'); setInterviewTimes(entries) }}
       />
       {/* 수행 기간만 「종료일 미정」을 허용한다. 모집 종료일은 D-day 계산의 근거라 비면 안 된다. */}
       <DateRangeModal
@@ -880,14 +933,16 @@ export default function ProjectPostClient({ projectSq }: Props) {
   )
 }
 
-function PickerField({ label, selected, onOpen, onRemove }: {
+function PickerField({ label, selected, onOpen, onRemove, invalid, bindRef }: {
   label: string
   selected: string[]
   onOpen: () => void
   onRemove: (item: string) => void
+  invalid?: boolean
+  bindRef?: (el: HTMLElement | null) => void
 }) {
   return (
-    <div className="space-y-2">
+    <InvalidFrame ref={bindRef} invalid={invalid} className="space-y-2">
       <div className="flex items-center gap-2">
         <label className="text-sm font-semibold">{label}</label>
         <button type="button" onClick={onOpen} className="text-xs text-muted-foreground hover:text-primary">+ 추가하기</button>
@@ -901,6 +956,6 @@ function PickerField({ label, selected, onOpen, onRemove }: {
           ))}
         </div>
       )}
-    </div>
+    </InvalidFrame>
   )
 }

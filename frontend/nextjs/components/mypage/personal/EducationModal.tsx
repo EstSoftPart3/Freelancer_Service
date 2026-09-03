@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { useFormErrors } from '@/hooks/useFormErrors'
 
 export interface EducationItem {
   educationSchoolNm: string
@@ -38,6 +39,7 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
   const [admissionDt, setAdmissionDt] = useState('')
   const [graduationDt, setGraduationDt] = useState('')
   const [major, setMajor] = useState('')
+  const { validate, fieldProps, clearField, clearAll } = useFormErrors<'admissionDt' | 'major'>()
 
   const fetchSchools = useCallback(async (p: number, gubun: 'high' | 'univ', keyword: string) => {
     try {
@@ -68,12 +70,14 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tab, page])
 
-  const reset = () => { setTab('high'); setSearch(''); setSchools([]); setPage(1); setTotalPages(1); setSelected(null); setAdmissionDt(''); setGraduationDt(''); setMajor('') }
+  const reset = () => { setTab('high'); setSearch(''); setSchools([]); setPage(1); setTotalPages(1); setSelected(null); setAdmissionDt(''); setGraduationDt(''); setMajor(''); clearAll() }
   const close = () => { reset(); onClose() }
 
   const complete = () => {
-    if (!admissionDt) return toast.error('입학년월을 입력해주세요.')
-    if (!major.trim()) return toast.error('전공명을 입력하세요.')
+    if (!validate([
+      { key: 'admissionDt', invalid: !admissionDt, message: '입학년월을 입력해주세요.' },
+      { key: 'major', invalid: !major.trim(), message: '전공명을 입력하세요.' },
+    ])) return
     onComplete({ educationSchoolNm: selected!.name, educationMajorNm: major, educationAdmissionDt: admissionDt, educationGraduationDt: graduationDt })
     close()
   }
@@ -126,10 +130,10 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
               <div className="text-xs text-muted-foreground">{selected.address}</div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1"><label className="text-sm text-muted-foreground">입학년월 <span className="text-destructive">*</span></label><Input type="month" max={todayMonth()} value={admissionDt} onChange={(e) => setAdmissionDt(e.target.value)} /></div>
+              <div className="space-y-1"><label className="text-sm text-muted-foreground">입학년월 <span className="text-destructive">*</span></label><Input {...fieldProps('admissionDt')} type="month" max={todayMonth()} value={admissionDt} onChange={(e) => { clearField('admissionDt'); setAdmissionDt(e.target.value) }} /></div>
               <div className="space-y-1"><label className="text-sm text-muted-foreground">졸업년월</label><Input type="month" max={todayMonth()} value={graduationDt} onChange={(e) => setGraduationDt(e.target.value)} /></div>
             </div>
-            <div className="space-y-1"><label className="text-sm text-muted-foreground">전공명 <span className="text-destructive">*</span></label><Input value={major} onChange={(e) => setMajor(e.target.value)} placeholder="전공명을 입력하세요" /></div>
+            <div className="space-y-1"><label className="text-sm text-muted-foreground">전공명 <span className="text-destructive">*</span></label><Input {...fieldProps('major')} value={major} onChange={(e) => { clearField('major'); setMajor(e.target.value) }} placeholder="전공명을 입력하세요" /></div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelected(null)}>이전</Button>
               <Button onClick={complete}>완료</Button>

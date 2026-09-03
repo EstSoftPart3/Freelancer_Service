@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { alertStore } from '@/stores/alertStore'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import { companyAgreementText } from '@/lib/terms'
 import api from '@/lib/api'
 
@@ -28,6 +29,8 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [termsOpen, setTermsOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const { validate, fieldProps, clearField } =
+    useFormErrors<'companyName' | 'ceoName' | 'openDate' | 'bizNumber'>()
 
   // 입력이 바뀌면 인증 상태 초기화 (Vue handleInputChange)
   function resetVerified() {
@@ -35,10 +38,13 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
   }
 
   async function handleVerify() {
-    if (!companyName.trim() || !ceoName.trim() || !openDate || !bizNumber.trim()) {
-      alertStore.show('모든 정보를 정확히 입력 후 인증해주세요.', 'danger')
-      return
-    }
+    // 네 칸 중 어디가 비었는지 프레임으로 짚어 준다(문구는 기존 그대로).
+    if (!validate([
+      { key: 'companyName', invalid: !companyName.trim(), message: '모든 정보를 정확히 입력 후 인증해주세요.' },
+      { key: 'ceoName', invalid: !ceoName.trim(), message: '모든 정보를 정확히 입력 후 인증해주세요.' },
+      { key: 'openDate', invalid: !openDate, message: '모든 정보를 정확히 입력 후 인증해주세요.' },
+      { key: 'bizNumber', invalid: !bizNumber.trim(), message: '모든 정보를 정확히 입력 후 인증해주세요.' },
+    ])) return
     setSubmitting(true)
     try {
       const { data } = await api.post<{ status: string; output: boolean; message?: string }>(
@@ -90,21 +96,22 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-sm font-medium">기업명</label>
-              <Input value={companyName} onChange={(e) => { setCompanyName(e.target.value); resetVerified() }} />
+              <Input {...fieldProps('companyName')} value={companyName} onChange={(e) => { clearField('companyName'); setCompanyName(e.target.value); resetVerified() }} />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">대표자명</label>
-              <Input value={ceoName} onChange={(e) => { setCeoName(e.target.value); resetVerified() }} />
+              <Input {...fieldProps('ceoName')} value={ceoName} onChange={(e) => { clearField('ceoName'); setCeoName(e.target.value); resetVerified() }} />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="text-sm font-medium">개업일자</label>
             <Input
+              {...fieldProps('openDate')}
               type="date"
               value={openDate}
               max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => { setOpenDate(e.target.value); resetVerified() }}
+              onChange={(e) => { clearField('openDate'); setOpenDate(e.target.value); resetVerified() }}
             />
           </div>
 
@@ -112,8 +119,9 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
             <label className="text-sm font-medium">사업자 번호</label>
             <div className="flex gap-2">
               <Input
+                {...fieldProps('bizNumber')}
                 value={bizNumber}
-                onChange={(e) => { setBizNumber(e.target.value.replace(/[^0-9]/g, '')); resetVerified() }}
+                onChange={(e) => { clearField('bizNumber'); setBizNumber(e.target.value.replace(/[^0-9]/g, '')); resetVerified() }}
                 placeholder="숫자만 입력"
               />
               <Button type="button" onClick={handleVerify} disabled={submitting}>

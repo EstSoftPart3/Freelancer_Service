@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
+import { focusInvalidElement } from '@/hooks/useFormErrors'
 
 interface Props {
   title: string
@@ -15,6 +16,7 @@ export default function PasswordCheck({ title, onConfirmed }: Props) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,6 +29,7 @@ export default function PasswordCheck({ title, onConfirmed }: Props) {
       onConfirmed()
     } catch (err) {
       setError(getApiErrorMessage(err, '서버와 통신 중 오류가 발생했습니다.'))
+      focusInvalidElement(inputRef.current)
     } finally {
       setLoading(false)
     }
@@ -40,9 +43,11 @@ export default function PasswordCheck({ title, onConfirmed }: Props) {
         <div className="space-y-2">
           <label className="text-sm font-medium">비밀번호</label>
           <Input
+            ref={inputRef}
+            aria-invalid={!!error || undefined}
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setError(''); setPassword(e.target.value) }}
             required
           />
           {error && <p className="text-sm text-destructive">{error}</p>}

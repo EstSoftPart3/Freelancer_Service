@@ -16,6 +16,8 @@ import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import type { SkillTag, Attachment } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 import 'react-quill-new/dist/quill.snow.css'
 
 // SSR 비활성화 — Quill은 browser-only
@@ -72,6 +74,8 @@ function extensionOf(fileName: string): string {
 export default function BoardPostForm({ boardCategory }: Props) {
   const router = useRouter()
   const { boardData, editSq, resetBoard } = useBoardStore()
+  const { validate, fieldProps, bindRef, isInvalid, clearField } =
+    useFormErrors<'category' | 'ttl' | 'description'>()
 
   const [ttl, setTtl] = useState(boardData.ttl)
   const [description, setDescription] = useState(boardData.description)
@@ -199,9 +203,12 @@ export default function BoardPostForm({ boardCategory }: Props) {
   }
 
   const handleSubmit = async () => {
-    if (isBoard && categoryCd === null) { alertStore.show('카테고리를 선택해주세요.', 'danger'); return }
-    if (!ttl.trim()) { alertStore.show('제목을 입력해주세요.', 'danger'); return }
-    if (isHtmlEmpty(description)) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
+    // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
+    if (!validate([
+      { key: 'category', invalid: isBoard && categoryCd === null, message: '카테고리를 선택해주세요.' },
+      { key: 'ttl', invalid: !ttl.trim(), message: '제목을 입력해주세요.' },
+      { key: 'description', invalid: isHtmlEmpty(description), message: '내용을 입력해주세요.' },
+    ])) return
     // 선택 시점에 이미 걸렀지만, 상태가 다른 경로로 채워졌을 경우를 대비한 최종 확인
     for (const f of newFiles) {
       if (f.size > MAX_FILE_SIZE) {
@@ -276,10 +283,12 @@ export default function BoardPostForm({ boardCategory }: Props) {
             </InfoTooltip>
           </div>
           <select
+            ref={bindRef('category')}
+            aria-invalid={isInvalid('category') || undefined}
             id="board-category"
             value={categoryCd === null ? '' : String(categoryCd)}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-48"
+            onChange={(e) => { clearField('category'); onCategoryChange(e.target.value) }}
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-48 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
           >
             {/* 필수 항목이라 빈 값은 선택할 수 없다. 초기 상태 표시용으로만 남긴다 */}
             <option value="" disabled>카테고리를 선택하세요</option>
@@ -316,21 +325,21 @@ export default function BoardPostForm({ boardCategory }: Props) {
       {/* 제목 */}
       <div>
         <label className="mb-1 block text-sm font-medium">제목</label>
-        <Input value={ttl} onChange={(e) => setTtl(e.target.value)} placeholder="제목을 입력하세요." />
+        <Input {...fieldProps('ttl')} value={ttl} onChange={(e) => { clearField('ttl'); setTtl(e.target.value) }} placeholder="제목을 입력하세요." />
       </div>
 
       {/* 내용 */}
       <div>
         <label className="mb-1 block text-sm font-medium">내용</label>
-        <div className="min-h-[200px] rounded-lg border">
+        <InvalidFrame ref={bindRef('description')} invalid={isInvalid('description')} className="min-h-[200px] rounded-lg border">
           <ReactQuill
             theme="snow"
             value={description}
-            onChange={setDescription}
+            onChange={(value: string) => { clearField('description'); setDescription(value) }}
             placeholder="내용을 입력해주세요."
             style={{ minHeight: '200px' }}
           />
-        </div>
+        </InvalidFrame>
       </div>
 
       {/* 태그 — 고객의 소리는 분류 축이 없어 노출하지 않는다 */}

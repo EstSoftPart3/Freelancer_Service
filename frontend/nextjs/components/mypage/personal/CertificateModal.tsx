@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import api from '@/lib/api'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 export interface CertificationItem {
   certificationCd: number | null
@@ -24,6 +26,7 @@ export default function CertificateModal({ open, onClose, onComplete }: Props) {
   const [options, setOptions] = useState<CertOption[]>([])
   const [selected, setSelected] = useState<CertOption | null>(null)
   const [issuer, setIssuer] = useState('')
+  const { validate, bindRef, isInvalid, clearAll } = useFormErrors<'selected'>()
 
   const fetchCerts = async () => {
     try {
@@ -32,11 +35,13 @@ export default function CertificateModal({ open, onClose, onComplete }: Props) {
     } catch { toast.error('자격증을 불러올 수 없습니다.') }
   }
 
-  const reset = () => { setSearch(''); setOptions([]); setSelected(null); setIssuer('') }
+  const reset = () => { setSearch(''); setOptions([]); setSelected(null); setIssuer(''); clearAll() }
   const close = () => { reset(); onClose() }
 
   const submit = () => {
-    if (!selected) return toast.error('자격증을 선택하세요.')
+    if (!validate([
+      { key: 'selected', invalid: !selected, message: '자격증을 선택하세요.' },
+    ]) || !selected) return  // validate 로는 타입이 좁혀지지 않아 한 번 더 본다
     onComplete({ certificationCd: selected.certificateCd, certificationNm: selected.certificateNm, certificationIssuerNm: issuer })
     close()
   }
@@ -50,7 +55,7 @@ export default function CertificateModal({ open, onClose, onComplete }: Props) {
             <Input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fetchCerts() } }} placeholder="자격증명 검색" />
             <Button type="button" variant="outline" onClick={fetchCerts}>검색</Button>
           </div>
-          <div className="max-h-56 overflow-y-auto rounded-md border divide-y">
+          <InvalidFrame ref={bindRef('selected')} invalid={isInvalid('selected')} className="max-h-56 overflow-y-auto rounded-md border divide-y">
             {options.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">검색 결과가 없습니다.</p>
             ) : options.map((c) => (
@@ -59,7 +64,7 @@ export default function CertificateModal({ open, onClose, onComplete }: Props) {
                 {c.certificateNm}
               </button>
             ))}
-          </div>
+          </InvalidFrame>
           <div className="space-y-1">
             <label className="text-sm font-medium">발급기관</label>
             <Input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="발급기관" />

@@ -1,6 +1,6 @@
 'use client'
 // Mirrors vue_js/src/fo/views/login&signup/ResetPasswordPage.vue
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
+import { focusInvalidElement } from '@/hooks/useFormErrors'
 
 const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
   <label className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -23,6 +24,8 @@ export default function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError] = useState('')
   const [confirmValid, setConfirmValid] = useState(false)
+  const passwordRef = useRef<HTMLInputElement | null>(null)
+  const confirmRef = useRef<HTMLInputElement | null>(null)
 
   const validatePassword = (val = password) => {
     setPasswordError(''); setPasswordValid(false)
@@ -44,7 +47,12 @@ export default function ResetPasswordForm() {
     e.preventDefault()
     const pwOk = validatePassword()
     const cpwOk = validateConfirm()
-    if (!pwOk || !cpwOk) { alertStore.show('입력 정보를 확인해주세요.', 'danger'); return }
+    if (!pwOk || !cpwOk) {
+      alertStore.show('입력 정보를 확인해주세요.', 'danger')
+      // 화면 순서대로 첫 미충족 필드로 스크롤·포커스한다.
+      focusInvalidElement(pwOk ? confirmRef.current : passwordRef.current)
+      return
+    }
 
     try {
       await api.post('/reset-password', { newPassword: password }, { withCredentials: true })
@@ -65,6 +73,8 @@ export default function ResetPasswordForm() {
             <div>
               <FieldLabel label="새로운 비밀번호" valid={passwordValid} />
               <Input
+                ref={passwordRef}
+                aria-invalid={!!passwordError || undefined}
                 type="password"
                 value={password}
                 maxLength={32}
@@ -79,6 +89,8 @@ export default function ResetPasswordForm() {
             <div>
               <FieldLabel label="비밀번호 확인" valid={confirmValid} />
               <Input
+                ref={confirmRef}
+                aria-invalid={!!confirmError || undefined}
                 type="password"
                 value={confirmPassword}
                 maxLength={32}

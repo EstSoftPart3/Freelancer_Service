@@ -15,6 +15,8 @@ import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import MemberResumeSelectDialog from '@/components/project/MemberResumeSelectDialog'
 import api from '@/lib/api'
 import type { CompanyMember } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 const PAGE_SIZE = 5
 
@@ -48,6 +50,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
   const [resumeChangeUserSq, setResumeChangeUserSq] = useState<number | null>(null)
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'members'>()
 
   const fetchMembers = useCallback(async (page = 1) => {
     try {
@@ -91,6 +94,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         toast.error('이미 지원한 이력 있는 사용자입니다.')
         return
       }
+      clearField('members')
       setSelected((prev) => [...prev, { userSq: member.userSq, userNm: member.userNm, resumeSq: member.resumeSq }])
     } catch {
       toast.error('지원 여부 확인 중 오류가 발생했습니다.')
@@ -103,7 +107,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
 
   function handleConfirm() {
     if (selected.length === 0) {
-      toast.error('소속 인원을 선택해주세요.')
+      markInvalid(['members'], '소속 인원을 선택해주세요.')
       return
     }
     setConfirmOpen(true)
@@ -171,6 +175,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         {members.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">검색 결과가 없습니다.</p>
         ) : (
+          <InvalidFrame ref={bindRef('members')} invalid={isInvalid('members')}>
           <ul className="max-h-80 divide-y overflow-y-auto">
             {members.map((member) => (
               <li key={member.userSq} className="flex items-center justify-between gap-2 py-3">
@@ -204,6 +209,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
               </li>
             ))}
           </ul>
+          </InvalidFrame>
         )}
 
         {totalPages > 1 && (

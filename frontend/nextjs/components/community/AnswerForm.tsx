@@ -9,6 +9,8 @@ import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import type { SkillTag, Attachment, BoardDetail } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 import 'react-quill-new/dist/quill.snow.css'
 
 // SSR 비활성화 — Quill은 browser-only
@@ -43,6 +45,7 @@ export default function AnswerForm({ boardSq, editTarget = null, onSuccess, onCa
   // Quill placeholder를 첫 입력(IME 조합 포함) 즉시 숨기기 위한 플래그
   const [editorTouched, setEditorTouched] = useState(!isHtmlEmpty(editTarget?.description ?? ''))
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { validate, fieldProps, bindRef, isInvalid, clearField } = useFormErrors<'ttl' | 'description'>()
 
   const addNormalTag = (val: string) => {
     const tag = val.trim()
@@ -60,8 +63,11 @@ export default function AnswerForm({ boardSq, editTarget = null, onSuccess, onCa
   }
 
   const handleSubmit = async () => {
-    if (!ttl.trim()) { alertStore.show('제목을 입력해주세요.', 'danger'); return }
-    if (isHtmlEmpty(description)) { alertStore.show('내용을 입력해주세요.', 'danger'); return }
+    // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
+    if (!validate([
+      { key: 'ttl', invalid: !ttl.trim(), message: '제목을 입력해주세요.' },
+      { key: 'description', invalid: isHtmlEmpty(description), message: '내용을 입력해주세요.' },
+    ])) return
     for (const f of files) {
       if (f.size > MAX_FILE_SIZE) { alertStore.show(`${f.name}의 크기가 1MB를 초과합니다.`, 'danger'); return }
     }
@@ -93,20 +99,22 @@ export default function AnswerForm({ boardSq, editTarget = null, onSuccess, onCa
 
   return (
     <div className="space-y-3">
-      <Input value={ttl} onChange={(e) => setTtl(e.target.value)} placeholder="제목을 입력하세요." />
+      <Input {...fieldProps('ttl')} value={ttl} onChange={(e) => { clearField('ttl'); setTtl(e.target.value) }} placeholder="제목을 입력하세요." />
 
-      <div
+      <InvalidFrame
+        ref={bindRef('description')}
+        invalid={isInvalid('description')}
         className={`min-h-[260px] rounded-lg border ${editorTouched ? '[&_.ql-editor.ql-blank::before]:hidden' : ''}`}
         onKeyDown={() => { if (!editorTouched) setEditorTouched(true) }}
       >
         <ReactQuill
           theme="snow"
           value={description}
-          onChange={setDescription}
+          onChange={(value: string) => { clearField('description'); setDescription(value) }}
           placeholder="답변 내용을 입력해주세요."
           style={{ minHeight: '260px' }}
         />
-      </div>
+      </InvalidFrame>
 
       {/* 태그 */}
       <div>

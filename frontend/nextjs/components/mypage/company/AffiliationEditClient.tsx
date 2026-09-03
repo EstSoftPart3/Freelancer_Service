@@ -16,6 +16,8 @@ import { getApiErrorMessage } from '@/lib/errors'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
 import type { AffiliationEditInfo } from '@/types'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { InvalidFrame } from '@/components/ui/invalid-frame'
 
 type EditKey = 'companyUrl' | 'userPhoneNum' | 'address' | 'companyGreetingTxt' | 'tagNm'
 
@@ -40,6 +42,7 @@ export default function AffiliationEditClient() {
     companyUrl: false, userPhoneNum: false, address: false, companyGreetingTxt: false, tagNm: false,
   })
   const [tagInput, setTagInput] = useState('')
+  const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<EditKey>()
   const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -79,10 +82,12 @@ export default function AffiliationEditClient() {
   useEffect(() => { fetchInfo() }, [])
 
   function toggleEdit(key: EditKey) {
+    clearField(key)
     setEditing((prev) => ({ ...prev, [key]: true }))
   }
 
   function cancelEdit(key: EditKey) {
+    clearField(key)
     if (!original || !form) return
     if (key === 'address') {
       setForm((prev) => prev ? {
@@ -103,6 +108,7 @@ export default function AffiliationEditClient() {
   }
 
   function confirmEdit(key: EditKey) {
+    clearField(key)
     setEditing((prev) => ({ ...prev, [key]: false }))
   }
 
@@ -175,8 +181,12 @@ export default function AffiliationEditClient() {
 
   async function saveAll() {
     if (!form) return
-    const isAnyEditing = Object.values(editing).some(Boolean)
-    if (isAnyEditing) { toast.error('수정 중인 항목을 먼저 저장하거나 취소해주세요.'); return }
+    // 열려 있는 행이 원인이므로, 그 행들을 모두 프레임 처리하고 첫 행으로 이동한다.
+    const openRows = (Object.keys(editing) as EditKey[]).filter((k) => editing[k])
+    if (openRows.length > 0) {
+      markInvalid(openRows, '수정 중인 항목을 먼저 저장하거나 취소해주세요.')
+      return
+    }
     try {
       await api.post('/mypage/edit/affiliation/update', {
         userPhoneNum: form.userPhoneNum,
@@ -277,6 +287,8 @@ export default function AffiliationEditClient() {
       <EditableRow
         label="기업 URL"
         editing={editing.companyUrl}
+        invalid={isInvalid('companyUrl')}
+        bindRef={bindRef('companyUrl')}
         disabled={isDisabled}
         viewContent={<span className="text-sm text-muted-foreground">{form.companyUrl || '-'}</span>}
         editContent={<Input value={form.companyUrl} onChange={(e) => setForm((p) => p ? { ...p, companyUrl: e.target.value } : p) } />}
@@ -288,6 +300,8 @@ export default function AffiliationEditClient() {
       <EditableRow
         label="대표번호"
         editing={editing.userPhoneNum}
+        invalid={isInvalid('userPhoneNum')}
+        bindRef={bindRef('userPhoneNum')}
         disabled={isDisabled}
         viewContent={<span className="text-sm text-muted-foreground">{form.userPhoneNum || '-'}</span>}
         editContent={<Input value={form.userPhoneNum} onChange={(e) => setForm((p) => p ? { ...p, userPhoneNum: e.target.value } : p)} />}
@@ -299,6 +313,8 @@ export default function AffiliationEditClient() {
       <EditableRow
         label="주소"
         editing={editing.address}
+        invalid={isInvalid('address')}
+        bindRef={bindRef('address')}
         disabled={isDisabled}
         viewContent={<span className="text-sm text-muted-foreground">{form.address} {form.detailAddress}</span>}
         editContent={
@@ -315,6 +331,8 @@ export default function AffiliationEditClient() {
       <EditableRow
         label="모집 내용"
         editing={editing.companyGreetingTxt}
+        invalid={isInvalid('companyGreetingTxt')}
+        bindRef={bindRef('companyGreetingTxt')}
         disabled={isDisabled}
         viewContent={<p className="text-sm text-muted-foreground whitespace-pre-line">{form.companyGreetingTxt || '-'}</p>}
         editContent={<Textarea value={form.companyGreetingTxt} onChange={(e) => setForm((p) => p ? { ...p, companyGreetingTxt: e.target.value } : p)} rows={4} />}
@@ -327,7 +345,7 @@ export default function AffiliationEditClient() {
       <div className="grid grid-cols-3 items-start gap-4">
         <label className="text-sm font-semibold pt-1">태그</label>
         <div className="col-span-2 flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0 space-y-2">
+          <InvalidFrame ref={bindRef('tagNm')} invalid={isInvalid('tagNm')} className="flex-1 min-w-0 space-y-2">
             <div className="flex flex-wrap gap-2">
               {form.tagNm.map((tag) => (
                 <Badge key={tag} variant="secondary" className="gap-1">
@@ -351,7 +369,7 @@ export default function AffiliationEditClient() {
                 placeholder="태그 입력 후 Enter"
               />
             )}
-          </div>
+          </InvalidFrame>
           <div className="flex gap-2 shrink-0">
             {!editing.tagNm
               ? <Button size="sm" variant="outline" disabled={isDisabled} onClick={() => toggleEdit('tagNm')}>수정</Button>
@@ -375,7 +393,7 @@ export default function AffiliationEditClient() {
 }
 
 function EditableRow({
-  label, editing, disabled, viewContent, editContent, onToggle, onConfirm, onCancel,
+  label, editing, disabled, viewContent, editContent, onToggle, onConfirm, onCancel, invalid, bindRef,
 }: {
   label: string
   editing: boolean
@@ -385,13 +403,17 @@ function EditableRow({
   onToggle: () => void
   onConfirm: () => void
   onCancel: () => void
+  invalid?: boolean
+  bindRef?: (el: HTMLElement | null) => void
 }) {
   return (
     <div className="grid grid-cols-3 items-start gap-4">
       <label className="text-sm font-semibold pt-1">{label}</label>
       <div className="col-span-2 flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0 pt-1">
-          {editing ? editContent : viewContent}
+          {editing
+            ? <InvalidFrame ref={bindRef} invalid={invalid}>{editContent}</InvalidFrame>
+            : viewContent}
         </div>
         <div className="flex gap-2 shrink-0">
           {!editing
