@@ -4,6 +4,17 @@
 
 <mapper namespace="com.example.demo.domain.project.mapper.ProjectMapper">
 
+	<!--
+	  지역 필터가 고른 시도에 속하는 area_code_sq 집합.
+	  🔴 시도 자신(area_code_sq IN ...)도 넣어야 한다. 세종특별자치시(36110)는 하위 시군구가
+	  없어서 주소가 시도 코드 그대로 저장되는데, 하위만 훑으면 세종 공고가 지역 검색에서
+	  영원히 안 잡힌다(2026-09-07 확인).
+	-->
+	<sql id="areaCodeInSelectedRegions"> SELECT area_code_sq FROM TBL_AREA_C WHERE
+		parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="(" separator=","
+			close=")">#{item}</foreach> OR area_code_sq IN <foreach item="item"
+			collection="addressCodeSq" open="(" separator="," close=")">#{item}</foreach> </sql>
+
 	<resultMap id="projectMap" type="com.example.demo.domain.project.entity.Project">
 		<id property="projectSq" column="project_sq" />
 
@@ -76,12 +87,10 @@
 		TBL_ADDRESS_S a1 ON p.address_sq = a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON
 		p.subway_address_sq = a2.address_sq WHERE p.project_is_deleted_yn = 'N' /* [필터 1] 지역 검색 */ <if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND ( p.address_sq IN (
-		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM
-		TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq"
-				open="(" separator="," close=")">#{item}</foreach> ) ) OR p.subway_address_sq IN (
-		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT area_code_sq FROM
-		TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq"
-				open="(" separator="," close=")">#{item}</foreach> ) ) )
+		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
+				refid="areaCodeInSelectedRegions" /> ) ) OR p.subway_address_sq IN (
+		SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
+				refid="areaCodeInSelectedRegions" /> ) ) )
 		AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL </if> /* [필터 2] 거리 내 검색 */ <if
 			test="userLat != null and userLng != null and distance != null">
 			AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL
@@ -183,12 +192,10 @@
 		p.address_sq = a1.address_sq LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq =
 		a2.address_sq WHERE p.project_is_deleted_yn = 'N' /* [필터 1] 지역 검색 */ <if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND ( p.address_sq IN (SELECT
-		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (SELECT area_code_sq FROM TBL_AREA_C
-		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")">#{item}</foreach>)) OR p.subway_address_sq IN (SELECT
-		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (SELECT area_code_sq FROM TBL_AREA_C
-		WHERE parent_area_code_sq IN <foreach item="item" collection="addressCodeSq" open="("
-				separator="," close=")">#{item}</foreach>)) )
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (<include
+				refid="areaCodeInSelectedRegions" />)) OR p.subway_address_sq IN (SELECT
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN (<include
+				refid="areaCodeInSelectedRegions" />)) )
 		AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL </if> /* [필터 2] 거리 내 검색 */ <if
 			test="userLat != null and userLng != null and distance != null">
 			AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL
@@ -301,10 +308,13 @@
 	<select id="countProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
 		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N'
-		/* [필터 1] 지역 검색 */ <if test="addressCodeSq != null and addressCodeSq.size() > 0"> AND
-		p.address_sq IN ( SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( SELECT
-		area_code_sq FROM TBL_AREA_C WHERE parent_area_code_sq IN <foreach item="item"
-				collection="addressCodeSq" open="(" separator="," close=")"> #{item} </foreach> ) ) </if>
+		/* [필터 1] 지역 검색 — 목록 쿼리와 조건이 같아야 한다. 예전에는 여기만 상세 주소만 봐서
+		   지하철역으로만 등록한 공고가 목록에는 나오는데 총건수에서 빠졌다. */ <if
+			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND (
+		p.address_sq IN ( SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
+				refid="areaCodeInSelectedRegions" /> ) ) OR p.subway_address_sq IN ( SELECT
+		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
+				refid="areaCodeInSelectedRegions" /> ) ) ) </if>
 		/* [필터 2] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
 		(

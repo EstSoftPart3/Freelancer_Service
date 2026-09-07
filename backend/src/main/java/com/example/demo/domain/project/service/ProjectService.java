@@ -225,8 +225,6 @@ public class ProjectService {
 			candidates.add(tokens[1] + " " + tokens[2]);
 		}
 		candidates.add(tokens[1]);
-		// 제주만 「제주도 제주시」처럼 시도명이 붙은 표기로 들어 있다(다른 시도는 안 붙는다).
-		candidates.add(sido + " " + tokens[1]);
 
 		for (String candidate : candidates) {
 			Long areaCodeSq = districtMapper.findAreaCodeBySidoAndSigungu(sido, candidate);
