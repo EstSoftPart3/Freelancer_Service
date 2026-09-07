@@ -170,32 +170,77 @@ public class ProjectService {
 
 	// [공통] DB에서 명칭을 찾아 DTO에 세팅 후 저장하는 프라이빗 메서드
 	private Long registerAddressWithDbCheck(String codeStr, AddressInsertDto dto) {
+		String sigunguName = null;
 		if (codeStr != null && !codeStr.isBlank()) {
-			Long code = Long.parseLong(codeStr);
 			// DB에서 해당 코드의 정확한 명칭 조회
-			String sigunguName = districtMapper.findSigunguByCode(code);
-
-			// 조회된 명칭을 DTO에 강제 세팅 (setter가 없다면 DTO에 추가 필요)
-			dto.setSigungu(sigunguName);
+			Long code = Long.parseLong(codeStr);
+			sigunguName = districtMapper.findSigunguByCode(code);
+			if (sigunguName != null && dto.getAreaCodeSq() == null) {
+				dto.setAreaCodeSq(code);
+			}
 		}
+		if (sigunguName == null) {
+			// 코드가 안 왔거나 TBL_AREA_C 에 없는 코드다. 주소 문자열에서 시군구를 되짚어 본다.
+			// (지하철 주소는 address 가 역 이름이라 여기서 못 건진다 — 아래 검증에서 걸린다)
+			sigunguName = resolveSigunguFromAddress(dto);
+		}
+
+		// TBL_ADDRESS_S 의 sigungu·latitude·longitude·area_code_sq 는 전부 NOT NULL 이다.
+		// 여기서 막지 않으면 INSERT 단계에서 SQLIntegrityConstraintViolationException 이 그대로
+		// 사용자 화면에 노출된다(2026-09-07 운영 오류).
+		if (sigunguName == null || dto.getAreaCodeSq() == null
+				|| dto.getLatitude() == null || dto.getLongitude() == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"주소의 지역 정보를 확인하지 못했습니다. 주소와 지하철역을 다시 검색해주세요.");
+		}
+		dto.setSigungu(sigunguName);
 
 		addressMapper.createAddress(dto);
 		return dto.getAddressSq();
 	}
 
-	// [신규] 상세 주소 등록 메서드
-	private Long registerDetailedAddress(ProjectCreateRequest request) {
-		AddressInsertDto addressDto = AddressInsertDto.forDetailed(request);
-		addressMapper.createAddress(addressDto);
-		return addressDto.getAddressSq();
+	// TBL_AREA_C 의 시도 명칭은 개칭 이전 표기로 들어 있는데, 다음·카카오가 주는 주소는 현행 표기다.
+	// 코드 조회가 실패해 주소 문자열 폴백으로 넘어왔을 때 이 셋만 시도 매칭이 깨진다.
+	private static final Map<String, String> SIDO_ALIAS = Map.of(
+			"강원특별자치도", "강원도",
+			"전북특별자치도", "전라북도",
+			"제주특별자치도", "제주도");
+
+	// 주소 문자열("서울특별시 강남구 …", "경기도 성남시 분당구 …")에서 시군구를 찾아
+	// 명칭을 돌려주고 area_code_sq 도 함께 채운다. 못 찾으면 null.
+	// 세종특별자치시는 하위 시군구가 없어 여기서는 못 건진다 — 코드 조회(36110)로만 커버된다.
+	private String resolveSigunguFromAddress(AddressInsertDto dto) {
+		String address = dto.getAddress();
+		if (address == null || address.isBlank()) {
+			return null;
+		}
+		String[] tokens = address.trim().split("\\s+");
+		if (tokens.length < 2) {
+			return null;
+		}
+		String sido = SIDO_ALIAS.getOrDefault(tokens[0], tokens[0]);
+		// 「성남시 분당구」처럼 두 토큰짜리가 있으므로 긴 후보부터 본다.
+		List<String> candidates = new ArrayList<>();
+		if (tokens.length >= 3) {
+			candidates.add(tokens[1] + " " + tokens[2]);
+		}
+		candidates.add(tokens[1]);
+		// 제주만 「제주도 제주시」처럼 시도명이 붙은 표기로 들어 있다(다른 시도는 안 붙는다).
+		candidates.add(sido + " " + tokens[1]);
+
+		for (String candidate : candidates) {
+			Long areaCodeSq = districtMapper.findAreaCodeBySidoAndSigungu(sido, candidate);
+			if (areaCodeSq != null) {
+				dto.setAreaCodeSq(areaCodeSq);
+				return candidate;
+			}
+		}
+		return null;
 	}
 
-	// [신규] 지하철 주소 등록 메서드
-	private Long registerSubwayAddress(ProjectCreateRequest request) {
-		AddressInsertDto addressDto = AddressInsertDto.forSubway(request);
-		addressMapper.createAddress(addressDto);
-		return addressDto.getAddressSq();
-	}
+	// registerDetailedAddress / registerSubwayAddress 는 삭제했다. 호출되는 곳이 없는데다
+	// sigungu 를 채우지 않고 바로 INSERT 하는 형태라, 되살아나면 NOT NULL 위반이 재발한다.
+	// 주소 등록은 registerAddressWithDbCheck 하나로만 들어간다.
 
 	@Transactional
 	// 계약/직무/기술스택/인터뷰 시간 등 하위 항목 등록
@@ -447,11 +492,11 @@ public class ProjectService {
 		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사
 		if (newDto.getZonecode() == null) newDto.setZonecode(existing.getZonecode());
 		if (newDto.getAreaCodeSq() == null) newDto.setAreaCodeSq(existing.getAreaCodeSq());
-		if (newDto.getSigungu() == null) newDto.setSigungu(existing.getSigungu());
 		if (newDto.getLatitude() == null) newDto.setLatitude(existing.getLatitude());
 		if (newDto.getLongitude() == null) newDto.setLongitude(existing.getLongitude());
-		addressMapper.createAddress(newDto);
-		return newDto.getAddressSq();
+		// 시군구는 기존 값을 복사하지 않고 새 주소 기준으로 다시 잡는다.
+		// 예전에는 그대로 물려받아, 강남구 주소를 서초구로 바꿔도 시군구가 강남구로 남았다.
+		return registerAddressWithDbCheck(request.detailedSigunguCode(), newDto);
 	}
 
 	private boolean isDetailedAddressUnchanged(AddressInsertDto existing, ProjectCreateRequest request) {

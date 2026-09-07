@@ -24,6 +24,10 @@
     <select id="findAreaCodeBySigunguName" parameterType="String" resultType="Long"> SELECT
         area_code_sq FROM TBL_AREA_C WHERE area_sigungu = #{sigunguName} LIMIT 1 </select>
 
+    <select id="findAreaCodeBySidoAndSigungu" resultType="Long"> SELECT child.area_code_sq FROM
+        TBL_AREA_C child JOIN TBL_AREA_C parent ON child.parent_area_code_sq = parent.area_code_sq
+        WHERE parent.area_sigungu = #{sidoName} AND child.area_sigungu = #{sigunguName} LIMIT 1 </select>
+
     <select id="findSigunguByCode" resultType="String"> SELECT area_sigungu FROM tbl_area_c WHERE
         area_code_sq = #{areaCodeSq} </select>
 </mapper>

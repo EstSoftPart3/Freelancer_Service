@@ -78,6 +78,12 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
     const geocoder = new kakaoMaps.services.Geocoder()
     geocoder.addressSearch(place.address_name, (result: Array<{ address?: { b_code?: string } }>, status: string) => {
       const sigunguCode = status === kakaoMaps.services.Status.OK ? (result[0]?.address?.b_code ?? '').slice(0, 5) : ''
+      // 시군구 코드를 못 구하면 선택을 막는다. 조용히 빈 값으로 넘기면 저장 단계에서
+      // TBL_ADDRESS_S.sigungu(NOT NULL) 위반으로 DB 에러가 그대로 노출된다(2026-09-07 운영 오류).
+      if (!sigunguCode) {
+        toast.error('선택한 역의 지역 정보를 찾지 못했습니다. 다른 역으로 다시 검색해주세요.')
+        return
+      }
       onSelect({
         placeName: place.place_name,
         addressName: place.address_name,

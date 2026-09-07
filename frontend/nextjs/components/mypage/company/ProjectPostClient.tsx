@@ -201,7 +201,10 @@ export default function ProjectPostClient({ projectSq }: Props) {
       new window.daum.Postcode({
         oncomplete: (data) => {
           const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
-          setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode })
+          setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode ?? '' })
+          if (!data.sigunguCode) {
+            toast.error('주소의 지역 정보를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
+          }
           // 좌표는 여기서 따로 채운다. 실패를 조용히 넘기면 주소만 있고 좌표가 빈 채로 제출돼
           // 서버에서 500 이 난다(2026-09-02 운영 장애). 실패하면 반드시 알린다.
           setF({ latitude: '', longitude: '' })
@@ -386,6 +389,12 @@ export default function ProjectPostClient({ projectSq }: Props) {
         message: '주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도하거나 주소를 다시 검색해주세요.' },
       { key: 'subway', invalid: !!form.subwayAddressName && (!form.subwayLat || !form.subwayLon),
         message: '지하철역의 좌표를 확인하지 못했습니다. 역을 다시 선택해주세요.' },
+      // 좌표와 같은 이유로 시군구 코드도 빈 채로 제출될 수 있다. 이건 DB 의 sigungu NOT NULL 을
+      // 건드려 등록이 통째로 실패한다(2026-09-07 운영 오류).
+      { key: 'address', invalid: !!form.address && !form.sigunguCode,
+        message: '주소의 지역 정보를 확인하지 못했습니다. 주소를 다시 검색해주세요.' },
+      { key: 'subway', invalid: !!form.subwayAddressName && !form.subwaySigunguCode,
+        message: '지하철역의 지역 정보를 확인하지 못했습니다. 역을 다시 선택해주세요.' },
       // 인원은 「미정」으로 둘 수 있다. 미정이 아닌 줄만 숫자를 확인한다. 합계 상한은 없다.
       { key: 'gradeCounts', invalid: form.gradeCounts.length === 0,
         message: '모집할 등급을 최소 하나 추가해주세요.' },
