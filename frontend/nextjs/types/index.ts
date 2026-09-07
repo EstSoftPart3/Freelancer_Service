@@ -84,6 +84,12 @@ declare global {
               addr: string,
               cb: (result: Array<{ x: string; y: string; address?: { b_code?: string } }>, status: string) => void,
             ) => void
+            // 좌표 → 행정구역. region_type 'B'(법정동) 항목의 code 앞 5자리가 시군구 코드다.
+            coord2RegionCode: (
+              x: number,
+              y: number,
+              cb: (result: Array<{ region_type?: string; code?: string }>, status: string) => void,
+            ) => void
           }
           Places: new () => {
             keywordSearch: (

@@ -73,28 +73,57 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
     }
   }
 
-  async function handleSelect(place: KakaoPlace) {
+  // 좌표 → 법정동 코드. 검색 결과가 이미 좌표를 주므로 이 경로는 실패할 이유가 없다.
+  // 예전에는 역의 주소 문자열을 addressSearch 로 다시 지오코딩했는데, 문자열 재해석이라
+  // 실패할 수 있었고 실제로 빈 코드가 저장까지 흘러갔다(2026-09-07 운영 오류).
+  function regionCodeByCoord(x: string, y: string): Promise<string> {
     const kakaoMaps = window.kakao.maps
-    const geocoder = new kakaoMaps.services.Geocoder()
-    geocoder.addressSearch(place.address_name, (result: Array<{ address?: { b_code?: string } }>, status: string) => {
-      const sigunguCode = status === kakaoMaps.services.Status.OK ? (result[0]?.address?.b_code ?? '').slice(0, 5) : ''
-      // 시군구 코드를 못 구하면 선택을 막는다. 조용히 빈 값으로 넘기면 저장 단계에서
-      // TBL_ADDRESS_S.sigungu(NOT NULL) 위반으로 DB 에러가 그대로 노출된다(2026-09-07 운영 오류).
-      if (!sigunguCode) {
-        toast.error('선택한 역의 지역 정보를 찾지 못했습니다. 다른 역으로 다시 검색해주세요.')
-        return
-      }
-      onSelect({
-        placeName: place.place_name,
-        addressName: place.address_name,
-        lat: Number(place.y),
-        lng: Number(place.x),
-        sigunguCode,
-      })
-      setKeyword('')
-      setResults([])
-      onClose()
+    return new Promise((resolve) => {
+      new kakaoMaps.services.Geocoder().coord2RegionCode(
+        Number(x), Number(y),
+        (result: Array<{ region_type?: string; code?: string }>, status: string) => {
+          if (status !== kakaoMaps.services.Status.OK) return resolve('')
+          // region_type 'B' 가 법정동이다. 'H'(행정동)는 코드 체계가 달라 TBL_AREA_C 와 안 맞는다.
+          const legal = result.find((r) => r.region_type === 'B') ?? result[0]
+          resolve((legal?.code ?? '').slice(0, 5))
+        },
+      )
     })
+  }
+
+  // 좌표 역조회가 안 되는 예외 상황에서만 쓰는 예비 경로(기존 방식)
+  function regionCodeByAddress(address: string): Promise<string> {
+    const kakaoMaps = window.kakao.maps
+    return new Promise((resolve) => {
+      new kakaoMaps.services.Geocoder().addressSearch(
+        address,
+        (result: Array<{ address?: { b_code?: string } }>, status: string) => {
+          if (status !== kakaoMaps.services.Status.OK) return resolve('')
+          resolve((result[0]?.address?.b_code ?? '').slice(0, 5))
+        },
+      )
+    })
+  }
+
+  async function handleSelect(place: KakaoPlace) {
+    const sigunguCode = (await regionCodeByCoord(place.x, place.y))
+      || (await regionCodeByAddress(place.address_name))
+    // 두 경로가 다 실패하면 선택을 막는다. 빈 값으로 넘기면 저장 단계에서
+    // TBL_ADDRESS_S.sigungu(NOT NULL) 위반으로 DB 에러가 그대로 노출된다.
+    if (!sigunguCode) {
+      toast.error('선택한 역의 지역 정보를 찾지 못했습니다. 다른 역으로 다시 검색해주세요.')
+      return
+    }
+    onSelect({
+      placeName: place.place_name,
+      addressName: place.address_name,
+      lat: Number(place.y),
+      lng: Number(place.x),
+      sigunguCode,
+    })
+    setKeyword('')
+    setResults([])
+    onClose()
   }
 
   return (

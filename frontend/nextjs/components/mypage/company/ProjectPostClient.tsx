@@ -202,9 +202,6 @@ export default function ProjectPostClient({ projectSq }: Props) {
         oncomplete: (data) => {
           const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
           setF({ address: addr, postcode: data.zonecode, sigunguCode: data.sigunguCode ?? '' })
-          if (!data.sigunguCode) {
-            toast.error('주소의 지역 정보를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
-          }
           // 좌표는 여기서 따로 채운다. 실패를 조용히 넘기면 주소만 있고 좌표가 빈 채로 제출돼
           // 서버에서 500 이 난다(2026-09-02 운영 장애). 실패하면 반드시 알린다.
           setF({ latitude: '', longitude: '' })
@@ -213,6 +210,13 @@ export default function ProjectPostClient({ projectSq }: Props) {
             geocoder.addressSearch(addr, (result, status) => {
               if (status === window.kakao.maps.services.Status.OK && result[0]) {
                 setF({ latitude: result[0].y, longitude: result[0].x })
+                // 같은 응답에 법정동 코드가 들어 있다. 다음이 sigunguCode 를 빠뜨렸을 때
+                // 이걸로 메운다 — 추가 호출 없이 얻는 값이라 버릴 이유가 없다.
+                if (!data.sigunguCode) {
+                  const bCode = (result[0].address?.b_code ?? '').slice(0, 5)
+                  if (bCode) setF({ sigunguCode: bCode })
+                  else toast.error('주소의 지역 정보를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
+                }
               } else {
                 setF({ latitude: '', longitude: '' })
                 toast.error('주소의 좌표를 찾지 못했습니다. 다른 주소로 다시 검색해주세요.')
