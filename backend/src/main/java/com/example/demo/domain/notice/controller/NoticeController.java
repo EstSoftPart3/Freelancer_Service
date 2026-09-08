@@ -30,6 +30,7 @@ import com.example.demo.common.File.FileCryptoUtil;
 import com.example.demo.common.viewcount.ViewCountDedupService;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
 import com.example.demo.domain.community.dto.response.BoardResponse;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.entity.BoardAttachment;
 import com.example.demo.domain.community.mapper.BoardMapper;
 import com.example.demo.domain.community.service.BoardService;
@@ -92,7 +93,7 @@ public class NoticeController {
             @PathVariable("boardSq") Long boardSq,
             HttpServletRequest request) {
         if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
-            boardService.addViewCntBoard(boardSq);
+            boardService.addViewCntBoard(boardSq, BoardTypeCode.NOTICE.getCode());
         }
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가 완료", null));
     }
@@ -113,6 +114,10 @@ public class NoticeController {
      */
     @GetMapping("/download/{fileSq}")
     public ResponseEntity<Resource> downloadFile(@PathVariable("fileSq") Long fileSq) {
+
+        // 이 엔드포인트도 fileSq 만 보고 파일을 내주므로 게시판 다운로드와 같은 권한 검사를 건다
+        // (경로가 /notice 일 뿐 첨부 테이블은 공용이라, 없으면 비공개 문의 첨부가 여기로 새어 나간다)
+        boardService.requireAttachmentReadable(fileSq);
 
         BoardAttachment attachment = boardMapper.findFile(fileSq);
 

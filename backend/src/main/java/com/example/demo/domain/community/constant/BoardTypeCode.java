@@ -41,13 +41,6 @@ public enum BoardTypeCode {
      */
     private final String path;
 
-    public static BoardTypeCode fromCode(Long code) {
-        return Arrays.stream(values())
-                .filter(t -> t.code.equals(code))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("알 수 없는 게시판 구분 코드입니다: " + code));
-    }
-
     /**
      * 알 수 없는 코드도 일단 일반게시판으로 취급한다.
      * 기존 {@code BoardService.createBoard} 가 그렇게 동작했으므로 그 행동을 보존한다.
@@ -88,14 +81,5 @@ public enum BoardTypeCode {
                 .findFirst()
                 .orElse(NORMAL)
                 .getPath();
-    }
-
-    /** 코드로 경로 접두를 만든다. {@link #pathPrefixOfTyp(String)} 의 숫자 버전. */
-    public static String pathPrefixOfCode(Long code) {
-        return "/" + Arrays.stream(values())
-                .filter(t -> t.code.equals(code))
-                .findFirst()
-                .orElse(NORMAL)
-                .getPath() + "/";
     }
 }

@@ -37,6 +37,17 @@ public enum BoardAdoptStatusCode {
 	private final Long code;
 	private final String label;
 
+	/**
+	 * 사용자가 직접 지정할 수 있는 상태인지. {@link #ADOPTED} 는 제외한다 —
+	 * 채택완료는 {@code AnswerService.adoptAnswer} 가 답변 1건과 함께 세팅해야 하는 상태라,
+	 * 상태 변경 API 로 곧장 찍으면 "채택완료인데 채택된 답변이 없는" 글이 생긴다.
+	 */
+	public static boolean isUserSelectable(Long code) {
+		return IN_PROGRESS.code.equals(code)
+				|| SELF_SOLVED.code.equals(code)
+				|| UNRESOLVED.code.equals(code);
+	}
+
 	/** 알 수 없는 코드는 진행중으로 본다 — 화면에 빈 칸을 내느니 기본 상태로 보이는 편이 낫다. */
 	public static String labelOf(Long code) {
 		return Arrays.stream(values())

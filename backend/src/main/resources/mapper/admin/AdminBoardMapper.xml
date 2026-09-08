@@ -39,8 +39,11 @@
         a.answer_description_edt AS description, 'ANSWER' AS mainType FROM TBL_BOARD_ANSWER_S a JOIN
         TBL_USER_M u ON a.user_sq = u.user_sq
         <!-- 답변도 원글의 게시판 유형을 따라간다. 이 JOIN 이 없으면 게시글은 걸러졌는데
-             거기 달린 답변만 남아, 고객의 소리 답변이 이 목록에 섞인다(실제로 그랬다). -->
+             거기 달린 답변만 남아, 고객의 소리 답변이 이 목록에 섞인다(실제로 그랬다).
+             삭제 여부도 원글을 따른다 — 게시글 삭제(deleteMaster/BoardService.deleteBoard)는
+             답변까지 내리지 않으므로, 이 조건이 없으면 원글이 사라진 뒤에도 답변만 목록에 남는다. -->
         JOIN TBL_BOARD_M pb ON pb.board_sq = a.board_sq AND pb.board_type_cd IN (1401, 1402)
+        AND pb.board_is_deleted_yn = 'N'
         WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE
         1=1 <if
             test="typeCds != null and typeCds.size > 0"> AND boardTypeCd IN <foreach item="t"
@@ -71,6 +74,7 @@
         1499 AS boardTypeCd, NULL AS boardCategoryCd FROM TBL_BOARD_ANSWER_S a JOIN TBL_USER_M u ON a.user_sq = u.user_sq
         <!-- 목록 쿼리와 같은 조건이어야 한다 — 한쪽만 고치면 총 건수가 어긋난다 -->
         JOIN TBL_BOARD_M pb ON pb.board_sq = a.board_sq AND pb.board_type_cd IN (1401, 1402)
+        AND pb.board_is_deleted_yn = 'N'
         WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE 1=1 <if
             test="typeCds != null and typeCds.size > 0"> AND boardTypeCd IN <foreach item="t"
                 collection="typeCds" open="(" separator="," close=")">#{t}</foreach>

@@ -61,4 +61,12 @@ public interface BoardMapper {
 
       List<CommunityBestItemDTO> findBestBoards(@Param("period") String period, @Param("size") int size);
 
+      /**
+       * 첨부파일이 붙어 있는 게시글 번호. 다운로드 권한을 판정하려면 fileSq → boardSq 역방향
+       * 조회가 필요하다. 글 첨부(TBL_BOARD_ATTACHMENT_S)와 답변 첨부
+       * (TBL_BOARD_ANSWER_ATTACHMENT_S) 를 모두 훑는다 — 답변 첨부를 빼면 비공개 문의에 달린
+       * 운영자 답변의 첨부가 그대로 공개된다. 어디에도 매달려 있지 않은 파일이면 null 이다.
+       */
+      Long findBoardSqByFileSq(@Param("fileSq") Long fileSq);
+
 }

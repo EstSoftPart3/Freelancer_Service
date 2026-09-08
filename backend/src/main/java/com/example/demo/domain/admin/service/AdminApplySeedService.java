@@ -179,12 +179,16 @@ public class AdminApplySeedService {
 		LocalDateTime baseAt = (req.getPlannedAt() == null || req.getPlannedAt().isBlank())
 				? LocalDateTime.now()
 				: LocalDateTime.parse(req.getPlannedAt(), TS);
-		return buildPlan(req, baseAt);
+		return buildPlan(req, baseAt, mapper.findRecruitingProjects(req.getProjectSqs()), mapper.findBots());
 	}
 
-	private ApplySeedPlanResponseDTO buildPlan(ApplySeedRequestDTO req, LocalDateTime baseAt) {
-		List<ApplySeedProjectDTO> projects = mapper.findRecruitingProjects(req.getProjectSqs());
-		List<ApplySeedBotDTO> allBots = mapper.findBots();
+	/**
+	 * 공고·봇 목록을 <b>인자로 받는다</b>. 등록({@link #commit})은 같은 목록으로 지원일시와 카운터까지
+	 * 계산해야 해서, 여기서 다시 조회하면 원격 DB 왕복만 늘고 그 사이에 목록이 바뀌면 배분과
+	 * 실제 INSERT 대상이 어긋난다.
+	 */
+	private ApplySeedPlanResponseDTO buildPlan(ApplySeedRequestDTO req, LocalDateTime baseAt,
+			List<ApplySeedProjectDTO> projects, List<ApplySeedBotDTO> allBots) {
 		List<ApplySeedBotDTO> usable = allBots.stream().filter(b -> b.getResumeSq() != null).toList();
 
 		List<String> warnings = new ArrayList<>();
@@ -321,14 +325,19 @@ public class AdminApplySeedService {
 		int createdResumes = ensureResumes();
 
 		LocalDateTime baseAt = LocalDateTime.parse(req.getPlannedAt(), TS);
-		ApplySeedPlanResponseDTO plan = buildPlan(req, baseAt);
+
+		// ensureResumes 뒤에 조회해야 방금 만든 이력서가 보인다. 배분·이력서 매핑·모집 시작일이
+		// 모두 이 두 목록 하나에서 나오므로 도중에 목록이 바뀌어 어긋날 일이 없다.
+		List<ApplySeedProjectDTO> projects = mapper.findRecruitingProjects(req.getProjectSqs());
+		List<ApplySeedBotDTO> bots = mapper.findBots();
+		ApplySeedPlanResponseDTO plan = buildPlan(req, baseAt, projects, bots);
 
 		Long statusCd = requireCode("APPLIED", 800L, "지원 상태(801 지원중)");
 		Long memberTypeCd = requireCode("PERSONAL", 300L, "회원 구분(301 개인)");
 
 		// user_sq -> resume_sq. 봇마다 매번 조회하면 100개 공고에서 수천 번 돈다.
 		Map<Long, Long> resumeByUser = new HashMap<>();
-		for (ApplySeedBotDTO b : mapper.findBots()) {
+		for (ApplySeedBotDTO b : bots) {
 			if (b.getResumeSq() != null) {
 				resumeByUser.put(b.getUserSq(), b.getResumeSq());
 			}
@@ -336,7 +345,7 @@ public class AdminApplySeedService {
 
 		// 공고별 모집 시작일 — 지원일시를 그 뒤로 두기 위해 필요하다.
 		Map<Long, LocalDate> startByProject = new HashMap<>();
-		for (ApplySeedProjectDTO p : mapper.findRecruitingProjects(req.getProjectSqs())) {
+		for (ApplySeedProjectDTO p : projects) {
 			startByProject.put(p.getProjectSq(), p.getRecruitStartDt());
 		}
 

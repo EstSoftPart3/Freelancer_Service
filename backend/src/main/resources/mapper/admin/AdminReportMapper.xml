@@ -53,13 +53,14 @@
         <include refid="reportJoins" /> WHERE 1=1 <include
             refid="reportWhere" /> ORDER BY <choose>
             <when test="sortField == 'reporterNm'"> u.user_nm </when>
-            <when test="sortField == 'targetTtl'"> (CASE WHEN r.report_target_type_cd = 2001 THEN
-        b.board_ttl WHEN r.report_target_type_cd = 2002 THEN a.answer_ttl ELSE
-        cmt.comment_description_txt END) </when>
+            <!-- targetTtl·originTypeCd 는 CASE 식을 여기에 다시 적지 않고 reportColumns 의
+                 <b>별칭을 그대로 쓴다</b>. 식을 복사해 두면 한쪽만 고쳤을 때 정렬 결과가 화면에
+                 보이는 값과 조용히 어긋난다(실제로 그랬다 — 답변 1404/댓글 1405 시절 식이 남아 있었다).
+                 MariaDB 는 ORDER BY 에서 SELECT 별칭을 받으므로 중복을 둘 이유가 없다. -->
+            <when test="sortField == 'targetTtl'"> targetTtl </when>
             <when test="sortField == 'reasonNm'"> c2.common_code_nm </when>
             <when test="sortField == 'statusCd'"> r.report_process_status_cd </when>
-            <when test="sortField == 'originTypeCd'"> (CASE WHEN r.report_target_type_cd = 2001 THEN
-        b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1404 ELSE 1405 END) </when>
+            <when test="sortField == 'originTypeCd'"> originTypeCd </when>
             <otherwise> r.report_created_at_dtm </otherwise>
         </choose> ${sortOrder} LIMIT
         #{size} OFFSET #{offset} </select>

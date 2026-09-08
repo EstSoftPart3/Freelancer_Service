@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.dto.CommonCodeDTO;
 import com.example.demo.domain.community.dto.CommunityBestItemDTO;
 import com.example.demo.domain.community.dto.response.BoardListResponse;
@@ -48,10 +49,10 @@ public class CommunityController {
 		// 주의: 3항 연산자 체인에서 long 리터럴과 null을 섞으면 결과 타입이 long으로 단일화되며
 		// null 분기에서 암묵적 언박싱이 일어나 NPE가 발생한다(boardType=all일 때 재현됨).
 		Long boardTypeCd;
-		if ("board".equals(boardType)) {
-			boardTypeCd = 1401L;
-		} else if ("qna".equals(boardType)) {
-			boardTypeCd = 1402L;
+		if (BoardTypeCode.NORMAL.getPath().equals(boardType)) {
+			boardTypeCd = BoardTypeCode.NORMAL.getCode();
+		} else if (BoardTypeCode.QNA.getPath().equals(boardType)) {
+			boardTypeCd = BoardTypeCode.QNA.getCode();
 		} else {
 			boardTypeCd = null;
 		}

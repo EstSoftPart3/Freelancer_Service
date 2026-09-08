@@ -167,7 +167,9 @@ public class AdminSeedService {
 	 * </p>
 	 */
 	private SeedRevokeResponseDTO doRevoke(SeedRevokeRequestDTO request, boolean execute) {
-		List<Long> userSqs = resolveAuthors(request.getUserSqs()).stream()
+		// botOnly=true — 회수는 계정을 직접 지정해도 봇만 대상이다. 이 인자가 빠지면
+		// userSqs 에 실사용자 번호를 넣는 것만으로 그 사람의 글·답변·댓글이 통째로 내려간다.
+		List<Long> userSqs = resolveAuthors(request.getUserSqs(), true).stream()
 				.map(SeedAuthorDTO::getUserSq)
 				.toList();
 
@@ -228,7 +230,9 @@ public class AdminSeedService {
 
 	private SeedPlanResponseDTO buildPlan(SeedCommunityRequestDTO request) {
 		LocalDateTime reference = resolveReferenceTime(request.getPlannedAt());
-		List<SeedAuthorDTO> authors = resolveAuthors(request.getOptions().getAuthorUserSqs());
+		// 등록은 봇이 아닌 계정도 작성자로 지정할 수 있다(운영자가 골라 넣는 경우). 회수와 달리
+		// 남의 데이터를 지우는 동작이 아니라서 여기서는 봇 조건을 강제하지 않는다.
+		List<SeedAuthorDTO> authors = resolveAuthors(request.getOptions().getAuthorUserSqs(), false);
 		List<CommonCodeDTO> categories = commonCodeMapper
 				.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode());
 
@@ -353,24 +357,36 @@ public class AdminSeedService {
 	 * 나중에 추적해야 한다.
 	 * </p>
 	 */
-	private List<SeedAuthorDTO> resolveAuthors(List<Long> requestedUserSqs) {
-		List<SeedAuthorDTO> authors = adminSeedMapper.findSeedAuthors(requestedUserSqs);
+	private List<SeedAuthorDTO> resolveAuthors(List<Long> requestedUserSqs, boolean botOnly) {
+		List<SeedAuthorDTO> authors = adminSeedMapper.findSeedAuthors(requestedUserSqs, botOnly);
 
 		if (authors.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					requestedUserSqs == null || requestedUserSqs.isEmpty()
 							? "시드에 쓸 봇 계정이 없습니다. 봇 계정을 먼저 생성해주세요."
-							: "지정한 계정을 찾을 수 없습니다. 개인회원(301)이면서 탈퇴하지 않은 계정만 쓸 수 있습니다.");
+							: botOnly
+									? "지정한 계정을 찾을 수 없습니다. 회수는 봇 계정(bot_)만 대상으로 할 수 있습니다."
+									: "지정한 계정을 찾을 수 없습니다. 개인회원(301)이면서 탈퇴하지 않은 계정만 쓸 수 있습니다.");
 		}
 
-		if (requestedUserSqs != null && !requestedUserSqs.isEmpty() && authors.size() != requestedUserSqs.size()) {
-			List<Long> found = authors.stream().map(SeedAuthorDTO::getUserSq).toList();
+		// 요청 목록은 중복을 걷어내고 비교한다. 원본 크기와 비교하면 [5, 5] 처럼 같은 번호를
+		// 두 번 보낸 것만으로 건수가 어긋나, 빠진 계정이 하나도 없는데 "찾을 수 없는 계정이 있습니다: "
+		// 라는 (뒤가 빈) 메시지로 거절된다.
+		if (requestedUserSqs != null && !requestedUserSqs.isEmpty()) {
+			Set<Long> found = authors.stream().map(SeedAuthorDTO::getUserSq).collect(Collectors.toSet());
 			String missing = requestedUserSqs.stream()
 					.filter(sq -> !found.contains(sq))
+					.distinct()
 					.map(String::valueOf)
 					.collect(Collectors.joining(", "));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"찾을 수 없는 계정이 있습니다: " + missing);
+			if (!missing.isEmpty()) {
+				// botOnly 경로에서는 "없는 번호" 와 "있지만 봇이 아닌 계정" 이 같은 결과로 떨어진다.
+				// 그대로 "찾을 수 없는 계정" 이라고만 하면, 실사용자 번호를 넣은 관리자가 번호를
+				// 잘못 적은 줄 알고 계속 다시 시도한다. 걸러진 이유를 함께 알려 준다.
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"찾을 수 없는 계정이 있습니다: " + missing
+								+ (botOnly ? " (회수는 봇 계정(bot_)만 대상으로 할 수 있습니다.)" : ""));
+			}
 		}
 
 		return authors;

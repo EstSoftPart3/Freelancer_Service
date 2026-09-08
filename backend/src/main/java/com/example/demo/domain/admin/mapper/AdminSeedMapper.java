@@ -32,8 +32,12 @@ public interface AdminSeedMapper {
 	 * {@code userSqs} 가 비어 있으면 봇 계정({@code user_id} 가 {@code bot_} 로 시작)을 전부 가져온다.
 	 * 관리자 계정이 섞이면 FO 목록에 운영자 명의 더미글이 생기므로 개인회원(301)만 대상이다.
 	 * </p>
+	 *
+	 * @param botOnly {@code true} 면 {@code userSqs} 를 직접 지정해도 봇 조건이 유지된다.
+	 *                <b>회수 경로는 반드시 이 값을 준다</b> — 그러지 않으면 실사용자 번호를 넣는 것만으로
+	 *                그 사람의 글·답변·댓글이 광역 회수 대상이 된다.
 	 */
-	List<SeedAuthorDTO> findSeedAuthors(@Param("userSqs") List<Long> userSqs);
+	List<SeedAuthorDTO> findSeedAuthors(@Param("userSqs") List<Long> userSqs, @Param("botOnly") boolean botOnly);
 
 	/**
 	 * 주어진 제목 중 <b>이미 등록돼 있는 것</b>만 돌려준다.

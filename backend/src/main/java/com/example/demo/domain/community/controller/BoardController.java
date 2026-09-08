@@ -143,7 +143,7 @@ public class BoardController {
 	@PatchMapping("/{boardSq}")
 	public ResponseEntity<ApiResponse<NullType>> deleteBoard(@AuthenticationPrincipal Long userSq,
 			@PathVariable("boardSq") Long boardSq) {
-		boardService.deleteBoard(userSq, boardSq);
+		boardService.deleteBoard(userSq, boardSq, NORMAL_BOARD);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 삭제가 완료되었습니다.", null));
 	}
 
@@ -154,7 +154,7 @@ public class BoardController {
 			@PathVariable("boardSq") Long boardSq,
 			HttpServletRequest request) {
 		if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
-			boardService.addViewCntBoard(boardSq);
+			boardService.addViewCntBoard(boardSq, NORMAL_BOARD);
 		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
 	}
@@ -207,6 +207,10 @@ public class BoardController {
 
 	@GetMapping("/download/{fileSq}")
 	public ResponseEntity<Resource> downloadFile(@PathVariable("fileSq") Long fileSq) {
+
+		// 0. 열람 권한 확인 — 비공개 고객의 소리 첨부는 작성자·관리자만 내려받을 수 있다.
+		// (이 엔드포인트는 permitAll 이라 이 검사가 없으면 fileSq 만으로 첨부가 새어 나간다)
+		boardService.requireAttachmentReadable(fileSq);
 
 		// 1. DB에서 파일 정보 조회
 		BoardAttachment attachment = boardMapper.findFile(fileSq);

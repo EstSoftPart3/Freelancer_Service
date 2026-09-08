@@ -34,6 +34,7 @@ import com.example.demo.domain.community.mapper.CommentMapper;
 import com.example.demo.domain.community.mapper.CommunityUserMapper;
 import com.example.demo.domain.community.mapper.RecommendationMapper;
 import com.example.demo.domain.community.service.AnswerService;
+import com.example.demo.domain.community.service.BoardService;
 import com.example.demo.domain.community.service.CommentService;
 import com.example.demo.domain.mypage.dto.ProfileImageInfoDTO;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
@@ -60,6 +61,8 @@ public class AdminBoardService {
         private final InformationEditService informationEditService;
         private final CommentService commentService;
         private final AnswerService answerService;
+        // 카테고리 유효성 판정을 FO 와 공유한다(BO 에서만 통과하는 코드가 생기지 않도록).
+        private final BoardService boardService;
         private final NotificationService notificationService;
 
         @Transactional(readOnly = true)
@@ -168,6 +171,12 @@ public class AdminBoardService {
 
                 board.setBoardTtl(boardRequest.getTtl());
                 board.setBoardDescriptionEdt(boardRequest.getDescription());
+                // BO 수정 드로어는 카테고리를 함께 보내는데 예전에는 그 값을 버렸다 —
+                // 관리자가 카테고리를 바꾸고 "수정되었습니다"를 받고도 실제로는 그대로였다.
+                // 카테고리 개념이 없는 게시판(공지 등)은 건드리지 않는다.
+                if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd) && boardRequest.getCategoryCd() != null) {
+                        board.setBoardCategoryCd(boardService.resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
+                }
                 if (boardRequest.getBoardAdoptStatusCd() != null) {
                         board.setBoardAdoptStatusCd(boardRequest.getBoardAdoptStatusCd());
                 }

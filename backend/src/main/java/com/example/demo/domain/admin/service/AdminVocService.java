@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.common.util.SortDirectionUtil;
 import com.example.demo.domain.admin.dto.AdminBoardListDTO;
@@ -83,6 +86,16 @@ public class AdminVocService {
      */
     @Transactional
     public void createAnswer(Long userSq, Long boardSq, String ttl, String description) {
+        // AnswerService.createAnswer 는 null 만 막고 빈 문자열은 통과시킨다. 빈 답변이 들어가면
+        // 문의자에게 알림(2607)이 나가고, answered 필터가 EXISTS 기준이라 이 문의는 영구히
+        // '답변완료' 로 잡혀 미답변 목록에서 사라진다.
+        if (!StringUtils.hasText(ttl)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "제목을 입력해주세요.");
+        }
+        if (isBlankBody(description)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "내용을 입력해주세요.");
+        }
+
         AnswerRequest request = new AnswerRequest();
         request.setUserSq(userSq);
         request.setBoardSq(boardSq);
@@ -92,6 +105,29 @@ public class AdminVocService {
         request.setSkillTags(Collections.emptyList());
 
         answerService.createAnswer(request);
+    }
+
+    /**
+     * 답변 본문이 사실상 비었는가.
+     *
+     * <p>
+     * BO 답변 입력은 지금 평문 textarea 지만, 에디터로 바뀌어도 통과하지 않게 태그를 벗겨서
+     * 판정한다(빈 에디터는 {@code <p><br></p>} 를 보낸다). <b>태그 이름 형태를 갖춘 것만</b>
+     * 벗기는 이유 — {@code <[^>]*>} 로 뭉뚱그리면 본문 전체가
+     * {@code <https://guide.example.com/faq>} 하나인 평문 답변까지 빈 값으로 오판해 거절한다.
+     * <b>{@code SeedTextToHtmlConverter#isHtmlEmpty} 와 규칙이 같지 않다</b> — 그쪽은 변환한
+     * HTML 만 보므로 {@code <[^>]*>} 로 뭉뚱그려도 되지만, 여기는 관리자가 친 평문이 그대로 들어온다.
+     * {@code &nbsp;} 를 대소문자 가리지 않고 지우는 것만 그쪽과 같다.
+     * </p>
+     */
+    private boolean isBlankBody(String description) {
+        if (description == null) {
+            return true;
+        }
+        String stripped = description
+                .replaceAll("</?[a-zA-Z][a-zA-Z0-9]*(?:\\s[^>]*)?/?>", "")
+                .replaceAll("(?i)&nbsp;", " ");
+        return !StringUtils.hasText(stripped);
     }
 
     /**

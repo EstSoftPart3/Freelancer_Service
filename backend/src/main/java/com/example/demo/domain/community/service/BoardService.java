@@ -17,6 +17,8 @@ import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
+import com.example.demo.common.security.CurrentUser;
+import com.example.demo.domain.community.constant.BoardAdoptStatusCode;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.converter.NormalTagConverter;
 import com.example.demo.domain.community.converter.SkillTagConverter;
@@ -83,6 +85,13 @@ public class BoardService {
 			List<Long> searchSkillTags, String sortType, Long page, Long size) {
 		if (page < 1)
 			page = 1L;
+		// size 는 쿼리 파라미터가 그대로 들어온다. 검증하지 않으면 ?size=-1 이 LIMIT -1 로 내려가
+		// SQL 문법 오류 500 이 나고, ?size=100000 은 목록 한 건마다 태그·답변수·작성자를 다시 읽는
+		// N+1 때문에 수십만 쿼리를 유발한다. getBestBoards 와 같은 방식으로 여기서도 조인다.
+		if (size == null || size < 1)
+			size = 10L;
+		if (size > 100)
+			size = 100L;
 		Long offset = (page - 1L) * size;
 		if (sortType == null || sortType.isEmpty())
 			sortType = "latest";
@@ -164,7 +173,12 @@ public class BoardService {
 				.filter(Objects::nonNull)
 				.map(comment -> {
 					UserDTO userDto = communityUserMapper.findById(comment.getUserSq());
-					String profileImageUrl = informationEditService.getProfileImageUrl(userDto.getUserSq());
+					// 탈퇴 회원은 findById 가 null 을 돌려준다(쿼리에 user_is_deleted_yn = 'N' 이 걸려 있다).
+					// 여기서 바로 getUserSq() 를 부르면 댓글 한 건 때문에 게시글 상세 전체가 500 이 난다.
+					// CommentResponse.fromEntity 는 이미 null userDto 를 "탈퇴한 사용자"로 처리한다.
+					String profileImageUrl = userDto != null
+							? informationEditService.getProfileImageUrl(userDto.getUserSq())
+							: null;
 					return CommentResponse.fromEntity(comment, userDto, profileImageUrl);
 				})
 				.collect(Collectors.toList());
@@ -223,12 +237,23 @@ public class BoardService {
 	 * 값이 실려 와도 무시한다(FO 실수로 엉뚱한 게시판에 카테고리가 박히는 것을 막는다).
 	 *
 	 * <p>
-	 * 미선택(null)은 정상이며 '미분류'로 저장된다 — 카테고리 도입 전 기존 글도 같은 상태다.
-	 * 반면 목록에 없는 코드가 오면 조용히 삼키지 않고 거절한다. 저장은 되돌리기 어렵고,
+	 * 일반게시판에서는 <b>미선택(null)도 거절한다</b>(400). 기존 글의 NULL 은 '미분류'로 남겨 두지만,
+	 * 새 글·수정 글까지 미분류를 허용하면 어느 카테고리 탭에도 걸리지 않는 글이 계속 늘어난다.
+	 * 그래서 수정 요청에도 카테고리를 반드시 실어 보내야 한다 — 카테고리를 빼고 제목만 고치는
+	 * 클라이언트가 있으면 그쪽이 400 을 맞는다.
+	 * </p>
+	 *
+	 * <p>
+	 * 목록에 없는 코드도 조용히 삼키지 않고 거절한다. 저장은 되돌리기 어렵고,
 	 * 잘못된 코드가 들어가면 어느 탭에서도 보이지 않는 유령 글이 된다.
 	 * </p>
+	 *
+	 * <p>
+	 * BO 수정 경로({@code AdminBoardService.updateBoardLogic})도 이 메서드를 쓴다 —
+	 * 활성 카테고리 판정이 FO 와 갈리면 BO 에서만 통과하는 코드가 생긴다.
+	 * </p>
 	 */
-	private Long resolveCategoryCd(Long boardTypeCd, Long categoryCd) {
+	public Long resolveCategoryCd(Long boardTypeCd, Long categoryCd) {
 		if (!BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
 			return null;
 		}
@@ -242,19 +267,9 @@ public class BoardService {
 	}
 
 	/**
-	 * 현재 노출 중인 카테고리 코드 집합. <b>공통코드가 유일한 출처다.</b>
-	 *
-	 * <p>
-	 * 하드코딩된 enum으로 검증하면 공통코드를 비활성(`is_active_yn='N'`)으로 내려도
-	 * 그 코드로 계속 글을 쓸 수 있고, 이름을 바꿔도 뱃지 라벨은 옛 값이 남는다.
-	 * 목록·뱃지·검증이 전부 같은 표를 보게 해서 그 어긋남을 없앤다.
-	 * 글쓰기는 드문 요청이라 여기서 매번 조회해도 비용이 문제되지 않는다.
-	 * </p>
-	 */
-	/**
 	 * 비공개 플래그를 'Y'/'N' 으로 환산한다. <b>고객의 소리(1404)에서만 유효</b>하고
-	 * 다른 게시판은 값이 실려 와도 'N' 으로 눌러 담는다 — 일반 게시판에 비공개 글이 생기면
-	 * 목록 필터가 조용히 그 글을 숨겨 "글이 사라졌다"는 신고로 돌아온다.
+	 * 다른 게시판은 값이 실려 와도 'N' 으로 눌러 담는다 — 비공개 개념이 없는 게시판에
+	 * 'Y' 가 박히면 상세 조회 권한 검사가 없는 채로 목록에만 자물쇠가 뜨는 반쪽 상태가 된다.
 	 *
 	 * <p>
 	 * 반환값 null 은 "건드리지 않음"이다(수정 시 기존 값 유지). 등록은 매퍼의 COALESCE 가 'N' 으로 채운다.
@@ -270,6 +285,16 @@ public class BoardService {
 		return isSecret ? "Y" : "N";
 	}
 
+	/**
+	 * 현재 노출 중인 카테고리 코드 집합. <b>공통코드가 유일한 출처다.</b>
+	 *
+	 * <p>
+	 * 하드코딩된 enum으로 검증하면 공통코드를 비활성(`is_active_yn='N'`)으로 내려도
+	 * 그 코드로 계속 글을 쓸 수 있고, 이름을 바꿔도 뱃지 라벨은 옛 값이 남는다.
+	 * 목록·뱃지·검증이 전부 같은 표를 보게 해서 그 어긋남을 없앤다.
+	 * 글쓰기는 드문 요청이라 여기서 매번 조회해도 비용이 문제되지 않는다.
+	 * </p>
+	 */
 	private Set<Long> activeCategoryCds() {
 		return commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())
 				.stream()
@@ -319,7 +344,7 @@ public class BoardService {
 		}
 
 		// 2. 스킬 태그 처리 수정 (updateBoard 포함)
-		if (board.getBoardTypeCd() == 1402 &&
+		if (BoardTypeCode.QNA.getCode().equals(board.getBoardTypeCd()) &&
 				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
 			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
 					board.getBoardSq(), null, boardRequest.getSkillTags()));
@@ -343,7 +368,8 @@ public class BoardService {
 			}
 		}
 
-		if (BoardTypeCd == 1403L) {
+		// Long == long 리터럴은 언박싱 비교라 null 이 오면 NPE 다. 나머지 분기와 같은 방식으로 맞춘다.
+		if (BoardTypeCode.NOTICE.getCode().equals(BoardTypeCd)) {
 			List<Long> allUserSqs = communityUserMapper.findAllUserSqs();
 
 			if (allUserSqs != null && !allUserSqs.isEmpty()) {
@@ -379,6 +405,11 @@ public class BoardService {
 		}
 
 		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
+		// findByIdBoard 는 게시판 종류까지 맞아야 행을 준다. 없는 번호거나 다른 게시판의 번호로
+		// 수정 요청이 오면(PUT /qna/{일반게시판 sq}) 아래 getUserSq() 에서 NPE 500 이 났다.
+		if (board == null || "Y".equals(board.getBoardIsDeletedYn())) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다.");
+		}
 
 		// if (board.getUserSq() != boardRequest.getUserSq()) {
 		// throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
@@ -402,8 +433,20 @@ public class BoardService {
 			board.setBoardIsSecretYn(resolveSecretYn(boardTypeCd, boardRequest.getIsSecret()));
 		}
 
-		if (boardRequest.getBoardAdoptStatusCd() != null) {
-			board.setBoardAdoptStatusCd(boardRequest.getBoardAdoptStatusCd());
+		// 채택 상태는 Q&A 전용이고, updateStatusBoard 와 같은 규칙으로 검증한다.
+		// 검증 없이 대입하면 PUT /qna/{내 글} 본문에 boardAdoptStatusCd=1502 를 실어
+		// "채택완료인데 채택된 답변이 0건"인 글을 만들 수 있고(BoardAdoptStatusCode 의 불변식 위반),
+		// 9999 같은 값이면 목록 필터·라벨이 전부 어긋난다.
+		// 값이 지금과 같으면(폼이 기존 값을 그대로 되돌려 보내는 경우) 그냥 통과시킨다.
+		Long requestedAdoptStatus = boardRequest.getBoardAdoptStatusCd();
+		if (requestedAdoptStatus != null
+				&& BoardTypeCode.QNA.getCode().equals(boardTypeCd)
+				&& !requestedAdoptStatus.equals(board.getBoardAdoptStatusCd())) {
+			if (!BoardAdoptStatusCode.isUserSelectable(requestedAdoptStatus)
+					|| BoardAdoptStatusCode.ADOPTED.getCode().equals(board.getBoardAdoptStatusCd())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "변경할 수 없는 채택 상태입니다.");
+			}
+			board.setBoardAdoptStatusCd(requestedAdoptStatus);
 		}
 
 		boardMapper.update(board);
@@ -419,7 +462,9 @@ public class BoardService {
 		}
 
 		// 2. 스킬 태그 처리 수정
-		if (board.getBoardTypeCd() == 1402 &&
+		// createBoard 쪽과 같은 비교를 쓴다 — Long == int 리터럴은 언박싱이라
+		// board_type_cd 가 NULL 인 행을 만나면 여기서 NPE 가 난다.
+		if (BoardTypeCode.QNA.getCode().equals(board.getBoardTypeCd()) &&
 				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
 			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
 					board.getBoardSq(), null, boardRequest.getSkillTags()));
@@ -462,13 +507,55 @@ public class BoardService {
 		return;
 	}
 
+	/**
+	 * 게시판 종류를 확인한 뒤 삭제한다. {@code PATCH /board/{내 Q&A 글 번호}} 처럼 엉뚱한 라우트로
+	 * 들어온 요청이 다른 게시판의 글을 지우지 못하게 막는다({@code VocService.deleteVoc} 와 같은 이유).
+	 */
+	@Transactional
+	public void deleteBoard(Long userSq, Long boardSq, Long boardTypeCd) {
+		Board typed = boardMapper.findByIdBoard(boardSq, boardTypeCd);
+		if (typed == null || "Y".equals(typed.getBoardIsDeletedYn())) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다.");
+		}
+		deleteBoard(userSq, boardSq);
+	}
+
 	@Transactional
 	public void deleteBoard(Long userSq, Long boardSq) {
-		boardMapper.delete(userSq, boardSq);
+		// delete 쿼리만 user_sq 로 걸려 있고 아래 세 개의 정리 쿼리는 board_sq 만 본다.
+		// 소유자 확인 없이 내려가면 남의 글 번호로 호출했을 때 글은 그대로 남은 채
+		// 태그와 추천 기록만 지워진다("추천 수가 0이 됐다"는 신고로 돌아온다).
+		Board board = boardMapper.findByIdOnly(boardSq);
+		if (board == null) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다.");
+		}
+		// 관리자는 남의 글도 지운다 — BO 공지 관리(AdminNoticeController)가 이 경로를 쓰는데,
+		// 공지를 등록한 관리자 계정과 지우는 계정이 다른 것이 정상이라 작성자 일치만 보면 전부 403 이 된다.
+		boolean admin = CurrentUser.isAdmin();
+		if (!admin && !Objects.equals(board.getUserSq(), userSq)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인이 작성한 글만 삭제할 수 있습니다.");
+		}
+
+		// delete 쿼리가 user_sq 를 조건으로 걸기 때문에, 관리자 삭제에서는 작성자 sq 로 맞춰 준다.
+		// (그러지 않으면 권한만 통과하고 0행 업데이트로 끝나 "삭제했는데 그대로"가 된다)
+		boardMapper.delete(admin ? board.getUserSq() : userSq, boardSq);
 		cmntTagMapper.deleteNT(boardSq, null);
 		cmntTagMapper.deleteST(boardSq, null);
 		recommendationMapper.deleteAll(boardSq, null, null);
 
+	}
+
+	/**
+	 * 게시판 종류를 확인한 뒤 조회수를 올린다. {@code addViewCnt} 는 board_sq 만 보고 올리기 때문에,
+	 * 확인이 없으면 {@code PATCH /qna/{일반게시판 sq}/increment-view} 로 엉뚱한 게시판 카운터가 오른다.
+	 */
+	@Transactional
+	public void addViewCntBoard(Long boardSq, Long boardTypeCd) {
+		Board board = boardMapper.findByIdBoard(boardSq, boardTypeCd);
+		if (board == null || "Y".equals(board.getBoardIsDeletedYn())) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다.");
+		}
+		boardMapper.addViewCnt(boardSq);
 	}
 
 	@Transactional
@@ -480,8 +567,10 @@ public class BoardService {
 	@Transactional
 	public void updateBoardRecommend(Long userSq, Long boardSq) {
 
+		// AnswerService.updateAnswerRecommend 와 같은 401 이어야 FO 의 refresh 인터셉터가
+		// 토큰을 재발급해 자동 재시도한다(400 이면 재시도 없이 실패로 끝난다).
 		if (userSq == null) {
-			throw new IllegalArgumentException("로그인 후 이용해주세요.");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
 		}
 
 		Recommendation recommendation = recommendationMapper.findByBoardSq(userSq, boardSq);
@@ -514,6 +603,37 @@ public class BoardService {
 
 	}
 
+	/**
+	 * 첨부파일 다운로드 권한. <b>비공개 고객의 소리의 첨부만 잠근다</b> — 나머지 게시판은 지금까지처럼 공개다.
+	 *
+	 * <p>
+	 * {@code GET /board/download/{fileSq}} 는 permitAll 이고 fileSq 만 보고 파일을 내주기 때문에,
+	 * 이 검사가 없으면 {@code VocService.getVoc} 로 본문을 잠가 놔도 <b>첨부파일은 번호만 맞히면 누구나
+	 * 내려받을 수 있다</b>. 본문·답변과 같은 기준을 첨부에도 건다.
+	 * </p>
+	 */
+	public void requireAttachmentReadable(Long fileSq) {
+		Long boardSq = boardMapper.findBoardSqByFileSq(fileSq);
+		if (boardSq == null) {
+			// TBL_COMMON_FILE_S 는 이력서·사업자등록증·프로필 이미지까지 함께 쓰는 공용 테이블이고,
+			// 이 엔드포인트는 permitAll 이다. 게시글·답변 어느 쪽에도 붙어 있지 않은 파일을 통과시키면
+			// file_sq 를 순차 대입하는 것만으로 남의 이력서가 복호화되어 나간다.
+			// 호출처는 게시판·공지·VOC 첨부뿐이므로(FO BoardPost, BO board/notice/voc 드로어)
+			// 연결이 없는 파일은 존재를 알리지 않고 404 로 끊는다.
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 정보가 존재하지 않습니다.");
+		}
+		// findByIdBoard 는 타입이 맞을 때만 행을 준다 — VOC 가 아니면 null 이라 그대로 통과한다.
+		// (boardSq 는 글 첨부·답변 첨부 어느 쪽으로 붙어 있든 같은 글을 가리킨다)
+		Board voc = boardMapper.findByIdBoard(boardSq, BoardTypeCode.VOC.getCode());
+		if (voc == null || !"Y".equals(voc.getBoardIsSecretYn())) {
+			return;
+		}
+		if (CurrentUser.isAdmin() || Objects.equals(CurrentUser.sq(), voc.getUserSq())) {
+			return;
+		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, "비공개 문의의 첨부파일입니다. 작성자와 관리자만 내려받을 수 있습니다.");
+	}
+
 	// 첨부파일 삭제
 	@Transactional
 	public void deleteFile(Long boardSq, Long fileSq) {
@@ -526,7 +646,12 @@ public class BoardService {
 	@Transactional
 	public void updateStatusBoard(Long userSq, Long boardSq, Long statusCd) {
 
-		Board board = boardMapper.findByIdBoard(boardSq, 1402L);
+		Board board = boardMapper.findByIdBoard(boardSq, BoardTypeCode.QNA.getCode());
+		// 채택 상태는 Q&A 전용이다. 다른 게시판 번호로 부르면 findByIdBoard 가 null 을 주고,
+		// 그대로 두면 getUserSq() 에서 NPE 500 이 난다(AnswerService.adoptAnswer 와 같은 처리).
+		if (board == null) {
+			throw new IllegalArgumentException("채택 상태 변경은 Q&A 글에만 가능합니다.");
+		}
 
 		// if (board.getUserSq() != userSq) {
 		// throw new IllegalArgumentException("유효하지 않은 접근입니다.");
@@ -537,8 +662,18 @@ public class BoardService {
 			throw new IllegalArgumentException("유효하지 않은 접근입니다.");
 		}
 
-		if (board.getBoardAdoptStatusCd() != 1501L) {
+		// Long != long 비교는 언박싱이라 채택상태가 NULL 인 글(BO·시더 유입)에서 NPE 가 났다.
+		// NULL 은 '진행중'으로 본다(BoardAdoptStatusCode.labelOf 와 같은 규약).
+		Long currentStatus = board.getBoardAdoptStatusCd();
+		if (currentStatus != null && !BoardAdoptStatusCode.IN_PROGRESS.getCode().equals(currentStatus)) {
 			throw new IllegalArgumentException("채택 상태가 이미 변경되었습니다.");
+		}
+
+		// statusCd 는 PathVariable 로 그대로 들어온다. 검증 없이 대입하면
+		// PUT /qna/{내 글}/status/9999 로 공통코드에 없는 값이 저장돼 목록 필터·라벨이 전부 어긋나고,
+		// 1502(채택완료)를 직접 찍으면 채택된 답변이 0건인 "채택완료" 글이 생긴다.
+		if (!BoardAdoptStatusCode.isUserSelectable(statusCd)) {
+			throw new IllegalArgumentException("변경할 수 없는 채택 상태입니다.");
 		}
 
 		board.setBoardAdoptStatusCd(statusCd);

@@ -27,8 +27,9 @@ public class BoardListDTO{
     private String boardType; // "board" | "qna" — 전체보기(통합 목록)에서 상세 링크 분기용
     private Long categoryCd;   // 게시판 카테고리 코드. 카테고리 도입 전 글은 null(미분류)
     private String categoryNm; // 코드 라벨 — FO가 코드→라벨 표를 따로 들고 있지 않아도 되게 함께 내린다
-    // 비공개 글 여부(고객의 소리 전용). 목록의 자물쇠 표시용이며, 남의 비공개 글은 애초에
-    // 목록 SQL에서 걸러지므로 여기 true 로 오는 것은 내 글이거나 관리자가 보는 경우뿐이다.
+    // 비공개 글 여부(고객의 소리 전용). 목록의 자물쇠 표시용이다.
+    // 주의: 목록 SQL 은 비공개 글을 거르지 않는다 — true 라고 해서 내 글이라는 뜻이 아니다.
+    // 내 글인지는 userSq 로 판단할 것(상세 진입 가능 여부도 그 기준이다).
     private boolean secret;
 
     public static BoardListDTO fromEntity(Board board, String userNickname, Integer boardAnswerCnt, List<String> normalTags, List<SkillTagDTO> skillTags) {

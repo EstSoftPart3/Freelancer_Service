@@ -90,12 +90,16 @@
 		VALUES (#{userSq}, #{boardTtl}, #{boardDescriptionEdt}, 1501, #{boardTyp}, #{boardTypeCd},
 		#{boardCategoryCd}, COALESCE(#{boardIsSecretYn}, 'N')) </insert>
 
-	<!-- board_is_secret_yn 은 NULL 이 오면 기존 값을 유지한다 — 이 update 는 게시판·Q&A·공지·BO가
-	     모두 지나가는데, 그쪽 호출부는 비공개 개념이 없어 엔티티에 값을 채우지 않는다.
-	     COALESCE 없이 그대로 대입하면 관리자가 BO에서 VOC 를 수정하는 순간 비공개가 풀린다. -->
+	<!-- board_is_secret_yn / board_category_cd 는 NULL 이 오면 기존 값을 유지한다 — 이 update 는
+	     게시판·Q&A·공지·BO가 모두 지나가는데, 그쪽 호출부는 비공개·카테고리 개념이 없어 엔티티에
+	     값을 채우지 않는다. COALESCE 없이 그대로 대입하면 관리자가 BO에서 VOC 를 수정하는 순간
+	     비공개가 풀리고, findByIdOnly 처럼 일부 컬럼만 읽어 온 엔티티로 update 를 부르면
+	     카테고리가 조용히 지워진다(일반게시판은 resolveCategoryCd 가 null 을 돌려주지 않으므로
+	     COALESCE 가 정상 수정을 막지 않는다). -->
 	<update id="update" parameterType="com.example.demo.domain.community.entity.Board"> UPDATE
 		TBL_BOARD_M SET board_ttl = #{boardTtl}, board_description_edt = #{boardDescriptionEdt},
-		board_adopt_status_cd = #{boardAdoptStatusCd}, board_category_cd = #{boardCategoryCd},
+		board_adopt_status_cd = #{boardAdoptStatusCd},
+		board_category_cd = COALESCE(#{boardCategoryCd}, board_category_cd),
 		board_is_secret_yn = COALESCE(#{boardIsSecretYn}, board_is_secret_yn),
 		board_modified_at_dtm = NOW() WHERE board_sq =
 		#{boardSq} </update>
@@ -120,6 +124,17 @@
 
 	<select id="findFiles" resultType="Long"> SELECT file_sq FROM TBL_BOARD_ATTACHMENT_S WHERE
 		board_sq = #{boardSq} </select>
+
+	<!--
+		다운로드 권한 판정용 역방향 조회 (fileSq → boardSq).
+		글 첨부(TBL_BOARD_ATTACHMENT_S)와 답변 첨부(TBL_BOARD_ANSWER_ATTACHMENT_S)를 모두 본다.
+		답변 쪽을 빼면 비공개 고객의 소리에 달린 운영자 답변의 첨부가 fileSq 만으로 새어 나간다
+		— /board/download/{fileSq} 는 TBL_COMMON_FILE_S 를 file_sq 로만 읽기 때문이다.
+	-->
+	<select id="findBoardSqByFileSq" resultType="Long"> SELECT board_sq FROM ( SELECT board_sq FROM
+		TBL_BOARD_ATTACHMENT_S WHERE file_sq = #{fileSq} UNION ALL SELECT a.board_sq FROM
+		TBL_BOARD_ANSWER_ATTACHMENT_S aa JOIN TBL_BOARD_ANSWER_S a ON a.answer_sq = aa.answer_sq
+		WHERE aa.file_sq = #{fileSq} ) owners LIMIT 1 </select>
 
 	<select id="findFile" resultType="com.example.demo.domain.community.entity.BoardAttachment">
 		SELECT * FROM TBL_COMMON_FILE_S WHERE file_sq = #{fileSq} </select>

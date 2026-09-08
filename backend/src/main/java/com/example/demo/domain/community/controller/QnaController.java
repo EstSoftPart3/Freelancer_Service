@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.viewcount.ViewCountDedupService;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.dto.SkillTagDTO;
 import com.example.demo.domain.community.dto.request.*;
 import com.example.demo.domain.community.service.BoardService;
@@ -27,6 +28,9 @@ public class QnaController {
     private final BoardService boardService;
     private final ViewCountDedupService viewCountDedupService;
 
+    /** 이 컨트롤러는 Q&A 전용이다. 흩어져 있던 1402L 매직넘버를 enum으로 모았다. */
+    private static final Long QNA_BOARD = BoardTypeCode.QNA.getCode();
+
     // 전체 QnA 조회
     @GetMapping
     public ResponseEntity<ApiResponse<BoardListResponse>> getAllQnas(
@@ -39,9 +43,9 @@ public class QnaController {
             @RequestParam(value = "page", defaultValue = "1") Long page,
             @RequestParam(value = "size", defaultValue = "10") Long size) {
 
-        // 서비스 호출 시 인자 순서 주의: (1402L, 채택상태, 검색타입, 키워드, 태그, 스킬태그리스트, 정렬, 페이지, 사이즈)
+        // 서비스 호출 시 인자 순서 주의: (게시판구분, 카테고리, 채택상태, 검색타입, 키워드, 태그, 스킬태그리스트, 정렬, 페이지, 사이즈)
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공",
-                boardService.getAllBoards(1402L, null, boardAdoptStatusCd, searchType, keyword, tag, skillTags, sortType,
+                boardService.getAllBoards(QNA_BOARD, null, boardAdoptStatusCd, searchType, keyword, tag, skillTags, sortType,
                         page, size)));
     }
 
@@ -50,7 +54,7 @@ public class QnaController {
     public ResponseEntity<ApiResponse<BoardResponse>> getQna(@AuthenticationPrincipal Long userSq,
             @PathVariable("boardSq") Long boardSq) {
         return ResponseEntity
-                .ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공", boardService.getBoard(userSq, boardSq, 1402L)));
+                .ok(ApiResponse.of(HttpStatus.OK, "게시글 조회 성공", boardService.getBoard(userSq, boardSq, QNA_BOARD)));
     }
 
     // QnA 등록
@@ -71,7 +75,7 @@ public class QnaController {
             boardRequest.setSkillTags(skillTags);
         }
         boardRequest.setUserSq(userSq);
-        boardService.createBoard(boardRequest, 1402L);
+        boardService.createBoard(boardRequest, QNA_BOARD);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.CREATED, "게시글 등록이 완료되었습니다.", null));
     }
 
@@ -94,7 +98,7 @@ public class QnaController {
             boardRequest.setSkillTags(skillTags);
         }
         boardRequest.setUserSq(userSq);
-        boardService.updateBoard(boardRequest, boardSq, 1402L);
+        boardService.updateBoard(boardRequest, boardSq, QNA_BOARD);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 수정이 완료되었습니다.", null));
     }
 
@@ -102,7 +106,7 @@ public class QnaController {
     @PatchMapping("/{boardSq}")
     public ResponseEntity<ApiResponse<NullType>> deleteQna(@AuthenticationPrincipal Long userSq,
             @PathVariable("boardSq") Long boardSq) {
-        boardService.deleteBoard(userSq, boardSq);
+        boardService.deleteBoard(userSq, boardSq, QNA_BOARD);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시글 삭제가 완료되었습니다.", null));
     }
 
@@ -113,7 +117,7 @@ public class QnaController {
             @PathVariable("boardSq") Long boardSq,
             HttpServletRequest request) {
         if (viewCountDedupService.isFirstView("board", boardSq, userSq, request)) {
-            boardService.addViewCntBoard(boardSq);
+            boardService.addViewCntBoard(boardSq, QNA_BOARD);
         }
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "조회수 증가가 완료되었습니다.", null));
     }

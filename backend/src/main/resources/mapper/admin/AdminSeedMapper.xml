@@ -21,15 +21,19 @@
           FROM TBL_USER_M
          WHERE user_is_deleted_yn = 'N'
            AND user_type_cd = 301
-        <choose>
-            <when test="userSqs != null and userSqs.size > 0">
-                AND user_sq IN
-                <foreach item="sq" collection="userSqs" open="(" separator="," close=")">#{sq}</foreach>
-            </when>
-            <otherwise>
-                AND user_id LIKE 'bot!_%' ESCAPE '!'
-            </otherwise>
-        </choose>
+        <if test="userSqs != null and userSqs.size > 0">
+            AND user_sq IN
+            <foreach item="sq" collection="userSqs" open="(" separator="," close=")">#{sq}</foreach>
+        </if>
+        <!--
+          botOnly=true 면 계정을 직접 지정해도 봇 조건이 빠지지 않는다. 회수 경로가 이 값을 준다 —
+          그쪽은 "어떤 조합이든 봇이 쓴 것만 지운다"(SeedRevokeRequestDTO) 가 보장이라,
+          userSqs 에 실사용자 번호를 넣는 것만으로 그 사람의 글·답변·댓글이 통째로 내려가면 안 된다.
+          계정을 지정하지 않은 경우도 결국 봇 전체이므로 같은 조건을 쓴다.
+        -->
+        <if test="botOnly or userSqs == null or userSqs.size == 0">
+            AND user_id LIKE 'bot!_%' ESCAPE '!'
+        </if>
          ORDER BY user_sq
     </select>
 

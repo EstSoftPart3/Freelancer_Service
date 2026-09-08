@@ -320,7 +320,9 @@ export function NoticeViewDrawer() {
               <SheetTitle className='text-2xl'>{detail.ttl}</SheetTitle>
               <div className='mt-2 flex items-center gap-4 text-sm text-muted-foreground'>
                 <div className='flex items-center gap-1'>
-                  <User size={14} /> {detail.userNm}
+                  {/* 상세는 BoardResponse 를 그대로 쓰는데 userNm 이 userNickname 으로 바뀌었다.
+                      목록(AdminBoardListDTO)은 아직 userNm 을 함께 내려주므로 폴백을 남긴다 */}
+                  <User size={14} /> {detail.userNickname ?? detail.userNm}
                 </div>
                 <div className='flex items-center gap-1'>
                   <Calendar size={14} /> {detail.createdAt}

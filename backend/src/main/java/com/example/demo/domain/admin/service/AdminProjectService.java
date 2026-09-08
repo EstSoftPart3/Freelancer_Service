@@ -67,10 +67,11 @@ public class AdminProjectService {
 
     @Transactional
     public void updateProject(Long projectSq, AdminProjectUpdateRequestDTO dto) {
-        if (adminProjectMapper.findProject(projectSq) == null) {
+        AdminProjectDetailDTO current = adminProjectMapper.findProject(projectSq);
+        if (current == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 프로젝트입니다.");
         }
-        validateDates(projectSq, dto);
+        validateDates(current, dto);
         adminProjectMapper.updateProject(projectSq, dto);
     }
 
@@ -96,9 +97,7 @@ public class AdminProjectService {
      * <b>저장 후의 최종 상태</b>를 기준으로 검사한다 — 종료일만 당겨 보내는 경우를 놓치지 않기 위해서다.
      * </p>
      */
-    private void validateDates(Long projectSq, AdminProjectUpdateRequestDTO dto) {
-        AdminProjectDetailDTO current = adminProjectMapper.findProject(projectSq);
-
+    private void validateDates(AdminProjectDetailDTO current, AdminProjectUpdateRequestDTO dto) {
         LocalDate recruitStart = dto.getRecruitStartDt() != null ? dto.getRecruitStartDt() : current.getRecruitStartDt();
         LocalDate recruitEnd = dto.getRecruitEndDt() != null ? dto.getRecruitEndDt() : current.getRecruitEndDt();
         LocalDate workStart = dto.getProjectStartDt() != null ? dto.getProjectStartDt() : current.getProjectStartDt();

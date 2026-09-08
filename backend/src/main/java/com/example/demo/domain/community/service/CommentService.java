@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.example.demo.common.security.CurrentUser;
 import com.example.demo.domain.community.constant.BoardTypeCode;
 import com.example.demo.domain.community.dto.request.CommentRequest;
 import com.example.demo.domain.community.dto.response.CommentResponse;
@@ -47,6 +50,19 @@ public class CommentService {
             throw new IllegalArgumentException("내용을 입력해주세요.");
         } else if (commentRequest.getBoardSq() == null && commentRequest.getAnswerSq() == null) {
             throw new IllegalArgumentException("게시판 또는 답변 순번이 없습니다.");
+        }
+
+        // 1-2. 비공개 고객의 소리에는 작성자·관리자만 댓글을 달 수 있다.
+        // VocService.requireReadable / AnswerService.createAnswer 와 같은 기준이다 —
+        // 여기만 열어 두면 본문은 403 으로 막아 둔 문의에 아무나 댓글을 달고
+        // 문의자에게 알림까지 나간다.
+        if (commentRequest.getBoardSq() != null) {
+            Board voc = boardMapper.findByIdBoard(commentRequest.getBoardSq(), BoardTypeCode.VOC.getCode());
+            if (voc != null && "Y".equals(voc.getBoardIsSecretYn())
+                    && !CurrentUser.isAdmin()
+                    && !Objects.equals(commentRequest.getUserSq(), voc.getUserSq())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "비공개 문의입니다. 작성자와 관리자만 댓글을 달 수 있습니다.");
+            }
         }
 
         // 2. 엔티티 빌드 및 저장
@@ -155,6 +171,11 @@ public class CommentService {
         }
 
         Comment comment = getComment(commentSq);
+        // findById 는 삭제되지 않은 댓글만 돌려준다. 없는 번호로 수정 요청이 오면
+        // 아래 getUserSq() 에서 NPE 500 이 났다(AnswerService.updateAnswer 와 같은 처리).
+        if (comment == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다.");
+        }
 
         // if (comment.getUserSq() != commentRequest.getUserSq()) {
         // throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
@@ -177,7 +198,18 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long userSq, Long commentSq) {
+        // delete 쿼리만 user_sq 로 걸려 있고 추천 정리·댓글수 재계산은 comment_sq 만 본다.
+        // 소유자 확인 없이 내려가면 남의 댓글 번호로 호출했을 때 댓글은 그대로 남은 채
+        // 추천 기록만 지워진다(BoardService.deleteBoard·AnswerService.deleteAnswer 와 같은 이유).
+        // 없는 번호면 아래 comment.getBoardSq() 에서 NPE 500 이 났다.
         Comment comment = getComment(commentSq);
+        if (comment == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다.");
+        }
+        if (!Objects.equals(comment.getUserSq(), userSq)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인이 작성한 댓글만 삭제할 수 있습니다.");
+        }
+
         commentMapper.delete(userSq, commentSq);
         recommendationMapper.deleteAll(null, null, commentSq);
 
@@ -193,8 +225,10 @@ public class CommentService {
     @Transactional
     public void updateRecommendCntComment(Long userSq, Long commentSq) {
 
+        // 400 이 아니라 401 이어야 FO 의 refresh 인터셉터가 토큰을 재발급해 자동 재시도한다
+        // (BoardService.updateBoardRecommend·AnswerService.updateAnswerRecommend 와 같은 규약).
         if (userSq == null) {
-            throw new IllegalArgumentException("로그인 후 이용해주세요.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
         }
 
         Recommendation recommendation = recommendationMapper.findByCommentSq(userSq, commentSq);
