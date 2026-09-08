@@ -109,6 +109,12 @@ public class AnswerService {
 		if (CurrentUser.isAdmin() || Objects.equals(CurrentUser.sq(), voc.getUserSq())) {
 			return;
 		}
+		// GET /answer/{sq} 는 permitAll 이라 토큰이 없거나 만료돼도 여기까지 온다. 403 을 내면
+		// FO 의 refresh 인터셉터(401 에서만 동작)가 돌지 않아 문의 작성자 본인이 자기 답변을
+		// 못 보는 채로 끝난다(BoardService.requireAttachmentReadable 과 같은 규약).
+		if (CurrentUser.sq() == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
+		}
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, "비공개 문의의 답변입니다. 작성자와 관리자만 볼 수 있습니다.");
 	}
 

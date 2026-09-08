@@ -56,8 +56,18 @@ public class CommentService {
         // VocService.requireReadable / AnswerService.createAnswer 와 같은 기준이다 —
         // 여기만 열어 두면 본문은 403 으로 막아 둔 문의에 아무나 댓글을 달고
         // 문의자에게 알림까지 나간다.
-        if (commentRequest.getBoardSq() != null) {
-            Board voc = boardMapper.findByIdBoard(commentRequest.getBoardSq(), BoardTypeCode.VOC.getCode());
+        // 댓글은 글(boardSq)에도, 답변(answerSq)에도 달린다. 답변 쪽을 빼면 비공개 문의에 달린
+        // 운영자 답변에 아무나 댓글을 달 수 있어 본문 잠금이 반쪽이 된다 — 두 갈래 모두 원글로
+        // 거슬러 올라가 같은 기준으로 판정한다.
+        Long targetBoardSq = commentRequest.getBoardSq();
+        if (targetBoardSq == null && commentRequest.getAnswerSq() != null) {
+            Answer parentAnswer = answerMapper.findById(commentRequest.getAnswerSq());
+            if (parentAnswer != null) {
+                targetBoardSq = parentAnswer.getBoardSq();
+            }
+        }
+        if (targetBoardSq != null) {
+            Board voc = boardMapper.findByIdBoard(targetBoardSq, BoardTypeCode.VOC.getCode());
             if (voc != null && "Y".equals(voc.getBoardIsSecretYn())
                     && !CurrentUser.isAdmin()
                     && !Objects.equals(commentRequest.getUserSq(), voc.getUserSq())) {

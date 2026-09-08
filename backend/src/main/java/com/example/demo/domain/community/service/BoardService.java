@@ -90,8 +90,12 @@ public class BoardService {
 		// N+1 때문에 수십만 쿼리를 유발한다. getBestBoards 와 같은 방식으로 여기서도 조인다.
 		if (size == null || size < 1)
 			size = 10L;
-		if (size > 100)
-			size = 100L;
+		// 상한은 500 이다 — 100 으로 조이면 sitemap.ts 가 무너진다. sitemap 은
+		// `size=500` 으로 목록을 훑으면서 `page * 500 >= totalElements` 로 종료를 판단하는데,
+		// 서버가 100건만 돌려주면 한 페이지에 100건씩만 모으면서도 500건을 모은 것처럼 세어
+		// 전체 글의 1/5 만 색인되고 나머지 URL 이 조용히 사라진다(/notice 목록도 같은 경로다).
+		if (size > 500)
+			size = 500L;
 		Long offset = (page - 1L) * size;
 		if (sortType == null || sortType.isEmpty())
 			sortType = "latest";
@@ -416,7 +420,10 @@ public class BoardService {
 		// }
 
 		// sq 비교 방식 변경
-		if (!Objects.equals(board.getUserSq(), boardRequest.getUserSq())) {
+		// 관리자는 남의 글도 고친다 — deleteBoard 와 같은 이유다. BO 공지 관리
+		// (AdminNoticeController.updateNotice)가 이 경로를 쓰는데, 공지를 등록한 관리자 계정과
+		// 수정하는 계정이 다른 것이 정상이라 작성자 일치만 보면 BO 공지 수정이 전부 400 이 된다.
+		if (!CurrentUser.isAdmin() && !Objects.equals(board.getUserSq(), boardRequest.getUserSq())) {
 			throw new IllegalArgumentException("작성자와 사용자가 일치하지 않습니다.");
 		}
 
@@ -630,6 +637,12 @@ public class BoardService {
 		}
 		if (CurrentUser.isAdmin() || Objects.equals(CurrentUser.sq(), voc.getUserSq())) {
 			return;
+		}
+		// 이 엔드포인트는 permitAll 이라 토큰이 없거나 만료돼도 필터를 통과한다. 그 경우 403 을 내면
+		// FO 의 refresh 인터셉터(401 에서만 동작)가 돌지 않아, 문의 작성자 본인이 자기 첨부를
+		// 못 받는 채로 끝난다. 비로그인/만료는 401, 로그인했지만 남의 글이면 403 으로 가른다.
+		if (CurrentUser.sq() == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
 		}
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, "비공개 문의의 첨부파일입니다. 작성자와 관리자만 내려받을 수 있습니다.");
 	}
