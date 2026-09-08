@@ -53,7 +53,9 @@ import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
@@ -76,8 +78,7 @@ public class ProjectService {
 		rejectPastInterviewTimes(request.interviewTime());
 
 		long devgradeCodeSq = resolveRepresentativeGradeCd(request);
-		long educationLvlSq = commonCodeMapper.findCommonCodeSqByName(request.educationLvl(),
-				ParentCodeEnum.EDUCATION.getCode());
+		long educationLvlSq = resolveEducationCd(request.educationLvl());
 
 		long userSq = token.getUserSq();
 		long userTypeCd = token.getUserTypeCd();
@@ -110,7 +111,16 @@ public class ProjectService {
 
 		registerSubEntities(project, request);
 		// ================= [ 스크랩 유저 배치 알림 발송 ] =================
+		// 알림은 부가 기능이라 실패해도 공고 등록 자체를 되돌리면 안 된다.
+		// (같은 트랜잭션이라 여기서 예외가 새어 나가면 방금 넣은 공고·하위 항목이 전부 롤백된다)
+		try {
+			notifyScrapUsers(request, project, companySq, userSq);
+		} catch (Exception e) {
+			log.warn("공고 등록 알림 발송 실패 - 공고는 정상 등록되었습니다. projectSq={}", project.getProjectSq(), e);
+		}
+	}
 
+	private void notifyScrapUsers(ProjectCreateRequest request, Project project, long companySq, long userSq) {
 		// 2. 해당 기업을 즐겨찾기(602)한 유저 및 타입 정보 조회
 		if ("Y".equals(request.isNotification())) {
 
@@ -145,28 +155,10 @@ public class ProjectService {
 		}
 	}
 
-	@Transactional
-	public void createProject(ProjectCreateRequest request) {
-		// ... 기존 로직 ...
-
-		// 1. 상세 주소 등록
-		Long detailedAddressSq = null;
-		if (request.detailedAddressName() != null && !request.detailedAddressName().isBlank()) {
-			detailedAddressSq = registerAddressWithDbCheck(
-					request.detailedSigunguCode(),
-					AddressInsertDto.forDetailed(request));
-		}
-
-		// 2. 지하철 주소 등록
-		Long subwayAddressSq = null;
-		if (request.subwayAddressName() != null && !request.subwayAddressName().isBlank()) {
-			subwayAddressSq = registerAddressWithDbCheck(
-					request.subwaySigunguCode(),
-					AddressInsertDto.forSubway(request));
-		}
-
-		// ... 이후 insertProject 진행 ...
-	}
+	// 토큰 없는 createProject(request) 오버로드는 삭제했다. 호출되는 곳이 없는데다
+	// 주소만 INSERT 하고 insertProject 없이 끝나는 형태라, 되살아나면 TBL_ADDRESS_S 에
+	// 어떤 공고도 가리키지 않는 고아 행이 쌓인다.
+	// (registerDetailedAddress / registerSubwayAddress 를 지운 것과 같은 이유다.)
 
 	// [공통] DB에서 명칭을 찾아 DTO에 세팅 후 저장하는 프라이빗 메서드
 	private Long registerAddressWithDbCheck(String codeStr, AddressInsertDto dto) {
@@ -386,6 +378,12 @@ public class ProjectService {
 	public ProjectDetailResponse fetchProject(Long projectSq, JwtAuthenticationToken token) {
 		Project p = projectMapper.findBySq(projectSq);
 
+		// 없는 번호를 받으면 findBySq 가 null 을 준다. 그대로 두면 NPE 500 이 난다
+		// (updateProject·softDeleteProject 와 같은 기준으로 막는다).
+		if (p == null) {
+			throw new RuntimeException("존재하지 않는 프로젝트입니다.");
+		}
+
 		if (p.getProjectIsDeletedYn().equals("Y")) {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
@@ -441,14 +439,17 @@ public class ProjectService {
 	public void updateContracts(Project project, ProjectCreateRequest request) {
 		long projectSq = project.getProjectSq();
 		projectMapper.deleteProjectContracts(projectSq);
-		projectMapper.insertContracts(projectSq, fillContractInsertRequest(projectSq, request.workType()));
+		// 등록과 같은 메서드를 탄다 — 매퍼를 직접 부르면 빈 리스트 가드를 건너뛰어
+		// foreach 가 VALUES 뒤가 빈 SQL 을 만든다.
+		createContracts(projectSq, request.workType());
 	}
 
 	@Transactional
 	public void updateJobRoles(Project project, ProjectCreateRequest request) {
 		long projectSq = project.getProjectSq();
 		projectMapper.deleteProjectJobRoles(projectSq);
-		projectMapper.insertJobs(projectSq, fillJobInsertRequest(projectSq, request.recruitJob()));
+		// 위와 같은 이유로 등록 경로와 같은 메서드를 쓴다.
+		createJobRoles(projectSq, request.recruitJob());
 	}
 
 	@Transactional
@@ -458,15 +459,40 @@ public class ProjectService {
 		createInterviewTimes(projectSq, request.interviewTime());
 	}
 
-	private void updateAddress(Project project, ProjectCreateRequest request) {
+	/**
+	 * 주소를 새로 등록하고 프로젝트에 매단다.
+	 *
+	 * <p>
+	 * 주소가 바뀌거나 지워지면 새 행을 INSERT 하고 프로젝트가 그쪽을 가리키게 되는데, 예전에는
+	 * 가리키지 않게 된 옛 행을 아무도 지우지 않아 TBL_ADDRESS_S 에 고아 행이 쌓였다.
+	 * (삭제 경로 softDeleteProject 는 "지금 가리키는" 행만 지우므로 영영 회수되지 않는다.)
+	 * 그래서 버려진 주소 번호를 돌려주고, 호출한 쪽이 UPDATE 를 마친 뒤 지운다.
+	 * </p>
+	 *
+	 * @return 더 이상 참조되지 않는 주소 번호들
+	 */
+	private List<Long> updateAddress(Project project, ProjectCreateRequest request) {
+		Long oldAddressSq = project.getAddressSq();
+		Long oldSubwaySq = project.getSubwayAddressSq();
+
 		// 1. 상세 주소 등록 (DB 체크 로직 포함)
-		Long newAddressSq = handleDetailedAddressUpdate(project.getAddressSq(), request);
+		Long newAddressSq = handleDetailedAddressUpdate(oldAddressSq, request);
 		// 2. 지하철 주소 등록 (DB 체크 로직 포함)
-		Long newSubwaySq = handleSubwayAddressUpdate(project.getSubwayAddressSq(), request);
+		Long newSubwaySq = handleSubwayAddressUpdate(oldSubwaySq, request);
 
 		// 3. 프로젝트 객체에 새로운 주소 PK 세팅 (address_type_cd 우선순위 자동 재설정 포함)
 		// 이 값들이 세팅되어야 나중에 projectMapper.updateProject(project) 시 반영됩니다.
 		project.updateAddressInfo(newAddressSq, newSubwaySq);
+
+		List<Long> obsolete = new ArrayList<>();
+		// 그대로 재사용된 경우(값이 같음)는 지우면 안 된다.
+		if (oldAddressSq != null && !oldAddressSq.equals(newAddressSq)) {
+			obsolete.add(oldAddressSq);
+		}
+		if (oldSubwaySq != null && !oldSubwaySq.equals(newSubwaySq)) {
+			obsolete.add(oldSubwaySq);
+		}
+		return obsolete;
 	}
 
 	private Long handleDetailedAddressUpdate(Long existingAddressSq, ProjectCreateRequest request) {
@@ -519,34 +545,45 @@ public class ProjectService {
 	}
 
 	@Transactional
-	public void updateProject(ProjectCreateRequest request) {
+	public void updateProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
 		Project project = projectMapper.findBySq(request.projectId());
+		if (project == null) {
+			throw new RuntimeException("존재하지 않는 프로젝트입니다.");
+		}
 		if (project.getProjectIsDeletedYn().equals("Y")) {
 			throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
 		}
 
+		// 삭제와 같은 기준으로 소유 기업인지 확인한다. 이게 없으면 projectId 만 바꿔
+		// 남의 공고를 통째로 덮어쓸 수 있다.
+		validateProjectOwner(project, token);
+
 		long devGradeCodeSq = resolveRepresentativeGradeCd(request);
-		long educationLvlSq = commonCodeMapper.findCommonCodeSqByName(request.educationLvl(),
-				ParentCodeEnum.EDUCATION.getCode());
+		long educationLvlSq = resolveEducationCd(request.educationLvl());
 
 		// 1. 객체 정보 업데이트 (메모리 상에서만 변경)
 		project.update(request, devGradeCodeSq, educationLvlSq);
 
 		// 2. 주소 및 하위 엔티티 업데이트 (여기서 주소 SQ들이 project 객체에 새로 세팅됨)
-		updateSubEntities(project, request);
+		List<Long> obsoleteAddressSqs = updateSubEntities(project, request);
 
 		// 3. 최종 저장 (중요! 주소까지 다 바뀐 최종 객체를 이때 DB에 딱 한 번만 쏜다)
 		projectMapper.updateProject(project);
+
+		// 4. 아무도 가리키지 않게 된 옛 주소 행 회수. 반드시 위 UPDATE 뒤에 지운다 —
+		// 프로젝트가 아직 옛 번호를 가리키는 동안 지우면 중간에 참조가 깨진다.
+		obsoleteAddressSqs.forEach(projectMapper::deleteProjectAddress);
 	}
 
+	/** @return 더 이상 참조되지 않는 주소 번호들 ({@link #updateAddress} 참고) */
 	@Transactional
-	public void updateSubEntities(Project project, ProjectCreateRequest request) {
+	public List<Long> updateSubEntities(Project project, ProjectCreateRequest request) {
 		updateSkills(project, request);
 		updateContracts(project, request);
 		updateJobRoles(project, request);
 		updateInterviewTimes(project, request);
 		updateRecruitHeadcounts(project, request);
-		updateAddress(project, request);
+		return updateAddress(project, request);
 	}
 
 	@Transactional
@@ -616,12 +653,17 @@ public class ProjectService {
 				appTyp = "corporate";
 			}
 			// 프로젝트 제목 추후 추가 & 제목 조회 쿼리를 결합
-			notificationService.send(
-					companyUserSq,
-					userSq,
-					2602L, // 프로젝트 지원 결과 코드
-					"새로운 프로젝트 지원자가 있습니다. 지원 현황을 확인해 주세요.",
-					"/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp);
+			// 알림 실패로 지원 자체가 롤백되면 안 된다(같은 트랜잭션이다).
+			try {
+				notificationService.send(
+						companyUserSq,
+						userSq,
+						2602L, // 프로젝트 지원 결과 코드
+						"새로운 프로젝트 지원자가 있습니다. 지원 현황을 확인해 주세요.",
+						"/mypage/affiliationProjectList?projectSq=" + projectSq + "&appTyp=" + appTyp);
+			} catch (Exception e) {
+				log.warn("프로젝트 지원 알림 발송 실패 - 지원은 정상 접수되었습니다. projectSq={}", projectSq, e);
+			}
 		}
 	}
 
@@ -644,19 +686,40 @@ public class ProjectService {
 
 	@Transactional
 	public void createContracts(Long projectSq, List<String> workTypes) {
+		if (workTypes == null || workTypes.isEmpty()) {
+			return;
+		}
 		List<ContractInsertRequest> requests = fillContractInsertRequest(projectSq, workTypes);
+		if (requests.isEmpty()) {
+			return;
+		}
 		projectMapper.insertContracts(projectSq, requests);
 	}
 
 	@Transactional
 	public void createJobRoles(Long projectSq, List<String> recruitJobs) {
+		if (recruitJobs == null || recruitJobs.isEmpty()) {
+			return;
+		}
 		List<JobInsertRequest> requests = fillJobInsertRequest(projectSq, recruitJobs);
+		// fillJobInsertRequest 가 공백 이름을 걸러내므로 입력이 비어 있지 않아도 결과가 빌 수 있다.
+		// 그대로 넘기면 MyBatis foreach 가 VALUES 뒤가 빈 SQL 을 만들어 문법 오류가 난다.
+		if (requests.isEmpty()) {
+			return;
+		}
 		projectMapper.insertJobs(projectSq, requests);
 	}
 
 	@Transactional
 	public void createReqSkills(Long projectSq, List<String> reqSkills) {
+		if (reqSkills == null || reqSkills.isEmpty()) {
+			return;
+		}
 		List<SkillInsertRequest> skillInsertRequests = fillSkillInsertRequest(reqSkills);
+		// fillSkillInsertRequest 가 공백 이름을 걸러내므로 결과가 빌 수 있다. (createPreferSkills 와 같은 이유)
+		if (skillInsertRequests.isEmpty()) {
+			return;
+		}
 		projectMapper.insertSkills(projectSq, skillInsertRequests);
 	}
 
@@ -668,6 +731,9 @@ public class ProjectService {
 			return;
 		}
 		List<SkillInsertRequest> skillInsertRequests = fillSkillInsertRequest(preferSkills);
+		if (skillInsertRequests.isEmpty()) {
+			return;
+		}
 		projectMapper.insertPreferSkills(projectSq, skillInsertRequests);
 	}
 
@@ -704,7 +770,29 @@ public class ProjectService {
 		if (gradeName == null || gradeName.isBlank()) {
 			return null;
 		}
-		return commonCodeMapper.findCommonCodeSqByName(gradeName, ParentCodeEnum.DEVELOPER_GRADE.getCode());
+		Long cd = commonCodeMapper.findCommonCodeSqByName(gradeName, ParentCodeEnum.DEVELOPER_GRADE.getCode());
+		if (cd == null) {
+			// 마스터에 없는 이름을 그대로 null 로 흘리면 "등급별 모집"이 소리 없이 "총원 모집"으로
+			// 뒤바뀌어 저장된다(developer_grade_cd NULL = 총원 모드). 원인을 알 수 있게 막는다.
+			throw new IllegalArgumentException(String.format("「%s」는 존재하지 않는 개발자 등급입니다.", gradeName));
+		}
+		return cd;
+	}
+
+	/**
+	 * 학력 이름 → 공통코드.
+	 *
+	 * <p>
+	 * 반환 타입이 원시 {@code long} 이라 마스터에 없는 이름이 오면 언박싱 NPE 로 500 이 난다.
+	 * 등급·근무형태와 같은 기준으로 원인이 분명한 메시지로 바꾼다.
+	 * </p>
+	 */
+	private long resolveEducationCd(String educationName) {
+		Long cd = commonCodeMapper.findCommonCodeSqByName(educationName, ParentCodeEnum.EDUCATION.getCode());
+		if (cd == null) {
+			throw new IllegalArgumentException(String.format("「%s」는 존재하지 않는 학력입니다.", educationName));
+		}
+		return cd;
 	}
 
 	/**
@@ -740,6 +828,11 @@ public class ProjectService {
 
 	@Transactional
 	public void createInterviewTimes(Long projectSq, List<LocalDateTime> interviewTimes) {
+		// interviewTime 은 @NotNull 만 걸려 있어 빈 리스트가 통과한다. 그대로 넘기면 foreach 가
+		// VALUES 뒤가 빈 SQL 을 만들어 문법 오류가 난다. (createPreferSkills 와 같은 이유)
+		if (interviewTimes == null || interviewTimes.isEmpty()) {
+			return;
+		}
 		projectMapper.insertInterviewTimes(projectSq, interviewTimes);
 	}
 
@@ -764,13 +857,28 @@ public class ProjectService {
 		return requests;
 	}
 
+	/**
+	 * 근무 형태를 DB 에 넣을 형태로 바꾼다.
+	 *
+	 * <p>
+	 * 기술·직군과 달리 근무 형태는 공통코드로 고정된 목록이라 직접 입력이 없다. 마스터에 없는 이름을
+	 * 그대로 두면 contract_type_cd 가 NULL 인 채 INSERT 되어 NOT NULL 위반으로 터지므로,
+	 * 원인을 알 수 있게 여기서 막는다.
+	 * </p>
+	 */
 	@Transactional
 	public List<ContractInsertRequest> fillContractInsertRequest(Long projectSq, List<String> contracts) {
 		List<ContractInsertRequest> requests = new ArrayList<>();
 		contracts.forEach(contractName -> {
-			ContractInsertRequest request = new ContractInsertRequest(projectSq,
-					commonCodeMapper.findCommonCodeSqByName(contractName, ParentCodeEnum.CONTRACT_TYPE.getCode()));
-			requests.add(request);
+			String name = contractName == null ? "" : contractName.trim();
+			if (name.isEmpty()) {
+				return;
+			}
+			Long codeSq = commonCodeMapper.findCommonCodeSqByName(name, ParentCodeEnum.CONTRACT_TYPE.getCode());
+			if (codeSq == null) {
+				throw new IllegalArgumentException(String.format("「%s」는 존재하지 않는 근무 형태입니다.", name));
+			}
+			requests.add(new ContractInsertRequest(projectSq, codeSq));
 		});
 		return requests;
 	}
@@ -805,6 +913,15 @@ public class ProjectService {
 
 		if (projectSq != 0L) {
 			Project project = projectMapper.findBySq(projectSq);
+			// 없는 번호면 null 이다. 아래에서 바로 역참조하므로 여기서 막는다.
+			if (project == null) {
+				throw new RuntimeException("존재하지 않는 프로젝트입니다.");
+			}
+			// 삭제된 공고의 본문을 폼 데이터로 계속 내주면 안 된다 —
+			// 상세 조회(fetchProject)는 막는데 여기만 열려 있었다. 같은 기준으로 막는다.
+			if ("Y".equals(project.getProjectIsDeletedYn())) {
+				throw new RuntimeException("이미 삭제된 프로젝트 입니다.");
+			}
 
 			// 초기값 null 세팅
 			AreaInfoResponse areaInfoResponse = null;

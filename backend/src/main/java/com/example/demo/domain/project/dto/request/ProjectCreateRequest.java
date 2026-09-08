@@ -9,6 +9,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 public record ProjectCreateRequest(
@@ -17,7 +18,9 @@ public record ProjectCreateRequest(
 
 		String projectImageUrl,
 
-		@NotNull(message = "단가는 필수입니다.") Long projectSalary,
+		// 0 은 "단가 협의"(formatSalary 가 금액 없이 협의로 표기)라 허용한다. 음수만 막는다 —
+		// 하한이 없으면 -500000 이 그대로 저장돼 목록에 "월 -50만원"이 찍힌다.
+		@NotNull(message = "단가는 필수입니다.") @PositiveOrZero(message = "단가는 0 이상이어야 합니다.") Long projectSalary,
 
 		// [추가] 단가 협의 여부 (Y/N)
 		@NotBlank(message = "단가 협의 여부는 필수입니다.") String projectSalaryNegotiableYn,

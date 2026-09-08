@@ -145,9 +145,7 @@ public class DeveloperGradeSupport {
 		if (gradeNames == null || gradeNames.size() < 2) {
 			return;
 		}
-		Map<String, String> engNmByName = loadMaster().stream()
-				.filter(c -> c.getCommonCodeEnglishNm() != null)
-				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm, CommonCodeDTO::getCommonCodeEnglishNm));
+		Map<String, String> engNmByName = engNmByName();
 
 		for (int i = 0; i < gradeNames.size(); i++) {
 			for (int j = i + 1; j < gradeNames.size(); j++) {
@@ -166,6 +164,22 @@ public class DeveloperGradeSupport {
 	/** 등급 마스터 전체(활성). 13개뿐이라 그때그때 읽는다. */
 	private List<CommonCodeDTO> loadMaster() {
 		return commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.DEVELOPER_GRADE.getCode());
+	}
+
+	/**
+	 * 한글 등급명 → 영문명.
+	 *
+	 * <p>
+	 * 병합 함수를 준 이유 — 마스터에 같은 한글명이 두 번 들어오면(폐기 코드를 비활성으로 돌리지 않고
+	 * 새 코드를 같은 이름으로 추가하는 식) {@code Collectors.toMap} 이 IllegalStateException 을
+	 * 던져 등록 폼 API 와 공고 등록이 통째로 500 이 된다. 이름이 겹치면 먼저 나온 것을 쓴다.
+	 * </p>
+	 */
+	private Map<String, String> engNmByName() {
+		return loadMaster().stream()
+				.filter(c -> c.getCommonCodeEnglishNm() != null)
+				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm, CommonCodeDTO::getCommonCodeEnglishNm,
+						(first, second) -> first));
 	}
 
 	/**
@@ -215,6 +229,9 @@ public class DeveloperGradeSupport {
 			Set<Integer> covered = coveredRanks(major.getCommonCodeEnglishNm());
 			List<String> details = master.stream()
 					.filter(c -> c.getCommonCodeEnglishNm() != null && c.getCommonCodeEnglishNm().contains("_"))
+					// 🔴 rankOf 가 null 을 줄 수 있다(언더바는 있는데 앞부분이 LOW/MID/HIGH 가 아닌 이름).
+					// covered 는 Set.of(...) 라 contains(null) 이 NPE 를 던진다 — 등록 폼 API 가 통째로 500 이 된다.
+					.filter(c -> rankOf(c.getCommonCodeEnglishNm()) != null)
 					.filter(c -> covered.contains(rankOf(c.getCommonCodeEnglishNm())))
 					.sorted(Comparator.comparing(c -> rankOf(c.getCommonCodeEnglishNm())))
 					.map(CommonCodeDTO::getCommonCodeNm)
@@ -242,9 +259,7 @@ public class DeveloperGradeSupport {
 		if (rawOptions == null || rawOptions.isEmpty()) {
 			return rawOptions;
 		}
-		Map<String, String> engNmByName = loadMaster().stream()
-				.filter(c -> c.getCommonCodeEnglishNm() != null)
-				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm, CommonCodeDTO::getCommonCodeEnglishNm));
+		Map<String, String> engNmByName = engNmByName();
 
 		return rawOptions.stream()
 				.filter(o -> {
@@ -257,34 +272,6 @@ public class DeveloperGradeSupport {
 					String engNm = nm == null ? null : engNmByName.get(nm.toString());
 					Integer rank = engNm == null ? null : rankOf(engNm);
 					return rank == null ? Integer.MAX_VALUE : rank; // 등급 무관은 맨 뒤
-				}))
-				.toList();
-	}
-
-	/**
-	 * 검색 필터 목록을 서열 순으로 정렬한다.
-	 *
-	 * <p>
-	 * 등록 폼의 {@code <select>}({@link #sortedGradeNames()})와 같은 순서로 보이게 하려는 것이다.
-	 * 필터 목록은 프런트가 {@code common_code_sq}/{@code common_code_nm} 키로 읽고 있어
-	 * (다른 필터 3종도 같은 모양이다) 반환 형태를 바꾸지 않고 순서만 손본다.
-	 * </p>
-	 */
-	public List<?> sortFilterOptionsByRank(List<?> rawOptions) {
-		if (rawOptions == null || rawOptions.isEmpty()) {
-			return rawOptions;
-		}
-		Map<String, Integer> sortKeyByName = loadMaster().stream()
-				.filter(c -> sortKeyOf(c.getCommonCodeEnglishNm()) != null)
-				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeNm,
-						c -> sortKeyOf(c.getCommonCodeEnglishNm())));
-
-		return rawOptions.stream()
-				.sorted(Comparator.comparing(o -> {
-					Object nm = (o instanceof Map<?, ?> row) ? row.get("common_code_nm") : null;
-					Integer key = nm == null ? null : sortKeyByName.get(nm.toString());
-					// 서열이 없는 것(등급 무관)은 맨 뒤로.
-					return key == null ? Integer.MAX_VALUE : key;
 				}))
 				.toList();
 	}
@@ -349,7 +336,8 @@ public class DeveloperGradeSupport {
 		List<CommonCodeDTO> master = loadMaster();
 		Map<Long, String> engNmByCd = master.stream()
 				.filter(c -> c.getCommonCodeEnglishNm() != null)
-				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeSq, CommonCodeDTO::getCommonCodeEnglishNm));
+				.collect(Collectors.toMap(CommonCodeDTO::getCommonCodeSq, CommonCodeDTO::getCommonCodeEnglishNm,
+						(first, second) -> first));
 
 		// 「등급 무관」만 고른 경우는 넓히지 않는다.
 		boolean onlyAny = selectedCds.stream()

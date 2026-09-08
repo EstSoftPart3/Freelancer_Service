@@ -307,15 +307,33 @@
 
 	<select id="countProjectsBySearch"
 		parameterType="com.example.demo.domain.project.dto.request.ProjectSearchRequest"
-		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p WHERE p.project_is_deleted_yn = 'N'
-		/* [필터 1] 지역 검색 — 목록 쿼리와 조건이 같아야 한다. 예전에는 여기만 상세 주소만 봐서
-		   지하철역으로만 등록한 공고가 목록에는 나오는데 총건수에서 빠졌다. */ <if
+		resultType="Long"> SELECT COUNT(*) FROM TBL_PROJECT_M p
+		LEFT JOIN TBL_ADDRESS_S a1 ON p.address_sq = a1.address_sq
+		LEFT JOIN TBL_ADDRESS_S a2 ON p.subway_address_sq = a2.address_sq
+		WHERE p.project_is_deleted_yn = 'N'
+		/* [필터 1] 지역 검색 — 목록 쿼리(findProjectsBySearch)와 조건이 글자 그대로 같아야 한다.
+		   예전에는 여기만 상세 주소만 봐서 지하철역으로만 등록한 공고가 목록에는 나오는데 총건수에서 빠졌다.
+		   대표 주소 NOT NULL 조건도 목록 쪽에만 있으면 반대 방향으로 어긋난다. */ <if
 			test="addressCodeSq != null and addressCodeSq.size() > 0"> AND (
 		p.address_sq IN ( SELECT address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
 				refid="areaCodeInSelectedRegions" /> ) ) OR p.subway_address_sq IN ( SELECT
 		address_sq FROM TBL_ADDRESS_S WHERE area_code_sq IN ( <include
-				refid="areaCodeInSelectedRegions" /> ) ) ) </if>
-		/* [필터 2] 공통 조건 (등급, 학력, 직군) */ <if
+				refid="areaCodeInSelectedRegions" /> ) ) )
+		AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL </if>
+		/* [필터 2] 거리 내 검색 — 목록 쿼리에만 있으면 「내 주변 10km」 검색에서 목록은 걸러지는데
+		   총건수·페이지수는 전체 건수로 나온다. */ <if
+			test="userLat != null and userLng != null and distance != null">
+			AND CASE WHEN p.address_type_cd = 2701 THEN a1.address ELSE a2.address END IS NOT NULL
+			<choose>
+				<when test="distance == 999"> AND ST_Distance_Sphere( POINT(#{userLng}, #{userLat}),
+		POINT( CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END ) ) / 1000 &gt;= 10 </when>
+				<otherwise> AND ST_Distance_Sphere( POINT(#{userLng}, #{userLat}), POINT( CASE WHEN
+		p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude END, CASE WHEN
+		p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END ) ) / 1000 &lt;= #{distance} </otherwise>
+			</choose>
+		</if>
+		/* [필터 3] 공통 조건 (등급, 학력, 직군) */ <if
 			test="projectDeveloperGradeCd != null and projectDeveloperGradeCd.size() > 0"> AND
 		(
 			EXISTS ( SELECT 1 FROM TBL_PROJECT_RECRUIT_HEADCOUNT_S h
@@ -370,6 +388,11 @@
 		c.company_sq = p.company_sq AND c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%') ) ) </otherwise>
 			</choose>
 		</if>
+		/* [필터 4] 지도 영역 검색 — 목록 쿼리와 같아야 총건수가 맞는다 */ <if
+			test="minLat != null and maxLat != null and minLng != null and maxLng != null"> AND
+		(CASE WHEN p.address_type_cd = 2701 THEN a1.latitude ELSE a2.latitude END BETWEEN #{minLat}
+		AND #{maxLat}) AND (CASE WHEN p.address_type_cd = 2701 THEN a1.longitude ELSE a2.longitude
+		END BETWEEN #{minLng} AND #{maxLng}) </if>
 	</select>
 
 
@@ -685,8 +708,12 @@
 		project_sq = #{projectSq} </delete>
 
 	<delete id="deleteProjectAddress"> DELETE FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </delete>
+	<!--
+		삭제 조건이 붙은 이유 — 조회수 증가는 상세 GET 에서 분리된 별도 PATCH 라 공고 존재 여부를
+		거치지 않는다. 없으면 삭제된 공고의 번호로 조회수를 계속 올릴 수 있다.
+	-->
 	<update id="updateViewCnt" parameterType="long"> UPDATE TBL_PROJECT_M SET project_view_cnt =
-		project_view_cnt + 1 WHERE project_sq = #{projectSq} </update>
+		project_view_cnt + 1 WHERE project_sq = #{projectSq} AND project_is_deleted_yn = 'N' </update>
 
 	<update id="updateProject" parameterType="com.example.demo.domain.project.entity.Project">
 		UPDATE TBL_PROJECT_M SET project_ttl = #{projectTtl}, project_description_txt =
@@ -708,7 +735,9 @@
 
 	<!-- 메인 페이지용 -->
 	<select id="selectMainPopularProjects" resultMap="projectMap"> SELECT project_sq, company_sq,
-		address_sq, project_ttl, project_developer_grade_cd, project_salary, project_view_cnt,
+		address_sq, project_ttl, project_developer_grade_cd, project_salary,
+		<!-- 단가 문자열(formatSalary)이 "(협의 가능)" 을 붙이려면 이 컬럼이 있어야 한다 -->
+		project_salary_negotiable_yn, project_view_cnt,
 		project_scrap_cnt, project_candidate_cnt FROM TBL_PROJECT_M WHERE project_is_deleted_yn =
 		'N'
 		<!-- 메인에는 지금 지원할 수 있는 공고만 노출한다(요구 2-①). 마감된 공고가 조회수만 높아 상단을 차지하던 문제 -->

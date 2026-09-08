@@ -86,11 +86,14 @@ public class ProjectController {
 
 	// @Valid가 빠져 있어 수정 시에는 필수값·날짜 정합성이 전혀 검증되지 않았다.
 	// 등록과 같은 DTO·같은 payload를 쓰므로 붙여도 기존 흐름이 깨지지 않는다.
+	// 소유권 검증은 삭제(softDeleteProject)와 같은 기준으로 서비스에서 한다 —
+	// 없으면 아무 기업 회원이나 projectId 만 바꿔 남의 공고를 덮어쓸 수 있다.
 	@PatchMapping
 	public ResponseEntity<ApiResponse<Void>> patchProject(
 			Authentication authentication,
 			@Valid @RequestBody ProjectCreateRequest request) {
-		projectService.updateProject(request);
+		JwtAuthenticationToken token = (JwtAuthenticationToken) authentication;
+		projectService.updateProject(request, token);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 수정 성공", null));
 	}
 
