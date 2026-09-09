@@ -44,6 +44,9 @@ public class ResumeService {
 
 	// S3 용
 
+	// 대표 해제(updateAllRepresentativeN) 후 INSERT가 실패하면 대표 이력서가 하나도 없는 상태로 남으므로
+	// updateResume 과 동일하게 한 트랜잭션으로 묶는다.
+	@Transactional
 	public int createResume(Long userSq, ResumeRequestDTO dto,
 			List<MultipartFile> profileImages,
 			List<MultipartFile> attachments) {
@@ -206,6 +209,13 @@ public class ResumeService {
 			resumeMapper.updateAllRepresentativeN(userSq);
 		}
 
+		// 주소 행은 이 이력서에 실제로 매여 있는 것만 건드린다. 요청 본문의 addressSq 를 그대로 쓰면
+		// 남의 주소 행 번호를 실어 보내 이력서를 그 행에 연결시킨 뒤 그 행을 덮어쓸 수 있다.
+		Long dbAddressSq = resumeRepository.selectAddressSqByResumeSq(resumeSq);
+		if (dto.getAddress() != null) {
+			dto.getAddress().setAddressSq(dbAddressSq);
+		}
+
 		// 1. 기본 이력서 정보 업데이트
 		int result = resumeRepository.updateResume(userSq, dto);
 		if (result == 0) {
@@ -214,11 +224,9 @@ public class ResumeService {
 
 		// 2. 주소 업데이트
 		if (dto.getAddress() != null) {
-			Long addressSq = resumeRepository.selectAddressSqByResumeSq(resumeSq);
-			if (addressSq == null) {
+			if (dbAddressSq == null) {
 				throw new IllegalArgumentException("주소 정보가 존재하지 않습니다.");
 			}
-			dto.getAddress().setAddressSq(addressSq);
 			int addrResult = resumeRepository.updateAddressByAddressSq(dto.getAddress());
 			if (addrResult == 0) {
 				throw new IllegalArgumentException("주소 수정에 실패했습니다.");
@@ -252,10 +260,19 @@ public class ResumeService {
 			}
 		}
 
+		// 이 이력서에 실제로 달려 있는 PK 집합. 요청 본문에 실려 온 남의 PK 로 DELETE 가 나가지 않게 막는다.
+		Set<Long> ownEducationSqs = dbEducationList == null ? Set.of()
+				: dbEducationList.stream().map(ResumeRequestDTO.EducationDTO::getEducationSq)
+						.filter(Objects::nonNull).collect(Collectors.toSet());
+
 		// dto에 있는 학력은 삭제 후 다시 삽입
 		if (dto.getEducationList() != null) {
 			for (ResumeRequestDTO.EducationDTO edu : dto.getEducationList()) {
 				edu.setResumeSq(resumeSq);
+				if (edu.getEducationSq() != null && !ownEducationSqs.contains(edu.getEducationSq())) {
+					// 이 이력서 것이 아니면 남의 행을 지우지 말고 신규 항목으로 취급한다.
+					edu.setEducationSq(null);
+				}
 				if (edu.getEducationSq() != null) {
 					resumeRepository.deleteEducation(edu.getEducationSq());
 				}
@@ -291,9 +308,16 @@ public class ResumeService {
 			}
 		}
 
+		Set<Long> ownCareerSqs = dbCareerList == null ? Set.of()
+				: dbCareerList.stream().map(ResumeRequestDTO.CareerDTO::getCareerSq)
+						.filter(Objects::nonNull).collect(Collectors.toSet());
+
 		if (dto.getCareerList() != null) {
 			for (ResumeRequestDTO.CareerDTO career : dto.getCareerList()) {
 				career.setResumeSq(resumeSq);
+				if (career.getCareerSq() != null && !ownCareerSqs.contains(career.getCareerSq())) {
+					career.setCareerSq(null);
+				}
 				if (career.getCareerSq() != null) {
 					resumeRepository.deleteCareer(career.getCareerSq());
 				}
@@ -337,10 +361,17 @@ public class ResumeService {
 			}
 		}
 
+		Set<Long> ownProjectHistorySqs = dbProjectList == null ? Set.of()
+				: dbProjectList.stream().map(ResumeRequestDTO.ProjectHistoryDTO::getProjectHistorySq)
+						.filter(Objects::nonNull).collect(Collectors.toSet());
+
 		// 5-2. dto에 있는 프로젝트는 삭제 후 다시 삽입 + 기술 태그 삽입
 		if (dto.getProjectHistoryList() != null) {
 			for (ResumeRequestDTO.ProjectHistoryDTO ph : dto.getProjectHistoryList()) {
 				ph.setResumeSq(resumeSq);
+				if (ph.getProjectHistorySq() != null && !ownProjectHistorySqs.contains(ph.getProjectHistorySq())) {
+					ph.setProjectHistorySq(null);
+				}
 				if (ph.getProjectHistorySq() != null) {
 					// 기존 프로젝트 기술 태그 먼저 삭제
 					List<ResumeRequestDTO.ProjectHistorySkillTagDTO> dbSkillTags = resumeRepository
@@ -396,9 +427,16 @@ public class ResumeService {
 			}
 		}
 
+		Set<Long> ownCertificationSqs = dbCertList == null ? Set.of()
+				: dbCertList.stream().map(ResumeRequestDTO.CertificationDTO::getCertificationSq)
+						.filter(Objects::nonNull).collect(Collectors.toSet());
+
 		if (dto.getCertificationList() != null) {
 			for (ResumeRequestDTO.CertificationDTO cert : dto.getCertificationList()) {
 				cert.setResumeSq(resumeSq);
+				if (cert.getCertificationSq() != null && !ownCertificationSqs.contains(cert.getCertificationSq())) {
+					cert.setCertificationSq(null);
+				}
 				if (cert.getCertificationSq() != null) {
 					resumeRepository.deleteCertification(cert.getCertificationSq());
 				}
@@ -432,10 +470,19 @@ public class ResumeService {
 			}
 		}
 
+		Set<Long> ownTrainingSqs = dbTrainingList == null ? Set.of()
+				: dbTrainingList.stream().map(ResumeRequestDTO.TrainingHistoryDTO::getTrainingSq)
+						.filter(Objects::nonNull).collect(Collectors.toSet());
+
 		if (dto.getTrainingHistoryList() != null) {
 			for (ResumeRequestDTO.TrainingHistoryDTO training : dto.getTrainingHistoryList()) {
 				training.setResumeSq(resumeSq);
-				resumeRepository.deleteTrainingHistory(training.getTrainingSq());
+				if (training.getTrainingSq() != null && !ownTrainingSqs.contains(training.getTrainingSq())) {
+					training.setTrainingSq(null);
+				}
+				if (training.getTrainingSq() != null) {
+					resumeRepository.deleteTrainingHistory(training.getTrainingSq());
+				}
 				int inserted = resumeRepository.insertTrainingHistory(training);
 				if (inserted == 0) {
 					throw new IllegalArgumentException("교육 이력 등록 실패.");
@@ -562,11 +609,25 @@ public class ResumeService {
 		List<ResumeRequestDTO.ResumeFileDTO> dbAttachmentList = resumeRepository
 				.selectAttachmentListForUpdateByResumeSq(resumeSq);
 
+		// 첨부파일 항목이 아예 없는 요청도 들어올 수 있다(빈 배열 대신 필드 누락).
+		// 그대로 역참조하면 NPE 500 이 나므로 빈 리스트로 정규화한다.
+		// 단 '필드 누락'을 '전부 삭제'로 해석하면 안 된다 — 그러면 부분 수정 요청 한 번에
+		// 첨부파일과 물리 파일이 통째로 사라진다. 삭제는 목록이 실제로 온 경우에만 한다.
+		boolean attachmentListProvided = dto.getAttachmentList() != null;
+		if (!attachmentListProvided) {
+			dto.setAttachmentList(new ArrayList<>());
+		}
+
 		// 2. 프론트에서 넘어온 유지할 파일 리스트 fileSq 추출
-		Set<Long> retainedFileSqs = dto.getAttachmentList().stream()
-				.map(ResumeRequestDTO.ResumeFileDTO::getFileSq)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
+		Set<Long> retainedFileSqs = attachmentListProvided
+				? dto.getAttachmentList().stream()
+						.map(ResumeRequestDTO.ResumeFileDTO::getFileSq)
+						.filter(Objects::nonNull)
+						.collect(Collectors.toSet())
+				: dbAttachmentList.stream()
+						.map(ResumeRequestDTO.ResumeFileDTO::getFileSq)
+						.filter(Objects::nonNull)
+						.collect(Collectors.toSet());
 
 		// 3. 기존 첨부파일 중 유지되지 않는 파일 삭제
 		for (ResumeRequestDTO.ResumeFileDTO dbFile : dbAttachmentList) {
@@ -647,8 +708,22 @@ public class ResumeService {
 	// 대표 이력서 설정
 	@Transactional
 	public void setMainResume(Long resumeSq, Long userSq) {
+		// 대상 이력서가 실제로 그 회원의 것인지 확인한다. 확인하지 않으면
+		// 남의 resumeSq 를 넘겨 그 사람의 대표 이력서를 바꿀 수 있다.
+		requireResumeOwner(resumeSq, userSq);
 		resumeMapper.updateAllRepresentativeN(userSq);
 		resumeMapper.updateRepresentativeY(resumeSq);
+	}
+
+	/** 이력서 소유자 확인. 남의 이력서에 손대는 경로를 막는다. */
+	private void requireResumeOwner(Long resumeSq, Long userSq) {
+		Long ownerSq = resumeMapper.findUserByResumeSq(resumeSq);
+		if (ownerSq == null) {
+			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
+		}
+		if (!ownerSq.equals(userSq)) {
+			throw new IllegalArgumentException("본인의 이력서만 처리할 수 있습니다.");
+		}
 	}
 
 	@Transactional
@@ -665,7 +740,9 @@ public class ResumeService {
 
 	// 로컬용
 	@Transactional
-	public void softDeleteResume(Long resumeSq) {
+	public void softDeleteResume(Long resumeSq, Long userSq) {
+		// 소유자 확인 없이 삭제하면 남의 이력서와 그 물리 파일까지 지울 수 있다.
+		requireResumeOwner(resumeSq, userSq);
 		resumeMapper.updateDeleteYn(resumeSq);
 
 		// 프로필 이미지 정리
@@ -739,6 +816,10 @@ public class ResumeService {
 	@Transactional
 	public List<CommonSkillTag> getAllSkillTags() {
 		List<CommonSkillTag> parentTags = resumeMapper.findParentSkillTags();
+		if (parentTags == null || parentTags.isEmpty()) {
+			// findAll 은 부모 목록을 IN 절로 펼친다. 빈 목록이면 `IN ()` 이 되어 SQL 문법 오류가 난다.
+			return new ArrayList<>();
+		}
 		List<CommonSkillTag> childrenTags = resumeMapper.findAll(parentTags);
 		List<CommonSkillTag> allTags = new ArrayList<>();
 		allTags.addAll(parentTags);
@@ -748,8 +829,9 @@ public class ResumeService {
 
 	}
 
-	// 로컬용
-	public ResumeRequestDTO getResumeDetail(Long resumeSq) {
+	// 로컬용 — 수정 화면용 상세. 이력서에는 이름·생년월일·연락처가 들어 있으므로 본인 것만 내준다.
+	public ResumeRequestDTO getResumeDetail(Long resumeSq, Long userSq) {
+		requireResumeOwner(resumeSq, userSq);
 		ResumeRequestDTO resume = resumeRepository.findByResumeSq(resumeSq);
 		if (resume == null)
 			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
@@ -903,16 +985,25 @@ public class ResumeService {
 	// 복사하기
 	@Transactional
 	public Long copyResume(Long userSq, Long originResumeSq, boolean withFiles) {
-		// 0. 원본 이력서 조회
+		// 0. 원본이 본인 이력서인지 먼저 확인한다. 확인하지 않으면 남의 resumeSq 를 넘겨
+		// 그 사람의 이력서(개인정보·첨부파일 포함)를 내 계정으로 통째로 가져올 수 있다.
+		requireResumeOwner(originResumeSq, userSq);
+
+		// 0-1. 원본 이력서 조회
 		ResumeRequestDTO originDto = resumeRepository.findByResumeSq(originResumeSq);
 		if (originDto == null)
 			throw new IllegalArgumentException("복사할 이력서를 찾을 수 없습니다.");
 		originDto.setResumeIsRepresentativeYn("N");
 
-		// 1. 주소 복사
-		ResumeRequestDTO.AddressDTO address = resumeRepository
-				.findAddressByAddressSq(originDto.getAddress().getAddressSq());
-		resumeRepository.insertAddress(address);
+		// 1. 주소 복사 — 주소 없이 등록된 이력서(createResume 는 address 가 null 이면 건너뛴다)도 있으므로
+		// 원본에 주소가 없으면 주소 복사를 통째로 건너뛴다. 예전에는 여기서 NPE 로 500 이 났다.
+		ResumeRequestDTO.AddressDTO address = null;
+		if (originDto.getAddress() != null && originDto.getAddress().getAddressSq() != null) {
+			address = resumeRepository.findAddressByAddressSq(originDto.getAddress().getAddressSq());
+			if (address != null) {
+				resumeRepository.insertAddress(address);
+			}
+		}
 
 		// 2. 기본정보 복사 (제목 후처리)
 		String suffix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
@@ -978,11 +1069,13 @@ public class ResumeService {
 		if (withFiles) {
 			// 9-1. 프로필 이미지 복제
 			ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.findProfileImage(originResumeSq);
-			if (profileImage != null) {
-				String copiedSaveNm = fileStorageService.copyFile(profileImage.getFileSaveNm());
+			String copiedProfileSaveNm = profileImage == null ? null
+					: fileStorageService.copyFile(profileImage.getFileSaveNm());
+			// 실물이 사라진 파일은 복사본 레코드를 만들지 않는다(빈 파일명 매핑 방지).
+			if (copiedProfileSaveNm != null) {
 				ResumeRequestDTO.ResumeFileDTO newProfileImage = new ResumeRequestDTO.ResumeFileDTO();
 				newProfileImage.setFileOriginalNm(profileImage.getFileOriginalNm());
-				newProfileImage.setFileSaveNm(copiedSaveNm);
+				newProfileImage.setFileSaveNm(copiedProfileSaveNm);
 				newProfileImage.setFileTyp(profileImage.getFileTyp());
 				newProfileImage.setFileSize(profileImage.getFileSize());
 				resumeRepository.insertProfileImage(newProfileImage);
@@ -992,6 +1085,9 @@ public class ResumeService {
 			// 9-2. 첨부파일 복제
 			for (ResumeRequestDTO.ResumeFileDTO file : resumeRepository.findAttachmentList(originResumeSq)) {
 				String copiedSaveNm = fileStorageService.copyFile(file.getFileSaveNm());
+				if (copiedSaveNm == null) {
+					continue;
+				}
 				ResumeRequestDTO.ResumeFileDTO newFile = new ResumeRequestDTO.ResumeFileDTO();
 				newFile.setFileOriginalNm(file.getFileOriginalNm());
 				newFile.setFileSaveNm(copiedSaveNm);

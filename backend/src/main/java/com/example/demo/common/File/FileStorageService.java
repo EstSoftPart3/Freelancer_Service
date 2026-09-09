@@ -167,6 +167,11 @@ public class FileStorageService {
         String newFileName = createFileName(sourceFileName);
         try {
             Path sourcePath = Paths.get(uploadDir).resolve(sourceFileName);
+            if (!Files.exists(sourcePath)) {
+                // DB 레코드만 남고 실물이 사라진 파일 때문에 복사 전체가 500 으로 죽지 않게 한다.
+                log.warn("복사할 원본 파일이 없어 건너뛴다: {}", sourceFileName);
+                return null;
+            }
             Path destPath = Paths.get(uploadDir).resolve(newFileName);
             Files.copy(sourcePath, destPath);
             log.info("파일 복사 성공: {} -> {}", sourceFileName, newFileName);

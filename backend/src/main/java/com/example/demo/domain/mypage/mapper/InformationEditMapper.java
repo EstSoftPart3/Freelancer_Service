@@ -24,8 +24,6 @@ public interface InformationEditMapper {
 
         String selectCompanyNameByUserSq(@Param("userSq") Long userSq);
 
-        boolean existsNicknameExcludingUser(@Param("userNickname") String userNickname, @Param("userSq") Long userSq);
-
         int updateUserInfo(@Param("userSq") Long userSq,
                         @Param("userPw") String userPw,
                         @Param("userEmail") String userEmail,

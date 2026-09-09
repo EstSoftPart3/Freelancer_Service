@@ -44,10 +44,12 @@
 		</if>
 		ORDER BY a.project_application_created_at_dtm DESC LIMIT #{size} OFFSET #{offset} </select>
 
+	<!-- 목록 쿼리와 조인이 하나라도 달라지면 총건수와 실제 행 수가 어긋난다(상태 코드 조인 포함) -->
 	<select id="countApplicationSummariesByUserSqWithFilter" resultType="int"> SELECT COUNT(*) FROM
 		TBL_RESUME_M r JOIN TBL_PROJECT_APPLICATION_H a ON r.resume_sq = a.resume_sq JOIN
 		TBL_PROJECT_M p ON a.project_sq = p.project_sq JOIN TBL_COMPANY_S c ON p.company_sq =
-		c.company_sq WHERE r.user_sq = #{userSq} <if test="keyword != null and keyword != ''">
+		c.company_sq JOIN TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq
+		WHERE r.user_sq = #{userSq} <if test="keyword != null and keyword != ''">
 			<choose>
 				<when test="searchType != null and searchType != 'all'">
 					<choose>

@@ -36,12 +36,13 @@
     #{dto.resumePhoneNum}, #{dto.resumeEmail}, #{dto.resumeGreetingTxt},
     #{dto.resumeIsNotificationYn}, #{dto.resumeIsRepresentativeYn} ) </insert>
 
+  <!-- 주소 항목이 아예 없는 요청(필드 누락)에 address_sq 를 NULL 로 지우지 않는다 -->
   <update id="updateResume" parameterType="map"> UPDATE TBL_RESUME_M SET address_sq =
-    #{dto.address.addressSq}, resume_ttl = #{dto.resumeTtl}, resume_nm = #{dto.resumeNm},
+    COALESCE(#{dto.address.addressSq}, address_sq), resume_ttl = #{dto.resumeTtl}, resume_nm = #{dto.resumeNm},
     resume_birth_dt = #{dto.resumeBirthDt}, resume_phone_num = #{dto.resumePhoneNum}, resume_email =
     #{dto.resumeEmail}, resume_greeting_txt = #{dto.resumeGreetingTxt}, resume_is_notification_yn =
     #{dto.resumeIsNotificationYn}, resume_is_representative_yn = #{dto.resumeIsRepresentativeYn}
-    WHERE resume_sq = #{dto.resumeSq} </update>
+    WHERE resume_sq = #{dto.resumeSq} AND user_sq = #{userSq} </update>
 
   <!-- 학력 -->
   <insert id="insertEducation"

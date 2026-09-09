@@ -36,6 +36,7 @@ import com.example.demo.domain.mypage.dto.response.AffiliationInfoResponseDTO;
 import com.example.demo.domain.mypage.mapper.InformationEditMapper;
 import com.example.demo.domain.mypage.repository.InformationEditRepository;
 import com.example.demo.domain.user.repository.CompanyVerificationRepository;
+import com.example.demo.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class InformationEditService {
     private final PasswordEncoder passwordEncoder;
     private final RestTemplate restTemplate = new RestTemplate();
     private final CompanyVerificationRepository companyVerificationRepository;
+    private final UserRepository userRepository;
 
     public boolean checkPassword(Long userSq, String rawPassword) {
         String encodedPw = informationEditRepository.getEncodedPasswordByUserSq(userSq);
@@ -84,7 +86,7 @@ public class InformationEditService {
             return null;
         }
         NicknamePolicy.validate(userNickname);
-        if (informationEditRepository.existsNicknameExcludingUser(userNickname, userSq)) {
+        if (userRepository.existsByUserNicknameExcludingUser(userNickname, userSq)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
         return userNickname;
@@ -300,19 +302,25 @@ public class InformationEditService {
     public void updateProfileImage(Long userSq, MultipartFile multipartFile) {
         validateUpdate(userSq, multipartFile);
 
-        // 1. 기존 파일 삭제 로직
+        // 1. 새 파일을 먼저 저장한다.
+        // 옛 파일을 먼저 지우면 업로드가 실패했을 때(허용되지 않는 확장자 등) DB는 롤백되지만
+        // 디스크의 원본은 이미 사라져, 기존 프로필 이미지가 깨진 링크로 남는다.
+        UploadedFileDTO uploaded = fileStorageService.uploadFile(multipartFile);
+
+        // 2. 기존 파일 매핑 정리
         ProfileImageInfoDTO existing = informationEditRepository.findFileByUserSq(userSq);
         if (existing != null) {
-            fileStorageService.deleteFile(existing.getSavedName()); // 로컬 파일 삭제
             informationEditRepository.markFileAsDeleted(existing.getFileSq());
             informationEditRepository.deleteUserProfileImageByUserSq(userSq);
         }
 
-        // 2. 새 파일 로컬 저장
-        UploadedFileDTO uploaded = fileStorageService.uploadFile(multipartFile);
-
         // 3. DB 기록
         saveFileInfoAndMapping(userSq, uploaded, "USER");
+
+        // 4. 물리 파일 삭제는 DB 처리가 모두 끝난 뒤에 한다.
+        if (existing != null) {
+            fileStorageService.deleteFile(existing.getSavedName());
+        }
     }
 
     /**
@@ -342,19 +350,23 @@ public class InformationEditService {
             throw new IllegalArgumentException("해당 사용자의 기업 정보를 찾을 수 없습니다.");
         }
 
-        // 1. 기존 기업 로고 삭제
+        // 1. 새 로고를 먼저 저장한다(업로드 실패 시 기존 로고가 사라지지 않게).
+        UploadedFileDTO uploaded = fileStorageService.uploadFile(multipartFile);
+
+        // 2. 기존 기업 로고 매핑 정리
         ProfileImageInfoDTO existing = informationEditRepository.findAffiliationFileByUserSq(companySq);
         if (existing != null) {
-            fileStorageService.deleteFile(existing.getSavedName());
             informationEditRepository.markFileAsDeleted(existing.getFileSq());
             informationEditRepository.deleteAffiliationProfileImageByUserSq(companySq);
         }
 
-        // 2. 새 로고 저장
-        UploadedFileDTO uploaded = fileStorageService.uploadFile(multipartFile);
-
         // 3. DB 기록
         saveFileInfoAndMapping(companySq, uploaded, "COMPANY");
+
+        // 4. 물리 파일 삭제는 DB 처리가 모두 끝난 뒤에 한다.
+        if (existing != null) {
+            fileStorageService.deleteFile(existing.getSavedName());
+        }
     }
 
     /**

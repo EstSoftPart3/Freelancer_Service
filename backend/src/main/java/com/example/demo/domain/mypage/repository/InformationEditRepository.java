@@ -59,10 +59,6 @@ public class InformationEditRepository {
         informationEditMapper.updateCompanyInfoWithoutPw(userSq, userEmail, userPhoneNum, userNm, userNickname);
     }
 
-    public boolean existsNicknameExcludingUser(String userNickname, Long userSq) {
-        return informationEditMapper.existsNicknameExcludingUser(userNickname, userSq);
-    }
-
     public void updateAddress(Long userSq, String zonecode, String address, String detailAddress, String sigungu,
             Double lat, Double lon, Long areaCodeSq) {
         informationEditMapper.updateAddress(userSq, zonecode, address, detailAddress, sigungu, lat, lon, areaCodeSq);

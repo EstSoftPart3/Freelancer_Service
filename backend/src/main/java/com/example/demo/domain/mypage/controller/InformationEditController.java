@@ -126,11 +126,17 @@ public class InformationEditController {
 
         if (user.getUserTypeCd().equals(301L)) {
             // 개인 회원
+            if (dto.getPersonal() == null) {
+                return ApiResponse.error(HttpStatus.BAD_REQUEST, "개인회원 정보가 누락되었습니다.");
+            }
             informationEditService.updatePersonalInfo(userSq, dto.getPersonal());
 
             return ApiResponse.of(HttpStatus.OK, "개인회원 정보 업데이트 완료", null);
         } else if (user.getUserTypeCd().equals(302L)) {
             // 기업 회원
+            if (dto.getCompany() == null) {
+                return ApiResponse.error(HttpStatus.BAD_REQUEST, "기업회원 정보가 누락되었습니다.");
+            }
             informationEditService.updateCompanyInfo(userSq, dto.getCompany());
             return ApiResponse.of(HttpStatus.OK, "기업회원 정보 업데이트 완료", null);
         } else {

@@ -1,6 +1,7 @@
 package com.example.demo.domain.mypage.service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,8 @@ public class WithdrawService {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
 
-        if (!user.getUserId().equals(dto.getUserId()) || !user.getUserNm().equals(dto.getUserNm())) {
+        // 이름이 비어 있는 계정(소셜 가입 등)에서 NPE 500 이 나지 않게 null 안전 비교를 쓴다.
+        if (!Objects.equals(user.getUserId(), dto.getUserId()) || !Objects.equals(user.getUserNm(), dto.getUserNm())) {
             throw new IllegalArgumentException("요청 정보가 일치하지 않습니다.");
         }
 
@@ -42,6 +44,10 @@ public class WithdrawService {
         Long companySq = affiliationMapper.findMemberCompanySq(userSq);
         if (companySq != null) {
             Long resignedStatusCd = commonCodeMapper.findCommonCodeSqByName("퇴사", ParentCodeEnum.EMPLOYMENT.getCode());
+            if (resignedStatusCd == null) {
+                // 코드를 못 찾으면 status 컬럼에 NULL 을 써 넣어 소속 상태가 망가진다. 차라리 탈퇴 전체를 롤백한다.
+                throw new IllegalStateException("퇴사 상태 코드를 찾을 수 없습니다.");
+            }
             affiliationMapper.updateMemberToResigned(companySq, userSq, resignedStatusCd, LocalDate.now());
         }
     }

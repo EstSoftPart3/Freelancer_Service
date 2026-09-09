@@ -81,8 +81,9 @@ public class ResumeController {
 
 	// 수정용 이력서 상세 조회
 	@GetMapping("/{resumeSq}")
-	public ResponseEntity<ApiResponse<ResumeRequestDTO>> getResumeDetail(@PathVariable Long resumeSq) {
-		ResumeRequestDTO resume = resumeService.getResumeDetail(resumeSq);
+	public ResponseEntity<ApiResponse<ResumeRequestDTO>> getResumeDetail(@PathVariable Long resumeSq,
+			@AuthenticationPrincipal Long userSq) {
+		ResumeRequestDTO resume = resumeService.getResumeDetail(resumeSq, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회 완료", resume));
 	}
 
@@ -100,7 +101,14 @@ public class ResumeController {
 				? request.getMemberSq()
 				: userSq;
 
-		resumeService.setMainResume(resumeSq, memberSq);
+		// memberSq 는 요청 본문에서 오는 값이라 소유자 검증의 기준으로 쓰면 안 된다.
+		// (남의 userSq + 남의 resumeSq 를 함께 보내면 검증이 그대로 통과해 버린다.)
+		// 본인 이력서는 인증 주체로 검증하고, 소속 인원 변경은 /others 와 같은 경로를 탄다.
+		if (memberSq.equals(userSq)) {
+			resumeService.setMainResume(resumeSq, userSq);
+		} else {
+			resumeService.setOthersMainResume(resumeSq);
+		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "대표 이력서 설정 완료", "success"));
 	}
 
@@ -120,8 +128,11 @@ public class ResumeController {
 		List<ResumeListResponse> fullList = resumeService.getAllResumes(userSq);
 
 		int totalCount = fullList.size();
-		int offset = (int) ((currentPage - 1) * size);
-		int toIndex = Math.min(offset + size.intValue(), totalCount);
+		// 범위를 벗어난 페이지 번호(마지막 페이지에서 삭제 후 새로고침 등)로 subList 가 터지지 않게 잘라 준다.
+		// 큰 페이지 번호가 int 로 넘치면서 음수로 되돌아오지 않도록 long 으로 계산한 뒤 자른다.
+		long rawOffset = (currentPage - 1) * size;
+		int offset = (int) Math.min(Math.max(rawOffset, 0L), (long) totalCount);
+		int toIndex = (int) Math.min((long) offset + Math.max(size, 0L), totalCount);
 		List<ResumeListResponse> pagedList = fullList.subList(offset, toIndex);
 
 		// 응답 본문 구성
@@ -151,8 +162,9 @@ public class ResumeController {
 
 	// 이력서 삭제
 	@PatchMapping("/{resumeSq}/delete")
-	public ResponseEntity<ApiResponse<String>> deleteResume(@PathVariable("resumeSq") Long resumeSq) {
-		resumeService.softDeleteResume(resumeSq);
+	public ResponseEntity<ApiResponse<String>> deleteResume(@PathVariable("resumeSq") Long resumeSq,
+			@AuthenticationPrincipal Long userSq) {
+		resumeService.softDeleteResume(resumeSq, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 삭제 완료", "success"));
 	}
 
