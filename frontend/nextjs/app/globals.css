@@ -129,6 +129,24 @@
   }
 }
 
+/* ── 헤더 "연봉계산기·연봉순위표" — hover 없이도 계속 눈에 띄도록 도는 은은한 애니메이션.
+   그라데이션이 천천히 흐르고 그림자가 숨쉬듯 커졌다 작아진다. 저모션 설정 시 꺼진다. ── */
+@keyframes salary-gradient-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes salary-glow-breathe {
+  0%, 100% { box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25); }
+  50% { box-shadow: 0 4px 16px rgba(37, 99, 235, 0.55); }
+}
+.salary-cta {
+  background-size: 200% 200%;
+  animation: salary-gradient-flow 3.5s ease-in-out infinite, salary-glow-breathe 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .salary-cta { animation: none; }
+}
+
 /* ── 프로젝트 지도(CustomOverlay) 마커 스타일 — Kakao Maps가 React 트리 밖에 직접 삽입하는 raw DOM이라 Tailwind 클래스가 닿지 않는다 ── */
 .cluster-pin {
   cursor: pointer;

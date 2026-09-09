@@ -1,10 +1,14 @@
 'use client'
 // Mirrors vue_js/src/fo/components/common/CommonHeader.vue
 // shadcn/ui 4.7+ = Base UI 기반 → asChild 없음, 컴포넌트 직접 스타일링
+//
+// Phase2 개편: 1단(로고만) + 2단(전체 네비 한 줄) 구조로 분리. 연봉계산기·연봉순위표를
+// 굵게 강조하고, 커뮤니티는 가로 메가메뉴로, 기업서비스는 별도 드롭다운으로 뺐다.
+// "소속"은 "파트너"로 라벨만 바꿨다(라우트는 그대로 /affiliation).
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, ChevronDown, LogOut, Menu, User, X } from 'lucide-react'
+import { Bell, Calculator, ChevronDown, LogOut, Menu, Search, TrendingUp, User, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -17,7 +21,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useUserStore } from '@/stores/userStore'
-import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -59,6 +62,25 @@ function normalizeNotificationUrl(url?: string): string {
   return url
 }
 
+// 커뮤니티 메가메뉴 — 대분류 6 + 소분류. 실제 카테고리 재설계(백엔드 공통코드)는 아직 안 됐으므로
+// 소분류 링크는 우선 /community 로 보내고 tab/sub 쿼리만 붙여둔다(추후 게시판 개편 때 실제 필터로 연결).
+const COMMUNITY_MEGA: { key: string; label: string; subs: string[] }[] = [
+  { key: 'career', label: '커리어/소통', subs: ['연봉', '이직', '면접'] },
+  { key: 'tech', label: '기술/소통', subs: ['개발', 'AI'] },
+  { key: 'company', label: '요즘회사', subs: [] },
+  { key: 'project', label: '프로젝트', subs: [] },
+  { key: 'lounge', label: '라운지(자유)', subs: ['말머리', '잡담'] },
+  { key: 'vote', label: '투표', subs: [] },
+]
+
+function communityHref(tab: string, sub?: string) {
+  if (tab === 'vote') return '/vote'
+  if (tab === 'project') return '/projects'
+  const params = new URLSearchParams({ tab })
+  if (sub) params.set('sub', sub)
+  return `/community?${params.toString()}`
+}
+
 export default function CommonHeader() {
   const pathname = usePathname()
   const router = useRouter()
@@ -72,6 +94,7 @@ export default function CommonHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [scrolled, setScrolled] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30)
@@ -174,8 +197,22 @@ export default function CommonHeader() {
   }
 
   const isActive = (paths: string[]) => paths.some((p) => pathname.startsWith(p))
+  // 곡선이 있는 버튼 형태 — 활성 탭은 은은한 배경, 나머지는 hover 시에만 배경이 뜬다
   const navCls = (active: boolean) =>
-    `text-sm font-medium transition-colors hover:text-primary ${active ? 'text-primary' : 'text-foreground/70'}`
+    cn(
+      'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+      active
+        ? 'border-primary/30 bg-primary/10 text-primary'
+        : 'border-border bg-muted/60 text-foreground/70 hover:border-foreground/20 hover:bg-muted hover:text-foreground',
+    )
+
+  // 커뮤니티 전체글 검색으로 보낸다 — BoardListClient가 ?keyword= 를 그대로 받아 검색한다.
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = searchTerm.trim()
+    if (!q) return
+    router.push(`/community/list?keyword=${encodeURIComponent(q)}`)
+  }
 
   // 알림 팝오버 내용 (로그인 시 공용)
   const NotificationPanel = (
@@ -240,62 +277,114 @@ export default function CommonHeader() {
     <header
       className={cn(
         'fixed top-0 z-50 w-full bg-background transition-shadow duration-300',
-        scrolled ? 'shadow-md' : 'border-b',
+        scrolled ? 'shadow-md border-b' : 'border-b',
       )}
-      style={{ height: '64px' }}
     >
-      <div className="container mx-auto flex h-full items-center justify-between px-4">
-        {/* 로고 — 소재가 여백 없이 타이트 크롭이라 36px 로 두면 글자가 헤더를 압도한다.
-            28px 가 내비 텍스트와 균형이 맞았다(브라우저에서 24/28/32 비교). 원본 715x120. */}
-        <Link href="/" className="flex shrink-0 items-center" aria-label="Ctrl + F 홈">
-          <img
-            src="/img/brand/logo-horizontal.png"
-            alt="Ctrl + F"
-            width={167}
-            height={28}
-            className="h-7 w-auto"
-          />
-        </Link>
+      {/* 1단 — 로고만 */}
+      <div className="border-b">
+        <div className="container mx-auto flex h-12 items-center px-4">
+          <Link href="/" className="flex shrink-0 items-center" aria-label="Ctrl + F 홈">
+            <img
+              src="/img/brand/logo-horizontal.png"
+              alt="Ctrl + F"
+              width={167}
+              height={28}
+              className="h-6 w-auto"
+            />
+          </Link>
+        </div>
+      </div>
 
-        {/* 데스크탑 네비게이션 */}
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link href="/affiliation" className={navCls(isActive(['/affiliation']))}>소속</Link>
-          <Link href="/projects" className={navCls(isActive(['/projects']))}>프로젝트</Link>
+      {/* 2단 — 전체 네비 한 줄 (좌: 메뉴, 우: 검색·로그인·기업서비스) */}
+      <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
+        <nav className="hidden min-w-0 items-center gap-2 md:flex">
+          {/* 연봉계산기·연봉순위표 — 클릭을 유도하는 강조 버튼. 나머지 메뉴와 확실히 구분되도록
+              색을 넣고, hover 시 살짝 떠오르며 아이콘이 반응한다. */}
+          <Link
+            href="/salary/calculator"
+            className="salary-cta group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-1.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+          >
+            <Calculator className="h-4 w-4 transition-transform duration-200 group-hover:rotate-[-8deg]" />
+            연봉계산기
+          </Link>
+          <Link
+            href="/salary/ranking"
+            className="salary-cta group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-1.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+          >
+            <TrendingUp className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+            연봉순위표
+          </Link>
 
-          {/* 커뮤니티 드롭다운 */}
+          <span className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden />
+
+          {/* 커뮤니티 메가메뉴 */}
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                'flex items-center gap-1 text-sm font-medium outline-none transition-colors hover:text-primary',
-                isActive(['/community', '/board', '/qna', '/voc']) ? 'text-primary' : 'text-foreground/70',
+                'flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium outline-none transition-colors',
+                isActive(['/community', '/board', '/qna', '/voc', '/vote'])
+                  ? 'border-primary/30 bg-primary/10 text-primary'
+                  : 'border-border bg-muted/60 text-foreground/70 hover:border-foreground/20 hover:bg-muted hover:text-foreground',
               )}
             >
               커뮤니티 <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => router.push('/community')}>
-                커뮤니티 홈
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/board')}>
-                일반 게시판
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/qna')}>
-                Q&A 게시판
-              </DropdownMenuItem>
-              {/* 고객의 소리는 로그인 전용 — 비로그인에게 노출하면 누르는 즉시 로그인으로 튕긴다 */}
-              {loggedIn && (
-                <DropdownMenuItem onClick={() => router.push('/voc')}>
-                  고객의 소리
-                </DropdownMenuItem>
-              )}
+            <DropdownMenuContent align="start" className="w-[720px] max-w-[calc(100vw-2rem)] p-5">
+              <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+                {COMMUNITY_MEGA.map((col) => (
+                  <div key={col.key}>
+                    <Link
+                      href={communityHref(col.key)}
+                      className="mb-2 block text-sm font-semibold text-foreground hover:text-primary"
+                    >
+                      {col.label}
+                    </Link>
+                    {col.subs.length > 0 && (
+                      <ul className="flex flex-col gap-1.5">
+                        {col.subs.map((sub) => (
+                          <li key={sub}>
+                            <Link
+                              href={communityHref(col.key, sub)}
+                              className="text-sm text-muted-foreground hover:text-foreground"
+                            >
+                              {sub}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 border-t pt-3">
+                <Link href="/community" className="text-sm font-medium text-primary hover:underline">
+                  커뮤니티 홈 전체 보기
+                </Link>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link href="/notice" className={navCls(isActive(['/notice']))}>공지사항</Link>
+          <Link href="/interview" className={cn('shrink-0', navCls(isActive(['/interview'])))}>면접후기</Link>
+          <Link href="/projects" className={cn('shrink-0', navCls(isActive(['/projects'])))}>프로젝트</Link>
+          <Link href="/affiliation" className={cn('shrink-0', navCls(isActive(['/affiliation'])))}>파트너</Link>
+          <Link href="/notice" className={cn('shrink-0', navCls(isActive(['/notice'])))}>공지사항</Link>
         </nav>
 
         {/* 우측 액션 */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
+          {/* 검색 — 아이콘 + 밑줄만 */}
+          <form onSubmit={handleSearch} className="hidden md:block">
+            <label className="flex items-center gap-1.5 border-b border-input px-0.5 py-1 text-sm text-muted-foreground transition-colors focus-within:border-foreground focus-within:text-foreground">
+              <Search className="h-3.5 w-3.5 shrink-0" />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="검색어를 입력하세요"
+                className="w-32 bg-transparent text-sm outline-none placeholder:text-muted-foreground lg:w-40"
+              />
+            </label>
+          </form>
+
           {loggedIn ? (
             <>
               {/* 알림 팝오버 */}
@@ -338,13 +427,55 @@ export default function CommonHeader() {
               </DropdownMenu>
             </>
           ) : authChecked ? (
-            <Link
-              href="/login"
-              className="hidden text-sm text-muted-foreground hover:text-foreground md:block"
-            >
-              로그인
-            </Link>
+            <div className="hidden items-center gap-3 md:flex">
+              <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+                로그인
+              </Link>
+              <Link href="/sign-up" className="text-sm text-muted-foreground hover:text-foreground">
+                회원가입
+              </Link>
+            </div>
           ) : null}
+
+          {/* 기업서비스 — 클릭 시 실제로 있는 기업 기능만 나열 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={cn(buttonVariants({ variant: 'outline' }), 'hidden md:inline-flex')}
+            >
+              기업서비스
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-2">
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5 py-2"
+                onClick={() => router.push('/login?loginType=COMPANY')}
+              >
+                <span className="font-medium">기업 로그인</span>
+                <span className="text-xs text-muted-foreground">기업 회원으로 로그인합니다</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5 py-2"
+                onClick={() => router.push('/sign-up?loginType=COMPANY')}
+              >
+                <span className="font-medium">기업 회원가입</span>
+                <span className="text-xs text-muted-foreground">사업자등록번호로 기업 회원을 만듭니다</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5 py-2"
+                onClick={() => router.push('/mypage/project-post')}
+              >
+                <span className="font-medium">프로젝트 공고 관리</span>
+                <span className="text-xs text-muted-foreground">등록 · 수정 · 지원자 확인</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5 py-2"
+                onClick={() => router.push('/mypage/affiliation-edit')}
+              >
+                <span className="font-medium">파트너 모집 관리</span>
+                <span className="text-xs text-muted-foreground">소속 정보 · 인원 · 지원자 현황</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* 모바일 Sheet */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -353,8 +484,8 @@ export default function CommonHeader() {
             >
               <Menu className="h-5 w-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-72 flex-col pt-10">
-              <Link href="/" className="mb-6 flex items-center" aria-label="Ctrl + F 홈">
+            <SheetContent side="left" className="flex w-80 flex-col overflow-y-auto pt-10">
+              <Link href="/" className="mb-4 flex items-center" aria-label="Ctrl + F 홈">
                 <img
                   src="/img/brand/logo-horizontal.png"
                   alt="Ctrl + F"
@@ -363,29 +494,29 @@ export default function CommonHeader() {
                   className="h-7 w-auto"
                 />
               </Link>
+
+              <div className="mb-4 flex gap-2">
+                <Link
+                  href="/salary/calculator"
+                  className="salary-cta flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-3 py-2 text-center text-sm font-bold text-white"
+                >
+                  <Calculator className="h-4 w-4" />
+                  연봉계산기
+                </Link>
+                <Link
+                  href="/salary/ranking"
+                  className="salary-cta flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-3 py-2 text-center text-sm font-bold text-white"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  연봉순위표
+                </Link>
+              </div>
+
               <nav className="flex flex-col gap-1">
-                <Link
-                  href="/affiliation"
-                  className={cn(
-                    'rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/affiliation']) ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
-                  )}
-                >
-                  소속
-                </Link>
-                <Link
-                  href="/projects"
-                  className={cn(
-                    'rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/projects']) ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
-                  )}
-                >
-                  프로젝트
-                </Link>
                 <button
                   className={cn(
                     'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/community', '/board', '/qna'])
+                    isActive(['/community', '/board', '/qna', '/vote'])
                       ? 'bg-primary/10 text-primary'
                       : 'hover:bg-muted',
                   )}
@@ -397,23 +528,57 @@ export default function CommonHeader() {
                   />
                 </button>
                 {mobileCommunityOpen && (
-                  <div className="ml-4 flex flex-col gap-1 border-l pl-3">
-                    <Link href="/community" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                      커뮤니티 홈
-                    </Link>
-                    <Link href="/board" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                      일반 게시판
-                    </Link>
-                    <Link href="/qna" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                      Q&A 게시판
-                    </Link>
-                    {loggedIn && (
-                      <Link href="/voc" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                        고객의 소리
-                      </Link>
-                    )}
+                  <div className="ml-4 flex flex-col gap-2 border-l pl-3">
+                    {COMMUNITY_MEGA.map((col) => (
+                      <div key={col.key}>
+                        <Link href={communityHref(col.key)} className="block rounded-md py-1 text-sm font-semibold hover:bg-muted">
+                          {col.label}
+                        </Link>
+                        {col.subs.length > 0 && (
+                          <div className="ml-2 flex flex-col">
+                            {col.subs.map((sub) => (
+                              <Link
+                                key={sub}
+                                href={communityHref(col.key, sub)}
+                                className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                              >
+                                {sub}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                <Link
+                  href="/interview"
+                  className={cn(
+                    'rounded-md px-3 py-2 text-sm font-medium',
+                    isActive(['/interview']) ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                  )}
+                >
+                  면접후기
+                </Link>
+                <Link
+                  href="/projects"
+                  className={cn(
+                    'rounded-md px-3 py-2 text-sm font-medium',
+                    isActive(['/projects']) ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                  )}
+                >
+                  프로젝트
+                </Link>
+                <Link
+                  href="/affiliation"
+                  className={cn(
+                    'rounded-md px-3 py-2 text-sm font-medium',
+                    isActive(['/affiliation']) ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                  )}
+                >
+                  파트너
+                </Link>
                 <Link
                   href="/notice"
                   className={cn(
@@ -424,6 +589,17 @@ export default function CommonHeader() {
                   공지사항
                 </Link>
               </nav>
+
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">기업서비스</p>
+                <div className="flex flex-col gap-1">
+                  <Link href="/login?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 로그인</Link>
+                  <Link href="/sign-up?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 회원가입</Link>
+                  <Link href="/mypage/project-post" className="rounded-md px-3 py-2 text-sm hover:bg-muted">프로젝트 공고 관리</Link>
+                  <Link href="/mypage/affiliation-edit" className="rounded-md px-3 py-2 text-sm hover:bg-muted">파트너 모집 관리</Link>
+                </div>
+              </div>
+
               <div className="mt-auto border-t pt-4">
                 {loggedIn ? (
                   <>
@@ -443,9 +619,14 @@ export default function CommonHeader() {
                     </button>
                   </>
                 ) : authChecked ? (
-                  <Link href="/login" className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
-                    로그인
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link href="/login" className="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium hover:bg-muted">
+                      로그인
+                    </Link>
+                    <Link href="/sign-up" className="flex-1 rounded-md px-3 py-2 text-center text-sm font-medium hover:bg-muted">
+                      회원가입
+                    </Link>
+                  </div>
                 ) : null}
               </div>
             </SheetContent>
