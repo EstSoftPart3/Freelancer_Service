@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { api } from '@/axios'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -32,6 +33,22 @@ export const useUserStore = defineStore('user', {
         : null,
   },
   actions: {
+
+    async fetchUserInfo() {
+      try {
+        // 백엔드의 로그인 유저 정보 조회 엔드포인트 호출 (프로젝트 엔드포인트 경로에 맞게 수정)
+        const response = await api.$get('/v1/users/me')
+        const userInfo = response.output || response.data || response
+
+        if (userInfo) {
+          this.setUser(userInfo)
+        }
+      } catch (error) {
+        console.error('유저 정보 조회 실패:', error)
+        this.clearUser()
+      }
+    },
+    
     setUser({
       userSq,
       userNm,

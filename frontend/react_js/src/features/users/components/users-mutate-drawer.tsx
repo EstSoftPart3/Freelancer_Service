@@ -124,6 +124,7 @@ export function UsersMutateDrawer({ open, onOpenChange, currentRow }: Props) {
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,

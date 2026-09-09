@@ -44,7 +44,16 @@ import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vu
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
 
+import GoogleCallback from '../views/login&signup/GoogleCallback.vue'
+
 const routes = [
+
+  {
+    path: '/oauth/callback', // 구글 구동 후 되돌아오는 주소 등록
+    component: GoogleCallback,
+    name: 'GoogleCallback'
+  },
+
   {
     path: '/',
     component: MainPage,
