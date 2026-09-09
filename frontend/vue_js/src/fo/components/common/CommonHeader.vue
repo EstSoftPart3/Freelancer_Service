@@ -126,7 +126,7 @@
                     role="button"
                     class="btn btn-light d-flex justify-content-center align-items-center position-relative dropdown-toggle no-caret"
                     id="notificationDropdown"
-                    @click.prevent="toggleNotificationDropdown"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false"
                     style="width: 36px; height: 36px; border-radius: 50%"
                   >
@@ -149,7 +149,6 @@
 
                   <div
                     class="dropdown-menu dropdown-menu-end p-0 shadow border-0"
-                    :class="{ show: isNotificationOpen }"
                     aria-labelledby="notificationDropdown"
                     style="
                       min-width: 300px;
@@ -253,7 +252,7 @@
                     class="btn btn-light d-flex align-items-center gap-2 px-3 py-1 dropdown-toggle"
                     style="height: 36px; border-radius: 50px"
                     id="userDropdown"
-                    @click.prevent="toggleUserDropdown"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
                     <i class="bi bi-person-circle fs-5"></i>
@@ -262,7 +261,6 @@
 
                   <ul
                     class="dropdown-menu dropdown-menu-end mt-2"
-                    :class="{ show: isUserMenuOpen }"
                     aria-labelledby="userDropdown"
                     style="min-width: 150px"
                   >
@@ -427,26 +425,6 @@ const userDropdownRef = ref(null)
 const notifications = ref([])
 const unreadCount = ref(0)
 
-const isNotificationOpen = ref(false)
-const isUserMenuOpen = ref(false)
-
-const toggleNotificationDropdown = () => {
-  isNotificationOpen.value = !isNotificationOpen.value
-  if (isNotificationOpen.value) {
-    isUserMenuOpen.value = false // 다른 드롭다운 닫기
-    closeMenu()
-  }
-}
-
-const toggleUserDropdown = () => {
-  isUserMenuOpen.value = !isUserMenuOpen.value
-  if (isUserMenuOpen.value) {
-    isNotificationOpen.value = false // 다른 드롭다운 닫기
-    closeMenu()
-  }
-}
-
-
 const closeMenu = () => {
   const navCollapse = document.querySelector('.header-nav-main nav.collapse')
   if (navCollapse && navCollapse.classList.contains('show')) {
@@ -583,11 +561,12 @@ onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
   if (notificationDropdownRef.value) {
     notificationDropdownRef.value.addEventListener(
-      closeMenu
+      'show.bs.dropdown',
+      closeMenu,
     )
   }
   if (userDropdownRef.value) {
-    userDropdownRef.value.addEventListener(closeMenu)
+    userDropdownRef.value.addEventListener('show.bs.dropdown', closeMenu)
   }
 })
 
@@ -605,25 +584,25 @@ watch(isLoggedIn, (newVal) => {
   if (newVal) {
     fetchNotifications()
     fetchUnreadCount()
-   
   } else {
     notifications.value = []
     unreadCount.value = 0
-    isNotificationOpen.value = false
-    isUserMenuOpen.value = false
   }
 })
 
 watch(currentPath, () => {
   closeMenu()
   isCommunityDropdownOpen.value = false
-  isNotificationOpen.value = false
-  isUserMenuOpen.value = false
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside)
-  
+  if (notificationDropdownRef.value) {
+    notificationDropdownRef.value.removeEventListener(
+      'show.bs.dropdown',
+      closeMenu,
+    )
+  }
   if (userDropdownRef.value) {
     userDropdownRef.value.removeEventListener('show.bs.dropdown', closeMenu)
   }

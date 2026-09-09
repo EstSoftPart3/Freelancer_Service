@@ -327,10 +327,9 @@ const socialProviders = [
 
 const handleSocialLogin = (provider) => {
   if (provider === 'google') {
-    
     const clientId = '757940029111-ukt42rdb3ae7ijgl0suckbi5gbhvbi5c.apps.googleusercontent.com'
-    
-    const redirectUri = window.location.origin + '/oauth/callback'
+
+    const redirectUri = `${window.location.origin}/oauth/callback`
 
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${clientId}` +
@@ -339,6 +338,7 @@ const handleSocialLogin = (provider) => {
       `&scope=email%20profile` +
       `&access_type=offline`
 
+    // 4. 구글 로그인 페이지로 이동
     window.location.href = googleAuthUrl
   } else {
     alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
