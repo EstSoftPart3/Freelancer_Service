@@ -14,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.common.AmazonS3.UploadedFileDTO;
 import com.example.demo.common.File.FileStorageService;
+import com.example.demo.common.security.CurrentUser;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
 import com.example.demo.domain.community.entity.CommonSkillTag;
 import com.example.demo.domain.mypage.dto.ParentSkillTagDTO;
 import com.example.demo.domain.mypage.dto.request.ResumeRequestDTO;
@@ -33,6 +35,7 @@ public class ResumeService {
 	private final ResumeMapper resumeMapper;
 	private final ResumeRepository resumeRepository;
 	private final FileStorageService fileStorageService; // S3Service 대신 주입
+	private final AffiliationMapper affiliationMapper;
 	// private final AmazonS3Service amazonS3Service;
 	// private final ResumeSkillMapper resumeSkillMapper;
 	// private final AddressRepository addressRepository;
@@ -715,7 +718,10 @@ public class ResumeService {
 		resumeMapper.updateRepresentativeY(resumeSq);
 	}
 
-	/** 이력서 소유자 확인. 남의 이력서에 손대는 경로를 막는다. */
+	/**
+	 * 이력서 소유자 확인. 수정·삭제·복사처럼 "변경"을 하는 경로 전용이다 — 본인만 통과한다.
+	 * 열람 허용 범위를 넓히는 곳(조회)은 {@link #requireResumeReadable}을 쓴다.
+	 */
 	private void requireResumeOwner(Long resumeSq, Long userSq) {
 		Long ownerSq = resumeMapper.findUserByResumeSq(resumeSq);
 		if (ownerSq == null) {
@@ -726,11 +732,79 @@ public class ResumeService {
 		}
 	}
 
+	/**
+	 * 이력서 열람 인가. 다음 넷 중 하나만 만족하면 통과한다.
+	 * 1. 본인 2. 지원 기록(요청자 소속회사로 이 이력서가 지원한 적이 있다, allowApplicationBased=true 일 때만)
+	 * 3. 소속회사가 이력서 주인과 같다 4. 관리자
+	 *
+	 * <p>수정·삭제처럼 "변경"에는 쓰지 않는다 — 그 경로는 여전히 {@link #requireResumeOwner} 전용이다.
+	 */
+	public void requireResumeReadable(Long resumeSq, Long userSq, boolean allowApplicationBased) {
+		if (CurrentUser.isAdmin()) {
+			return;
+		}
+		Long ownerSq = resumeMapper.findUserByResumeSq(resumeSq);
+		if (ownerSq == null) {
+			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
+		}
+		if (ownerSq.equals(userSq)) {
+			return;
+		}
+		if (sameCompany(userSq, ownerSq)) {
+			return;
+		}
+		if (allowApplicationBased) {
+			Long requesterCompanySq = affiliationMapper.findMemberCompanySq(userSq);
+			if (requesterCompanySq != null
+					&& resumeMapper.existsApplicationByCompanyAndResume(requesterCompanySq, resumeSq)) {
+				return;
+			}
+		}
+		throw new IllegalArgumentException("이력서를 열람할 권한이 없습니다.");
+	}
+
+	/**
+	 * 두 회원이 같은 회사에 소속돼 있는지. 둘 다 소속이 없으면(companySq 둘 다 null) 같은 회사로 치지 않는다 —
+	 * 그렇게 하지 않으면 무소속 사용자 두 명이 서로의 이력서를 열람할 수 있게 된다.
+	 */
+	private boolean sameCompany(Long userSqA, Long userSqB) {
+		Long companyA = affiliationMapper.findMemberCompanySq(userSqA);
+		if (companyA == null) {
+			return false;
+		}
+		Long companyB = affiliationMapper.findMemberCompanySq(userSqB);
+		return companyA.equals(companyB);
+	}
+
+	/**
+	 * 소속 인원의 대표 이력서 변경 인가. 열람이 아니라 변경이므로 소속회사·관리자만 허용하고
+	 * 지원 기록은 근거로 쓰지 않는다 — 지원받았다고 남의 대표 이력서를 바꿀 권한은 없다.
+	 * 존재하는 이력서의 소유자 sq 를 반환해 호출부가 다시 조회하지 않아도 되게 한다.
+	 */
+	private Long requireResumeChangeableByAffiliate(Long resumeSq, Long userSq) {
+		Long ownerSq = resumeMapper.findUserByResumeSq(resumeSq);
+		if (ownerSq == null) {
+			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
+		}
+		if (CurrentUser.isAdmin() || sameCompany(userSq, ownerSq)) {
+			return ownerSq;
+		}
+		throw new IllegalArgumentException("대표 이력서를 변경할 권한이 없습니다.");
+	}
+
 	@Transactional
-	public void setOthersMainResume(Long resumeSq) {
-		Long memberSq = resumeMapper.findUserByResumeSq(resumeSq);
+	public void setOthersMainResume(Long resumeSq, Long userSq) {
+		Long memberSq = requireResumeChangeableByAffiliate(resumeSq, userSq);
 		resumeMapper.updateAllRepresentativeN(memberSq);
 		resumeMapper.updateRepresentativeY(resumeSq);
+	}
+
+	/** 소속 인원의 이력서 목록 열람 인가. 목록 열람이므로 소속회사·관리자만 허용한다(지원 기록·본인 조건은 없음). */
+	public List<ResumeListResponse> getResumesForMember(Long memberSq, Long userSq) {
+		if (!CurrentUser.isAdmin() && !sameCompany(userSq, memberSq)) {
+			throw new IllegalArgumentException("이력서 목록을 조회할 권한이 없습니다.");
+		}
+		return resumeMapper.selectAllResumes(memberSq);
 	}
 
 	// 이력서 전체 조회
@@ -829,9 +903,9 @@ public class ResumeService {
 
 	}
 
-	// 로컬용 — 수정 화면용 상세. 이력서에는 이름·생년월일·연락처가 들어 있으므로 본인 것만 내준다.
+	// 로컬용 — 수정 화면용 상세. 이력서에는 이름·생년월일·연락처가 들어 있으므로 본인·지원기록·소속회사·관리자만 내준다.
 	public ResumeRequestDTO getResumeDetail(Long resumeSq, Long userSq) {
-		requireResumeOwner(resumeSq, userSq);
+		requireResumeReadable(resumeSq, userSq, true);
 		ResumeRequestDTO resume = resumeRepository.findByResumeSq(resumeSq);
 		if (resume == null)
 			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");

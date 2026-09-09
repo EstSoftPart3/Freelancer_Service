@@ -238,6 +238,9 @@
   <select id="findUserByResumeSq" resultType="Long"> SELECT user_sq FROM TBL_RESUME_M WHERE
     resume_sq = #{resumeSq} </select>
 
+  <select id="existsApplicationByCompanyAndResume" resultType="boolean"> SELECT EXISTS(SELECT 1 FROM
+    TBL_PROJECT_APPLICATION_H WHERE company_sq = #{companySq} AND resume_sq = #{resumeSq}) </select>
+
 
   <!--대표이력서
   설정-->

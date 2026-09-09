@@ -107,7 +107,7 @@ public class ResumeController {
 		if (memberSq.equals(userSq)) {
 			resumeService.setMainResume(resumeSq, userSq);
 		} else {
-			resumeService.setOthersMainResume(resumeSq);
+			resumeService.setOthersMainResume(resumeSq, userSq);
 		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "대표 이력서 설정 완료", "success"));
 	}
@@ -115,7 +115,7 @@ public class ResumeController {
 	@PatchMapping("/representative/{resumeSq}/others")
 	public ResponseEntity<ApiResponse<String>> setMainResume(@AuthenticationPrincipal Long userSq,
 			@PathVariable("resumeSq") Long resumeSq) {
-		resumeService.setOthersMainResume(resumeSq);
+		resumeService.setOthersMainResume(resumeSq, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 인원 대표 이력서 설정 완료", "success"));
 	}
 
@@ -155,7 +155,7 @@ public class ResumeController {
 	@GetMapping("/list/{memberSq}")
 	public ResponseEntity<ApiResponse<List<ResumeListResponse>>> getAllResumes(@AuthenticationPrincipal Long userSq,
 			@PathVariable("memberSq") Long memberSq) {
-		List<ResumeListResponse> resumes = resumeService.getAllResumes(memberSq);
+		List<ResumeListResponse> resumes = resumeService.getResumesForMember(memberSq, userSq);
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 조회가 완료되었습니다.",
 				resumes));
 	}
