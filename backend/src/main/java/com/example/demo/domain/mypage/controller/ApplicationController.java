@@ -23,9 +23,10 @@ public class ApplicationController {
     // 소속 신청 내역 하나 조회
     @GetMapping("/{applicationSq}")
     public ResponseEntity<ApiResponse<ApplyResponse>> getAffiliation(
+            @AuthenticationPrincipal Long userSq,
             @PathVariable("applicationSq") Long applicationSq) {
         return ResponseEntity.ok(
-                ApiResponse.of(HttpStatus.OK, "소속 공고 조회가 완료되었습니다.", affiliationService.getAffiliaion(applicationSq)));
+                ApiResponse.of(HttpStatus.OK, "소속 공고 조회가 완료되었습니다.", affiliationService.getAffiliaion(userSq, applicationSq)));
     }
 
     // 회사
@@ -45,21 +46,23 @@ public class ApplicationController {
     // 열람 상태 변경
     @PutMapping("/read/{companyApplicationSq}")
     public ResponseEntity<ApiResponse<NullType>> updateApplicationReadAt(
+            @AuthenticationPrincipal Long userSq,
             @PathVariable("companyApplicationSq") Long companyApplicationSq) {
-        affiliationService.updateApplicationReadAt(companyApplicationSq);
+        affiliationService.updateApplicationReadAt(userSq, companyApplicationSq);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 지원 신청 열람이 완료되었습니다.", null));
     }
 
     // 합격 또는 불합격 변경
     @PutMapping("/apply/{companyApplicationSq}")
     public ResponseEntity<ApiResponse<NullType>> updateApplicationStatus(
+            @AuthenticationPrincipal Long userSq,
             @PathVariable("companyApplicationSq") Long companyApplicationSq,
             @RequestBody CompanyApplication companyApplication) {
 
         Long statusCd = companyApplication.getCompanyApplicationStatusCd();
 
         // 지원 상태 업데이트 + 알림 발송 + 합격 시 소속 등록 (단일 트랜잭션)
-        affiliationService.updateApplicationStatus(companyApplicationSq, statusCd);
+        affiliationService.updateApplicationStatus(userSq, companyApplicationSq, statusCd);
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 지원 상태 수정이 완료되었습니다.", null));
     }
@@ -94,8 +97,9 @@ public class ApplicationController {
     // 소속 공고 지원 취소
     @PatchMapping("/{companyApplicationSq}")
     public ResponseEntity<ApiResponse<NullType>> deleteApplication(
+            @AuthenticationPrincipal Long userSq,
             @PathVariable("companyApplicationSq") Long companyApplicationSq) {
-        affiliationService.deleteApplication(companyApplicationSq);
+        affiliationService.deleteApplication(userSq, companyApplicationSq);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "소속 공고 지원이 취소되었습니다.", null));
     }
 

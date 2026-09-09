@@ -30,14 +30,16 @@ public class SignUpController {
      * 기존 /check-id는 원시 boolean(=중복 여부)을 반환해 의미가 반대이지만, 신규 API는 ApiResponse 래핑 + 사용가능 기준으로 통일한다.
      */
     @GetMapping("/check-nickname")
-    public ApiResponse<Boolean> checkUserNickname(@RequestParam(name = "userNickname") String userNickname) {
+    public ResponseEntity<ApiResponse<Boolean>> checkUserNickname(@RequestParam(name = "userNickname") String userNickname) {
         try {
             boolean exists = userService.isUserNicknameExists(userNickname);
             return exists
-                    ? ApiResponse.of(HttpStatus.OK, "이미 사용 중인 닉네임입니다.", false)
-                    : ApiResponse.of(HttpStatus.OK, "사용 가능한 닉네임입니다.", true);
+                    ? ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이미 사용 중인 닉네임입니다.", false))
+                    : ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "사용 가능한 닉네임입니다.", true));
         } catch (IllegalArgumentException e) {
-            return ApiResponse.of(HttpStatus.BAD_REQUEST, e.getMessage(), false);
+            // ApiResponse 를 그냥 반환하면 body 의 status 필드와 무관하게 실제 HTTP 응답은
+            // 항상 200 으로 나가 프런트가 상태 코드로 실패를 구분할 수 없다. ResponseEntity 로 감싼다.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.of(HttpStatus.BAD_REQUEST, e.getMessage(), false));
         }
     }
 

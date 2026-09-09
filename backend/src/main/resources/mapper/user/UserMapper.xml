@@ -126,9 +126,13 @@
     = #{userSq} </update>
 
 
+  <!-- 탈퇴 회원은 제외한다(existsByUserEmail 과 동일 기준) — 아니면 탈퇴한 계정의 이메일이
+    영구히 "사용 중"으로 잡혀, 같은 메일로 재가입할 때 인증코드 발송(EmailVerificationService)
+    단계에서부터 막힌다. 정작 가입 시 중복 확인은 existsByUserEmail 로 통과하는데 말이다. -->
   <select id="findByEmail" resultType="com.example.demo.domain.user.dto.UserDTO"
     parameterType="string"> SELECT user_sq, user_id, user_pw, user_nm, user_nickname, user_type_cd,
-    user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} </select>
+    user_is_deleted_yn, user_email FROM TBL_USER_M WHERE user_email = #{email} AND
+    user_is_deleted_yn = 'N' </select>
 
   <select id="selectEmailByUserSq" resultType="string"> SELECT user_email FROM TBL_USER_M WHERE
     user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>

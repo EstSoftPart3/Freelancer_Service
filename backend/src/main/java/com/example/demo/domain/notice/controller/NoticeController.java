@@ -143,6 +143,10 @@ public class NoticeController {
                     .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(decryptedBytes.length))
                     .body(resource);
 
+        } catch (ResponseStatusException e) {
+            // 위에서 던진 404(파일 없음)까지 아래 catch(Exception) 에 걸려 500으로 뭉개지고 있었다.
+            // 진짜 서버 오류와 구분되게 그대로 다시 던진다.
+            throw e;
         } catch (Exception e) {
             log.error("공지사항 파일 다운로드 중 오류 발생: {}", fileSq, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 다운로드 중 오류가 발생했습니다.");
