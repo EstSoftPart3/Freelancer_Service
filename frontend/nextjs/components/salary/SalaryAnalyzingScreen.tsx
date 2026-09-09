@@ -3,9 +3,18 @@
 // 🔴 지금은 리뷰용으로 애니메이션이 멈추지 않고 계속 돈다 — E(연봉 리포트)가 만들어지면
 // 그때 아래 useEffect에 "일정 시간 뒤 /salary/report로 자동 이동" 로직을 붙이면 된다.
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { Sparkles } from 'lucide-react'
 
 const PHASES = ['데이터 수집 중', '같은 조건 그룹 매칭 중', '연봉 분포 계산 중', '리포트 만드는 중']
+
+// 단계별 컨트롤에프 캐릭터. 파일이 없으면 이미지가 안 뜰 뿐 레이아웃은 안 깨짐(Image onError로 숨김).
+const MASCOTS = [
+  '/img/mascot/ctrl-f-data.png', // 데이터 수집 중
+  '/img/mascot/ctrl-f-matching.png', // 같은 조건 그룹 매칭 중
+  '/img/mascot/ctrl-f-calculating.png', // 연봉 분포 계산 중
+  '/img/mascot/ctrl-f-report.png', // 리포트 만드는 중
+]
 
 interface CalcInput {
   employment: 'EMPLOYED' | 'FREELANCE'
@@ -43,21 +52,44 @@ export default function SalaryAnalyzingScreen() {
         컨트롤에프AI
       </p>
 
-      {/* 회전 스피너 + 가운데 펄스 아이콘 — 둘 다 무한 반복이라 "리셋되는 순간"이 안 보인다 */}
-      <div className="relative mb-8 flex h-36 w-36 items-center justify-center">
+      {/* 회전 스피너 + 단계별 컨트롤에프 캐릭터 크로스페이드 — 스피너는 계속 돌고, 안쪽 캐릭터만 단계에 맞춰 전환 */}
+      <div className="relative mb-8 flex h-40 w-40 items-center justify-center">
         <div className="absolute inset-0 rounded-full border-[6px] border-indigo-100" />
         <div className="absolute inset-0 animate-spin rounded-full border-[6px] border-transparent border-t-indigo-600" style={{ animationDuration: '1.1s' }} />
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-50">
-          <Sparkles className="h-8 w-8 animate-pulse text-amber-500" />
+        <div className="relative h-28 w-28">
+          {MASCOTS.map((src, i) => (
+            <Image
+              key={src}
+              src={src}
+              alt=""
+              fill
+              priority={i === 0}
+              className={`object-contain transition-opacity duration-700 ease-in-out ${
+                i === phaseIdx ? 'opacity-100' : 'opacity-0'
+              }`}
+              onError={(e) => {
+                e.currentTarget.style.visibility = 'hidden'
+              }}
+            />
+          ))}
         </div>
       </div>
 
       <h1 className="mb-2 text-2xl font-bold text-foreground md:text-3xl">컨트롤에프AI가 확인 중입니다</h1>
 
-      {/* 상태 문구 — 1.6초마다 다음 단계로 순환(무한 루프) */}
-      <p key={phaseIdx} className="mb-6 animate-in fade-in text-base font-medium text-indigo-700 duration-300">
-        {PHASES[phaseIdx]}...
-      </p>
+      {/* 상태 문구 — 4개를 전부 같은 자리에 겹쳐두고 opacity만 전환해서 페이드아웃↔페이드인이 동시에 보이게 함 */}
+      <div className="relative mb-6 h-6 w-full">
+        {PHASES.map((phase, i) => (
+          <p
+            key={phase}
+            className={`absolute inset-0 flex items-center justify-center text-base font-medium text-indigo-700 transition-opacity duration-700 ease-in-out ${
+              i === phaseIdx ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {phase}...
+          </p>
+        ))}
+      </div>
 
       {/* 불확정 진행바 — 퍼센트 숫자 없이 계속 좌우로 쓸어가는 그라데이션(로딩 중 표시의 정석) */}
       <div className="mb-6 h-1.5 w-64 overflow-hidden rounded-full bg-indigo-50">
