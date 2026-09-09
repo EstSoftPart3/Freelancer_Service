@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminTagMapper">
+
+    <delete id="deleteNT"> DELETE FROM TBL_BOARD_NORMAL_TAG_S WHERE 1=1 <if test="boardSq != null">
+        AND board_sq = #{boardSq} </if>
+        <if test="answerSq != null"> AND answer_sq = #{answerSq} </if>
+    </delete>
+
+    <delete id="deleteST"> DELETE FROM TBL_BOARD_SKILL_TAG_S WHERE 1=1 <if test="boardSq != null">
+        AND board_sq = #{boardSq} </if>
+        <if test="answerSq != null"> AND answer_sq = #{answerSq} </if>
+    </delete>
+
+</mapper>

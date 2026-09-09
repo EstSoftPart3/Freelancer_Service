@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.common.mapper.CommonCodeMapper">
+
+	<select id="findCommonCodeSqAndNmByParent" parameterType="Long" resultType="map">
+    SELECT common_code_sq, common_code_nm
+    FROM TBL_COMMON_CODE_C
+    WHERE PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+	</select>
+	
+
+    <select id="findCommonCodeSqByName" parameterType="map" resultType="Long">
+    SELECT common_code_sq
+    FROM TBL_COMMON_CODE_C
+    WHERE COMMON_CODE_NM = #{name} AND PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+	</select>
+	
+	<select id="findCommonCodeSqByEngName" parameterType="map" resultType="Long">
+	SELECT common_code_sq
+	FROM TBL_COMMON_CODE_C
+	WHERE COMMON_CODE_ENGLISH_NM = #{engName} AND PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+	</select>
+	
+	<select id="findByParentCode" parameterType="Long" resultType="String">
+	SELECT common_code_nm
+	FROM TBL_COMMON_CODE_C
+	WHERE PARENT_COMMON_CODE_SQ = #{parentCodeSq}
+	</select>
+	
+	<select id="findCommonCodeNmBySq" parameterType="Long" resultType="String">
+	SELECT common_code_nm
+	FROM TBL_COMMON_CODE_C
+	WHERE COMMON_CODE_SQ = #{codeSq}
+	</select>
+
+</mapper>

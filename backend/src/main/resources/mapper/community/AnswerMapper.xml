@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.community.mapper.AnswerMapper">
+
+    <select id="findById" resultType="com.example.demo.domain.community.entity.Answer" parameterType="Long">
+        SELECT * FROM TBL_BOARD_ANSWER_S WHERE answer_sq = #{answerSq} AND answer_is_deleted_yn = 'N'
+    </select>
+
+    <select id="findAll" resultType="com.example.demo.domain.community.entity.Answer">
+        SELECT * FROM TBL_BOARD_ANSWER_S WHERE board_sq = #{boardSq}
+    </select>
+
+    <select id="findAllCnt" resultType="Integer">
+        SELECT COUNT(*) FROM TBL_BOARD_ANSWER_S WHERE board_sq = #{boardSq}
+    </select>
+
+    <insert id="insert" parameterType="com.example.demo.domain.community.entity.Answer" useGeneratedKeys="true" keyProperty="answerSq" keyColumn="answer_sq">
+        INSERT INTO TBL_BOARD_ANSWER_S (user_sq, board_sq, answer_ttl, answer_description_edt) 
+        VALUES (#{userSq}, #{boardSq}, #{answerTtl}, #{answerDescriptionEdt})
+    </insert>
+
+    <update id="update" parameterType="com.example.demo.domain.community.entity.Answer">
+        UPDATE TBL_BOARD_ANSWER_S
+        SET answer_ttl = #{answerTtl},
+        answer_description_edt = #{answerDescriptionEdt},
+        answer_is_adopted_yn = #{answerIsAdoptedYn},
+        answer_modified_at_dtm = NOW()
+        WHERE answer_sq = #{answerSq}
+    </update>
+
+    <update id="delete" parameterType="Long">
+        UPDATE TBL_BOARD_ANSWER_S
+        SET answer_is_deleted_yn = 'Y'
+        WHERE answer_sq = #{answerSq} AND user_sq = #{userSq}
+    </update>
+
+    <update id="addViewCnt" parameterType="Long">
+        UPDATE TBL_BOARD_ANSWER_S
+        SET answer_view_cnt = answer_view_cnt + 1
+        WHERE answer_sq = #{answerSq}
+    </update>
+    
+    <update id="updateCommentCnt" parameterType="Long">
+	    UPDATE TBL_BOARD_ANSWER_S
+	    SET answer_comment_cnt = (
+	        SELECT COUNT(*) 
+	        FROM TBL_BOARD_COMMENT_S 
+	        WHERE answer_sq = #{answerSq} AND comment_is_deleted_yn = 'N'
+	    )
+	    WHERE answer_sq = #{answerSq}
+	</update>
+    
+    <update id="updateRecommendCnt" parameterType="Long">
+	    UPDATE TBL_BOARD_ANSWER_S
+	    SET answer_recommend_cnt = (
+	        SELECT COUNT(*) 
+	        FROM TBL_RECOMMENDATION_S 
+	        WHERE answer_sq = #{answerSq}
+	    )
+	    WHERE answer_sq = #{answerSq}
+	</update>
+	
+	<insert id="insertFile"> 
+		INSERT INTO TBL_BOARD_ANSWER_ATTACHMENT_S ( answer_sq, file_sq )
+        VALUES ( #{answerSq}, #{fileSq} ) 
+    </insert>
+    
+	<select id="findFiles" resultType="Long">
+		SELECT file_sq FROM TBL_BOARD_ANSWER_ATTACHMENT_S 
+		WHERE answer_sq = #{answerSq}
+	</select>
+
+    <delete id="deleteAnswerFile">
+        DELETE FROM TBL_BOARD_ANSWER_ATTACHMENT_S
+        WHERE answer_sq = #{answerSq} AND file_sq = #{fileSq}
+    </delete>
+
+</mapper>

@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.affiliation.mapper.AffiliationMapper">
+	
+	<select id="findAll" resultType="com.example.demo.domain.affiliation.entity.Company">
+		SELECT * FROM TBL_COMPANY_S 
+		WHERE company_is_recruiting_yn = 'Y'
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'company'">
+					AND company_nm LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+				<when test="searchType == 'content'">
+					AND company_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'tag'">
+	                AND company_sq IN (
+	                    SELECT DISTINCT company_sq
+	                    FROM TBL_COMPANY_TAG_S
+	                    WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_nm LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_greeting_txt LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_sq IN (
+                        	SELECT company_sq
+                        	FROM TBL_COMPANY_TAG_S
+                        	WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+                		)
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		<!-- 지역 필터 -->
+		<if test="addressCd != null and addressCd != ''">
+		    AND address_sq IN (
+		        SELECT address_sq
+		        FROM TBL_ADDRESS_S
+		        WHERE area_code_sq IN (
+		            SELECT area_code_sq
+		            FROM TBL_AREA_C
+		            WHERE parent_area_code_sq = #{addressCd} OR area_code_sq = #{addressCd}
+		        )
+		    )
+		</if>
+		<!-- 정렬 -->
+	    <choose>
+			<when test="sortType == 'latest'"> ORDER BY company_recruit_start_dtm DESC </when>
+			<when test="sortType == 'oldest'"> ORDER BY company_recruit_start_dtm ASC </when>
+			<when test="sortType == 'view'"> ORDER BY company_view_cnt DESC </when>
+			<when test="sortType == 'scrap'">
+				ORDER BY (
+				    SELECT COUNT(*)
+				    FROM TBL_SCRAP_S
+				    WHERE TBL_SCRAP_S.company_sq = TBL_COMPANY_S.company_sq
+				) DESC
+			</when>
+			<when test="sortType == 'applicant'">
+				ORDER BY (
+				    SELECT COUNT(*)
+				    FROM TBL_COMPANY_APPLICATION_H
+				    WHERE TBL_COMPANY_APPLICATION_H.company_sq = TBL_COMPANY_S.company_sq
+				) DESC
+			</when>
+
+			<otherwise> ORDER BY board_created_at_dtm DESC <!-- 기본값: 최신순 --> </otherwise>
+		</choose>
+		LIMIT #{size} OFFSET #{offset}
+	</select>
+
+	<select id="findAllCnt" resultType="Long">
+		SELECT COUNT(*) FROM TBL_COMPANY_S 
+		WHERE company_is_recruiting_yn = 'Y'
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'company'">
+					AND company_nm LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+				<when test="searchType == 'content'">
+					AND company_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'tag'">
+	                AND company_sq IN (
+	                    SELECT DISTINCT company_sq
+	                    FROM TBL_COMPANY_TAG_S
+	                    WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_nm LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_greeting_txt LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_sq IN (
+                        	SELECT company_sq
+                        	FROM TBL_COMPANY_TAG_S
+                        	WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+                		)
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		<!-- 지역 필터 -->
+		<if test="addressCd != null and addressCd != ''">
+		    AND address_sq IN (
+		        SELECT address_sq
+		        FROM TBL_ADDRESS_S
+		        WHERE area_code_sq IN (
+		            SELECT area_code_sq
+		            FROM TBL_AREA_C
+		            WHERE parent_area_code_sq = #{addressCd} OR area_code_sq = #{addressCd}
+		        )
+		    )
+		</if>
+	</select>
+
+    <select id="findAddress" resultType="com.example.demo.domain.affiliation.entity.Address" parameterType="Long">
+        SELECT * FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq}
+    </select>
+
+    <select id="findTags" resultType="String">
+        SELECT tag_nm FROM TBL_COMPANY_TAG_S WHERE company_sq = #{companySq}
+    </select>
+
+    <select id="findScrapCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_SCRAP_S WHERE company_sq = #{companySq}
+    </select>
+
+    <select id="findProfileImg" resultType="String">
+        SELECT file_save_nm FROM TBL_COMMON_FILE_S 
+        WHERE file_sq = 
+        	(SELECT file_sq FROM TBL_COMPANY_PROFILE_IMAGE_S
+        	WHERE company_sq = #{companySq})
+    </select>
+
+    <select id="findScrapAffiliations" resultType="com.example.demo.domain.affiliation.entity.Company">
+        SELECT * FROM TBL_COMPANY_S
+        WHERE company_sq IN (
+			SELECT DISTINCT company_sq FROM TBL_SCRAP_S WHERE user_sq = #{userSq}
+		)
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'company'">
+					AND company_nm LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+				<when test="searchType == 'content'">
+					AND company_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'tag'">
+	                AND company_sq IN (
+	                    SELECT DISTINCT company_sq
+	                    FROM TBL_COMPANY_TAG_S
+	                    WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_nm LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_greeting_txt LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_sq IN (
+                        	SELECT company_sq
+                        	FROM TBL_COMPANY_TAG_S
+                        	WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+                		)
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		ORDER BY company_sq DESC
+		LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findScrapAffiliationsCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_S
+        WHERE company_sq IN (
+			SELECT DISTINCT company_sq FROM TBL_SCRAP_S WHERE user_sq = #{userSq}
+		)
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'company'">
+					AND company_nm LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+				<when test="searchType == 'content'">
+					AND company_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'tag'">
+	                AND company_sq IN (
+	                    SELECT DISTINCT company_sq
+	                    FROM TBL_COMPANY_TAG_S
+	                    WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_nm LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_greeting_txt LIKE CONCAT('%', #{keyword}, '%') 
+						OR company_sq IN (
+                        	SELECT company_sq
+                        	FROM TBL_COMPANY_TAG_S
+                        	WHERE tag_nm LIKE CONCAT('%', #{keyword}, '%')
+                		)
+                    )
+				</when>
+			</choose>
+		</if>
+    </select>
+
+    <select id="findAffiliationMemberCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_MEMBER_R WHERE company_sq = #{companySq}
+    </select>
+
+    <select id="findScrap" resultType="com.example.demo.domain.affiliation.entity.Scrap">
+        SELECT * FROM TBL_SCRAP_S WHERE user_sq = #{userSq} AND company_sq = #{companySq}
+    </select>
+
+    <insert id="insertScrap" parameterType="com.example.demo.domain.affiliation.entity.Scrap" useGeneratedKeys="true" keyProperty="scrapSq" keyColumn="scrap_sq">
+        INSERT INTO TBL_SCRAP_S (user_sq, company_sq, scrap_type_cd) 
+        VALUES (#{userSq}, #{companySq}, #{scrapTypeCd})
+    </insert>
+
+    <delete id="deleteScrap" parameterType="Long">
+        DELETE FROM TBL_SCRAP_S 
+		WHERE scrap_sq = #{scrapSq}
+    </delete>
+
+    <update id="addViewCnt" parameterType="Long">
+        UPDATE TBL_COMPANY_S
+        SET company_view_cnt = company_view_cnt + 1
+        WHERE company_sq = #{companySq}
+    </update>
+
+    <insert id="insertApplication" parameterType="com.example.demo.domain.affiliation.entity.CompanyApplication" useGeneratedKeys="true" keyProperty="companyApplicationSq" keyColumn="company_application_sq">
+        INSERT INTO TBL_COMPANY_APPLICATION_H (company_sq, user_sq, resume_sq, company_application_greeting_txt, company_application_status_cd) 
+        VALUES (#{companySq}, #{userSq}, #{resumeSq}, #{companyApplicationGreetingTxt}, 501)
+    </insert>
+
+    <update id="updateApplication" parameterType="com.example.demo.domain.affiliation.entity.CompanyApplication" >
+        UPDATE TBL_COMPANY_APPLICATION_H
+        SET resume_sq = #{resumeSq},
+        company_application_greeting_txt = #{companyApplicationGreetingTxt},
+        company_application_status_cd = #{companyApplicationStatusCd}
+        WHERE company_application_sq = #{companyApplicationSq}
+    </update>
+
+    <select id="findApplication" resultType="com.example.demo.domain.affiliation.entity.CompanyApplication">
+        SELECT * FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_application_sq = #{companyApplicationSq}
+    </select>
+
+    <select id="findIsApply" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_sq = #{companySq}
+        AND user_sq = #{userSq}
+        AND company_application_status_cd = 501
+        AND company_application_is_deleted_yn = 'N'
+    </select>
+
+    <select id="isActiveMember" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_MEMBER_R
+        WHERE user_sq = #{userSq}
+        AND company_sq = #{companySq}
+        AND company_member_status_cd = 401
+        AND company_member_leave_dt IS NULL
+    </select>
+    
+    <update id="updateReadAt">
+        UPDATE TBL_COMPANY_APPLICATION_H
+        SET company_application_read_at_dtm = CURRENT_TIMESTAMP
+        WHERE company_application_sq = #{companyApplicationSq}
+	</update>
+
+    <select id="findApplicants" resultType="com.example.demo.domain.affiliation.entity.CompanyApplication">
+        SELECT * FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_sq = (
+			SELECT company_sq FROM TBL_COMPANY_S
+			WHERE user_sq = #{userSq}
+		)
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND resume_sq IN (
+						SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+						WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+							OR resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		<choose>
+			<when test="readType == 'read'">
+				AND company_application_read_at_dtm IS NOT NULL
+			</when>
+			<when test="readType == 'unread'">
+				AND company_application_read_at_dtm IS NULL
+			</when>
+		</choose>
+		
+        AND company_application_is_deleted_yn = 'N'
+        
+        ORDER BY company_application_created_at_dtm DESC
+        
+		LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findApplicantsCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_sq = (
+			SELECT company_sq FROM TBL_COMPANY_S
+			WHERE user_sq = #{userSq}
+		)
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND resume_sq IN (
+						SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+						WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+							OR resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+		
+        AND company_application_is_deleted_yn = 'N'
+    </select>
+
+    <select id="findApplicantsReadCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_sq = (
+			SELECT company_sq FROM TBL_COMPANY_S
+			WHERE user_sq = #{userSq}
+		)
+		AND company_application_read_at_dtm IS NOT NULL
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND resume_sq IN (
+						SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+						WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_nm LIKE CONCAT('%', #{keyword}, '%')
+							OR resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+		
+        AND company_application_is_deleted_yn = 'N'
+    </select>
+
+    <select id="findUserNm" resultType="String">
+        SELECT resume_nm FROM TBL_RESUME_M
+        WHERE resume_sq = #{resumeSq}
+    </select>
+
+    <select id="findCareers" resultType="com.example.demo.domain.affiliation.entity.Career">
+        SELECT * FROM TBL_RESUME_CAREER_S
+        WHERE resume_sq = #{resumeSq}
+    </select>
+
+    <select id="findApplicationByUserSq" resultType="com.example.demo.domain.affiliation.entity.CompanyApplication">
+        SELECT * FROM TBL_COMPANY_APPLICATION_H
+        WHERE user_sq = #{userSq}
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND company_sq IN (
+						SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+						WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_sq IN (
+							SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+							WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+						)
+						OR resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+		
+		<choose>
+			<when test="readType == 'read'">
+				AND company_application_read_at_dtm IS NOT NULL
+			</when>
+			<when test="readType == 'unread'">
+				AND company_application_read_at_dtm IS NULL
+			</when>
+		</choose>
+        
+        ORDER BY company_application_created_at_dtm DESC
+        
+		LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findApplicationByUserSqCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE user_sq = #{userSq}
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND company_sq IN (
+						SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+						WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_sq IN (
+							SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+							WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+						)
+						OR resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+    </select>
+
+    <select id="findApplicationByUserSqReadCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE user_sq = #{userSq}
+        AND company_application_read_at_dtm IS NOT NULL
+		
+		<!-- 검색 키워드 필터 -->
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND company_sq IN (
+						SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+						WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+					) 
+				</when>
+				<when test="searchType == 'greeting'">
+					AND company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+				</when>
+	            <when test="searchType == 'title'">
+	                AND resume_sq IN (
+	                    SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+	                    WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+	                )
+	            </when>
+				<when test="searchType == 'all'">
+					AND (
+						company_sq IN (
+							SELECT DISTINCT company_sq FROM TBL_COMPANY_S
+							WHERE company_nm LIKE CONCAT('%', #{keyword}, '%')
+						)
+						OR resume_sq IN (
+							SELECT DISTINCT resume_sq FROM TBL_RESUME_M
+							WHERE resume_ttl LIKE CONCAT('%', #{keyword}, '%')
+						) 
+						OR company_application_greeting_txt LIKE CONCAT('%', #{keyword}, '%')
+                    )
+				</when>
+			</choose>
+		</if>
+    </select>
+
+    <select id="findCompany" resultType="com.example.demo.domain.affiliation.entity.Company">
+        SELECT * FROM TBL_COMPANY_S
+        WHERE company_sq = #{companySq}
+    </select>
+
+    <select id="findResumeTtl" resultType="String">
+        SELECT resume_ttl FROM TBL_RESUME_M
+        WHERE resume_sq = #{resumeSq}
+    </select>
+
+    <select id="findApplicantCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_COMPANY_APPLICATION_H
+        WHERE company_sq = #{companySq} AND company_application_is_deleted_yn = 'N'
+    </select>
+
+    <update id="deleteApplication" parameterType="Long" >
+        UPDATE TBL_COMPANY_APPLICATION_H
+        SET company_application_is_deleted_yn = 'Y'
+        WHERE company_application_sq = #{companyApplicationSq}
+    </update>
+
+    <select id="findResumeSkills" resultType="com.example.demo.domain.affiliation.entity.ResumeSkillTag">
+        SELECT * FROM TBL_RESUME_SKILL_TAG_S
+        WHERE resume_sq = #{resumeSq}
+    </select>
+
+    <select id="findAddressCds" resultType="com.example.demo.domain.affiliation.entity.AreaCd">
+        SELECT * FROM TBL_AREA_C
+    </select>
+
+	<select id="findCompanyOwnerUserSq" resultType="long">
+		SELECT user_sq 
+		FROM tbl_company_s 
+		WHERE company_sq = #{companySq}
+	</select>
+
+	<select id="findAffiliationNotificationInfo" resultType="map">
+		SELECT 
+			a.user_sq as "userSq",
+			c.company_nm as "companyNm"
+		FROM tbl_company_application_h a
+		JOIN tbl_company_s c ON a.company_sq = c.company_sq
+		WHERE a.company_application_sq = #{companyApplicationSq}
+	</select>
+
+
+<select id="findScrapUserInfos" resultType="map">
+    SELECT 
+        s.user_sq as "userSq",
+        u.user_type_cd as "userTypeCd"
+    FROM tbl_scrap_s s
+    JOIN tbl_user_m u ON s.user_sq = u.user_sq
+    WHERE s.company_sq = #{companySq} 
+      AND s.scrap_type_cd = 602
+</select>
+
+<select id="findCompanyNameBySq" resultType="string">
+    SELECT company_nm
+    FROM tbl_company_s
+    WHERE company_sq = #{companySq}
+</select>
+
+<select id="findMemberCompanySq" resultType="long">
+    SELECT company_sq FROM TBL_COMPANY_MEMBER_R
+    WHERE user_sq = #{userSq} AND company_member_status_cd = 401
+    LIMIT 1
+</select>
+
+<update id="updateMemberToResigned">
+    UPDATE TBL_COMPANY_MEMBER_R
+    SET company_member_status_cd = #{memberStatusCd}, company_member_leave_dt = #{leaveDt}
+    WHERE user_sq = #{userSq} AND company_sq = #{companySq} AND company_member_status_cd = 401
+</update>
+
+<select id="findUserNmByUserSq" resultType="string">
+    SELECT user_nm FROM TBL_USER_M WHERE user_sq = #{userSq}
+</select>
+
+<select id="findMyAffiliationInfo" resultType="map">
+    SELECT c.company_sq as "companySq",
+           c.company_nm as "companyNm",
+           c.company_ceo_nm as "companyCeoNm",
+           c.company_open_dt as "companyOpenDt",
+           c.company_url as "companyUrl",
+           c.company_is_recruiting_yn as "companyIsRecruitingYn",
+           a.address as "address",
+           m.company_member_join_dt as "companyMemberJoinDt"
+    FROM TBL_COMPANY_MEMBER_R m
+    JOIN TBL_COMPANY_S c ON m.company_sq = c.company_sq
+    LEFT JOIN TBL_ADDRESS_S a ON c.address_sq = a.address_sq
+    WHERE m.user_sq = #{userSq}
+      AND m.company_member_status_cd = 401
+      AND m.company_member_leave_dt IS NULL
+</select>
+
+</mapper>

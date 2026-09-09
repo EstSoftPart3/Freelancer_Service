@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.ProjectScrapMapper">
+
+    <select id="findScrappedProjectSqsByUserSq" resultType="long"> SELECT project_sq FROM
+        TBL_SCRAP_S WHERE user_sq = #{userSq} AND scrap_type_cd = 601 </select>
+
+    <select id="findProjectBasic" resultType="com.example.demo.domain.mypage.dto.ProjectDTO"> SELECT
+        project_sq, project_ttl, project_recruit_start_dt, project_recruit_end_dt,
+        project_candidate_cnt, project_created_at_dtm, project_required_education_cd,
+        project_developer_grade_cd FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} </select>
+
+    <select id="findCompanyByProjectSq" resultType="com.example.demo.domain.mypage.dto.CompanyDTO">
+        SELECT c.company_sq, c.company_nm FROM TBL_PROJECT_M p JOIN TBL_COMPANY_S c ON p.company_sq
+        = c.company_sq WHERE p.project_sq = #{projectSq} </select>
+
+    <select id="findAddressByProjectSq"
+        resultType="com.example.demo.domain.mypage.dto.ProjectScrapAddressDTO"> SELECT
+        p_area.area_sigungu AS parentSigungu, area.area_sigungu AS sigungu FROM TBL_PROJECT_M p JOIN
+        TBL_ADDRESS_S a ON a.address_sq = COALESCE(p.address_sq, p.subway_address_sq) JOIN TBL_AREA_C
+        area ON a.area_code_sq = area.area_code_sq LEFT JOIN TBL_AREA_C p_area ON
+        area.parent_area_code_sq = p_area.area_code_sq WHERE p.project_sq = #{projectSq} </select>
+
+    <select id="findEducationName" resultType="string"> SELECT common_code_nm FROM TBL_COMMON_CODE_C
+        WHERE common_code_sq = #{commonCodeSq} </select>
+
+    <select id="findDeveloperGradeName" resultType="string"> SELECT common_code_nm FROM
+        TBL_COMMON_CODE_C WHERE common_code_sq = #{commonCodeSq} </select>
+
+    <select id="findSkillTagsByProjectSq" resultType="string"> SELECT skill_tag_nm FROM
+        TBL_PROJECT_REQUIRED_SKILL_TAG_S WHERE project_sq = #{projectSq} </select>
+
+    <delete id="deleteByUserAndProject" parameterType="map"> DELETE FROM TBL_SCRAP_S WHERE user_sq =
+        #{userSq} AND project_sq = #{projectSq} AND scrap_type_cd = 601 </delete>
+
+    <!-- 페이징 + 검색조건 반영 프로젝트 스크랩 조회 -->
+    <select id="findScrappedProjectSqsByUserSqWithPaging" resultType="long"> SELECT s.project_sq
+        FROM TBL_SCRAP_S s JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq =
+        #{userSq} AND s.scrap_type_cd = 601 <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == '전체'"> AND ( LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE c.company_sq =
+        p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%', LOWER(#{searchKeyword}), '%') ) ) </when>
+                <when test="searchType == '제목'"> AND LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') </when>
+                <when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+        c.company_sq = p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') ) </when>
+            </choose>
+        </if> ORDER BY
+        p.project_created_at_dtm DESC LIMIT #{limit} OFFSET #{offset} </select>
+
+
+    <!-- 검색조건에 맞는 총 개수 조회 -->
+    <select id="countScrappedProjectsByUserSq" resultType="int"> SELECT COUNT(*) FROM TBL_SCRAP_S s
+        JOIN TBL_PROJECT_M p ON s.project_sq = p.project_sq WHERE s.user_sq = #{userSq} AND
+        s.scrap_type_cd = 601 <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == '전체'"> AND ( LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') OR EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE c.company_sq =
+        p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%', LOWER(#{searchKeyword}), '%') ) ) </when>
+                <when test="searchType == '제목'"> AND LOWER(p.project_ttl) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') </when>
+                <when test="searchType == '회사명'"> AND EXISTS ( SELECT 1 FROM TBL_COMPANY_S c WHERE
+        c.company_sq = p.company_sq AND LOWER(c.company_nm) LIKE CONCAT('%',
+        LOWER(#{searchKeyword}), '%') ) </when>
+            </choose>
+        </if>
+    </select>
+
+
+</mapper>

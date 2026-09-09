@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.ResumeListMapper">
+
+  <select id="getResumeListByMemberId" resultType="com.example.demo.domain.mypage.dto.response.ResumeSummary">
+    SELECT
+      RESUME_SQ AS resumeId,
+      RESUME_TTL as title,
+      DATE_FORMAT(resume_created_at_dtm, '%Y.%m.%d') AS registerDate,
+      RESUME_IS_REPRESENTATIVE_YN AS isRepresentative
+    FROM TBL_RESUME_M
+    WHERE USER_SQ = #{userSq}
+    ORDER BY resume_created_at_dtm DESC
+    <if test="request.size != null and request.page != null">
+	  LIMIT #{request.size} OFFSET #{request.page}
+	</if>
+  </select>
+  
+  <select id="countByUserSq" parameterType="Long" resultType="Integer">
+    SELECT
+     COUNT(*)
+    FROM TBL_RESUME_M
+    WHERE USER_SQ = #{userSq}
+  </select>
+  
+  
+
+</mapper>

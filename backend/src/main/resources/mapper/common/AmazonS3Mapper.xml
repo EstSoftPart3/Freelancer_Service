@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.common.AmazonS3.AmazonS3Mapper">
+
+    <!-- 파일 정보 INSERT -->
+    <insert id="insertFileInfo" parameterType="com.example.demo.common.AmazonS3.UploadedFileDTO">
+        INSERT INTO TBL_COMMON_FILE_S ( file_original_nm, file_save_nm, file_typ, file_size ) VALUES
+        ( #{originalName}, #{savedName}, #{contentType}, #{size} ) </insert>
+
+    <!-- 저장 파일명으로 파일 순번 조회 -->
+    <select id="selectFileSqBySavedName" parameterType="String" resultType="long"> SELECT file_sq
+        FROM TBL_COMMON_FILE_S WHERE file_save_nm = #{savedName} </select>
+
+</mapper>

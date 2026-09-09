@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.InformationEditMapper">
+
+    <select id="selectPasswordByUserSq" parameterType="long" resultType="string"> SELECT user_pw
+        FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
+
+
+    <select id="findUserInfoByUserSq" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.UserInfoDTO"> SELECT user_sq, user_id,
+        user_email, user_nm, user_birth_dt, user_gender_cd, user_phone_num, user_type_cd, address_sq
+        FROM TBL_USER_M WHERE user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
+
+    <select id="findAddressByAddressSq" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.InformationEditAddressDTO"> SELECT address_sq
+        ,zonecode, address, detail_address, sigungu, latitude, longitude, area_code_sq As areaCodeSq
+        FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
+    <select id="findSigunguByAreaCodeSq" parameterType="long"
+        resultType="String"> SELECT area_sigungu FROM TBL_AREA_C WHERE area_code_sq = #{areaCodeSq} </select>
+
+    <select id="findCommonCodeNameByGenderCd" resultType="String"> SELECT common_code_nm FROM
+        TBL_COMMON_CODE_C WHERE common_code_sq = #{codeSq} </select>
+
+    <select id="selectCompanyNameByUserSq" resultType="string"> SELECT company_nm FROM TBL_COMPANY_S
+        WHERE user_sq = #{userSq} </select>
+
+    <update id="updateUserInfo"> UPDATE TBL_USER_M <set>
+            <if test="userPw != null and userPw != ''"> user_pw = #{userPw}, </if>
+    <if
+                test="userEmail != null"> user_email = #{userEmail}, </if>
+    <if
+                test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+        user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
+
+    <update id="updateUserInfoWithoutPw"> UPDATE TBL_USER_M <set>
+            <if test="userEmail != null"> user_email = #{userEmail}, </if>
+    <if
+                test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+        user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
+
+    <update id="updateCompanyInfo"> UPDATE TBL_USER_M <set>
+            <if test="userPw != null and userPw != ''"> user_pw = #{userPw}, </if>
+                <if
+                test="userNm != null"> user_nm = #{userNm}, </if>
+    <if
+                test="userEmail != null"> user_email = #{userEmail}, </if>
+    <if
+                test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+        user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
+
+    <update id="updateCompanyInfoWithoutPw"> UPDATE TBL_USER_M <set>
+            <if
+                test="userNm != null"> user_nm = #{userNm}, </if>
+            <if test="userEmail != null">
+        user_email = #{userEmail}, </if>
+    <if
+                test="userPhoneNum != null"> user_phone_num = #{userPhoneNum}, </if>
+        user_modified_at_dtm = NOW() </set> WHERE user_sq = #{userSq} </update>
+
+    <update id="updateAddress"> UPDATE TBL_ADDRESS_S SET zonecode = #{zonecode}, address =
+        #{address}, detail_address = #{detailAddress}, sigungu = #{sigungu}, latitude = #{latitude},
+        longitude = #{longitude}, address_modified_at_dtm = NOW() WHERE address_sq = (SELECT
+        address_sq FROM TBL_USER_M WHERE user_sq = #{userSq}) </update>
+
+    <select id="existsByEmail" resultType="boolean"> SELECT EXISTS( SELECT 1 FROM TBL_USER_M WHERE
+        user_email = #{userEmail} ) </select>
+
+    <select id="existsByPhone" resultType="boolean"> SELECT EXISTS( SELECT 1 FROM TBL_USER_M WHERE
+        user_phone_num = #{userPhoneNum} ) </select>
+
+    <select id="findUserSqByEmail" resultType="java.lang.Long"> SELECT user_sq FROM TBL_USER_M WHERE
+        user_email = #{userEmail} </select>
+
+    <select id="findUserSqByPhone" resultType="java.lang.Long"> SELECT user_sq FROM TBL_USER_M WHERE
+        user_phone_num = #{userPhoneNum} </select>
+
+    <select id="selectUserInfo" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.UserInfoDTO"> SELECT user_phone_num FROM
+        TBL_USER_M WHERE user_sq = #{userSq} </select>
+
+    <select id="selectCompanyInfo" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.CompanyInfoDTO"> SELECT company_sq,
+        address_sq, company_nm, company_ceo_nm, DATE_FORMAT(company_open_dt, '%Y-%m-%d') AS
+        company_open_dt, company_url, company_greeting_txt, company_is_recruiting_yn FROM
+        TBL_COMPANY_S WHERE user_sq = #{userSq} </select>
+
+
+    <select id="selectAddressInfo" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.InformationEditAddressDTO"> SELECT
+        address_sq, zonecode, address, detail_address, sigungu, latitude, longitude , area_code_sq
+        FROM TBL_ADDRESS_S WHERE address_sq = #{addressSq} </select>
+
+    <select id="selectAffiliationTags" parameterType="long" resultType="string"> SELECT tag_nm FROM
+        TBL_COMPANY_TAG_S WHERE company_sq = #{companySq} </select>
+
+    <update id="updateRecruitingYnToN"> UPDATE TBL_COMPANY_S SET company_is_recruiting_yn = 'N'
+        WHERE user_sq = #{userSq} </update>
+
+    <select id="findCompanySqByUserSq" parameterType="long" resultType="long"> SELECT company_sq
+        FROM TBL_COMPANY_S WHERE user_sq = #{userSq} </select>
+
+    <select id="findAffiliationAddressSqByCompanySq" parameterType="long" resultType="long"> SELECT
+        address_sq FROM TBL_COMPANY_S WHERE company_sq = #{companySq} </select>
+
+    <update id="updateAffiliationPhoneNumByUserSq" parameterType="map"> UPDATE TBL_USER_M SET
+        user_phone_num = #{phoneNum} WHERE user_sq = #{userSq} </update>
+
+    <update id="updateAffiliationUrlGreetingRecruitingByCompanySq" parameterType="map"> UPDATE
+        TBL_COMPANY_S SET company_url = #{companyUrl}, company_greeting_txt = #{greetingTxt},
+        company_is_recruiting_yn = #{isRecruitingYn} WHERE company_sq = #{companySq} </update>
+
+    <update id="updateAffiliationAddressByAddressSq" parameterType="map"> UPDATE TBL_ADDRESS_S SET
+        zonecode = #{zonecode}, address = #{address}, detail_address = #{detailAddress}, sigungu =
+        #{sigungu}, latitude = #{latitude}, longitude = #{longitude}, area_code_sq = #{areaCodeSq},
+        address_modified_at_dtm = NOW() WHERE address_sq = #{addressSq} </update>
+
+    <delete id="deleteAffiliationTagsByCompanySq" parameterType="long"> DELETE FROM
+        TBL_COMPANY_TAG_S WHERE company_sq = #{companySq} </delete>
+
+    <insert id="insertAffiliationTagByCompanySq" parameterType="map"> INSERT INTO TBL_COMPANY_TAG_S
+        (tag_nm, company_sq) VALUES (#{tagNm}, #{companySq}) </insert>
+
+    <!-- 프로필 이미지 -->
+
+    <select id="selectFileSqByUserSq" resultType="long"> SELECT file_sq FROM
+        TBL_USER_PROFILE_IMAGE_S WHERE user_sq = #{userSq} </select>
+
+    <select id="selectFileBySq" resultType="com.example.demo.common.AmazonS3.UploadedFileDTO">
+        SELECT file_original_nm AS originalName, file_save_nm AS savedName, file_typ AS contentType,
+        file_size AS size FROM TBL_COMMON_FILE_S WHERE file_sq = #{fileSq} </select>
+
+    <!-- 파일 메타데이터 저장 -->
+    <insert id="insertFile" useGeneratedKeys="true" keyProperty="fileSq"> INSERT INTO
+        TBL_COMMON_FILE_S ( file_original_nm, file_save_nm, file_typ, file_size ) VALUES (
+        #{originalName}, #{savedName}, #{contentType}, #{size} ) </insert>
+
+    <!-- 사용자 프로필 이미지 매핑 저장 -->
+    <insert id="insertUserProfileImage"> INSERT INTO TBL_USER_PROFILE_IMAGE_S ( user_sq, file_sq )
+        VALUES ( #{userSq}, #{fileSq} ) </insert>
+
+    <!-- 사용자 기존 프로필 이미지 매핑 삭제 -->
+    <delete id="deleteUserProfileImageByUserSq"> DELETE FROM TBL_USER_PROFILE_IMAGE_S WHERE user_sq
+        = #{userSq} </delete>
+
+    <!-- 사용자 기존 파일 정보 조회 -->
+    <select id="findFileByUserSq"
+        resultType="com.example.demo.domain.mypage.dto.ProfileImageInfoDTO"> SELECT f.file_sq AS
+        fileSq, f.file_original_nm AS originalName, f.file_save_nm AS savedName, f.file_typ AS
+        contentType, f.file_size AS size FROM TBL_COMMON_FILE_S f JOIN TBL_USER_PROFILE_IMAGE_S up
+        ON up.file_sq = f.file_sq WHERE up.user_sq = #{userSq} </select>
+
+    <update id="markFileAsDeleted"> UPDATE TBL_COMMON_FILE_S SET file_is_deleted_yn = 'Y' WHERE
+        file_sq = #{fileSq} </update>
+
+    <select id="selectFileSqByCompanySq" resultType="long"> SELECT file_sq FROM
+        TBL_COMPANY_PROFILE_IMAGE_S WHERE company_sq = #{companySq} </select>
+
+    <!-- 소속 프로필 이미지 매핑 저장 -->
+    <insert id="insertAffiliationProfileImage"> INSERT INTO TBL_COMPANY_PROFILE_IMAGE_S (
+        company_sq, file_sq ) VALUES ( #{companySq}, #{fileSq} ) </insert>
+
+    <!-- 소속 기존 프로필 이미지 매핑 삭제 -->
+    <delete id="deleteAffiliationProfileImageByUserSq"> DELETE FROM TBL_COMPANY_PROFILE_IMAGE_S
+        WHERE company_sq = #{companySq} </delete>
+
+    <!-- 소속 기존 파일 정보 조회 -->
+    <select id="findAffiliationFileByUserSq"
+        resultType="com.example.demo.domain.mypage.dto.ProfileImageInfoDTO"> SELECT f.file_sq AS
+        fileSq, f.file_original_nm AS originalName, f.file_save_nm AS savedName, f.file_typ AS
+        contentType, f.file_size AS size FROM TBL_COMMON_FILE_S f JOIN TBL_COMPANY_PROFILE_IMAGE_S
+        cp ON cp.file_sq = f.file_sq WHERE cp.company_sq = #{companySq} </select>
+
+    <!-- 기업 인증  -->
+    <update id="updateCompanyVerification" parameterType="map"> UPDATE tbl_company_s SET company_nm
+        = #{companyNm}, company_ceo_nm = #{companyCeoNm}, company_biz_num = #{companyBizNum},
+        company_open_dt = #{companyOpenDt}, company_auth_status_cd = #{statusCd},
+        company_agreed_terms_yn = 'Y' WHERE user_sq = #{userSq} </update>
+
+
+</mapper>

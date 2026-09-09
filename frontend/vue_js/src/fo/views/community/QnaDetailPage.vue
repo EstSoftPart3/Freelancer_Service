@@ -1,0 +1,177 @@
+<template>
+  <section>
+    <CommonPageHeader
+      title=""
+      strongText="QnA 게시판"
+      :breadcrumbs="[
+        { text: 'QnA 게시판', link: '/qna' },
+        { text: boardInfo.ttl },
+      ]"
+    />
+
+    <div class="container py-5 mt-3">
+      <div class="post-content ms-0">
+        <BoardPost
+          :boardInfo="boardInfo"
+          boardType="qna"
+          :getBoard="getBoard"
+        />
+        <!-- 답변 영역 -->
+        <div class="answers-section mt-5">
+          <h4 class="mb-4 f-s-15">답변 ({{ boardInfo.answers.length }})</h4>
+          <div
+            v-for="answer in boardInfo.answers"
+            :key="answer"
+            class="answer-box card p-4 mb-3 border-0"
+            :class="{ 'disable-box': answer.sq === null }"
+            @click="clickApplication(answer.sq)"
+          >
+            <div
+              class="d-flex justif y-content-between align-items-center mb-2"
+            >
+              <h5 class="mb-0 text-dark f-s-13 me-2">
+                {{ answer.ttl || '삭제된 답변입니다.' }}
+              </h5>
+              <span
+                v-if="answer.isAdoptedYn == 'Y'"
+                class="badge bg-primary f-s-11"
+                >채택 답변</span
+              >
+            </div>
+            <div
+              class="d-flex justify-content-between text-muted f-s-11"
+              v-if="answer.isDeletedYn == 'N'"
+            >
+              <div>
+                <i class="far fa-user"></i> By
+                <span>{{ answer.userNm }}</span> &nbsp;&nbsp;
+                <i class="far fa-calendar-alt"></i>
+                &nbsp;{{ formatTime(answer.createdAt) }}
+              </div>
+              <div>
+                조회 {{ answer.viewCnt }} · 댓글 {{ answer.commentCnt }} · 추천
+                {{ answer.recommendCnt }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <BoardComment
+          :comments="boardInfo.comments"
+          :isAnswer="false"
+          :getBoard="getBoard"
+        />
+      </div>
+    </div>
+  </section>
+</template>
+<script setup>
+import BoardComment from '@/fo/components/community/BoardComment.vue'
+import BoardPost from '@/fo/components/community/BoardPost.vue'
+import AnswerDetailModal from '@/fo/components/community/AnswerDetailModal.vue'
+import { useModalStore } from '@/fo/stores/modalStore'
+import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
+import { defineProps, ref, onMounted, watch } from 'vue'
+import { useBoardStore } from '@/fo/stores/boardStore'
+import { useRoute } from 'vue-router'
+import { useAlertStore } from '@/fo/stores/alertStore'
+import { api } from '@/axios'
+
+const alertStore = useAlertStore()
+const modalStore = useModalStore()
+const boardStore = useBoardStore()
+const route = useRoute()
+
+const props = defineProps({ board_sq: String })
+
+const boardInfo = ref({
+  attachments: [],
+  skillTags: [],
+  normalTags: [],
+  answers: [],
+  comments: [],
+})
+
+// 답변 모달
+const clickApplication = (sq) => {
+  if (sq == null) {
+    return
+  }
+  modalStore.openModal(AnswerDetailModal, {
+    size: 'modal-lg',
+    answerSq: sq,
+    boardUserSq: boardInfo.value.userSq,
+    adoptStatusCd: boardInfo.value.boardAdoptStatusCd,
+  })
+}
+
+// 게시글 불러오기
+const getBoard = async () => {
+  try {
+    const res = await api.$get(`/qna/${props.board_sq}`)
+    if (res) {
+      boardInfo.value = res.output
+      boardStore.viewerSq = res.output.viewerSq
+
+      // [추가] URL에 answerSq 파라미터가 있으면 자동으로 모달 오픈
+      const targetAnswerSq = route.query.answerSq
+      if (targetAnswerSq) {
+        // 문자열로 올 수 있으므로 숫자로 변환하여 비교하거나 처리
+        clickApplication(Number(targetAnswerSq))
+      }
+    }
+  } catch (error) {
+    alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+  }
+}
+
+const addViewCnt = async () => {
+  await api.$patch(`/board/${props.board_sq}/increment-view`)
+}
+
+const formatTime = (createdAt) => {
+  const date = new Date(createdAt)
+  let year = date.getFullYear()
+  let month = date.getMonth() + 1
+  let day = date.getDate()
+  if (month < 10) month = '0' + month
+  if (day < 10) day = '0' + day
+
+  return `${year}-${month}-${day}`
+}
+
+onMounted(() => {
+  addViewCnt()
+  getBoard()
+})
+
+watch(
+  () => props.board_sq,
+  (newSq, oldSq) => {
+    if (newSq !== oldSq) {
+      addViewCnt()
+      getBoard()
+    }
+  },
+)
+</script>
+<style>
+.answer-box {
+  background-color: #f4f4f4;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+.f-s-11 {
+  font-size: 1.1rem;
+}
+.f-s-13 {
+  font-size: 1.3rem;
+}
+.f-s-15 {
+  font-size: 1.5rem;
+}
+.answer-box.disable-box {
+  cursor: default;
+}
+</style>

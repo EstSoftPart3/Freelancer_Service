@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.MypageAddressMapper">
+	
+	<select id="selectAreaCodeBySigungu" resultType="Long">
+	  SELECT area_code_sq
+	  FROM TBL_AREA_C
+	  WHERE area_sigungu LIKE CONCAT('%', #{sigungu}, '%')
+	  LIMIT 1
+	</select>
+
+	<!--<select id="selectSidoBySigungu" resultType="string">
+	  SELECT area_sido
+	  FROM TBL_AREA_C
+	  WHERE area_sigungu LIKE CONCAT('%', #{sigungu})
+	</select>-->
+
+  <!-- 1. 지역코드 조회 -->
+	   <select id="selectAreaCodeBySidoAndSigungu" resultType="long">
+        SELECT area_code_sq
+        FROM TBL_AREA_C
+  		WHERE TRIM(area_sido) = TRIM(#{sido})
+    	AND TRIM(area_sigungu) = TRIM(#{sigungu})
+    </select>
+	
+  <!-- 2. 주소 INSERT -->
+	<insert id="insertAddress"
+            parameterType="com.example.demo.domain.mypage.dto.AddressDTO"
+            useGeneratedKeys="true"
+            keyProperty="addressSq"
+            keyColumn="address_sq">
+        INSERT INTO TBL_ADDRESS_S (
+            zonecode, 
+            address, 
+            detail_address, 
+            sigungu, 
+            latitude, 
+            longitude, 
+            area_code_sq
+        ) VALUES (
+            #{zonecode}, 
+            #{address}, 
+            #{detailAddress}, 
+            #{sigungu}, 
+            #{latitude}, 
+            #{longitude}, 
+            #{areaCodeSq}
+        )
+	</insert>
+
+	<select id="selectAddressSqByFields"
+	        parameterType="com.example.demo.domain.mypage.dto.AddressDTO"
+	        resultType="long">
+	    SELECT address_sq
+	    FROM TBL_ADDRESS_S
+	    WHERE address = #{address}
+	      AND detail_address = #{detailAddress}
+	      AND sigungu = #{sigungu}
+	      AND latitude = #{latitude}
+	      AND longitude = #{longitude}
+	    ORDER BY address_created_at_dtm DESC
+	    LIMIT 1
+	</select>
+</mapper>

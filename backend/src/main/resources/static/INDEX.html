@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>모달 예제</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1;
+          left: 0; top: 0;
+          width: 100%; height: 100%;
+          overflow: auto;
+          background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+          background-color: #fff;
+          margin: 10% auto;
+          padding: 20px;
+          border: 1px solid #888;
+          width: 400px;
+          border-radius: 10px;
+        }
+        .modal-header {
+          font-size: 20px;
+          margin-bottom: 10px;
+        }
+        .option-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin: 20px 0;
+        }
+        .option-button {
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          background-color: #f9f9f9;
+          cursor: pointer;
+          text-align: center;
+        }
+        .option-button.selected {
+          background-color: #007BFF;
+          color: white;
+          border-color: #007BFF;
+        }
+        .modal-footer {
+          text-align: right;
+        }
+        .modal-footer button {
+          margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<h2>모달 버튼</h2>
+<button onclick="document.getElementById('employmentModal').style.display='block'">근무 형태 선택</button>
+<button onclick="document.getElementById('jobModal').style.display='block'">모집 직군 선택</button>
+
+<!-- 근무 형태 모달 -->
+<div id="employmentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">근무 형태 선택</div>
+        <div class="option-grid">
+            <div class="option-button" onclick="toggleSelection(this)">프리랜서</div>
+            <div class="option-button" onclick="toggleSelection(this)">인턴</div>
+            <div class="option-button" onclick="toggleSelection(this)">정규직</div>
+            <div class="option-button" onclick="toggleSelection(this)">계약직</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="document.getElementById('employmentModal').style.display='none'">닫기</button>
+            <button onclick="submitSelection('employmentModal')">선택 완료</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모집 직군 모달 -->
+<div id="jobModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">모집 직군 선택</div>
+        <div class="option-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="option-button" onclick="toggleSelection(this)">개발PM</div>
+            <div class="option-button" onclick="toggleSelection(this)">게임개발</div>
+            <div class="option-button" onclick="toggleSelection(this)">데이터분석가</div>
+            <div class="option-button" onclick="toggleSelection(this)">데이터엔지니어</div>
+            <div class="option-button" onclick="toggleSelection(this)">백엔드/서버개발</div>
+            <div class="option-button" onclick="toggleSelection(this)">보안컨설팅</div>
+            <div class="option-button" onclick="toggleSelection(this)">앱개발</div>
+            <div class="option-button" onclick="toggleSelection(this)">웹개발</div>
+            <div class="option-button" onclick="toggleSelection(this)">웹마스터</div>
+            <div class="option-button" onclick="toggleSelection(this)">퍼블리셔</div>
+            <div class="option-button" onclick="toggleSelection(this)">프론트엔드</div>
+            <div class="option-button" onclick="toggleSelection(this)">BI 엔지니어</div>
+            <div class="option-button" onclick="toggleSelection(this)">시스템엔지니어</div>
+            <div class="option-button" onclick="toggleSelection(this)">SI개발</div>
+            <div class="option-button" onclick="toggleSelection(this)">SQA</div>
+            <div class="option-button" onclick="toggleSelection(this)">전문분야</div>
+            <div class="option-button" onclick="toggleSelection(this)">검색엔진</div>
+            <div class="option-button" onclick="toggleSelection(this)">네트워크</div>
+            <div class="option-button" onclick="toggleSelection(this)">딥러닝</div>
+            <div class="option-button" onclick="toggleSelection(this)">머신러닝</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="document.getElementById('jobModal').style.display='none'">닫기</button>
+            <button onclick="submitSelection('jobModal')">선택 완료</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSelection(element) {
+      element.classList.toggle('selected');
+    }
+
+    function submitSelection(modalId) {
+      const selectedOptions = document.querySelectorAll(`#${modalId} .option-button.selected`);
+      const values = Array.from(selectedOptions).map(el => el.textContent);
+      alert(`선택된 값: ${values.join(', ')}`);
+      document.getElementById(modalId).style.display = 'none';
+    }
+</script>
+</body>
+</html>
