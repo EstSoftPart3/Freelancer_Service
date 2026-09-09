@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.mypage.mapper.CertificateMapper">
+
+
+    <insert id="insertCertificate" parameterType="com.example.demo.domain.mypage.dto.CertificateDTO"
+        useGeneratedKeys="false" keyProperty="certificateCd"> INSERT INTO TBL_CERTIFICATE_S (
+        certificate_cd, certificate_nm, middle_obligation_field_cd, middle_obligation_field_nm,
+        obligation_field_cd, obligation_field_nm, qualification_group_cd, qualification_group_nm,
+        series_cd, series_nm ) VALUES ( #{certificateCd}, #{certificateNm},
+        #{middleObligationFieldCd}, #{middleObligationFieldNm}, #{obligationFieldCd},
+        #{obligationFieldNm}, #{qualificationGroupCd}, #{qualificationGroupNm}, #{seriesCd},
+        #{seriesNm} ) </insert>
+
+    <update id="updateCertificate" parameterType="com.example.demo.domain.mypage.dto.CertificateDTO">
+        UPDATE TBL_CERTIFICATE_S SET certificate_nm = #{certificateNm}, middle_obligation_field_cd =
+        #{middleObligationFieldCd}, middle_obligation_field_nm = #{middleObligationFieldNm},
+        obligation_field_cd = #{obligationFieldCd}, obligation_field_nm = #{obligationFieldNm},
+        qualification_group_cd = #{qualificationGroupCd}, qualification_group_nm =
+        #{qualificationGroupNm}, series_cd = #{seriesCd}, series_nm = #{seriesNm} WHERE
+        certificate_cd = #{certificateCd} </update>
+
+    <select id="selectCertificateById" parameterType="long"
+        resultType="com.example.demo.domain.mypage.dto.CertificateDTO"> SELECT * FROM
+        TBL_CERTIFICATE_S WHERE certificate_cd = #{certificateCd} </select>
+
+
+</mapper>
