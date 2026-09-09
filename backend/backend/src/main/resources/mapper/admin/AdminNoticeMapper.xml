@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminNoticeMapper">
+
+    <sql id="noticeWhereClause"> WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd =
+        #{boardTypeCd} <if test="keyword != null and keyword != ''"> AND b.board_ttl LIKE
+        CONCAT('%', #{keyword}, '%') </if>
+    </sql>
+
+    <select id="countNotices" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M b <include
+            refid="noticeWhereClause" />
+    </select>
+
+    <select id="findAllNotices" resultType="com.example.demo.domain.community.dto.BoardListDTO">
+        SELECT b.board_sq AS sq, b.user_sq AS userSq, u.user_nm AS userNm, b.board_ttl AS ttl,
+        b.board_view_cnt AS viewCnt, b.board_comment_cnt AS commentCnt, b.board_recommend_cnt AS
+        recommendCnt, b.board_created_at_dtm AS createdAt, b.board_adopt_status_cd AS
+        boardAdoptStatusCd, 0 AS answerCnt FROM TBL_BOARD_M b LEFT JOIN TBL_USER_M u ON b.user_sq =
+        u.user_sq <include refid="noticeWhereClause" /> ORDER BY <choose>
+            <when test="sortField == 'sq'"> b.board_sq </when>
+            <when test="sortField == 'ttl'"> b.board_ttl </when>
+            <when test="sortField == 'viewCnt'"> b.board_view_cnt </when>
+            <when test="sortField == 'recommendCnt'"> b.board_recommend_cnt </when>
+            <when test="sortField == 'createdAt'"> b.board_created_at_dtm </when>
+            <otherwise> b.board_created_at_dtm </otherwise>
+        </choose> ${sortOrder} LIMIT
+        #{size} OFFSET #{offset} </select>
+
+    <update id="deleteCommentByAdmin"> UPDATE TBL_BOARD_COMMENT_S SET comment_is_deleted_yn = 'Y',
+        comment_modified_at_dtm = NOW() WHERE comment_sq = #{commentSq} </update>
+
+    <select id="findCommentById" resultType="com.example.demo.domain.community.entity.Comment">
+        SELECT * FROM TBL_BOARD_COMMENT_S WHERE comment_sq = #{commentSq} </select>
+
+</mapper>

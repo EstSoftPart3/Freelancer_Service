@@ -326,7 +326,23 @@ const socialProviders = [
 ]
 
 const handleSocialLogin = (provider) => {
-  alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  if (provider === 'google') {
+    
+    const clientId = '757940029111-ukt42rdb3ae7ijgl0suckbi5gbhvbi5c.apps.googleusercontent.com'
+    
+    const redirectUri = window.location.origin + '/oauth/callback'
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=email%20profile` +
+      `&access_type=offline`
+
+    window.location.href = googleAuthUrl
+  } else {
+    alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
+  }
 }
 </script>
 

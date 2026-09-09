@@ -1,6 +1,9 @@
 package com.example.demo.domain.user.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,11 +63,23 @@ public class LoginController {
 
         @PostMapping("/logout")
         public ResponseEntity<ApiResponse<Void>> logout(
-                        @AuthenticationPrincipal Long userSq) {
+                        @AuthenticationPrincipal Long userSq,
+                        HttpServletResponse response) {
 
                 // DB에서 userSq에 해당하는 리프레시 토큰 삭제
-                loginService.deleteRefreshTokenByUserSq(userSq);
+                if (userSq != null) {
+                        loginService.deleteRefreshTokenByUserSq(userSq);
+                }
 
-                return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그아웃 성공", null));
+                // 2. 프론트엔드가 생성한 쿠키를 강제로 만료시키는 Set-Cookie 헤더 추가
+                ResponseCookie cookie1 = ResponseCookie.from("auth_user_info", "")
+                        .path("/").maxAge(0).build();
+                ResponseCookie cookie2 = ResponseCookie.from("thisisjustarandomstring", "")
+                        .path("/").maxAge(0).build();
+
+                response.addHeader(HttpHeaders.SET_COOKIE, cookie1.toString());
+                response.addHeader(HttpHeaders.SET_COOKIE, cookie2.toString());
+
+                              return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그아웃 성공", null));
         }
 }

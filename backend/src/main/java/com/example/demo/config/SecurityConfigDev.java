@@ -7,11 +7,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsUtils;
 
 import com.example.demo.domain.user.util.JwtAuthenticationFilter;
 import com.example.demo.domain.user.util.JwtProvider;
@@ -26,16 +29,24 @@ public class SecurityConfigDev {
 
     private final JwtProvider jwtProvider;
 
+    //OAuth2 성공 핸들러, 서비스 주입
+    private final DefaultOAuth2UserService customOAuth2UserService;
+    private final AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:8504"); // Vue(FO)
-        configuration.addAllowedOrigin("http://localhost:5173"); // React(BO)
-        configuration.addAllowedOrigin("https://job.estsw.co.kr");
-        configuration.addAllowedOrigin("https://admin-job.estsw.co.kr");
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
-        configuration.setAllowCredentials(true); // 쿠키 허용
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:8504",
+            "http://localhost:5173",
+            "https://job.estsw.co.kr",
+            "https://admin-job.estsw.co.kr"
+        ));
+        
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -48,6 +59,7 @@ public class SecurityConfigDev {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
                 .authorizeHttpRequests(auth -> auth
+                		.requestMatchers(reqeust -> CorsUtils.isPreFlightRequest(reqeust)).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
                         .requestMatchers("/actuator/**").permitAll()
@@ -58,7 +70,16 @@ public class SecurityConfigDev {
                         // 3. 사용자 정보 조회 등은 인증 필요
                         .requestMatchers("/me").authenticated()
                         // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
+
+                        //OAuth2 관련 로그인/인증 엔드포인트 접근 허용
+                        .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
                         .anyRequest().permitAll())
+
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable());
 

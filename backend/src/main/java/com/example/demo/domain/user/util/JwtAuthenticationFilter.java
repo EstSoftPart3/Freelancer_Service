@@ -60,6 +60,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 여기에 더 추가 가능
     );
+  
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        // OPTIONS(Preflight) 요청은 JWT 검증을 무조건 우회
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
