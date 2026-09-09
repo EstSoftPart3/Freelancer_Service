@@ -123,6 +123,12 @@ public class SecurityConfigProd {
                         // ---- 그 외 전부 인증 필요 ----
                         .requestMatchers("/me").authenticated()
                         .anyRequest().authenticated())
+                // Spring Security가 HttpSecurity 빈에 기본으로 얹는 LogoutConfigurer를 끈다.
+                // 이걸 안 끄면 POST /logout이 우리 LoginController.logout() 대신 기본 LogoutFilter에
+                // 먼저 잡혀 "/login?logout"로 302 리다이렉트되고, refresh token 삭제가 아예 실행되지
+                // 않는다(CSRF를 꺼둬서 이 필터가 모든 메서드를 가로챈다). SecurityConfigDev는 이미
+                // 이 줄로 같은 문제를 막고 있다 — prod에서 빠져 있던 것을 맞춘다.
+                .logout(logout -> logout.disable())
                 // 인증 실패(로그인 안된 상태) 시 처리
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
