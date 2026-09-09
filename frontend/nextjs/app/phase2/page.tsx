@@ -12,7 +12,9 @@ const SCREENS: { group: string; items: { label: string; href: string; note: stri
   {
     group: '연봉',
     items: [
-      { label: '연봉계산기', href: '/salary/calculator', note: '준비 중' },
+      { label: '연봉계산기', href: '/salary/calculator', note: '완료' },
+      { label: 'AI 분석 중', href: '/salary/analyzing', note: '완료(자동으로 리포트로 이동)' },
+      { label: '연봉 리포트', href: '/salary/report', note: '완료(계산기부터 진행해야 값이 보임)' },
       { label: '연봉순위표', href: '/salary/ranking', note: '준비 중' },
     ],
   },

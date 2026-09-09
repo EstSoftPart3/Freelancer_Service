@@ -1,8 +1,7 @@
 'use client'
-// D. "컨트롤에프AI가 확인 중입니다" 인터스티셜.
-// 🔴 지금은 리뷰용으로 애니메이션이 멈추지 않고 계속 돈다 — E(연봉 리포트)가 만들어지면
-// 그때 아래 useEffect에 "일정 시간 뒤 /salary/report로 자동 이동" 로직을 붙이면 된다.
+// D. "컨트롤에프AI가 확인 중입니다" 인터스티셜. 4단계를 한 바퀴 돈 뒤 E(연봉 리포트)로 자동 이동한다.
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Sparkles } from 'lucide-react'
 
@@ -25,14 +24,20 @@ interface CalcInput {
   salary: number
 }
 
+const PHASE_DURATION_MS = 1600
+
 export default function SalaryAnalyzingScreen() {
+  const router = useRouter()
   const [phaseIdx, setPhaseIdx] = useState(0)
   const [input, setInput] = useState<CalcInput | null>(null)
 
   useEffect(() => {
+    // sessionStorage는 서버에 없어서 SSR과 값이 다를 수밖에 없다 — 하이드레이션 직후
+    // 이펙트에서 한 번만 읽어야 서버·클라이언트 첫 렌더가 어긋나지 않는다.
     const raw = sessionStorage.getItem('salaryCalcInput')
     if (raw) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setInput(JSON.parse(raw))
       } catch {
         // 손상된 값이면 조용히 무시 — 조건 캡션만 안 뜬다
@@ -41,9 +46,17 @@ export default function SalaryAnalyzingScreen() {
   }, [])
 
   useEffect(() => {
-    const t = setInterval(() => setPhaseIdx((i) => (i + 1) % PHASES.length), 1600)
-    return () => clearInterval(t)
-  }, [])
+    const t = setInterval(() => setPhaseIdx((i) => (i + 1) % PHASES.length), PHASE_DURATION_MS)
+    // 4단계를 한 바퀴(약 6.4초) 돈 뒤 리포트로 이동 — 너무 빨라서 애니메이션을 못 보는 느낌이 안 들게
+    // 마지막 단계("리포트 만드는 중")가 화면에 걸쳐 있는 시간만큼 여유를 더 준다.
+    const redirectTimer = setTimeout(() => {
+      router.push('/salary/report')
+    }, PHASE_DURATION_MS * PHASES.length)
+    return () => {
+      clearInterval(t)
+      clearTimeout(redirectTimer)
+    }
+  }, [router])
 
   return (
     <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center bg-white px-4 py-16 text-center">
