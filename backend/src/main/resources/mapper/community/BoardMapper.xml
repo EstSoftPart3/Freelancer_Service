@@ -161,7 +161,10 @@
 		       (b.board_view_cnt * 1 + b.board_comment_cnt * 2 + b.board_recommend_cnt * 3) AS score
 		FROM TBL_BOARD_M b
 		LEFT JOIN TBL_USER_M u ON u.user_sq = b.user_sq AND u.user_is_deleted_yn = 'N'
+		<!-- 하한(N일 전)만 있고 상한이 없어 미래 날짜로 심어진(시드 등) 글이 항상 "최근 N일"을 통과하던 결함.
+		     상한(<= NOW())을 걸어 실제로 지금 시점 기준 과거 N일 안에 든 글만 집계되게 한다. -->
 		WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd IN (1401, 1402)
+			AND b.board_created_at_dtm &lt;= NOW()
 		<choose>
 			<when test="period == 'daily'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 1 DAY) </when>
 			<when test="period == 'weekly'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 7 DAY) </when>

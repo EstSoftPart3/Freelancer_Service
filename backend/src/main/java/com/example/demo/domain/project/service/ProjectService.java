@@ -1057,6 +1057,8 @@ public class ProjectService {
 					.projectSalary(p.getProjectSalary())
 					.formattedSalary(formatSalary(p.getProjectSalary(), p.getProjectSalaryNegotiableYn()))
 					.projectSkills(skillNames)
+					.viewCnt(p.getProjectViewCnt())
+					.candidateCnt(p.getProjectCandidateCnt())
 					.build();
 		}).collect(Collectors.toList());
 	}
