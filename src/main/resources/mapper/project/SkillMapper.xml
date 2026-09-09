@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.project.mapper.SkillMapper">
+
+	<select id="findAllSkills" resultType="com.example.demo.domain.project.dto.response.SingleSkillInfoResponse">
+	    SELECT DISTINCT
+        skill_tag_nm AS parentSkillTagNm,
+        skill_tag_nm AS childSkillTagNm
+	    FROM TBL_SKILL_TAG_C 
+	    WHERE c.skill_tag_is_deleted_yn = 'N'
+	      AND p.skill_tag_is_deleted_yn = 'N'
+	    ORDER BY p.skill_tag_nm, c.skill_tag_nm
+  	</select>
+
+	<select id="findAllReqSkillsByProjectSq" parameterType="Long" resultType="String">
+    SELECT skill_tag_nm
+    FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S
+    WHERE project_sq = #{projectSq}
+	</select>
+	
+	<select id="findAllPreferSkillsByProjectSq" parameterType="Long" resultType="String">
+    SELECT skill_tag_nm
+    FROM TBL_PROJECT_PREFERRED_SKILL_TAG_S
+    WHERE project_sq = #{projectSq}
+	</select>
+	
+	<delete id="deleteReqSkillsByProjectSq">
+	  DELETE FROM TBL_PROJECT_REQUIRED_SKILL_TAG_S
+	  WHERE project_sq = #{projectSq}
+	</delete>
+	
+	<delete id="deletePreferSkillsByProjectSq">
+	  DELETE FROM TBL_PROJECT_PREFERRED_SKILL_TAG_S
+	  WHERE project_sq = #{projectSq}
+	</delete>
+	
+	<select id="findSkillTagSqByName" parameterType="String" resultType="Long">
+	SELECT skill_tag_sq
+	FROM TBL_SKILL_TAG_C
+	WHERE SKILL_TAG_NM = #{name}
+	</select>
+	
+	<select id="findSkillTagInfoByName" parameterType="String" resultType="com.example.demo.domain.project.dto.request.SkillInsertRequest">
+    SELECT
+        skill_tag_sq AS skillTagSq,
+        parent_skill_tag_sq AS parentSkillTagSq,
+        skill_tag_lvl AS skillTagLvl,
+        skill_tag_nm AS skillTagNm
+    FROM TBL_SKILL_TAG_C
+    WHERE skill_tag_nm = #{name}
+	</select>
+
+</mapper>
