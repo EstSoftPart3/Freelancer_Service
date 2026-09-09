@@ -2,7 +2,7 @@
 // Mirrors vue_js/src/fo/views/login&signup/LoginPage.vue
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,7 +12,6 @@ import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { User } from '@/types'
-import { cn } from '@/lib/utils'
 
 type LoginType = 'PERSONAL' | 'COMPANY'
 
@@ -25,23 +24,23 @@ const SOCIAL_PROVIDERS = [
 
 export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { setUser } = useUserStore()
 
-  const [loginType, setLoginType] = useState<LoginType>('PERSONAL')
+  // 헤더 "로그인"은 개인, "기업서비스 > 기업 로그인"은 ?loginType=COMPANY 로 들어온다.
+  // 회원가입(SignUpPageClient)과 동일한 방식 — 진입 경로가 그대로 회원 유형을 정하고,
+  // 이 페이지 안에서 개인/기업을 서로 바꿀 수 있는 탭은 두지 않는다(잘못된 경로로 가입·로그인하는 걸 막기 위함).
+  const loginType: LoginType = searchParams.get('loginType') === 'COMPANY' ? 'COMPANY' : 'PERSONAL'
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)
   const [idSave, setIdSave] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // 저장된 아이디 불러오기
+  // 저장된 아이디 불러오기 — 회원 유형은 더 이상 기억하지 않고(경로가 곧 유형이므로),
+  // 그 유형으로 마지막에 저장해둔 아이디만 불러온다.
   useEffect(() => {
-    const savedType = localStorage.getItem('savedLoginType') as LoginType | null
-    if (savedType === 'PERSONAL' || savedType === 'COMPANY') setLoginType(savedType)
     setAutoLogin(localStorage.getItem('autoLogin') === 'true')
-  }, [])
-
-  useEffect(() => {
     const savedKey = loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId'
     const saved = localStorage.getItem(savedKey) ?? ''
     setId(saved)
@@ -83,7 +82,6 @@ export default function LoginForm() {
           loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId',
           id,
         )
-        localStorage.setItem('savedLoginType', loginType)
       } else {
         localStorage.removeItem('savedPersonalId')
         localStorage.removeItem('savedCompanyId')
@@ -108,28 +106,19 @@ export default function LoginForm() {
     alertStore.show(`${provider} 로그인은 준비 중입니다.`, 'danger')
   }
 
-  const tabCls = (active: boolean) =>
-    cn(
-      'flex-1 cursor-pointer rounded-md py-2 text-sm font-medium transition-colors',
-      active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-    )
-
   return (
     <div className="flex min-h-[calc(100vh-200px)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-bold">회원 로그인</h1>
+        <h1 className="mb-1 text-center text-2xl font-bold">
+          {loginType === 'COMPANY' ? '기업 로그인' : '개인 로그인'}
+        </h1>
+        <p className="mb-6 text-center text-sm text-muted-foreground">
+          {loginType === 'COMPANY'
+            ? '기업 회원 계정으로 로그인합니다.'
+            : '개인 회원 계정으로 로그인합니다.'}
+        </p>
 
         <div className="rounded-xl border bg-card p-6 shadow-lg">
-          {/* 개인 / 기업 탭 */}
-          <div className="mb-6 flex gap-1 rounded-lg bg-muted p-1">
-            <button className={tabCls(loginType === 'PERSONAL')} onClick={() => setLoginType('PERSONAL')}>
-              개인회원
-            </button>
-            <button className={tabCls(loginType === 'COMPANY')} onClick={() => setLoginType('COMPANY')}>
-              기업회원
-            </button>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">아이디</label>
