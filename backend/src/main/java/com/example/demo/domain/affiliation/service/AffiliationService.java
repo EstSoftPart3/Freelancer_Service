@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -336,7 +337,16 @@ public class AffiliationService {
 				if (passDTO == null) {
 					throw new IllegalStateException("지원 정보를 찾을 수 없습니다.");
 				}
-				affiliationRepository.insertCompanyMember(passDTO);
+				// 바로 위 isUserAlreadyAffiliated 확인과 이 INSERT 사이엔 잠금이 없어, 서로 다른
+				// 두 회사가 같은 지원자를 거의 동시에 승인하면 둘 다 확인을 통과할 수 있었다.
+				// 진짜 방어선은 TBL_COMPANY_MEMBER_R 의 유니크 인덱스다(재직 중인 소속은
+				// 사용자당 하나만 허용, 2026-09-10 migrate-2026-09-10-affiliation-unique-member.py
+				// 로 추가) — 경합이 나면 나중 INSERT 가 여기서 걸린다.
+				try {
+					affiliationRepository.insertCompanyMember(passDTO);
+				} catch (DuplicateKeyException e) {
+					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+				}
 
 				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
 			} else {

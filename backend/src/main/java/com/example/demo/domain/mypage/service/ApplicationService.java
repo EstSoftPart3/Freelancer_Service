@@ -2,6 +2,7 @@ package com.example.demo.domain.mypage.service;
 
 import java.time.LocalDate;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.mypage.dto.ApplicationPassDTO;
@@ -29,7 +30,13 @@ public class ApplicationService {
             }
 
             // 2. 새로운 소속 이력을 추가 (재입사자라면 새로운 행이 생성됨)
-            applicationRepository.insertCompanyMember(dto);
+            // 바로 위 확인과 이 INSERT 사이의 경합은 TBL_COMPANY_MEMBER_R 의 유니크 인덱스가
+            // 막는다(AffiliationService.updateApplicationStatus 와 같은 이유, 2026-09-10 추가).
+            try {
+                applicationRepository.insertCompanyMember(dto);
+            } catch (DuplicateKeyException e) {
+                throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+            }
         }
     }
 
