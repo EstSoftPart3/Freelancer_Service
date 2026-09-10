@@ -34,16 +34,16 @@ public class NotificationController {
         return notificationService.getUnreadCount(userSq);
     }
 
-    // 알림 읽음 처리
+    // 알림 읽음 처리 (본인 알림만 — userSq 없이는 남의 notificationSq 로도 처리됐다)
     @PatchMapping("/{notificationSq}")
-    public void readNotification(@PathVariable Long notificationSq) {
-        notificationService.markAsRead(notificationSq);
+    public void readNotification(@AuthenticationPrincipal Long userSq, @PathVariable Long notificationSq) {
+        notificationService.markAsRead(notificationSq, userSq);
     }
 
-    // 알림 삭제
+    // 알림 삭제 (본인 알림만)
     @DeleteMapping("/{notificationSq}")
-    public void deleteNotification(@PathVariable Long notificationSq) {
-        notificationService.removeNotification(notificationSq);
+    public void deleteNotification(@AuthenticationPrincipal Long userSq, @PathVariable Long notificationSq) {
+        notificationService.removeNotification(notificationSq, userSq);
     }
 
     // 모두 읽음 처리

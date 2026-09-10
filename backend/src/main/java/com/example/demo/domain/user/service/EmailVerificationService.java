@@ -54,9 +54,25 @@ public class EmailVerificationService {
     public boolean verifyCode(String email, String code) {
         String storedCode = redisRepository.getVerificationCode(email);
         boolean success = storedCode != null && storedCode.equals(code);
-        if (success)
+        if (success) {
             redisRepository.deleteCode(email); // 일회성 인증
+            redisRepository.markVerified(email); // 뒤이어 오는 가입완료·비밀번호재설정 확인 단계에서 참조
+        }
         return success;
+    }
+
+    /**
+     * 이 이메일이 방금 verifyCode 를 통과했는지. 회원가입·비밀번호 재설정처럼
+     * "인증번호 확인" 과 "본 작업"이 서로 다른 API 호출로 나뉘어 있는 곳에서,
+     * 본 작업 쪽이 인증코드를 다시 요구하지 않고도 인증 여부를 확인하는 데 쓴다.
+     */
+    public boolean isEmailVerified(String email) {
+        return redisRepository.isVerified(email);
+    }
+
+    /** 인증 표식을 1회성으로 소모한다. 같은 인증으로 재설정 흐름을 반복 사용하지 못하도록. */
+    public void consumeVerifiedFlag(String email) {
+        redisRepository.clearVerified(email);
     }
 
     private String generateCode() {

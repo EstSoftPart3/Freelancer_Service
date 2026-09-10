@@ -54,14 +54,14 @@ public class NotificationService {
 
     // 4. 읽음 처리
     @Transactional
-    public void markAsRead(Long notificationSq) {
-        notificationMapper.updateNotificationRead(notificationSq);
+    public void markAsRead(Long notificationSq, Long receiverUserSq) {
+        notificationMapper.updateNotificationRead(notificationSq, receiverUserSq);
     }
 
     // 5. 삭제 처리
     @Transactional
-    public void removeNotification(Long notificationSq) {
-        notificationMapper.deleteNotification(notificationSq);
+    public void removeNotification(Long notificationSq, Long receiverUserSq) {
+        notificationMapper.deleteNotification(notificationSq, receiverUserSq);
     }
 
     // 6. 모두 읽음 처리

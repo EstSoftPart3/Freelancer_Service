@@ -21,11 +21,13 @@ public interface NotificationMapper {
     // 3. 알림 생성
     int insertNotification(NotificationRequestDTO requestDto);
 
-    // 4. 알림 읽음 처리
-    int updateNotificationRead(Long notificationSq);
+    // 4. 알림 읽음 처리 (receiverUserSq 로 소유자 검증 — 남의 알림 번호로는 0행 업데이트된다)
+    int updateNotificationRead(@Param("notificationSq") Long notificationSq,
+            @Param("receiverUserSq") Long receiverUserSq);
 
-    // 5. 알림 삭제 (논리 삭제)
-    int deleteNotification(Long notificationSq);
+    // 5. 알림 삭제 (논리 삭제, 소유자 검증 포함)
+    int deleteNotification(@Param("notificationSq") Long notificationSq,
+            @Param("receiverUserSq") Long receiverUserSq);
 
     // 6. 모든 미읽음 알림 읽음 처리
     int updateAllNotificationsRead(Long receiverUserSq);

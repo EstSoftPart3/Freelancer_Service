@@ -24,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional(readOnly = true)
     public boolean isUserIdExists(String userId) {
@@ -48,6 +49,12 @@ public class UserService {
         }
         if (userRepository.existsByUserEmail(requestDto.getUserEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+        // 가입 화면(개인·기업 폼 둘 다)은 제출 전 이메일 인증을 필수로 요구하지만, 그건
+        // 화면 로직일 뿐이었다 — 서버는 이 값을 확인한 적이 없어 남의(아직 미등록) 이메일로
+        // 계정을 만들 수 있었다. verifyCode 통과 표식을 여기서 확인한다.
+        if (!emailVerificationService.isEmailVerified(requestDto.getUserEmail())) {
+            throw new IllegalArgumentException("이메일 인증을 먼저 완료해주세요.");
         }
         if (userRepository.existsByUserPhoneNum(requestDto.getUserPhoneNum())) {
             throw new IllegalArgumentException("이미 사용 중인 휴대폰 번호입니다.");
@@ -97,6 +104,8 @@ public class UserService {
             companyProfileDTO.setCompanyAuthStatusCd(2501L);
             userRepository.insertCompanyProfile(companyProfileDTO);
         }
+
+        emailVerificationService.consumeVerifiedFlag(requestDto.getUserEmail());
     }
 
     public LoginResponseDTO getUserInfoByUserSq(Long userSq) {
