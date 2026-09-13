@@ -276,7 +276,10 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       }))
       // 프리필은 사용자의 입력이 아니라 clearField 를 타지 않는다. 응답이 늦게 와서
       // 그 사이에 제출한 경우 채워진 칸에 빨간 프레임이 남으므로 여기서 걷어 준다.
-      clearAll()
+      // clearAll() 을 쓰면 프리필이 손대지 않는 다른 칸(제목 등)의 미충족 표시까지 함께 사라지므로,
+      // 실제로 채운 칸만 걷는다.
+      clearField('resumeNm'); clearField('resumeBirthDt'); clearField('resumePhoneNum')
+      clearField('email'); clearField('address')
     } catch (err) {
       // 회원 기본정보 프리필 실패 — 빈 폼은 유지하되 원인을 조용히 삼키지 않는다.
       console.error('회원 기본정보를 불러오지 못했습니다.', err)

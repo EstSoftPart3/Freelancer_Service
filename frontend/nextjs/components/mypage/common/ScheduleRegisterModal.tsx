@@ -35,7 +35,13 @@ interface Props {
   onSaved: () => void
 }
 
-const trimDt = (v: string, allDay: boolean) => (!v ? '' : allDay ? v.substring(0, 10) : v.substring(0, 16))
+// allDay -> timed 전환 시 시각이 없으면(날짜만 10자) datetime-local 이 요구하는 "YYYY-MM-DDTHH:mm" 형식이 아니라
+// 입력이 빈 채로 보인다 — 기존 값을 잃지 않도록 자정으로 채워 보정한다.
+const trimDt = (v: string, allDay: boolean) => {
+  if (!v) return ''
+  if (allDay) return v.substring(0, 10)
+  return v.length >= 16 ? v.substring(0, 16) : `${v.substring(0, 10)}T00:00`
+}
 
 type ScheduleField = 'scheduleTtl' | 'scheduleStartDtm' | 'scheduleEndDtm'
 

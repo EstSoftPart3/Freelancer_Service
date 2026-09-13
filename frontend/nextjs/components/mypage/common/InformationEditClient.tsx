@@ -153,6 +153,12 @@ export default function InformationEditClient() {
       markInvalid([field], '이메일 인증을 완료해주세요.')
       return
     }
+    // 주소는 선택 직후 카카오 지오코딩이 비동기로 좌표를 채운다 — 그게 끝나기 전에 확인을 누르면
+    // 좌표가 빈 채로 저장돼 2026-09-02 공고 등록과 같은 500 오류가 난다.
+    if (field === 'address' && form.address && (form.latitude == null || form.longitude == null)) {
+      markInvalid([field], '주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
     clearField(field)
     if (field === 'userEmail') {
       setForm((prev) => ({
