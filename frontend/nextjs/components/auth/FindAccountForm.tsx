@@ -20,7 +20,7 @@ const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmai
 function EmailVerifyRow({
   emailId, setEmailId, domain, setDomain,
   customDomain, setCustomDomain, isCustom, setIsCustom,
-  onSendCode, sending, onBlur, error, valid, blockRef,
+  onSendCode, sending, onBlur, error, valid, blockRef, onEmailChanged,
 }: {
   emailId: string; setEmailId: (v: string) => void
   domain: string; setDomain: (v: string) => void
@@ -29,8 +29,12 @@ function EmailVerifyRow({
   onSendCode: () => void; sending: boolean
   onBlur?: () => void; error: string; valid: boolean
   blockRef?: React.Ref<HTMLDivElement>
+  // 이메일 주소가 바뀌면 이전 인증 상태가 새 주소에 그대로 남아 인증번호 입력이
+  // "인증 완료"로 잠기는 문제를 막기 위해 호출한다(PersonalSignUpForm·CompanySignUpForm 과 동일 이유).
+  onEmailChanged?: () => void
 }) {
   const handleDomain = (val: string) => {
+    onEmailChanged?.()
     if (val === 'custom') { setIsCustom(true); setCustomDomain(''); setDomain('custom') }
     else { setIsCustom(false); setDomain(val) }
   }
@@ -40,9 +44,9 @@ function EmailVerifyRow({
         이메일 주소 {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
       </label>
       <InvalidFrame ref={blockRef} invalid={!!error} className="flex flex-wrap gap-1">
-        <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => setEmailId(e.target.value)} onBlur={onBlur} placeholder="아이디" />
+        <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => { setEmailId(e.target.value); onEmailChanged?.() }} onBlur={onBlur} placeholder="아이디" />
         <span className="flex items-center px-1 text-sm">@</span>
-        <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => setCustomDomain(e.target.value)} placeholder="도메인" />
+        <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => { setCustomDomain(e.target.value); onEmailChanged?.() }} placeholder="도메인" />
         <select value={isCustom ? 'custom' : domain} onChange={(e) => handleDomain(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
           <option value="" disabled>선택</option>
           {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -96,6 +100,9 @@ function FindIdForm() {
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); return false }
     return true
   }
+  // 이메일 주소를 인증 후 바꿔도 ev.verified 가 그대로 남아, 인증 안 한 새 주소로
+  // /find-id 가 호출될 수 있었다(PersonalSignUpForm 등 가입 폼엔 이미 있던 처리).
+  const resetEmailVerification = () => { ev.reset(); setVerifyCode(''); setVerifyError('') }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,7 +141,7 @@ function FindIdForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
-        blockRef={emailRef}
+        blockRef={emailRef} onEmailChanged={resetEmailVerification}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -182,6 +189,9 @@ function ResetPasswordVerifyForm() {
     if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('올바른 이메일 주소 형식이 아닙니다.'); return false }
     setEmailValid(true); return true
   }
+  // 이메일 주소를 인증 후 바꿔도 ev.verified 가 그대로 남아, 인증 안 한 새 주소로
+  // /reset-password/verify 가 호출될 수 있었다.
+  const resetEmailVerification = () => { ev.reset(); setVerifyCode(''); setVerifyError('') }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -231,7 +241,7 @@ function ResetPasswordVerifyForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
-        blockRef={emailRef}
+        blockRef={emailRef} onEmailChanged={resetEmailVerification}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">

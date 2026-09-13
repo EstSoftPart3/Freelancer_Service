@@ -11,6 +11,7 @@ import { setCookie } from '@/lib/cookies'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { User } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -95,10 +96,10 @@ export default function LoginForm() {
       alertStore.show(`${user.userNm}님 안녕하세요.`, 'success')
       router.push('/')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        '로그인에 실패했습니다.'
-      alertStore.show(msg, 'danger')
+      // 다른 인증 폼(FindAccountForm 등)은 전부 getApiErrorMessage 를 쓴다. 여기만 손으로
+      // response.data.message 만 봐서, 인터셉터가 Error 로 바꾼 "HTTP 200 + status 필드"
+      // 실패(예: 비밀번호 불일치)는 서버 문구 대신 항상 이 기본 메시지로만 떴다.
+      alertStore.show(getApiErrorMessage(err, '로그인에 실패했습니다.'), 'danger')
     } finally {
       setLoading(false)
     }

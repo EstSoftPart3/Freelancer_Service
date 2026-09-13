@@ -151,6 +151,10 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
         setPostcode(data.zonecode)
         addressField.setValue(addr); addressField.setError(''); addressField.setValid(true)
         setSigunguCode(data.sigunguCode); setAddressDetail('')
+        // 새 주소를 고른 즉시 옛 좌표부터 비운다 — 안 비우면 지오코딩이 끝나기 전(비동기 구간)에
+        // 제출할 경우 새 주소 텍스트에 옛 좌표가 실려 나간다. PersonalSignUpForm 은 이미 처리돼
+        // 있었는데 이 폼엔 빠져 있었다(2026-09-02 그 문제의 재발 지점).
+        setLatitude(''); setLongitude('')
         // 좌표를 비우기만 하면 사용자는 실패를 모른 채 제출해 서버에서 터진다
         // (2026-09-02 공고 등록에서 실제로 발생). 주소 필드 에러로 알린다.
         const failGeocode = (msg: string) => {
