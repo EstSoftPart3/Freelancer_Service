@@ -10,6 +10,7 @@
 // 지난 시각은 고를 수 없다 — 8/31 오후 3시에 8/31 오전 9시 인터뷰를 등록하던 문제.
 import { useState, useEffect, useMemo } from 'react'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -105,8 +106,13 @@ export default function InterviewTimeModal({ open, minDate, maxDate, entries, on
   }
 
   function handleSave() {
-    // 시간을 하나도 고르지 않은 날짜는 저장하지 않는다.
-    onConfirm(local.filter((e) => e.times.length > 0))
+    // 시간을 하나도 고르지 않은 날짜는 저장하지 않는다 — 저장 전 사용자에게 알려 실수로 누락하지 않게 한다.
+    const withTimes = local.filter((e) => e.times.length > 0)
+    const droppedCount = local.length - withTimes.length
+    if (droppedCount > 0) {
+      toast.error(`시간을 선택하지 않은 날짜 ${droppedCount}건은 저장되지 않았습니다.`)
+    }
+    onConfirm(withTimes)
     onClose()
   }
 

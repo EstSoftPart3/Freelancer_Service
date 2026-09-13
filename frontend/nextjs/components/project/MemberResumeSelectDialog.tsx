@@ -16,7 +16,7 @@ interface Props {
   open: boolean
   userSq: number | null
   onClose: () => void
-  onChanged: () => void
+  onChanged: (resumeSq: number) => void
 }
 
 export default function MemberResumeSelectDialog({ open, userSq, onClose, onChanged }: Props) {
@@ -52,7 +52,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
     try {
       await api.patch(`/mypage/resume/representative/${selected}`, { memberSq: userSq })
       toast.success('대표 이력서가 변경되었습니다.')
-      onChanged()
+      onChanged(selected)
       onClose()
     } catch {
       toast.error('대표 이력서 변경에 실패했습니다.')

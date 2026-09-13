@@ -50,6 +50,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
   const [resumeChangeUserSq, setResumeChangeUserSq] = useState<number | null>(null)
+  const [checkingUserSq, setCheckingUserSq] = useState<number | null>(null)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'members'>()
 
   const fetchMembers = useCallback(async (page = 1) => {
@@ -88,6 +89,8 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
       toast.error('대표 이력서를 먼저 선택해주세요.')
       return
     }
+    if (checkingUserSq === member.userSq) return
+    setCheckingUserSq(member.userSq)
     try {
       const { data } = await api.get(`/projects/applications/${projectSq}/check`, { params: { userSq: member.userSq } })
       if (data.output) {
@@ -95,9 +98,15 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         return
       }
       clearField('members')
-      setSelected((prev) => [...prev, { userSq: member.userSq, userNm: member.userNm, resumeSq: member.resumeSq }])
+      setSelected((prev) => (
+        prev.some((m) => m.userSq === member.userSq)
+          ? prev
+          : [...prev, { userSq: member.userSq, userNm: member.userNm, resumeSq: member.resumeSq }]
+      ))
     } catch {
       toast.error('지원 여부 확인 중 오류가 발생했습니다.')
+    } finally {
+      setCheckingUserSq(null)
     }
   }
 
@@ -200,6 +209,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
                   <Button
                     size="sm"
                     variant={isSelected(member.userSq) ? 'default' : 'outline'}
+                    disabled={checkingUserSq === member.userSq}
                     onClick={() => toggleSelection(member)}
                   >
                     {isSelected(member.userSq) ? '선택됨' : '선택하기'}
@@ -238,7 +248,16 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         open={resumeChangeUserSq !== null}
         userSq={resumeChangeUserSq}
         onClose={() => setResumeChangeUserSq(null)}
-        onChanged={() => fetchMembers(currentPage)}
+        onChanged={(newResumeSq) => {
+          // 이미 선택된 인원의 대표 이력서를 바꾼 경우, 지원 목록에 담긴 스냅샷도 함께 갱신한다.
+          const changedUserSq = resumeChangeUserSq
+          if (changedUserSq != null) {
+            setSelected((prev) => prev.map((m) => (
+              m.userSq === changedUserSq ? { ...m, resumeSq: newResumeSq } : m
+            )))
+          }
+          fetchMembers(currentPage)
+        }}
       />
     </Dialog>
   )
