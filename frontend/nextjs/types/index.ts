@@ -13,6 +13,13 @@ export interface User {
   companyAuthStatusCd?: string
 }
 
+// /login, /me 가 실제로 내려주는 원본 모양. 백엔드 LoginResponseDTO#isAffiliated 는
+// boolean 이 아니라 'Y'/'N' 문자열이다 — 그대로 User 로 캐스팅해 저장하면 "N" 도
+// truthy 라 소속 없음 판정이 깨진다. userStore.setUser 에서 boolean 으로 정규화할 때 쓴다.
+export interface UserApiResponse extends Omit<User, 'isAffiliated'> {
+  isAffiliated?: 'Y' | 'N' | null
+}
+
 export interface AlertState {
   visible: boolean
   message: string

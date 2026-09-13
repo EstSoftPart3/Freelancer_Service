@@ -12,10 +12,23 @@ import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
-import { User } from '@/types'
+import { UserApiResponse } from '@/types'
 import { cn } from '@/lib/utils'
 
 type LoginType = 'PERSONAL' | 'COMPANY'
+
+// 사파리 프라이빗 모드·저장소 차단 정책 등에서는 localStorage 접근 자체가 SecurityError 를 던진다.
+// 이 폼의 localStorage 사용은 전부 "있으면 편의 기능" 수준(아이디 저장·자동 로그인 기억)이라,
+// 예외를 삼켜서 로그인 폼 자체가 마운트 단계에서 죽는 것만 막는다.
+function safeStorageGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function safeStorageSet(key: string, value: string) {
+  try { localStorage.setItem(key, value) } catch { /* 저장소 차단 환경 — 무시 */ }
+}
+function safeStorageRemove(key: string) {
+  try { localStorage.removeItem(key) } catch { /* 저장소 차단 환경 — 무시 */ }
+}
 
 const SOCIAL_PROVIDERS = [
   { name: 'kakao', title: '카카오 로그인', img: '/img/social/kakao.png' },
@@ -37,14 +50,14 @@ export default function LoginForm() {
 
   // 저장된 아이디 불러오기
   useEffect(() => {
-    const savedType = localStorage.getItem('savedLoginType') as LoginType | null
+    const savedType = safeStorageGet('savedLoginType') as LoginType | null
     if (savedType === 'PERSONAL' || savedType === 'COMPANY') setLoginType(savedType)
-    setAutoLogin(localStorage.getItem('autoLogin') === 'true')
+    setAutoLogin(safeStorageGet('autoLogin') === 'true')
   }, [])
 
   useEffect(() => {
     const savedKey = loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId'
-    const saved = localStorage.getItem(savedKey) ?? ''
+    const saved = safeStorageGet(savedKey) ?? ''
     setId(saved)
     setIdSave(!!saved)
   }, [loginType])
@@ -73,24 +86,24 @@ export default function LoginForm() {
       setCookie('refreshToken', refreshToken, autoLogin ? 30 : null)
 
       // 유저 정보 로드
-      const { data: meData } = await api.post<{ output: User }>('/me')
+      const { data: meData } = await api.post<{ output: UserApiResponse }>('/me')
       const user = meData.output
       setUser(user)
       setCookie('userType', user.userTypeCd === 301 ? 'PERSONAL' : 'COMPANY', autoLogin ? 30 : null)
 
       // 아이디 저장 처리
       if (idSave) {
-        localStorage.setItem(
+        safeStorageSet(
           loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId',
           id,
         )
-        localStorage.setItem('savedLoginType', loginType)
+        safeStorageSet('savedLoginType', loginType)
       } else {
-        localStorage.removeItem('savedPersonalId')
-        localStorage.removeItem('savedCompanyId')
+        safeStorageRemove('savedPersonalId')
+        safeStorageRemove('savedCompanyId')
       }
-      if (autoLogin) localStorage.setItem('autoLogin', 'true')
-      else localStorage.removeItem('autoLogin')
+      if (autoLogin) safeStorageSet('autoLogin', 'true')
+      else safeStorageRemove('autoLogin')
 
       // GA4: login
       alertStore.show(`${user.userNm}님 안녕하세요.`, 'success')
