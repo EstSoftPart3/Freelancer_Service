@@ -1,7 +1,7 @@
 'use client'
 
 // Vue 원본 AffiliationMemberModal.vue 이식 — 이름 클릭 이력서 상세(B3), '이력서 변경' 대표 이력서 변경(B1)
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,8 +52,12 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [resumeChangeUserSq, setResumeChangeUserSq] = useState<number | null>(null)
   const [checkingUserSq, setCheckingUserSq] = useState<number | null>(null)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'members'>()
+  // 검색어를 빠르게 바꿔 Enter 를 두 번 치거나 검색 도중 페이지를 넘기면 요청이 겹친다.
+  // 나중에 시작된 요청만 결과를 반영하도록 순번을 매긴다(다른 목록 다이얼로그들과 동일 패턴).
+  const fetchSeqRef = useRef(0)
 
   const fetchMembers = useCallback(async (page = 1) => {
+    const seq = ++fetchSeqRef.current
     try {
       const { data } = await api.get('/companies', {
         params: {
@@ -63,12 +67,13 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
           keyword: searchText.trim() || undefined,
         },
       })
+      if (seq !== fetchSeqRef.current) return
       const out = data.output ?? {}
       setMembers(out.members ?? [])
       setCurrentPage(out.page ?? page)
       setTotalPages(Math.max(1, out.totalPages ?? 1))
     } catch {
-      toast.error('소속 인원 목록을 불러올 수 없습니다.')
+      if (seq === fetchSeqRef.current) toast.error('소속 인원 목록을 불러올 수 없습니다.')
     }
   }, [searchType, searchText])
 
