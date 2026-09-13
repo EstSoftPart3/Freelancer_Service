@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, ChevronDown, ChevronUp } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -77,7 +78,7 @@ export default function ProjectFilterBar({ onSearch }: Props) {
       .then(([regions, careers, educations, jobTypes]) => {
         setFilters({ regions, careers, educations, jobTypes })
       })
-      .catch(() => {})
+      .catch(() => toast.error('상세 필터 옵션을 불러올 수 없습니다.'))
   }, [])
 
   function buildParams(overrideSortIdx?: number): ProjectSearchParams {
