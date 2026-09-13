@@ -227,8 +227,9 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   }
 
   const handleSendCode = async () => {
-    validateEmail()
-    if (!emailIdField.valid && !(emailIdField.value && (emailDomain || customDomain))) return
+    // validateEmail()의 반환값으로 바로 판정한다 — setValid()는 비동기라 같은 틱에서
+    // emailIdField.valid를 읽으면 직전 렌더의 값(stale)이라 형식 오류를 우회해 전송해버린다.
+    if (!validateEmail()) return
     await emailVerify.sendCode(fullEmail())
   }
 

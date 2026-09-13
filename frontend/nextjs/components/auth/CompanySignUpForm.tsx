@@ -144,7 +144,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
   }
 
   const openPostcode = () => {
-    if (!window.daum) return
+    if (!window.daum) { alertStore.show('주소 검색 서비스를 불러오는 중입니다.', 'danger'); return }
     new window.daum.Postcode({
       oncomplete: (data: DaumPostcodeResult) => {
         const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
@@ -342,7 +342,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
               {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
               <option value="custom">직접입력</option>
             </select>
-            <Button type="button" size="sm" onClick={async () => { validateEmail(); await emailVerify.sendCode(fullEmail()) }} disabled={emailVerify.sending}>
+            <Button type="button" size="sm" onClick={async () => { if (validateEmail()) await emailVerify.sendCode(fullEmail()) }} disabled={emailVerify.sending}>
               {emailVerify.sending ? '전송 중...' : '인증 요청'}
             </Button>
           </div>
