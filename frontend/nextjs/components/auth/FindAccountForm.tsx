@@ -198,7 +198,12 @@ function ResetPasswordVerifyForm() {
     const errs: Record<string, string> = {}
     if (!userId || userId.length < 4) errs.userId = '아이디를 입력해주세요.'
     if (!name || name.length < 2) errs.name = '이름을 입력해주세요.'
-    if (!vEmail()) errs.email = emailError
+    // vEmail() 이 setEmailError 로 방금 세팅한 값은 이 렌더에는 아직 반영 안 된 stale
+    // state 다 — emailError 를 그대로 읽으면 항상 한 턴 전 값(대개 빈 문자열)이 잡혀
+    // errs.email 이 falsy 가 되고, 아래 focus 이동 로직이 이 필드를 건너뛴다.
+    // 화면에 보일 문구는 emailError state(비동기 반영)로 이미 그려지므로, 여기서는
+    // errs 맵을 채우는 용도의 자리표시자 문자열이면 된다.
+    if (!vEmail()) errs.email = '이메일을 확인해주세요.'
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); errs.verify = '인증 필요' }
     setErrors(errs)
     if (Object.keys(errs).length) {
