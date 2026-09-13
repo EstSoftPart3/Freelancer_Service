@@ -43,6 +43,12 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [members, setMembers] = useState<CompanyMember[]>([])
   const [searchType, setSearchType] = useState('all')
   const [searchText, setSearchText] = useState('')
+  // 실제 검색에 적용된 값 — 제출(Enter/검색 버튼) 시에만 반영한다. searchText/searchType을
+  // fetchMembers의 deps에 직접 두면 fetchMembers 아이덴티티가 매 keystroke마다 바뀌어
+  // 아래 useEffect([open, fetchMembers])가 매 keystroke마다 재실행돼 타이핑할 때마다
+  // 요청이 나갔다(AffiliationListPage의 activeKeyword/activeSearchType 분리와 동일 패턴).
+  const [activeSearchType, setActiveSearchType] = useState('all')
+  const [activeSearchText, setActiveSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selected, setSelected] = useState<SelectedMember[]>([])
@@ -63,8 +69,8 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         params: {
           page,
           size: PAGE_SIZE,
-          searchType: searchType !== 'all' ? searchType : undefined,
-          keyword: searchText.trim() || undefined,
+          searchType: activeSearchType !== 'all' ? activeSearchType : undefined,
+          keyword: activeSearchText.trim() || undefined,
         },
       })
       if (seq !== fetchSeqRef.current) return
@@ -75,11 +81,16 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
     } catch {
       if (seq === fetchSeqRef.current) toast.error('소속 인원 목록을 불러올 수 없습니다.')
     }
-  }, [searchType, searchText])
+  }, [activeSearchType, activeSearchText])
 
   useEffect(() => {
     if (open) fetchMembers(1)
   }, [open, fetchMembers])
+
+  function submitSearch() {
+    setActiveSearchType(searchType)
+    setActiveSearchText(searchText)
+  }
 
   function isSelected(userSq: number) {
     return selected.some((m) => m.userSq === userSq)
@@ -165,11 +176,11 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
           <Input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchMembers(1)}
+            onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
             placeholder="검색어 입력"
             className="w-40"
           />
-          <Button size="sm" onClick={() => fetchMembers(1)}>검색</Button>
+          <Button size="sm" onClick={submitSearch}>검색</Button>
         </div>
 
         {selected.length > 0 && (
