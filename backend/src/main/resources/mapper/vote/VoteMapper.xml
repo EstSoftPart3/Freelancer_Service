@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.vote.mapper.VoteMapper">
+
+    <insert id="insertVote" parameterType="com.example.demo.domain.vote.entity.Vote"
+        useGeneratedKeys="true" keyProperty="voteSq" keyColumn="vote_sq">
+        INSERT INTO TBL_VOTE_M (user_sq, vote_ttl, vote_description_edt, vote_end_dt)
+        VALUES (#{userSq}, #{voteTtl}, #{voteDescriptionEdt}, #{voteEndDt})
+    </insert>
+
+    <insert id="insertOption" parameterType="com.example.demo.domain.vote.entity.VoteOption"
+        useGeneratedKeys="true" keyProperty="voteOptionSq" keyColumn="vote_option_sq">
+        INSERT INTO TBL_VOTE_OPTION_S (vote_sq, vote_option_nm, vote_option_order)
+        VALUES (#{voteSq}, #{voteOptionNm}, #{voteOptionOrder})
+    </insert>
+
+    <select id="findById" resultType="com.example.demo.domain.vote.entity.Vote">
+        SELECT v.*, u.user_nickname
+        FROM TBL_VOTE_M v
+        LEFT JOIN TBL_USER_M u ON u.user_sq = v.user_sq
+        WHERE v.vote_sq = #{voteSq}
+    </select>
+
+    <select id="findAll" resultType="com.example.demo.domain.vote.dto.response.VoteListItemDTO">
+        SELECT v.vote_sq, v.vote_ttl, v.user_sq, u.user_nickname, v.vote_end_dt,
+        v.vote_created_at_dtm, v.vote_view_cnt,
+        (SELECT COUNT(*) FROM TBL_VOTE_OPTION_S o WHERE o.vote_sq = v.vote_sq) AS option_cnt,
+        (SELECT COUNT(*) FROM TBL_VOTE_RECORD_S r WHERE r.vote_sq = v.vote_sq) AS total_vote_cnt
+        FROM TBL_VOTE_M v
+        LEFT JOIN TBL_USER_M u ON u.user_sq = v.user_sq
+        WHERE v.vote_is_deleted_yn = 'N'
+        <if test="keyword != null and keyword != ''">
+            AND v.vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <choose>
+            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC </when>
+            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC </when>
+            <otherwise> ORDER BY v.vote_created_at_dtm DESC </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findAllCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_VOTE_M WHERE vote_is_deleted_yn = 'N'
+        <if test="keyword != null and keyword != ''">
+            AND vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="findOptionsByVoteSq" resultType="com.example.demo.domain.vote.entity.VoteOption">
+        SELECT * FROM TBL_VOTE_OPTION_S WHERE vote_sq = #{voteSq} ORDER BY vote_option_order ASC
+    </select>
+
+    <select id="findOptionResultsByVoteSq" resultType="com.example.demo.domain.vote.dto.response.VoteOptionResultDTO">
+        SELECT o.vote_option_sq, o.vote_option_nm, o.vote_option_order,
+        (SELECT COUNT(*) FROM TBL_VOTE_RECORD_S r WHERE r.vote_option_sq = o.vote_option_sq) AS vote_cnt
+        FROM TBL_VOTE_OPTION_S o
+        WHERE o.vote_sq = #{voteSq}
+        ORDER BY o.vote_option_order ASC
+    </select>
+
+    <select id="countTotalBallots" resultType="Long">
+        SELECT COUNT(*) FROM TBL_VOTE_RECORD_S WHERE vote_sq = #{voteSq}
+    </select>
+
+    <select id="findMyOptionSq" resultType="Long">
+        SELECT vote_option_sq FROM TBL_VOTE_RECORD_S WHERE vote_sq = #{voteSq} AND user_sq = #{userSq}
+    </select>
+
+    <select id="existsOptionInVote" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM TBL_VOTE_OPTION_S WHERE vote_option_sq = #{voteOptionSq} AND vote_sq = #{voteSq}
+    </select>
+
+    <!--
+        중복 투표 방지는 TBL_VOTE_RECORD_S 의 UNIQUE(vote_sq, user_sq) 가 최종 방어선이다.
+        서비스 레이어에서도 findMyOptionSq 로 먼저 막지만, 동시 요청 레이스는 이 제약이 막는다
+        (DuplicateKeyException 을 VoteService 가 409 로 변환).
+    -->
+    <insert id="insertBallot">
+        INSERT INTO TBL_VOTE_RECORD_S (vote_sq, vote_option_sq, user_sq)
+        VALUES (#{voteSq}, #{voteOptionSq}, #{userSq})
+    </insert>
+
+    <update id="addViewCnt">
+        UPDATE TBL_VOTE_M SET vote_view_cnt = vote_view_cnt + 1 WHERE vote_sq = #{voteSq}
+    </update>
+
+    <update id="deleteVote">
+        UPDATE TBL_VOTE_M SET vote_is_deleted_yn = 'Y' WHERE vote_sq = #{voteSq} AND user_sq = #{userSq}
+    </update>
+
+</mapper>

@@ -1,16 +1,18 @@
-import ComingSoonPanel from '@/components/common/ComingSoonPanel'
+import type { Metadata } from 'next'
+import { safeGet } from '@/lib/fetchers'
+import CategoryTabs from '@/components/community/CategoryTabs'
+import VoteListClient from '@/components/vote/VoteListClient'
+import type { VoteListResponse } from '@/components/vote/types'
 
-export default function VotePage() {
+export const metadata: Metadata = { title: '투표 | 커뮤니티' }
+
+export default async function VotePage() {
+  const initialData = await safeGet<VoteListResponse | null>('/votes?page=1&size=9&sortType=latest', null)
+
   return (
-    <ComingSoonPanel
-      eyebrow="투표"
-      title="개발자들의 생각을 가볍게 묻는 투표"
-      description="다음 단계에서 함께 만들 화면입니다."
-      items={[
-        '카드 그리드 — 질문 + 선택지 + 투표 결과 막대',
-        '투표 후 실시간 퍼센트 애니메이션으로 전환',
-        '카드 하단에 참여 인원 수 노출',
-      ]}
-    />
+    <div className="container mx-auto max-w-5xl px-4 py-8">
+      <CategoryTabs />
+      <VoteListClient initialData={initialData} />
+    </div>
   )
 }
