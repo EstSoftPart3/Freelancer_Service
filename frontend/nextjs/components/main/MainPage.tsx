@@ -80,8 +80,7 @@ interface Props {
 
 export default function MainPage({ initialProjects }: Props = {}) {
   const router = useRouter()
-  const { getUserType, userTypeCd, isLoggedIn } = useUserStore()
-  const userType = getUserType()
+  const { userTypeCd, isLoggedIn } = useUserStore()
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [projects, setProjects] = useState<PopularProject[]>(initialProjects ?? [])
@@ -138,8 +137,11 @@ export default function MainPage({ initialProjects }: Props = {}) {
   }, [])
 
   useEffect(() => {
+    // SSR이 이미 'views' 정렬로 초기 목록을 조회해뒀으므로 최초 마운트에서는
+    // 같은 요청을 다시 보내지 않는다(중복 호출 방지). 정렬 버튼 클릭 시엔 정상 재조회.
+    if (initialProjects?.length) return
     fetchPopularProjects('views')
-  }, [fetchPopularProjects])
+  }, [fetchPopularProjects]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToProject = (project: PopularProject) => {
     // userTypeCd 302 = COMPANY → company spec, else user spec
@@ -148,9 +150,6 @@ export default function MainPage({ initialProjects }: Props = {}) {
       : `/projects/user/${project.projectSq}`
     router.push(path)
   }
-
-  // userType 사용 억제 (Vue 원본과 동일하게 userType 기반 라우팅)
-  void userType
 
   const toggleFaq = (i: number) => setActiveFaq(activeFaq === i ? null : i)
 
