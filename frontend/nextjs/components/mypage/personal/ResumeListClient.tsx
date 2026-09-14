@@ -26,6 +26,7 @@ export default function ResumeListClient() {
   const [totalPages, setTotalPages] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
   const [copyTarget, setCopyTarget] = useState<number | null>(null)
+  const [copying, setCopying] = useState(false)
   const [detailTarget, setDetailTarget] = useState<number | null>(null)
 
   const fetchResumes = useCallback(async (page = 1) => {
@@ -66,7 +67,10 @@ export default function ResumeListClient() {
   }
 
   async function handleCopy(withFiles: boolean) {
-    if (copyTarget === null) return
+    // 다이얼로그가 요청 완료 전까지 열려 있으므로(ConfirmDialog와 달리 즉시 닫히지 않는다),
+    // 버튼을 막지 않으면 연타 시 이력서가 중복으로 복사된다.
+    if (copyTarget === null || copying) return
+    setCopying(true)
     try {
       await api.post(`/mypage/resume/${copyTarget}/copy`, { withFiles })
       toast.success(`이력서 복사(${withFiles ? '파일 포함' : '파일 제외'})가 완료되었습니다.`)
@@ -74,6 +78,7 @@ export default function ResumeListClient() {
     } catch {
       toast.error('이력서 복사에 실패했습니다.')
     } finally {
+      setCopying(false)
       setCopyTarget(null)
     }
   }
@@ -166,16 +171,16 @@ export default function ResumeListClient() {
       />
 
       {/* 복사: Vue copyResume — 첨부파일 포함 여부 선택 */}
-      <Dialog open={copyTarget !== null} onOpenChange={(o) => { if (!o) setCopyTarget(null) }}>
+      <Dialog open={copyTarget !== null} onOpenChange={(o) => { if (!o && !copying) setCopyTarget(null) }}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>이력서 복사</DialogTitle>
             <DialogDescription>프로필 이미지와 첨부파일도 같이 복사하시겠습니까?</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCopyTarget(null)}>취소</Button>
-            <Button variant="outline" onClick={() => handleCopy(false)}>파일 제외</Button>
-            <Button onClick={() => handleCopy(true)}>파일 포함</Button>
+            <Button variant="outline" disabled={copying} onClick={() => setCopyTarget(null)}>취소</Button>
+            <Button variant="outline" disabled={copying} onClick={() => handleCopy(false)}>파일 제외</Button>
+            <Button disabled={copying} onClick={() => handleCopy(true)}>{copying ? '복사 중...' : '파일 포함'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

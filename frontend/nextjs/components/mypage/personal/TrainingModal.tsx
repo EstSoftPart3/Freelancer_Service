@@ -27,6 +27,9 @@ export default function TrainingModal({ open, onClose, onComplete }: Props) {
   const { validate, fieldProps, clearField, clearAll } = useFormErrors<keyof TrainingItem>()
   const set = (k: keyof TrainingItem, v: string) => { clearField(k); setForm((p) => ({ ...p, [k]: v })) }
 
+  const reset = () => { setForm(EMPTY); clearAll() }
+  const close = () => { reset(); onClose() }
+
   const submit = () => {
     if (!validate([
       { key: 'trainingProgramNm', invalid: !form.trainingProgramNm.trim(), message: '교육명을 입력해주세요.' },
@@ -35,13 +38,12 @@ export default function TrainingModal({ open, onClose, onComplete }: Props) {
       { key: 'trainingEndDt', invalid: !form.trainingEndDt, message: '교육 종료월을 선택하세요.' },
     ])) return
     onComplete(form)
-    setForm(EMPTY)
-    clearAll()
+    reset()
     onClose()
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) close() }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>교육 이력 추가하기</DialogTitle></DialogHeader>
         <div className="space-y-3">
@@ -60,7 +62,7 @@ export default function TrainingModal({ open, onClose, onComplete }: Props) {
         </div>
         <DialogFooter>
           <Button onClick={submit}>저장하기</Button>
-          <Button variant="outline" onClick={onClose}>닫기</Button>
+          <Button variant="outline" onClick={close}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
