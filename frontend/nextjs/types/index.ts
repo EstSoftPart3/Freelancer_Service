@@ -302,10 +302,13 @@ export interface ProjectFilters {
 }
 
 export interface ProjectSearchParams {
-  addressCodeSq?: number
-  projectDeveloperGradeCd?: number
-  educationCd?: number
-  jobRoleCd?: number
+  // 백엔드 ProjectSearchRequest 가 List<Long> 으로 선언한 다중선택 필터다.
+  // 예전엔 여기가 number(단수) 로 잘못 선언돼 있어, 실제로 배열 상태를 들고 있던
+  // ProjectFilterBar 가 [0] 만 뽑아 보내도 타입 에러가 안 났다.
+  addressCodeSq?: number[]
+  projectDeveloperGradeCd?: number[]
+  educationCd?: number[]
+  jobRoleCd?: number[]
   minPrice?: number
   distance?: number
   searchKeyword?: string
