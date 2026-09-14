@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.interview.mapper.InterviewMapper">
+
+    <insert id="insert" parameterType="com.example.demo.domain.interview.entity.InterviewReview"
+        useGeneratedKeys="true" keyProperty="interviewReviewSq" keyColumn="interview_review_sq">
+        INSERT INTO TBL_INTERVIEW_REVIEW_M
+        (user_sq, company_nm, job_nm, career_level, interview_dt, interview_stages,
+         question_edt, difficulty_star, atmosphere_edt, result_cd, proposed_salary)
+        VALUES
+        (#{userSq}, #{companyNm}, #{jobNm}, #{careerLevel}, #{interviewDt}, #{interviewStages},
+         #{questionEdt}, #{difficultyStar}, #{atmosphereEdt}, #{resultCd}, #{proposedSalary})
+    </insert>
+
+    <select id="findById" resultType="com.example.demo.domain.interview.entity.InterviewReview">
+        SELECT i.*, u.user_nickname
+        FROM TBL_INTERVIEW_REVIEW_M i
+        LEFT JOIN TBL_USER_M u ON u.user_sq = i.user_sq
+        WHERE i.interview_review_sq = #{interviewReviewSq}
+    </select>
+
+    <sql id="listWhere">
+        WHERE i.interview_is_deleted_yn = 'N'
+        <if test="companyNm != null and companyNm != ''">
+            AND i.company_nm = #{companyNm}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (i.company_nm LIKE CONCAT('%', #{keyword}, '%') OR i.job_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findAll" resultType="com.example.demo.domain.interview.dto.response.InterviewListItemDTO">
+        SELECT i.interview_review_sq, i.user_sq, u.user_nickname, i.company_nm, i.job_nm, i.career_level,
+        i.interview_dt, i.difficulty_star, i.result_cd, i.interview_view_cnt, i.interview_created_at_dtm
+        FROM TBL_INTERVIEW_REVIEW_M i
+        LEFT JOIN TBL_USER_M u ON u.user_sq = i.user_sq
+        <include refid="listWhere" />
+        <choose>
+            <when test="sortType == 'oldest'"> ORDER BY i.interview_created_at_dtm ASC </when>
+            <when test="sortType == 'view'"> ORDER BY i.interview_view_cnt DESC </when>
+            <otherwise> ORDER BY i.interview_created_at_dtm DESC </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findAllCnt" resultType="Long">
+        SELECT COUNT(*) FROM TBL_INTERVIEW_REVIEW_M i
+        <include refid="listWhere" />
+    </select>
+
+    <update id="deleteById">
+        UPDATE TBL_INTERVIEW_REVIEW_M SET interview_is_deleted_yn = 'Y'
+        WHERE interview_review_sq = #{interviewReviewSq} AND user_sq = #{userSq}
+    </update>
+
+    <update id="addViewCnt">
+        UPDATE TBL_INTERVIEW_REVIEW_M SET interview_view_cnt = interview_view_cnt + 1
+        WHERE interview_review_sq = #{interviewReviewSq}
+    </update>
+
+</mapper>

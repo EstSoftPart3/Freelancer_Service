@@ -1,17 +1,20 @@
-import ComingSoonPanel from '@/components/common/ComingSoonPanel'
+import type { Metadata } from 'next'
+import InterviewWriteForm from '@/components/interview/InterviewWriteForm'
+import { InfoTooltip } from '@/components/ui/tooltip'
+import { INTERVIEW_INTRO_TIP } from '@/components/community/boardMeta'
+
+export const metadata: Metadata = { title: '면접후기 작성', robots: { index: false } }
 
 export default function InterviewWritePage() {
   return (
-    <ComingSoonPanel
-      eyebrow="면접후기 작성"
-      title="면접 후기 등록"
-      description="다음 단계에서 함께 만들 화면입니다."
-      items={[
-        '회사 · 직무 · 연차 · 지원경로 · 면접일 · 전형단계 · 난이도 · 결과',
-        '면접 질문 여러 개 추가/삭제',
-        '익명 여부 선택',
-        '등록 시 커뮤니티 > 커리어/소통 > 면접에도 함께 노출',
-      ]}
-    />
+    <div className="container mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-6 flex items-center gap-1.5 text-2xl font-bold">
+        면접후기 작성
+        <InfoTooltip label="면접후기 안내">{INTERVIEW_INTRO_TIP}</InfoTooltip>
+      </h1>
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <InterviewWriteForm />
+      </div>
+    </div>
   )
 }
