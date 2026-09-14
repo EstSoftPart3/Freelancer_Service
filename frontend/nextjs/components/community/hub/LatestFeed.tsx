@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BOARD_TYPE_LABEL, type BoardType } from '@/components/community/boardMeta'
 import type { BoardItem } from '@/types'
 
 interface Props {
@@ -24,10 +25,10 @@ export default function LatestFeed({ items }: Props) {
           {items.map((item) => (
             <li key={`${item.boardType}-${item.sq}`} className="p-3">
               <div className="mb-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                {/* Q&A 는 카테고리가 없고(categoryNm null), 일반게시판은 자유/현장정보/기능요청/정보 중 하나다.
-                    예전엔 '자유주제'로 고정돼 있어 정보·현장정보 글까지 자유로 보였다. */}
+                {/* 중분류가 있으면 그 이름(연봉·개발 등)을, 없으면(요즘회사처럼 단일 게시판이거나
+                    옛 QnA) 게시판 종류 이름을 보여준다. */}
                 <span className="rounded-full bg-muted px-2 py-0.5">
-                  {item.boardType === 'qna' ? 'Q&A' : (item.categoryNm ?? '자유')}
+                  {item.categoryNm ?? BOARD_TYPE_LABEL[(item.boardType ?? 'board') as Exclude<BoardType, 'all'>]}
                 </span>
               </div>
               <Link

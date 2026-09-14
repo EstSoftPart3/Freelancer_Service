@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import BestCriteriaInfo from '@/components/community/BestCriteriaInfo'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
+import { BOARD_TYPE_LABEL, type BoardType } from '@/components/community/boardMeta'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -186,7 +187,7 @@ function PostMiniCard({ item }: { item: CommunityBestItem }) {
       )}
     >
       <Badge variant="secondary" className="w-fit text-xs">
-        {item.boardType === 'qna' ? 'Q&A' : '일반'}
+        {BOARD_TYPE_LABEL[(item.boardType ?? 'board') as Exclude<BoardType, 'all'>]}
       </Badge>
       <h5 className="line-clamp-2 min-h-10 text-sm font-bold leading-snug">{item.ttl}</h5>
       <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">

@@ -31,3 +31,12 @@ export const getBoardDetail = cache((sq: string) => safeGet<BoardDetail | null>(
 export const getQnaDetail = cache((sq: string) => safeGet<BoardDetail | null>(`/qna/${sq}`, null))
 export const getNoticeDetail = cache((sq: string) => safeGet<BoardDetail | null>(`/notice/${sq}`, null))
 export const getProjectDetail = cache((sq: string) => safeGet<ProjectDetail | null>(`/projects/${sq}/details`, null))
+
+// Phase2 게시판 재설계(2026-09) 신설 5종 공용 — board/qna처럼 종류마다 함수를 복제하지 않는다.
+export const getCommunityBoardDetail = cache((boardType: string, sq: string) =>
+  safeGet<BoardDetail | null>(`/${boardType}/${sq}`, null))
+
+// 투표·면접후기 — TBL_BOARD_M을 쓰지 않는 전용 도메인이라 반환 타입이 BoardDetail이 아니다.
+export const getVoteDetail = cache((sq: string) => safeGet<import('@/components/vote/types').VoteDetail | null>(`/votes/${sq}`, null))
+export const getInterviewReviewDetail = cache((sq: string) =>
+  safeGet<import('@/components/interview/types').InterviewDetail | null>(`/interviews/${sq}`, null))

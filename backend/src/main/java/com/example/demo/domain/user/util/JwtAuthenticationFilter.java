@@ -47,6 +47,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // SecurityConfig 의 permitAll 과 **이 목록 양쪽**에 넣어야 한다 —
             // 한쪽만 넣으면 설정상 공개인데 실제로는 401 이 나간다.
             "/api/community/board-categories",
+            // Phase2 게시판 재설계(2026-09) 신설 5종(CommunityBoardController) — board/qna와 같은 이유로 공개.
+            "/api/career",
+            "/api/tech",
+            "/api/company",
+            "/api/teamup",
+            "/api/lounge",
+            "/api/votes",
+            "/api/interviews",
             "/api/affiliation",
             "/api/affiliation/*/increment-view",
             "/api/affiliation/address",

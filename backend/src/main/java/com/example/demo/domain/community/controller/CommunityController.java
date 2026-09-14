@@ -1,5 +1,6 @@
 package com.example.demo.domain.community.controller;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -46,16 +47,15 @@ public class CommunityController {
 			@RequestParam(value = "page", defaultValue = "1") Long page,
 			@RequestParam(value = "size", defaultValue = "10") Long size) {
 
-		// 주의: 3항 연산자 체인에서 long 리터럴과 null을 섞으면 결과 타입이 long으로 단일화되며
-		// null 분기에서 암묵적 언박싱이 일어나 NPE가 발생한다(boardType=all일 때 재현됨).
-		Long boardTypeCd;
-		if (BoardTypeCode.NORMAL.getPath().equals(boardType)) {
-			boardTypeCd = BoardTypeCode.NORMAL.getCode();
-		} else if (BoardTypeCode.QNA.getPath().equals(boardType)) {
-			boardTypeCd = BoardTypeCode.QNA.getCode();
-		} else {
-			boardTypeCd = null;
-		}
+		// "all"이거나 알 수 없는 값이면 boardTypeCd=null → BoardService가 통합목록으로 처리한다.
+		// ofPath는 미지 값을 NORMAL로 조용히 폴백하므로, 여기서는 그 폴백에 기대지 않고
+		// "실제로 이 경로 문자열을 가진 통합목록 대상 종류인가"를 직접 확인한다.
+		Long boardTypeCd = Arrays.stream(BoardTypeCode.values())
+				.filter(BoardTypeCode::isInCommunityList)
+				.filter(t -> t.getPath().equals(boardType))
+				.findFirst()
+				.map(BoardTypeCode::getCode)
+				.orElse(null);
 
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "커뮤니티 통합 목록 조회 성공",
 				boardService.getAllBoards(boardTypeCd, category, boardAdoptStatusCd, searchType, keyword, tag, null,
@@ -64,7 +64,14 @@ public class CommunityController {
 	}
 
 	/**
-	 * 게시판 카테고리 목록 (공통코드 3200 하위).
+	 * 게시판 카테고리(중분류) 목록.
+	 *
+	 * <p>
+	 * Phase2 게시판 재설계(2026-09) 이후 중분류는 공통코드 3200 그룹 밑에 평평하게 있지 않고,
+	 * 각 대분류 게시판 코드(1405 커리어소통 등)를 parent로 둔다. {@code boardType}을 주면 그
+	 * 대분류의 중분류만, 생략하면 옛 3200 그룹(현재는 전부 비활성)을 돌려준다 — 하위 호환용으로만
+	 * 남겨둔다.
+	 * </p>
 	 *
 	 * <p>
 	 * FO 탭·작성 폼이 코드와 라벨을 하드코딩하지 않도록 서버가 내려준다. 공통코드 이름만 바꾸면
@@ -72,9 +79,13 @@ public class CommunityController {
 	 * </p>
 	 */
 	@GetMapping("/board-categories")
-	public ResponseEntity<ApiResponse<List<CommonCodeDTO>>> getBoardCategories() {
+	public ResponseEntity<ApiResponse<List<CommonCodeDTO>>> getBoardCategories(
+			@RequestParam(value = "boardType", required = false) String boardType) {
+		Long parentCodeSq = boardType == null
+				? ParentCodeEnum.BOARD_CATEGORY.getCode()
+				: BoardTypeCode.ofPath(boardType).getCode();
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시판 카테고리 조회 성공",
-				commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())));
+				commonCodeMapper.findActiveChildrenByParent(parentCodeSq)));
 	}
 
 	@GetMapping("/best")

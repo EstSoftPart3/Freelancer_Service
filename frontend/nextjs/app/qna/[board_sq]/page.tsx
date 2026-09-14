@@ -44,7 +44,7 @@ export default async function QnaDetailPage({ params }: Props) {
         </>
       )}
       <Suspense>
-        <QnaDetailClient boardSq={board_sq} initialData={qna} />
+        <QnaDetailClient boardSq={board_sq} boardType="qna" initialData={qna} />
       </Suspense>
     </>
   )

@@ -12,8 +12,11 @@
         reporterNm, u.user_nickname AS reporterNickname, r.report_target_type_cd AS targetTypeCd, CASE WHEN r.report_target_type_cd =
         2001 THEN b.board_type_cd WHEN r.report_target_type_cd = 2002 THEN 1499 WHEN
         r.report_target_type_cd IN (2003, 2004) THEN 1498 ELSE NULL END AS originTypeCd, CASE WHEN
-        r.report_target_type_cd = 2001 AND b.board_type_cd = 1401 THEN '일반 게시글' WHEN
-        r.report_target_type_cd = 2001 AND b.board_type_cd = 1402 THEN 'Q&amp;A 질문' WHEN
+        <!-- 게시글 유형 라벨은 공통코드(cbt)에서 그대로 가져온다 — 예전엔 1401/1402 두 값만
+             하드코딩돼 있어서 게시판 유형이 늘 때마다(Phase2 재설계 등) 여기도 손대야 했다.
+             "Q&A 질문"처럼 공통코드 명(예: "기술소통")과 다른 표현을 쓰고 싶으면 공통코드 이름
+             자체를 그렇게 바꾸면 된다 — 이름의 유일한 출처를 공통코드로 두는 다른 곳들과 같은 원칙. -->
+        r.report_target_type_cd = 2001 THEN cbt.common_code_nm WHEN
         r.report_target_type_cd = 2002 THEN '답변' WHEN r.report_target_type_cd = 2003 THEN '댓글' WHEN
         r.report_target_type_cd = 2004 THEN '대댓글' ELSE c1.common_code_nm END AS targetTypeNm,
         r.report_target_sq AS targetSq, CASE WHEN r.report_target_type_cd = 2001 THEN b.board_ttl
@@ -35,7 +38,7 @@
         = b.board_sq AND r.report_target_type_cd = 2001 LEFT JOIN tbl_board_answer_s a ON
         r.report_target_sq = a.answer_sq AND r.report_target_type_cd = 2002 LEFT JOIN
         tbl_board_comment_s cmt ON r.report_target_sq = cmt.comment_sq AND r.report_target_type_cd
-        IN (2003, 2004) </sql>
+        IN (2003, 2004) LEFT JOIN tbl_common_code_c cbt ON cbt.common_code_sq = b.board_type_cd </sql>
 
     <sql id="reportWhere">
         <if test="statusCds != null and statusCds.size > 0"> AND r.report_process_status_cd IN <foreach

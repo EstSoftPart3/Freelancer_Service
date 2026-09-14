@@ -12,6 +12,9 @@
 		<include refid="boardSelectBase" /> WHERE b.board_sq = #{boardSq} AND b.board_type_cd =
 		#{boardTypeCd} </select>
 
+	<select id="findByIdAny" resultType="com.example.demo.domain.community.entity.Board">
+		<include refid="boardSelectBase" /> WHERE b.board_sq = #{boardSq} </select>
+
 	<!--
 		비공개 글(고객의 소리)도 목록에는 남긴다 — 사용자 결정.
 		"다른 사람들도 문의를 남기고 있다"는 것이 보여야 창구가 살아 있다고 느끼기 때문이다.
@@ -22,7 +25,9 @@
 	<select id="findAll" resultType="com.example.demo.domain.community.entity.Board">
 		<include refid="boardSelectBase" /> WHERE board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
-			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
+			<otherwise> AND board_type_cd IN <foreach item="cd" collection="communityListTypeCds"
+					open="(" separator="," close=")"> #{cd} </foreach>
+			</otherwise>
 		</choose> <if
 			test="boardCategoryCd != null"> AND board_category_cd = #{boardCategoryCd} </if> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
@@ -59,7 +64,9 @@
 	<select id="findAllCnt" resultType="Long"> SELECT COUNT(*) FROM TBL_BOARD_M WHERE
 		board_is_deleted_yn = 'N' <choose>
 			<when test="boardTypeCd != null"> AND board_type_cd = #{boardTypeCd} </when>
-			<otherwise> AND board_type_cd IN (1401, 1402) </otherwise>
+			<otherwise> AND board_type_cd IN <foreach item="cd" collection="communityListTypeCds"
+					open="(" separator="," close=")"> #{cd} </foreach>
+			</otherwise>
 		</choose> <if
 			test="boardCategoryCd != null"> AND board_category_cd = #{boardCategoryCd} </if> <if
 			test="boardAdoptStatusCd != null"> AND board_adopt_status_cd = #{boardAdoptStatusCd} </if>
@@ -163,7 +170,8 @@
 		LEFT JOIN TBL_USER_M u ON u.user_sq = b.user_sq AND u.user_is_deleted_yn = 'N'
 		<!-- 하한(N일 전)만 있고 상한이 없어 미래 날짜로 심어진(시드 등) 글이 항상 "최근 N일"을 통과하던 결함.
 		     상한(<= NOW())을 걸어 실제로 지금 시점 기준 과거 N일 안에 든 글만 집계되게 한다. -->
-		WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd IN (1401, 1402)
+		WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd IN
+			<foreach item="cd" collection="communityListTypeCds" open="(" separator="," close=")"> #{cd} </foreach>
 			AND b.board_created_at_dtm &lt;= NOW()
 		<choose>
 			<when test="period == 'daily'"> AND b.board_created_at_dtm &gt;= DATE_SUB(NOW(), INTERVAL 1 DAY) </when>

@@ -26,12 +26,14 @@
         SELECT * FROM ( SELECT b.board_sq AS sq, b.board_ttl AS ttl, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname,
         b.board_type_cd AS boardTypeCd, b.board_created_at_dtm AS createdAt, b.board_view_cnt AS
         viewCnt, b.board_comment_cnt AS commentCnt, b.board_recommend_cnt AS recommendCnt, CASE WHEN
-        b.board_type_cd = 1401 THEN NULL ELSE b.board_adopt_status_cd END AS boardAdoptStatusCd,
+        b.board_type_cd IN <foreach item="at" collection="answerSupportedTypeCds" open="(" separator="," close=")">#{at}</foreach>
+        THEN b.board_adopt_status_cd ELSE NULL END AS boardAdoptStatusCd,
         b.board_category_cd AS boardCategoryCd, cc.common_code_nm AS boardCategoryNm,
         b.board_description_edt AS description, 'BOARD' AS mainType FROM TBL_BOARD_M b JOIN
         TBL_USER_M u ON b.user_sq = u.user_sq LEFT JOIN TBL_COMMON_CODE_C cc ON cc.common_code_sq =
         b.board_category_cd WHERE b.board_is_deleted_yn = 'N' AND b.board_type_cd
-        IN (1401, 1402) UNION ALL SELECT a.answer_sq AS sq, a.answer_ttl AS ttl, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname, 1499
+        IN <foreach item="mt" collection="managedTypeCds" open="(" separator="," close=")">#{mt}</foreach>
+        UNION ALL SELECT a.answer_sq AS sq, a.answer_ttl AS ttl, u.user_id AS userId, u.user_nm AS userNm, u.user_nickname AS userNickname, 1499
         AS boardTypeCd, a.answer_created_at_dtm AS createdAt, a.answer_view_cnt AS viewCnt,
         a.answer_comment_cnt AS commentCnt, a.answer_recommend_cnt AS recommendCnt, CASE WHEN
         a.answer_is_adopted_yn = 'Y' THEN 1502 ELSE 1504 END AS boardAdoptStatusCd,
@@ -42,7 +44,8 @@
              거기 달린 답변만 남아, 고객의 소리 답변이 이 목록에 섞인다(실제로 그랬다).
              삭제 여부도 원글을 따른다 — 게시글 삭제(deleteMaster/BoardService.deleteBoard)는
              답변까지 내리지 않으므로, 이 조건이 없으면 원글이 사라진 뒤에도 답변만 목록에 남는다. -->
-        JOIN TBL_BOARD_M pb ON pb.board_sq = a.board_sq AND pb.board_type_cd IN (1401, 1402)
+        JOIN TBL_BOARD_M pb ON pb.board_sq = a.board_sq AND pb.board_type_cd
+        IN <foreach item="mt" collection="managedTypeCds" open="(" separator="," close=")">#{mt}</foreach>
         AND pb.board_is_deleted_yn = 'N'
         WHERE a.answer_is_deleted_yn = 'N' ) AS unified WHERE
         1=1 <if

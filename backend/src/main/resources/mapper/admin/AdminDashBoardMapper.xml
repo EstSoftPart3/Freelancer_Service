@@ -40,7 +40,7 @@
 	<select id="getChartPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
 		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
 		FROM TBL_BOARD_M t
-		WHERE t.board_type_cd IN (1401, 1402, 1403)
+		WHERE t.board_type_cd IN <foreach item="c" collection="dashboardTypeCds" open="(" separator="," close=")">#{c}</foreach>
 		  AND DATE(t.board_created_at_dtm) BETWEEN #{startDate} AND #{endDate}
 		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
 	</select>
@@ -84,7 +84,7 @@
 	<select id="getDayPostCount" resultType="com.example.demo.domain.admin.dto.DateCountDTO">
 		SELECT count(*) AS count, DATE_FORMAT(t.board_created_at_dtm, "%Y-%m-%d") AS date
 		FROM TBL_BOARD_M t
-		WHERE t.board_type_cd IN (1401, 1402, 1403)
+		WHERE t.board_type_cd IN <foreach item="c" collection="dashboardTypeCds" open="(" separator="," close=")">#{c}</foreach>
 		  AND t.board_created_at_dtm >=  DATE_SUB(CURDATE(), INTERVAL 1 DAY)
 		GROUP BY DATE_FORMAT(t.board_created_at_dtm,  "%Y-%m-%d")
 	</select>
@@ -112,7 +112,7 @@
 		FROM TBL_BOARD_M t
 		LEFT JOIN TBL_USER_M m ON t.user_sq = m.user_sq
 		WHERE t.board_is_deleted_yn = 'N'
-		  AND t.board_type_cd IN (1401, 1402, 1403)
+		  AND t.board_type_cd IN <foreach item="c" collection="dashboardTypeCds" open="(" separator="," close=")">#{c}</foreach>
 		ORDER BY t.board_created_at_dtm DESC
 		LIMIT 5
 	</select>

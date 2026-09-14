@@ -74,6 +74,9 @@ function InfoTooltip({
         type="button"
         aria-label={label}
         onClick={() => setOpen((prev) => !prev)}
+        // Base UI 트리거의 기본 동작(closeOnClick=true)이 클릭 시 우리가 setOpen(true)로 연
+        // 상태를 곧바로 다시 닫아버려서, 터치/클릭으로는 절대 안 열리는 버그가 있었다 — 꺼둔다.
+        closeOnClick={false}
         className={cn(
           "inline-flex shrink-0 cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground",
           className

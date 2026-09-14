@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
-import { fmtDate, STATUS, resolveBoardType, canOpenDetail, type BoardType } from '@/components/community/boardMeta'
+import { fmtDate, STATUS, resolveBoardType, canOpenDetail, supportsAnswer, type BoardType } from '@/components/community/boardMeta'
 import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
@@ -110,9 +110,8 @@ function TagRow({ skillTags, normalTags, resolvedType }: TagRowProps) {
 
 // 데스크톱(md 이상) 목록 — 헤더 없는 리스트형 행. md 미만은 BoardCardList가 담당한다.
 export default function BoardTable({ boardList, boardType, viewerSq }: Props) {
-  const isQna = boardType === 'qna'
   const isAll = boardType === 'all'
-  const hasStatusCol = isQna || isAll
+  const hasStatusCol = supportsAnswer(boardType) || isAll
 
   if (boardList.length === 0) {
     return <div className="rounded-lg border py-12 text-center text-muted-foreground">게시글이 없습니다.</div>
@@ -122,8 +121,8 @@ export default function BoardTable({ boardList, boardType, viewerSq }: Props) {
     <ul className="divide-y rounded-lg border">
       {boardList.map((b) => {
         const resolvedType = resolveBoardType(b, boardType)
-        const isRowQna = resolvedType === 'qna'
-        const status = isRowQna && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
+        const rowSupportsAnswer = supportsAnswer(resolvedType)
+        const status = rowSupportsAnswer && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
         const locked = !canOpenDetail(b, viewerSq)
         return (
           <li key={b.sq} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/40">
@@ -148,7 +147,7 @@ export default function BoardTable({ boardList, boardType, viewerSq }: Props) {
                     className="min-w-0 truncate font-medium hover:text-primary hover:underline"
                   >
                     {b.ttl}
-                    {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
+                    {rowSupportsAnswer && !!b.answerCnt && b.answerCnt > 0 && (
                       <span className="ml-2 text-xs text-muted-foreground">답변 {b.answerCnt}</span>
                     )}
                   </Link>

@@ -54,8 +54,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/affiliation`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/community`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/community/list`, changeFrequency: 'daily', priority: 0.7 },
-    { url: `${SITE_URL}/board`, changeFrequency: 'daily', priority: 0.7 },
-    { url: `${SITE_URL}/qna`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/career`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/tech`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/company`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/teamup`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/lounge`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/vote`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE_URL}/interview`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE_URL}/notice`, changeFrequency: 'weekly', priority: 0.6 },
   ]
 
@@ -87,8 +92,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   const boardRoutes: MetadataRoute.Sitemap = boards.map((b) => ({
-    // 통합 목록의 boardType으로 상세 경로 분기 ('board' | 'qna')
-    url: `${SITE_URL}/${b.boardType === 'qna' ? 'qna' : 'board'}/${b.sq}`,
+    // 통합 목록의 boardType이 곧 FO 라우트 세그먼트다(BoardTypeCode.pathOfCode와 동일 규약).
+    url: `${SITE_URL}/${b.boardType ?? 'board'}/${b.sq}`,
     lastModified: toDate(b.createdAt),
     changeFrequency: 'weekly',
     priority: 0.6,

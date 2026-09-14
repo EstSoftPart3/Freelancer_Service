@@ -416,11 +416,15 @@ public class AnswerService {
 		if (answer == null) {
 			throw new IllegalArgumentException("답변이 존재하지 않습니다.");
 		}
-		Board board = boardMapper.findByIdBoard(answer.getBoardSq(), BoardTypeCode.QNA.getCode());
-		// 채택은 Q&A 전용이다. 고객의 소리(1404) 답변으로 이 API 를 부르면 findByIdBoard 가
-		// null 을 돌려주고, 그대로 두면 board.getUserSq() 에서 NPE 500 이 난다.
+		Board board = boardMapper.findByIdAny(answer.getBoardSq());
 		if (board == null) {
-			throw new IllegalArgumentException("채택은 Q&A 답변에만 가능합니다.");
+			throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
+		}
+		// 채택은 답변을 지원하는 게시판 전용이다(BoardTypeCode.supportsAnswer).
+		// 이 검사를 findByIdBoard 로 미리 걸러 두면(예전 방식) 지원 게시판 목록이 늘 때마다
+		// 여기 조회 조건까지 고쳐야 했다.
+		if (!BoardTypeCode.of(board.getBoardTypeCd()).isSupportsAnswer()) {
+			throw new IllegalArgumentException("채택은 답변이 지원되는 게시판에서만 가능합니다.");
 		}
 
 		// if (board.getUserSq() != userSq) {

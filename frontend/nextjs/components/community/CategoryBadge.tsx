@@ -1,6 +1,6 @@
 // 카테고리·게시판유형 뱃지 — 목록(데스크톱/모바일)과 상세가 같은 모양을 쓰도록 한 곳에 모았다.
 // 세 군데에 각자 클래스를 박아두면 한쪽만 고쳐져 모양이 갈라진다.
-import { BOARD_TYPE_LABEL } from '@/components/community/boardMeta'
+import { BOARD_TYPE_LABEL, type BoardType } from '@/components/community/boardMeta'
 
 /**
  * 게시판 카테고리 뱃지.
@@ -20,7 +20,7 @@ export function CategoryBadge({ name }: { name?: string | null }) {
  * 전체보기처럼 유형이 섞이는 목록에서만 쓴다 — 카테고리가 없는 Q&A 행에도 뱃지가 하나는 붙어야
  * 어떤 줄에만 뱃지가 달린 들쭉날쭉한 목록이 되지 않는다.
  */
-export function BoardTypeBadge({ type }: { type: 'board' | 'qna' | 'notice' | 'voc' }) {
+export function BoardTypeBadge({ type }: { type: Exclude<BoardType, 'all'> }) {
   return (
     <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium leading-none text-muted-foreground">
       {BOARD_TYPE_LABEL[type]}

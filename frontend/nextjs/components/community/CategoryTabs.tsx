@@ -3,11 +3,18 @@ import type { ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useCommunityStore } from '@/stores/communityStore'
 import { useUserStore } from '@/stores/userStore'
+import { supportsAnswer, type BoardType } from '@/components/community/boardMeta'
 
+// Phase2 게시판 전면 재설계(2026-09) — 일반게시판/QnA는 데이터를 전부 이관하고 비활성화됐다.
+// 실제 게시판 종류인 6대분류(투표 제외)를 여기서 직접 보여준다.
 const TABS = [
   { label: '전체보기', href: '/community/list' },
-  { label: '일반게시판', href: '/board' },
-  { label: 'Q&A 게시판', href: '/qna' },
+  { label: '커리어소통', href: '/career' },
+  { label: '기술소통', href: '/tech' },
+  { label: '요즘회사', href: '/company' },
+  { label: '프로젝트', href: '/teamup' },
+  { label: '라운지', href: '/lounge' },
+  { label: '투표', href: '/vote' },
   // 고객의 소리는 목록부터 로그인이 필요하다(비공개 글이 섞여 있어 공개 목록이 성립하지 않는다).
   // 비로그인에게 탭을 보여주면 누르는 순간 로그인 화면으로 튕기므로 아예 숨긴다.
   { label: '고객의 소리', href: '/voc', authOnly: true },
@@ -29,7 +36,8 @@ export default function CategoryTabs({ rightSlot }: Props) {
   const go = (href: string) => {
     const qs = new URLSearchParams({ sort, searchType })
     if (keyword.trim()) qs.set('keyword', keyword.trim())
-    if (href === '/qna' && status !== 'all') qs.set('status', status)
+    // 채택상태 필터는 답변을 지원하는 게시판(커리어소통·기술소통)에서만 의미가 있다.
+    if (supportsAnswer(href.slice(1) as BoardType) && status !== 'all') qs.set('status', status)
     router.push(`${href}?${qs.toString()}`)
   }
 

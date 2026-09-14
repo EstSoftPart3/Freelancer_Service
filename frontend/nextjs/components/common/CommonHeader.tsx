@@ -62,24 +62,46 @@ function normalizeNotificationUrl(url?: string): string {
   return url
 }
 
-// 커뮤니티 메가메뉴 — 대분류 6 + 소분류. 실제 카테고리 재설계(백엔드 공통코드)는 아직 안 됐으므로
-// 소분류 링크는 우선 /community 로 보내고 tab/sub 쿼리만 붙여둔다(추후 게시판 개편 때 실제 필터로 연결).
-const COMMUNITY_MEGA: { key: string; label: string; subs: string[] }[] = [
-  { key: 'career', label: '커리어/소통', subs: ['연봉', '이직', '면접'] },
-  { key: 'tech', label: '기술/소통', subs: ['개발', 'AI'] },
-  { key: 'company', label: '요즘회사', subs: [] },
-  { key: 'project', label: '프로젝트', subs: [] },
-  { key: 'lounge', label: '라운지(자유)', subs: ['말머리', '잡담'] },
-  { key: 'vote', label: '투표', subs: [] },
+// 커뮤니티 메가메뉴 — 대분류 6. 게시판 전면 재설계(2026-09) 완료 후 각 대분류가 실제
+// 게시판 종류(board_type_cd)로 승격됐다 — career/tech/company/teamup/lounge는
+// CommunityBoardController가 처리하는 실제 라우트, 투표는 별도 도메인(/vote)이다.
+// 소분류는 각 게시판의 실제 중분류(공통코드)로 연결하고, 면접은 커리어소통 목록과
+// 완전히 분리된 전용 도메인(/interview)으로, 프로젝트 공고는 기존 /projects 도메인
+// 그대로 링크만 건다(네비게이션 편입 — 데이터는 손대지 않음).
+const COMMUNITY_MEGA: { key: string; label: string; href: string; subs: { label: string; href: string }[] }[] = [
+  {
+    key: 'career', label: '커리어소통', href: '/career',
+    subs: [
+      { label: '연봉', href: '/career?category=3210' },
+      { label: '이직', href: '/career?category=3211' },
+      { label: '면접', href: '/interview' },
+    ],
+  },
+  {
+    key: 'tech', label: '기술소통', href: '/tech',
+    subs: [
+      { label: '개발', href: '/tech?category=3220' },
+      { label: 'AI', href: '/tech?category=3221' },
+    ],
+  },
+  { key: 'company', label: '요즘회사', href: '/company', subs: [] },
+  {
+    key: 'teamup', label: '프로젝트', href: '/teamup',
+    subs: [
+      { label: '프로젝트 공고', href: '/projects' },
+      { label: '프로젝트 의뢰', href: '/teamup?category=3230' },
+      { label: '팀원모집', href: '/teamup?category=3231' },
+    ],
+  },
+  {
+    key: 'lounge', label: '라운지(자유)', href: '/lounge',
+    subs: [
+      { label: '말머리', href: '/lounge?category=3240' },
+      { label: '잡담', href: '/lounge?category=3241' },
+    ],
+  },
+  { key: 'vote', label: '투표', href: '/vote', subs: [] },
 ]
-
-function communityHref(tab: string, sub?: string) {
-  if (tab === 'vote') return '/vote'
-  if (tab === 'project') return '/projects'
-  const params = new URLSearchParams({ tab })
-  if (sub) params.set('sub', sub)
-  return `/community?${params.toString()}`
-}
 
 export default function CommonHeader() {
   const pathname = usePathname()
@@ -91,6 +113,9 @@ export default function CommonHeader() {
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileCommunityOpen, setMobileCommunityOpen] = useState(false)
+  // 메가메뉴 안의 링크는 DropdownMenuItem이 아니라 <Link>라서 Base UI Menu가 선택 시
+  // 자동으로 닫아주지 않는다 — 직접 열림 상태를 들고 있다가 링크 클릭 시 닫는다.
+  const [communityMenuOpen, setCommunityMenuOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [scrolled, setScrolled] = useState(false)
@@ -105,6 +130,7 @@ export default function CommonHeader() {
   useEffect(() => {
     setMobileOpen(false)
     setMobileCommunityOpen(false)
+    setCommunityMenuOpen(false)
   }, [pathname])
 
   useEffect(() => {
@@ -200,7 +226,7 @@ export default function CommonHeader() {
   // 곡선이 있는 버튼 형태 — 활성 탭은 은은한 배경, 나머지는 hover 시에만 배경이 뜬다
   const navCls = (active: boolean) =>
     cn(
-      'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+      'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors xl:px-3.5 xl:py-1.5 xl:text-sm',
       active
         ? 'border-primary/30 bg-primary/10 text-primary'
         : 'border-border bg-muted/60 text-foreground/70 hover:border-foreground/20 hover:bg-muted hover:text-foreground',
@@ -296,33 +322,34 @@ export default function CommonHeader() {
       </div>
 
       {/* 2단 — 전체 네비 한 줄 (좌: 메뉴, 우: 검색·로그인·기업서비스) */}
-      <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
-        <nav className="hidden min-w-0 items-center gap-2 md:flex">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-4 lg:gap-4">
+        <nav className="hidden min-w-0 items-center gap-1 lg:flex lg:gap-2">
           {/* 연봉계산기·연봉순위표 — 클릭을 유도하는 강조 버튼. 나머지 메뉴와 확실히 구분되도록
-              색을 넣고, hover 시 살짝 떠오르며 아이콘이 반응한다. */}
+              색을 넣고, hover 시 살짝 떠오르며 아이콘이 반응한다.
+              폭이 좁아지는 lg~xl 구간에서는 패딩·글자를 한 단계 줄여 자연스럽게 작아지게 한다. */}
           <Link
             href="/salary/calculator"
-            className="salary-cta group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-1.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+            className="salary-cta group flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-2.5 py-1 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 xl:gap-1.5 xl:px-4 xl:py-1.5 xl:text-sm"
           >
             <Calculator className="h-4 w-4 transition-transform duration-200 group-hover:rotate-[-8deg]" />
             연봉계산기
           </Link>
           <Link
             href="/salary/ranking"
-            className="salary-cta group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-1.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+            className="salary-cta group flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-2.5 py-1 text-xs font-bold text-white transition-transform hover:-translate-y-0.5 xl:gap-1.5 xl:px-4 xl:py-1.5 xl:text-sm"
           >
             <TrendingUp className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             연봉순위표
           </Link>
 
-          <span className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden />
+          <span className="mx-1 hidden h-4 w-px shrink-0 bg-border xl:block" aria-hidden />
 
           {/* 커뮤니티 메가메뉴 */}
-          <DropdownMenu>
+          <DropdownMenu open={communityMenuOpen} onOpenChange={setCommunityMenuOpen}>
             <DropdownMenuTrigger
               className={cn(
-                'flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium outline-none transition-colors',
-                isActive(['/community', '/board', '/qna', '/voc', '/vote'])
+                'flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium outline-none transition-colors lg:px-3.5 lg:py-1.5 lg:text-sm',
+                isActive(['/community', '/career', '/tech', '/company', '/teamup', '/lounge', '/voc', '/vote', '/interview'])
                   ? 'border-primary/30 bg-primary/10 text-primary'
                   : 'border-border bg-muted/60 text-foreground/70 hover:border-foreground/20 hover:bg-muted hover:text-foreground',
               )}
@@ -334,7 +361,8 @@ export default function CommonHeader() {
                 {COMMUNITY_MEGA.map((col) => (
                   <div key={col.key}>
                     <Link
-                      href={communityHref(col.key)}
+                      href={col.href}
+                      onClick={() => setCommunityMenuOpen(false)}
                       className="mb-2 block text-sm font-semibold text-foreground hover:text-primary"
                     >
                       {col.label}
@@ -342,12 +370,13 @@ export default function CommonHeader() {
                     {col.subs.length > 0 && (
                       <ul className="flex flex-col gap-1.5">
                         {col.subs.map((sub) => (
-                          <li key={sub}>
+                          <li key={sub.label}>
                             <Link
-                              href={communityHref(col.key, sub)}
+                              href={sub.href}
+                              onClick={() => setCommunityMenuOpen(false)}
                               className="text-sm text-muted-foreground hover:text-foreground"
                             >
-                              {sub}
+                              {sub.label}
                             </Link>
                           </li>
                         ))}
@@ -357,7 +386,11 @@ export default function CommonHeader() {
                 ))}
               </div>
               <div className="mt-5 border-t pt-3">
-                <Link href="/community" className="text-sm font-medium text-primary hover:underline">
+                <Link
+                  href="/community"
+                  onClick={() => setCommunityMenuOpen(false)}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
                   커뮤니티 홈 전체 보기
                 </Link>
               </div>
@@ -365,15 +398,15 @@ export default function CommonHeader() {
           </DropdownMenu>
 
           <Link href="/interview" className={cn('shrink-0', navCls(isActive(['/interview'])))}>면접후기</Link>
-          <Link href="/projects" className={cn('shrink-0', navCls(isActive(['/projects'])))}>프로젝트</Link>
-          <Link href="/affiliation" className={cn('shrink-0', navCls(isActive(['/affiliation'])))}>파트너</Link>
-          <Link href="/notice" className={cn('shrink-0', navCls(isActive(['/notice'])))}>공지사항</Link>
+          <Link href="/projects" className={cn('hidden shrink-0 lg:inline-block', navCls(isActive(['/projects'])))}>프로젝트</Link>
+          <Link href="/affiliation" className={cn('hidden shrink-0 lg:inline-block', navCls(isActive(['/affiliation'])))}>파트너</Link>
+          <Link href="/notice" className={cn('hidden shrink-0 lg:inline-block', navCls(isActive(['/notice'])))}>공지사항</Link>
         </nav>
 
         {/* 우측 액션 */}
         <div className="flex shrink-0 items-center gap-3">
           {/* 검색 — 아이콘 + 밑줄만 */}
-          <form onSubmit={handleSearch} className="hidden md:block">
+          <form onSubmit={handleSearch} className="hidden xl:block">
             <label className="flex items-center gap-1.5 border-b border-input px-0.5 py-1 text-sm text-muted-foreground transition-colors focus-within:border-foreground focus-within:text-foreground">
               <Search className="h-3.5 w-3.5 shrink-0" />
               <input
@@ -408,7 +441,7 @@ export default function CommonHeader() {
                 <DropdownMenuTrigger
                   className={cn(
                     buttonVariants({ variant: 'outline' }),
-                    'hidden gap-2 rounded-full md:flex',
+                    'hidden gap-2 rounded-full lg:flex',
                   )}
                 >
                   <User className="h-4 w-4" />
@@ -427,7 +460,7 @@ export default function CommonHeader() {
               </DropdownMenu>
             </>
           ) : authChecked ? (
-            <div className="hidden items-center gap-3 md:flex">
+            <div className="hidden items-center gap-3 lg:flex">
               <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
                 로그인
               </Link>
@@ -440,7 +473,7 @@ export default function CommonHeader() {
           {/* 기업서비스 — 클릭 시 실제로 있는 기업 기능만 나열 */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className={cn(buttonVariants({ variant: 'outline' }), 'hidden md:inline-flex')}
+              className={cn(buttonVariants({ variant: 'outline' }), 'hidden xl:inline-flex')}
             >
               기업서비스
             </DropdownMenuTrigger>
@@ -480,7 +513,7 @@ export default function CommonHeader() {
           {/* 모바일 Sheet */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger
-              className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'md:hidden')}
+              className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'lg:hidden')}
             >
               <Menu className="h-5 w-5" />
             </SheetTrigger>
@@ -516,7 +549,7 @@ export default function CommonHeader() {
                 <button
                   className={cn(
                     'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/community', '/board', '/qna', '/vote'])
+                    isActive(['/community', '/career', '/tech', '/company', '/teamup', '/lounge', '/voc', '/vote', '/interview'])
                       ? 'bg-primary/10 text-primary'
                       : 'hover:bg-muted',
                   )}
@@ -531,18 +564,18 @@ export default function CommonHeader() {
                   <div className="ml-4 flex flex-col gap-2 border-l pl-3">
                     {COMMUNITY_MEGA.map((col) => (
                       <div key={col.key}>
-                        <Link href={communityHref(col.key)} className="block rounded-md py-1 text-sm font-semibold hover:bg-muted">
+                        <Link href={col.href} className="block rounded-md py-1 text-sm font-semibold hover:bg-muted">
                           {col.label}
                         </Link>
                         {col.subs.length > 0 && (
                           <div className="ml-2 flex flex-col">
                             {col.subs.map((sub) => (
                               <Link
-                                key={sub}
-                                href={communityHref(col.key, sub)}
+                                key={sub.label}
+                                href={sub.href}
                                 className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                               >
-                                {sub}
+                                {sub.label}
                               </Link>
                             ))}
                           </div>

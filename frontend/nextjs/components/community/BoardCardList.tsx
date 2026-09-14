@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
-import { fmtDate, STATUS, resolveBoardType, canOpenDetail, type BoardType } from '@/components/community/boardMeta'
+import { fmtDate, STATUS, resolveBoardType, canOpenDetail, supportsAnswer, type BoardType } from '@/components/community/boardMeta'
 import { CategoryBadge, BoardTypeBadge, SecretBadge } from '@/components/community/CategoryBadge'
 import type { BoardItem } from '@/types'
 
@@ -23,8 +23,8 @@ export default function BoardCardList({ boardList, boardType, viewerSq }: Props)
     <ul className="space-y-2">
       {boardList.map((b) => {
         const resolvedType = resolveBoardType(b, boardType)
-        const isRowQna = resolvedType === 'qna'
-        const status = isRowQna && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
+        const rowSupportsAnswer = supportsAnswer(resolvedType)
+        const status = rowSupportsAnswer && b.boardAdoptStatusCd ? STATUS[b.boardAdoptStatusCd] : undefined
         const hasTags = (b.skillTags?.length ?? 0) > 0 || (b.normalTags?.length ?? 0) > 0
         const locked = !canOpenDetail(b, viewerSq)
         return (
@@ -44,7 +44,7 @@ export default function BoardCardList({ boardList, boardType, viewerSq }: Props)
             ) : (
               <Link href={`/${resolvedType}/${b.sq}`} className="line-clamp-2 font-medium hover:text-primary hover:underline">
                 {b.ttl}
-                {isRowQna && !!b.answerCnt && b.answerCnt > 0 && (
+                {rowSupportsAnswer && !!b.answerCnt && b.answerCnt > 0 && (
                   <span className="ml-2 text-xs font-normal text-muted-foreground">답변 {b.answerCnt}</span>
                 )}
               </Link>

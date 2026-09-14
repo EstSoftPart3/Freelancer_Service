@@ -13,11 +13,16 @@ const PUBLIC_PATHS = [
   '/notice',
   '/affiliation',
   '/projects',
+  // Phase2 게시판 전면 재설계(2026-09) 신설 5종 — board/qna와 같은 이유로 공개
+  '/career',
+  '/tech',
+  '/company',
+  '/teamup',
+  '/lounge',
   // Phase2 신규 화면 — 로그인 없이도 볼 수 있어야 하는 공개 화면
   '/salary',
   '/interview',
   '/vote',
-  '/phase2', // 🔴 임시 데모 허브 — 반영 시 함께 삭제
 ]
 
 // 로그인 상태에서 진입하면 홈으로 돌려보낼 인증 전용 경로

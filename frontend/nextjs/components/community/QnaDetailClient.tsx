@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   boardSq: string
+  // 답변+채택을 지원하는 게시판 종류 — QnA 전용이었던 이 컴포넌트를 Phase2 재설계로 신설된
+  // 커리어소통·기술소통에서도 재사용하기 위해 하드코딩된 '/qna' 대신 이 값으로 라우트를 만든다.
+  boardType: 'qna' | 'career' | 'tech'
   // 서버에서 미리 조회한 초기 데이터 — SEO용으로 초기 HTML에 본문을 포함시킨다.
   // viewerSq 등 사용자별 필드가 없으므로 마운트 후 getBoard()로 1회 갱신한다(기존 동작 유지).
   initialData?: BoardDetail | null
@@ -29,19 +32,12 @@ const emptyBoard: BoardDetail = {
   attachments: [], comments: [], answers: [],
 }
 
-const STATUS: Record<number, { label: string; cls: string }> = {
-  1501: { label: '진행중', cls: 'bg-yellow-100 text-yellow-800' },
-  1502: { label: '채택완료', cls: 'bg-green-100 text-green-800' },
-  1503: { label: '자체해결', cls: 'bg-gray-100 text-gray-700' },
-  1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
-}
-
 function fmtDate(iso: string) {
   const d = new Date(iso)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function QnaDetailClient({ boardSq, initialData }: Props) {
+export default function QnaDetailClient({ boardSq, boardType, initialData }: Props) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { setViewerSq, viewerSq } = useBoardStore()
@@ -62,7 +58,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
 
   const getBoard = useCallback(async () => {
     try {
-      const { data } = await api.get<{ output: BoardDetail }>(`/qna/${boardSq}`)
+      const { data } = await api.get<{ output: BoardDetail }>(`/${boardType}/${boardSq}`)
       setBoardInfo(data.output)
       setViewerSq(data.output.viewerSq ?? null)
       // URL에 answerSq가 있으면 자동 모달 오픈
@@ -70,21 +66,21 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
       if (targetSq) openAnswerDetail(targetSq)
     } catch (err: unknown) {
       // 삭제됐거나 유효하지 않은 게시글은 백엔드가 400을 반환한다.
-      // 이 경우 안내 후 Q&A 게시판 목록으로 되돌린다(그 외 일시적 오류는 이동하지 않음).
+      // 이 경우 안내 후 게시판 목록으로 되돌린다(그 외 일시적 오류는 이동하지 않음).
       const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
       if (res?.status === 400) {
         alertStore.show(res.data?.message ?? '삭제되었거나 존재하지 않는 게시글입니다.', 'danger')
-        router.replace('/qna')
+        router.replace(`/${boardType}`)
       } else {
         alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
       }
     }
-  }, [boardSq, setViewerSq, searchParams, router])
+  }, [boardSq, boardType, setViewerSq, searchParams, router])
 
   useEffect(() => {
-    incrementView(`/qna/${boardSq}`)
+    incrementView(`/${boardType}/${boardSq}`)
     getBoard()
-  }, [boardSq, getBoard])
+  }, [boardSq, boardType, getBoard])
 
   const openAnswerDetail = async (sq: number) => {
     try {
@@ -109,7 +105,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
       {/* QnA 본문 */}
       <BoardPost
         boardInfo={boardInfo}
-        boardType="qna"
+        boardType={boardType}
         onRefresh={getBoard}
         onAnswerWrite={() => {
           if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
@@ -163,7 +159,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
       <Dialog open={answerOpen} onOpenChange={setAnswerOpen}>
         <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>QnA 답변 작성</DialogTitle>
+            <DialogTitle>답변 작성</DialogTitle>
           </DialogHeader>
           {answerOpen && (
             <AnswerForm
@@ -179,7 +175,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
       <Dialog open={editAnswer != null} onOpenChange={(o) => { if (!o) setEditAnswer(null) }}>
         <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>QnA 답변 수정</DialogTitle>
+            <DialogTitle>답변 수정</DialogTitle>
           </DialogHeader>
           {editAnswer && (
             <AnswerForm

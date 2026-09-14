@@ -12,6 +12,13 @@ const DISALLOW = [
   '/reset-password',
   '/board/register',
   '/qna/register',
+  '/career/register',
+  '/tech/register',
+  '/company/register',
+  '/teamup/register',
+  '/lounge/register',
+  '/vote/register',
+  '/interview/write',
   // 고객의 소리는 목록·상세·작성 전부 로그인 전용이라 트리 통째로 제외한다.
   '/voc',
 ]

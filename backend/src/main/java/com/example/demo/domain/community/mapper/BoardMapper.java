@@ -11,8 +11,19 @@ import java.util.*;
 public interface BoardMapper {
       Board findByIdBoard(@Param("boardSq") Long boardSq, @Param("boardTypeCd") Long boardTypeCd);
 
+      /**
+       * 게시판 종류를 가리지 않고 조회한다. 채택/상태변경처럼 "이 게시판이 그 기능을
+       * 지원하는가"를 호출자가 {@link com.example.demo.domain.community.constant.BoardTypeCode}
+       * capability로 직접 판정해야 하는 경우에 쓴다 — {@code findByIdBoard}처럼 특정 타입
+       * 코드로 미리 걸러버리면 그 판정을 매퍼 밖으로 낼 수 없다.
+       */
+      Board findByIdAny(@Param("boardSq") Long boardSq);
+
       // 목록과 카운트는 같은 동적 조건을 공유한다 — 한쪽만 파라미터를 늘리면
       // 목록은 필터링되는데 총 건수는 전체 기준이라 뒷 페이지가 비는 증상이 난다(Phase 3 사례).
+      // communityListTypeCds: boardTypeCd가 null(통합목록)일 때만 쓰는 종류 화이트리스트.
+      // 예전엔 매퍼 XML에 IN (1401,1402)로 박혀 있었다 — 게시판 종류가 늘 때마다 XML을
+      // 고쳐야 했던 걸, 서비스가 BoardTypeCode.communityListCodes()로 넘기게 바꿨다.
       List<Board> findAll(
                   @Param("boardTypeCd") Long boardTypeCd,
                   @Param("boardCategoryCd") Long boardCategoryCd,
@@ -23,7 +34,8 @@ public interface BoardMapper {
                   @Param("skillTags") List<Long> skillTags, // 6번째: 기술 태그 리스트
                   @Param("sortType") String sortType,
                   @Param("size") Long size,
-                  @Param("offset") Long offset);
+                  @Param("offset") Long offset,
+                  @Param("communityListTypeCds") List<Long> communityListTypeCds);
 
       Long findAllCnt(
                   @Param("boardTypeCd") Long boardTypeCd,
@@ -32,7 +44,8 @@ public interface BoardMapper {
                   @Param("searchType") String searchType,
                   @Param("keyword") String keyword,
                   @Param("tag") String tag, // [수정] tag 파라미터 추가
-                  @Param("skillTags") List<Long> skillTags // [수정] 불필요한 sortType, size, offset 제거
+                  @Param("skillTags") List<Long> skillTags, // [수정] 불필요한 sortType, size, offset 제거
+                  @Param("communityListTypeCds") List<Long> communityListTypeCds
       );
 
       void insert(Board board);
@@ -59,7 +72,8 @@ public interface BoardMapper {
 
       Board findByIdOnly(@Param("boardSq") Long boardSq);
 
-      List<CommunityBestItemDTO> findBestBoards(@Param("period") String period, @Param("size") int size);
+      List<CommunityBestItemDTO> findBestBoards(@Param("period") String period, @Param("size") int size,
+                  @Param("communityListTypeCds") List<Long> communityListTypeCds);
 
       /**
        * 첨부파일이 붙어 있는 게시글 번호. 다운로드 권한을 판정하려면 fileSq → boardSq 역방향
