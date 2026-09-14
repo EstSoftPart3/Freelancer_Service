@@ -1,6 +1,7 @@
 package com.example.demo.domain.user.mapper;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -54,5 +55,9 @@ public interface UserMapper {
     int updatePasswordByUserSq(@Param("userSq") Long userSq, @Param("newPassword") String newPassword);
 
     UserDTO findByEmail(@Param("email") String email);
+    
+    Optional<UserDTO> findByUserEmail(String userEmail);
+
+    void save(UserDTO userDTO);
 
 }

@@ -131,5 +131,43 @@ public class UserService {
         int updatedRows = userRepository.updatePassword(userSq, encodedPassword);
         return updatedRows > 0;
     }
+    
+    @Transactional
+    public UserDTO getOrCreateSocialUser(String email, Map<String, Object> attributes) {
+        UserDTO user = null;
+
+        // 1. 이미 존재하는 이메일인지 확인
+        boolean exists = userRepository.existsByUserEmail(email);
+
+        if (exists) {
+            // 2-A. 기존 유저가 존재하면 해당 유저 정보 조회
+            // (findUserByInfo 매퍼를 활용하거나 이메일 기준 유저 정보를 받아옵니다)
+            user = userRepository.findUserByInfo(null, null, email);
+        } else {
+            // 2-B. 신규 소셜 회원 가입 처리
+            user = new UserDTO();
+            String name = (String) attributes.getOrDefault("name", "구글사용자");
+            
+            // 구글 이메일 기반 아이디 생성 (예: google_test)
+            String googleUserId = "google_" + email.split("@")[0];
+            
+            // 아이디 중복 방지 처리
+            if (userRepository.existsByUserId(googleUserId)) {
+                googleUserId = googleUserId + "_" + System.currentTimeMillis() % 1000;
+            }
+
+            user.setUserId(googleUserId);
+            user.setUserEmail(email);
+            user.setUserNm(name);
+            user.setUserPw(passwordEncoder.encode("OAUTH2_SOCIAL_USER_DUMMY_PW")); // 소셜 로그인용 임시 암호화 비밀번호
+            user.setUserTypeCd(301L); // 일반 사용자 유형 코드 (프로젝트 공통코드 기준)
+            user.setUserSignupTypeCd(401L); // 구글 소셜 가입 구분 코드
+
+            // 신규 사용자 저장 (useGeneratedKeys로 userSq 자동 채움)
+            userRepository.insertUser(user);
+        }
+
+        return user;
+    }
 
 }

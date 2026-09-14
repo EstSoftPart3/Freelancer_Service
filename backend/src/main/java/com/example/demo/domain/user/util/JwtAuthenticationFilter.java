@@ -56,15 +56,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/admin/login",
             "/api/admin/refresh-token",
             // ---------------- [추가] Health Check 경로 ----------------
-            "/api/actuator"
+            "/api/actuator",
+            // ---------------- [추가] OAuth2 경로 ----------------
+            "/v1/auth",
+            "api/v1/auth"
 
     // 여기에 더 추가 가능
     );
   
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        // OPTIONS(Preflight) 요청은 JWT 검증을 무조건 우회
-        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    	String path = request.getRequestURI();
+
+        // 1. OPTIONS(Preflight) 요청 무시
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        // 2. 소셜 로그인 및 인증 관련 경로는 JWT 필터 자체를 동작시키지 않음
+        if (path.contains("/v1/auth") || path.contains("/auth/google")) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override

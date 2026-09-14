@@ -44,6 +44,7 @@ import ScheduleCalendarPage from '../views/mypage/common/ScheduleCalendarPage.vu
 import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
 import GoogleCallback from '@/fo/views/login&signup/GoogleCallback.vue'
+import ScoutPage from '../views/scout/ScoutPage.vue'
 
 const routes = [
   {
@@ -274,6 +275,12 @@ const routes = [
       },
     ],
   },
+
+  {
+    path: '/scout', 
+    component: ScoutPage,
+    name: 'ScoutPage',
+  }
 ]
 const router = createRouter({
   history: createWebHistory(),
@@ -359,6 +366,7 @@ router.beforeEach((to, from, next) => {
     alertStore.show('로그인이 필요한 서비스입니다.', 'danger')
     return next({ name: 'Login' })
   }
+
 
   next()
 })

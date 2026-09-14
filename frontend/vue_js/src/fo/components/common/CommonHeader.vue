@@ -51,6 +51,19 @@
                       <router-link
                         class="dropdown-item dropdown-toggle"
                         :class="{
+                          active: isScoutActive,
+                          'current-page-active': true,
+                        }"
+                        to="/scout"
+                      >
+                        스카우트
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
                           active: isProjectActive,
                           'current-page-active': true,
                         }"
@@ -327,6 +340,19 @@
                       <router-link
                         class="dropdown-item dropdown-toggle"
                         :class="{
+                          active: isScoutActive,
+                          'current-page-active': true,
+                        }"
+                        to="/scout"
+                      >
+                        스카우트
+                        <i class="fas fa-chevron-down"></i
+                      ></router-link>
+                    </li>
+                    <li class="dropdown">
+                      <router-link
+                        class="dropdown-item dropdown-toggle"
+                        :class="{
                           active: isProjectActive,
                           'current-page-active': true,
                         }"
@@ -447,6 +473,9 @@ const currentPath = computed(() => route.path)
 // 각 메뉴의 활성 여부 판별
 const isAffiliationActive = computed(() =>
   currentPath.value.startsWith('/affiliation'),
+)
+const isScoutActive = computed(() =>
+  currentPath.value.startsWith('/scout'),
 )
 const isProjectActive = computed(() =>
   currentPath.value.startsWith('/projectListPage'),

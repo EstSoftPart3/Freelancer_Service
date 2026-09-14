@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -16,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsUtils;
 
+import com.example.demo.domain.auth.util.OAuth2SuccessHandler;
 import com.example.demo.domain.user.util.JwtAuthenticationFilter;
 import com.example.demo.domain.user.util.JwtProvider;
 
@@ -28,10 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfigDev {
 
     private final JwtProvider jwtProvider;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    //OAuth2 성공 핸들러, 서비스 주입
-    private final DefaultOAuth2UserService customOAuth2UserService;
-    private final AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -61,6 +62,7 @@ public class SecurityConfigDev {
                 .authorizeHttpRequests(auth -> auth
                 		.requestMatchers(reqeust -> CorsUtils.isPreFlightRequest(reqeust)).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/v1/auth/google/login").permitAll()
                         // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
                         .requestMatchers("/actuator/**").permitAll()
                         // 1. 관리자 로그인 및 토큰 재발급은 누구나 접근 가능
@@ -73,13 +75,11 @@ public class SecurityConfigDev {
 
                         //OAuth2 관련 로그인/인증 엔드포인트 접근 허용
                         .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/v1/auth/**").permitAll()
                         .anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .oauth2Login(oauth -> oauth.successHandler(oAuth2SuccessHandler))
 
-                // OAuth2 로그인 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable());
 

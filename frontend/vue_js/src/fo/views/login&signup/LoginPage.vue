@@ -327,7 +327,7 @@ const socialProviders = [
 
 const handleSocialLogin = (provider) => {
   if (provider === 'google') {
-    const clientId = '757940029111-ukt42rdb3ae7ijgl0suckbi5gbhvbi5c.apps.googleusercontent.com'
+    const clientId = '757940029111-oci5ckjj9pj0bb66qvppl576me17f9md.apps.googleusercontent.com'
 
     const redirectUri = `${window.location.origin}/oauth/callback`
 

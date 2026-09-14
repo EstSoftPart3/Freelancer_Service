@@ -119,4 +119,57 @@
 
   <select id="selectEmailByUserSq" resultType="string"> SELECT user_email FROM TBL_USER_M WHERE
     user_sq = #{userSq} AND user_is_deleted_yn = 'N' </select>
+    
+    <!-- 이메일로 사용자 조회 (구글/소셜 로그인용) -->
+  <select id="findByUserEmail" parameterType="string" resultType="com.example.demo.domain.user.dto.UserDTO">
+    SELECT 
+      user_sq AS userSq,
+      address_sq AS addressSq,
+      user_id AS userId,
+      user_email AS userEmail,
+      user_pw AS userPw,
+      user_nm AS userNm,
+      user_gender_cd AS userGenderCd,
+      user_phone_num AS userPhoneNum,
+      user_birth_dt AS userBirthDt,
+      user_type_cd AS userTypeCd,
+      user_signup_type_cd AS userSignupTypeCd,
+      user_agreed_privacy_policy_yn AS userAgreedPrivacyPolicyYn,
+      user_created_at_dtm AS userCreatedAtDtm,
+      user_modified_at_dtm AS userModifiedAtDtm,
+      user_is_deleted_yn AS userIsDeletedYn,
+      user_refresh_token AS userRefreshToken
+    FROM TBL_USER_M
+    WHERE user_email = #{userEmail}
+      AND user_is_deleted_yn = 'N'
+  </select>
+
+  <!-- 신규 사용자 저장 (구글/소셜 회원가입용) -->
+  <insert id="save" parameterType="com.example.demo.domain.user.dto.UserDTO" useGeneratedKeys="true" keyProperty="userSq">
+    INSERT INTO TBL_USER_M (
+      address_sq,
+      user_id,
+      user_email,
+      user_pw,
+      user_nm,
+      user_gender_cd,
+      user_phone_num,
+      user_birth_dt,
+      user_type_cd,
+      user_signup_type_cd
+    ) VALUES (
+      #{addressSq},
+      #{userId},
+      #{userEmail},
+      #{userPw},
+      #{userNm},
+      #{userGenderCd},
+      #{userPhoneNum},
+      #{userBirthDt},
+      #{userTypeCd},
+      #{userSignupTypeCd}
+    )
+  </insert>
+    
+    
 </mapper>

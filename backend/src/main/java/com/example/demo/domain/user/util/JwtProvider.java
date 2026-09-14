@@ -45,7 +45,7 @@ public class JwtProvider {
                 refreshTokenExpiration);
     }
 
-    private String createToken(Long userSq, Long userTypeCd, long expirationTime) {
+    public String createToken(Long userSq, Long userTypeCd, long expirationTime) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationTime);
 
