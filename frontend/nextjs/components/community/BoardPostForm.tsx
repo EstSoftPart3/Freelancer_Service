@@ -83,6 +83,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const [skillTags, setSkillTags] = useState<SkillTag[]>(boardData.skillTags)
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>(boardData.attachments)
   const [newFiles, setNewFiles] = useState<File[]>([])
+  const [submitting, setSubmitting] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [skillOpen, setSkillOpen] = useState(false)
   const [categoryCd, setCategoryCd] = useState<number | null>(boardData.categoryCd)
@@ -203,6 +204,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
   }
 
   const handleSubmit = async () => {
+    if (submitting) return
     // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
     if (!validate([
       { key: 'category', invalid: isBoard && categoryCd === null, message: '카테고리를 선택해주세요.' },
@@ -234,6 +236,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
     formData.append('attachments', existingAttachments.map((a) => a.fileSq).join(','))
     newFiles.forEach((f) => formData.append('files', f))
 
+    setSubmitting(true)
     try {
       if (isEdit) {
         const { data } = await api.put<{ status: string; message: string }>(
@@ -257,6 +260,8 @@ export default function BoardPostForm({ boardCategory }: Props) {
       // (일괄 '실패하였습니다'로 덮으면 사용자가 원인을 알 수 없다)
       const serverMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       alertStore.show(serverMessage || '게시글 등록에 실패하였습니다.', 'danger')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -463,7 +468,9 @@ export default function BoardPostForm({ boardCategory }: Props) {
 
       {/* 버튼 */}
       <div className="flex justify-end gap-2">
-        <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
+        <Button onClick={handleSubmit} disabled={submitting}>
+          {submitting ? (isEdit ? '수정 중...' : '등록 중...') : (isEdit ? '수정' : '등록')}
+        </Button>
         <Button variant="outline" onClick={handleCancel}>취소</Button>
       </div>
 

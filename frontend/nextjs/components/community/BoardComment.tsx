@@ -33,36 +33,50 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [delConfirm, setDelConfirm] = useState(false)
+  // 추천·수정·답글·삭제 4개 액션이 각자 버튼이라 연타 시 중복 요청이 나갈 수 있다 — 하나의 in-flight
+  // 가드로 묶는다(동시에 두 액션을 누를 일은 없으니 액션별로 나눌 필요는 없다).
+  const [actionPending, setActionPending] = useState(false)
   const isOwner = viewerSq != null && comment.userSq === viewerSq
   // 한 컴포넌트에 입력이 둘(수정·답글)이라 키로 구분한다.
   const { markInvalid, fieldProps, clearField } = useFormErrors<'edit' | 'reply'>()
 
   const recommend = async () => {
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
+    if (actionPending) return
+    setActionPending(true)
     try {
       const { data } = await api.post<{ status: string; message: string }>(`/comment/${comment.sq}/recommend`)
       if (data.status === 'OK') { alertStore.show(data.message, 'success'); onRefresh() }
     } catch { alertStore.show('추천 반영에 실패하였습니다.', 'danger') }
+    finally { setActionPending(false) }
   }
 
   const submitEdit = async () => {
     if (!editText.trim()) { markInvalid(['edit'], '내용을 입력해주세요.'); return }
+    if (actionPending) return
+    setActionPending(true)
     try {
       const { data } = await api.put<{ status: string; message: string }>(`/comment/${comment.sq}`, { description: editText })
       if (data.status === 'OK') { alertStore.show(data.message, 'success'); setEditMode(false); onRefresh() }
     } catch { alertStore.show('댓글 수정에 실패하였습니다.', 'danger') }
+    finally { setActionPending(false) }
   }
 
   const handleDelete = async () => {
+    if (actionPending) return
+    setActionPending(true)
     try {
       const { data } = await api.patch<{ status: string; message: string }>(`/comment/${comment.sq}`)
       if (data.status === 'OK') { alertStore.show(data.message, 'success'); onRefresh() }
     } catch { alertStore.show('댓글 삭제에 실패하였습니다.', 'danger') }
+    finally { setActionPending(false) }
   }
 
   const submitReply = async () => {
     // 원래 조용히 돌아섰던 자리 — 문구는 그대로 두고 어느 칸이 비었는지만 보여준다.
     if (!replyText.trim()) { markInvalid(['reply']); return }
+    if (actionPending) return
+    setActionPending(true)
     try {
       const { data } = await api.post<{ status: string; message: string }>('/comment', {
         parentCommentSq: comment.sq,
@@ -75,6 +89,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
         setShowReply(false); setReplyText(''); onRefresh()
       }
     } catch { alertStore.show('답글 등록 실패', 'danger') }
+    finally { setActionPending(false) }
   }
 
   return (
@@ -107,7 +122,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
                       <button className="text-xs text-destructive" onClick={() => setDelConfirm(true)}>삭제</button>
                     </>
                   ) : (
-                    <button className="text-xs text-primary hover:underline" onClick={recommend}>
+                    <button className="text-xs text-primary hover:underline disabled:opacity-60" disabled={actionPending} onClick={recommend}>
                       추천 {comment.recommendCnt}
                     </button>
                   )}
@@ -119,7 +134,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
           ) : (
             <div className="flex gap-2">
               <Input {...fieldProps('edit')} value={editText} onChange={(e) => { clearField('edit'); setEditText(e.target.value) }} className="flex-1" />
-              <Button size="sm" onClick={submitEdit}>수정 완료</Button>
+              <Button size="sm" onClick={submitEdit} disabled={actionPending}>수정 완료</Button>
               <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>취소</Button>
             </div>
           )}
@@ -137,7 +152,7 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
               onChange={(e) => { clearField('reply'); setReplyText(e.target.value) }}
               placeholder="답글을 입력하세요"
             />
-            <Button size="sm" onClick={submitReply}>등록</Button>
+            <Button size="sm" onClick={submitReply} disabled={actionPending}>등록</Button>
             <Button size="sm" variant="outline" onClick={() => setShowReply(false)}>취소</Button>
           </div>
         </div>

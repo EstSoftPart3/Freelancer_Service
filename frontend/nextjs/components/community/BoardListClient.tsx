@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -54,6 +54,9 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
   )
   const [isLoading, setIsLoading] = useState(false)
+  // 정렬·검색·페이지 전환을 빠르게 연달아 누르면 먼저 보낸 느린 요청이 나중 요청보다 늦게
+  // 응답할 수 있다 — 응답 순서가 아니라 "가장 마지막으로 보낸 요청"만 반영한다.
+  const requestSeqRef = useRef(0)
 
   // 필터 state — URL 우선, 없으면 탭 전환 간 보존되는 communityStore 값으로 폴백
   // (getState()로 스냅샷만 읽어 store 변경에 이 컴포넌트가 불필요하게 재구독되지 않게 한다)
@@ -80,6 +83,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
   const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string, cat: number | null) => {
+    const seq = ++requestSeqRef.current
     setIsLoading(true)
     try {
       let url = isAll
@@ -91,12 +95,17 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       if (isBoard && cat !== null) url += `&category=${cat}`
 
       const { data } = await api.get<{ output: BoardListResponse }>(url)
+      if (seq !== requestSeqRef.current) return // 그 사이 더 최신 요청이 나갔다 — 이 응답은 버린다
       const out = data.output
       const total = out.totalElements === 0 ? 1 : Math.ceil(out.totalElements / PAGE_SIZE)
       setTotalPages(total)
       setBoardList(out.boards)
-    } catch { alertStore.show('게시글을 불러올 수 없습니다.', 'danger') }
-    finally { setIsLoading(false) }
+    } catch {
+      if (seq !== requestSeqRef.current) return
+      alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+    } finally {
+      if (seq === requestSeqRef.current) setIsLoading(false)
+    }
   }, [boardCategory, isQna, isAll, isBoard])
 
   // URL 반영
