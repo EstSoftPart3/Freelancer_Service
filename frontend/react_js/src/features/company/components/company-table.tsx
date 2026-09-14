@@ -2,6 +2,9 @@ import { useState, useMemo } from 'react'
 import {
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type SortingState,
@@ -102,6 +105,10 @@ export function CompanyTable({
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    // 클라이언트 페이징이므로 반드시 필요 — 없으면 페이지를 넘겨도 전체 행이 그대로 보인다.
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
   return (
