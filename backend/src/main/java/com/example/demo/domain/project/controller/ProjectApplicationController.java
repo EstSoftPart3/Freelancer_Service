@@ -72,6 +72,17 @@ public class ProjectApplicationController {
 				ApiResponse.of(HttpStatus.OK, "인터뷰 가능 시간 조회 성공", projectService.fetchProjectAvailableTimes(projectSq)));
 	}
 
+	// 상태별 탭 배지 집계 — 현재 페이지가 아니라 조건에 맞는 전체 건수를 상태별로 준다.
+	@GetMapping("/{projectSq}/counts")
+	public ResponseEntity<ApiResponse<Map<String, Integer>>> getApplicantStatusCounts(
+			@PathVariable Long projectSq,
+			@RequestParam(defaultValue = "personal") String applicantType,
+			@RequestParam(defaultValue = "all") String searchType,
+			@RequestParam(defaultValue = "") String keyword) {
+		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "지원자 상태별 건수 조회 성공",
+				projectApplicationService.getApplicantStatusCounts(projectSq, applicantType, searchType, keyword)));
+	}
+
 	@GetMapping("/{projectSq}/personal")
 	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
 			@PathVariable Long projectSq,

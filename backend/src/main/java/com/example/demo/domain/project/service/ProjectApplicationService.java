@@ -278,6 +278,33 @@ public class ProjectApplicationService {
 				.collect(Collectors.toList());
 	}
 
+	private static final String[] APPLICANT_STATUS_FILTERS = {
+			"passed", "in_progress", "interview_confirmed", "interview_requested", "rejected" };
+
+	/**
+	 * 지원현황 모달의 상태별 탭 배지 집계. 지금까지는 프런트가 현재 페이지·필터로 로드된
+	 * 목록(allApplicants)만으로 배지를 계산해, 여러 페이지에 걸친 지원자는 "전체" 배지가
+	 * 실제 전체 건수가 아니라 현재 페이지 건수만 보여줬다(2026-09-14, 28번). 페이징과
+	 * 무관하게 상태별로 각각 COUNT 해서 돌려준다.
+	 */
+	@Transactional(readOnly = true)
+	public Map<String, Integer> getApplicantStatusCounts(
+			Long projectSq, String applicantType, String searchType, String keyword) {
+		Map<String, Integer> counts = new HashMap<>();
+		boolean corporate = "corporate".equals(applicantType);
+		int all = corporate
+				? applicationMapper.countCorporateApplicantsByProjectSq(projectSq, "all", searchType, keyword)
+				: applicationMapper.countPersonalApplicantsByProjectSq(projectSq, "all", searchType, keyword);
+		counts.put("all", all);
+		for (String filter : APPLICANT_STATUS_FILTERS) {
+			int cnt = corporate
+					? applicationMapper.countCorporateApplicantsByProjectSq(projectSq, filter, searchType, keyword)
+					: applicationMapper.countPersonalApplicantsByProjectSq(projectSq, filter, searchType, keyword);
+			counts.put(filter, cnt);
+		}
+		return counts;
+	}
+
 	@Transactional
 	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
 			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
