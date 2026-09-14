@@ -9,6 +9,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { useDebounce } from '@/hooks/use-debounce'
 import { projectApi } from './api/project-api'
 import { ProjectDialogs } from './components/project-dialogs'
 import { ProjectProvider } from './components/project-provider'
@@ -53,16 +54,14 @@ export function ProjectList() {
     fetchProjects()
   }, [fetchProjects])
 
+  const debouncedKeyword = useDebounce(keyword, 500)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (keyword !== (search.keyword || '')) {
-        navigate({
-          search: (prev) => ({ ...prev, keyword: keyword || undefined, page: 1 }),
-        })
-      }
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [keyword, navigate, search.keyword])
+    if (debouncedKeyword !== (search.keyword || '')) {
+      navigate({
+        search: (prev) => ({ ...prev, keyword: debouncedKeyword || undefined, page: 1 }),
+      })
+    }
+  }, [debouncedKeyword, navigate, search.keyword])
 
   return (
     <ProjectProvider refresh={fetchProjects}>
