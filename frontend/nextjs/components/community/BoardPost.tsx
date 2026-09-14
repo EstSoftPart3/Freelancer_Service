@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import ReportModal from '@/components/community/ReportModal'
 import { CategoryBadge, SecretBadge } from '@/components/community/CategoryBadge'
+import { STATUS } from '@/components/community/boardMeta'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -18,13 +19,6 @@ function fmtDate(iso?: string) {
   if (!iso) return ''
   const d = new Date(iso)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-const STATUS: Record<number, { label: string; cls: string }> = {
-  1501: { label: '진행중', cls: 'bg-yellow-100 text-yellow-800' },
-  1502: { label: '채택완료', cls: 'bg-green-100 text-green-800' },
-  1503: { label: '자체해결', cls: 'bg-gray-100 text-gray-700' },
-  1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
 }
 
 type BoardType = 'board' | 'qna' | 'answer' | 'notice' | 'voc'

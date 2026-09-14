@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import {
@@ -29,13 +29,6 @@ const emptyBoard: BoardDetail = {
   attachments: [], comments: [], answers: [],
 }
 
-const STATUS: Record<number, { label: string; cls: string }> = {
-  1501: { label: '진행중', cls: 'bg-yellow-100 text-yellow-800' },
-  1502: { label: '채택완료', cls: 'bg-green-100 text-green-800' },
-  1503: { label: '자체해결', cls: 'bg-gray-100 text-gray-700' },
-  1504: { label: '미해결', cls: 'bg-red-100 text-red-700' },
-}
-
 function fmtDate(iso: string) {
   const d = new Date(iso)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -60,14 +53,21 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
   // 채택 확인
   const [adoptConfirm, setAdoptConfirm] = useState<{ open: boolean; sq: number }>({ open: false, sq: 0 })
 
+  // URL의 answerSq는 getBoard()가 채택/답변등록 등으로 재호출될 때마다 여전히 남아있다 —
+  // 매번 다시 열면 사용자가 방금 닫은 모달이 새로고침 후 되살아난다. 같은 sq는 한 번만 자동으로 연다.
+  const autoOpenedSqRef = useRef<number | null>(null)
+
   const getBoard = useCallback(async () => {
     try {
       const { data } = await api.get<{ output: BoardDetail }>(`/qna/${boardSq}`)
       setBoardInfo(data.output)
       setViewerSq(data.output.viewerSq ?? null)
-      // URL에 answerSq가 있으면 자동 모달 오픈
+      // URL에 answerSq가 있으면 자동 모달 오픈(같은 sq에 대해 한 번만)
       const targetSq = Number(searchParams.get('answerSq'))
-      if (targetSq) openAnswerDetail(targetSq)
+      if (targetSq && autoOpenedSqRef.current !== targetSq) {
+        autoOpenedSqRef.current = targetSq
+        openAnswerDetail(targetSq)
+      }
     } catch (err: unknown) {
       // 삭제됐거나 유효하지 않은 게시글은 백엔드가 400을 반환한다.
       // 이 경우 안내 후 Q&A 게시판 목록으로 되돌린다(그 외 일시적 오류는 이동하지 않음).
