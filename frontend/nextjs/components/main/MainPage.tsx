@@ -89,6 +89,9 @@ export default function MainPage({ initialProjects }: Props = {}) {
   const [currentSort, setCurrentSort] = useState<SortType>('views')
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // 정렬 버튼 연타 시 늦게 보낸 요청이 먼저 응답한 요청 결과를 덮어써
+  // "선택된 정렬"과 "표시된 목록"이 어긋나는 것을 막기 위한 요청 순번
+  const sortRequestSeq = useRef(0)
 
   const total = SLIDES.length
 
@@ -121,6 +124,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
   }
 
   const fetchPopularProjects = useCallback(async (sortType: SortType) => {
+    const requestId = ++sortRequestSeq.current
     setCurrentSort(sortType)
     setLoading(true)
     try {
@@ -128,11 +132,15 @@ export default function MainPage({ initialProjects }: Props = {}) {
       const { data } = await api.get<PopularProject[]>('/projects/popular', {
         params: { sortType },
       })
+      // 이 응답을 기다리는 동안 더 최신 정렬 요청이 나갔다면 폐기 — 느린 이전 응답이
+      // 최신 정렬 버튼 선택 상태를 덮어써 목록과 선택이 어긋나는 것을 방지한다.
+      if (requestId !== sortRequestSeq.current) return
       setProjects(Array.isArray(data) ? data : [])
     } catch {
+      if (requestId !== sortRequestSeq.current) return
       console.error('[MainPage] 인기 프로젝트 로드 실패')
     } finally {
-      setLoading(false)
+      if (requestId === sortRequestSeq.current) setLoading(false)
     }
   }, [])
 

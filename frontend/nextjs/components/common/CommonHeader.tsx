@@ -379,7 +379,7 @@ export default function CommonHeader() {
                 <button
                   className={cn(
                     'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium',
-                    isActive(['/community', '/board', '/qna'])
+                    isActive(['/community', '/board', '/qna', '/voc'])
                       ? 'bg-primary/10 text-primary'
                       : 'hover:bg-muted',
                   )}
