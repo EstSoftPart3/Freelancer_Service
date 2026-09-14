@@ -95,7 +95,7 @@ export default function AffiliatedScrapClient() {
 
       <ul className="divide-y">
         {scraps.map((scrap) => (
-          <li key={scrap.id} className="py-4 space-y-2">
+          <li key={scrap.sq ?? scrap.id} className="py-4 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-base font-medium">{scrap.companyNm}</span>
               <div className="flex gap-2">

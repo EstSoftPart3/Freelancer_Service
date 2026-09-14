@@ -57,17 +57,24 @@ export default function ResumeDetailModal({ resumeSq, projectSq, applicationSq, 
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
+  // 단일 인스턴스를 resumeSq로만 토글해 여러 화면(ApplyStatusModal·AppliedProjectsClient 등)이
+  // 공유한다. 이전 resumeSq 요청이 늦게 도착하면 최신 요청 결과를 덮어쓸 수 있어 순번으로 거른다.
+  const requestSeq = useRef(0)
+
   const load = useCallback(async () => {
     if (resumeSq == null) return
+    const seq = ++requestSeq.current
     setInfo(null)
     try {
       const { data } = projectSq != null && applicationSq != null
         ? await api.post('/mypage/resume-detail-view', { resumeSq, projectSq, applicationSq })
         : await api.get(`/mypage/resume-detail/${resumeSq}`)
+      if (seq !== requestSeq.current) return // 그 사이 다른 resumeSq로 새 요청이 나갔다 — 폐기
       const out: ResumeInfo = data.output ?? {}
       setInfo(out)
       setExpanded(new Set((out.projectList ?? []).map((_, i) => i))) // 기본 전체 펼침
     } catch (e) {
+      if (seq !== requestSeq.current) return
       // 삭제된 이력서 등: 백엔드가 "유효하지 않은 이력서입니다." 400 → 에러 토스트 + 모달 닫기
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message
       toast.error(msg || '이력서를 불러올 수 없습니다.')
