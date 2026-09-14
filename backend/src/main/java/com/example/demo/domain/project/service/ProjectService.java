@@ -654,6 +654,13 @@ public class ProjectService {
 			} else if (!resumeOwnerSq.equals(userSq)) {
 				throw new IllegalArgumentException("본인 이력서로만 지원할 수 있습니다.");
 			}
+			// 지원취소가 삭제가 아니라 상태 변경(806)이라 단순 유니크 검사는 취소 후 재지원을
+			// 막아버린다 — 지원취소·불합격(802) 을 제외한 "활성" 지원이 이미 있을 때만
+			// 거절한다(2026-09-14, 판단대기 11번). 더블클릭·동시요청으로 지원 행이 중복
+			// 생기고 project_candidate_cnt 가 함께 부풀던 문제를 막는다.
+			if (projectMapper.existsActiveApplication(projectSq, rSq)) {
+				throw new IllegalArgumentException("이미 지원한 이력서입니다.");
+			}
 		});
 
 		request.getResumeSq().forEach(rSq -> {
@@ -694,8 +701,12 @@ public class ProjectService {
 
 	@Transactional
 	public void toggleProjectScrap(long projectSq, ScrapRequest scrapRequest, Long userSq) {
-		boolean hasScrapped = scrapRequest.isHasScrapped();
-		if (!hasScrapped) {
+		// 클라이언트가 보낸 hasScrapped 를 그대로 믿었다 — 화면 상태가 실제 DB 와 어긋나 있으면
+		// (다른 탭에서 토글했거나 확인 버튼이 두 번 발동한 경우 등) 삭제해야 할 때 다시 추가하거나
+		// 추가해야 할 때 다시 지워, 카운트가 음수가 되거나 중복 집계됐다(2026-09-14, 판단대기 8번).
+		// 요청 값은 무시하고 DB 의 실제 상태로 판단한다.
+		boolean alreadyScrapped = projectMapper.existsScrap(projectSq, userSq);
+		if (!alreadyScrapped) {
 			long scrapTypeCd = commonCodeMapper.findCommonCodeSqByName(scrapRequest.getTarget(),
 					ParentCodeEnum.SCRAP_TYPE.getCode());
 			ScrapInsertRequest scrapInsertRequest = new ScrapInsertRequest(userSq, projectSq, scrapTypeCd);
