@@ -86,6 +86,14 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
     getBoard()
   }, [boardSq, getBoard])
 
+  // 답변 상세를 다시 불러오기만 한다 — 조회수 증가는 최초 오픈(openAnswerDetail) 때 한 번만.
+  const refetchAnswerDetail = async (sq: number) => {
+    try {
+      const { data } = await api.get<{ output: BoardDetail }>(`/answer/${sq}`)
+      setDetailAnswer(data.output)
+    } catch { alertStore.show('답변을 불러올 수 없습니다.', 'danger') }
+  }
+
   const openAnswerDetail = async (sq: number) => {
     try {
       const { data } = await api.get<{ output: BoardDetail }>(`/answer/${sq}`)
@@ -213,7 +221,7 @@ export default function QnaDetailClient({ boardSq, initialData }: Props) {
                 comments={detailAnswer.comments ?? []}
                 answerSq={detailAnswer.sq}
                 isAnswer
-                onRefresh={() => openAnswerDetail(detailAnswer.sq)}
+                onRefresh={() => refetchAnswerDetail(detailAnswer.sq)}
               />
             </>
           )}

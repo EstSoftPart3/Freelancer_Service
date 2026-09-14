@@ -47,13 +47,19 @@ export default function VocDetailClient({ boardSq }: Props) {
       setBoardInfo(data.output)
       setViewerSq(data.output.viewerSq ?? null)
     } catch (err: unknown) {
-      // 403 = 남의 비공개 글, 404 = 없거나 삭제된 글. 둘 다 목록으로 돌려보낸다.
+      // 403 = 남의 비공개 글, 404 = 없거나 삭제된 글. 이 둘만 목록으로 돌려보낸다.
       // (서버도 "있는데 못 본다"와 "없다"를 구분해 알려주지 않는다 — 존재 자체가 정보다)
-      if (failedRef.current) return
-      failedRef.current = true
+      // 그 외(네트워크 오류·5xx 등 일시적 오류)는 BoardDetailClient/QnaDetailClient와 동일하게
+      // 안내만 하고 페이지에 머문다 — 실제로 접근 가능한 글인데 일시적 오류로 쫓겨나면 안 된다.
       const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
-      alertStore.show(res?.data?.message ?? '글을 불러올 수 없습니다.', 'danger')
-      router.replace('/voc')
+      if (res?.status === 403 || res?.status === 404) {
+        if (failedRef.current) return
+        failedRef.current = true
+        alertStore.show(res.data?.message ?? '글을 불러올 수 없습니다.', 'danger')
+        router.replace('/voc')
+      } else {
+        alertStore.show(res?.data?.message ?? '글을 불러올 수 없습니다.', 'danger')
+      }
     } finally {
       setLoading(false)
     }
