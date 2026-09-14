@@ -282,6 +282,19 @@ public class ProjectApplicationService {
 			"passed", "in_progress", "interview_confirmed", "interview_requested", "rejected" };
 
 	/**
+	 * 지원현황 조회 3종(개인·기업·집계) 공통 가드. 이 셋 다 인증 주체 확인이 없어서,
+	 * /api/projects 가 JwtAuthenticationFilter.EXCLUDE_URLS 접두사에 걸려 있는 것과 맞물려
+	 * 프로젝트 번호만 알면 누구나 그 회사의 지원자 현황(이름·이력서·상태)을 볼 수 있었다
+	 * (2026-09-14, 28번 작업 중 발견). 이 프로젝트를 등록한 회사 계정만 통과시킨다.
+	 */
+	private void requireProjectOwner(Long projectSq, Long userSq) {
+		Long ownerUserSq = projectMapper.findUserSqByProjectSq(projectSq);
+		if (ownerUserSq == null || !ownerUserSq.equals(userSq)) {
+			throw new IllegalArgumentException("해당 프로젝트의 지원 현황을 조회할 권한이 없습니다.");
+		}
+	}
+
+	/**
 	 * 지원현황 모달의 상태별 탭 배지 집계. 지금까지는 프런트가 현재 페이지·필터로 로드된
 	 * 목록(allApplicants)만으로 배지를 계산해, 여러 페이지에 걸친 지원자는 "전체" 배지가
 	 * 실제 전체 건수가 아니라 현재 페이지 건수만 보여줬다(2026-09-14, 28번). 페이징과
@@ -289,7 +302,8 @@ public class ProjectApplicationService {
 	 */
 	@Transactional(readOnly = true)
 	public Map<String, Integer> getApplicantStatusCounts(
-			Long projectSq, String applicantType, String searchType, String keyword) {
+			Long projectSq, String applicantType, String searchType, String keyword, Long userSq) {
+		requireProjectOwner(projectSq, userSq);
 		Map<String, Integer> counts = new HashMap<>();
 		boolean corporate = "corporate".equals(applicantType);
 		int all = corporate
@@ -307,7 +321,8 @@ public class ProjectApplicationService {
 
 	@Transactional
 	public PagedApplicantResponseDTO<PersonalApplicantDTO> getPersonalApplicants(
-			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
+			Long projectSq, int page, int size, String filter, String searchType, String keyword, Long userSq) {
+		requireProjectOwner(projectSq, userSq);
 
 		int offset = (page - 1) * size;
 		List<PersonalApplicantDTO> applicants = applicationMapper.findPersonalApplicantsByProjectSq(
@@ -344,7 +359,8 @@ public class ProjectApplicationService {
 
 	@Transactional
 	public PagedApplicantResponseDTO<CorporateApplicantGroupDTO> getCorporateApplicantsGrouped(
-			Long projectSq, int page, int size, String filter, String searchType, String keyword) {
+			Long projectSq, int page, int size, String filter, String searchType, String keyword, Long userSq) {
+		requireProjectOwner(projectSq, userSq);
 
 		int offset = (page - 1) * size;
 		List<String> companyNames = applicationMapper.findDistinctCompanyNamesByProject(projectSq, filter, searchType,
