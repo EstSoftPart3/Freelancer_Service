@@ -235,8 +235,10 @@
   </select>
 
 
+  <!-- resume_is_deleted_yn = 'N' 없이는 소프트삭제된 이력서도 소유자 확인을 통과해 다시
+    읽히고 복사될 수 있었다(selectResumeBasic 등 다른 조회는 이미 이 조건을 건다). -->
   <select id="findUserByResumeSq" resultType="Long"> SELECT user_sq FROM TBL_RESUME_M WHERE
-    resume_sq = #{resumeSq} </select>
+    resume_sq = #{resumeSq} AND resume_is_deleted_yn = 'N' </select>
 
   <select id="existsApplicationByCompanyAndResume" resultType="boolean"> SELECT EXISTS(SELECT 1 FROM
     TBL_PROJECT_APPLICATION_H WHERE company_sq = #{companySq} AND resume_sq = #{resumeSq}) </select>
@@ -273,7 +275,7 @@
     resultMap="ResumeResultMap"> SELECT r.resume_sq, r.user_sq, r.address_sq, r.resume_ttl,
     r.resume_nm, r.resume_birth_dt, r.resume_phone_num, r.resume_email, r.resume_greeting_txt,
     r.resume_is_notification_yn, r.resume_is_representative_yn FROM TBL_RESUME_M r WHERE r.resume_sq
-    = #{resumeSq} </select>
+    = #{resumeSq} AND r.resume_is_deleted_yn = 'N' </select>
   <select id="selectAddressByAddressSq" parameterType="long"
     resultType="com.example.demo.domain.mypage.dto.request.ResumeRequestDTO$AddressDTO"> SELECT
     address_sq, zonecode, address, detail_address AS detailAddress, sigungu, latitude, longitude,

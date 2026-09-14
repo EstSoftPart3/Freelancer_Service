@@ -57,9 +57,11 @@ public class ProjectController {
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 생성 성공", null));
 	}
 
+	// @Valid 가 빠져 있어 size 없으면 언페이지드 쿼리+언박싱 NPE 로 500, size=0 이면
+	// ArithmeticException 이 났다 — BaseRequest 의 @NotNull/@Min 이 실제로 걸리게 붙인다.
 	@GetMapping
 	public ResponseEntity<ApiResponse<ProjectListResponse>> getProjectList(Authentication authentication,
-			@ModelAttribute ProjectSearchRequest request) {
+			@Valid @ModelAttribute ProjectSearchRequest request) {
 		JwtAuthenticationToken token = null;
 		if (authentication != null) {
 			token = (JwtAuthenticationToken) authentication;
@@ -171,7 +173,7 @@ public class ProjectController {
 
 	@GetMapping("/regions")
 	public ResponseEntity<ApiResponse<List<ProjectRegionGroupDTO>>> getProjectRegionGroups(
-			@ModelAttribute ProjectSearchRequest request) {
+			@Valid @ModelAttribute ProjectSearchRequest request) {
 
 		return ResponseEntity.ok(
 				ApiResponse.of(HttpStatus.OK, "지역별 프로젝트 그룹 조회 성공",

@@ -11,9 +11,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { board_sq } = await params
-  const notice = await getNoticeDetail(board_sq)
-  // 삭제/존재하지 않는 글은 색인 제외
-  if (!notice) return { title: '공지사항', robots: { index: false } }
+  const { data: notice, confirmedMissing } = await getNoticeDetail(board_sq)
+  // 확실히 삭제/존재하지 않는 글만 색인 제외 — 일시적 조회 실패는 noindex 하지 않는다
+  if (!notice) return { title: '공지사항', robots: { index: confirmedMissing ? false : undefined } }
   return buildPageMetadata({
     title: notice.ttl,
     description: stripHtmlToExcerpt(notice.description),
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NoticeDetailPage({ params }: Props) {
   const { board_sq } = await params
   // generateMetadata와 React cache()로 공유 — 실제 API 호출은 요청당 1회
-  const notice = await getNoticeDetail(board_sq)
+  const { data: notice } = await getNoticeDetail(board_sq)
   return (
     <>
       {notice && (

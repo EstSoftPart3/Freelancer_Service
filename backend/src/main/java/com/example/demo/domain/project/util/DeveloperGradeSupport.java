@@ -15,6 +15,7 @@ import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.community.dto.CommonCodeDTO;
 import com.example.demo.domain.project.dto.response.DevGradeGroupResponse;
+import com.example.demo.domain.project.dto.response.RecruitHeadcountResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -198,6 +199,34 @@ public class DeveloperGradeSupport {
 								: sortKeyOf(c.getCommonCodeEnglishNm()))
 						.thenComparing(CommonCodeDTO::getCommonCodeSq))
 				.map(CommonCodeDTO::getCommonCodeNm)
+				.toList();
+	}
+
+	/**
+	 * 모집인원 목록을 등급 서열로 정렬한다.
+	 *
+	 * <p>
+	 * {@code findRecruitHeadcountsByProjectSq} 의 SQL {@code ORDER BY}는 등급 공통코드의
+	 * {@code common_code_sq} 값 순이라, 세부 9개 뒤에 추가된 대분류 3개가 서열과 무관하게
+	 * 맨 뒤로 밀린다({@code 초초·초중·...·상상·초급·중급·상급} 처럼). {@code TBL_COMMON_CODE_C}
+	 * 에는 정렬 순서 컬럼이 없어 SQL 만으로는 못 고치므로, {@link #sortedGradeNames()} 와 같은
+	 * 방식으로 영문명에서 유도한 서열로 자바에서 재정렬한다. {@code grade} 가 null(총원 모드)인
+	 * 행은 원래 순서(= PK 순)를 유지한다.
+	 * </p>
+	 */
+	public List<RecruitHeadcountResponse> sortRecruitHeadcounts(List<RecruitHeadcountResponse> headcounts) {
+		if (headcounts == null || headcounts.size() < 2) {
+			return headcounts;
+		}
+		Map<String, String> engNmByName = engNmByName();
+		return headcounts.stream()
+				.sorted(Comparator.comparing(h -> {
+					if (h.getGrade() == null) {
+						return Integer.MAX_VALUE;
+					}
+					Integer key = sortKeyOf(engNmByName.get(h.getGrade()));
+					return key == null ? Integer.MAX_VALUE : key;
+				}))
 				.toList();
 	}
 

@@ -515,8 +515,9 @@ public class ProjectService {
 		}
 		// 4. 변경되었으면 새 주소 생성
 		AddressInsertDto newDto = AddressInsertDto.forDetailed(request);
-		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사
-		if (newDto.getZonecode() == null) newDto.setZonecode(existing.getZonecode());
+		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사한다. 단 zonecode 는 주소 자체가
+		// 바뀌는 이 분기에서 옛 값을 물려받으면 새 주소와 안 맞는 우편번호가 남는다
+		// (TBL_ADDRESS_S.zonecode 는 nullable — 비워도 무해하다). 복사하지 않는다.
 		if (newDto.getAreaCodeSq() == null) newDto.setAreaCodeSq(existing.getAreaCodeSq());
 		if (newDto.getLatitude() == null) newDto.setLatitude(existing.getLatitude());
 		if (newDto.getLongitude() == null) newDto.setLongitude(existing.getLongitude());
