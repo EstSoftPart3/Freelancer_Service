@@ -39,11 +39,12 @@ export default function AffiliationProjectsClient() {
   const [currentFilter, setCurrentFilter] = useState('all')
   const [searchType, setSearchType] = useState('all')
   const [searchText, setSearchText] = useState('')
+  const [appliedSearchText, setAppliedSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
-  const fetchStatusCounts = useCallback(async (filter = currentFilter, sType = searchType, kw = searchText) => {
+  const fetchStatusCounts = useCallback(async (filter = currentFilter, sType = searchType, kw = appliedSearchText) => {
     try {
       const { data } = await api.get('/projects/companies/status', {
         params: { keyword: kw || undefined, searchType: sType !== 'all' ? sType : undefined, status: filter !== 'all' ? filter : undefined },
@@ -52,9 +53,9 @@ export default function AffiliationProjectsClient() {
     } catch {
       // non-critical
     }
-  }, [currentFilter, searchType, searchText])
+  }, [currentFilter, searchType, appliedSearchText])
 
-  const fetchProjects = useCallback(async (page = 1, filter = currentFilter, sType = searchType, kw = searchText) => {
+  const fetchProjects = useCallback(async (page = 1, filter = currentFilter, sType = searchType, kw = appliedSearchText) => {
     try {
       const { data } = await api.get('/projects/companies', {
         params: { page, size: PAGE_SIZE, searchType: sType !== 'all' ? sType : undefined, keyword: kw || undefined, status: filter },
@@ -65,7 +66,7 @@ export default function AffiliationProjectsClient() {
     } catch {
       toast.error('프로젝트 목록을 불러올 수 없습니다.')
     }
-  }, [currentFilter, searchType, searchText])
+  }, [currentFilter, searchType, appliedSearchText])
 
   useEffect(() => {
     fetchProjects(currentPage)
@@ -128,8 +129,8 @@ export default function AffiliationProjectsClient() {
               ))}
             </SelectContent>
           </Select>
-          <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchProjects(1)} placeholder="검색어 입력" className="w-40" />
-          <Button size="sm" onClick={() => { setCurrentPage(1); fetchProjects(1); fetchStatusCounts() }}>검색</Button>
+          <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedSearchText(searchText); setCurrentPage(1); fetchProjects(1, currentFilter, searchType, searchText); fetchStatusCounts(currentFilter, searchType, searchText) } }} placeholder="검색어 입력" className="w-40" />
+          <Button size="sm" onClick={() => { setAppliedSearchText(searchText); setCurrentPage(1); fetchProjects(1, currentFilter, searchType, searchText); fetchStatusCounts(currentFilter, searchType, searchText) }}>검색</Button>
         </div>
       </div>
 

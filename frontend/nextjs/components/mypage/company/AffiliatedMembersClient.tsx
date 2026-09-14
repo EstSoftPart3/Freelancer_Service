@@ -19,11 +19,12 @@ export default function AffiliatedMembersClient() {
   const [members, setMembers] = useState<CompanyMember[]>([])
   const [searchType, setSearchType] = useState('all')
   const [searchText, setSearchText] = useState('')
+  const [appliedSearchText, setAppliedSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [fireTarget, setFireTarget] = useState<number | null>(null)
 
-  const fetchMembers = useCallback(async (page = 1, sType = searchType, kw = searchText) => {
+  const fetchMembers = useCallback(async (page = 1, sType = searchType, kw = appliedSearchText) => {
     try {
       const { data } = await api.get('/companies', {
         params: {
@@ -40,7 +41,7 @@ export default function AffiliatedMembersClient() {
     } catch {
       toast.error('소속 인원 목록을 불러올 수 없습니다.')
     }
-  }, [searchType, searchText])
+  }, [searchType, appliedSearchText])
 
   useEffect(() => { fetchMembers(currentPage) }, [fetchMembers, currentPage])
 
@@ -78,8 +79,8 @@ export default function AffiliatedMembersClient() {
             ))}
           </SelectContent>
         </Select>
-        <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchMembers(1)} placeholder="검색어 입력" className="w-40" />
-        <Button size="sm" onClick={() => { setCurrentPage(1); fetchMembers(1) }}>검색</Button>
+        <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedSearchText(searchText); fetchMembers(1, searchType, searchText) } }} placeholder="검색어 입력" className="w-40" />
+        <Button size="sm" onClick={() => { setAppliedSearchText(searchText); setCurrentPage(1); fetchMembers(1, searchType, searchText) }}>검색</Button>
       </div>
 
       <hr />

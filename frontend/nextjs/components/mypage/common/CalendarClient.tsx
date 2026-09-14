@@ -49,16 +49,17 @@ export default function CalendarClient() {
   const userType = getUserType()
   const [searchType, setSearchType] = useState('전체')
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [appliedKeyword, setAppliedKeyword] = useState('')
   const [events, setEvents] = useState<object[]>([])
   const [detailResumeSq, setDetailResumeSq] = useState<number | null>(null)
   const [navConfirm, setNavConfirm] = useState<{ open: boolean; title: string; path: string }>({ open: false, title: '', path: '' })
   const [schedule, setSchedule] = useState<{ open: boolean; mode: 'REGISTER' | 'VIEW'; event: ScheduleEventData | null }>({ open: false, mode: 'REGISTER', event: null })
 
-  const fetchSchedules = useCallback(async () => {
+  const fetchSchedules = useCallback(async (kw = appliedKeyword) => {
     if (!authChecked) return
     try {
       const { data } = await api.get('/mypage/schedule/list', {
-        params: { userSq, userType, searchType, searchKeyword },
+        params: { userSq, userType, searchType, searchKeyword: kw },
       })
       const raw: CalendarEvent[] = data.output ?? []
       setEvents(
@@ -78,7 +79,7 @@ export default function CalendarClient() {
       console.error('일정 조회 실패:', error)
       toast.error('일정을 불러올 수 없습니다.')
     }
-  }, [authChecked, userSq, userType, searchType, searchKeyword])
+  }, [authChecked, userSq, userType, searchType, appliedKeyword])
 
   useEffect(() => { fetchSchedules() }, [fetchSchedules])
 
@@ -151,11 +152,11 @@ export default function CalendarClient() {
         <Input
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && fetchSchedules()}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedKeyword(searchKeyword); fetchSchedules(searchKeyword) } }}
           placeholder="검색어 입력"
           className="w-full min-w-0 flex-1 sm:w-48 sm:flex-none"
         />
-        <Button onClick={fetchSchedules} size="sm">검색</Button>
+        <Button onClick={() => { setAppliedKeyword(searchKeyword); fetchSchedules(searchKeyword) }} size="sm">검색</Button>
       </div>
 
       <div className="min-h-[500px] overflow-x-auto">
