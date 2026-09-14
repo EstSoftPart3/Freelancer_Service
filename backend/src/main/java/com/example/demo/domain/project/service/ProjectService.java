@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
@@ -71,6 +72,7 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
+	private final ResumeMapper resumeMapper;
 
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
@@ -630,6 +632,29 @@ public class ProjectService {
 		}
 
 		Optional<Long> userCompanySq = Optional.ofNullable(companyService.fetchCompanySq(userSq));
+
+		// 요청 본문의 resumeSq 를 검증 없이 그대로 썼다 — 로그인만 하면 남의 이력서 번호를
+		// 실어 타인의 이력서를 기업에 제출할 수 있었다(2026-09-14, 판단대기 7번).
+		// 규칙: PERSONAL 지원은 본인 이력서만, COMPANY(대리지원)는 지원자 본인이 이 요청자의
+		// 소속 회사원이어야 한다.
+		boolean isCompanyApply = "COMPANY".equals(request.getProjectApplicationTyp());
+		if (isCompanyApply && userCompanySq.isEmpty()) {
+			throw new IllegalArgumentException("소속 회사 정보가 없어 대리 지원할 수 없습니다.");
+		}
+		request.getResumeSq().forEach(rSq -> {
+			Long resumeOwnerSq = resumeMapper.findUserByResumeSq(rSq);
+			if (resumeOwnerSq == null) {
+				throw new IllegalArgumentException("존재하지 않는 이력서입니다.");
+			}
+			if (isCompanyApply) {
+				Long ownerCompanySq = affiliationMapper.findMemberCompanySq(resumeOwnerSq);
+				if (ownerCompanySq == null || !ownerCompanySq.equals(userCompanySq.get())) {
+					throw new IllegalArgumentException("우리 소속 회원의 이력서만 지원에 사용할 수 있습니다.");
+				}
+			} else if (!resumeOwnerSq.equals(userSq)) {
+				throw new IllegalArgumentException("본인 이력서로만 지원할 수 있습니다.");
+			}
+		});
 
 		request.getResumeSq().forEach(rSq -> {
 			ProjectApplicationEntity projectApplicationEntity = ProjectApplicationEntity.from(projectSq,
