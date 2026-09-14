@@ -10,7 +10,22 @@ import { useRouter } from 'next/navigation'
 import { Calculator, ChevronDown, Sparkles } from 'lucide-react'
 import api from '@/lib/api'
 import SkillPickerModal from './SkillPickerModal'
+import { useUserStore } from '@/stores/userStore'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import type { RequiredSkillGroup } from '@/types'
+
+// 로그인 사용자별 "이전 계산 이력" — 백엔드에 저장 API가 없어 브라우저에만 남긴다(프로토타입 한정).
+function historyKey(userSq: number): string {
+  return `salaryCalcHistory:${userSq}`
+}
 
 type Employment = 'EMPLOYED' | 'FREELANCE'
 
@@ -83,7 +98,13 @@ function ProgressRing({ value, max }: { value: number; max: number }) {
 
 export default function SalaryCalculatorForm() {
   const router = useRouter()
+  const { isLoggedIn, userSq } = useUserStore()
   const [forms, setForms] = useState<FormsData | null>(null)
+
+  // 로그인 상태로 이 화면에 들어왔고, 이전에 계산해 둔 이력이 있으면
+  // "바로 리포트를 볼지 / 새로 계산할지" 먼저 물어본다.
+  const [historyPayload, setHistoryPayload] = useState<Record<string, unknown> | null>(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   useEffect(() => {
     api
@@ -91,6 +112,28 @@ export default function SalaryCalculatorForm() {
       .then(({ data }) => setForms(data.output))
       .catch(() => console.error('[SalaryCalculator] 폼 메타데이터 로드 실패'))
   }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn() || !userSq) return
+    const raw = localStorage.getItem(historyKey(userSq))
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHistoryPayload(parsed)
+      setShowHistoryModal(true)
+    } catch {
+      localStorage.removeItem(historyKey(userSq))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userSq])
+
+  function goToPreviousReport() {
+    if (!historyPayload) return
+    sessionStorage.setItem('salaryCalcInput', JSON.stringify(historyPayload))
+    setShowHistoryModal(false)
+    router.push('/salary/report')
+  }
 
   const regionOptions = useMemo(
     () => (forms ? [...forms.cities.map((c) => c.areaName), REGION_REMOTE] : []),
@@ -164,6 +207,9 @@ export default function SalaryCalculatorForm() {
       jobChangeCount: jobChangeCount || null,
     }
     sessionStorage.setItem('salaryCalcInput', JSON.stringify(payload))
+    if (isLoggedIn() && userSq) {
+      localStorage.setItem(historyKey(userSq), JSON.stringify(payload))
+    }
     router.push('/salary/analyzing')
   }
 
@@ -487,6 +533,25 @@ export default function SalaryCalculatorForm() {
           onConfirm={setStack}
         />
       )}
+
+      <Dialog open={showHistoryModal} onOpenChange={(o) => { if (!o) setShowHistoryModal(false) }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>이전에 계산한 연봉 리포트가 있어요</DialogTitle>
+            <DialogDescription>
+              {String(historyPayload?.job ?? '')} · {String(historyPayload?.years ?? '')} ·{' '}
+              {String(historyPayload?.region ?? '')} 조건으로 계산한 이력이 남아있어요. 바로
+              리포트를 볼까요, 새로 계산할까요?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHistoryModal(false)}>
+              새로 계산하기
+            </Button>
+            <Button onClick={goToPreviousReport}>이전 리포트 보기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

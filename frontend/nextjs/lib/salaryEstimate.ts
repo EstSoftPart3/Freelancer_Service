@@ -28,16 +28,25 @@ export interface SkillBump {
   bumpPct: number
 }
 
+export interface CompanyRecommendation {
+  companyNm: string
+  matchedCount: number
+  avgSalary: number
+}
+
 export interface SalaryReportData {
   mySalary: number
   meanSalary: number
   percentileTop: number // "상위 N%"에 쓸 값(1~99)
   histogram: HistogramBucket[]
-  yearProjection: { normal: YearPoint[]; conservative: YearPoint[] }
+  // grind = "인생 빡세게 모드" — 야근·자격증·이직 등 적극적으로 커리어에 투자했을 때의 성장률
+  yearProjection: { normal: YearPoint[]; grind: YearPoint[] }
   skillCandidates: SkillBump[]
+  companyRecommendations: CompanyRecommendation[]
 }
 
-function hashString(s: string): number {
+// 이 파일과 lib/salaryRanking.ts가 함께 쓰는 결정론적 PRNG 유틸 — export해서 재사용한다.
+export function hashString(s: string): number {
   let h = 5381
   for (let i = 0; i < s.length; i++) {
     h = (h * 33) ^ s.charCodeAt(i)
@@ -46,7 +55,7 @@ function hashString(s: string): number {
 }
 
 // mulberry32 — 시드 하나로 재현 가능한 0~1 난수열을 만드는 가벼운 PRNG
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   let a = seed
   return function () {
     a |= 0
@@ -57,7 +66,7 @@ function mulberry32(seed: number) {
   }
 }
 
-function normalPdf(z: number): number {
+export function normalPdf(z: number): number {
   return Math.exp(-(z * z) / 2) / Math.sqrt(2 * Math.PI)
 }
 
@@ -70,7 +79,7 @@ function normalCdf(z: number): number {
   return p
 }
 
-const roundTo10 = (n: number) => Math.round(n / 10) * 10
+export const roundTo10 = (n: number) => Math.round(n / 10) * 10
 
 export function computeSalaryReport(input: SalaryCalcInput, catalogSkills: string[]): SalaryReportData {
   const seed = hashString(`${input.job}|${input.years}|${input.region}|${input.employment}`)
@@ -107,9 +116,10 @@ export function computeSalaryReport(input: SalaryCalcInput, catalogSkills: strin
     target.isMine = true
   }
 
-  // 연도별 추정 — "일반" 시나리오와, 성장률을 낮춘 "보수적" 시나리오
+  // 연도별 추정 — "일반" 시나리오와, 성장률을 끌어올린 "인생 빡세게 모드"
+  // (야근·자격증·이직 등 커리어에 적극 투자했을 때 가능한 성장률이라는 설정)
   const normalGrowth = 0.04 + rng() * 0.05
-  const hardGrowth = normalGrowth * (0.35 + rng() * 0.25)
+  const grindGrowth = Math.min(0.28, normalGrowth * (1.7 + rng() * 0.9))
   const YEARS_AHEAD = 5
   const buildProjection = (growth: number): YearPoint[] =>
     Array.from({ length: YEARS_AHEAD + 1 }, (_, i) => ({
@@ -129,15 +139,39 @@ export function computeSalaryReport(input: SalaryCalcInput, catalogSkills: strin
     bumpPct: Math.round((2 + rng() * 7) * 2) / 2, // 2.0~9.0%, 0.5 단위
   }))
 
+  // 같은 조건 개발자가 많이 다니는 회사 — 향후 회사 추천 서비스의 미리보기.
+  // 실제 재직 데이터가 아니라, 이 조건의 시드로 회사 후보를 섞고 그럴듯한 재직자 수·평균 연봉을 붙인 목데이터.
+  const companyRng = mulberry32(hashString(`company|${input.job}|${input.years}|${input.region}`))
+  const shuffledCompanies = [...COMPANY_POOL]
+  for (let i = shuffledCompanies.length - 1; i > 0; i--) {
+    const j = Math.floor(companyRng() * (i + 1))
+    ;[shuffledCompanies[i], shuffledCompanies[j]] = [shuffledCompanies[j], shuffledCompanies[i]]
+  }
+  const companyRecommendations: CompanyRecommendation[] = shuffledCompanies
+    .slice(0, 5)
+    .map((companyNm) => ({
+      companyNm,
+      matchedCount: Math.round(8 + companyRng() * 54),
+      avgSalary: roundTo10(meanSalary * (0.9 + companyRng() * 0.24)),
+    }))
+    .sort((a, b) => b.matchedCount - a.matchedCount)
+
   return {
     mySalary,
     meanSalary,
     percentileTop,
     histogram,
-    yearProjection: { normal: buildProjection(normalGrowth), conservative: buildProjection(hardGrowth) },
+    yearProjection: { normal: buildProjection(normalGrowth), grind: buildProjection(grindGrowth) },
     skillCandidates,
+    companyRecommendations,
   }
 }
+
+const COMPANY_POOL = [
+  '테크노베이션', '클라우드포지', '데이터브릿지', '넥스트레이어', '핀텍스랩',
+  '그리드소프트', '스퀘어웍스', '블루오션소프트', '메타빌드', '코어스택',
+  '시그널팩토리', '오르빗테크', '페블시스템', '루미넌스', '아이언메쉬',
+]
 
 export interface JobChangeFeedItem {
   maskedNickname: string
@@ -165,4 +199,25 @@ export function buildJobChangeFeed(input: SalaryCalcInput, meanSalary: number): 
       relativeTime: RELATIVE_TIMES[Math.floor(rng() * RELATIVE_TIMES.length)],
     }
   }).sort((a, b) => RELATIVE_TIMES.indexOf(a.relativeTime) - RELATIVE_TIMES.indexOf(b.relativeTime))
+}
+
+export interface JobChangeBand {
+  label: string
+  pct: number
+  salary: number
+}
+
+// "이직했을 때 예상 연봉" — 위 최근 이직 동향 피드(buildJobChangeFeed)의 인상폭 분포를
+// 그대로 근거로 삼아, 내 연봉에 적용했을 때의 범위(보수적~공격적)를 계산한다.
+export function buildJobChangeSalaryBands(mySalary: number, feed: JobChangeFeedItem[]): JobChangeBand[] {
+  const bumps = feed.map((f) => (f.toSalary - f.fromSalary) / f.fromSalary)
+  const minBump = Math.min(...bumps)
+  const avgBump = bumps.reduce((a, b) => a + b, 0) / bumps.length
+  const maxBump = Math.max(...bumps)
+  const mk = (label: string, pct: number): JobChangeBand => ({
+    label,
+    pct: Math.round(pct * 1000) / 10,
+    salary: roundTo10(mySalary * (1 + pct)),
+  })
+  return [mk('보수적으로 이직', minBump), mk('평균적으로 이직', avgBump), mk('적극적으로 이직', maxBump)]
 }
