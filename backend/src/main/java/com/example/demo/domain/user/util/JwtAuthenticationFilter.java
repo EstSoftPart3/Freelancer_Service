@@ -88,6 +88,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 여기에 더 추가 가능
     );
 
+    // 🔴 EXCLUDE_URLS의 "/api/projects"는 GET /projects(목록)·/projects/{id} 같은 공개 조회를
+    // 봐주려고 넣은 접두사인데, prefix 매칭이라 SecurityConfigProd가 명시적으로 인증을 요구하는
+    // 하위 경로(GET /projects/companies·/projects/companies/status, /projects/applications/**)까지
+    // 같이 걸려버린다. 이 목록에 걸리면 토큰이 없거나 만료돼도 401을 던지지 않고 그냥
+    // 통과시키는데(아래 exclude 분기), Spring Security의 authenticated() 규칙은 익명
+    // Authentication도 "인증됨"으로 쳐서 그대로 컨트롤러까지 들어가 버린다 — 컨트롤러가 기대하는
+    // 진짜 userSq가 없어 500으로 죽는다(2026-09-16 실서버에서 발견: 토큰 만료 후 이 API를 부르면
+    // 프론트 401 처리기가 아예 안 타고 알 수 없는 에러 alert만 뜨며 헤더도 로그인 상태로 남음).
+    // 아래 목록에 걸리면 "/api/projects" 예외를 적용하지 않고 정상적인 인증 필수 분기로 보낸다.
+    private static final List<String> PROJECTS_EXCLUDE_EXCEPTIONS = List.of(
+            "/api/projects/companies",
+            "/api/projects/applications"
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
@@ -97,7 +111,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         // 인증 제외 경로 처리
-        if (EXCLUDE_URLS.stream().anyMatch(uri::startsWith)) {
+        boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(uri::startsWith)
+                && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith);
+        if (isExcluded) {
             if (token != null && jwtProvider.validateToken(token)) {
                 try {
                     Long userSq = jwtProvider.getUserSqFromToken(token);
