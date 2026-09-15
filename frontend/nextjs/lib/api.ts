@@ -130,7 +130,11 @@ api.interceptors.response.use(
         // 계속 옮겨 다니다 토큰이 만료되면 아래 window.location.href 로 실제 이동해 새로
         // 마운트되기 전까지 헤더가 로그인 상태 그대로 남아 있었다(리다이렉트가 지연되거나
         // 라우터가 가로채는 경우 특히 눈에 띔). 여기서 즉시 클라이언트 상태도 지운다.
-        useUserStore.getState().clearUser()
+        // useUserStore는 모듈 전역 싱글턴이라, 이 api 인스턴스를 혹시라도 서버 컴포넌트가
+        // 인증 요청에 쓰게 되면(이 파일의 baseUrl 분기가 그 경우를 이미 지원한다) Node
+        // 프로세스에서 동시에 처리 중인 다른 사용자의 요청까지 이 clearUser 가 건드릴 수
+        // 있다 — 브라우저에서만 실행되도록 명시적으로 가드한다.
+        if (typeof window !== 'undefined') useUserStore.getState().clearUser()
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           alertStore.show('세션이 만료되었습니다. 다시 로그인해 주세요.', 'danger')
           window.location.href = '/login'
