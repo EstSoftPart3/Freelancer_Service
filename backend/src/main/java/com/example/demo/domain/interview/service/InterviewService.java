@@ -35,6 +35,18 @@ public class InterviewService {
 
     public InterviewListResponse getAllReviews(String keyword, String companyNm, String sortType, Long page,
             Long size) {
+        // page/size 를 그대로 LIMIT/OFFSET 에 흘려보내면 ?page=0·음수 는 음수 OFFSET 으로,
+        // ?size=0·음수 는 음수 LIMIT 으로 내려가 SQL 문법 오류 500 이 난다
+        // (BoardService.getAllBoards, VoteService.getAllVotes 와 동일한 함정). 여기서 방어한다.
+        if (page == null || page < 1) {
+            page = 1L;
+        }
+        if (size == null || size < 1) {
+            size = 12L;
+        }
+        if (size > 100) {
+            size = 100L;
+        }
         Long offset = (page - 1L) * size;
         List<InterviewListItemDTO> reviews = interviewMapper.findAll(keyword, companyNm, sortType, size, offset);
         Long totalElements = interviewMapper.findAllCnt(keyword, companyNm);
@@ -71,6 +83,16 @@ public class InterviewService {
     }
 
     public Long createReview(InterviewReviewRequest request) {
+        // /api/interviews 는 JwtAuthenticationFilter.EXCLUDE_URLS 에 접두사로 통째로 올라 있고
+        // SecurityConfigProd 는 POST /interviews 를 permitAll 하지 않는다 — 토큰이 없거나 만료되면
+        // 필터가 인증 세팅 없이 그냥 통과시키는데, Spring Security 의 anyRequest().authenticated()
+        // 는 익명 Authentication 도 "인증됨"으로 쳐서 컨트롤러까지 들어와 버린다
+        // (b6291e11 에서 /api/projects 에 대해, VoteService.createVote 에서 동일하게 고친 것과 같은
+        // 함정). deleteReview 는 이미 이 null 가드가 있었는데 createReview 만 빠져 있어
+        // 비로그인/만료 토큰 사용자가 user_sq 없는 면접후기를 만들 수 있었다.
+        if (request.getUserSq() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
+        }
         if (request.getCompanyNm() == null || request.getCompanyNm().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회사명을 입력해주세요.");
         }
