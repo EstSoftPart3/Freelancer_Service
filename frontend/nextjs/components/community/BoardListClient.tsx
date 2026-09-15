@@ -15,7 +15,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useCommunityStore } from '@/stores/communityStore'
 import api from '@/lib/api'
 import { InfoTooltip } from '@/components/ui/tooltip'
-import { BOARD_INTRO_TIPS, BOARD_PAGE_TITLE, supportsAnswer, type BoardType as BoardCategory } from '@/components/community/boardMeta'
+import { BOARD_INTRO_TIPS, BOARD_PAGE_TITLE, supportsAnswer, hasCategory, type BoardType as BoardCategory } from '@/components/community/boardMeta'
 import type { BoardItem, BoardListResponse } from '@/types'
 
 const STATUS_OPTIONS = [
@@ -83,9 +83,14 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const isNotice = boardCategory === 'notice'
   const isVoc = boardCategory === 'voc'
   const isAll = boardCategory === 'all'
-  // 중분류(카테고리) 필터 줄 — notice/voc/all은 이 축이 없다. 실제 중분류가 있는지는
-  // BoardCategoryTabs가 스스로 판단해 없으면 아무것도 그리지 않는다.
-  const hasCategoryTabs = !isNotice && !isVoc && !isAll
+  // 중분류(카테고리) 필터 줄 — hasCategory()가 정본이다(중분류가 실제로 있는 종류인지).
+  // 예전엔 "notice/voc/all이 아니면 전부"로 하드코딩해서, 중분류가 없는 요즘회사(company)에도
+  // 이 축이 있는 것처럼 취급돼 불필요한 카테고리 조회·잘못된 category 파라미터 전송으로 샜다.
+  // hasCategory()의 BOARD_CATEGORY_FALLBACK엔 'board'(일반게시판) 키가 없다 — 옛 3200 그룹이
+  // 지금은 전부 비활성이라 "새로 고를 수 있는" 카테고리가 없다는 뜻으로 뺀 것이지만, 이미 옛
+  // 카테고리가 달려 있는 기존 글을 그 카테고리로 걸러보는 조회 기능 자체는 여전히 유효하다
+  // (BoardTypeCode.NORMAL도 hasCategory=true로 선언돼 있다) — 'board'는 명시적으로 포함한다.
+  const hasCategoryTabs = boardCategory === 'board' || hasCategory(boardCategory)
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
   // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
   const canRegister = authChecked && !isNotice && !isAll && isLoggedIn()

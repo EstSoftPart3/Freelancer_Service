@@ -56,8 +56,10 @@ export const getProjectDetail = cache((sq: string) =>
   safeGetDetailed<ProjectDetail | null>(`/projects/${sq}/details`, null))
 
 // Phase2 게시판 재설계(2026-09) 신설 5종 공용 — board/qna처럼 종류마다 함수를 복제하지 않는다.
+// safeGetDetailed를 쓴다 — safeGet(confirmedMissing 버림)을 쓰면 백엔드 일시 장애 때도
+// 정상 게시글을 robots noindex로 내보내는, 바로 위 safeGetDetailed 주석이 경고하는 버그가 재현된다.
 export const getCommunityBoardDetail = cache((boardType: string, sq: string) =>
-  safeGet<BoardDetail | null>(`/${boardType}/${sq}`, null))
+  safeGetDetailed<BoardDetail | null>(`/${boardType}/${sq}`, null))
 
 // 투표·면접후기 — TBL_BOARD_M을 쓰지 않는 전용 도메인이라 반환 타입이 BoardDetail이 아니다.
 export const getVoteDetail = cache((sq: string) => safeGet<import('@/components/vote/types').VoteDetail | null>(`/votes/${sq}`, null))

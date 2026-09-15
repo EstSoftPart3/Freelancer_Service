@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import ReportModal from '@/components/community/ReportModal'
 import { CategoryBadge, SecretBadge } from '@/components/community/CategoryBadge'
-import { STATUS, type BoardPostDisplayType } from '@/components/community/boardMeta'
+import { STATUS, supportsAnswer, hasCategory, type BoardPostDisplayType } from '@/components/community/boardMeta'
 import { useBoardStore } from '@/stores/boardStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -48,6 +48,13 @@ export default function BoardPost({
   // 고객의 소리는 운영자에게 보내는 1:1 창구다 — 추천·신고 같은 커뮤니티 상호작용을 붙이지 않는다.
   // (신고는 "운영자에게 운영자를 신고"하는 꼴이 되고, 추천은 비공개 글에서 의미가 없다)
   const isVocOrNotice = boardType === 'notice' || boardType === 'voc'
+  // 답변+채택 지원 게시판(QnA·커리어소통·기술소통) — 'answer'는 게시판 종류가 아니므로 제외.
+  const isAnswerBoard = boardType !== 'answer' && supportsAnswer(boardType)
+  // 중분류(카테고리)를 갖는 게시판 — 'answer'는 카테고리 축이 없다. 'board'(일반게시판)는
+  // hasCategory()의 BOARD_CATEGORY_FALLBACK엔 없지만(옛 3200 그룹이 지금은 전부 비활성이라
+  // "새로 고를" 카테고리가 없다는 뜻일 뿐) 이미 카테고리가 달린 기존 글은 여전히 있어 명시적으로
+  // 포함한다 — 아래 렌더 조건이 boardInfo.categoryNm 존재까지 같이 보므로 안전하다.
+  const isCategorizedBoard = boardType !== 'answer' && (boardType === 'board' || hasCategory(boardType))
 
   // 본문은 SSR 원본 그대로 렌더하고(hydration mismatch 방지) 링크 교정은 DOM에서 후처리
   const descriptionRef = useRef<HTMLDivElement>(null)
@@ -98,7 +105,7 @@ export default function BoardPost({
   const handleStatusUpdate = async (cd: number) => {
     try {
       const { data } = await api.put<{ status: string }>(
-        `/qna/${boardInfo.sq}/status/${cd}`,
+        `/${boardType}/${boardInfo.sq}/status/${cd}`,
       )
       if (data.status === 'OK') {
         alertStore.show(`${cd === 1503 ? '자체해결' : '미해결'} 상태로 변경되었습니다.`, 'success')
@@ -110,7 +117,7 @@ export default function BoardPost({
   return (
     <div>
       {/* 상태 배지 */}
-      {boardType === 'qna' && boardInfo.boardAdoptStatusCd && STATUS[boardInfo.boardAdoptStatusCd] && (
+      {isAnswerBoard && boardInfo.boardAdoptStatusCd && STATUS[boardInfo.boardAdoptStatusCd] && (
         <div className="mb-2">
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[boardInfo.boardAdoptStatusCd].cls}`}>
             {STATUS[boardInfo.boardAdoptStatusCd].label}
@@ -129,8 +136,8 @@ export default function BoardPost({
         </div>
       )}
 
-      {/* 카테고리 배지 — 일반게시판에만 있는 축이고, 미분류(null)면 그리지 않는다 */}
-      {boardType === 'board' && boardInfo.categoryNm && (
+      {/* 카테고리 배지 — 중분류를 갖는 게시판에만 있는 축이고, 미분류(null)면 그리지 않는다 */}
+      {isCategorizedBoard && boardInfo.categoryNm && (
         <div className="mb-2">
           <CategoryBadge name={boardInfo.categoryNm} />
         </div>
@@ -218,10 +225,10 @@ export default function BoardPost({
 
       {/* 관리 버튼 */}
       <div className="mt-4 flex flex-wrap justify-end gap-2">
-        {boardType === 'qna' && !isOwner && viewerSq != null && (
+        {isAnswerBoard && !isOwner && viewerSq != null && (
           <Button size="sm" onClick={onAnswerWrite}>답변 작성</Button>
         )}
-        {boardType === 'qna' && isOwner && boardInfo.boardAdoptStatusCd === 1501 && (
+        {isAnswerBoard && isOwner && boardInfo.boardAdoptStatusCd === 1501 && (
           <>
             <Button size="sm" variant="outline" onClick={() => setStatusConfirm({ open: true, cd: 1503 })}>자체 해결</Button>
             <Button size="sm" variant="outline" onClick={() => setStatusConfirm({ open: true, cd: 1504 })}>미해결</Button>

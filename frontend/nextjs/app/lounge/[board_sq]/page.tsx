@@ -11,8 +11,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { board_sq } = await params
-  const board = await getCommunityBoardDetail('lounge', board_sq)
-  if (!board) return { title: '게시글', robots: { index: false } }
+  // 확실히 삭제/존재하지 않는 글만 색인 제외 — 일시적 조회 실패는 noindex 하지 않는다
+  const { data: board, confirmedMissing } = await getCommunityBoardDetail('lounge', board_sq)
+  if (!board) return { title: '게시글', robots: { index: confirmedMissing ? false : undefined } }
   return buildPageMetadata({
     title: board.ttl,
     description: stripHtmlToExcerpt(board.description),
@@ -24,7 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function LoungeDetailPage({ params }: Props) {
   const { board_sq } = await params
-  const board = await getCommunityBoardDetail('lounge', board_sq)
+  // generateMetadata와 React cache()로 공유 — 실제 API 호출은 요청당 1회
+  const { data: board } = await getCommunityBoardDetail('lounge', board_sq)
   return (
     <>
       {board && (

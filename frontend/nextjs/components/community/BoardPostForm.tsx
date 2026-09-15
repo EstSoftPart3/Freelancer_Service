@@ -112,8 +112,13 @@ export default function BoardPostForm({ boardCategory }: Props) {
   const isEdit = editTargetSq > 0
   // 기술태그는 QnA·기술소통에서만 노출 (Vue 원본 isQna/skillActive 대응, Phase2 재설계로 확장)
   const isQna = supportsSkillTag(boardCategory)
-  // 카테고리는 중분류를 갖는 게시판에만 있는 축이다 (백엔드도 hasCategory=false면 값을 무시한다)
-  const isBoard = hasCategory(boardCategory)
+  // 카테고리는 중분류를 갖는 게시판에만 있는 축이다 (백엔드도 hasCategory=false면 값을 무시한다).
+  // 'board'(일반게시판)는 BOARD_CATEGORY_FALLBACK엔 키가 없지만(옛 3200 그룹이 지금은 전부
+  // 비활성이라 "새로 고를" 카테고리가 없다는 뜻일 뿐) 이미 카테고리가 달린 기존 글의 수정
+  // 화면(/board/register?edit=...)에서는 여전히 그 값을 보여주고 저장해야 한다 — 빠뜨리면
+  // 카테고리 선택 UI가 안 보이는 채로 저장돼 기존 categoryCd가 조용히 지워진다
+  // (BoardListClient.tsx·BoardPost.tsx와 같은 이유의 같은 수정, 세 번째 지점).
+  const isBoard = boardCategory === 'board' || hasCategory(boardCategory)
   // 고객의 소리 — 태그·기술태그 없이 제목/본문/첨부/공개여부만 받는다
   const isVoc = boardCategory === 'voc'
 
