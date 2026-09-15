@@ -216,7 +216,13 @@ export default function SalaryCalculatorForm() {
 
   const isFreelance = employment === 'FREELANCE'
 
-  const filledCount = [job, years, region, stack.length > 0 ? '1' : '', salary].filter(Boolean).length
+  const filledCount = [
+    job,
+    years,
+    region,
+    stack.length > 0 ? '1' : '',
+    salary && Number(salary) > 0 ? '1' : '',
+  ].filter(Boolean).length
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
