@@ -73,7 +73,7 @@ function getDisplayAddress(p: ProjectDetail): string {
 export default function ProjectSpec({ projectSq, variant, initialData }: Props) {
   const pid = Number(projectSq) // 상세 응답에 projectSq가 없어 라우트 파라미터를 사용
   const router = useRouter()
-  const { isLoggedIn } = useUserStore()
+  const { isLoggedIn, userTypeCd } = useUserStore()
   const [project, setProject] = useState<ProjectDetail | null>(initialData ?? null)
   const [loading, setLoading] = useState(!initialData)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -81,6 +81,21 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
   const [isRecruitmentEnded, setIsRecruitmentEnded] = useState(
     initialData ? isRecruitEnded(initialData.projectRecruitEndDt) : false,
   )
+
+  useEffect(() => {
+    // /projects/company/{sq} 는 소속원 대리지원·작성자 수정/삭제 화면이다. 정상 내비게이션
+    // (ProjectListClient.getProjectPath)은 userTypeCd 로 알아서 올바른 경로로 보내주지만,
+    // 북마크·공유링크·주소창 직접 입력으로 반대 경로에 들어오는 건 막혀 있지 않았다 —
+    // 개인 계정(소속원 포함, userTypeCd 301)이 여길 열면 자신을 위한 화면이 아닌
+    // "소속원을 대신 골라 지원시키는" 대리지원 다이얼로그가 뜬다(소속원은 개인 계정으로
+    // 로그인해 직접 지원하는 것이 정책이므로, 그 경로 자체를 여기서 막는다).
+    // 로그인 정보는 앱 부트스트랩(/me)이 마운트 후 채우므로, 그게 늦게 끝나도 놓치지
+    // 않도록 이 확인만 별도 effect 로 두어 isLoggedIn/userTypeCd 변화에 다시 반응시킨다.
+    if (variant === 'company' && isLoggedIn() && userTypeCd !== 302) {
+      toast.error('접근 권한이 없습니다.')
+      router.push('/')
+    }
+  }, [variant, isLoggedIn, userTypeCd, router])
 
   useEffect(() => {
     // 조회수는 상세 GET에서 분리된 별도 API로 집계 — 실제 브라우저 방문만 카운트(크롤러/SSR 제외)

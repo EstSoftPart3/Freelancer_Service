@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -30,32 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class FileController {
 
-    /**
-     * 확장자 → MIME 타입. Files.probeContentType 은 리눅스 컨테이너(eclipse-temurin)에
-     * /etc/mime.types 가 없으면 항상 null 을 돌려준다. 그러면 application/octet-stream 이
-     * 나가고, 아래의 nosniff 와 겹쳐 브라우저가 이미지 렌더링을 거부한다.
-     * 로컬 Windows 는 레지스트리에서 판정하므로 이 문제가 재현되지 않는다.
-     */
-    private static final Map<String, String> MIME_BY_EXT = Map.ofEntries(
-            Map.entry("jpg", "image/jpeg"),
-            Map.entry("jpeg", "image/jpeg"),
-            Map.entry("png", "image/png"),
-            Map.entry("gif", "image/gif"),
-            Map.entry("webp", "image/webp"),
-            Map.entry("bmp", "image/bmp"),
-            Map.entry("svg", "image/svg+xml"),
-            Map.entry("pdf", "application/pdf"),
-            Map.entry("txt", "text/plain"),
-            Map.entry("csv", "text/csv"),
-            Map.entry("hwp", "application/x-hwp"),
-            Map.entry("hwpx", "application/hwp+zip"),
-            Map.entry("doc", "application/msword"),
-            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
-            Map.entry("xls", "application/vnd.ms-excel"),
-            Map.entry("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
-            Map.entry("ppt", "application/vnd.ms-powerpoint"),
-            Map.entry("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
-            Map.entry("zip", "application/zip"));
+    // 확장자 → MIME 타입은 SupportedFileTypes 에 단일 출처로 있다(FileStorageService의 업로드
+    // 화이트리스트와 같은 집합이어야 한다). Files.probeContentType 은 리눅스 컨테이너
+    // (eclipse-temurin)에 /etc/mime.types 가 없으면 항상 null 을 돌려준다. 그러면
+    // application/octet-stream 이 나가고, 아래의 nosniff 와 겹쳐 브라우저가 이미지 렌더링을
+    // 거부한다. 로컬 Windows 는 레지스트리에서 판정하므로 이 문제가 재현되지 않는다.
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -132,7 +110,7 @@ public class FileController {
         int dot = savedName.lastIndexOf('.');
         if (dot >= 0 && dot < savedName.length() - 1) {
             String ext = savedName.substring(dot + 1).toLowerCase(Locale.ROOT);
-            String mapped = MIME_BY_EXT.get(ext);
+            String mapped = SupportedFileTypes.MIME_BY_EXTENSION.get(ext);
             if (mapped != null) {
                 return mapped;
             }

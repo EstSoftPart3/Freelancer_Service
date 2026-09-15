@@ -1,6 +1,6 @@
 'use client'
 // Mirrors vue_js/src/fo/views/company/AffiliationListPage.vue
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Heart, Eye, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -110,8 +110,13 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
     }
   }, [])
 
+  // 정렬/필터를 연달아 바꾸면 요청이 겹칠 수 있어, 나중에 시작된 요청만 결과를 반영하도록 순번을 매긴다.
+  // (ProjectListClient.fetchProjects의 fetchSeqRef와 동일한 패턴)
+  const fetchSeqRef = useRef(0)
+
   // 이슈 4: keyword/searchType은 deps에서 제외 → 제출 시에만 activeKeyword/activeSearchType 업데이트
   const fetchList = useCallback(async (page: number) => {
+    const seq = ++fetchSeqRef.current
     setIsLoading(true)
     try {
       const params: Record<string, unknown> = { page, size: PAGE_SIZE, sortType }
@@ -124,13 +129,14 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
       const { data } = await api.get<{ output: { companies: AffiliationItem[]; totalElements: number } }>(
         '/affiliation', { params },
       )
+      if (seq !== fetchSeqRef.current) return // 이후에 시작된 요청이 있으면 이 결과는 폐기
       const total = data.output.totalElements
       setTotalPages(total === 0 ? 1 : Math.ceil(total / PAGE_SIZE))
       setList(data.output.companies)
     } catch {
-      alertStore.show('소속 공고를 불러올 수 없습니다.', 'danger')
+      if (seq === fetchSeqRef.current) alertStore.show('소속 공고를 불러올 수 없습니다.', 'danger')
     } finally {
-      setIsLoading(false)
+      if (seq === fetchSeqRef.current) setIsLoading(false)
     }
   }, [sortType, activeKeyword, activeSearchType, addressCd])
 

@@ -97,12 +97,17 @@ export default function ProjectListClient({ initialData }: Props = {}) {
     [userTypeCd],
   )
 
-  const fetchRegionGroups = useCallback(async (params: ProjectSearchParams) => {
+  // fetchProjects 가 이미 매긴 seq 를 그대로 받는다 — 지도 패닝을 빠르게 두 번 하면
+  // fetchProjects 는 자기 응답을 순번으로 거르지만, 그 안에서 다시 부르는 이 지역 클러스터
+  // 조회는 별도 요청이라 자기만의 가드가 없으면 늦게 도착한 이전 bounds 결과가
+  // 최신 마커와 안 맞는 시군구 라벨로 덮어쓸 수 있었다.
+  const fetchRegionGroups = useCallback(async (params: ProjectSearchParams, seq: number) => {
     try {
       const { data } = await api.get('/projects/regions', { params })
+      if (seq !== fetchSeqRef.current) return
       setRegionGroups(data.output ?? [])
     } catch {
-      setRegionGroups([])
+      if (seq === fetchSeqRef.current) setRegionGroups([])
     }
   }, [])
 
@@ -125,7 +130,7 @@ export default function ProjectListClient({ initialData }: Props = {}) {
         const totalCount = output.totalCount ?? output.totalElements ?? 0
         setTotalPages(Math.max(1, Math.ceil(totalCount / PAGE_SIZE)))
       } else {
-        fetchRegionGroups(requestParams)
+        fetchRegionGroups(requestParams, seq)
       }
     } catch {
       if (seq === fetchSeqRef.current) toast.error('프로젝트 목록을 불러올 수 없습니다.')

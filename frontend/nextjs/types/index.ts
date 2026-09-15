@@ -13,6 +13,13 @@ export interface User {
   companyAuthStatusCd?: string
 }
 
+// /login, /me 가 실제로 내려주는 원본 모양. 백엔드 LoginResponseDTO#isAffiliated 는
+// boolean 이 아니라 'Y'/'N' 문자열이다 — 그대로 User 로 캐스팅해 저장하면 "N" 도
+// truthy 라 소속 없음 판정이 깨진다. userStore.setUser 에서 boolean 으로 정규화할 때 쓴다.
+export interface UserApiResponse extends Omit<User, 'isAffiliated'> {
+  isAffiliated?: 'Y' | 'N' | null
+}
+
 export interface AlertState {
   visible: boolean
   message: string
@@ -295,10 +302,13 @@ export interface ProjectFilters {
 }
 
 export interface ProjectSearchParams {
-  addressCodeSq?: number
-  projectDeveloperGradeCd?: number
-  educationCd?: number
-  jobRoleCd?: number
+  // 백엔드 ProjectSearchRequest 가 List<Long> 으로 선언한 다중선택 필터다.
+  // 예전엔 여기가 number(단수) 로 잘못 선언돼 있어, 실제로 배열 상태를 들고 있던
+  // ProjectFilterBar 가 [0] 만 뽑아 보내도 타입 에러가 안 났다.
+  addressCodeSq?: number[]
+  projectDeveloperGradeCd?: number[]
+  educationCd?: number[]
+  jobRoleCd?: number[]
   minPrice?: number
   distance?: number
   searchKeyword?: string

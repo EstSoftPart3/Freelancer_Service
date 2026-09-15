@@ -35,7 +35,13 @@ interface Props {
   onSaved: () => void
 }
 
-const trimDt = (v: string, allDay: boolean) => (!v ? '' : allDay ? v.substring(0, 10) : v.substring(0, 16))
+// allDay -> timed 전환 시 시각이 없으면(날짜만 10자) datetime-local 이 요구하는 "YYYY-MM-DDTHH:mm" 형식이 아니라
+// 입력이 빈 채로 보인다 — 기존 값을 잃지 않도록 자정으로 채워 보정한다.
+const trimDt = (v: string, allDay: boolean) => {
+  if (!v) return ''
+  if (allDay) return v.substring(0, 10)
+  return v.length >= 16 ? v.substring(0, 16) : `${v.substring(0, 10)}T00:00`
+}
 
 type ScheduleField = 'scheduleTtl' | 'scheduleStartDtm' | 'scheduleEndDtm'
 
@@ -45,6 +51,7 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
   const [mode, setMode] = useState<Mode>(initialMode)
   const [isAllDay, setIsAllDay] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
     scheduleSq: null as number | string | null,
     scheduleTtl: '', scheduleCnt: '',
@@ -75,6 +82,7 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
   const set = (k: keyof typeof form, v: string) => { clearField(k as ScheduleField); setForm((p) => ({ ...p, [k]: v })) }
 
   async function save() {
+    if (submitting) return
     // 날짜 비교는 배열 밖에서 끝내 둔다 — 배열 리터럴 안에서 예외가 나면 폼 전체가 죽는다.
     const now = new Date()
     const start = new Date(form.scheduleStartDtm)
@@ -98,6 +106,7 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
       scheduleEndDtm: endStr,
       scheduleAllDayYn: isAllDay ? 'Y' : 'N',
     }
+    setSubmitting(true)
     try {
       if (mode === 'EDIT') await api.put('/mypage/schedule/modify', payload)
       else await api.post('/mypage/schedule/register', payload)
@@ -106,10 +115,14 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
       onClose()
     } catch {
       toast.error('일정 저장 중 오류가 발생했습니다.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
   async function remove() {
+    if (submitting) return
+    setSubmitting(true)
     try {
       await api.delete(`/mypage/schedule/delete/${form.scheduleSq}`)
       toast.success('일정이 삭제되었습니다.')
@@ -117,6 +130,8 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
       onClose()
     } catch {
       toast.error('일정 삭제 중 오류가 발생했습니다.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -188,13 +203,13 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
             </>
           ) : mode === 'EDIT' ? (
             <>
-              <Button onClick={save}>저장</Button>
-              <Button variant="outline" onClick={() => setMode('VIEW')}>취소</Button>
+              <Button onClick={save} disabled={submitting}>저장</Button>
+              <Button variant="outline" onClick={() => setMode('VIEW')} disabled={submitting}>취소</Button>
             </>
           ) : (
             <>
-              <Button onClick={save}>등록</Button>
-              <Button variant="outline" onClick={onClose}>취소</Button>
+              <Button onClick={save} disabled={submitting}>등록</Button>
+              <Button variant="outline" onClick={onClose} disabled={submitting}>취소</Button>
             </>
           )}
         </DialogFooter>

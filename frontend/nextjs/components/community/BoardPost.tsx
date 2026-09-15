@@ -41,6 +41,8 @@ export default function BoardPost({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [statusConfirm, setStatusConfirm] = useState<{ open: boolean; cd: number }>({ open: false, cd: 0 })
   const [reportOpen, setReportOpen] = useState(false)
+  // 추천 버튼은 확인창 없이 바로 나가는 요청이라 연타 시 중복 반영될 수 있다 — in-flight 가드.
+  const [recommendPending, setRecommendPending] = useState(false)
 
   const isOwner = boardInfo.userSq != null && viewerSq != null && boardInfo.userSq === viewerSq
   // 고객의 소리는 운영자에게 보내는 1:1 창구다 — 추천·신고 같은 커뮤니티 상호작용을 붙이지 않는다.
@@ -55,6 +57,8 @@ export default function BoardPost({
 
   const handleRecommend = async () => {
     if (viewerSq == null) { alertStore.show('로그인 후 이용해주세요.', 'danger'); return }
+    if (recommendPending) return
+    setRecommendPending(true)
     try {
       const { data } = await api.post<{ status: string; message: string }>(
         `/${boardType}/${boardInfo.sq}/recommend`,
@@ -62,6 +66,7 @@ export default function BoardPost({
       if (data.status === 'OK') { alertStore.show(data.message, 'success'); onRefresh() }
       else alertStore.show('추천 반영에 실패하였습니다.', 'danger')
     } catch { alertStore.show('추천 반영에 실패하였습니다.', 'danger') }
+    finally { setRecommendPending(false) }
   }
 
   const handleEdit = () => {
@@ -140,7 +145,8 @@ export default function BoardPost({
           </span>
           {!isVocOrNotice && (
             <button
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary disabled:opacity-60"
+              disabled={recommendPending}
               onClick={handleRecommend}
             >
               <ThumbsUp className="h-3.5 w-3.5" /> 추천 {boardInfo.recommendCnt}

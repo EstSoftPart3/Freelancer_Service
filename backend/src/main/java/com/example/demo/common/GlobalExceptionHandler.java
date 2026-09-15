@@ -81,14 +81,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ApiResponse<?>> handleNullPointerException(NullPointerException ex) {
         log.error("NullPointerException 발생: ", ex); // 2. 에러 객체(ex)를 로그로 출력
+        // ex.getMessage()를 그대로 응답에 실으면 내부 클래스명·필드명이 노출될 수 있어 고정 메시지로 응답한다.
+        // 상세 내용은 위 로그로만 남긴다.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage()));
+                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleGeneralException(Exception ex) {
         log.error("Exception 발생 (500): ", ex); // 2. 에러 객체(ex)를 로그로 출력
+        // ex.getMessage()를 그대로 내보내면 MyBatis PersistenceException 등이 SQL 원문·바인딩 값을
+        // 그대로 담고 있어 그것까지 응답으로 새어 나간다. 클라이언트에는 고정 메시지만 주고,
+        // 원인 파악은 위 로그(스택트레이스 포함)로 한다.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage()));
+                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
     }
 }

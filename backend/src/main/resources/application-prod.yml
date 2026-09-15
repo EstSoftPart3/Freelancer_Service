@@ -80,7 +80,10 @@ mybatis:
 
 server:
   # 서버의 기존 컨테이너가 8081:8081 로 매핑돼 있어 운영은 8081 로 뜬다.
-  port: ${SERVER_PORT:8080}
+  # docker-compose.yml 이 SERVER_PORT 를 항상 주입하므로 이 기본값은 정상 배포 경로에서는
+  # 쓰이지 않지만, 값을 깜빡했을 때 8080(컨테이너 매핑과 불일치)으로 조용히 뜨는 대신
+  # 실제 운영 포트와 같은 값으로 맞춰 둔다.
+  port: ${SERVER_PORT:8081}
   address: 0.0.0.0
   servlet:
     context-path: /api

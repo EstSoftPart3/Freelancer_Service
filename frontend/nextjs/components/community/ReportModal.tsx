@@ -25,23 +25,35 @@ interface Props {
 export default function ReportModal({ open, reportTypeCd, sq, onClose }: Props) {
   const { viewerSq } = useBoardStore()
   const [reasons, setReasons] = useState<ReportReason[]>([])
+  const [reasonsFailed, setReasonsFailed] = useState(false)
   const [selectedReasonSq, setSelectedReasonSq] = useState<number | null>(null)
   const [customContent, setCustomContent] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // ConfirmDialog는 onConfirm 호출 직후 곧장 onClose로 닫혀 재렌더 전 연타를 막지 못한다 —
+  // 다른 폼들과 동일하게 in-flight 가드를 둔다.
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setSelectedReasonSq(null)
     setCustomContent('')
+    setReasons([])
+    setReasonsFailed(false)
     api
       .get<{ status: string; output: ReportReason[] }>('/report/codes/2800')
       .then(({ data }) => {
         if (data.status === 'OK') setReasons(data.output)
+        else setReasonsFailed(true)
       })
-      .catch(() => alertStore.show('신고 사유를 불러오지 못했습니다.', 'danger'))
+      .catch(() => {
+        setReasonsFailed(true)
+        alertStore.show('신고 사유를 불러오지 못했습니다.', 'danger')
+      })
   }, [open])
 
   const submit = async () => {
+    if (submitting) return
+    setSubmitting(true)
     try {
       const { data } = await api.post<{ status: string }>('/report', {
         userSq: viewerSq,
@@ -58,6 +70,8 @@ export default function ReportModal({ open, reportTypeCd, sq, onClose }: Props) 
       }
     } catch {
       alertStore.show('신고 등록에 실패하였습니다.', 'danger')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -69,7 +83,9 @@ export default function ReportModal({ open, reportTypeCd, sq, onClose }: Props) 
             <DialogTitle>신고 하기</DialogTitle>
           </DialogHeader>
 
-          {reasons.length === 0 ? (
+          {reasonsFailed ? (
+            <p className="py-3 text-center text-sm text-destructive">사유를 불러오지 못했습니다. 다시 열어서 시도해주세요.</p>
+          ) : reasons.length === 0 ? (
             <p className="py-3 text-center text-sm text-muted-foreground">사유를 불러오는 중...</p>
           ) : (
             <div className="space-y-4">
@@ -104,7 +120,7 @@ export default function ReportModal({ open, reportTypeCd, sq, onClose }: Props) 
 
           <DialogFooter>
             <Button variant="outline" onClick={onClose}>닫기</Button>
-            <Button disabled={!selectedReasonSq} onClick={() => setConfirmOpen(true)}>신고 제출</Button>
+            <Button disabled={!selectedReasonSq || submitting} onClick={() => setConfirmOpen(true)}>신고 제출</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

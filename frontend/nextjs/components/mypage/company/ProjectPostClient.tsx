@@ -122,6 +122,8 @@ export default function ProjectPostClient({ projectSq }: Props) {
   const [interviewModalOpen, setInterviewModalOpen] = useState(false)
   const [projectPeriodModalOpen, setProjectPeriodModalOpen] = useState(false)
   const [recruitPeriodModalOpen, setRecruitPeriodModalOpen] = useState(false)
+  // 제출 버튼에 잠금이 없으면 연타 시 등록/수정 요청이 중복으로 나간다 — 진행 중엔 다시 못 누르게 막는다.
+  const [submitting, setSubmitting] = useState(false)
 
   const { validate, fieldProps, bindRef, isInvalid, clearField, clearAll } = useFormErrors<ProjectField>()
 
@@ -361,6 +363,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
   }, [form.recruitStartDt, form.recruitEndDt])
 
   async function handleSubmit() {
+    if (submitting) return
     const preference = [...form.preferenceList, ...preferenceInput.split(',')].map((s) => s.trim()).filter(Boolean).join(',')
     const interviewTime = interviewTimes.flatMap((e) => e.times.map((t) => `${e.date}T${t}`))
     const recruitHeadcounts = form.gradeCounts.map((g) => ({
@@ -479,6 +482,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       isNotification: form.isNotification ? 'Y' : 'N',
     }
 
+    setSubmitting(true)
     try {
       if (isEdit) {
         await api.patch('/projects', requestBody)
@@ -491,6 +495,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
     } catch (err) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       toast.error(message || `프로젝트 ${isEdit ? '수정' : '등록'}에 실패했습니다.`)
+      setSubmitting(false)
     }
   }
 
@@ -518,7 +523,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
               className="cursor-pointer"
               onClick={openPostcode}
             />
-            {form.address && <Button type="button" variant="ghost" size="sm" onClick={() => setF({ address: '', postcode: '', latitude: '', longitude: '', sigunguCode: '' })}>×</Button>}
+            {form.address && <Button type="button" variant="ghost" size="sm" onClick={() => setF({ address: '', detailAddress: '', postcode: '', latitude: '', longitude: '', sigunguCode: '' })}>×</Button>}
           </div>
           {form.address && (
             <Input
@@ -879,7 +884,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleSubmit}>{isEdit ? '수정' : '등록'}</Button>
+        <Button onClick={handleSubmit} disabled={submitting}>{isEdit ? '수정' : '등록'}</Button>
         <Button variant="outline" onClick={() => router.push('/mypage/affiliation-projects')}>취소</Button>
       </div>
 

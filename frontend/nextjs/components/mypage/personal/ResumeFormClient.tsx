@@ -96,6 +96,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
   const router = useRouter()
   const isEdit = !!resumeSq
   const { validate, fieldProps, bindRef, isInvalid, clearField, clearAll } = useFormErrors<ResumeField>()
+  const [submitting, setSubmitting] = useState(false)
 
   // 기본 정보
   const [resumeTtl, setResumeTtl] = useState('')
@@ -276,7 +277,10 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       }))
       // 프리필은 사용자의 입력이 아니라 clearField 를 타지 않는다. 응답이 늦게 와서
       // 그 사이에 제출한 경우 채워진 칸에 빨간 프레임이 남으므로 여기서 걷어 준다.
-      clearAll()
+      // clearAll() 을 쓰면 프리필이 손대지 않는 다른 칸(제목 등)의 미충족 표시까지 함께 사라지므로,
+      // 실제로 채운 칸만 걷는다.
+      clearField('resumeNm'); clearField('resumeBirthDt'); clearField('resumePhoneNum')
+      clearField('email'); clearField('address')
     } catch (err) {
       // 회원 기본정보 프리필 실패 — 빈 폼은 유지하되 원인을 조용히 삼키지 않는다.
       console.error('회원 기본정보를 불러오지 못했습니다.', err)
@@ -294,6 +298,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
   }, [isEdit, loadDetail, prefillFromMember])
 
   async function handleSubmit() {
+    if (submitting) return
     // 필수값 검증 (Vue required 대응).
     // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
     if (!validate([
@@ -367,6 +372,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
     if (profileFile) fd.append('profileImages', profileFile)
     attachFiles.forEach((f) => fd.append('attachments', f))
 
+    setSubmitting(true)
     try {
       if (isEdit) {
         await api.put(`/mypage/resume/${resumeSq}`, fd)
@@ -378,6 +384,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       router.push('/mypage/resume')
     } catch {
       toast.error('이력서 저장에 실패했습니다.')
+      setSubmitting(false)
     }
   }
 
@@ -575,7 +582,7 @@ export default function ResumeFormClient({ resumeSq }: Props) {
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleSubmit}>{isEdit ? '수정하기' : '등록하기'}</Button>
+        <Button onClick={handleSubmit} disabled={submitting}>{isEdit ? '수정하기' : '등록하기'}</Button>
         <Button variant="outline" onClick={() => router.push('/mypage/resume')}>취소</Button>
       </div>
 

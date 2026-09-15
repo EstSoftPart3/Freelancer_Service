@@ -13,7 +13,7 @@ COPY . .
 # 🔴 NEXT_PUBLIC_* 은 빌드 타임에 번들로 인라인되고, next.config.ts 의 rewrites 도
 #    빌드 시점 값으로 고정된다(standalone 은 런타임에 config 를 다시 읽지 않는다).
 #    따라서 이 값들은 런타임 env 가 아니라 반드시 빌드 ARG 로 들어와야 한다.
-ARG API_INTERNAL_BASE_URL=http://freelancer-api-server:8081/api
+ARG API_INTERNAL_BASE_URL=http://freelancer-api:8081/api
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_NAVER_SITE_VERIFICATION
 ARG NEXT_PUBLIC_GA_ID

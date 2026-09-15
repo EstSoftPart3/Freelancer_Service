@@ -11,9 +11,23 @@ import { setCookie } from '@/lib/cookies'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
-import { User } from '@/types'
+import { getApiErrorMessage } from '@/lib/errors'
+import { UserApiResponse } from '@/types'
 
 type LoginType = 'PERSONAL' | 'COMPANY'
+
+// 사파리 프라이빗 모드·저장소 차단 정책 등에서는 localStorage 접근 자체가 SecurityError 를 던진다.
+// 이 폼의 localStorage 사용은 전부 "있으면 편의 기능" 수준(아이디 저장·자동 로그인 기억)이라,
+// 예외를 삼켜서 로그인 폼 자체가 마운트 단계에서 죽는 것만 막는다.
+function safeStorageGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function safeStorageSet(key: string, value: string) {
+  try { localStorage.setItem(key, value) } catch { /* 저장소 차단 환경 — 무시 */ }
+}
+function safeStorageRemove(key: string) {
+  try { localStorage.removeItem(key) } catch { /* 저장소 차단 환경 — 무시 */ }
+}
 
 const SOCIAL_PROVIDERS = [
   { name: 'kakao', title: '카카오 로그인', img: '/img/social/kakao.png' },
@@ -40,9 +54,9 @@ export default function LoginForm() {
   // 저장된 아이디 불러오기 — 회원 유형은 더 이상 기억하지 않고(경로가 곧 유형이므로),
   // 그 유형으로 마지막에 저장해둔 아이디만 불러온다.
   useEffect(() => {
-    setAutoLogin(localStorage.getItem('autoLogin') === 'true')
+    setAutoLogin(safeStorageGet('autoLogin') === 'true')
     const savedKey = loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId'
-    const saved = localStorage.getItem(savedKey) ?? ''
+    const saved = safeStorageGet(savedKey) ?? ''
     setId(saved)
     setIdSave(!!saved)
   }, [loginType])
@@ -71,32 +85,32 @@ export default function LoginForm() {
       setCookie('refreshToken', refreshToken, autoLogin ? 30 : null)
 
       // 유저 정보 로드
-      const { data: meData } = await api.post<{ output: User }>('/me')
+      const { data: meData } = await api.post<{ output: UserApiResponse }>('/me')
       const user = meData.output
       setUser(user)
       setCookie('userType', user.userTypeCd === 301 ? 'PERSONAL' : 'COMPANY', autoLogin ? 30 : null)
 
       // 아이디 저장 처리
       if (idSave) {
-        localStorage.setItem(
+        safeStorageSet(
           loginType === 'PERSONAL' ? 'savedPersonalId' : 'savedCompanyId',
           id,
         )
       } else {
-        localStorage.removeItem('savedPersonalId')
-        localStorage.removeItem('savedCompanyId')
+        safeStorageRemove('savedPersonalId')
+        safeStorageRemove('savedCompanyId')
       }
-      if (autoLogin) localStorage.setItem('autoLogin', 'true')
-      else localStorage.removeItem('autoLogin')
+      if (autoLogin) safeStorageSet('autoLogin', 'true')
+      else safeStorageRemove('autoLogin')
 
       // GA4: login
       alertStore.show(`${user.userNm}님 안녕하세요.`, 'success')
       router.push('/')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        '로그인에 실패했습니다.'
-      alertStore.show(msg, 'danger')
+      // 다른 인증 폼(FindAccountForm 등)은 전부 getApiErrorMessage 를 쓴다. 여기만 손으로
+      // response.data.message 만 봐서, 인터셉터가 Error 로 바꾼 "HTTP 200 + status 필드"
+      // 실패(예: 비밀번호 불일치)는 서버 문구 대신 항상 이 기본 메시지로만 떴다.
+      alertStore.show(getApiErrorMessage(err, '로그인에 실패했습니다.'), 'danger')
     } finally {
       setLoading(false)
     }

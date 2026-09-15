@@ -12,25 +12,48 @@ const baseUrl =
   'http://localhost:8080/api'
 
 export async function safeGet<T>(path: string, fallback: T, opts?: { revalidate?: number }): Promise<T> {
+  const { data } = await safeGetDetailed(path, fallback, opts)
+  return data
+}
+
+/**
+ * 상세 조회용 — 데이터 없음의 "이유"까지 함께 준다.
+ *
+ * 백엔드는 삭제/미존재 게시글·공고도 (컨트롤러가 던지는 IllegalArgumentException 이
+ * GlobalExceptionHandler 에서 400 으로 매핑돼) HTTP 400 으로 응답한다. 이걸 네트워크 오류나
+ * 5xx 와 구분하지 않고 똑같이 "없음" 취급하면, 백엔드가 일시적으로 응답 못 하는 순간에
+ * generateMetadata 가 정상 게시글까지 robots noindex 로 내보낼 수 있다 — 4xx(진짜 없음/
+ * 잘못된 요청)만 "확실히 없음"으로 보고, 5xx·네트워크 오류는 "일시적 실패"로 구분한다.
+ */
+export async function safeGetDetailed<T>(
+  path: string,
+  fallback: T,
+  opts?: { revalidate?: number },
+): Promise<{ data: T; confirmedMissing: boolean }> {
   try {
     // revalidate 지정 시 fetch 캐시(ISR)를 써서 sitemap/RSS처럼 자주 불리는 라우트가 백엔드를 폭격하지 않게 한다.
     const res = await fetch(
       `${baseUrl}${path}`,
       opts?.revalidate != null ? { next: { revalidate: opts.revalidate } } : { cache: 'no-store' },
     )
+    if (res.status >= 400 && res.status < 500) return { data: fallback, confirmedMissing: true }
     if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`)
     const data = (await res.json()) as { output: T }
-    return data.output ?? fallback
+    return { data: data.output ?? fallback, confirmedMissing: false }
   } catch (err) {
     console.error(`[server-fetch] ${path} 조회 실패`, err)
-    return fallback
+    return { data: fallback, confirmedMissing: false }
   }
 }
 
-export const getBoardDetail = cache((sq: string) => safeGet<BoardDetail | null>(`/board/${sq}`, null))
-export const getQnaDetail = cache((sq: string) => safeGet<BoardDetail | null>(`/qna/${sq}`, null))
-export const getNoticeDetail = cache((sq: string) => safeGet<BoardDetail | null>(`/notice/${sq}`, null))
-export const getProjectDetail = cache((sq: string) => safeGet<ProjectDetail | null>(`/projects/${sq}/details`, null))
+// generateMetadata 와 페이지 본문이 React cache() 로 같은 요청 안에서 dedupe 되도록,
+// 자원마다 이 detailed 버전 하나만 두고 본문 쪽은 .data 만 꺼내 쓴다(별도 wrapper 를
+// 또 두면 같은 자원을 캐시 키가 달라 두 번 fetch 하게 된다).
+export const getBoardDetail = cache((sq: string) => safeGetDetailed<BoardDetail | null>(`/board/${sq}`, null))
+export const getQnaDetail = cache((sq: string) => safeGetDetailed<BoardDetail | null>(`/qna/${sq}`, null))
+export const getNoticeDetail = cache((sq: string) => safeGetDetailed<BoardDetail | null>(`/notice/${sq}`, null))
+export const getProjectDetail = cache((sq: string) =>
+  safeGetDetailed<ProjectDetail | null>(`/projects/${sq}/details`, null))
 
 // Phase2 게시판 재설계(2026-09) 신설 5종 공용 — board/qna처럼 종류마다 함수를 복제하지 않는다.
 export const getCommunityBoardDetail = cache((boardType: string, sq: string) =>

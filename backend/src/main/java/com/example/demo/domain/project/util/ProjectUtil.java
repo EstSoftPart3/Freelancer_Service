@@ -29,7 +29,8 @@ public class ProjectUtil {
 	private final SkillMapper skillMapper;
 	private final CommonCodeMapper commonCodeMapper;
 	private final ProjectMapper projectMapper;
-	
+	private final DeveloperGradeSupport developerGradeSupport;
+
 	
 	public String convertAddressSqToName(Long addressSq) {
 		return addressMapper.findAddressBySq(addressSq);
@@ -56,9 +57,9 @@ public class ProjectUtil {
 		return projectMapper.findJobsByProjectSq(projectSq);
 	}
 
-	/** 공고의 모집 인원. 인원 개념이 없던 시절 공고는 빈 리스트다. */
+	/** 공고의 모집 인원. 인원 개념이 없던 시절 공고는 빈 리스트다. 등급 서열순으로 정렬해 돌려준다. */
 	public List<RecruitHeadcountResponse> fetchRecruitHeadcountsByProjectSq(Long projectSq) {
-		return projectMapper.findRecruitHeadcountsByProjectSq(projectSq);
+		return developerGradeSupport.sortRecruitHeadcounts(projectMapper.findRecruitHeadcountsByProjectSq(projectSq));
 	}
 	
 	public Map<String, LocalDateTime> fetchInterviewTimeMinMaxBySq(Long projectSq) {

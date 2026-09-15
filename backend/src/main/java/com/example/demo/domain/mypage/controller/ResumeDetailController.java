@@ -26,8 +26,9 @@ public class ResumeDetailController {
 
     @GetMapping("/resume-detail/{resumeSq}")
     public ResponseEntity<ApiResponse<ResumeDetailResponseDTO>> getResumeDetail(
+            @AuthenticationPrincipal Long userSq,
             @PathVariable(name = "resumeSq") Long resumeSq) {
-        ResumeDetailResponseDTO response = resumeDetailService.getResumeDetail(resumeSq);
+        ResumeDetailResponseDTO response = resumeDetailService.getResumeDetail(resumeSq, userSq);
         if (response != null) {
             return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "이력서 정보 조회 완료", response));
         } else {

@@ -4,7 +4,9 @@ import { SITE_URL } from '@/lib/seo'
 // 색인 제외: 인증 필요/개인화 페이지 + 글 작성 폼 + API.
 // 공개 경로는 allow '/' 하나로 통일 — 경로 나열식은 신규 공개 페이지 추가 시 누락 위험.
 const DISALLOW = [
-  '/mypage/',
+  // 트레일링 슬래시 없이: '/mypage' 대시보드 자체(로그인 전용)도 함께 막는다.
+  // '/mypage/'만 쓰면 정확히 '/mypage' 경로는 이 규칙에 매칭되지 않아(robots.txt는 순수 접두 매칭) 색인된다.
+  '/mypage',
   '/api/',
   '/login',
   '/sign-up',

@@ -1,7 +1,6 @@
 'use client'
 // Mirrors vue_js/src/fo/components/login&signup/CompanySignUpForm.vue
 import { useCallback, useRef, useState } from 'react'
-import Script from 'next/script'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -132,25 +131,38 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
 
   const validateAddress = (val = addressField.value) => {
     if (!val) { addressField.setError('주소를 입력해주세요.'); addressField.setValid(false); return false }
+    // 주소 텍스트가 있어도 지오코딩이 아직 안 끝났거나 실패했으면(위 failGeocode) 좌표가 비어 있다.
+    // 이 검사가 없으면 제출 시 재검증이 openPostcode 의 실패 표시를 지워버려 좌표 0,0 으로
+    // 그대로 제출된다(2026-09-02 재발 지점) — 여기서 다시 막는다.
+    if (!latitude || !longitude) {
+      addressField.setError('주소의 좌표를 확인하지 못했습니다. 주소를 다시 검색해주세요.')
+      addressField.setValid(false)
+      return false
+    }
     addressField.setError(''); addressField.setValid(true); return true
   }
 
-  const validateEmail = (val = emailIdField.value) => {
-    const email = `${val}@${isCustomDomain ? customDomain : emailDomain}`
+  const validateEmail = (val = emailIdField.value, domainVal?: string) => {
+    const domain = domainVal ?? (isCustomDomain ? customDomain : emailDomain)
+    const email = `${val}@${domain}`
     if (!val) { emailIdField.setError('이메일 아이디를 입력해주세요.'); emailIdField.setValid(false); return false }
-    if (isCustomDomain && !customDomain) { emailIdField.setError('도메인을 입력해주세요.'); emailIdField.setValid(false); return false }
+    if (isCustomDomain && !domain) { emailIdField.setError('도메인을 입력해주세요.'); emailIdField.setValid(false); return false }
     if (!/\S+@\S+\.\S+/.test(email)) { emailIdField.setError('올바른 이메일 주소 형식이 아닙니다.'); emailIdField.setValid(false); return false }
     emailIdField.setError(''); emailIdField.setValid(true); return true
   }
 
   const openPostcode = () => {
-    if (!window.daum) return
+    if (!window.daum) { alertStore.show('주소 검색 서비스를 불러오는 중입니다.', 'danger'); return }
     new window.daum.Postcode({
       oncomplete: (data: DaumPostcodeResult) => {
         const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
         setPostcode(data.zonecode)
         addressField.setValue(addr); addressField.setError(''); addressField.setValid(true)
         setSigunguCode(data.sigunguCode); setAddressDetail('')
+        // 새 주소를 고른 즉시 옛 좌표부터 비운다 — 안 비우면 지오코딩이 끝나기 전(비동기 구간)에
+        // 제출할 경우 새 주소 텍스트에 옛 좌표가 실려 나간다. PersonalSignUpForm 은 이미 처리돼
+        // 있었는데 이 폼엔 빠져 있었다(2026-09-02 그 문제의 재발 지점).
+        setLatitude(''); setLongitude('')
         // 좌표를 비우기만 하면 사용자는 실패를 모른 채 제출해 서버에서 터진다
         // (2026-09-02 공고 등록에서 실제로 발생). 주소 필드 에러로 알린다.
         const failGeocode = (msg: string) => {
@@ -237,7 +249,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
 
   return (
     <>
-      <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
+      {/* Daum 우편번호 스크립트는 layout.tsx에서 전역 1회(afterInteractive) 로드된다 — 여기서 다시 로드하지 않는다. */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 아이디 */}
         <div>
@@ -332,13 +344,13 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
           <div className="flex flex-wrap gap-1">
             <Input {...emailIdField.props} className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
-            <Input className="w-28 min-w-0 flex-1" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value); resetEmailVerification() }} placeholder="도메인" />
+            <Input className="w-28 min-w-0 flex-1" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value, e.target.value); resetEmailVerification() }} placeholder="도메인" />
             <select value={isCustomDomain ? 'custom' : emailDomain} onChange={(e) => handleDomainChange(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
               <option value="" disabled>선택</option>
               {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
               <option value="custom">직접입력</option>
             </select>
-            <Button type="button" size="sm" onClick={async () => { validateEmail(); await emailVerify.sendCode(fullEmail()) }} disabled={emailVerify.sending}>
+            <Button type="button" size="sm" onClick={async () => { if (validateEmail()) await emailVerify.sendCode(fullEmail()) }} disabled={emailVerify.sending}>
               {emailVerify.sending ? '전송 중...' : '인증 요청'}
             </Button>
           </div>

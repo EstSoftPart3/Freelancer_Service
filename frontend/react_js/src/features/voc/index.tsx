@@ -9,6 +9,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { useDebounce } from '@/hooks/use-debounce'
 import { vocApi } from './api/voc-api'
 import { VocDeepLink } from './components/voc-deep-link'
 import { VocDialogs } from './components/voc-dialogs'
@@ -58,16 +59,14 @@ export function VocList() {
   }, [fetchVocs])
 
   // 검색어는 타이핑이 멈춘 뒤 URL 에 반영한다(게시글 관리와 같은 방식)
+  const debouncedKeyword = useDebounce(keyword, 500)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (keyword !== (search.keyword || '')) {
-        navigate({
-          search: (prev) => ({ ...prev, keyword: keyword || undefined, page: 1 }),
-        })
-      }
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [keyword, navigate, search.keyword])
+    if (debouncedKeyword !== (search.keyword || '')) {
+      navigate({
+        search: (prev) => ({ ...prev, keyword: debouncedKeyword || undefined, page: 1 }),
+      })
+    }
+  }, [debouncedKeyword, navigate, search.keyword])
 
   return (
     <VocProvider refresh={fetchVocs}>

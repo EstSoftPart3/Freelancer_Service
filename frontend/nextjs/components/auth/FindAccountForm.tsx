@@ -20,7 +20,7 @@ const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmai
 function EmailVerifyRow({
   emailId, setEmailId, domain, setDomain,
   customDomain, setCustomDomain, isCustom, setIsCustom,
-  onSendCode, sending, onBlur, error, valid, blockRef,
+  onSendCode, sending, onBlur, error, valid, blockRef, onEmailChanged,
 }: {
   emailId: string; setEmailId: (v: string) => void
   domain: string; setDomain: (v: string) => void
@@ -29,8 +29,12 @@ function EmailVerifyRow({
   onSendCode: () => void; sending: boolean
   onBlur?: () => void; error: string; valid: boolean
   blockRef?: React.Ref<HTMLDivElement>
+  // 이메일 주소가 바뀌면 이전 인증 상태가 새 주소에 그대로 남아 인증번호 입력이
+  // "인증 완료"로 잠기는 문제를 막기 위해 호출한다(PersonalSignUpForm·CompanySignUpForm 과 동일 이유).
+  onEmailChanged?: () => void
 }) {
   const handleDomain = (val: string) => {
+    onEmailChanged?.()
     if (val === 'custom') { setIsCustom(true); setCustomDomain(''); setDomain('custom') }
     else { setIsCustom(false); setDomain(val) }
   }
@@ -40,9 +44,9 @@ function EmailVerifyRow({
         이메일 주소 {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
       </label>
       <InvalidFrame ref={blockRef} invalid={!!error} className="flex flex-wrap gap-1">
-        <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => setEmailId(e.target.value)} onBlur={onBlur} placeholder="아이디" />
+        <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => { setEmailId(e.target.value); onEmailChanged?.() }} onBlur={onBlur} placeholder="아이디" />
         <span className="flex items-center px-1 text-sm">@</span>
-        <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => setCustomDomain(e.target.value)} placeholder="도메인" />
+        <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => { setCustomDomain(e.target.value); onEmailChanged?.() }} placeholder="도메인" />
         <select value={isCustom ? 'custom' : domain} onChange={(e) => handleDomain(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
           <option value="" disabled>선택</option>
           {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -96,6 +100,9 @@ function FindIdForm() {
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); return false }
     return true
   }
+  // 이메일 주소를 인증 후 바꿔도 ev.verified 가 그대로 남아, 인증 안 한 새 주소로
+  // /find-id 가 호출될 수 있었다(PersonalSignUpForm 등 가입 폼엔 이미 있던 처리).
+  const resetEmailVerification = () => { ev.reset(); setVerifyCode(''); setVerifyError('') }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,7 +141,7 @@ function FindIdForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
-        blockRef={emailRef}
+        blockRef={emailRef} onEmailChanged={resetEmailVerification}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -182,13 +189,21 @@ function ResetPasswordVerifyForm() {
     if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('올바른 이메일 주소 형식이 아닙니다.'); return false }
     setEmailValid(true); return true
   }
+  // 이메일 주소를 인증 후 바꿔도 ev.verified 가 그대로 남아, 인증 안 한 새 주소로
+  // /reset-password/verify 가 호출될 수 있었다.
+  const resetEmailVerification = () => { ev.reset(); setVerifyCode(''); setVerifyError('') }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs: Record<string, string> = {}
     if (!userId || userId.length < 4) errs.userId = '아이디를 입력해주세요.'
     if (!name || name.length < 2) errs.name = '이름을 입력해주세요.'
-    if (!vEmail()) errs.email = emailError
+    // vEmail() 이 setEmailError 로 방금 세팅한 값은 이 렌더에는 아직 반영 안 된 stale
+    // state 다 — emailError 를 그대로 읽으면 항상 한 턴 전 값(대개 빈 문자열)이 잡혀
+    // errs.email 이 falsy 가 되고, 아래 focus 이동 로직이 이 필드를 건너뛴다.
+    // 화면에 보일 문구는 emailError state(비동기 반영)로 이미 그려지므로, 여기서는
+    // errs 맵을 채우는 용도의 자리표시자 문자열이면 된다.
+    if (!vEmail()) errs.email = '이메일을 확인해주세요.'
     if (!ev.verified) { setVerifyError('인증을 완료해주세요.'); errs.verify = '인증 필요' }
     setErrors(errs)
     if (Object.keys(errs).length) {
@@ -231,7 +246,7 @@ function ResetPasswordVerifyForm() {
         isCustom={isCustom} setIsCustom={setIsCustom}
         onSendCode={async () => { if (vEmail()) await ev.sendCode(fullEmail()) }}
         sending={ev.sending} onBlur={vEmail} error={emailError} valid={emailValid}
-        blockRef={emailRef}
+        blockRef={emailRef} onEmailChanged={resetEmailVerification}
       />
       <div>
         <label className="mb-1 flex items-center gap-1 text-sm font-medium">

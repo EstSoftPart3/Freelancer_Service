@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
@@ -49,11 +52,27 @@ public class AffiliationService {
 
 	// 소속 신청 내역 하나 조회
 	@Transactional
-	public ApplyResponse getAffiliaion(Long applicationSq) {
+	public ApplyResponse getAffiliaion(Long userSq, Long applicationSq) {
 
 		CompanyApplication application = getApply(applicationSq);
+		if (application == null) {
+			throw new IllegalArgumentException("등록된 소속 신청 정보가 없습니다.");
+		}
+
+		// 지원자 본인 또는 해당 소속(회사)의 담당자만 조회할 수 있다.
+		boolean isApplicant = Objects.equals(userSq, application.getUserSq());
+		boolean isCompanyOwner = !isApplicant
+				&& Objects.equals(userSq, affiliationMapper.findCompanyOwnerUserSq(application.getCompanySq()));
+		if (!isApplicant && !isCompanyOwner) {
+			throw new IllegalArgumentException("소속 신청 내역을 조회할 권한이 없습니다.");
+		}
 
 		Company company = affiliationMapper.findCompany(application.getCompanySq());
+		if (company == null) {
+			// 신청은 남아 있는데 소속(회사) 행이 사라진 경우(고아 FK). 권한 검사는 이미 통과했으니
+			// company.getCompanySq() 에서 NPE 로 500 내는 대신 명확한 404 를 준다.
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 소속입니다.");
+		}
 		String resumeTtl = affiliationMapper.findResumeTtl(application.getResumeSq());
 		Long applicantCnt = affiliationMapper.findApplicantCnt(application.getCompanySq());
 
@@ -275,9 +294,24 @@ public class AffiliationService {
 
 	// 합격 또는 불합격 변경
 	@Transactional
-	public void updateApplicationStatus(Long companyApplicationSq, Long companyApplicationStatusCd) {
+	public void updateApplicationStatus(Long userSq, Long companyApplicationSq, Long companyApplicationStatusCd) {
 		// 1. 상태 업데이트
 		CompanyApplication application = getApply(companyApplicationSq);
+		if (application == null) {
+			throw new IllegalArgumentException("등록된 소속 신청 정보가 없습니다.");
+		}
+		// 해당 소속(회사)의 담당자만 합격/불합격을 결정할 수 있다.
+		// (없으면 지원자 본인이 자기 신청의 상태를 502(합격)로 바꿔 스스로 소속될 수 있다)
+		Long companyOwnerSq = affiliationMapper.findCompanyOwnerUserSq(application.getCompanySq());
+		if (!Objects.equals(userSq, companyOwnerSq)) {
+			throw new IllegalArgumentException("해당 소속 신청의 상태를 변경할 권한이 없습니다.");
+		}
+		if (companyApplicationStatusCd == null) {
+			// 이전엔 요청에서 이 값이 빠지면 NPE(500)로 끊겼다. Objects.equals 로 NPE는 없앴지만,
+			// 그대로 두면 null 이 DB 에 그대로 쓰이고(매퍼가 <if> 가드 없이 SET 한다) 아래 분기가
+			// "불합격" 으로 빠져 실제로는 상태 미확정인데 지원자에게 불합격 통보가 나간다.
+			throw new IllegalArgumentException("합격/불합격 상태 코드가 필요합니다.");
+		}
 		application.setCompanyApplicationStatusCd(companyApplicationStatusCd);
 		affiliationMapper.updateApplication(application);
 
@@ -289,7 +323,9 @@ public class AffiliationService {
 			String message = "";
 
 			// 상태 코드에 따른 메시지 분기 (예: 702 합격, 703 불합격 등 실제 코드에 맞춰 수정)
-			if (companyApplicationStatusCd.equals(502L)) {
+			// 요청 본문에 companyApplicationStatusCd 가 빠지면 null 이 그대로 들어오므로
+			// .equals() 대신 Objects.equals() 로 NPE 없이 걸러낸다.
+			if (Objects.equals(companyApplicationStatusCd, 502L)) {
 				// 합격 시 이미 다른 기업에 소속 중이면 상태 변경 롤백 + 알림 차단
 				boolean isWorkingNow = affiliationRepository.isUserAlreadyAffiliated(receiverSq);
 				if (isWorkingNow) {
@@ -301,7 +337,16 @@ public class AffiliationService {
 				if (passDTO == null) {
 					throw new IllegalStateException("지원 정보를 찾을 수 없습니다.");
 				}
-				affiliationRepository.insertCompanyMember(passDTO);
+				// 바로 위 isUserAlreadyAffiliated 확인과 이 INSERT 사이엔 잠금이 없어, 서로 다른
+				// 두 회사가 같은 지원자를 거의 동시에 승인하면 둘 다 확인을 통과할 수 있었다.
+				// 진짜 방어선은 TBL_COMPANY_MEMBER_R 의 유니크 인덱스다(재직 중인 소속은
+				// 사용자당 하나만 허용, 2026-09-10 migrate-2026-09-10-affiliation-unique-member.py
+				// 로 추가) — 경합이 나면 나중 INSERT 가 여기서 걸린다.
+				try {
+					affiliationRepository.insertCompanyMember(passDTO);
+				} catch (DuplicateKeyException e) {
+					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+				}
 
 				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";
 			} else {
@@ -331,20 +376,33 @@ public class AffiliationService {
 				.filter(Objects::nonNull)
 				.map(application -> {
 					Company company = affiliationMapper.findCompany(application.getCompanySq());
+					if (company == null) {
+						// getAffiliaion 과 같은 고아 FK 케이스(신청은 남아 있는데 소속 행이 사라짐).
+						// 여기는 목록이라 전체를 500 으로 죽이는 대신 그 항목만 건너뛴다.
+						return null;
+					}
 					String resumeTtl = affiliationMapper.findResumeTtl(application.getResumeSq());
 					Long applicantCnt = affiliationMapper.findApplicantCnt(application.getCompanySq());
 
 					return ApplicationResponse.fromEntity(company, resumeTtl, application, applicantCnt);
 
-				}).collect(Collectors.toList());
+				}).filter(Objects::nonNull).collect(Collectors.toList());
 
 		return ApplicationListResponse.builder().applies(responses).size(size).page(page).totalElements(totalElements)
 				.readElements(readElements).build();
 	}
 
 	// 열람 상태 변경
-	public void updateApplicationReadAt(Long companyApplicationSq) {
+	public void updateApplicationReadAt(Long userSq, Long companyApplicationSq) {
 		CompanyApplication application = getApply(companyApplicationSq);
+		if (application == null) {
+			throw new IllegalArgumentException("등록된 소속 신청 정보가 없습니다.");
+		}
+		// 해당 소속(회사)의 담당자만 열람 처리를 할 수 있다.
+		Long companyOwnerSq = affiliationMapper.findCompanyOwnerUserSq(application.getCompanySq());
+		if (!Objects.equals(userSq, companyOwnerSq)) {
+			throw new IllegalArgumentException("해당 소속 신청을 열람할 권한이 없습니다.");
+		}
 		if (application.getCompanyApplicationReadAtDtm() == null) {
 			affiliationMapper.updateReadAt(companyApplicationSq);
 		}
@@ -352,7 +410,15 @@ public class AffiliationService {
 	}
 
 	// 소속 신청 취소
-	public void deleteApplication(Long companyApplicationSq) {
+	public void deleteApplication(Long userSq, Long companyApplicationSq) {
+		CompanyApplication application = getApply(companyApplicationSq);
+		if (application == null) {
+			throw new IllegalArgumentException("등록된 소속 신청 정보가 없습니다.");
+		}
+		// 본인이 신청한 소속 신청만 취소할 수 있다.
+		if (!Objects.equals(userSq, application.getUserSq())) {
+			throw new IllegalArgumentException("본인의 소속 신청만 취소할 수 있습니다.");
+		}
 		affiliationMapper.deleteApplication(companyApplicationSq);
 		return;
 	}

@@ -63,11 +63,19 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
-  if (token && PERSONAL_ONLY.some((p) => pathname.startsWith(p)) && userType !== 'PERSONAL') {
+  if (
+    token &&
+    PERSONAL_ONLY.some((p) => pathname === p || pathname.startsWith(p + '/')) &&
+    userType !== 'PERSONAL'
+  ) {
     return NextResponse.redirect(new URL('/mypage', req.url))
   }
 
-  if (token && COMPANY_ONLY.some((p) => pathname.startsWith(p)) && userType !== 'COMPANY') {
+  if (
+    token &&
+    COMPANY_ONLY.some((p) => pathname === p || pathname.startsWith(p + '/')) &&
+    userType !== 'COMPANY'
+  ) {
     return NextResponse.redirect(new URL('/mypage', req.url))
   }
 

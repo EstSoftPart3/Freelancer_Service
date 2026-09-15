@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -32,10 +32,9 @@ public class FileStorageService {
     // svg는 내부에 <script>를 품을 수 있어 그 자체로는 저장형 XSS 벡터다. 업무상 필요해 허용하되,
     // FileController가 응답에 `Content-Security-Policy: sandbox` 를 붙여 스크립트 실행을 차단한다.
     // 둘은 한 쌍이다 — 그 헤더를 지우면 svg 허용이 곧바로 취약점이 된다.
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg",
-            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-            "txt", "csv", "hwp", "hwpx", "zip");
+    //
+    // 목록 자체는 SupportedFileTypes 에 단일 출처로 있다 — FileController의 MIME 판정表과
+    // 따로 유지하면 한쪽만 갱신했을 때 "업로드는 되는데 서빙 시 타입을 못 찾는" 불일치가 생긴다.
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -152,8 +151,8 @@ public class FileStorageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 이름이 없습니다.");
         }
         // 저장 파일명은 UUID + 확장자라 이중 확장자(a.php.png)로 우회되지 않는다 — 마지막 확장자만 보면 충분하다.
-        String ext = getFileExtension(originalName).substring(1).toLowerCase();
-        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+        String ext = getFileExtension(originalName).substring(1).toLowerCase(Locale.ROOT);
+        if (!SupportedFileTypes.ALLOWED_EXTENSIONS.contains(ext)) {
             log.warn("허용되지 않는 확장자 업로드 시도: {}", originalName);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "허용되지 않는 파일 형식입니다. (." + ext + ") 이미지·문서·압축 파일만 업로드할 수 있습니다.");
@@ -166,13 +165,20 @@ public class FileStorageService {
 
         String newFileName = createFileName(sourceFileName);
         try {
-            Path sourcePath = Paths.get(uploadDir).resolve(sourceFileName);
+            Path uploadPath = Paths.get(uploadDir).normalize();
+            Path sourcePath = uploadPath.resolve(sourceFileName).normalize();
+            // sourceFileName은 DB에 저장된 UUID 파일명이어야 하지만, 방어적으로 업로드 루트 밖으로
+            // 벗어나는 경로("../../etc/passwd" 류)는 여기서 걸러 실제 파일시스템 접근 전에 막는다.
+            if (!sourcePath.startsWith(uploadPath)) {
+                log.warn("업로드 경로를 벗어난 복사 시도를 거부한다: {}", sourceFileName);
+                return null;
+            }
             if (!Files.exists(sourcePath)) {
                 // DB 레코드만 남고 실물이 사라진 파일 때문에 복사 전체가 500 으로 죽지 않게 한다.
                 log.warn("복사할 원본 파일이 없어 건너뛴다: {}", sourceFileName);
                 return null;
             }
-            Path destPath = Paths.get(uploadDir).resolve(newFileName);
+            Path destPath = uploadPath.resolve(newFileName);
             Files.copy(sourcePath, destPath);
             log.info("파일 복사 성공: {} -> {}", sourceFileName, newFileName);
             return newFileName;

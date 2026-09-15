@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import { getCookie, clearAuthCookies } from '@/lib/cookies'
 import api from '@/lib/api'
-import { User } from '@/types'
+import { UserApiResponse } from '@/types'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const { setUser, clearUser, setAuthChecked } = useUserStore()
@@ -20,7 +20,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     }
 
     api
-      .post<{ output: User }>('/me')
+      .post<{ output: UserApiResponse }>('/me')
       .then(({ data }) => {
         setUser(data.output)
       })

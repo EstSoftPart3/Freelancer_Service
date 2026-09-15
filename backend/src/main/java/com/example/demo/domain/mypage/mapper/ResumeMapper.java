@@ -152,6 +152,10 @@ public interface ResumeMapper {
 
 	public Long findUserByResumeSq(@Param("resumeSq") Long resumeSq);
 
+	// 이력서 열람 인가: 요청자 소속회사가 이 이력서로 지원받은 기록이 있는지
+	boolean existsApplicationByCompanyAndResume(@Param("companySq") Long companySq,
+			@Param("resumeSq") Long resumeSq);
+
 	// 전체 태그
 	List<CommonSkillTag> findParentSkillTags();
 

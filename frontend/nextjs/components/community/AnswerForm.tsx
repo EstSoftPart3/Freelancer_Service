@@ -63,6 +63,8 @@ export default function AnswerForm({ boardSq, editTarget = null, onSuccess, onCa
   }
 
   const handleSubmit = async () => {
+    // disabled prop만으로는 리렌더 전 연타를 막지 못한다 — 다른 폼들과 동일하게 in-flight 가드를 둔다.
+    if (submitting) return
     // 순차 return 이 아니라 검사 배열을 전부 평가한다 — 미충족 필드를 한꺼번에 빨간 프레임으로 보여주기 위해서다.
     if (!validate([
       { key: 'ttl', invalid: !ttl.trim(), message: '제목을 입력해주세요.' },

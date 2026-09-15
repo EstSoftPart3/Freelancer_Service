@@ -12,9 +12,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { project_sq } = await params
-  const project = await getProjectDetail(project_sq)
-  // 삭제/존재하지 않는 프로젝트는 색인 제외
-  if (!project) return { title: '프로젝트 상세', robots: { index: false } }
+  const { data: project, confirmedMissing } = await getProjectDetail(project_sq)
+  // 확실히 삭제/존재하지 않는 프로젝트만 색인 제외 — 일시적 조회 실패는 noindex 하지 않는다
+  if (!project) return { title: '프로젝트 상세', robots: { index: confirmedMissing ? false : undefined } }
   return buildPageMetadata({
     title: project.projectTtl,
     description: stripHtmlToExcerpt(
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CompanyProjectSpecPage({ params }: Props) {
   const { project_sq } = await params
   // generateMetadata와 React cache()로 공유 — 실제 API 호출은 요청당 1회
-  const project = await getProjectDetail(project_sq)
+  const { data: project } = await getProjectDetail(project_sq)
   return (
     <div className="container mx-auto px-4 py-8">
       <ProjectSpec projectSq={project_sq} variant="company" initialData={project} />

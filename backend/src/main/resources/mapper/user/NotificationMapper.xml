@@ -22,11 +22,14 @@
     notification_content_txt, notification_target_url ) VALUES ( #{receiverUserSq}, #{senderUserSq},
     #{notificationTypeCd}, #{notificationContentTxt}, #{notificationTargetUrl} ) </insert>
 
+  <!-- receiver_user_sq 조건이 없으면 로그인만 한 아무 사용자가 notificationSq 를 늘려가며
+    남의 알림을 읽음 처리·삭제할 수 있다. 소유자가 아니면 0행 업데이트로 조용히 끝난다
+    (알림이 존재하는지 여부조차 알려주지 않는 편이 안전하다). -->
   <update id="updateNotificationRead"> UPDATE tbl_notification_m SET notification_read_yn = 'Y'
-    WHERE notification_sq = #{notificationSq} </update>
+    WHERE notification_sq = #{notificationSq} AND receiver_user_sq = #{receiverUserSq} </update>
 
   <update id="deleteNotification"> UPDATE tbl_notification_m SET notification_is_deleted_yn = 'Y'
-    WHERE notification_sq = #{notificationSq} </update>
+    WHERE notification_sq = #{notificationSq} AND receiver_user_sq = #{receiverUserSq} </update>
 
   <insert id="insertNotificationBatch"> INSERT INTO tbl_notification_m ( receiver_user_sq,
     sender_user_sq, notification_type_cd, notification_content_txt, notification_target_url ) VALUES <foreach

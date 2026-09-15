@@ -13,7 +13,25 @@ export const baseUrl =
       'http://localhost:8080/api')
     : '/api'
 
-const api = axios.create({ baseURL: baseUrl })
+// 백엔드(@ModelAttribute List<Long>)는 같은 키를 반복하는 형식(key=1&key=2)을 요구한다.
+// axios 기본 직렬화는 배열을 대괄호 형식(key[]=1&key[]=2)으로 보내 Spring 이 못 읽는다
+// (ProjectFilterBar 의 다중선택 필터가 이 이유로 값을 하나만 보내도록 우회돼 있었다).
+// 모든 API 호출이 이 인스턴스를 공유하므로 여기 한 곳만 고치면 배열 파라미터를 쓰는
+// 모든 곳에 적용된다 — 대신 새로 배열을 넘기는 곳은 반드시 이 형식을 전제해야 한다.
+function serializeParams(params: Record<string, unknown>): string {
+  const parts: string[] = []
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    const values = Array.isArray(value) ? value : [value]
+    values.forEach((v) => {
+      if (v === undefined || v === null) return
+      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`)
+    })
+  })
+  return parts.join('&')
+}
+
+const api = axios.create({ baseURL: baseUrl, paramsSerializer: serializeParams })
 
 let isRefreshing = false
 let failedQueue: Array<{

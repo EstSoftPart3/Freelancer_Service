@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useUserStore } from '@/stores/userStore'
+import { clearAuthCookies } from '@/lib/cookies'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -30,12 +31,6 @@ interface Notification {
   notificationReadYn: 'Y' | 'N'
   notificationTargetUrl?: string
   notificationCreatedAtDtm?: string
-}
-
-function clearAuthCookies() {
-  document.cookie = 'accessToken=; Max-Age=0; path=/'
-  document.cookie = 'refreshToken=; Max-Age=0; path=/'
-  document.cookie = 'userType=; Max-Age=0; path=/'
 }
 
 // 백엔드가 알림 targetUrl을 Vue 라우터 camelCase로 저장 → Next kebab 라우트와 불일치(하드 404).

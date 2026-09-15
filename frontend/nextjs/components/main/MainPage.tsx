@@ -214,8 +214,7 @@ function PostMiniCard({ item }: { item: CommunityBestItem }) {
 
 export default function MainPage({ initialProjects }: Props = {}) {
   const router = useRouter()
-  const { getUserType, userTypeCd } = useUserStore()
-  const userType = getUserType()
+  const { userTypeCd } = useUserStore()
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [projects, setProjects] = useState<PopularProject[]>(initialProjects ?? [])
@@ -225,6 +224,9 @@ export default function MainPage({ initialProjects }: Props = {}) {
   const [postsLoading, setPostsLoading] = useState(true)
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // 정렬 버튼 연타 시 늦게 보낸 요청이 먼저 응답한 요청 결과를 덮어써
+  // "선택된 정렬"과 "표시된 목록"이 어긋나는 것을 막기 위한 요청 순번
+  const sortRequestSeq = useRef(0)
 
   const total = SLIDES.length
 
@@ -254,17 +256,22 @@ export default function MainPage({ initialProjects }: Props = {}) {
   // Phase2: 정렬 탭(조회순/스크랩순/지원순)을 없애고 "조회수 높은 순" 하나로 고정했다 —
   // 기준은 추천 프로젝트 옆 안내 아이콘에 그대로 적어둔다.
   const fetchPopularProjects = useCallback(async () => {
+    const requestId = ++sortRequestSeq.current
     setLoading(true)
     try {
       // /projects/popular 는 ApiResponse 없이 List<> 직접 반환
       const { data } = await api.get<PopularProject[]>('/projects/popular', {
         params: { sortType: 'views' },
       })
+      // 이 응답을 기다리는 동안 더 최신 정렬 요청이 나갔다면 폐기 — 느린 이전 응답이
+      // 최신 정렬 버튼 선택 상태를 덮어써 목록과 선택이 어긋나는 것을 방지한다.
+      if (requestId !== sortRequestSeq.current) return
       setProjects(Array.isArray(data) ? data : [])
     } catch {
+      if (requestId !== sortRequestSeq.current) return
       console.error('[MainPage] 인기 프로젝트 로드 실패')
     } finally {
-      setLoading(false)
+      if (requestId === sortRequestSeq.current) setLoading(false)
     }
   }, [])
 
@@ -293,9 +300,6 @@ export default function MainPage({ initialProjects }: Props = {}) {
       : `/projects/user/${project.projectSq}`
     router.push(path)
   }
-
-  // userType 사용 억제 (Vue 원본과 동일하게 userType 기반 라우팅)
-  void userType
 
   const toggleFaq = (i: number) => setActiveFaq(activeFaq === i ? null : i)
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, ChevronDown, ChevronUp } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -77,16 +78,21 @@ export default function ProjectFilterBar({ onSearch }: Props) {
       .then(([regions, careers, educations, jobTypes]) => {
         setFilters({ regions, careers, educations, jobTypes })
       })
-      .catch(() => {})
+      .catch(() => toast.error('상세 필터 옵션을 불러올 수 없습니다.'))
   }, [])
 
   function buildParams(overrideSortIdx?: number): ProjectSearchParams {
     const sort = SORT_OPTIONS[overrideSortIdx ?? sortIdx]
     return {
-      addressCodeSq: selectedRegions[0],
-      projectDeveloperGradeCd: selectedCareers[0],
-      educationCd: selectedEducations[0],
-      jobRoleCd: selectedJobTypes[0],
+      // 백엔드(ProjectSearchRequest)는 이 넷을 전부 List<Long> 으로 받는 다중선택
+      // 필터다. [0] 만 보내던 예전 코드는 체크박스로 여러 개를 골라도 첫 값만
+      // 서버에 반영됐다(lib/api.ts 의 paramsSerializer 로 배열이 Spring 이
+      // 읽는 형식으로 나가게 함께 고쳤다). 빈 배열이면 undefined 로 보내
+      // "필터 없음" 을 유지한다.
+      addressCodeSq: selectedRegions.length ? selectedRegions : undefined,
+      projectDeveloperGradeCd: selectedCareers.length ? selectedCareers : undefined,
+      educationCd: selectedEducations.length ? selectedEducations : undefined,
+      jobRoleCd: selectedJobTypes.length ? selectedJobTypes : undefined,
       minPrice: minPrice > 0 ? minPrice : undefined,
       distance: distance > 0 ? distance : undefined,
       searchKeyword: searchKeyword || undefined,

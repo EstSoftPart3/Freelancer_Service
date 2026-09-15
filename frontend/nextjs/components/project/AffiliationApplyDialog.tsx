@@ -1,7 +1,7 @@
 'use client'
 
 // Vue 원본 AffiliationMemberModal.vue 이식 — 이름 클릭 이력서 상세(B3), '이력서 변경' 대표 이력서 변경(B1)
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,6 +43,12 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [members, setMembers] = useState<CompanyMember[]>([])
   const [searchType, setSearchType] = useState('all')
   const [searchText, setSearchText] = useState('')
+  // 실제 검색에 적용된 값 — 제출(Enter/검색 버튼) 시에만 반영한다. searchText/searchType을
+  // fetchMembers의 deps에 직접 두면 fetchMembers 아이덴티티가 매 keystroke마다 바뀌어
+  // 아래 useEffect([open, fetchMembers])가 매 keystroke마다 재실행돼 타이핑할 때마다
+  // 요청이 나갔다(AffiliationListPage의 activeKeyword/activeSearchType 분리와 동일 패턴).
+  const [activeSearchType, setActiveSearchType] = useState('all')
+  const [activeSearchText, setActiveSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selected, setSelected] = useState<SelectedMember[]>([])
@@ -50,30 +56,41 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
   const [resumeChangeUserSq, setResumeChangeUserSq] = useState<number | null>(null)
+  const [checkingUserSq, setCheckingUserSq] = useState<number | null>(null)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'members'>()
+  // 검색어를 빠르게 바꿔 Enter 를 두 번 치거나 검색 도중 페이지를 넘기면 요청이 겹친다.
+  // 나중에 시작된 요청만 결과를 반영하도록 순번을 매긴다(다른 목록 다이얼로그들과 동일 패턴).
+  const fetchSeqRef = useRef(0)
 
   const fetchMembers = useCallback(async (page = 1) => {
+    const seq = ++fetchSeqRef.current
     try {
       const { data } = await api.get('/companies', {
         params: {
           page,
           size: PAGE_SIZE,
-          searchType: searchType !== 'all' ? searchType : undefined,
-          keyword: searchText.trim() || undefined,
+          searchType: activeSearchType !== 'all' ? activeSearchType : undefined,
+          keyword: activeSearchText.trim() || undefined,
         },
       })
+      if (seq !== fetchSeqRef.current) return
       const out = data.output ?? {}
       setMembers(out.members ?? [])
       setCurrentPage(out.page ?? page)
       setTotalPages(Math.max(1, out.totalPages ?? 1))
     } catch {
-      toast.error('소속 인원 목록을 불러올 수 없습니다.')
+      if (seq === fetchSeqRef.current) toast.error('소속 인원 목록을 불러올 수 없습니다.')
     }
-  }, [searchType, searchText])
+  }, [activeSearchType, activeSearchText])
 
   useEffect(() => {
     if (open) fetchMembers(1)
   }, [open, fetchMembers])
+
+  function submitSearch() {
+    setActiveSearchType(searchType)
+    setActiveSearchText(searchText)
+  }
 
   function isSelected(userSq: number) {
     return selected.some((m) => m.userSq === userSq)
@@ -88,6 +105,8 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
       toast.error('대표 이력서를 먼저 선택해주세요.')
       return
     }
+    if (checkingUserSq === member.userSq) return
+    setCheckingUserSq(member.userSq)
     try {
       const { data } = await api.get(`/projects/applications/${projectSq}/check`, { params: { userSq: member.userSq } })
       if (data.output) {
@@ -95,9 +114,15 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         return
       }
       clearField('members')
-      setSelected((prev) => [...prev, { userSq: member.userSq, userNm: member.userNm, resumeSq: member.resumeSq }])
+      setSelected((prev) => (
+        prev.some((m) => m.userSq === member.userSq)
+          ? prev
+          : [...prev, { userSq: member.userSq, userNm: member.userNm, resumeSq: member.resumeSq }]
+      ))
     } catch {
       toast.error('지원 여부 확인 중 오류가 발생했습니다.')
+    } finally {
+      setCheckingUserSq(null)
     }
   }
 
@@ -151,11 +176,11 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
           <Input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchMembers(1)}
+            onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
             placeholder="검색어 입력"
             className="w-40"
           />
-          <Button size="sm" onClick={() => fetchMembers(1)}>검색</Button>
+          <Button size="sm" onClick={submitSearch}>검색</Button>
         </div>
 
         {selected.length > 0 && (
@@ -200,6 +225,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
                   <Button
                     size="sm"
                     variant={isSelected(member.userSq) ? 'default' : 'outline'}
+                    disabled={checkingUserSq === member.userSq}
                     onClick={() => toggleSelection(member)}
                   >
                     {isSelected(member.userSq) ? '선택됨' : '선택하기'}
@@ -238,7 +264,16 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
         open={resumeChangeUserSq !== null}
         userSq={resumeChangeUserSq}
         onClose={() => setResumeChangeUserSq(null)}
-        onChanged={() => fetchMembers(currentPage)}
+        onChanged={(newResumeSq) => {
+          // 이미 선택된 인원의 대표 이력서를 바꾼 경우, 지원 목록에 담긴 스냅샷도 함께 갱신한다.
+          const changedUserSq = resumeChangeUserSq
+          if (changedUserSq != null) {
+            setSelected((prev) => prev.map((m) => (
+              m.userSq === changedUserSq ? { ...m, resumeSq: newResumeSq } : m
+            )))
+          }
+          fetchMembers(currentPage)
+        }}
       />
     </Dialog>
   )

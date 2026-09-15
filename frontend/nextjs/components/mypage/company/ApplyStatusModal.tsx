@@ -52,15 +52,6 @@ const SEARCH_OPTIONS = [
   { value: 'skills', label: '사용 기술' },
 ]
 
-function bucket(status?: string): string {
-  if (status === '지원중') return 'in_progress'
-  if (status === '합격') return 'passed'
-  if (status === '인터뷰확정') return 'interview_confirmed'
-  if (status === '인터뷰요청중') return 'interview_requested'
-  if (status === '불합격' || status === '지원취소') return 'rejected'
-  return ''
-}
-
 // interviewDt(LocalDateTime)용 — 시분까지 표시
 function fmtDate(s?: string) {
   if (!s) return ''
@@ -87,6 +78,7 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
   const [rejectTarget, setRejectTarget] = useState<number | null>(null)
   const [detail, setDetail] = useState<{ resumeSq: number; applicationSq: number } | null>(null)
   const [interview, setInterview] = useState<{ applicationSq: number; times: InterviewTime[] } | null>(null)
+  const [counts, setCounts] = useState<Record<string, number>>({})
 
   // 응답은 {applicantType, currentPage, totalPages, response} 형태로 직접 내려옴 (output 래퍼 없음)
   const load = useCallback(async (
@@ -112,17 +104,36 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
     }
   }, [projectSq])
 
+  // 예전엔 현재 페이지에 로드된 allApplicants 로 배지를 셌다 — 페이지가 여러 장이면
+  // "전체" 배지가 실제 전체 건수가 아니라 현재 페이지 건수만 보였다(2026-09-14, 28번).
+  // 백엔드에 상태별 COUNT 전용 엔드포인트를 추가해 페이징과 무관하게 정확한 값을 받는다.
+  const loadCounts = useCallback(async (
+    which: 'personal' | 'company', sType: string, kw: string,
+  ) => {
+    if (projectSq == null) return
+    try {
+      const { data } = await api.get(`/projects/applications/${projectSq}/counts`, {
+        params: { applicantType: which === 'company' ? 'corporate' : 'personal', searchType: sType, keyword: kw },
+      })
+      setCounts(data.output ?? {})
+    } catch {
+      // 배지 집계 실패는 화면을 막을 정도는 아니다 — 목록 자체는 load() 가 이미 보여준다.
+    }
+  }, [projectSq])
+
   useEffect(() => {
     if (open) {
       setFilter('all'); setTab('personal'); setSearchType('all'); setSearchText(''); setAppliedKeyword('')
       setCurrentPage(1); setCollapsed(new Set())
       load('personal', 1, 'all', 'all', '')
+      loadCounts('personal', 'all', '')
     }
-  }, [open, load])
+  }, [open, load, loadCounts])
 
   function switchTab(t: 'personal' | 'company') {
     setTab(t); setFilter('all'); setCurrentPage(1); setCollapsed(new Set())
     load(t, 1, 'all', searchType, appliedKeyword)
+    loadCounts(t, searchType, appliedKeyword)
   }
 
   function applyFilter(type: string) {
@@ -133,6 +144,7 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
   function doSearch() {
     setAppliedKeyword(searchText); setCurrentPage(1)
     load(tab, 1, filter, searchType, searchText)
+    loadCounts(tab, searchType, searchText)
   }
 
   function changePage(p: number) {
@@ -142,18 +154,12 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
 
   const allApplicants = useMemo(() => groups.flatMap((g) => g.applicants), [groups])
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: allApplicants.length }
-    TABS.forEach((t) => { if (t.type !== 'all') c[t.type] = 0 })
-    allApplicants.forEach((a) => { const b = bucket(a.appStatusVo?.appStatus); if (b) c[b]++ })
-    return c
-  }, [allApplicants])
-
   async function updateStatus(applicationSq: number, status: string) {
     try {
       await api.patch(`/projects/applications/${applicationSq}`, { status })
       toast.success('상태가 정상적으로 변경되었습니다.')
       load(tab, currentPage, filter, searchType, appliedKeyword)
+      loadCounts(tab, searchType, appliedKeyword)
     } catch {
       toast.error('상태 변경 중 오류가 발생했습니다.')
     }
@@ -298,7 +304,10 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
           applicationSq={interview?.applicationSq ?? null}
           interviewTimes={interview?.times ?? []}
           onClose={() => setInterview(null)}
-          onConfirm={() => load(tab, currentPage, filter, searchType, appliedKeyword)}
+          onConfirm={() => {
+            load(tab, currentPage, filter, searchType, appliedKeyword)
+            loadCounts(tab, searchType, appliedKeyword)
+          }}
         />
         <ConfirmDialog
           open={rejectTarget !== null}

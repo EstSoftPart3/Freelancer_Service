@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -54,6 +54,16 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
   )
   const [isLoading, setIsLoading] = useState(false)
+  // 정렬·검색·페이지 전환을 빠르게 연달아 누르면 먼저 보낸 느린 요청이 나중 요청보다 늦게
+  // 응답할 수 있다 — 응답 순서가 아니라 "가장 마지막으로 보낸 요청"만 반영한다.
+  const requestSeqRef = useRef(0)
+  // onSort/onStatus/onSearch/onPageChange는 자기 값으로 곧장 fetchList를 부르면서 동시에
+  // syncUrl로 page를 바꾼다 — 그 URL 변경이 page 파라미터를 실제로 바꾸면 아래
+  // "초기 + tag 변경 감지" effect도 다시 깨워 방금 보낸 것과 같은 조회를 한 번 더 내보낸다
+  // (요청 2배). 직접 호출한 (page,tag,category) 조합을 기억해 뒀다가, effect가 정확히 같은
+  // 조합으로 깨어나면 그 1회만 건너뛴다 — 값으로 비교하므로 유효기간이 남는 boolean 플래그와
+  // 달리 관계없는 다음 변경까지 잘못 건너뛰지 않는다.
+  const pendingSkipKeyRef = useRef<string | null>(null)
 
   // 필터 state — URL 우선, 없으면 탭 전환 간 보존되는 communityStore 값으로 폴백
   // (getState()로 스냅샷만 읽어 store 변경에 이 컴포넌트가 불필요하게 재구독되지 않게 한다)
@@ -83,6 +93,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
   const fetchList = useCallback(async (p: number, sort: string, sType: string, kw: string, status: string, t: string, cat: number | null) => {
+    const seq = ++requestSeqRef.current
     setIsLoading(true)
     try {
       let url = isAll
@@ -94,12 +105,17 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       if (hasCategoryTabs && cat !== null) url += `&category=${cat}`
 
       const { data } = await api.get<{ output: BoardListResponse }>(url)
+      if (seq !== requestSeqRef.current) return // 그 사이 더 최신 요청이 나갔다 — 이 응답은 버린다
       const out = data.output
       const total = out.totalElements === 0 ? 1 : Math.ceil(out.totalElements / PAGE_SIZE)
       setTotalPages(total)
       setBoardList(out.boards)
-    } catch { alertStore.show('게시글을 불러올 수 없습니다.', 'danger') }
-    finally { setIsLoading(false) }
+    } catch {
+      if (seq !== requestSeqRef.current) return
+      alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
+    } finally {
+      if (seq === requestSeqRef.current) setIsLoading(false)
+    }
   }, [boardCategory, isAnswerBoard, isAll, hasCategoryTabs])
 
   // URL 반영
@@ -116,25 +132,37 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     setCategoryCd(cat)
     const p = Math.max(1, Number(searchParams.get('page')) || 1)
     setPage(p)
-    fetchList(p, sortType, searchType, keyword, statusCd, t, cat)
+    const key = `${p}|${t}|${cat}`
+    if (pendingSkipKeyRef.current === key) {
+      pendingSkipKeyRef.current = null
+    } else {
+      fetchList(p, sortType, searchType, keyword, statusCd, t, cat)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.get('tag'), searchParams.get('page'), searchParams.get('category')])
 
   const onSort = (val: string) => {
-    setSortType(val); setPage(1)
+    setSortType(val)
+    // page가 이미 1이면 URL의 page 파라미터가 안 바뀌어 effect가 재실행되지 않는다 —
+    // 그럴 때 pendingSkipKeyRef를 세팅하면 다음 실제 변경 때까지 값이 남아 엉뚱한 조회를 건너뛰게 된다.
+    if (page !== 1) pendingSkipKeyRef.current = `1|${tag}|${categoryCd}`
+    setPage(1)
     syncUrl({ sort: val, page: '1' })
     setCommunityFilters({ sort: val })
     fetchList(1, val, searchType, keyword, statusCd, tag, categoryCd)
   }
 
   const onStatus = (val: string) => {
-    setStatusCd(val); setPage(1)
+    setStatusCd(val)
+    if (page !== 1) pendingSkipKeyRef.current = `1|${tag}|${categoryCd}`
+    setPage(1)
     syncUrl({ status: val, page: '1' })
     setCommunityFilters({ status: val })
     fetchList(1, sortType, searchType, keyword, val, tag, categoryCd)
   }
 
   const onSearch = () => {
+    if (page !== 1) pendingSkipKeyRef.current = `1|${tag}|${categoryCd}`
     setPage(1)
     syncUrl({ page: '1', searchType, keyword: keyword.trim() || '' })
     setCommunityFilters({ searchType, keyword: keyword.trim() })
@@ -142,7 +170,9 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   }
 
   const onPageChange = (p: number) => {
-    setPage(p); syncUrl({ page: String(p) })
+    if (p !== page) pendingSkipKeyRef.current = `${p}|${tag}|${categoryCd}`
+    setPage(p)
+    syncUrl({ page: String(p) })
     fetchList(p, sortType, searchType, keyword, statusCd, tag, categoryCd)
   }
 

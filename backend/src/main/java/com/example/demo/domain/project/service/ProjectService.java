@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.company.service.CompanyService;
 import com.example.demo.domain.project.dto.AddressInsertDto;
 import com.example.demo.domain.project.dto.ProjectRegionGroupDTO;
@@ -71,6 +72,7 @@ public class ProjectService {
 	private final CompanyService companyService;
 	private final NotificationService notificationService;
 	private final AffiliationMapper affiliationMapper;
+	private final ResumeMapper resumeMapper;
 
 	@Transactional
 	public void createProject(ProjectCreateRequest request, JwtAuthenticationToken token) {
@@ -513,8 +515,9 @@ public class ProjectService {
 		}
 		// 4. 변경되었으면 새 주소 생성
 		AddressInsertDto newDto = AddressInsertDto.forDetailed(request);
-		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사
-		if (newDto.getZonecode() == null) newDto.setZonecode(existing.getZonecode());
+		// 프론트에서 안 보내는 필드는 기존 레코드에서 복사한다. 단 zonecode 는 주소 자체가
+		// 바뀌는 이 분기에서 옛 값을 물려받으면 새 주소와 안 맞는 우편번호가 남는다
+		// (TBL_ADDRESS_S.zonecode 는 nullable — 비워도 무해하다). 복사하지 않는다.
 		if (newDto.getAreaCodeSq() == null) newDto.setAreaCodeSq(existing.getAreaCodeSq());
 		if (newDto.getLatitude() == null) newDto.setLatitude(existing.getLatitude());
 		if (newDto.getLongitude() == null) newDto.setLongitude(existing.getLongitude());
@@ -631,6 +634,36 @@ public class ProjectService {
 
 		Optional<Long> userCompanySq = Optional.ofNullable(companyService.fetchCompanySq(userSq));
 
+		// 요청 본문의 resumeSq 를 검증 없이 그대로 썼다 — 로그인만 하면 남의 이력서 번호를
+		// 실어 타인의 이력서를 기업에 제출할 수 있었다(2026-09-14, 판단대기 7번).
+		// 규칙: PERSONAL 지원은 본인 이력서만, COMPANY(대리지원)는 지원자 본인이 이 요청자의
+		// 소속 회사원이어야 한다.
+		boolean isCompanyApply = "COMPANY".equals(request.getProjectApplicationTyp());
+		if (isCompanyApply && userCompanySq.isEmpty()) {
+			throw new IllegalArgumentException("소속 회사 정보가 없어 대리 지원할 수 없습니다.");
+		}
+		request.getResumeSq().forEach(rSq -> {
+			Long resumeOwnerSq = resumeMapper.findUserByResumeSq(rSq);
+			if (resumeOwnerSq == null) {
+				throw new IllegalArgumentException("존재하지 않는 이력서입니다.");
+			}
+			if (isCompanyApply) {
+				Long ownerCompanySq = affiliationMapper.findMemberCompanySq(resumeOwnerSq);
+				if (ownerCompanySq == null || !ownerCompanySq.equals(userCompanySq.get())) {
+					throw new IllegalArgumentException("우리 소속 회원의 이력서만 지원에 사용할 수 있습니다.");
+				}
+			} else if (!resumeOwnerSq.equals(userSq)) {
+				throw new IllegalArgumentException("본인 이력서로만 지원할 수 있습니다.");
+			}
+			// 지원취소가 삭제가 아니라 상태 변경(806)이라 단순 유니크 검사는 취소 후 재지원을
+			// 막아버린다 — 지원취소·불합격(802) 을 제외한 "활성" 지원이 이미 있을 때만
+			// 거절한다(2026-09-14, 판단대기 11번). 더블클릭·동시요청으로 지원 행이 중복
+			// 생기고 project_candidate_cnt 가 함께 부풀던 문제를 막는다.
+			if (projectMapper.existsActiveApplication(projectSq, rSq)) {
+				throw new IllegalArgumentException("이미 지원한 이력서입니다.");
+			}
+		});
+
 		request.getResumeSq().forEach(rSq -> {
 			ProjectApplicationEntity projectApplicationEntity = ProjectApplicationEntity.from(projectSq,
 					projectMapper, rSq, request.getProjectApplicationTyp(), commonCodeMapper, userCompanySq);
@@ -669,8 +702,12 @@ public class ProjectService {
 
 	@Transactional
 	public void toggleProjectScrap(long projectSq, ScrapRequest scrapRequest, Long userSq) {
-		boolean hasScrapped = scrapRequest.isHasScrapped();
-		if (!hasScrapped) {
+		// 클라이언트가 보낸 hasScrapped 를 그대로 믿었다 — 화면 상태가 실제 DB 와 어긋나 있으면
+		// (다른 탭에서 토글했거나 확인 버튼이 두 번 발동한 경우 등) 삭제해야 할 때 다시 추가하거나
+		// 추가해야 할 때 다시 지워, 카운트가 음수가 되거나 중복 집계됐다(2026-09-14, 판단대기 8번).
+		// 요청 값은 무시하고 DB 의 실제 상태로 판단한다.
+		boolean alreadyScrapped = projectMapper.existsScrap(projectSq, userSq);
+		if (!alreadyScrapped) {
 			long scrapTypeCd = commonCodeMapper.findCommonCodeSqByName(scrapRequest.getTarget(),
 					ParentCodeEnum.SCRAP_TYPE.getCode());
 			ScrapInsertRequest scrapInsertRequest = new ScrapInsertRequest(userSq, projectSq, scrapTypeCd);

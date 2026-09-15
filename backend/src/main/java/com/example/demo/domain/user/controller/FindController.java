@@ -14,6 +14,7 @@ import com.example.demo.domain.user.dto.request.FindIdRequestDTO;
 import com.example.demo.domain.user.dto.request.ResetPasswordRequestDTO;
 import com.example.demo.domain.user.dto.request.ResetPasswordVerifyRequestDTO;
 import com.example.demo.domain.user.dto.response.FindIdResponseDTO;
+import com.example.demo.domain.user.service.EmailVerificationService;
 import com.example.demo.domain.user.service.UserService;
 import com.example.demo.domain.user.util.JwtProvider;
 
@@ -29,6 +30,7 @@ public class FindController {
     private final UserService userService;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/find-id")
     public ApiResponse<FindIdResponseDTO> findUserId(@RequestBody FindIdRequestDTO request) {
@@ -49,6 +51,15 @@ public class FindController {
         if (user == null) {
             return ApiResponse.error(HttpStatus.BAD_REQUEST, "일치하는 회원 정보를 찾을 수 없습니다.");
         }
+
+        // 화면은 이 호출 전에 인증번호 확인(/email/verify-code)을 이미 시켰지만, 그건 버튼을
+        // 활성화하는 화면 로직일 뿐 서버가 강제하지 않았다 — 아이디·이름·이메일만 알면(이력서
+        // 등에서 유출 가능) 메일함 없이도 재설정 토큰을 받을 수 있었다. 방금 인증을 통과했다는
+        // 표식을 여기서 반드시 확인한다.
+        if (!emailVerificationService.isEmailVerified(dto.getEmail())) {
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, "이메일 인증을 먼저 완료해주세요.");
+        }
+        emailVerificationService.consumeVerifiedFlag(dto.getEmail());
 
         String resetToken = jwtProvider.createResetToken(user.getUserSq());
 

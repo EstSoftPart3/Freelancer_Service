@@ -7,14 +7,11 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import CommonPagination from '@/components/community/CommonPagination'
 import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import api from '@/lib/api'
 import type { ResumeItem } from '@/types'
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
-
-const PAGE_SIZE = 5
 
 interface Props {
   open: boolean
@@ -27,19 +24,16 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
   const router = useRouter()
   const [resumes, setResumes] = useState<ResumeItem[]>([])
   const [selected, setSelected] = useState<number | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'resume'>()
 
-  const fetchResumes = useCallback(async (page = 1) => {
+  // GET /mypage/resume/select-list 는 페이지네이션을 받지 않고 전체 목록을 그대로 반환한다(ResumeController#getAllResumes).
+  const fetchResumes = useCallback(async () => {
     try {
-      const { data } = await api.get('/mypage/resume/select-list', { params: { currentPage: page, size: PAGE_SIZE } })
-      const output = data.output ?? {}
-      const list: ResumeItem[] = Array.isArray(output.output) ? output.output : Array.isArray(output) ? output : []
+      const { data } = await api.get('/mypage/resume/select-list')
+      const list: ResumeItem[] = Array.isArray(data.output) ? data.output : []
       setResumes(list)
-      setTotalPages(output.totalCount ? Math.max(1, Math.ceil(output.totalCount / PAGE_SIZE)) : 1)
       const rep = list.find((r) => r.resumeIsRepresentativeYn === 'Y')
       if (rep) setSelected(rep.resumeSq)
     } catch {
@@ -48,8 +42,8 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
   }, [])
 
   useEffect(() => {
-    if (open) fetchResumes(currentPage)
-  }, [open, currentPage, fetchResumes])
+    if (open) fetchResumes()
+  }, [open, fetchResumes])
 
   async function handleConfirm() {
     if (selected == null) {
@@ -91,7 +85,7 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
           </div>
         ) : (
           <InvalidFrame ref={bindRef('resume')} invalid={isInvalid('resume')}>
-          <ul className="divide-y">
+          <ul className="max-h-80 divide-y overflow-y-auto">
             {resumes.map((resume) => (
               <li key={resume.resumeSq} className="flex items-center justify-between gap-2 py-3">
                 <div className="min-w-0">
@@ -120,10 +114,6 @@ export default function ResumeSelectDialog({ open, projectSq, onClose, onApplied
             ))}
           </ul>
           </InvalidFrame>
-        )}
-
-        {totalPages > 1 && (
-          <CommonPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         )}
 
         <DialogFooter>

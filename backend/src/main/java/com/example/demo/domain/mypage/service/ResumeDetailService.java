@@ -20,13 +20,31 @@ import lombok.RequiredArgsConstructor;
 public class ResumeDetailService {
 
     private final ResumeDetailRepository repository;
+    private final ResumeService resumeService;
 
     // private final AmazonS3 amazonS3;
 
     // @Value("${cloud.aws.s3.bucket}")
     // private String bucket;
 
-    public ResumeDetailResponseDTO getResumeDetail(Long resumeSq) {
+    // 인증 주체가 없던 경로 — 본인·지원기록·소속회사·관리자 넷 중 하나가 아니면 남의 이력서 상세(이름·생년월일·
+    // 연락처·경력 전문)를 sq 만 알면 그대로 내주고 있었다. ResumeService 의 인가 모델과 통일한다.
+    public ResumeDetailResponseDTO getResumeDetail(Long resumeSq, Long userSq) {
+        resumeService.requireResumeReadable(resumeSq, userSq, true);
+        return buildResumeDetail(resumeSq);
+    }
+
+    public ResumeDetailResponseDTO getResumeDetailAndMarkViewed(Long userSq, ResumeDetailViewRequestDTO dto) {
+        resumeService.requireResumeReadable(dto.getResumeSq(), userSq, true);
+
+        // 열람일자 업데이트
+        repository.updateReadApplicationDtmIfNull(dto.getResumeSq(), dto.getProjectSq(), dto.getApplicationSq());
+
+        // 이력서 상세 조회
+        return buildResumeDetail(dto.getResumeSq());
+    }
+
+    private ResumeDetailResponseDTO buildResumeDetail(Long resumeSq) {
         ResumeDetailResponseDTO resume = repository.getResumeBasic(resumeSq);
         if (resume == null) {
             return null;
@@ -140,14 +158,5 @@ public class ResumeDetailService {
         resume.setAttachmentList(attachmentDTOs);
 
         return resume;
-    }
-
-    public ResumeDetailResponseDTO getResumeDetailAndMarkViewed(Long userSq, ResumeDetailViewRequestDTO dto) {
-
-        // 열람일자 업데이트
-        repository.updateReadApplicationDtmIfNull(dto.getResumeSq(), dto.getProjectSq(), dto.getApplicationSq());
-
-        // 이력서 상세 조회
-        return getResumeDetail(dto.getResumeSq());
     }
 }

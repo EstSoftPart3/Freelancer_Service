@@ -600,6 +600,12 @@
 			separator=","> (#{projectSq}, #{time}) </foreach>
 	</insert>
 
+	<!-- 지원 중복 제출 차단(2026-09-14, 판단대기 11번). 지원취소(806)·불합격(802)은 종료된
+		상태라 재지원을 막지 않는다 — 그 두 상태만 빼고 "활성" 지원이 이미 있으면 중복으로 본다. -->
+	<select id="existsActiveApplication" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM
+		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND resume_sq = #{resumeSq} AND
+		project_application_status_cd NOT IN (802, 806) ) </select>
+
 	<update id="increaseApplication" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_candidate_cnt = project_candidate_cnt + 1 WHERE project_sq = #{projectSq} </update>
 
@@ -610,8 +616,15 @@
 	<update id="increaseScrap" parameterType="long"> UPDATE TBL_PROJECT_M SET project_scrap_cnt =
 		project_scrap_cnt + 1 WHERE project_sq = #{projectSq} </update>
 
+	<!-- GREATEST(...,0) 클램프: ProjectScrapMapper.decreaseScrapCnt(mypage 도메인, 같은 컬럼을 건드림)
+		에는 원래 있던 방어가 여기엔 없어 이 경로로 두 번 감소하면 음수가 될 수 있었다
+		(2026-09-14, 판단대기 8·16번 — toggleProjectScrap 을 서버 판단 방식으로 고쳐 정상 흐름에서는
+		더 이상 중복 감소가 안 나지만, 클램프는 남겨 둔다). -->
 	<update id="decreaseScrap" parameterType="long"> UPDATE TBL_PROJECT_M SET project_scrap_cnt =
-		project_scrap_cnt - 1 WHERE project_sq = #{projectSq} </update>
+		GREATEST(project_scrap_cnt - 1, 0) WHERE project_sq = #{projectSq} </update>
+
+	<select id="existsScrap" resultType="boolean"> SELECT EXISTS ( SELECT 1 FROM TBL_SCRAP_S WHERE
+		project_sq = #{projectSq} AND user_sq = #{userSq} ) </select>
 
 
 	<!--

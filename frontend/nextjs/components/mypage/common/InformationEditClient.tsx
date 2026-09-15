@@ -77,6 +77,7 @@ export default function InformationEditClient() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
   const [editEmail, setEditEmail] = useState({ emailId: '', emailDomain: '', code: '' })
   const [isVerified, setIsVerified] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<EditKey>()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -151,6 +152,12 @@ export default function InformationEditClient() {
     }
     if (field === 'userEmail' && !isVerified) {
       markInvalid([field], '이메일 인증을 완료해주세요.')
+      return
+    }
+    // 주소는 선택 직후 카카오 지오코딩이 비동기로 좌표를 채운다 — 그게 끝나기 전에 확인을 누르면
+    // 좌표가 빈 채로 저장돼 2026-09-02 공고 등록과 같은 500 오류가 난다.
+    if (field === 'address' && form.address && (form.latitude == null || form.longitude == null)) {
+      markInvalid([field], '주소의 좌표를 아직 확인하지 못했습니다. 잠시 후 다시 시도해주세요.')
       return
     }
     clearField(field)
@@ -278,6 +285,7 @@ export default function InformationEditClient() {
   }
 
   async function handleSave() {
+    if (submitting) return
     // 열려 있는 행이 원인이므로, 그 행들을 모두 프레임 처리하고 첫 행으로 이동한다.
     const openRows = (Object.keys(editing) as EditKey[]).filter((k) => editing[k])
     if (openRows.length > 0) {
@@ -318,6 +326,7 @@ export default function InformationEditClient() {
             longitude: form.longitude,
           },
         }
+    setSubmitting(true)
     try {
       await api.post('/mypage/edit/update', payload)
       toast.success('회원 정보가 수정되었습니다.')
@@ -325,6 +334,8 @@ export default function InformationEditClient() {
     } catch (err) {
       // Vue saveAll: 백엔드 검증 message(비밀번호 규칙 등)를 그대로 노출
       toast.error(getApiErrorMessage(err, '회원 정보 수정에 실패했습니다.'))
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -591,7 +602,7 @@ export default function InformationEditClient() {
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button onClick={handleSave}>저장</Button>
+        <Button onClick={handleSave} disabled={submitting}>저장</Button>
         <Button variant="outline" onClick={() => { setForm(original); setEditing({ userPw: false, userEmail: false, userPhoneNum: false, address: false, userNm: false, userNickname: false }) }}>
           초기화
         </Button>

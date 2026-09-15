@@ -27,13 +27,14 @@ export default function AffiliatedJobApplicationsClient() {
   const [readType, setReadType] = useState('all')
   const [searchType, setSearchType] = useState('all')
   const [keyword, setKeyword] = useState('')
+  const [appliedKeyword, setAppliedKeyword] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [counts, setCounts] = useState({ all: 0, read: 0, unread: 0 })
   const [cancelTarget, setCancelTarget] = useState<number | null>(null)
   const [detailTarget, setDetailTarget] = useState<number | null>(null)
 
-  const fetchApplies = useCallback(async (page = 1, rType = readType, sType = searchType, kw = keyword) => {
+  const fetchApplies = useCallback(async (page = 1, rType = readType, sType = searchType, kw = appliedKeyword) => {
     try {
       const params: Record<string, unknown> = { page, size: PAGE_SIZE }
       if (kw?.trim()) { params.searchType = sType; params.keyword = kw.trim() }
@@ -50,7 +51,7 @@ export default function AffiliatedJobApplicationsClient() {
     } catch {
       toast.error('지원 현황을 불러올 수 없습니다.')
     }
-  }, [readType, searchType, keyword])
+  }, [readType, searchType, appliedKeyword])
 
   useEffect(() => { fetchApplies(currentPage) }, [fetchApplies, currentPage])
 
@@ -93,7 +94,7 @@ export default function AffiliatedJobApplicationsClient() {
               key={type}
               size="sm"
               variant={readType === type ? 'default' : 'outline'}
-              onClick={() => { setReadType(type); setCurrentPage(1); fetchApplies(1, type, searchType, keyword) }}
+              onClick={() => { setReadType(type); setCurrentPage(1); fetchApplies(1, type, searchType, appliedKeyword) }}
             >
               {label}
               <Badge variant="secondary" className="ml-1">{counts[type as keyof typeof counts]}</Badge>
@@ -111,8 +112,8 @@ export default function AffiliatedJobApplicationsClient() {
               ))}
             </SelectContent>
           </Select>
-          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchApplies(1)} placeholder="검색어 입력" className="w-40" />
-          <Button size="sm" onClick={() => { setCurrentPage(1); fetchApplies(1) }}>검색</Button>
+          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedKeyword(keyword); setCurrentPage(1); fetchApplies(1, readType, searchType, keyword) } }} placeholder="검색어 입력" className="w-40" />
+          <Button size="sm" onClick={() => { setAppliedKeyword(keyword); setCurrentPage(1); fetchApplies(1, readType, searchType, keyword) }}>검색</Button>
         </div>
       </div>
 

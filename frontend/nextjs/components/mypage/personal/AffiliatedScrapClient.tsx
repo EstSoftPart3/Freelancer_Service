@@ -22,6 +22,7 @@ export default function AffiliatedScrapClient() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchScraps = useCallback(async (page = 1, sType = searchType, kw = keyword) => {
     try {
@@ -43,7 +44,11 @@ export default function AffiliatedScrapClient() {
   useEffect(() => { fetchScraps(currentPage) }, [fetchScraps, currentPage])
 
   async function doDelete() {
-    if (deleteTarget === null) return
+    if (deleteTarget === null || deleting) return
+    // 이 엔드포인트는 스크랩 추가/삭제를 겸하는 토글이다(전용 삭제 API 가 백엔드에 없다 —
+    // 2026-09-14 확인). ConfirmDialog 의 "확인" 버튼은 클릭 즉시 닫히기만 할 뿐 중복 클릭을
+    // 막지 않으므로, 여기서 직접 막지 않으면 연타 시 삭제→재스크랩으로 토글될 수 있다.
+    setDeleting(true)
     try {
       await api.post(`/affiliation/${deleteTarget}/scrap`)
       toast.success('스크랩이 삭제되었습니다.')
@@ -51,6 +56,7 @@ export default function AffiliatedScrapClient() {
     } catch {
       toast.error('스크랩 삭제에 실패했습니다.')
     } finally {
+      setDeleting(false)
       setDeleteTarget(null)
     }
   }
@@ -89,7 +95,7 @@ export default function AffiliatedScrapClient() {
 
       <ul className="divide-y">
         {scraps.map((scrap) => (
-          <li key={scrap.id} className="py-4 space-y-2">
+          <li key={scrap.sq ?? scrap.id} className="py-4 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-base font-medium">{scrap.companyNm}</span>
               <div className="flex gap-2">

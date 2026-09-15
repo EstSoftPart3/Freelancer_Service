@@ -70,6 +70,13 @@ public interface ProjectApplicationMapper {
 			@Param("searchType") String searchType,
 			@Param("keyword") String keyword);
 
+	// 기업(소속원 대리지원) 지원자 개수 — 회사 수가 아니라 지원자 행 수. 상태별 탭 배지 집계용.
+	int countCorporateApplicantsByProjectSq(
+			@Param("projectSq") Long projectSq,
+			@Param("filter") String filter,
+			@Param("searchType") String searchType,
+			@Param("keyword") String keyword);
+
 	// 기업명 리스트 조회 (페이징)
 	List<String> findDistinctCompanyNamesByProject(
 			@Param("projectSq") Long projectSq,

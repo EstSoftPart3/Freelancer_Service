@@ -1,7 +1,7 @@
 'use client'
 
 // Vue 원본 SubwaySearchModal.vue 이식 — 백엔드 검색 없이 Kakao Places(keywordSearch, category_group_code=SW8)로 클라이언트에서 직접 검색
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,13 +33,17 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
   const [keyword, setKeyword] = useState('')
   const [results, setResults] = useState<KakaoPlace[]>([])
   const [searching, setSearching] = useState(false)
+  // 검색 결과 콜백이 이전 검색어의 응답이 늦게 도착해 최신 검색 결과를 덮어쓰지 않도록 순번을 매긴다.
+  const searchSeqRef = useRef(0)
 
   async function handleSearch() {
     const trimmed = keyword.trim()
     if (!trimmed) return
+    const seq = ++searchSeqRef.current
     setSearching(true)
     try {
       await loadKakaoMaps()
+      if (seq !== searchSeqRef.current) return
       const places = new window.kakao.maps.services.Places()
       // Kakao Local 검색은 "가좌"만으로는 "가좌역"이 안 잡히는 경우가 있어, "역"을 붙인 쿼리도 같이 검색해 병합한다
       const queries = trimmed.endsWith('역') ? [trimmed] : [trimmed, `${trimmed}역`]
@@ -59,6 +63,7 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
             }
             pending -= 1
             if (pending === 0) {
+              if (seq !== searchSeqRef.current) return
               setSearching(false)
               setResults(merged)
               if (merged.length === 0) toast.error('검색 결과가 없습니다.')
@@ -68,6 +73,7 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
         )
       })
     } catch {
+      if (seq !== searchSeqRef.current) return
       setSearching(false)
       toast.error('지하철역 검색 중 오류가 발생했습니다.')
     }

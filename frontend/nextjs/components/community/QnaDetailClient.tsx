@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import {
@@ -56,14 +56,21 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
   // 채택 확인
   const [adoptConfirm, setAdoptConfirm] = useState<{ open: boolean; sq: number }>({ open: false, sq: 0 })
 
+  // URL의 answerSq는 getBoard()가 채택/답변등록 등으로 재호출될 때마다 여전히 남아있다 —
+  // 매번 다시 열면 사용자가 방금 닫은 모달이 새로고침 후 되살아난다. 같은 sq는 한 번만 자동으로 연다.
+  const autoOpenedSqRef = useRef<number | null>(null)
+
   const getBoard = useCallback(async () => {
     try {
       const { data } = await api.get<{ output: BoardDetail }>(`/${boardType}/${boardSq}`)
       setBoardInfo(data.output)
       setViewerSq(data.output.viewerSq ?? null)
-      // URL에 answerSq가 있으면 자동 모달 오픈
+      // URL에 answerSq가 있으면 자동 모달 오픈(같은 sq에 대해 한 번만)
       const targetSq = Number(searchParams.get('answerSq'))
-      if (targetSq) openAnswerDetail(targetSq)
+      if (targetSq && autoOpenedSqRef.current !== targetSq) {
+        autoOpenedSqRef.current = targetSq
+        openAnswerDetail(targetSq)
+      }
     } catch (err: unknown) {
       // 삭제됐거나 유효하지 않은 게시글은 백엔드가 400을 반환한다.
       // 이 경우 안내 후 게시판 목록으로 되돌린다(그 외 일시적 오류는 이동하지 않음).
@@ -81,6 +88,14 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
     incrementView(`/${boardType}/${boardSq}`)
     getBoard()
   }, [boardSq, boardType, getBoard])
+
+  // 답변 상세를 다시 불러오기만 한다 — 조회수 증가는 최초 오픈(openAnswerDetail) 때 한 번만.
+  const refetchAnswerDetail = async (sq: number) => {
+    try {
+      const { data } = await api.get<{ output: BoardDetail }>(`/answer/${sq}`)
+      setDetailAnswer(data.output)
+    } catch { alertStore.show('답변을 불러올 수 없습니다.', 'danger') }
+  }
 
   const openAnswerDetail = async (sq: number) => {
     try {
@@ -209,7 +224,7 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
                 comments={detailAnswer.comments ?? []}
                 answerSq={detailAnswer.sq}
                 isAnswer
-                onRefresh={() => openAnswerDetail(detailAnswer.sq)}
+                onRefresh={() => refetchAnswerDetail(detailAnswer.sq)}
               />
             </>
           )}

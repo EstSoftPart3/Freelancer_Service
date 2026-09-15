@@ -33,11 +33,12 @@ export default function ProjectScrapClient() {
   const [scraps, setScraps] = useState<ScrapProjectItem[]>([])
   const [searchType, setSearchType] = useState('전체')
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState({ type: '전체', keyword: '' })
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
-  const fetchScraps = useCallback(async (page = 1, sType = searchType, kw = searchKeyword) => {
+  const fetchScraps = useCallback(async (page = 1, sType = appliedSearch.type, kw = appliedSearch.keyword) => {
     try {
       const { data } = await api.get('/mypage/projectScrap', {
         params: { searchType: sType, searchKeyword: kw || undefined, page, size: PAGE_SIZE },
@@ -49,11 +50,12 @@ export default function ProjectScrapClient() {
       // 빈 목록은 백엔드가 200 OK로 준다(ProjectScrapController) — 여기 오면 진짜 실패다.
       toast.error('스크랩 목록을 불러올 수 없습니다.')
     }
-  }, [searchType, searchKeyword])
+  }, [appliedSearch])
 
   useEffect(() => { fetchScraps(currentPage) }, [fetchScraps, currentPage])
 
   function handleSearch() {
+    setAppliedSearch({ type: searchType, keyword: searchKeyword })
     setCurrentPage(1)
     fetchScraps(1, searchType, searchKeyword)
   }

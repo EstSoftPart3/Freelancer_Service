@@ -1,7 +1,7 @@
 'use client'
 
 // Vue ResumeSelectModal.vue(role=COMPANY) 이식 — 소속원의 대표 이력서 변경
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,7 @@ interface Props {
   open: boolean
   userSq: number | null
   onClose: () => void
-  onChanged: () => void
+  onChanged: (resumeSq: number) => void
 }
 
 export default function MemberResumeSelectDialog({ open, userSq, onClose, onChanged }: Props) {
@@ -25,16 +25,24 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
   const [submitting, setSubmitting] = useState(false)
   const [detailSq, setDetailSq] = useState<number | null>(null)
   const { markInvalid, bindRef, isInvalid, clearField } = useFormErrors<'resume'>()
+  // 대상 userSq 를 빠르게 전환(다른 소속원의 "이력서 변경"을 연속 클릭)하면 먼저 보낸 요청이
+  // 나중 요청보다 늦게 응답할 수 있다 — 순번을 매겨 최신 요청의 결과만 반영한다.
+  const fetchSeqRef = useRef(0)
 
   const fetchResumes = useCallback(async () => {
     if (userSq == null) return
+    const seq = ++fetchSeqRef.current
+    setResumes([])
+    setSelected(null)
     try {
       const { data } = await api.get(`/mypage/resume/list/${userSq}`)
+      if (seq !== fetchSeqRef.current) return // 이후에 시작된 요청이 있으면 이 결과는 폐기
       const list: ResumeItem[] = Array.isArray(data.output) ? data.output : []
       setResumes(list)
       const rep = list.find((r) => r.resumeIsRepresentativeYn === 'Y')
       setSelected(rep ? rep.resumeSq : null)
     } catch {
+      if (seq !== fetchSeqRef.current) return
       toast.error('이력서 목록을 불러올 수 없습니다.')
     }
   }, [userSq])
@@ -52,7 +60,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
     try {
       await api.patch(`/mypage/resume/representative/${selected}`, { memberSq: userSq })
       toast.success('대표 이력서가 변경되었습니다.')
-      onChanged()
+      onChanged(selected)
       onClose()
     } catch {
       toast.error('대표 이력서 변경에 실패했습니다.')

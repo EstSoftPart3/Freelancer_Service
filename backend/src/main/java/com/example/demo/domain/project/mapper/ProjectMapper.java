@@ -74,6 +74,8 @@ public interface ProjectMapper {
 
 	void insertProjectApplication(ProjectApplicationEntity entity);
 
+	boolean existsActiveApplication(@Param("projectSq") long projectSq, @Param("resumeSq") Long resumeSq);
+
 	void insertContracts(@Param("projectSq") Long projectSq,
 			@Param("contractTypes") List<ContractInsertRequest> contractTypes);
 
@@ -106,6 +108,8 @@ public interface ProjectMapper {
 	void decreaseScrap(@Param("projectSq") Long projectSq);
 
 	void deleteProjectScrap(@Param("projectSq") Long projectSq, @Param("userSq") Long userSq);
+
+	boolean existsScrap(@Param("projectSq") Long projectSq, @Param("userSq") Long userSq);
 
 	void deleteProjectContracts(@Param("projectSq") Long projectSq);
 

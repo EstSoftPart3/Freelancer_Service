@@ -169,9 +169,32 @@ export default function AffiliationEditClient() {
     const yn = checked ? 'Y' : 'N'
     setForm((prev) => prev ? { ...prev, companyIsRecruitingYn: yn } : prev)
     if (!checked) {
+      // 수정 중(저장 전)인 행이 있으면 fetchInfo() 의 서버값 덮어쓰기로 날아간다 — 그 행들의
+      // 현재 입력값은 다시 얹어 되살린다(2026-09 회귀: 모집 해제 한 번으로 다른 행 미저장 입력이 사라졌다).
+      const openKeys = (Object.keys(editing) as EditKey[]).filter((k) => editing[k])
+      const preserved = openKeys.length > 0 ? form : null
       try {
         await api.post('/mypage/edit/affiliation/recruiting/cancel')
         await fetchInfo()
+        if (preserved) {
+          setForm((prev) => {
+            if (!prev) return prev
+            const merged = { ...prev }
+            for (const k of openKeys) {
+              if (k === 'address') {
+                merged.address = preserved.address
+                merged.detailAddress = preserved.detailAddress
+                merged.zonecode = preserved.zonecode
+                merged.sigunguCode = preserved.sigunguCode
+                merged.latitude = preserved.latitude
+                merged.longitude = preserved.longitude
+              } else {
+                merged[k] = preserved[k] as never
+              }
+            }
+            return merged
+          })
+        }
         toast.success('모집이 해제되었습니다.')
       } catch (err) {
         toast.error(getApiErrorMessage(err, '모집 상태 해제 중 오류가 발생했습니다.'))

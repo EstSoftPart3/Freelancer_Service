@@ -1,7 +1,6 @@
 'use client'
 // Mirrors vue_js/src/fo/components/login&signup/PersonalSignUpForm.vue
 import { useCallback, useRef, useState } from 'react'
-import Script from 'next/script'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -148,13 +147,22 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
 
   const validateAddress = (val = addressField.value) => {
     if (!val) { addressField.setError('주소를 입력해주세요.'); addressField.setValid(false); return false }
+    // 주소 텍스트가 있어도 지오코딩이 아직 안 끝났거나 실패했으면(위 failGeocode) 좌표가 비어 있다.
+    // 이 검사가 없으면 제출 시 재검증이 openPostcode 의 실패 표시를 지워버려 좌표 0,0 으로
+    // 그대로 제출된다(2026-09-02 재발 지점) — 여기서 다시 막는다.
+    if (!latitude || !longitude) {
+      addressField.setError('주소의 좌표를 확인하지 못했습니다. 주소를 다시 검색해주세요.')
+      addressField.setValid(false)
+      return false
+    }
     addressField.setError(''); addressField.setValid(true); return true
   }
 
-  const validateEmail = (val = emailIdField.value) => {
-    const email = `${val}@${isCustomDomain ? customDomain : emailDomain}`
+  const validateEmail = (val = emailIdField.value, domainVal?: string) => {
+    const domain = domainVal ?? (isCustomDomain ? customDomain : emailDomain)
+    const email = `${val}@${domain}`
     if (!val) { emailIdField.setError('이메일 아이디를 입력해주세요.'); emailIdField.setValid(false); return false }
-    if (isCustomDomain && !customDomain) { emailIdField.setError('도메인을 입력해주세요.'); emailIdField.setValid(false); return false }
+    if (isCustomDomain && !domain) { emailIdField.setError('도메인을 입력해주세요.'); emailIdField.setValid(false); return false }
     if (!/\S+@\S+\.\S+/.test(email)) { emailIdField.setError('올바른 이메일 주소 형식이 아닙니다.'); emailIdField.setValid(false); return false }
     emailIdField.setError(''); emailIdField.setValid(true); return true
   }
@@ -227,8 +235,9 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
   }
 
   const handleSendCode = async () => {
-    validateEmail()
-    if (!emailIdField.valid && !(emailIdField.value && (emailDomain || customDomain))) return
+    // validateEmail()의 반환값으로 바로 판정한다 — setValid()는 비동기라 같은 틱에서
+    // emailIdField.valid를 읽으면 직전 렌더의 값(stale)이라 형식 오류를 우회해 전송해버린다.
+    if (!validateEmail()) return
     await emailVerify.sendCode(fullEmail())
   }
 
@@ -295,9 +304,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
 
   return (
     <>
-      {/* Daum 우편번호 API */}
-      <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
-
+      {/* Daum 우편번호 스크립트는 layout.tsx에서 전역 1회(afterInteractive) 로드된다 — 여기서 다시 로드하지 않는다. */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 아이디 */}
         <div>
@@ -435,7 +442,7 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
               className="w-28 min-w-0 flex-1"
               value={isCustomDomain ? customDomain : emailDomain}
               readOnly={!isCustomDomain}
-              onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value); resetEmailVerification() }}
+              onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value, e.target.value); resetEmailVerification() }}
               placeholder="도메인"
             />
             <select

@@ -20,6 +20,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final List<String> EXCLUDE_URLS = List.of(
             "/api/login",
+            // SecurityConfigProd 는 POST /logout 을 permitAll 로 열어 뒀다. 하지만 이 필터가
+            // 그보다 먼저 돌아서, 토큰이 만료된 채로 로그아웃을 누르면 컨트롤러에 닿기도 전에
+            // 401 로 끊어 refresh token 삭제가 실행되지 않았다. 이 목록에 있어도 토큰이
+            // 유효하면 아래에서 그대로 인증 정보를 세팅하니(바로 아래 분기 참고), 정상
+            // 케이스(토큰이 살아 있을 때)는 지금과 동일하게 동작하고 만료 케이스만 통과시킨다.
+            "/api/logout",
             "/api/refresh-token",
             "/api/email/send-code",
             "/api/email/find/send-code",
@@ -32,14 +38,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/check-nickname",
             "/api/company/verify",
             "/api/file",
+            // 이 목록은 AntPathMatcher 가 아니라 String.startsWith 로만 비교한다 — "*"는 와일드카드가
+            // 아니라 리터럴 문자다. 그래서 "/api/board/*/increment-view" 같은 항목은 실제 URI
+            // ("/api/board/123/increment-view")와 "*" 위치에서 어긋나 절대 매치되지 않는다.
+            // 아래처럼 상위 경로("/api/board" 등)가 이미 그 하위 전부를 prefix 로 덮으므로
+            // 결과적으로 무해했지만, 있어도 아무 일도 안 하는 죽은 항목이라 걷어냈다.
+            // 새 공개 엔드포인트를 추가할 때 이 방식(별표를 넣어 "그 하위만" 공개하려는 시도)은
+            // 통하지 않는다는 점에 주의 — SecurityConfig 의 permitAll 과 **이 목록 양쪽**에
+            // 넣어야 하는 것은 여전하지만, 여기 넣는 값은 항상 리터럴 prefix 여야 한다.
             "/api/board",
-            "/api/board/*/increment-view",
             "/api/qna",
-            "/api/qna/*/increment-view",
             "/api/answer",
-            "/api/answer/*/increment-view",
             "/api/notice",
-            "/api/notice/*/increment-view",
             "/api/community/boards",
             "/api/community/best",
             // 주의: 이 목록은 접두사 매칭이라 "/api/community/boards" 가
@@ -56,14 +66,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/votes",
             "/api/interviews",
             "/api/affiliation",
-            "/api/affiliation/*/increment-view",
             "/api/affiliation/address",
             "/api/projects/interviews",
             "/api/projects/forms",
             "/api/projects/filters",
             "/api/projects",
-            "/api/projects/*/districts",
-            "/api/projects/applications/interviews/*",
             "/api/mypage/resume",
             "/api/uploads",
             "/api/download",

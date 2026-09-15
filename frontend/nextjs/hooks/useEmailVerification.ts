@@ -2,6 +2,7 @@
 // 이메일 인증 코드 발송/확인 로직 — PersonalSignUpForm, FindIdForm, ResetPasswordForm 공용
 import { useState } from 'react'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { alertStore } from '@/stores/alertStore'
 
 interface Options {
@@ -21,10 +22,7 @@ export function useEmailVerification({ sendCodeEndpoint }: Options) {
       alertStore.show('인증 코드를 전송했습니다.', 'success')
       return true
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        '이메일 인증 요청에 실패했습니다.'
-      alertStore.show(msg, 'danger')
+      alertStore.show(getApiErrorMessage(err, '이메일 인증 요청에 실패했습니다.'), 'danger')
       return false
     } finally {
       setSending(false)
@@ -39,8 +37,10 @@ export function useEmailVerification({ sendCodeEndpoint }: Options) {
       alertStore.show('이메일 인증에 성공하였습니다.', 'success')
       setVerified(true)
       return true
-    } catch {
-      alertStore.show('인증번호가 일치하지 않습니다.', 'danger')
+    } catch (err: unknown) {
+      // 실제 서버 사유(만료·요청 초과 등)를 보존한다 — 하드코딩된 "코드 불일치" 문구는
+      // 네트워크 오류·서버 오류일 때도 항상 떠서 사용자가 원인을 알 수 없게 만들었다.
+      alertStore.show(getApiErrorMessage(err, '인증번호가 일치하지 않습니다.'), 'danger')
       setVerified(false)
       return false
     } finally {

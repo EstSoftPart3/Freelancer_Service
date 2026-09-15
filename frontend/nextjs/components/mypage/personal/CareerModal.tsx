@@ -28,6 +28,9 @@ export default function CareerModal({ open, onClose, onComplete }: Props) {
   const { validate, fieldProps, clearField, clearAll } = useFormErrors<keyof CareerItem>()
   const set = (k: keyof CareerItem, v: string) => { clearField(k); setForm((p) => ({ ...p, [k]: v })) }
 
+  const reset = () => { setForm(EMPTY); clearAll() }
+  const close = () => { reset(); onClose() }
+
   const submit = () => {
     if (!validate([
       { key: 'careerCompanyNm', invalid: !form.careerCompanyNm.trim(), message: '회사명을 입력해주세요.' },
@@ -36,13 +39,12 @@ export default function CareerModal({ open, onClose, onComplete }: Props) {
       { key: 'careerStartDt', invalid: !form.careerStartDt, message: '근무 기간을 선택하세요.' },
     ])) return
     onComplete(form)
-    setForm(EMPTY)
-    clearAll()
+    reset()
     onClose()
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) close() }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>회사 이력 추가하기</DialogTitle></DialogHeader>
         <div className="space-y-3">
@@ -62,7 +64,7 @@ export default function CareerModal({ open, onClose, onComplete }: Props) {
         </div>
         <DialogFooter>
           <Button onClick={submit}>저장하기</Button>
-          <Button variant="outline" onClick={onClose}>닫기</Button>
+          <Button variant="outline" onClick={close}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
