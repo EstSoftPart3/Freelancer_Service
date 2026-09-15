@@ -92,6 +92,7 @@
             AND skl.skill_tag_nm NOT IN
             <foreach item="s" collection="excludeSkills" open="(" separator="," close=")">#{s}</foreach>
         </if>
+        <if test="!includeSeed">AND m.is_seed_yn = 'N'</if>
         GROUP BY skl.skill_tag_nm
         HAVING COUNT(*) >= 5
     </select>
@@ -147,12 +148,6 @@
     <select id="countRanking" resultType="Long">
         SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
         <include refid="rankingWhere" />
-    </select>
-
-    <select id="countRealRanking" resultType="Long">
-        SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
-        <include refid="rankingWhere" />
-        AND m.is_seed_yn = 'N'
     </select>
 
 </mapper>

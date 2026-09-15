@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.domain.salary.dto.request.SalarySubmissionRequest;
@@ -79,20 +81,39 @@ public class SalaryService {
                 .build();
     }
 
+    @Transactional
     public Long submit(SalarySubmissionRequest request) {
+        // getMySubmission/getReport와 같은 이유의 같은 가드 — /salary/submissions는
+        // JwtAuthenticationFilter.EXCLUDE_URLS에 없어 만료/무효 토큰이면 필터 단계에서 이미
+        // 401로 끊기지만, vote/interview 그룹에서 반복된 사고 패턴이라 방어적으로 한 번 더 막는다.
+        if (request.getUserSq() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
+        }
         validate(request);
 
         SalarySubmission existing = salaryMapper.findByUserSq(request.getUserSq());
         SalarySubmission submission = toEntity(request);
+        Long submissionSq;
 
         if (existing == null) {
-            salaryMapper.insert(submission);
+            try {
+                salaryMapper.insert(submission);
+                submissionSq = submission.getSalarySubmissionSq();
+            } catch (DuplicateKeyException e) {
+                // 동시 제출 경합(더블클릭·두 탭) — findByUserSq 이후 다른 요청이 먼저 INSERT해
+                // uq_salary_submission_user 유니크 제약에 걸린 경우. MariaDB 기본
+                // REPEATABLE READ 에서는 같은 트랜잭션 안에서 재조회해도 맨 처음 SELECT의
+                // 스냅샷을 그대로 봐서 여전히 null이 나온다(재조회로 update 전환 불가) —
+                // VoteService.castBallot과 같은 패턴으로 그냥 409로 알리고 클라이언트가
+                // 다시 요청하게 한다(새 요청은 새 트랜잭션이라 정상적으로 update 경로를 탄다).
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 제출 처리 중입니다. 잠시 후 다시 시도해주세요.");
+            }
         } else {
             submission.setSalarySubmissionSq(existing.getSalarySubmissionSq());
             salaryMapper.update(submission);
             salaryMapper.deleteSkillsBySubmissionSq(existing.getSalarySubmissionSq());
+            submissionSq = existing.getSalarySubmissionSq();
         }
-        Long submissionSq = existing == null ? submission.getSalarySubmissionSq() : existing.getSalarySubmissionSq();
         for (String skill : request.getSkillTagNms()) {
             salaryMapper.insertSkill(submissionSq, skill);
         }
@@ -114,7 +135,8 @@ public class SalaryService {
         String regionNm = mine.getRegionNm();
         List<String> relaxedConditions = new ArrayList<>();
 
-        List<SalarySubmission> group = resolveGroup(jobNm, careerBucket, regionNm, employmentType, relaxedConditions);
+        GroupResolution resolution = resolveGroup(jobNm, careerBucket, regionNm, employmentType, relaxedConditions);
+        List<SalarySubmission> group = resolution.rows();
         boolean useCareerFilter = !relaxedConditions.contains("연차");
         boolean useRegionFilter = !relaxedConditions.contains("지역");
         String careerFilter = useCareerFilter ? careerBucket : null;
@@ -122,13 +144,13 @@ public class SalaryService {
 
         int meanSalary = calculator.meanSalary(group);
         int mySalary = mine.getAnnualSalary();
-        long realCount = salaryMapper.countRealInGroup(jobNm, careerFilter, regionFilter, employmentType);
+        long realCount = resolution.realCount();
         boolean includesSeed = group.stream().anyMatch(s -> "Y".equals(s.getIsSeedYn()));
 
         List<SalarySubmission> careerSeries = salaryMapper.findByJobAndEmployment(jobNm, employmentType);
         List<String> mySkills = salaryMapper.findSkillsBySubmissionSq(mine.getSalarySubmissionSq());
         List<SkillAverageDTO> skillAverages = salaryMapper.findSkillAverages(jobNm, careerFilter, regionFilter,
-                employmentType, mySkills);
+                employmentType, mySkills, includesSeed);
         List<CompanyRecommendationDTO> companies = salaryMapper.findCompanyRecommendations(jobNm, careerFilter,
                 regionFilter, employmentType);
         String yearMonthFrom = LocalDate.now().minusMonths(3).format(YM_FORMAT);
@@ -167,14 +189,19 @@ public class SalaryService {
                 .build();
     }
 
+    /** resolveGroup이 이미 계산한 실표본 수를 getReport에 그대로 넘겨주기 위한 결과 묶음 —
+     * 안 그러면 같은 조건으로 countRealInGroup을 한 번 더 호출하게 된다. */
+    private record GroupResolution(List<SalarySubmission> rows, long realCount) {
+    }
+
     /** 실표본이 부족하면 시드를 섞고, 그래도 부족하면 지역 → 연차 순으로 조건을 완화한다. */
-    private List<SalarySubmission> resolveGroup(String jobNm, String careerBucket, String regionNm,
+    private GroupResolution resolveGroup(String jobNm, String careerBucket, String regionNm,
             String employmentType, List<String> relaxedConditions) {
         long real = salaryMapper.countRealInGroup(jobNm, careerBucket, regionNm, employmentType);
         boolean includeSeed = real < MIN_REAL_SAMPLE;
         List<SalarySubmission> group = salaryMapper.findGroup(jobNm, careerBucket, regionNm, employmentType, includeSeed);
         if (group.size() >= MIN_GROUP_SAMPLE) {
-            return group;
+            return new GroupResolution(group, real);
         }
 
         relaxedConditions.add("지역");
@@ -182,12 +209,13 @@ public class SalaryService {
         includeSeed = real < MIN_REAL_SAMPLE;
         group = salaryMapper.findGroup(jobNm, careerBucket, null, employmentType, includeSeed);
         if (group.size() >= MIN_GROUP_SAMPLE) {
-            return group;
+            return new GroupResolution(group, real);
         }
 
         relaxedConditions.add("연차");
-        includeSeed = true;
-        return salaryMapper.findGroup(jobNm, null, null, employmentType, includeSeed);
+        real = salaryMapper.countRealInGroup(jobNm, null, null, employmentType);
+        group = salaryMapper.findGroup(jobNm, null, null, employmentType, true);
+        return new GroupResolution(group, real);
     }
 
     private void validate(SalarySubmissionRequest request) {

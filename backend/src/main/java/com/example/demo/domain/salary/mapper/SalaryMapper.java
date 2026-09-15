@@ -40,10 +40,14 @@ public interface SalaryMapper {
     List<SalarySubmission> findByJobAndEmployment(@Param("jobNm") String jobNm,
             @Param("employmentType") String employmentType);
 
-    /** 미보유 스킬별 평균연봉 — 그룹 필터와 동일 조건, 표본 5 미만은 제외(HAVING). */
+    /**
+     * 미보유 스킬별 평균연봉 — 그룹 필터와 동일 조건, 표본 5 미만은 제외(HAVING).
+     * includeSeed=false면 실데이터만(findGroup/findCompanyRecommendations/findJobChangeFeed와
+     * 같은 기준을 따라야 한다 — 실표본이 충분한 그룹인데도 스킬 상승률에 시드가 섞이면 안 된다).
+     */
     List<SkillAverageDTO> findSkillAverages(@Param("jobNm") String jobNm, @Param("careerBucket") String careerBucket,
             @Param("regionNm") String regionNm, @Param("employmentType") String employmentType,
-            @Param("excludeSkills") List<String> excludeSkills);
+            @Param("excludeSkills") List<String> excludeSkills, @Param("includeSeed") boolean includeSeed);
 
     /** 같은 조건 개발자가 다니는 회사 — 실데이터만, 3명 이상인 회사만. */
     List<CompanyRecommendationDTO> findCompanyRecommendations(@Param("jobNm") String jobNm,
@@ -59,9 +63,5 @@ public interface SalaryMapper {
             @Param("regionNm") String regionNm, @Param("limit") int limit);
 
     Long countRanking(@Param("jobNm") String jobNm, @Param("careerBucket") String careerBucket,
-            @Param("regionNm") String regionNm);
-
-    /** 순위표 실표본 존재 여부 — 있으면 includesSeed 배지를 끈다. */
-    Long countRealRanking(@Param("jobNm") String jobNm, @Param("careerBucket") String careerBucket,
             @Param("regionNm") String regionNm);
 }

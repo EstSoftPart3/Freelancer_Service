@@ -52,7 +52,16 @@ public class SalaryStatsCalculator {
         int bucketCount = 9;
         int min = group.stream().mapToInt(SalarySubmission::getAnnualSalary).min().orElse(mySalary);
         int max = group.stream().mapToInt(SalarySubmission::getAnnualSalary).max().orElse(mySalary);
-        if (max <= min) max = min + bucketCount * 10; // 표본이 1건뿐이라 폭이 0이면 최소 폭 확보
+        // 표본이 좁은 범위(예: 같은 연차대 30명이 몇백만원 안에 몰림)에 몰려 있으면 폭을 10 단위로
+        // 반올림하는 과정에서 여러 구간의 from==to가 돼 버려(폭이 0으로 뭉개짐) 그 구간엔 아무도
+        // 안 걸리고 내 위치도 엉뚱한 끝 구간으로 밀려난다 — 전체 폭이 최소한 bucketCount*10은
+        // 되도록 위아래로 넓혀 각 구간이 최소 10 폭을 갖게 만든다.
+        int minSpan = bucketCount * 10;
+        if (max - min < minSpan) {
+            int pad = (minSpan - (max - min) + 1) / 2;
+            min -= pad;
+            max += pad;
+        }
         double bucketWidth = (max - min) / (double) bucketCount;
 
         List<HistogramBucketDTO> buckets = new ArrayList<>();
