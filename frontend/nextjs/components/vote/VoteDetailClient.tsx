@@ -7,24 +7,53 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { incrementView } from '@/lib/viewCount'
 import type { VoteDetail } from '@/components/vote/types'
 
 interface Props {
   voteSq: number
-  initialData: VoteDetail
+  // SSR 조회 실패(백엔드 일시 장애)일 때는 null — 마운트 후 CSR로 재시도한다.
+  initialData: VoteDetail | null
+}
+
+const emptyVote: VoteDetail = {
+  voteSq: 0, voteTtl: '', voteDescriptionEdt: null, userSq: 0, userNickname: null,
+  voteEndDt: new Date().toISOString(), voteCreatedAtDtm: '', voteViewCnt: 0,
+  closed: true, totalVoteCnt: 0, myVoteOptionSq: null, options: [],
 }
 
 export default function VoteDetailClient({ voteSq, initialData }: Props) {
   const router = useRouter()
   const { userSq, authChecked, isLoggedIn } = useUserStore()
-  const [vote, setVote] = useState<VoteDetail>(initialData)
+  const [vote, setVote] = useState<VoteDetail>(initialData ?? emptyVote)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [showBars, setShowBars] = useState(vote.myVoteOptionSq != null || vote.closed)
+  const [showBars, setShowBars] = useState(
+    initialData != null && (initialData.myVoteOptionSq != null || initialData.closed),
+  )
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   useEffect(() => {
-    api.patch(`/votes/${voteSq}/increment-view`).catch(() => {})
+    // 조회수 증가는 voteSq당 1회만 — authChecked 갱신 때마다 재실행되는 아래 effect와
+    // 분리해 둔다(InterviewDetailClient와 같은 패턴). incrementView 자체에 3초 dedup이
+    // 있지만, /me 인증 확인이 느려지면(콜드 스타트 등) 그 창을 넘겨 조회수가 중복 집계될 수 있다.
+    incrementView(`/votes/${voteSq}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voteSq])
+
+  useEffect(() => {
+    // SSR 조회가 일시 장애로 실패했다면(initialData null) 인증 여부와 무관하게 즉시 재시도한다.
+    if (initialData == null) {
+      api
+        .get<{ output: VoteDetail }>(`/votes/${voteSq}`)
+        .then(({ data }) => {
+          setVote(data.output)
+          if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
+        })
+        .catch(() => alertStore.show('투표 정보를 불러올 수 없습니다.', 'danger'))
+      return
+    }
+
     // 서버 SSR 조회는 비인증 요청이라 내 투표 여부(myVoteOptionSq)를 알 수 없다 — 마운트 후 1회 갱신한다
     // (BoardDetailClient가 viewerSq를 처리하는 것과 같은 패턴).
     if (!authChecked) return
@@ -36,7 +65,7 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voteSq, authChecked])
+  }, [voteSq, authChecked, initialData])
 
   const hasVoted = vote.myVoteOptionSq != null
   const isOwner = authChecked && userSq === vote.userSq

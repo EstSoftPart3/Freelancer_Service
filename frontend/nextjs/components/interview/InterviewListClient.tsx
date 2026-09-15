@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import CommonPagination from '@/components/community/CommonPagination'
 import InterviewCard from '@/components/interview/InterviewCard'
@@ -24,20 +24,26 @@ export default function InterviewListClient({ initialData }: Props) {
     initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
   )
   const [isLoading, setIsLoading] = useState(false)
+  // 페이지 버튼을 연달아 누르면 먼저 보낸 느린 요청이 나중 요청보다 늦게 응답할 수 있다 —
+  // 응답 순서가 아니라 "가장 마지막으로 보낸 요청"만 반영한다(BoardListClient와 같은 패턴).
+  const requestSeqRef = useRef(0)
 
   const fetchPage = useCallback(async (p: number) => {
+    const seq = ++requestSeqRef.current
     setIsLoading(true)
     try {
       const { data } = await api.get<{ output: InterviewListResponse }>(
         `/interviews?page=${p}&size=${PAGE_SIZE}&sortType=latest`,
       )
+      if (seq !== requestSeqRef.current) return
       setReviews(data.output.reviews)
       setTotalPages(Math.max(1, Math.ceil(data.output.totalElements / PAGE_SIZE)))
       setPage(p)
     } catch {
+      if (seq !== requestSeqRef.current) return
       alertStore.show('면접후기 목록을 불러올 수 없습니다.', 'danger')
     } finally {
-      setIsLoading(false)
+      if (seq === requestSeqRef.current) setIsLoading(false)
     }
   }, [])
 

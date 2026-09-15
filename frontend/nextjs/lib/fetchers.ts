@@ -62,6 +62,8 @@ export const getCommunityBoardDetail = cache((boardType: string, sq: string) =>
   safeGetDetailed<BoardDetail | null>(`/${boardType}/${sq}`, null))
 
 // 투표·면접후기 — TBL_BOARD_M을 쓰지 않는 전용 도메인이라 반환 타입이 BoardDetail이 아니다.
-export const getVoteDetail = cache((sq: string) => safeGet<import('@/components/vote/types').VoteDetail | null>(`/votes/${sq}`, null))
+// 여기도 safeGetDetailed를 쓴다 — 바로 위 주석과 같은 이유(5xx/네트워크 오류를 확정-없음과 구분).
+export const getVoteDetail = cache((sq: string) =>
+  safeGetDetailed<import('@/components/vote/types').VoteDetail | null>(`/votes/${sq}`, null))
 export const getInterviewReviewDetail = cache((sq: string) =>
-  safeGet<import('@/components/interview/types').InterviewDetail | null>(`/interviews/${sq}`, null))
+  safeGetDetailed<import('@/components/interview/types').InterviewDetail | null>(`/interviews/${sq}`, null))

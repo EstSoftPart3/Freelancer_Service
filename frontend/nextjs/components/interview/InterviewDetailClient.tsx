@@ -8,11 +8,20 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { incrementView } from '@/lib/viewCount'
 import { RESULT_LABEL, type InterviewDetail } from '@/components/interview/types'
 
 interface Props {
   interviewReviewSq: number
-  initialData: InterviewDetail
+  // SSR 조회 실패(백엔드 일시 장애)일 때는 null — 마운트 후 CSR로 재시도한다.
+  initialData: InterviewDetail | null
+}
+
+const emptyReview: InterviewDetail = {
+  interviewReviewSq: 0, userSq: 0, userNickname: null, companyNm: '', jobNm: '',
+  careerLevel: '', interviewDt: null, interviewStages: [], questionEdt: null,
+  difficultyStar: null, atmosphereEdt: null, resultCd: null, proposedSalary: null,
+  interviewViewCnt: 0, interviewCreatedAtDtm: '',
 }
 
 function StarRating({ value }: { value: number }) {
@@ -31,13 +40,21 @@ function StarRating({ value }: { value: number }) {
 export default function InterviewDetailClient({ interviewReviewSq, initialData }: Props) {
   const router = useRouter()
   const { userSq, authChecked } = useUserStore()
-  const review = initialData
+  const [review, setReview] = useState<InterviewDetail>(initialData ?? emptyReview)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   useEffect(() => {
-    api.patch(`/interviews/${interviewReviewSq}/increment-view`).catch(() => {})
+    incrementView(`/interviews/${interviewReviewSq}`)
+
+    // SSR 조회가 일시 장애로 실패했다면(initialData null) 마운트 후 CSR로 재시도한다.
+    if (initialData == null) {
+      api
+        .get<{ output: InterviewDetail }>(`/interviews/${interviewReviewSq}`)
+        .then(({ data }) => setReview(data.output))
+        .catch(() => alertStore.show('면접후기 정보를 불러올 수 없습니다.', 'danger'))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviewReviewSq])
+  }, [interviewReviewSq, initialData])
 
   const isOwner = authChecked && userSq === review.userSq
 
