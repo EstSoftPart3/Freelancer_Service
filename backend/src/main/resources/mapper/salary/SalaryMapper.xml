@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.salary.mapper.SalaryMapper">
+
+    <insert id="insert" parameterType="com.example.demo.domain.salary.entity.SalarySubmission"
+        useGeneratedKeys="true" keyProperty="salarySubmissionSq" keyColumn="salary_submission_sq">
+        INSERT INTO TBL_SALARY_SUBMISSION_M
+        (user_sq, employment_type, job_nm, career_bucket, region_nm, annual_salary,
+         age_band, education_nm, company_size, company_type, position_nm, team_size,
+         employment_subtype, remote_type, bonus_amount, stock_opt, job_change_count,
+         company_nm, prev_annual_salary, job_changed_ym)
+        VALUES
+        (#{userSq}, #{employmentType}, #{jobNm}, #{careerBucket}, #{regionNm}, #{annualSalary},
+         #{ageBand}, #{educationNm}, #{companySize}, #{companyType}, #{positionNm}, #{teamSize},
+         #{employmentSubtype}, #{remoteType}, #{bonusAmount}, #{stockOpt}, #{jobChangeCount},
+         #{companyNm}, #{prevAnnualSalary}, #{jobChangedYm})
+    </insert>
+
+    <update id="update" parameterType="com.example.demo.domain.salary.entity.SalarySubmission">
+        UPDATE TBL_SALARY_SUBMISSION_M SET
+            employment_type = #{employmentType}, job_nm = #{jobNm}, career_bucket = #{careerBucket},
+            region_nm = #{regionNm}, annual_salary = #{annualSalary}, age_band = #{ageBand},
+            education_nm = #{educationNm}, company_size = #{companySize}, company_type = #{companyType},
+            position_nm = #{positionNm}, team_size = #{teamSize}, employment_subtype = #{employmentSubtype},
+            remote_type = #{remoteType}, bonus_amount = #{bonusAmount}, stock_opt = #{stockOpt},
+            job_change_count = #{jobChangeCount}, company_nm = #{companyNm},
+            prev_annual_salary = #{prevAnnualSalary}, job_changed_ym = #{jobChangedYm}
+        WHERE salary_submission_sq = #{salarySubmissionSq}
+    </update>
+
+    <select id="findByUserSq" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
+        SELECT m.*, u.user_nickname
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        WHERE m.user_sq = #{userSq}
+    </select>
+
+    <select id="findSkillsBySubmissionSq" resultType="String">
+        SELECT skill_tag_nm FROM TBL_SALARY_SUBMISSION_SKILL_S
+        WHERE salary_submission_sq = #{salarySubmissionSq}
+        ORDER BY salary_submission_skill_sq
+    </select>
+
+    <insert id="insertSkill">
+        INSERT INTO TBL_SALARY_SUBMISSION_SKILL_S (salary_submission_sq, skill_tag_nm)
+        VALUES (#{salarySubmissionSq}, #{skillTagNm})
+    </insert>
+
+    <delete id="deleteSkillsBySubmissionSq">
+        DELETE FROM TBL_SALARY_SUBMISSION_SKILL_S WHERE salary_submission_sq = #{salarySubmissionSq}
+    </delete>
+
+    <sql id="groupWhere">
+        WHERE m.job_nm = #{jobNm}
+        <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
+        <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+        AND m.employment_type = #{employmentType}
+        <if test="!includeSeed">AND m.is_seed_yn = 'N'</if>
+    </sql>
+
+    <select id="findGroup" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
+        SELECT m.*, u.user_nickname
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        <include refid="groupWhere" />
+    </select>
+
+    <select id="countRealInGroup" resultType="Long">
+        SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
+        WHERE m.job_nm = #{jobNm}
+        <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
+        <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+        AND m.employment_type = #{employmentType}
+        AND m.is_seed_yn = 'N'
+    </select>
+
+    <select id="findByJobAndEmployment" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
+        SELECT m.* FROM TBL_SALARY_SUBMISSION_M m
+        WHERE m.job_nm = #{jobNm} AND m.employment_type = #{employmentType}
+    </select>
+
+    <select id="findSkillAverages" resultType="com.example.demo.domain.salary.dto.response.SkillAverageDTO">
+        SELECT skl.skill_tag_nm AS skill, AVG(m.annual_salary) AS avgSalary, COUNT(*) AS sampleCount
+        FROM TBL_SALARY_SUBMISSION_SKILL_S skl
+        JOIN TBL_SALARY_SUBMISSION_M m ON m.salary_submission_sq = skl.salary_submission_sq
+        WHERE m.job_nm = #{jobNm}
+        <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
+        <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+        AND m.employment_type = #{employmentType}
+        <if test="excludeSkills != null and excludeSkills.size() > 0">
+            AND skl.skill_tag_nm NOT IN
+            <foreach item="s" collection="excludeSkills" open="(" separator="," close=")">#{s}</foreach>
+        </if>
+        GROUP BY skl.skill_tag_nm
+        HAVING COUNT(*) >= 5
+    </select>
+
+    <select id="findCompanyRecommendations" resultType="com.example.demo.domain.salary.dto.response.CompanyRecommendationDTO">
+        SELECT TRIM(m.company_nm) AS companyNm, COUNT(*) AS matchedCount, ROUND(AVG(m.annual_salary)) AS avgSalary
+        FROM TBL_SALARY_SUBMISSION_M m
+        WHERE m.job_nm = #{jobNm}
+        <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
+        <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+        AND m.employment_type = #{employmentType}
+        AND m.is_seed_yn = 'N'
+        AND m.company_nm IS NOT NULL AND TRIM(m.company_nm) != ''
+        GROUP BY TRIM(m.company_nm)
+        HAVING COUNT(*) >= 3
+        ORDER BY matchedCount DESC
+        LIMIT 5
+    </select>
+
+    <select id="findJobChangeFeed" resultType="com.example.demo.domain.salary.dto.response.JobChangeRawDTO">
+        SELECT
+            CASE WHEN u.user_nickname IS NOT NULL AND CHAR_LENGTH(u.user_nickname) > 0
+                 THEN CONCAT(LEFT(u.user_nickname, 1), '**') ELSE '**' END AS maskedNickname,
+            m.prev_annual_salary AS fromSalary,
+            m.annual_salary AS toSalary,
+            m.job_changed_ym AS jobChangedYm
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        WHERE m.job_nm = #{jobNm}
+        AND m.is_seed_yn = 'N'
+        AND m.job_changed_ym IS NOT NULL AND m.job_changed_ym >= #{yearMonthFrom}
+        AND m.prev_annual_salary IS NOT NULL
+        ORDER BY m.job_changed_ym DESC
+        LIMIT #{limit}
+    </select>
+
+    <sql id="rankingWhere">
+        WHERE 1=1
+        <if test="jobNm != null">AND m.job_nm = #{jobNm}</if>
+        <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
+        <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+    </sql>
+
+    <select id="findRanking" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
+        SELECT m.*, u.user_nickname
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        <include refid="rankingWhere" />
+        ORDER BY m.annual_salary DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countRanking" resultType="Long">
+        SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
+        <include refid="rankingWhere" />
+    </select>
+
+    <select id="countRealRanking" resultType="Long">
+        SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
+        <include refid="rankingWhere" />
+        AND m.is_seed_yn = 'N'
+    </select>
+
+</mapper>

@@ -110,6 +110,10 @@ public class SecurityConfigProd {
                                 "/votes/**", "/interviews/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/affiliation", "/affiliation/address").permitAll()
 
+                        // ---- 연봉순위표만 공개(사용자 확정) — 계산기 제출·리포트는 로그인 필수라
+                        //      /salary/** 를 통째로 열지 않고 이 경로 하나만 permitAll 한다.
+                        .requestMatchers(HttpMethod.GET, "/salary/ranking").permitAll()
+
                         // ---- 익명 조회수 (FO가 비로그인에도 호출) ----
                         .requestMatchers(HttpMethod.PATCH,
                                 "/projects/*/increment-view",

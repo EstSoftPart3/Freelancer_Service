@@ -65,6 +65,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/lounge",
             "/api/votes",
             "/api/interviews",
+            // 연봉순위표만 공개(계산기 제출·리포트는 로그인 필수) — votes/interviews처럼 도메인
+            // 전체를 열지 않고 이 접두사 하나만. startsWith 매칭이라 /api/salary/report·
+            // /api/salary/submissions 는 걸리지 않는다.
+            "/api/salary/ranking",
             "/api/affiliation",
             "/api/affiliation/address",
             "/api/projects/interviews",
