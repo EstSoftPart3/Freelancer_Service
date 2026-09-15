@@ -45,6 +45,12 @@ export default function LoginForm() {
   // 회원가입(SignUpPageClient)과 동일한 방식 — 진입 경로가 그대로 회원 유형을 정하고,
   // 이 페이지 안에서 개인/기업을 서로 바꿀 수 있는 탭은 두지 않는다(잘못된 경로로 가입·로그인하는 걸 막기 위함).
   const loginType: LoginType = searchParams.get('loginType') === 'COMPANY' ? 'COMPANY' : 'PERSONAL'
+  // 연봉계산기처럼 로그인 필수 화면에서 튕겨온 경우 로그인 후 원래 화면으로 되돌린다.
+  // 외부 도메인으로 열린 리다이렉트(오픈 리다이렉트)를 막기 위해 "/"로 시작하는 내부 경로만 허용한다.
+  const redirectParam = searchParams.get('redirect')
+  // "//evil.com" 처럼 "/"로 시작하지만 스킴 상대 URL로 해석돼 외부로 나가는 경우까지 막는다.
+  const redirectTo =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/'
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)
@@ -105,7 +111,7 @@ export default function LoginForm() {
 
       // GA4: login
       alertStore.show(`${user.userNm}님 안녕하세요.`, 'success')
-      router.push('/')
+      router.push(redirectTo)
     } catch (err: unknown) {
       // 다른 인증 폼(FindAccountForm 등)은 전부 getApiErrorMessage 를 쓴다. 여기만 손으로
       // response.data.message 만 봐서, 인터셉터가 Error 로 바꾼 "HTTP 200 + status 필드"

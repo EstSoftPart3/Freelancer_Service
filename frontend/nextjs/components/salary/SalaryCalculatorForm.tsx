@@ -22,11 +22,6 @@ import {
 import { Button } from '@/components/ui/button'
 import type { RequiredSkillGroup } from '@/types'
 
-// 로그인 사용자별 "이전 계산 이력" — 백엔드에 저장 API가 없어 브라우저에만 남긴다(프로토타입 한정).
-function historyKey(userSq: number): string {
-  return `salaryCalcHistory:${userSq}`
-}
-
 type Employment = 'EMPLOYED' | 'FREELANCE'
 
 const YEAR_BUCKETS = ['1~2년', '3~5년', '6~9년', '10년+']
@@ -45,6 +40,56 @@ interface FormsData {
   educationLevels: string[]
   recruitJobs: string[]
   skills: RequiredSkillGroup[]
+}
+
+// GET /salary/submissions/me 응답 — SalarySubmissionResponse(백엔드)와 필드 그대로 대응
+interface SubmissionMeResponse {
+  employmentType: Employment
+  jobNm: string
+  careerBucket: string
+  regionNm: string
+  annualSalary: number
+  skillTagNms: string[]
+  ageBand: string | null
+  educationNm: string | null
+  companySize: string | null
+  companyType: string | null
+  positionNm: string | null
+  teamSize: string | null
+  employmentSubtype: string | null
+  remoteType: string | null
+  bonusAmount: number | null
+  stockOpt: string | null
+  jobChangeCount: string | null
+  companyNm: string | null
+  prevAnnualSalary: number | null
+  jobChangedYm: string | null
+}
+
+// SalaryReportScreen 등이 읽는 sessionStorage 페이로드 형태로 변환
+function toCalcInputPayload(m: SubmissionMeResponse) {
+  return {
+    employment: m.employmentType,
+    job: m.jobNm,
+    years: m.careerBucket,
+    region: m.regionNm,
+    stack: m.skillTagNms,
+    salary: m.annualSalary,
+    age: m.ageBand,
+    edu: m.educationNm,
+    companySize: m.companySize,
+    companyType: m.companyType,
+    position: m.positionNm,
+    teamSize: m.teamSize,
+    subtype: m.employmentSubtype,
+    remote: m.remoteType,
+    bonus: m.bonusAmount,
+    stock: m.stockOpt,
+    jobChangeCount: m.jobChangeCount,
+    companyNm: m.companyNm,
+    prevAnnualSalary: m.prevAnnualSalary,
+    jobChangedYm: m.jobChangedYm,
+  }
 }
 
 // 단일 선택 칩 — 연봉 화면 공용(연봉계산기·연봉순위표에서 재사용)
@@ -115,16 +160,15 @@ export default function SalaryCalculatorForm() {
 
   useEffect(() => {
     if (!isLoggedIn() || !userSq) return
-    const raw = localStorage.getItem(historyKey(userSq))
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHistoryPayload(parsed)
-      setShowHistoryModal(true)
-    } catch {
-      localStorage.removeItem(historyKey(userSq))
-    }
+    api
+      .get<{ output: SubmissionMeResponse }>('/salary/submissions/me')
+      .then(({ data }) => {
+        setHistoryPayload(toCalcInputPayload(data.output))
+        setShowHistoryModal(true)
+      })
+      .catch(() => {
+        // 404 = 제출 이력 없음(첫 방문) — 조용히 무시, 모달을 안 띄우면 된다.
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userSq])
 
@@ -163,6 +207,10 @@ export default function SalaryCalculatorForm() {
   const [bonusAmount, setBonusAmount] = useState('')
   const [stock, setStock] = useState('')
   const [jobChangeCount, setJobChangeCount] = useState('')
+  // 실데이터화 신규 3종 — "같은 조건 개발자가 다니는 회사"·"최근 이직 동향"을 실제 제출로 채우기 위함
+  const [companyNm, setCompanyNm] = useState('')
+  const [prevAnnualSalary, setPrevAnnualSalary] = useState('')
+  const [jobChangedYm, setJobChangedYm] = useState('')
 
   const [error, setError] = useState('')
 
@@ -205,11 +253,13 @@ export default function SalaryCalculatorForm() {
       bonus: bonusYesNo === '있음' ? Number(bonusAmount) || 0 : null,
       stock: stock || null,
       jobChangeCount: jobChangeCount || null,
+      companyNm: employment === 'EMPLOYED' ? companyNm.trim() || null : null,
+      prevAnnualSalary: prevAnnualSalary ? Number(prevAnnualSalary) || null : null,
+      jobChangedYm: jobChangedYm || null,
     }
+    // 실제 저장(POST /salary/submissions)은 D(분석 중) 화면에서 로그인 확인 후 수행한다 —
+    // 여기서는 비로그인 사용자도 일단 입력을 마칠 수 있게 세션에만 담아 넘긴다.
     sessionStorage.setItem('salaryCalcInput', JSON.stringify(payload))
-    if (isLoggedIn() && userSq) {
-      localStorage.setItem(historyKey(userSq), JSON.stringify(payload))
-    }
     router.push('/salary/analyzing')
   }
 
@@ -385,7 +435,7 @@ export default function SalaryCalculatorForm() {
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${optionalOpen ? 'rotate-180' : ''}`} />
             더 정확한 분석을 원하시나요?
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">선택 항목 11개</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">선택 항목 14개</span>
           </button>
 
           {optionalOpen && (
@@ -509,6 +559,54 @@ export default function SalaryCalculatorForm() {
                       <Chip key={j} label={j} active={jobChangeCount === j} onClick={() => setJobChangeCount(j)} />
                     ))}
                   </div>
+                </div>
+
+                {employment === 'EMPLOYED' && (
+                  <div>
+                    <p className="mb-1.5 text-xs font-semibold text-muted-foreground">현재 회사명</p>
+                    <input
+                      type="text"
+                      value={companyNm}
+                      onChange={(e) => setCompanyNm(e.target.value)}
+                      placeholder="예: 컨트롤에프"
+                      maxLength={50}
+                      className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      &ldquo;같은 조건 개발자가 다니는 회사&rdquo; 통계에 실제로 반영돼요(3명 미만이면 노출 안 함).
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-muted-foreground">
+                    직전 {isFreelance ? '단가' : '연봉'}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      value={prevAnnualSalary}
+                      onChange={(e) => setPrevAnnualSalary(e.target.value)}
+                      placeholder="4500"
+                      className="w-28 rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    />
+                    <span className="text-xs text-muted-foreground">만원</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-muted-foreground">최근 이직·계약 시기</p>
+                  <input
+                    type="month"
+                    value={jobChangedYm}
+                    onChange={(e) => setJobChangedYm(e.target.value)}
+                    max={new Date().toISOString().slice(0, 7)}
+                    className="rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    직전 {isFreelance ? '단가' : '연봉'}와 함께 입력하면 &ldquo;최근 이직 동향&rdquo;에 반영돼요.
+                  </p>
                 </div>
               </div>
             </div>

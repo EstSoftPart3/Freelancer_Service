@@ -1,7 +1,6 @@
 'use client'
-// E. 연봉 리포트 — D(분석 중)에서 넘어온 sessionStorage 입력값을 읽어 리포트를 그린다.
-// 백엔드에 "연봉 통계" API 가 없어서 lib/salaryEstimate.ts 의 결정론적 추정치를 쓴다
-// (같은 입력이면 새로고침해도 같은 숫자가 나온다 — 진짜 시장 데이터 아님, 프로토타입 시연용).
+// E. 연봉 리포트 — D(분석 중)에서 넘어온 sessionStorage 입력값(캡션 표시용)과
+// GET /salary/report(로그인 필수, 내 제출 기준 실통계) 를 함께 읽어 리포트를 그린다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Award, Briefcase, Building2, Flame, RotateCcw, Sparkles, TrendingUp, Users } from 'lucide-react'
@@ -9,14 +8,10 @@ import api from '@/lib/api'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import {
-  buildJobChangeFeed,
   buildJobChangeSalaryBands,
-  computeSalaryReport,
-  type JobChangeFeedItem,
   type SalaryCalcInput,
-  type SalaryReportData,
+  type SalaryReportApiResponse,
 } from '@/lib/salaryEstimate'
-import type { RequiredSkillGroup } from '@/types'
 
 function formatMan(n: number): string {
   return `${Math.round(n).toLocaleString()}만원`
@@ -30,7 +25,7 @@ function formatManShort(n: number): string {
 
 export default function SalaryReportScreen() {
   const [input, setInput] = useState<SalaryCalcInput | null | undefined>(undefined) // undefined = 아직 확인 전
-  const [catalogSkills, setCatalogSkills] = useState<string[]>([])
+  const [report, setReport] = useState<SalaryReportApiResponse | null | undefined>(undefined)
 
   const [scenario, setScenario] = useState<'normal' | 'grind'>('normal')
   const [selectedBumps, setSelectedBumps] = useState<Set<string>>(new Set())
@@ -53,34 +48,28 @@ export default function SalaryReportScreen() {
   }, [])
 
   useEffect(() => {
+    // Analyzing(D) 화면이 이미 제출을 끝내고 넘어온 경우다 — 여기서는 결과만 읽는다.
+    // 401/404(제출 이력 없음)면 계산기로 돌려보낸다.
     api
-      .get<{ output: { skills: RequiredSkillGroup[] } }>('/projects/forms')
-      .then(({ data }) => setCatalogSkills(data.output.skills.flatMap((g) => g.childSkillTagNms)))
-      .catch(() => console.error('[SalaryReport] 기술스택 카탈로그 로드 실패'))
+      .get<{ output: SalaryReportApiResponse }>('/salary/report')
+      .then(({ data }) => setReport(data.output))
+      .catch(() => setReport(null))
   }, [])
 
-  const report: SalaryReportData | null = useMemo(() => {
-    if (!input || catalogSkills.length === 0) return null
-    return computeSalaryReport(input, catalogSkills)
-  }, [input, catalogSkills])
-
-  const feed: JobChangeFeedItem[] = useMemo(() => {
-    if (!input || !report) return []
-    return buildJobChangeFeed(input, report.meanSalary)
-  }, [input, report])
+  const feed = useMemo(() => report?.jobChangeFeed ?? [], [report])
 
   const jobChangeBands = useMemo(() => {
     if (!report || feed.length === 0) return []
     return buildJobChangeSalaryBands(report.mySalary, feed)
   }, [report, feed])
 
-  // 로딩 중(아직 sessionStorage 확인 전)
-  if (input === undefined) {
+  // 로딩 중(아직 sessionStorage·리포트 확인 전)
+  if (input === undefined || report === undefined) {
     return <div className="min-h-[calc(100vh-104px)] bg-white" />
   }
 
-  // 계산기 없이 바로 들어온 경우 — 가드
-  if (input === null) {
+  // 계산기 없이 바로 들어왔거나(input) 제출 이력이 없는 경우(report) — 가드
+  if (input === null || report === null) {
     return (
       <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-4 bg-white px-4 text-center">
         <p className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -97,10 +86,6 @@ export default function SalaryReportScreen() {
         </Link>
       </div>
     )
-  }
-
-  if (!report) {
-    return <div className="min-h-[calc(100vh-104px)] bg-white" />
   }
 
   const combinedBumpPct = report.skillCandidates
@@ -192,8 +177,17 @@ export default function SalaryReportScreen() {
             <span>상위</span>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            같은 조건({input.job} · {input.years} · {input.region}) 동료들의 평균 추정치는{' '}
+            같은 조건({input.job} · {input.years} · {input.region}) 동료들의 평균은{' '}
             <span className="font-semibold text-foreground">{formatMan(report.meanSalary)}</span> 이에요.
+            {report.relaxedConditions.length > 0 && (
+              <> ({report.relaxedConditions.join('·')} 조건은 표본이 부족해 넓혀서 비교했어요)</>
+            )}
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            표본 {report.sampleCount.toLocaleString()}명(실제 제출 {report.realSampleCount.toLocaleString()}명) 기준
+            {report.includesSeed && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">예시 데이터 포함</span>
+            )}
           </p>
         </section>
 
@@ -434,21 +428,27 @@ export default function SalaryReportScreen() {
           <p className="mb-5 text-xs text-muted-foreground">
             {input.job} · {input.years} · {input.region} 조건과 겹치는 재직자가 많은 곳이에요.
           </p>
-          <div className="flex flex-col gap-2.5">
-            {report.companyRecommendations.map((c, i) => (
-              <div key={c.companyNm} className="flex items-center gap-3 rounded-xl border border-border p-3.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-foreground">{c.companyNm}</p>
-                  <p className="text-xs text-muted-foreground">
-                    동일 조건 재직자 약 {c.matchedCount}명 · 평균 {formatMan(c.avgSalary)}
-                  </p>
+          {report.companyRecommendations.length === 0 ? (
+            <p className="rounded-xl border border-border bg-muted/30 p-5 text-center text-sm text-muted-foreground">
+              아직 이 조건으로 회사명을 등록한 회원이 3명 미만이에요. 데이터가 더 모이면 보여드릴게요.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {report.companyRecommendations.map((c, i) => (
+                <div key={c.companyNm} className="flex items-center gap-3 rounded-xl border border-border p-3.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground">{c.companyNm}</p>
+                    <p className="text-xs text-muted-foreground">
+                      동일 조건 재직자 약 {c.matchedCount}명 · 평균 {formatMan(c.avgSalary)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 최근 이직 연봉 동향 + 이직했을 때 예상 연봉 */}
@@ -456,26 +456,32 @@ export default function SalaryReportScreen() {
           <h2 className="mb-4 flex items-center gap-1.5 text-base font-bold text-foreground">
             <Users className="h-4 w-4 text-indigo-600" />최근 이직 연봉 동향
           </h2>
-          <div className="flex flex-col gap-3">
-            {feed.map((f, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                  {f.maskedNickname}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {formatMan(f.fromSalary)} → {formatMan(f.toSalary)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {input.job} · {input.years} · {f.relativeTime}
-                  </p>
+          {feed.length === 0 ? (
+            <p className="rounded-xl border border-border bg-muted/30 p-5 text-center text-sm text-muted-foreground">
+              최근 3개월 안에 같은 직무로 이직 정보를 남긴 회원이 아직 없어요.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {feed.map((f, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {f.maskedNickname}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {formatMan(f.fromSalary)} → {formatMan(f.toSalary)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {input.job} · {input.years} · {f.relativeTime}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold text-[#0ca30c]">
+                    +{Math.round(((f.toSalary - f.fromSalary) / f.fromSalary) * 100)}%
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs font-bold text-[#0ca30c]">
-                  +{Math.round(((f.toSalary - f.fromSalary) / f.fromSalary) * 100)}%
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {jobChangeBands.length > 0 && (
             <div className="mt-6 border-t border-border pt-5">

@@ -1,13 +1,12 @@
 'use client'
 // F. 연봉순위표 — 개인 연봉 계산 결과와 무관한, 플랫폼 전체 랭킹 조회 화면.
 // 보기 기준(전체/직무별/연차별/지역별)을 고르면 그 기준으로 상위 랭킹을 보여준다.
-// 백엔드에 통계 API가 없어 lib/salaryRanking.ts의 결정론적 추정치를 쓴다
-// (같은 조건이면 항상 같은 결과 — 실제 회원 데이터 아님).
+// GET /salary/ranking(비로그인 공개) 호출 — 실표본이 부족하면 시드가 섞이고 includesSeed로 알려준다.
 import { useEffect, useMemo, useState } from 'react'
 import { ListOrdered, Trophy } from 'lucide-react'
 import api from '@/lib/api'
 import { InfoTooltip } from '@/components/ui/tooltip'
-import { buildPopulation, filterRanking, YEAR_BUCKETS, type RankingDimension } from '@/lib/salaryRanking'
+import { YEAR_BUCKETS, type PlatformRankingBoard, type RankingDimension } from '@/lib/salaryRanking'
 import type { RequiredSkillGroup } from '@/types'
 
 const REGION_REMOTE = '원격'
@@ -58,16 +57,24 @@ export default function SalaryRankingScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forms])
 
-  // 보기 기준을 바꿔도 같은 인구 집단 안에서 필터만 달라지게 — jobs/regions가 갖춰지면 한 번만 만든다
-  const population = useMemo(() => {
-    if (!forms || regionOptions.length === 0) return null
-    return buildPopulation(forms.recruitJobs, regionOptions)
-  }, [forms, regionOptions])
+  const [board, setBoard] = useState<PlatformRankingBoard | null>(null)
 
-  const board = useMemo(() => {
-    if (!population) return null
-    return filterRanking(population, { dimension, job, years, region })
-  }, [population, dimension, job, years, region])
+  useEffect(() => {
+    // dimension별로 실제 필터 대상 값이 아직 안 정해졌으면(예: job 기준인데 forms 로딩 전) 기다린다
+    if (dimension === 'job' && !job) return
+    if (dimension === 'region' && !region) return
+
+    let cancelled = false
+    api
+      .get<{ output: PlatformRankingBoard }>('/salary/ranking', {
+        params: { dimension, job: dimension === 'job' ? job : undefined,
+          years: dimension === 'years' ? years : undefined,
+          region: dimension === 'region' ? region : undefined },
+      })
+      .then(({ data }) => { if (!cancelled) setBoard(data.output) })
+      .catch(() => console.error('[SalaryRanking] 순위표 조회 실패'))
+    return () => { cancelled = true }
+  }, [dimension, job, years, region])
 
   if (!board) {
     return <div className="min-h-[calc(100vh-104px)] bg-white" />
@@ -93,8 +100,8 @@ export default function SalaryRankingScreen() {
           </p>
           <h1 className="mb-1 text-2xl font-bold text-foreground md:text-3xl">플랫폼 연봉 랭킹</h1>
           <p className="text-sm text-muted-foreground">
-            전체 · 직무별 · 연차별 · 지역별로 랭킹을 나눠 볼 수 있어요. 시드 기반 추정치로, 실제 회원
-            데이터가 아니에요.
+            전체 · 직무별 · 연차별 · 지역별로 랭킹을 나눠 볼 수 있어요. 실제 회원 제출 데이터
+            기준이며, 표본이 부족한 조건은 예시 데이터가 섞여요.
           </p>
         </div>
 
@@ -188,9 +195,13 @@ export default function SalaryRankingScreen() {
               보여드려요.
             </InfoTooltip>
           </h2>
-          <p className="mb-5 text-xs text-muted-foreground">
-            총 {board.totalCount.toLocaleString()}명 중 상위 {board.rows.length}명 · 닉네임은 전부
-            마스킹된 예시예요.
+          <p className="mb-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            총 {board.totalCount.toLocaleString()}명 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
+            {board.includesSeed && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                예시 데이터 포함
+              </span>
+            )}
           </p>
 
           <div className="flex flex-col gap-2">
@@ -208,9 +219,12 @@ export default function SalaryRankingScreen() {
                     {row.job} · {row.years} · {row.region}
                   </p>
                 </div>
-                <span className={`shrink-0 text-xs font-bold ${row.changePct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'}`}>
-                  {row.changePct >= 0 ? '+' : ''}
-                  {row.changePct}%
+                <span
+                  className={`shrink-0 text-xs font-bold ${
+                    row.changePct == null ? 'text-muted-foreground' : row.changePct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'
+                  }`}
+                >
+                  {row.changePct == null ? '-' : `${row.changePct >= 0 ? '+' : ''}${row.changePct}%`}
                 </span>
               </div>
             ))}

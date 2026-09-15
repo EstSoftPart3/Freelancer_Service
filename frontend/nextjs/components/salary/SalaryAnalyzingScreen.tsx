@@ -1,9 +1,16 @@
 'use client'
-// D. "컨트롤에프AI가 확인 중입니다" 인터스티셜. 4단계를 한 바퀴 돈 뒤 E(연봉 리포트)로 자동 이동한다.
+// D. "컨트롤에프AI가 확인 중입니다" 인터스티셜. 4단계 애니메이션 동안 실제로 GET /salary/submissions를
+// 호출해 제출을 끝내고, 최소 노출시간을 채운 뒤 E(연봉 리포트)로 이동한다.
+// 계산기(C) 자체는 비로그인도 채울 수 있지만, 제출·리포트는 로그인 필수라 여기서 게이트한다 —
+// sessionStorage에 입력값이 남아 있으니 로그인 후 돌아오면 이어서 제출된다.
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Sparkles } from 'lucide-react'
+import api from '@/lib/api'
+import { useUserStore } from '@/stores/userStore'
+import { alertStore } from '@/stores/alertStore'
+import { getApiErrorMessage } from '@/lib/errors'
 
 const PHASES = ['데이터 수집 중', '같은 조건 그룹 매칭 중', '연봉 분포 계산 중', '리포트 만드는 중']
 
@@ -22,12 +29,53 @@ interface CalcInput {
   region: string
   stack: string[]
   salary: number
+  age?: string | null
+  edu?: string | null
+  companySize?: string | null
+  companyType?: string | null
+  position?: string | null
+  teamSize?: string | null
+  subtype?: string | null
+  remote?: string | null
+  bonus?: number | null
+  stock?: string | null
+  jobChangeCount?: string | null
+  companyNm?: string | null
+  prevAnnualSalary?: number | null
+  jobChangedYm?: string | null
 }
 
 const PHASE_DURATION_MS = 1600
+const MIN_DISPLAY_MS = PHASE_DURATION_MS * PHASES.length // 애니메이션이 최소 한 바퀴는 돌게
+
+function toSubmissionRequest(input: CalcInput) {
+  return {
+    employmentType: input.employment,
+    jobNm: input.job,
+    careerBucket: input.years,
+    regionNm: input.region,
+    annualSalary: input.salary,
+    skillTagNms: input.stack,
+    ageBand: input.age ?? null,
+    educationNm: input.edu ?? null,
+    companySize: input.companySize ?? null,
+    companyType: input.companyType ?? null,
+    positionNm: input.position ?? null,
+    teamSize: input.teamSize ?? null,
+    employmentSubtype: input.subtype ?? null,
+    remoteType: input.remote ?? null,
+    bonusAmount: input.bonus ?? null,
+    stockOpt: input.stock ?? null,
+    jobChangeCount: input.jobChangeCount ?? null,
+    companyNm: input.companyNm ?? null,
+    prevAnnualSalary: input.prevAnnualSalary ?? null,
+    jobChangedYm: input.jobChangedYm ?? null,
+  }
+}
 
 export default function SalaryAnalyzingScreen() {
   const router = useRouter()
+  const { isLoggedIn, authChecked } = useUserStore()
   const [phaseIdx, setPhaseIdx] = useState(0)
   const [input, setInput] = useState<CalcInput | null>(null)
 
@@ -35,28 +83,47 @@ export default function SalaryAnalyzingScreen() {
     // sessionStorage는 서버에 없어서 SSR과 값이 다를 수밖에 없다 — 하이드레이션 직후
     // 이펙트에서 한 번만 읽어야 서버·클라이언트 첫 렌더가 어긋나지 않는다.
     const raw = sessionStorage.getItem('salaryCalcInput')
-    if (raw) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setInput(JSON.parse(raw))
-      } catch {
-        // 손상된 값이면 조용히 무시 — 조건 캡션만 안 뜬다
-      }
+    if (!raw) {
+      router.replace('/salary/calculator')
+      return
     }
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInput(JSON.parse(raw))
+    } catch {
+      router.replace('/salary/calculator')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    const t = setInterval(() => setPhaseIdx((i) => (i + 1) % PHASES.length), PHASE_DURATION_MS)
-    // 4단계를 한 바퀴(약 6.4초) 돈 뒤 리포트로 이동 — 너무 빨라서 애니메이션을 못 보는 느낌이 안 들게
-    // 마지막 단계("리포트 만드는 중")가 화면에 걸쳐 있는 시간만큼 여유를 더 준다.
-    const redirectTimer = setTimeout(() => {
-      router.push('/salary/report')
-    }, PHASE_DURATION_MS * PHASES.length)
-    return () => {
-      clearInterval(t)
-      clearTimeout(redirectTimer)
+    // authChecked 전까지 로그인 상태를 단정하지 않는다 — 로그인 상태인데도 로그인 화면으로
+    // 잘못 튕기는 것을 막기 위함(다른 화면들과 동일한 패턴).
+    if (!authChecked || !input) return
+    if (!isLoggedIn()) {
+      router.replace('/login?redirect=/salary/analyzing')
+      return
     }
-  }, [router])
+
+    const t = setInterval(() => setPhaseIdx((i) => (i + 1) % PHASES.length), PHASE_DURATION_MS)
+
+    let cancelled = false
+    Promise.all([
+      api.post('/salary/submissions', toSubmissionRequest(input)),
+      new Promise((resolve) => setTimeout(resolve, MIN_DISPLAY_MS)),
+    ])
+      .then(() => { if (!cancelled) router.push('/salary/report') })
+      .catch((err) => {
+        if (cancelled) return
+        alertStore.show(getApiErrorMessage(err, '연봉 정보 제출에 실패했습니다.'), 'danger')
+        router.replace('/salary/calculator')
+      })
+
+    return () => {
+      cancelled = true
+      clearInterval(t)
+    }
+  }, [authChecked, input, isLoggedIn, router])
 
   return (
     <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center bg-white px-4 py-16 text-center">
