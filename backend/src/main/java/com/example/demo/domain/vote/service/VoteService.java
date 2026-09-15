@@ -6,10 +6,12 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.domain.vote.dto.request.VoteCreateRequest;
 import com.example.demo.domain.vote.dto.response.VoteDetailResponse;
+import com.example.demo.domain.vote.dto.response.VoteListItemDTO;
 import com.example.demo.domain.vote.dto.response.VoteListResponse;
 import com.example.demo.domain.vote.dto.response.VoteOptionResultDTO;
 import com.example.demo.domain.vote.entity.Vote;
@@ -35,9 +37,20 @@ public class VoteService {
     private final VoteMapper voteMapper;
 
     public VoteListResponse getAllVotes(String keyword, String sortType, Long page, Long size) {
+        // page/size 를 그대로 LIMIT/OFFSET 에 흘려보내면 ?page=0·음수 는 음수 OFFSET 으로,
+        // ?size=0·음수 는 음수 LIMIT 으로 내려가 SQL 문법 오류 500 이 난다
+        // (BoardService.getAllBoards 와 동일한 함정). 여기서 방어한다.
+        if (page == null || page < 1) {
+            page = 1L;
+        }
+        if (size == null || size < 1) {
+            size = 10L;
+        }
+        if (size > 100) {
+            size = 100L;
+        }
         Long offset = (page - 1L) * size;
-        List<com.example.demo.domain.vote.dto.response.VoteListItemDTO> votes = voteMapper.findAll(keyword, sortType,
-                size, offset);
+        List<VoteListItemDTO> votes = voteMapper.findAll(keyword, sortType, size, offset);
         Long totalElements = voteMapper.findAllCnt(keyword);
         return VoteListResponse.builder()
                 .page(page)
@@ -73,7 +86,18 @@ public class VoteService {
                 .build();
     }
 
+    @Transactional
     public Long createVote(VoteCreateRequest request) {
+        // /api/votes 는 JwtAuthenticationFilter.EXCLUDE_URLS 에 접두사로 통째로 올라 있고
+        // SecurityConfigProd 는 POST /votes 를 permitAll 하지 않는다 — 토큰이 없거나 만료되면
+        // 필터가 인증 세팅 없이 그냥 통과시키는데, Spring Security 의 anyRequest().authenticated()
+        // 는 익명 Authentication 도 "인증됨"으로 쳐서 컨트롤러까지 들어와 버린다
+        // (b6291e11 에서 /api/projects 에 대해 고친 것과 동일한 함정). deleteVote/castBallot 은
+        // 이미 이 null 가드가 있었는데 createVote 만 빠져 있어 비로그인/만료 토큰 사용자가
+        // user_sq 없는 투표를 만들 수 있었다.
+        if (request.getUserSq() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
+        }
         if (request.getOptions() == null || request.getOptions().size() < 2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상이어야 합니다.");
         }
