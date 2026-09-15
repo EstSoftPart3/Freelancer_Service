@@ -2,6 +2,7 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import { getCookie, setCookie, clearAuthCookies } from '@/lib/cookies'
 import { alertStore } from '@/stores/alertStore'
+import { useUserStore } from '@/stores/userStore'
 
 // 브라우저: /api/* → Next.js rewrites → 백엔드 (CORS 우회)
 // 서버 컴포넌트: 직접 백엔드 호출 — 컨테이너 내부 주소(API_INTERNAL_BASE_URL)를 쓴다.
@@ -94,6 +95,12 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = getCookie('refreshToken')
+        // 리프레시 토큰 쿠키 자체가 없으면(만료돼 브라우저가 이미 지웠거나 세션 쿠키가 브라우저
+        // 재시작으로 사라진 경우) 서버에 물어볼 필요 없이 바로 로그아웃 처리한다 — 예전엔 빈
+        // 값으로도 /refresh-token 을 불러 "유효하지 않은 리프레시 토큰" 401 을 한 번 더 받고서야
+        // 로그아웃됐다(불필요한 왕복 + 화면에 따라 catch 순서가 꼬여 헤더 갱신이 늦어질 여지).
+        if (!refreshToken) throw new Error('리프레시 토큰이 없습니다.')
+
         // 백엔드 LoginController는 refresh token을 Authorization 헤더(Bearer)로 받는다 (body 아님)
         // 인터셉터 없는 기본 axios를 써서 request 인터셉터가 access token으로 덮어쓰지 않도록 한다
         const { data } = await axios.post(`/api/refresh-token`, null, {
@@ -118,7 +125,13 @@ api.interceptors.response.use(
       } catch (err) {
         processQueue(err, null)
         clearAuthCookies()
-        if (typeof window !== 'undefined') {
+        // 🔴 이 실패 이전엔 쿠키만 지우고 헤더 로그인 상태(Zustand userStore)는 그대로 뒀다 —
+        // Providers 의 /me 부트스트랩이 최초 마운트 시 한 번만 돌기 때문에, SPA 안에서 페이지를
+        // 계속 옮겨 다니다 토큰이 만료되면 아래 window.location.href 로 실제 이동해 새로
+        // 마운트되기 전까지 헤더가 로그인 상태 그대로 남아 있었다(리다이렉트가 지연되거나
+        // 라우터가 가로채는 경우 특히 눈에 띔). 여기서 즉시 클라이언트 상태도 지운다.
+        useUserStore.getState().clearUser()
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           alertStore.show('세션이 만료되었습니다. 다시 로그인해 주세요.', 'danger')
           window.location.href = '/login'
         }
