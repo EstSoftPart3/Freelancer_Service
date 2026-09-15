@@ -19,6 +19,17 @@ public interface BoardMapper {
        */
       Board findByIdAny(@Param("boardSq") Long boardSq);
 
+      /**
+       * 답변의 부모 글 타입을 조회한다. 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 부모 타입을
+       * QNA로 못박아도 됐지만, 커리어·기술소통도 답변을 지원하게 되면서 실제 부모 글을 찾아야
+       * 한다(알림 링크·문구가 게시판마다 갈리므로). 부모 글이 이미 사라졌으면(하드 삭제 등)
+       * {@code fallback}을 돌려준다. AdminBoardService·CommentService가 답변 알림에서 공유한다.
+       */
+      default Long findParentBoardTypeCdOrDefault(Long boardSq, Long fallback) {
+            Board parentBoard = findByIdAny(boardSq);
+            return parentBoard != null ? parentBoard.getBoardTypeCd() : fallback;
+      }
+
       // 목록과 카운트는 같은 동적 조건을 공유한다 — 한쪽만 파라미터를 늘리면
       // 목록은 필터링되는데 총 건수는 전체 기준이라 뒷 페이지가 비는 증상이 난다(Phase 3 사례).
       // communityListTypeCds: boardTypeCd가 null(통합목록)일 때만 쓰는 종류 화이트리스트.

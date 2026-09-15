@@ -157,8 +157,23 @@
 
 	<!-- 베스트글/인기글/추천글 공용 — 조회수*1 + 댓글수*2 + 추천수*3 복합 점수. 태그는 포함하지 않아 N+1 없음 -->
 	<select id="findBestBoards" resultType="com.example.demo.domain.community.dto.CommunityBestItemDTO">
+		<!-- communityListTypeCds가 커뮤니티 재설계(2026-09)로 NORMAL·QNA 2종에서 7종(+career·tech·
+		     company·teamup·lounge)으로 늘었는데, 이 CASE는 1402(qna)만 구분하고 나머지를 전부 'board'로
+		     묶어서 예: career 글이 /board/{sq}로 링크돼 404가 났다 — BoardListDTO.fromEntity가 이미
+		     BoardTypeCode.pathOfCode()로 고친 것과 같은 부류의 버그. 여기도 코드별로 전부 나열한다. -->
 		SELECT b.board_sq AS sq,
-		       CASE WHEN b.board_type_cd = 1402 THEN 'qna' ELSE 'board' END AS boardType,
+		       CASE b.board_type_cd
+		           WHEN 1401 THEN 'board'
+		           WHEN 1402 THEN 'qna'
+		           WHEN 1403 THEN 'notice'
+		           WHEN 1404 THEN 'voc'
+		           WHEN 1405 THEN 'career'
+		           WHEN 1406 THEN 'tech'
+		           WHEN 1407 THEN 'company'
+		           WHEN 1408 THEN 'teamup'
+		           WHEN 1409 THEN 'lounge'
+		           ELSE 'board'
+		       END AS boardType,
 		       b.board_ttl AS ttl,
 		       COALESCE(u.user_nickname, '탈퇴한 사용자') AS userNickname,
 		       b.board_view_cnt AS viewCnt,

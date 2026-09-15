@@ -81,9 +81,19 @@ public class CommunityController {
 	@GetMapping("/board-categories")
 	public ResponseEntity<ApiResponse<List<CommonCodeDTO>>> getBoardCategories(
 			@RequestParam(value = "boardType", required = false) String boardType) {
-		Long parentCodeSq = boardType == null
-				? ParentCodeEnum.BOARD_CATEGORY.getCode()
-				: BoardTypeCode.ofPath(boardType).getCode();
+		Long parentCodeSq;
+		if (boardType == null) {
+			parentCodeSq = ParentCodeEnum.BOARD_CATEGORY.getCode();
+		} else {
+			// ofPath는 미지 값을 NORMAL로 조용히 폴백한다 — getCommunityBoards와 같은 이유로
+			// 그 폴백에 기대지 않고, 실제로 존재하는 게시판 경로인지 먼저 확인한다.
+			BoardTypeCode type = Arrays.stream(BoardTypeCode.values())
+					.filter(t -> t.getPath().equals(boardType))
+					.findFirst()
+					.orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+							HttpStatus.BAD_REQUEST, "알 수 없는 게시판입니다: " + boardType));
+			parentCodeSq = type.getCode();
+		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시판 카테고리 조회 성공",
 				commonCodeMapper.findActiveChildrenByParent(parentCodeSq)));
 	}

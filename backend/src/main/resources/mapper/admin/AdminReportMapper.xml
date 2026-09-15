@@ -15,8 +15,12 @@
         <!-- 게시글 유형 라벨은 공통코드(cbt)에서 그대로 가져온다 — 예전엔 1401/1402 두 값만
              하드코딩돼 있어서 게시판 유형이 늘 때마다(Phase2 재설계 등) 여기도 손대야 했다.
              "Q&A 질문"처럼 공통코드 명(예: "기술소통")과 다른 표현을 쓰고 싶으면 공통코드 이름
-             자체를 그렇게 바꾸면 된다 — 이름의 유일한 출처를 공통코드로 두는 다른 곳들과 같은 원칙. -->
-        r.report_target_type_cd = 2001 THEN cbt.common_code_nm WHEN
+             자체를 그렇게 바꾸면 된다 — 이름의 유일한 출처를 공통코드로 두는 다른 곳들과 같은 원칙.
+
+             COALESCE로 c1(리포트 대상유형 자체의 공통코드명, 예: "게시글")까지 떨어뜨린다 —
+             원글이 하드 삭제돼 b가 NULL이면 cbt도 조인되지 않아 라벨이 통째로 빈값이 나가던
+             문제를 예전 ELSE c1.common_code_nm 폴백과 같은 수준으로 되돌린다. -->
+        r.report_target_type_cd = 2001 THEN COALESCE(cbt.common_code_nm, c1.common_code_nm) WHEN
         r.report_target_type_cd = 2002 THEN '답변' WHEN r.report_target_type_cd = 2003 THEN '댓글' WHEN
         r.report_target_type_cd = 2004 THEN '대댓글' ELSE c1.common_code_nm END AS targetTypeNm,
         r.report_target_sq AS targetSq, CASE WHEN r.report_target_type_cd = 2001 THEN b.board_ttl

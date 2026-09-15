@@ -15,6 +15,7 @@ import com.example.demo.domain.admin.dto.response.DayStatsDTO;
 import com.example.demo.domain.admin.dto.response.LatestPostsDTO;
 import com.example.demo.domain.admin.dto.response.SummaryDTO;
 import com.example.demo.domain.admin.mapper.AdminDashBoardMapper;
+import com.example.demo.domain.community.constant.BoardTypeCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,7 +31,7 @@ public class AdminDashBoardService {
 		List<DateCountDTO> projectApplicationList = adminDashBoardMapper.getChartProjectApplicationCount(startDate, endDate);
 		List<DateCountDTO> companyApplicationList = adminDashBoardMapper.getChartCompanyApplicationCount(startDate, endDate);
 		List<DateCountDTO> postList = adminDashBoardMapper.getChartPostCount(startDate, endDate,
-				com.example.demo.domain.community.constant.BoardTypeCode.dashboardTypeCds());
+				BoardTypeCode.dashboardTypeCds());
 		List<DateCountDTO> commentList = adminDashBoardMapper.getChartCommentCount(startDate, endDate);
 
 		Map<String, DayStatsDTO> map = new HashMap<>();
@@ -125,7 +126,7 @@ public class AdminDashBoardService {
 	    result.add(toSummaryDTO("프로젝트 지원", adminDashBoardMapper.getDayProjectApplicationCount()));
 	    result.add(toSummaryDTO("소속 지원", adminDashBoardMapper.getDayCompanyApplicationCount()));
 	    result.add(toSummaryDTO("게시글", adminDashBoardMapper.getDayPostCount(
-	    		com.example.demo.domain.community.constant.BoardTypeCode.dashboardTypeCds())));
+	    		BoardTypeCode.dashboardTypeCds())));
 	    result.add(toSummaryDTO("댓글", adminDashBoardMapper.getDayCommentCount()));
 
 	    return result;
@@ -156,9 +157,9 @@ public class AdminDashBoardService {
 	            .build();
 	}
 	
-	public List<LatestPostsDTO> getLatestPosts() {	
+	public List<LatestPostsDTO> getLatestPosts() {
 		return adminDashBoardMapper.getLatestPosts(
-				com.example.demo.domain.community.constant.BoardTypeCode.dashboardTypeCds());
+				BoardTypeCode.dashboardTypeCds());
 	}
 }
 	

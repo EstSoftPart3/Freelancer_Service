@@ -117,9 +117,17 @@ public class CommentService {
 
             if (answer != null) {
                 receiverSq = answer.getUserSq();
+                // 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 "/qna/"로 못박아도 됐지만,
+                // 커리어/기술소통도 답변을 지원하게 되면서 실제 부모 글의 타입을 찾아야 한다
+                // (AdminBoardService.getAdminBoardDetail과 같은 이유의 같은 수정).
+                Long parentBoardTypeCd = boardMapper.findParentBoardTypeCdOrDefault(answer.getBoardSq(),
+                        BoardTypeCode.QNA.getCode());
                 // [중요] 상세 페이지 URL 뒤에 answerSq 파라미터를 붙여 모달 띄우기 대응
-                targetUrl = "/qna/" + answer.getBoardSq() + "?answerSq=" + comment.getAnswerSq();
-                notiContent = "내 Q&A 답변에 새로운 댓글이 달렸습니다.";
+                targetUrl = "/" + BoardTypeCode.pathOfCode(parentBoardTypeCd) + "/" + answer.getBoardSq()
+                        + "?answerSq=" + comment.getAnswerSq();
+                // 링크와 같은 이유로 문구도 "Q&A" 로 못박지 않는다 — 커리어/기술소통 답변에 달린
+                // 댓글에도 이 분기가 타므로 "Q&A 답변" 이라고 하면 실제 게시판과 다른 문구가 나간다.
+                notiContent = "내 답변에 새로운 댓글이 달렸습니다.";
             }
         }
 

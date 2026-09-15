@@ -31,7 +31,9 @@ import lombok.Getter;
 @Getter
 public enum BoardTypeCode {
 
-    NORMAL(1401L, "normal", "board", true, true, false, true, true, false, false),
+    // supportsSkillTag·supportsAnswer는 예전부터 QNA(1402) 전용 기능이었다(스킬 태그·답변/채택 모두
+    // "boardTypeCd == 1402L" 로만 열려 있었다) — 일반게시판은 둘 다 지원하지 않는다.
+    NORMAL(1401L, "normal", "board", true, true, false, false, false, false, false),
     QNA(1402L, "qna", "qna", true, false, false, true, true, false, false),
     NOTICE(1403L, "notice", "notice", false, false, false, false, false, true, false),
     /** 고객의 소리 — Phase 5에서 사용. 공통코드 1404. */
@@ -162,5 +164,13 @@ public enum BoardTypeCode {
         List<Long> codes = new java.util.ArrayList<>(communityListCodes());
         codes.add(NOTICE.getCode());
         return codes;
+    }
+
+    /** 답변/채택 상태를 실제로 갖는 게시판 유형 코드 — BO 목록의 채택상태 컬럼을 이 유형에서만 보여준다. */
+    public static List<Long> answerSupportedCodes() {
+        return Arrays.stream(values())
+                .filter(BoardTypeCode::isSupportsAnswer)
+                .map(BoardTypeCode::getCode)
+                .collect(Collectors.toList());
     }
 }

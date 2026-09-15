@@ -79,7 +79,7 @@ public class AdminBoardService {
                 List<AdminBoardListDTO> boards = adminBoardMapper.findAllUnified(
                                 typeCds, categoryCds, keyword, tagKeyword, sortField,
                                 SortDirectionUtil.normalize(sortOrder), offset, size,
-                                BoardTypeCode.communityListCodes(), answerSupportedTypeCds());
+                                BoardTypeCode.communityListCodes(), BoardTypeCode.answerSupportedCodes());
 
                 // 3. 전체 개수 조회
                 Long totalElements = adminBoardMapper.findAllUnifiedCnt(typeCds, categoryCds, keyword, tagKeyword,
@@ -92,14 +92,6 @@ public class AdminBoardService {
                                 .page(page)
                                 .size(size)
                                 .build();
-        }
-
-        /** 답변/채택 상태를 실제로 갖는 게시판 유형 코드 — BO 목록의 채택상태 컬럼을 이 유형에서만 보여준다. */
-        private List<Long> answerSupportedTypeCds() {
-                return java.util.Arrays.stream(BoardTypeCode.values())
-                                .filter(BoardTypeCode::isSupportsAnswer)
-                                .map(BoardTypeCode::getCode)
-                                .collect(java.util.stream.Collectors.toList());
         }
 
         @Transactional
@@ -310,9 +302,8 @@ public class AdminBoardService {
 
                         // 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 부모 유형을 1402로 못박아도
                         // 됐지만, 커리어/기술소통도 답변을 지원하게 되면서 실제 부모 글을 찾아야 한다.
-                        Board parentBoard = boardMapper.findByIdAny(answer.getBoardSq());
-                        Long parentBoardTypeCd = parentBoard != null ? parentBoard.getBoardTypeCd()
-                                        : BoardTypeCode.QNA.getCode();
+                        Long parentBoardTypeCd = boardMapper.findParentBoardTypeCdOrDefault(answer.getBoardSq(),
+                                        BoardTypeCode.QNA.getCode());
 
                         return AdminBoardDetailResponseDTO.builder()
                                         .sq(answer.getAnswerSq())
@@ -457,9 +448,17 @@ public class AdminBoardService {
 
                         if (answer != null) {
                                 receiverSq = answer.getUserSq();
+                                // 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 "/qna/"로 못박아도 됐지만,
+                                // 커리어/기술소통도 답변을 지원하게 되면서 실제 부모 글의 타입을 찾아야 한다
+                                // (getAdminBoardDetail과 같은 이유의 같은 수정).
+                                Long parentBoardTypeCd = boardMapper.findParentBoardTypeCdOrDefault(
+                                                answer.getBoardSq(), BoardTypeCode.QNA.getCode());
                                 // 상세 페이지 URL 뒤에 answerSq 파라미터를 붙여 모달 띄우기 대응
-                                targetUrl = "/qna/" + answer.getBoardSq() + "?answerSq=" + comment.getAnswerSq();
-                                notiContent = "관리자가 내 Q&A 답변에 댓글을 남겼습니다.";
+                                targetUrl = "/" + BoardTypeCode.pathOfCode(parentBoardTypeCd) + "/" + answer.getBoardSq()
+                                                + "?answerSq=" + comment.getAnswerSq();
+                                // 링크와 같은 이유로 문구도 "Q&A" 로 못박지 않는다 — 커리어/기술소통 답변에 달린
+                                // 댓글에도 이 분기가 타므로 "Q&A 답변" 이라고 하면 실제 게시판과 다른 문구가 나간다.
+                                notiContent = "관리자가 내 답변에 댓글을 남겼습니다.";
                         }
                 }
 
