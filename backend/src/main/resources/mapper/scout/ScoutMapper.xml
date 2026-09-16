@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.scout.mapper.ScoutMapper">
+
+    <!-- 스카우트 제안 등록 -->
+    <insert id="insertScoutOffer" parameterType="com.example.demo.domain.scout.entity.ScoutEntity" useGeneratedKeys="true" keyProperty="scoutOfferSq">
+        INSERT INTO tbl_scout_offer_m (
+            company_sq,
+            
+            resume_sq,
+            project_sq,
+            scout_offer_ttl,
+            scout_offer_cnt,
+            scout_offer_salary,
+            scout_offer_status_cd,
+            scout_offer_created_at_dtm,
+            scout_offer_updated_at_dtm
+        ) VALUES (
+            #{companySq},
+            #{resumeSq},
+            #{projectSq},
+            #{scoutOfferTtl},
+            #{scoutOfferCnt},
+            #{scoutOfferSalary},
+            COALESCE(#{scoutOfferStatusCd}, 'PENDING'),
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- PK 기준 조회 -->
+    <select id="selectScoutOfferById" parameterType="long" resultType="com.example.demo.domain.scout.entity.ScoutEntity">
+        SELECT
+            scout_offer_sq AS scoutOfferSq,
+            company_sq AS companySq,
+            resume_sq AS resumeSq,
+            project_sq AS projectSq,
+            scout_offer_ttl AS scoutOfferTtl,
+            scout_offer_cnt AS scoutOfferCnt,
+            scout_offer_salary AS scoutOfferSalary,
+            scout_offer_status_cd AS scoutOfferStatusCd,
+            scout_offer_created_at_dtm AS scoutOfferCreatedAtDtm,
+            scout_offer_updated_at_dtm AS scoutOfferUpdatedAtDtm
+        FROM tbl_scout_offer_m
+        WHERE scout_offer_sq = #{scoutOfferSq}
+    </select>
+    
+    <select id="selectScoutList" resultType="com.example.demo.domain.scout.dto.response.ScoutListResponseDto$ScoutItem">
+        SELECT
+            so.scout_offer_sq AS scoutsSq,
+            c.company_nm AS senderCompanyName,
+            so.project_sq AS projectSq,
+            p.project_ttl AS projectTitle,
+            so.scout_offer_ttl AS title,
+            so.scout_offer_cnt AS content,
+            so.scout_offer_salary AS offeredPay,
+            so.scout_offer_status_cd AS status,
+            DATE_FORMAT(so.scout_offer_created_at_dtm, '%Y-%m-%d %H:%i:%s') AS createdAt,
+            NULL AS expiredAt
+        FROM tbl_scout_offer_m so
+        LEFT JOIN tbl_company_s c ON so.company_sq = c.company_sq
+        LEFT JOIN tbl_project_m p ON so.project_sq = p.project_sq
+        LEFT JOIN tbl_resume_m r ON so.resume_sq = r.resume_sq
+        WHERE r.user_sq = #{userSq}
+        
+        <!-- 상태 코드 필터링 -->
+        <if test="status != null and status != '' and status != 'all'">
+            AND so.scout_offer_status_cd = #{status}
+        </if>
+        
+        <!-- 키워드 검색 (제목 / 기업명 / 전체) -->
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'company'">
+                    AND c.company_nm LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm LIKE CONCAT('%', #{keyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+        
+        ORDER BY so.scout_offer_sq DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectScoutCount" resultType="long">
+        SELECT COUNT(*)
+        FROM tbl_scout_offer_m so
+        LEFT JOIN tbl_company_s c ON so.company_sq = c.company_sq
+        LEFT JOIN tbl_resume_m r ON so.resume_sq = r.resume_sq
+        WHERE r.user_sq = #{userSq}
+        
+        <if test="status != null and status != '' and status != 'all'">
+            AND so.scout_offer_status_cd = #{status}
+        </if>
+        
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'company'">
+                    AND c.company_nm LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm LIKE CONCAT('%', #{keyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+    
+    <select id="selectScoutDetail" parameterType="long" resultType="com.example.demo.domain.scout.dto.response.ScoutDetailResponse">
+        SELECT
+            so.scout_offer_sq AS scoutSq,
+            so.company_sq AS companySq,
+            c.company_nm AS companyName,
+            so.project_sq AS projectSq,
+            p.project_ttl AS projectTitle,
+            so.scout_offer_ttl AS title,
+            so.scout_offer_cnt AS content,
+            so.scout_offer_salary AS offeredPay,
+            so.scout_offer_status_cd AS status,
+            DATE_FORMAT(so.scout_offer_created_at_dtm, '%Y-%m-%d %H:%i:%s') AS createdAt,
+            DATE_FORMAT(so.scout_offer_updated_at_dtm, '%Y-%m-%d %H:%i:%s') AS updatedAt
+        FROM tbl_scout_offer_m so
+        LEFT JOIN tbl_company_s c ON so.company_sq = c.company_sq
+        LEFT JOIN tbl_project_m p ON so.project_sq = p.project_sq
+        WHERE so.scout_offer_sq = #{scoutSq}
+    </select>
+
+    <!-- 스카우트 제안 상태 변경 -->
+    <update id="updateScoutStatus">
+        UPDATE tbl_scout
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE scout_sq = #{scoutSq}
+    </update>
+    
+
+</mapper>

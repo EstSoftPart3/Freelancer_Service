@@ -27,6 +27,13 @@ public class FreelancerResponseDto {
     private String profileImageUrl;
 
     private String summary;
+    
+    private String address;
+    
+    @JsonProperty("detail_address")
+    private String detailAddress;
+
+    private String sigungu;
 	
 
 }

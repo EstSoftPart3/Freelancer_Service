@@ -27,12 +27,23 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()((set) => {
   // --- 초기화 로직 (새로고침 시 실행) ---
-  const cookieToken = getCookie(ACCESS_TOKEN)
-  const initToken = cookieToken ? JSON.parse(cookieToken) : ''
+  const cookieToken = getCookie(ACCESS_TOKEN) || ''
+  
 
   // ✅ 유저 정보도 쿠키에서 읽어와서 새로고침 시 유지되도록 함
   const cookieUser = getCookie(AUTH_USER)
-  const initUser = cookieUser ? JSON.parse(cookieUser) : null
+  let initUser: AuthUser | null = null
+  if (cookieUser) {
+    try {
+      initUser = JSON.parse(decodeURIComponent(cookieUser))
+    } catch {
+      try {
+        initUser = JSON.parse(cookieUser)
+      } catch {
+        initUser = null
+      }
+    }
+  }
 
   return {
     auth: {
@@ -40,16 +51,17 @@ export const useAuthStore = create<AuthState>()((set) => {
       setUser: (user) =>
         set((state) => {
           if (user) {
-            setCookie(AUTH_USER, JSON.stringify(user)) // ✅ 쿠키에 저장
+            const encodedUser = encodeURIComponent(JSON.stringify(user))
+            setCookie(AUTH_USER, encodedUser) // ✅ 쿠키에 저장
           } else {
             removeCookie(AUTH_USER)
           }
           return { ...state, auth: { ...state.auth, user } }
         }),
-      accessToken: initToken,
+      accessToken: cookieToken,
       setAccessToken: (accessToken) =>
         set((state) => {
-          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken))
+          setCookie(ACCESS_TOKEN, accessToken)
           return { ...state, auth: { ...state.auth, accessToken } }
         }),
       resetAccessToken: () =>

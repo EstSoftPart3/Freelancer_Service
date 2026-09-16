@@ -59,7 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/actuator",
             // ---------------- [추가] OAuth2 경로 ----------------
             "/v1/auth",
-            "api/v1/auth"
+            "api/v1/auth",
+            "/v1/scouts",
+            "/api/v1/scouts"
 
     // 여기에 더 추가 가능
     );

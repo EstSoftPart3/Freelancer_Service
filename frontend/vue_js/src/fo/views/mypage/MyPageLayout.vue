@@ -190,6 +190,16 @@ const headerInfo = computed(() => {
           { text: '프로젝트 수정' },
         ],
       }
+
+    case 'scoutOfferPage':
+      return {
+        title: '제안서',
+        strongText: '현황',
+        breadcrumbs: [
+          { text: '마이페이지', link: '/mypage' },
+          { text: '제안서 내역' },
+        ],
+      }
     default:
       return {
         title: '마이페이지',

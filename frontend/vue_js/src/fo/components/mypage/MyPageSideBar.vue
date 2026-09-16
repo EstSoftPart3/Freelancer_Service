@@ -196,6 +196,18 @@
           </ul>
         </li>
         <li class="nav-item">
+          <span class="nav-link">제안서 관리</span>
+          <ul>
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/mypage/scoutOfferPage"
+                @click="handleNavigate"
+                >받은 제안서 내역</router-link>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item">
           <span class="nav-link">회원 정보 관리</span>
           <ul>
             <li class="nav-item">

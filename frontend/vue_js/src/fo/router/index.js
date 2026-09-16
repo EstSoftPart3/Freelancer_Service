@@ -45,6 +45,7 @@ import NoticeListPage from '../views/notice/NoticeListPage.vue'
 import NoticeDetailPage from '../views/notice/NoticeDetailPage.vue'
 import GoogleCallback from '@/fo/views/login&signup/GoogleCallback.vue'
 import ScoutPage from '../views/scout/ScoutPage.vue'
+import ScoutOfferPage from '../views/mypage/personal/ScoutOfferPage.vue'
 
 const routes = [
   {
@@ -273,6 +274,11 @@ const routes = [
         name: 'ProjectPostPage',
         component: ProjectPostPage,
       },
+      {
+        path: 'scoutOfferPage',
+        name: 'scoutOfferPage',
+        component: ScoutOfferPage,
+      },
     ],
   },
 
@@ -280,6 +286,15 @@ const routes = [
     path: '/scout', 
     component: ScoutPage,
     name: 'ScoutPage',
+  },
+
+  {
+    path: '/resume/detail/:id',
+    name: 'ResumeDetailPopup',
+    component: () => import('@/fo/components/mypage/common/ResumeDetailModal.vue'),
+    meta: {
+      layout: 'empty'
+    }
   }
 ]
 const router = createRouter({

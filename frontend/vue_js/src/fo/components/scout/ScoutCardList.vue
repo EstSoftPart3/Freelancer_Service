@@ -3,7 +3,7 @@
     <div class="col">
       <div
         v-for="scout in props.scouts"
-        :key="scout.id || scout.userSq"
+        :key="scout.resumeSq || scout.userSq || scout.id"
         class="card position-relative p-4 shadow-sm mb-3"
       >
         <!-- 스크랩 아이콘 (카드 우측 상단 고정) -->
@@ -34,7 +34,7 @@
             style="cursor: pointer"
           >
             <img
-              :src="scout.userProfileUrl || '/img/avatars/default_avatar.png'"
+              :src="scout.profile_image_url || '/img/avatars/default_avatar.png'"
               alt="프로필 이미지"
               class="rounded-circle"
               style="
@@ -56,7 +56,7 @@
                   @click.prevent="goToScoutSpec(scout)"
                   class="text-dark text-decoration-none"
                 >
-                  {{ scout.userName || scout.name }}
+                  {{ scout.name || scout.userName }}
                 </a>
               </h4>
               <span class="badge bg-primary px-2 py-1 fs-6 fw-normal">
@@ -66,14 +66,22 @@
 
             <!-- 경력 정보 -->
             <div class="text-muted fs-6 mb-1">
-              <span>경력 : {{ scout.careerYearNm || scout.career || '신입' }}</span>
+              <span>
+                경력 : 
+                <template v-if="scout.experienceYears > 0">
+                  {{ scout.experienceYears }}년차
+                </template>
+                <template v-else>
+                  신입
+                </template>
+              </span>
             </div>
 
             <!-- 위치 정보 -->
             <div class="text-muted fs-6 mb-2">
               <span class="d-flex align-items-center">
                 <i class="bi bi-geo-alt me-1 text-primary"></i>
-                {{ scout.address || scout.detailedAddress || '지역 정보 없음' }}
+                {{ scout.sigungu || scout.address || '지역 정보 없음' }}
               </span>
             </div>
 
@@ -84,20 +92,20 @@
                 :key="typeof skill === 'object' ? skill.id : skill"
                 :class="[
                   'btn btn-rounded btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1',
-                  props.selectedSkillTags.includes(skill)
+                  isSkillSelected(skill)
                     ? 'btn-primary text-white'
                     : 'btn-light text-dark',
                 ]"
                 style="border-radius: 20px;"
-                @click.stop="emit('click-skill-tag', skill)"
+                @click.stop="emit('click-skill-tag', getSkillName(skill))"
               >
                 <img
-                  :src="generateIconUrl(typeof skill === 'object' ? skill.name : skill)"
+                  :src="generateIconUrl(getSkillName(skill))"
                   width="16"
                   height="16"
-                  :alt="typeof skill === 'object' ? skill.name : skill"
+                  :alt="getSkillName(skill)"
                 />
-                {{ typeof skill === 'object' ? skill.name : skill }}
+                {{ getSkillName(skill) }}
               </button>
             </div>
 
@@ -115,12 +123,10 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
-import { useRouter } from 'vue-router'
 import { api } from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 const alertStore = useAlertStore()
-const router = useRouter()
 
 const props = defineProps({
   scouts: {
@@ -133,12 +139,27 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['click-skill-tag'])
+const emit = defineEmits(['click-skill-tag', 'open-resume'])
 
 const goToScoutSpec = (scout) => {
-  const userSq = scout.userSq || scout.id
-  if (!userSq) return
-  router.push(`/scout/${userSq}`)
+  console.log('클릭한 scout 객체 데이터:', scout)
+
+  if (!scout) {
+    console.warn('scout 데이터가 없습니다.')
+    return
+  }
+
+  // 부모(handleOpenResume)가 scout 객체를 받아 PK를 파싱하도록 객체 그대로 전달
+  emit('open-resume', scout)
+}
+
+const getSkillName = (skill) => {
+  return typeof skill === 'object' ? skill.name : skill
+}
+
+const isSkillSelected = (skill) => {
+  const name = getSkillName(skill)
+  return props.selectedSkillTags.includes(name)
 }
 
 const generateIconUrl = (name) => {
@@ -148,13 +169,13 @@ const generateIconUrl = (name) => {
 }
 
 const clickScrap = async (scout) => {
+  const targetId = scout.userSq || scout.id
+  const isScrapped = scout.hasScrapped === 'Y'
+
   try {
-    const isScrapped = scout.hasScrapped === 'Y'
     scout.hasScrapped = isScrapped ? 'N' : 'Y'
 
-    const targetId = scout.userSq || scout.id
-    await api.$post(`/scouts/${targetId}/scraps`, {
-      withCredentials: true,
+    await api.post(`/scouts/${targetId}/scraps`, {
       hasScrapped: isScrapped,
       target: '인재',
     })
@@ -163,7 +184,7 @@ const clickScrap = async (scout) => {
       isScrapped ? '스크랩 해제에 성공하였습니다.' : '스크랩에 성공하였습니다.',
     )
   } catch (error) {
-    scout.hasScrapped = scout.hasScrapped === 'Y' ? 'N' : 'Y'
+    scout.hasScrapped = isScrapped ? 'Y' : 'N'
     console.error(error)
     alertStore.show('스크랩에 실패했습니다.', 'danger')
   }

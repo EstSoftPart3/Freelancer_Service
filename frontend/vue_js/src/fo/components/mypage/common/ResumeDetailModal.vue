@@ -1,12 +1,12 @@
 <template>
   <div class="modal-content">
     <div class="modal-header">
-      <h4 class="modal-title">{{ resumeInfo.title }}</h4>
+      <h4 class="modal-title">{{ resumeInfo.resumeTtl || '이력서 상세' }}</h4>
       <button
         type="button"
         class="btn-close"
         @click="closeModal"
-        aria-hidden="true"
+        aria-label="Close"
       >
         ×
       </button>
@@ -71,7 +71,7 @@
               <p>
                 <strong class="text-primary">주소 :</strong>
                 <span class="text-dark">
-                  {{ resumeInfo.address.addressFull }}</span
+                  {{ resumeInfo.address?.addressFull || resumeInfo.address }}</span
                 >
               </p>
             </div>
@@ -298,11 +298,6 @@
                       </button>
                     </div>
                   </div>
-                  <!-- <div class="row mb-3">
-                    <div class="col-sm-12">
-                      <strong style="margin-right: 8px">기타:</strong>
-                    </div>
-                  </div> -->
                 </div>
               </div>
             </li>
@@ -352,33 +347,36 @@
         </div>
       </div>
     </div>
+
+    <!-- 하단 슬롯 제공 (기본값으로 닫기 버튼 설정) -->
     <div class="modal-footer">
-      <!-- <button class="btn btn-primary" @click="handleSelect">선택하기</button> -->
-      <button class="btn btn-outline-secondary" @click="closeModal">
-        닫기
-      </button>
+      <slot name="footer" :closeModal="closeModal">
+        <button class="btn btn-outline-secondary" @click="closeModal">
+          닫기
+        </button>
+      </slot>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect, defineProps } from 'vue'
+import { ref, watchEffect, defineProps, defineEmits } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { api } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 const props = defineProps({
   resumeSq: {
-    type: Number,
-    required: true,
+    type: [Number, String, Object], // 객체로 넘어오는 케이스까지 포용하도록 확장
+    default: null,
   },
   projectSq: {
     type: Number,
-    required: true,
+    default: 0,
   },
   applicationSq: {
     type: Number,
-    required: true,
+    default: 0,
   },
   isFromApplicationList: {
     type: Boolean,
@@ -386,6 +384,7 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['close'])
 const modalStore = useModalStore()
 
 const resumeInfo = ref({
@@ -408,6 +407,7 @@ const resumeInfo = ref({
 })
 
 function getTagsByCategory(project, category) {
+  if (!project?.groupedSkillTags) return []
   const found = project.groupedSkillTags.find((item) => item[category])
   return found ? found[category] : []
 }
@@ -430,32 +430,58 @@ const collapseAllProjects = () => {
 }
 
 const closeModal = () => {
+  emit('close')
   modalStore.closeModal()
 }
 
-// const handleSelect = () => {
-//   console.log('이력서 선택')
-//   closeModal()
-// }
-
 // 이력서 상세조회
 watchEffect(async () => {
-  if (!props.resumeSq) return
+  console.log('[ResumeDetailModal] 원본 resumeSq Prop:', props.resumeSq)
 
+  // 1. props.resumeSq가 객체인지, 숫자/문자열인지 파싱하여 순수 PK 값 추출
+  let realResumeSq = null
+
+  if (typeof props.resumeSq === 'object' && props.resumeSq !== null) {
+    realResumeSq =
+      props.resumeSq.resumeSq ||
+      props.resumeSq.resume_sq ||
+      props.resumeSq.freelancerSq ||
+      props.resumeSq.freelancer_sq ||
+      props.resumeSq.userSq ||
+      props.resumeSq.user_sq ||
+      props.resumeSq.id
+  } else {
+    realResumeSq = props.resumeSq
+  }
+
+  if (!realResumeSq) {
+    console.warn('[ResumeDetailModal] resumeSq 값이 없어 API 요청을 보낼 수 없습니다.')
+    return
+  }
+
+  console.log('[ResumeDetailModal] 최종 파싱된 resumeSq:', realResumeSq)
+
+  // 2. 파싱된 PK 기반으로 API 요청 진행
   try {
     const res = props.isFromApplicationList
       ? await api.$post('/mypage/resume-detail-view', {
-          resumeSq: props.resumeSq,
+          resumeSq: realResumeSq,
           projectSq: props.projectSq,
           applicationSq: props.applicationSq,
-        }) // 열람 처리 포함 API
-      : await api.$get(`/mypage/resume-detail/${props.resumeSq}`) // 단순 조회 API
+        })
+      : await api.$get(`/mypage/resume-detail/${realResumeSq}`)
 
-    res.output.projectList = res.output.projectList.map((project) => ({
-      ...project,
-      isExpanded: true,
-    }))
-    resumeInfo.value = res.output
+    const data = res?.output || res?.data || res
+
+    if (data) {
+      if (data.projectList) {
+        data.projectList = data.projectList.map((project) => ({
+          ...project,
+          isExpanded: true,
+        }))
+      }
+      Object.assign(resumeInfo.value, data)
+    }
   } catch (err) {
     console.error('이력서 조회 실패:', err)
   }
@@ -467,33 +493,3 @@ const generateIconUrl = (name) => {
   return skillIconMap[key] || skillIconMap.default
 }
 </script>
-
-<style scoped>
-.modal-content {
-  border-radius: 8px;
-}
-
-.btn-rounded {
-  border-radius: 20px;
-}
-
-.btn-3d {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.rotate-90 {
-  transform: rotate(90deg);
-}
-
-.transition-transform {
-  transition: transform 0.3s ease;
-}
-
-.bg-color-grey {
-  background-color: #f5f5f5;
-}
-</style>

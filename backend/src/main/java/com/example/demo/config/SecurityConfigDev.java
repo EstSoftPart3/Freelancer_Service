@@ -30,64 +30,55 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfigDev {
 
-    private final JwtProvider jwtProvider;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+	private final JwtProvider jwtProvider;
+	private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOriginPatterns(List.of("http://localhost:8504", "http://localhost:5173",
+				"https://job.estsw.co.kr", "https://admin-job.estsw.co.kr"));
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of(
-            "http://localhost:8504",
-            "http://localhost:5173",
-            "https://job.estsw.co.kr",
-            "https://admin-job.estsw.co.kr"
-        ));
-        
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
-        configuration.setAllowCredentials(true);
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+		configuration.setAllowedHeaders(List.of("*"));
+		configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
+		configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // 최신 방식의 disable 설정
-                .authorizeHttpRequests(auth -> auth
-                		.requestMatchers(reqeust -> CorsUtils.isPreFlightRequest(reqeust)).permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/v1/auth/google/login").permitAll()
-                        // --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
-                        .requestMatchers("/actuator/**").permitAll()
-                        // 1. 관리자 로그인 및 토큰 재발급은 누구나 접근 가능
-                        .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
-                        // 2. /api/admin으로 시작하는 모든 경로는 'ADMIN' 권한 필요
-                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                        // 3. 사용자 정보 조회 등은 인증 필요
-                        .requestMatchers("/me").authenticated()
-                        // 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable()) 
+				.authorizeHttpRequests(auth -> auth.requestMatchers(reqeust -> CorsUtils.isPreFlightRequest(reqeust))
+						.permitAll().requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers("/v1/auth/google/login").permitAll()
+						// --- 추가: 헬스 체크 경로는 인증 없이 접근 허용 ---
+						.requestMatchers("/actuator/**").permitAll()
+						// 1. 관리자 로그인 및 토큰 재발급은 누구나 접근 가능
+						.requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
+						// 2. /api/admin으로 시작하는 모든 경로는 'ADMIN' 권한 필요
+						.requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+						// 3. 사용자 정보 조회 등은 인증 필요
+						.requestMatchers("/me").authenticated()
+						// 4. 나머지는 FO와 동일하게 유지 (상황에 따라 조정)
 
-                        //OAuth2 관련 로그인/인증 엔드포인트 접근 허용
-                        .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**", "/v1/auth/**").permitAll()
-                        .anyRequest().permitAll())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .oauth2Login(oauth -> oauth.successHandler(oAuth2SuccessHandler))
+						// OAuth2 관련 로그인/인증 엔드포인트 접근 허용
+						.requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
+						.requestMatchers("/api/v1/auth/**", "/v1/auth/**").permitAll().anyRequest().permitAll())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+				.oauth2Login(oauth -> oauth.successHandler(oAuth2SuccessHandler))
 
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout.disable());
+				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+				.logout(logout -> logout.disable());
 
-        return http.build();
-    }
+		return http.build();
+	}
 
-    @Bean
-    public Filter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider);
-    }
+	@Bean
+	public Filter jwtAuthenticationFilter() {
+		return new JwtAuthenticationFilter(jwtProvider);
+	}
 }

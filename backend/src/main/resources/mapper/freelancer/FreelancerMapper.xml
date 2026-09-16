@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.domain.freelancer.mapper.FreelancerMapper">
 
-    <!-- 1. 프리랜서(이력서) 목록 조회 -->
     <select id="selectFreelancers" resultType="com.example.demo.domain.freelancer.dto.response.FreelancerResponseDto">
         SELECT 
-            r.resume_sq             AS resumeSq,
+            /* [수정] DTO의 @JsonProperty("freelancer_sq")에 매핑되도록 Alias 변경 */
+            r.resume_sq             AS freelancerSq,
             r.user_sq               AS userSq,
             u.user_nm               AS name,
             r.resume_ttl            AS jobTitle,
@@ -17,14 +18,25 @@
                     WHERE c.resume_sq = r.resume_sq
                 ), 0
             )                       AS experienceYears,
-            <!-- tbl_user_profile_image_s 와 연동하여 file_sq 기반 URL 생성 (프로젝트 저장 경로 규칙에 맞춰 변경 가능) -->
             CONCAT('/api/v1/files/', p.file_sq) AS profileImageUrl,
-            r.resume_greeting_txt   AS summary
+            r.resume_greeting_txt   AS summary,
+            a.address               AS address,
+            a.detail_address        AS detailAddress,
+            a.sigungu               AS sigungu
         FROM TBL_RESUME_M r
+       
+        INNER JOIN (
+            SELECT user_sq, MAX(resume_sq) AS max_resume_sq
+            FROM TBL_RESUME_M
+            GROUP BY user_sq
+        ) latest_r ON r.resume_sq = latest_r.max_resume_sq
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
         LEFT JOIN tbl_user_profile_image_s p 
             ON u.user_sq = p.user_sq
+        
+        LEFT JOIN tbl_address_s a
+            ON r.address_sq = a.address_sq
         <where>
             <if test="req.experience != null">
                 AND COALESCE(
@@ -52,17 +64,16 @@
         ORDER BY r.resume_sq DESC
         LIMIT #{req.size} OFFSET #{offset}
     </select>
-
-    <!-- 2. 이력서별 보유 기술 태그 목록 조회 -->
+    
     <select id="selectFreelancerSkills" resultType="string">
         SELECT st.skill_tag_nm
         FROM TBL_RESUME_SKILL_SEARCH_S rss
         INNER JOIN TBL_SKILL_TAG_C st 
             ON rss.skill_tag_sq = st.skill_tag_sq
         WHERE rss.resume_sq = #{resumeSq}
-        ORDER BY st.skill_tag_sq ASC
+        ORDER BY st.skill_tag_nm ASC
     </select>
-
+    
     <!-- 3. 프리랜서(이력서) 전체 개수 조회 -->
     <select id="countFreelancers" resultType="long">
         SELECT COUNT(DISTINCT r.resume_sq)

@@ -26,17 +26,12 @@
     </div>
   </div>
 
-  <!-- 1. 스카우트용 이력서 상세 모달 (기업회원 조건 적용) -->
   <ScoutResumeDetailModal
-    ref="scoutResumeModalRef" 
-    @open-scout-offer="handleOpenScoutOffer" 
+    ref="scoutResumeModalRef"
+    @open-scout-offer="handleOpenScoutOffer"
   />
 
-  <!-- 2. 스카우트 제안 모달 -->
-  <ScoutOfferModal 
-    ref="scoutOfferModalRef" 
-  />
-
+  <ScoutOfferModal ref="scoutOfferModalRef" />
 </template>
 
 <script setup>
@@ -44,16 +39,17 @@ import { ref, reactive, onMounted } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import ScoutFilterBar from '@/fo/components/common/ScoutFilterBar.vue'
 import ScoutCardList from '@/fo/components/scout/ScoutCardList.vue'
-import ScoutResumeDetailModal from '@/fo/components/scout/ScoutResumeDetailModal.vue'
 import ScoutOfferModal from '@/fo/components/scout/ScoutOfferModal.vue'
+import ScoutResumeDetailModal from '@/fo/components/scout/ScoutResumeDetailModal.vue'
+
 import { api } from '@/axios.js'
 import { useAlertStore } from '@/fo/stores/alertStore'
 
 const alertStore = useAlertStore()
 const isLoading = ref(false)
 
-const scoutResumeModalRef = ref(null)
 const scoutOfferModalRef = ref(null)
+const scoutResumeModalRef = ref(null)
 
 const scoutList = ref([])
 const selectedSkills = ref([])
@@ -61,7 +57,7 @@ const currentFilters = reactive({
   skills: '',
   experience: null,
   page: 0,
-  size: 10
+  size: 10,
 })
 
 const fetchScouts = async () => {
@@ -70,7 +66,7 @@ const fetchScouts = async () => {
     const res = await api.$get(
       `/v1/freelancers?page=${currentFilters.page}&size=${currentFilters.size}&skills=${encodeURIComponent(currentFilters.skills || '')}`
     )
-    
+
     if (res && res.output) {
       scoutList.value = res.output.freelancers || []
     } else if (res && res.data) {
@@ -99,30 +95,30 @@ const handleSkillTagClick = (skill) => {
   } else {
     selectedSkills.value.push(skill)
   }
-  
-    currentFilters.skills = selectedSkills.value.join(',')
+
+  currentFilters.skills = selectedSkills.value.join(',')
   currentFilters.page = 0
   fetchScouts()
 }
 
+const handleOpenResume = (scoutData) => {
+  console.log('카드 클릭 -> 이력서 상세 오픈:', scoutData)
+  if (scoutResumeModalRef.value) {
+    scoutResumeModalRef.value.openModal(scoutData)
+  }
+}
+
+const handleOpenScoutOffer = (scoutData) => {
+  if (scoutResumeModalRef.value) {
+    scoutResumeModalRef.value.closeModal()
+  }
+
+  if (scoutOfferModalRef.value) {
+    scoutOfferModalRef.value.openModal(scoutData)
+  }
+}
+
 onMounted(() => {
   fetchScouts()
 })
-
-const handleOpenResume = (scout) => {
-  scoutResumeModalRef.value?.openModal(scout)
-}
-
-const handleOpenScoutOffer = (freelancerData) => {
-  scoutResumeModalRef.value?.closeModal()
-  scoutOfferModalRef.value?.openModal(freelancerData)
-}
-
-onMounted(() => {
-  fetchScouts()
-})
-
 </script>
-
-<style scoped>
-</style>
