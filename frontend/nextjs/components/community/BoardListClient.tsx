@@ -93,7 +93,10 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   const hasCategoryTabs = boardCategory === 'board' || hasCategory(boardCategory)
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
   // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
-  const canRegister = authChecked && !isNotice && !isAll && isLoggedIn()
+  // 'board'(레거시 일반게시판)는 새로 고를 카테고리가 없어(위 hasCategoryTabs 주석 참고)
+  // 등록 폼의 카테고리 필수 검증을 통과할 방법이 없다 — 신규 작성 진입점을 막는다.
+  // 기존 글 수정(BoardPost.tsx의 handleEdit)은 같은 라우트를 쓰지만 별도 진입점이라 영향 없다.
+  const canRegister = authChecked && !isNotice && !isAll && boardCategory !== 'board' && isLoggedIn()
 
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 

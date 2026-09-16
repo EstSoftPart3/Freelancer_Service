@@ -29,7 +29,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InterviewService {
 
-    private static final String STAGE_DELIMITER = ",";
+    // 값 자체에 올 수 있는 일반 문자(콤마 등)와 절대 겹치지 않도록 유닛 구분자(U+001F)를
+    // 쓴다 — 키보드로 입력할 수 없어 값에 우연히 섞일 일이 없다(판단 대기 3번 해결).
+    private static final String STAGE_DELIMITER = "";
 
     private final InterviewMapper interviewMapper;
 
