@@ -1,4 +1,5 @@
 <template>
+<Teleport to="body">
   <div
     ref="modalRef"
     class="modal fade"
@@ -6,46 +7,51 @@
     tabindex="-1"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold">스카우트 제안 상세</h5>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border shadow-sm rounded-2 overflow-hidden">
+        <!-- 모달 헤더 -->
+        <div class="modal-header py-3 border-bottom bg-white d-flex align-items-center justify-content-between">
+          <h4 class="modal-title fs-6 fw-bold text-dark m-0" id="scoutOfferModalLabel">스카우트 상세 내역</h4>
           <button
             type="button"
-            class="btn-close"
-            @click="closeModal"
+            class="btn-close fs-6"
+            data-bs-dismiss="modal"
             aria-label="Close"
           ></button>
         </div>
 
-        <div class="modal-body" v-if="scoutDetail">
+        <!-- 본문 (데이터 존재 시) -->
+        <div class="modal-body bg-light p-4" v-if="scoutDetail">
+          <!-- 보낸 기업 -->
           <div class="mb-4">
-            <h4 class="fw-bold text-primary">{{ scoutDetail.title }}</h4>
-            <p class="text-muted fs-6">
-              제안 기업: <strong class="text-dark">{{ scoutDetail.companyName || scoutDetail.company_name || scoutDetail.sender_company_name || '기업명 없음' }}</strong>
-            </p>
+            <label class="form-label text-primary fw-semibold mb-1 d-block">보낸 기업</label>
+            <div class="text-dark fs-7">{{ scoutDetail.companyName || scoutDetail.company_name || scoutDetail.sender_company_name || '기업명 없음' }}</div>
           </div>
 
-          <hr />
-
-          <div class="row g-3 my-2">
-            <div class="col-md-6">
-              <span class="text-muted d-block">제시 월 단가</span>
-              <strong class="fs-5 text-dark">{{ formatPay(scoutDetail.offeredPay || scoutDetail.offered_pay) }}</strong>
-            </div>
-            <div class="col-md-6">
-              <span class="text-muted d-block">제안 일시</span>
-              <span class="text-dark">{{ formatDate(scoutDetail.createdAt || scoutDetail.created_at) }}</span>
-            </div>
+          <!-- 연관 프로젝트 -->
+          <div class="mb-3">
+            <label class="form-label text-primary fw-semibold mb-1 d-block">연관 프로젝트</label>
+            <div class="text-dark fs-7">{{ scoutDetail.projectTitle || scoutDetail.project_ttl || '연관 프로젝트 없음' }}</div>
           </div>
 
-          <hr />
+          <!-- 제안 제목 -->
+          <div class="mb-3">
+            <label class="form-label text-primary fw-semibold mb-1 d-block">제안 제목</label>
+            <div class="text-dark fs-7">{{ scoutDetail.title || scoutDetail.scout_offer_ttl || '제목 없음' }}</div>
+          </div>
 
-          <div class="my-3">
-            <h6 class="fw-bold mb-2">제안 내용</h6>
+          <!-- 제시 단가 -->
+          <div class="mb-3">
+            <label class="form-label text-primary fw-semibold mb-1 d-block">제시 단가</label>
+            <div class="text-dark fs-7">{{ formatPay(scoutDetail.offeredPay || scoutDetail.offered_pay) }}</div>
+          </div>
+
+          <!-- 제안 내용 -->
+          <div class="mb-2">
+            <label class="form-label text-primary fw-semibold mb-1 d-block">제안 내용</label>
             <div
-              class="p-3 bg-light rounded border"
-              style="min-height: 120px; white-space: pre-wrap;"
+              class="p-3 bg-white rounded border"
+              style="min-height: 120px; white-space: pre-wrap; word-break: break-all;"
             >
               {{ scoutDetail.content || scoutDetail.message || '상세 제안 내용이 없습니다.' }}
             </div>
@@ -62,29 +68,28 @@
         <div class="modal-body text-center py-5" v-else>
           <p class="text-danger mb-0">제안 상세 정보를 불러올 수 없습니다.</p>
         </div>
-
-        <div class="modal-footer d-flex justify-content-between">
+        <div class="modal-footer d-flex justify-content-end">
           <div>
             <template v-if="scoutDetail && (scoutDetail.status === 'PENDING' || scoutDetail.status === '대기중')">
               <button
                 type="button"
-                class="btn btn-primary px-4 me-2"
+                class="btn btn-primary px-3 me-2"
                 @click="handleRespond('ACCEPTED')"
               >
-                수락
+                수락하기
               </button>
               <button
                 type="button"
-                class="btn btn-outline-secondary px-4"
-                @click="handleRespond('REJECTED')"
+                class="btn btn-reject-custom px-3 py-2 fw-bold"
+                @click="handleReject"
               >
-                거절
+                거절하기
               </button>
             </template>
           </div>
           <button
             type="button"
-            class="btn btn-secondary px-4"
+            class="btn btn-outline-secondary px-3"
             @click="closeModal"
           >
             닫기
@@ -93,13 +98,17 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
+
 <script setup>
-import { ref, defineEmits, defineExpose } from 'vue'
+/* global defineProps, defineEmits, defineExpose */
+import { ref } from 'vue'
 import { api } from '@/axios.js'
 import { useModalStore } from '@/fo/stores/modalStore'
 import CommonConfirmModal from '@/fo/components/common/CommonConfirmModal.vue'
+import ScoutRejectModal from '@/fo/components/scout/ScoutRejectModal.vue'
 
 const emit = defineEmits(['refresh'])
 const modalStore = useModalStore()
@@ -109,9 +118,60 @@ const scoutDetail = ref(null)
 const isLoading = ref(false)
 let modalInstance = null
 
-const openModal = async (scoutSq) => {
-  if (!scoutSq) {
-    console.error('유효하지 않은 scoutSq입니다:', scoutSq)
+const props = defineProps({
+  scoutSq: { type: [Number, String], required: false, default: null },
+})
+
+const getScoutSq = () => {
+  if (!scoutDetail.value) return props.scoutSq || null
+  return (
+    scoutDetail.value.scoutsSq ??
+    scoutDetail.value.scouts_sq ??
+    scoutDetail.value.scoutSq ??
+    scoutDetail.value.scout_sq ??
+    scoutDetail.value.sq ??
+    props.scoutSq
+  )
+}
+
+const handleReject = () => {
+  const targetSq = getScoutSq()
+
+  if (!targetSq || targetSq === 'null' || targetSq === 'undefined') {
+    console.error('유효하지 않은 scoutSq입니다:', targetSq, scoutDetail.value)
+    alert('제안 정보 식별자를 찾을 수 없습니다.')
+    return
+  }
+
+  const targetCompany = scoutDetail.value?.companyName || scoutDetail.value?.company_name || scoutDetail.value?.corpNm || ''
+  const targetTitle = scoutDetail.value?.title || scoutDetail.value?.scout_offer_ttl || ''
+
+  modalStore.openModal(ScoutRejectModal, {
+    scoutSq: targetSq,
+    companyName: targetCompany,
+    title: targetTitle,
+    onConfirm: async (reason) => {
+      try {
+        await api.$patch(`/v1/scouts/${targetSq}/reject`, {
+          rejectReason: reason,
+        })
+        modalStore.closeModal()
+        closeModal()
+        emit('refresh')
+      } catch (e) {
+        console.error('스카우트 거절 처리 실패:', e)
+      }
+    },
+    onCancel: () => {
+      modalStore.closeModal()
+    },
+  })
+}
+
+const openModal = async (scoutSqParam) => {
+  const targetSq = scoutSqParam || props.scoutSq
+  if (!targetSq) {
+    console.error('유효하지 않은 scoutSq입니다:', targetSq)
     return
   }
 
@@ -123,21 +183,17 @@ const openModal = async (scoutSq) => {
     }
   }
 
-  await fetchScoutDetail(scoutSq)
+  await fetchScoutDetail(targetSq)
 }
 
-// 1. 상세 데이터 조회 (ApiResponse 제거에 맞춘 resData 바인딩)
 const fetchScoutDetail = async (scoutSq) => {
   isLoading.value = true
   scoutDetail.value = null
 
   try {
-    const response = await api.$get(`/v1/scouts/${scoutSq}`, {
+    const response = await api.$get(`/v1/scouts/${scoutSq}`, { 
       withCredentials: true,
     })
-
-    // Axios 커스텀 인스턴스(api.$get)가 response.data를 즉시 리턴하는 구조인 경우
-    // response 자체가 ScoutDetailResponse 객체입니다.
     scoutDetail.value = response?.data || response
   } catch (e) {
     console.error('스카우트 상세 조회 실패:', e)
@@ -158,11 +214,28 @@ const closeModal = () => {
   }
 }
 
-// 2. 수락 / 거절 처리
 const handleRespond = (status) => {
   if (!scoutDetail.value) return
+
+    const scoutSq = 
+    scoutDetail.value.scouts_sq ?? 
+    scoutDetail.value.scoutsSq ?? 
+    scoutDetail.value.scoutSq ?? 
+    scoutDetail.value.scout_sq ??
+    scoutDetail.value.sq;
   
-  const scoutSq = scoutDetail.value.scoutSq || scoutDetail.value.scout_sq || scoutDetail.value.scouts_sq || scoutDetail.value.id
+    if (!scoutSq) {
+    console.error('스카우트 식별자(scoutSq)를 찾을 수 없습니다.', scoutDetail.value)
+    alert('제안 정보 식별자를 찾을 수 없습니다.')
+    return
+  }
+
+  if (!scoutSq || scoutSq === 'null') {
+    console.error('유효하지 않은 scoutSq 입니다:', scoutDetail.value);
+    alert('제안 정보 식별자가 유효하지 않습니다.');
+    return;
+  }
+
   const actionText = status === 'ACCEPTED' ? '수락' : '거절'
 
   modalStore.openModal(CommonConfirmModal, {
@@ -181,16 +254,8 @@ const handleRespond = (status) => {
   })
 }
 
-function formatDate(dateString) {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return dateString
 
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}.${month}.${day}`
-}
+
 
 function formatPay(pay) {
   if (!pay || isNaN(pay)) return '협의'
@@ -201,4 +266,38 @@ defineExpose({
   openModal,
   closeModal,
 })
+
+
 </script>
+
+<style scoped>
+
+#scoutDetailModal {
+  z-index: 1060 !important;
+}
+
+.modal-title {
+  font-size: 1.35rem !important;
+  letter-spacing: -0.5px;
+}
+
+.btn-reject-custom {
+  background-color: #ffffff !important;
+  color: #dc3545 !important;
+  border: 1px solid #dc3545 !important;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-reject-custom:hover {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  border-color: #dc3545 !important;
+}
+
+</style>
+
+<style>
+#scoutDetailModal ~ .modal-backdrop {
+  z-index: 1050 !important;
+}
+</style>

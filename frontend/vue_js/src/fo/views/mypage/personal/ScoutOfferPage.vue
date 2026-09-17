@@ -94,7 +94,7 @@
                     </button>
                   </template>
                   <template v-else-if="item.status === 'ACCEPTED' || item.status === '수락'">
-                    <span class="badge bg-success fs-7 px-3 py-2">수락됨</span>
+                    <span class="badge bg-primary fs-7 px-3 py-2">수락됨</span>
                   </template>
                   <template v-else-if="item.status === 'REJECTED' || item.status === '거절'">
                     <span class="badge bg-secondary fs-7 px-3 py-2">거절됨</span>
@@ -104,19 +104,31 @@
 
               <div class="d-flex justify-content-between align-items-center mt-2 fs-6 text-muted">
                 <div>
-                  기업명 <span class="text-dark fw-semibold">{{ item.sender_company_name || item.companyName || item.company_name || '기업 정보 없음' }}</span>
+                  <span class="text-dark fw-bold">
+                  기업명 
+                  </span>
+                  <span class="text-dark">{{ item.sender_company_name || item.companyName || item.company_name || '기업 정보 없음' }}</span>
                 </div>
                 <div>
-                  제안 일자 <span class="text-dark">{{ formatDate(item.createdAt || item.created_at || item.created_date) }}</span>
+                  <span class="text-dark fw-bold">
+                  제안 일자
+                  </span> 
+                  <span class="text-dark">{{ formatDate(item.createdAt || item.created_at || item.created_date) }}</span>
                 </div>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mt-1 fs-6 text-muted">
                 <div>
-                  제시 단가 | <span class="text-dark fw-bold">{{ formatPay(item.offeredPay || item.offered_pay || item.pay) }}</span>
+                  <span class="text-dark fw-bold">
+                  제시 단가 
+                  </span>
+                  | <span class="text-dark">{{ formatPay(item.offeredPay || item.offered_pay || item.pay) }}</span>
                 </div>
                 <div>
-                  상태 <span class="text-dark fw-bold">{{ getStatusLabel(item.status) }}</span>
+                  <span class="text-dark fw-bold">
+                  상태
+                  </span>
+                    <span class="text-dark">{{ getStatusLabel(item.status) }}</span>
                 </div>
               </div>
             </div>

@@ -161,7 +161,10 @@ const openModal = (freelancer) => {
   loadCompanyProjects();
 
   if (!bsModal) {
-    bsModal = new bootstrap.Modal(modalRef.value);
+    bsModal = new bootstrap.Modal(modalRef.value, {
+    backdrop: true,
+    keyboard: true
+    });
   }
   bsModal.show();
 };
@@ -201,6 +204,15 @@ defineExpose({ openModal });
 </script>
 
 <style scoped>
+
+#scoutOfferModal {
+  z-index: 1100 !important;
+}
+
+:deep(.modal-backdrop) {
+  z-index: 1060 !important;
+}
+
 .fs-7 {
   font-size: 0.825rem;
 }
@@ -214,4 +226,13 @@ defineExpose({ openModal });
 .form-select:focus {
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15) !important;
 }
+</style>
+
+<style>
+
+#scoutOfferModal ~ .modal-backdrop,
+body > .modal-backdrop.show:last-of-type {
+  z-index: 1095 !important;
+}
+
 </style>

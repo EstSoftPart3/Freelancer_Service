@@ -41,3 +41,14 @@ function closeModal() {
   modalStore.closeModal()
 }
 </script>
+
+<style>
+.modal-backdrop.show:last-of-type {
+  z-index: 1080 !important;
+}
+
+.modal.show:last-of-type,
+.confirm-modal-class {
+  z-index: 1090 !important;
+}
+</style>

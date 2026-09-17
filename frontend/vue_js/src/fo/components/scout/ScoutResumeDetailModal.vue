@@ -62,7 +62,7 @@ import { ref, computed, defineEmits, defineExpose, nextTick } from 'vue'
 import ResumeDetailModal from '@/fo/components/mypage/common/ResumeDetailModal.vue'
 import { useUserStore } from '@/fo/stores/userStore'
 
-const emit = defineEmits(['open-scout-offer'])
+const emit = defineEmits(['open-scout-offer', 'close'])
 
 const userStore = useUserStore()
 const baseModalRef = ref(null)
@@ -70,11 +70,9 @@ const currentScout = ref(null)
 const targetResumeSq = ref(null)
 
 const isCorporateUser = computed(() => {
-  // 스토어 루트 및 userInfo 객체 참조
   const store = userStore || {}
   const info = userStore.userInfo || {}
 
-  // userType 이 'COMPANY', 'CORPORATE', 또는 userTypeCd 가 302 일 때 true
   const isCorp =
     store.userType === 'COMPANY' ||
     info.userType === 'COMPANY' ||
@@ -126,10 +124,15 @@ const closeModal = () => {
     else if (typeof child.close === 'function') child.close()
   }
   targetResumeSq.value = null
+  emit('close')
 }
 
 const handleScoutOffer = () => {
-  emit('open-scout-offer', currentScout.value)
+  const scoutData = currentScout.value
+  closeModal()
+  nextTick(() => {
+    emit('open-scout-offer', scoutData)
+  })
 }
 
 defineExpose({
@@ -145,8 +148,8 @@ defineExpose({
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: transparent;
-  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  pointer-events: auto;
   z-index: 9999;
 }
 

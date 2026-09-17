@@ -149,7 +149,6 @@ const goToScoutSpec = (scout) => {
     return
   }
 
-  // 부모(handleOpenResume)가 scout 객체를 받아 PK를 파싱하도록 객체 그대로 전달
   emit('open-resume', scout)
 }
 
