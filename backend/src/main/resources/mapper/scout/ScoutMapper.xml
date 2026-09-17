@@ -117,9 +117,9 @@
     
     <select id="selectScoutDetail" parameterType="long" resultType="com.example.demo.domain.scout.dto.response.ScoutDetailResponse">
         SELECT
-            so.scout_offer_sq AS scoutSq,
+            so.scout_offer_sq AS scoutsSq,
             so.company_sq AS companySq,
-            c.company_nm AS companyName,
+            c.company_nm AS sendercompanyName,
             so.project_sq AS projectSq,
             p.project_ttl AS projectTitle,
             so.scout_offer_ttl AS title,
@@ -136,11 +136,12 @@
 
     <!-- 스카우트 제안 상태 변경 -->
     <update id="updateScoutStatus">
-        UPDATE tbl_scout
-        SET status = #{status},
-            updated_at = NOW()
-        WHERE scout_sq = #{scoutSq}
-    </update>
+    UPDATE tbl_scout_offer_m
+    SET scout_offer_status_cd = #{status},
+        reject_reason = #{rejectReason},
+        scout_offer_updated_at_dtm = NOW()
+    WHERE scout_offer_sq = #{scoutSq}
+</update>
     
 
 </mapper>

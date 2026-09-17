@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.scout.dto.request.ScoutListRequestDto;
 import com.example.demo.domain.scout.dto.request.ScoutRequestDto;
+import com.example.demo.domain.scout.dto.request.ScoutStatusUpdateRequestDto;
 import com.example.demo.domain.scout.dto.response.ScoutDetailResponse;
 import com.example.demo.domain.scout.dto.response.ScoutListResponseDto;
 import com.example.demo.domain.scout.dto.response.ScoutResponseDto;
@@ -24,14 +25,14 @@ public class ScoutService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional
-    public ScoutResponseDto createScoutOffer(Long companySq, ScoutRequestDto dto) {
+    public ScoutResponseDto createScoutOffer(Long companySq, ScoutRequestDto reuqest) {
         ScoutEntity scoutOffer = ScoutEntity.builder()
                 .companySq(companySq)
-                .resumeSq(dto.getFreelancerSq())
-                .projectSq(dto.getProjectSq())
-                .scoutOfferTtl(dto.getTitle())
-                .scoutOfferCnt(dto.getContent())
-                .scoutOfferSalary(dto.getOfferedPay())
+                .resumeSq(reuqest.getFreelancerSq())
+                .projectSq(reuqest.getProjectSq())
+                .scoutOfferTtl(reuqest.getTitle())
+                .scoutOfferCnt(reuqest.getContent())
+                .scoutOfferSalary(reuqest.getOfferedPay())
                 .scoutOfferStatusCd("PENDING")
                 .build();
 
@@ -46,18 +47,18 @@ public class ScoutService {
                 .build();
     }
     
-    public ScoutListResponseDto getScoutList(ScoutListRequestDto req, Long userSq) {
-        int offset = req.getOffset();
-        int size = req.getSize();
+    public ScoutListResponseDto getScoutList(ScoutListRequestDto request, Long userSq) {
+        int offset = request.getOffset();
+        int size = request.getSize();
 
-        List<ScoutListResponseDto.ScoutItem> scouts = scoutMapper.selectScoutList(userSq, req.getStatus(), offset, size, req.getSearchType(), req.getKeyword());
-        long totalElements = scoutMapper.selectScoutCount(userSq, req.getStatus(), req.getSearchType(), req.getKeyword());
+        List<ScoutListResponseDto.ScoutItem> scouts = scoutMapper.selectScoutList(userSq, request.getStatus(), offset, size, request.getSearchType(), request.getKeyword());
+        long totalElements = scoutMapper.selectScoutCount(userSq, request.getStatus(), request.getSearchType(), request.getKeyword());
 
         int totalPages = (int) Math.ceil((double) totalElements / size);
-        boolean isLast = (req.getPage() + 1) >= totalPages;
+        boolean isLast = (request.getPage() + 1) >= totalPages;
 
         ScoutListResponseDto.PageInfo pageInfo = ScoutListResponseDto.PageInfo.builder()
-                .currentPage(req.getPage())
+                .currentPage(request.getPage())
                 .totalPages(totalPages)
                 .totalElements(totalElements)
                 .isLast(isLast)
@@ -82,12 +83,9 @@ public class ScoutService {
         return detail;
     }
 
-    /**
-     * 스카우트 제안 상태 변경 (수락 / 거절)
-     */
     @Transactional
-    public void updateStatus(Long scoutSq, String status) {
-        int updatedRows = scoutMapper.updateScoutStatus(scoutSq, status);
+    public void updateStatus(Long scoutSq, ScoutStatusUpdateRequestDto request) {
+        int updatedRows = scoutMapper.updateScoutStatus(scoutSq, request.getStatus(), request.getRejectReason());
         if (updatedRows == 0) {
             throw new IllegalStateException("스카우트 제안 상태 변경 실패. (sq: " + scoutSq + ")");
         }

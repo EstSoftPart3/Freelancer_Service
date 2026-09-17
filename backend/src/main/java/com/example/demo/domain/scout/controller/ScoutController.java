@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.common.ApiResponse;
 import com.example.demo.domain.scout.dto.request.ScoutListRequestDto;
 import com.example.demo.domain.scout.dto.request.ScoutRequestDto;
-import com.example.demo.domain.scout.dto.request.ScoutStatusUpdateRequest;
+import com.example.demo.domain.scout.dto.request.ScoutStatusUpdateRequestDto;
 import com.example.demo.domain.scout.dto.response.ScoutDetailResponse;
 import com.example.demo.domain.scout.dto.response.ScoutListResponseDto;
 import com.example.demo.domain.scout.dto.response.ScoutResponseDto;
@@ -65,8 +65,19 @@ public class ScoutController {
 	@PatchMapping("/{scoutSq}/status")
 	public ResponseEntity<Void> updateScoutStatus(
 	        @PathVariable("scoutSq") Long scoutSq,
-	        @RequestBody ScoutStatusUpdateRequest request) {
-	    scoutService.updateStatus(scoutSq, request.getStatus());
+	        @RequestBody ScoutStatusUpdateRequestDto request) {
+	    scoutService.updateStatus(scoutSq, request);
 	    return ResponseEntity.ok().build();
 	}
+
+	@PatchMapping("/{scoutSq}/reject")
+	public ResponseEntity<Void> rejectScout(
+	        @PathVariable("scoutSq") Long scoutSq,
+	        @RequestBody ScoutStatusUpdateRequestDto request) {
+	    request.setStatus("REJECTED");
+	    scoutService.updateStatus(scoutSq, request);
+	    return ResponseEntity.ok().build();
+	}
+
+	
 }

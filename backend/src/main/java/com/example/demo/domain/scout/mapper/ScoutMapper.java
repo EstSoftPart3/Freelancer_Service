@@ -38,7 +38,9 @@ public interface ScoutMapper {
     ScoutDetailResponse selectScoutDetail(@Param("scoutSq") Long scoutSq);
 
     // 상태 변경 (ACCEPTED, REJECTED)
-    int updateScoutStatus(@Param("scoutSq") Long scoutSq, @Param("status") String status);
+    int updateScoutStatus(@Param("scoutSq") Long scoutSq,
+    					  @Param("status") String status,
+    					  @Param("rejectReason") String rejectReason);
 }
 
 
