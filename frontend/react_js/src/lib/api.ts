@@ -4,7 +4,8 @@ import axios, {
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig,
 } from 'axios'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAuthStore, REFRESH_TOKEN } from '@/stores/auth-store'
+import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
 // 빌드 타임에 인라인된다(Vite). 값을 바꾸려면 재빌드해야 한다.
 // - 로컬 개발: 미설정 → http://localhost:8080/api
@@ -83,7 +84,7 @@ apiInstance.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const storedRefreshToken = localStorage.getItem('refreshToken')
+      const storedRefreshToken = getCookie(REFRESH_TOKEN)
 
       if (!storedRefreshToken) {
         throw new Error('No refresh token available')
@@ -112,9 +113,9 @@ apiInstance.interceptors.response.use(
         throw new Error('새로운 액세스 토큰이 응답에 없습니다.')
       }
 
-      // 2. 스토어 및 로컬스토리지 업데이트
+      // 2. 스토어 및 쿠키 업데이트 (세션 쿠키 — 브라우저 종료 시 자동 삭제)
       auth.setAccessToken(accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
+      setCookie(REFRESH_TOKEN, refreshToken, null)
 
       // 3. 대기 중이던 요청들에게 새 토큰 전달
       processQueue(null, accessToken)
@@ -130,7 +131,7 @@ apiInstance.interceptors.response.use(
 
       // 재발급 실패 시 상태 초기화 및 이동
       auth.reset()
-      localStorage.removeItem('refreshToken')
+      removeCookie(REFRESH_TOKEN)
       window.location.href = '/sign-in'
 
       return Promise.reject(err)

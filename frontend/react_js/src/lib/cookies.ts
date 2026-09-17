@@ -29,12 +29,13 @@ export function getCookie(name: string): string | undefined {
 }
 
 /**
- * Set a cookie with name, value, and optional max age
+ * Set a cookie with name, value, and optional max age.
+ * maxAge를 null로 주면 max-age를 아예 안 붙여 세션 쿠키(브라우저 종료 시 자동 삭제)로 만든다.
  */
 export function setCookie(
   name: string,
   value: string,
-  maxAge: number = DEFAULT_MAX_AGE
+  maxAge: number | null = DEFAULT_MAX_AGE
 ): void {
   if (typeof document === 'undefined') return
 
@@ -42,7 +43,8 @@ export function setCookie(
   // 백엔드 Spring Security StrictHttpFirewall이 요청을 거부(비ASCII 헤더 값)한다.
   // 특히 FO(localhost:3000)와 쿠키를 공유하는 localhost 환경에서 FO 로그인까지 400 유발.
   // encodeURIComponent로 항상 ASCII 안전한 값으로 저장한다(읽을 때 getCookie가 디코딩).
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}`
+  const maxAgeAttr = maxAge === null ? '' : `; max-age=${maxAge}`
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAgeAttr}`
 }
 
 /**

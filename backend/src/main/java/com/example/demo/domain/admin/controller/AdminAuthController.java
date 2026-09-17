@@ -2,6 +2,7 @@ package com.example.demo.domain.admin.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,5 +54,14 @@ public class AdminAuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.of(HttpStatus.UNAUTHORIZED, "리프레시 토큰 만료. 다시 로그인하세요.", null));
         }
+    }
+
+    // FO의 LoginController.logout과 동일한 목적 — 이게 없으면 BO의 "로그아웃" 버튼은
+    // 클라이언트 상태만 지울 뿐, DB의 refreshToken이 그대로 남아 재로그인 없이도
+    // 계속 재발급이 가능한 상태로 남는다(2026-09-17 로그아웃 버그 원인 중 하나).
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userSq) {
+        loginService.deleteRefreshTokenByUserSq(userSq);
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "로그아웃 성공", null));
     }
 }
