@@ -30,7 +30,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 // [해결] 명칭 및 경로 수정
 import { boardApi } from '../api/board-api'
-import { ANSWER_TYPE_CD } from '../data/board-type'
+import { ANSWER_SUPPORTED_TYPE_CDS, ANSWER_TYPE_CD } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { BoardMutateDrawer } from './board-mutate-drawer'
 import { useBoard } from './board-provider'
@@ -477,7 +477,8 @@ export function BoardViewDrawer({ open, onOpenChange }: Props) {
 
             <Separator />
 
-            {detail.boardTypeCd === 1402 && (
+            {detail.boardTypeCd !== undefined &&
+              ANSWER_SUPPORTED_TYPE_CDS.includes(detail.boardTypeCd) && (
               <div className='space-y-4 border-t pt-6'>
                 <div className='flex items-center justify-between'>
                   <h4 className='flex items-center gap-2 font-semibold text-orange-600'>

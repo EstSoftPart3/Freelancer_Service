@@ -30,8 +30,8 @@ import {
 } from '@/components/ui/sheet'
 // 1. [에러 해결] boardApi와 AdminBoard로 임포트 변경
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { boardApi } from '../api/board-api'
-import { ANSWER_TYPE_CD } from '../data/board-type'
+import { boardApi, type BoardCategory } from '../api/board-api'
+import { ANSWER_TYPE_CD, MANAGED_BOARD_TYPES } from '../data/board-type'
 import {
   templateFor,
   isHtmlEmpty,
@@ -50,14 +50,9 @@ interface SkillTag {
   skillTagNm: string
 }
 
-// 카테고리 코드 목록. FO는 공통코드 API를 쓰지만 BO 작성 폼은 한 곳뿐이라 상수로 둔다.
-// 3202 '일반'은 제외됐다(공통코드에서도 비활성) — 게시판 이름이 "일반 게시판"이라 중복된다.
-const CATEGORY_OPTIONS = [
-  { value: '3201', label: '자유' },
-  { value: '3203', label: '현장정보' },
-  { value: '3204', label: '기능요청' },
-  { value: '3205', label: '정보' },
-]
+// Phase2 재설계로 NORMAL(1401)·QNA(1402)는 데이터가 전부 이관된 빈 껍데기라 BO에서
+// 새로 쓰지 않는다 — 작성 가능한 유형은 관리 대상 5종뿐이다.
+const DEFAULT_TYPE_CD = String(MANAGED_BOARD_TYPES[0].code)
 
 const schema = z.object({
   boardTypeCd: z.string().optional(),
@@ -92,6 +87,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [isFetching, setIsFetching] = useState(false)
   const [skillTagModalOpen, setSkillTagModalOpen] = useState(false)
+  const [categoryOptions, setCategoryOptions] = useState<BoardCategory[]>([])
   // 작성 중인 내용이 있을 때 양식을 덧붙일지 물어보는 확인 창 (덮어쓰기 사고 방지)
   const [templateConfirm, setTemplateConfirm] = useState<{
     open: boolean
@@ -104,14 +100,41 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const { register, handleSubmit, setValue, watch, reset } = useForm<BoardForm>(
     {
       resolver: zodResolver(schema),
-      // 카테고리는 필수라 미선택 상태를 두지 않고 '자유'로 시작한다
-      defaultValues: { boardTypeCd: '1401', categoryCd: '3201' }, // 기본값 일반게시글·자유
+      defaultValues: { boardTypeCd: DEFAULT_TYPE_CD, categoryCd: '' },
     }
   )
 
   const descriptionContent = watch('description')
   const boardTypeCdValue = watch('boardTypeCd') // 유형 모니터링
   const categoryCdValue = watch('categoryCd')
+
+  const currentTypeMeta = MANAGED_BOARD_TYPES.find(
+    (t) => String(t.code) === boardTypeCdValue
+  )
+  const showCategory = !isAnswerMode && !!currentTypeMeta?.hasCategory
+  const showSkillTag = !isAnswerMode && !!currentTypeMeta?.supportsSkillTag
+
+  // 유형이 바뀔 때마다 그 유형의 중분류를 서버에서 받아온다(FO와 동일한 공개 엔드포인트).
+  // 중분류가 없는 유형(요즘회사)이면 목록을 비워 카테고리 select 자체를 숨긴다.
+  useEffect(() => {
+    if (!open || isAnswerMode || !currentTypeMeta?.hasCategory) {
+      setCategoryOptions([])
+      return
+    }
+    let cancelled = false
+    boardApi.getBoardCategories(currentTypeMeta.path).then((res) => {
+      if (cancelled) return
+      // 여기서 첫 옵션을 자동 선택하지 않는다 — Radix Select는 한 번도 열지 않은
+      // 값을 프로그래밍적으로 설정하면(setValue) 실제 값은 맞게 들어가지만 트리거에는
+      // 라벨이 안 보여서, 관리자가 자기가 고르지 않은 카테고리로 등록되는 걸 못 알아챌
+      // 위험이 있다. 대신 onSubmit에서 비어있으면 막는다.
+      setCategoryOptions(res.output ?? [])
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isAnswerMode, currentTypeMeta?.path])
 
   const removeNormalTag = (index: number) => {
     setNormalTags((prev) => prev.filter((_, i) => i !== index))
@@ -163,8 +186,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
 
         reset({
           boardTypeCd: String(detail.boardTypeCd),
-          // 카테고리 도입 전 글은 null 일 수 있다 — 필수 항목이므로 '자유'로 채워 보여준다
-          categoryCd: detail.boardCategoryCd ? String(detail.boardCategoryCd) : '3201',
+          categoryCd: detail.boardCategoryCd ? String(detail.boardCategoryCd) : '',
           title: detail.ttl,
           description: detail.description || '',
         })
@@ -185,8 +207,8 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
       if (isUpdate) fetchDetail()
       else {
         reset({
-          boardTypeCd: isAnswerMode ? String(ANSWER_TYPE_CD) : '1401',
-          categoryCd: '3201',
+          boardTypeCd: isAnswerMode ? String(ANSWER_TYPE_CD) : DEFAULT_TYPE_CD,
+          categoryCd: '',
           title: '',
           description: '',
         })
@@ -228,12 +250,17 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   // }
 
   const onSubmit = async (data: BoardForm) => {
+    if (showCategory && !data.categoryCd) {
+      toast.error('카테고리를 선택해주세요.')
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append('ttl', data.title)
       formData.append('description', data.description)
-      // 백엔드는 일반게시글(1401) 외에는 카테고리를 무시하지만, 빈 문자열을 보내면
-      // Long 변환 실패로 400 이 되므로 값이 있을 때만 싣는다.
+      // 카테고리 개념이 없는 유형(요즘회사 등)은 빈 문자열을 보내면 Long 변환 실패로
+      // 400 이 되므로 값이 있을 때만 싣는다.
       if (data.categoryCd) {
         formData.append('categoryCd', data.categoryCd)
       }
@@ -305,22 +332,30 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                 <Label>게시글 유형</Label>
                 <Select
                   value={boardTypeCdValue}
-                  onValueChange={(val) => setValue('boardTypeCd', val)}
+                  onValueChange={(val) => {
+                    setValue('boardTypeCd', val)
+                    // 유형이 바뀌면 이전 유형의 카테고리 값은 더 이상 유효하지 않다 —
+                    // 비워둬야 카테고리 fetch 완료 후 새 유형의 첫 옵션이 자동 선택된다.
+                    setValue('categoryCd', '')
+                  }}
                   disabled={isUpdate}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='유형 선택' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='1401'>일반 게시글</SelectItem>
-                    <SelectItem value='1402'>Q&A 질문</SelectItem>
+                    {MANAGED_BOARD_TYPES.map((t) => (
+                      <SelectItem key={t.code} value={String(t.code)}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               )}
 
-              {/* 카테고리 — 일반 게시글에만 있는 축이다 */}
-              {!isAnswerMode && boardTypeCdValue === '1401' && (
+              {/* 카테고리 — 중분류를 갖는 유형에만 있는 축이다 */}
+              {showCategory && (
                 <div className='space-y-2'>
                   <Label>카테고리 <span className='text-destructive'>*</span></Label>
                   <Select
@@ -331,9 +366,9 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                       <SelectValue placeholder='카테고리 선택' />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORY_OPTIONS.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
+                      {categoryOptions.map((c) => (
+                        <SelectItem key={c.commonCodeSq} value={String(c.commonCodeSq)}>
+                          {c.commonCodeNm}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -393,7 +428,7 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                 </div>
               </div>
 
-              {boardTypeCdValue === '1402' && (
+              {(boardTypeCdValue === '1402' || showSkillTag) && (
                 <div className='space-y-2'>
                   <Label className='font-bold text-orange-600'>
                     기술 태그 (Skill Tags)

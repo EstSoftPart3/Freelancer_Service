@@ -1,5 +1,5 @@
 // src/features/board/components/board-table.tsx
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 // sorting 관리를 위해 추가
 import {
   flexRender,
@@ -15,7 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { ANSWER_TYPE_CD } from '../data/board-type'
+import { boardApi } from '../api/board-api'
+import { ANSWER_TYPE_CD, MANAGED_BOARD_TYPES } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { boardColumns as columns } from './board-columns'
 
@@ -62,6 +63,31 @@ export function BoardTable({
   setTagKeyword: _setTagKeyword,
 }: BoardTableProps) {
   const [rowSelection, setRowSelection] = useState({})
+  const [categoryOptions, setCategoryOptions] = useState<
+    { label: string; value: string }[]
+  >([])
+
+  // 카테고리 필터는 유형과 별개 축(전역 다중선택)이라, 관리 대상 5종 게시판의 중분류를
+  // 전부 모아 한 번에 보여준다. 이름이 서로 겹치지 않아 게시판 구분 없이 평평하게 나열해도 된다.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      MANAGED_BOARD_TYPES.filter((t) => t.hasCategory).map((t) =>
+        boardApi.getBoardCategories(t.path).then((res) => res.output ?? [])
+      )
+    ).then((lists) => {
+      if (cancelled) return
+      setCategoryOptions(
+        lists.flat().map((c) => ({
+          label: c.commonCodeNm,
+          value: String(c.commonCodeSq),
+        }))
+      )
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const sorting = useMemo(
     () => [{ id: sortField, desc: sortOrder === 'DESC' }],
@@ -132,18 +158,8 @@ export function BoardTable({
   })
 
   const typeOptions = [
-    { label: '일반 게시글', value: '1401' },
-    { label: 'Q&A 질문', value: '1402' },
+    ...MANAGED_BOARD_TYPES.map((t) => ({ label: t.label, value: String(t.code) })),
     { label: '답변', value: String(ANSWER_TYPE_CD) },
-  ]
-
-  // FO는 공통코드 API에서 카테고리를 받아오지만, BO 필터는 목록 화면 하나뿐이라
-  // 공통코드 조회를 새로 붙이지 않고 상수로 둔다. 코드 값이 바뀌면 여기도 함께 고칠 것.
-  const categoryOptions = [
-    { label: '자유', value: '3201' },
-    { label: '현장정보', value: '3203' },
-    { label: '기능요청', value: '3204' },
-    { label: '정보', value: '3205' },
   ]
 
   return (

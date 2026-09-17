@@ -123,7 +123,7 @@ export function BoardList() {
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>게시글 관리</h2>
             <p className='text-muted-foreground'>
-              일반 게시글, Q&A, 답변을 통합 관리합니다.
+              커리어소통·기술소통·요즘회사·프로젝트·라운지 게시글과 답변을 통합 관리합니다.
             </p>
           </div>
           <BoardPrimaryButtons />
