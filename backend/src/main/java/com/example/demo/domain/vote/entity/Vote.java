@@ -14,6 +14,8 @@ public class Vote {
     private String userNickname;
     private String voteTtl;
     private String voteDescriptionEdt;
+    // 공통코드 3250(IT) / 3251(일반) — parent 1410(투표_카테고리).
+    private Long voteCategoryCd;
     private LocalDateTime voteEndDt;
     private Integer voteViewCnt;
     private String voteIsDeletedYn;

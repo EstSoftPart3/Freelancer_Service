@@ -20,6 +20,7 @@ public class VoteDetailResponse {
     private String voteDescriptionEdt;
     private Long userSq;
     private String userNickname;
+    private Long voteCategoryCd;
     private LocalDateTime voteEndDt;
     private LocalDateTime voteCreatedAtDtm;
     private Integer voteViewCnt;

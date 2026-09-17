@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,8 @@ interface Props {
   // 서버에서 미리 조회한 첫 페이지(기본 정렬) — SEO용으로 초기 HTML에 목록을 포함시킨다.
   // 마운트 후 fetchList가 URL/스토어 필터 기준으로 1회 갱신한다(기존 동작 유지).
   initialData?: BoardListResponse | null
+  // 제목(h1) 오른쪽에 붙는 페이지 전용 액션 — 예: teamup의 "프로젝트 공고 바로가기" 버튼.
+  titleAction?: ReactNode
 }
 
 const PAGE_SIZE = 10
@@ -43,7 +45,7 @@ function parseCategory(raw: string | null): number | null {
   return Number.isInteger(n) && n > 0 ? n : null
 }
 
-export default function BoardListClient({ boardCategory, initialData }: Props) {
+export default function BoardListClient({ boardCategory, initialData, titleAction }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isLoggedIn, authChecked, userSq } = useUserStore()
@@ -248,12 +250,15 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       {!isNotice && <CategoryTabs rightSlot={filterControls} />}
       <div className="lg:flex lg:gap-6">
       <main className="min-w-0 flex-1">
-      <h1 className="mb-6 flex items-center gap-1.5 text-2xl font-bold">
-        {title}
-        {BOARD_INTRO_TIPS[boardCategory] && (
-          <InfoTooltip label={`${BOARD_PAGE_TITLE[boardCategory]} 안내`}>{BOARD_INTRO_TIPS[boardCategory]}</InfoTooltip>
-        )}
-      </h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-1.5 text-2xl font-bold">
+          {title}
+          {BOARD_INTRO_TIPS[boardCategory] && (
+            <InfoTooltip label={`${BOARD_PAGE_TITLE[boardCategory]} 안내`}>{BOARD_INTRO_TIPS[boardCategory]}</InfoTooltip>
+          )}
+        </h1>
+        {titleAction}
+      </div>
 
       {/* 공지는 카테고리 탭이 없으므로 필터를 단독 줄로 노출 */}
       {isNotice && (

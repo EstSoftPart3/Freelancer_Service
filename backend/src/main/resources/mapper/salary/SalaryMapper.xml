@@ -112,9 +112,12 @@
         LIMIT 5
     </select>
 
+    <!-- 2026-09-17: 시드 표본이 부족한 직무가 많아 "실데이터만" 원칙을 사용자 요청으로 깨고
+         시드도 포함하도록 바꿨다(연봉 순위표 증감률과 동일한 기준으로 통일). -->
     <select id="findJobChangeFeed" resultType="com.example.demo.domain.salary.dto.response.JobChangeRawDTO">
         SELECT
-            CASE WHEN u.user_nickname IS NOT NULL AND CHAR_LENGTH(u.user_nickname) > 0
+            CASE WHEN m.is_seed_yn = 'Y' THEN m.seed_nickname
+                 WHEN u.user_nickname IS NOT NULL AND CHAR_LENGTH(u.user_nickname) > 0
                  THEN CONCAT(LEFT(u.user_nickname, 1), '**') ELSE '**' END AS maskedNickname,
             m.prev_annual_salary AS fromSalary,
             m.annual_salary AS toSalary,
@@ -122,7 +125,6 @@
         FROM TBL_SALARY_SUBMISSION_M m
         LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
         WHERE m.job_nm = #{jobNm}
-        AND m.is_seed_yn = 'N'
         AND m.job_changed_ym IS NOT NULL AND m.job_changed_ym >= #{yearMonthFrom}
         AND m.prev_annual_salary IS NOT NULL
         ORDER BY m.job_changed_ym DESC

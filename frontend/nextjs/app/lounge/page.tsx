@@ -7,7 +7,7 @@ import type { BoardListResponse } from '@/types'
 
 export const metadata: Metadata = buildPageMetadata({
   title: '라운지',
-  description: '말머리·잡담 등 주제 제한 없는 자유로운 이야기를 나누는 공간.',
+  description: '유머·일상 등 주제 제한 없는 자유로운 이야기를 나누는 공간.',
   path: '/lounge',
 })
 

@@ -45,7 +45,7 @@ interface CalcInput {
   jobChangedYm?: string | null
 }
 
-const PHASE_DURATION_MS = 1600
+const PHASE_DURATION_MS = 800
 const MIN_DISPLAY_MS = PHASE_DURATION_MS * PHASES.length // 애니메이션이 최소 한 바퀴는 돌게
 
 function toSubmissionRequest(input: CalcInput) {
@@ -143,7 +143,10 @@ export default function SalaryAnalyzingScreen() {
               src={src}
               alt=""
               fill
-              priority={i === 0}
+              // 4단계 이미지 전부를 처음부터 미리 로드한다 — 하나씩만 priority를 주면
+              // 뒤 단계(1~3) 이미지는 그 단계가 될 때까지 지연 로드돼, 전환되는 순간
+              // 잠깐 안 보였다가 늦게 나타나는 깜빡임이 있었다. 4장뿐이라 비용도 작다.
+              priority
               className={`object-contain transition-opacity duration-700 ease-in-out ${
                 i === phaseIdx ? 'opacity-100' : 'opacity-0'
               }`}

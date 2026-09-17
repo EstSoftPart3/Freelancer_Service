@@ -12,6 +12,7 @@ public class VoteListItemDTO {
     private String voteTtl;
     private Long userSq;
     private String userNickname;
+    private Long voteCategoryCd;
     private LocalDateTime voteEndDt;
     private LocalDateTime voteCreatedAtDtm;
     private Integer voteViewCnt;

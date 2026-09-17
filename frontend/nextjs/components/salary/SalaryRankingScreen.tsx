@@ -219,12 +219,18 @@ export default function SalaryRankingScreen() {
                     {row.job} · {row.years} · {row.region}
                   </p>
                 </div>
-                <span
-                  className={`shrink-0 text-xs font-bold ${
-                    row.changePct == null ? 'text-muted-foreground' : row.changePct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'
-                  }`}
-                >
-                  {row.changePct == null ? '-' : `${row.changePct >= 0 ? '+' : ''}${row.changePct}%`}
+                <span className="flex shrink-0 items-center gap-1">
+                  <span
+                    className={`text-xs font-bold ${
+                      row.changePct == null ? 'text-muted-foreground' : row.changePct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'
+                    }`}
+                  >
+                    {row.changePct == null ? '-' : `${row.changePct >= 0 ? '+' : ''}${row.changePct}%`}
+                  </span>
+                  <InfoTooltip label="증감률 안내" side="left">
+                    직전 대비 연봉 변동률이에요. 이직·연봉협상 등으로 오르면 초록색(+), 내리면
+                    빨간색(-)으로 보여드려요.
+                  </InfoTooltip>
                 </span>
               </div>
             ))}

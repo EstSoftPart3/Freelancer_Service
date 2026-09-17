@@ -46,11 +46,12 @@ public class VoteController {
     public ResponseEntity<ApiResponse<VoteListResponse>> getAllVotes(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sortType", defaultValue = "latest") String sortType,
+            @RequestParam(value = "category", required = false) Long category,
             @RequestParam(value = "page", defaultValue = "1") Long page,
             @RequestParam(value = "size", defaultValue = "10") Long size) {
 
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "투표 목록 조회 성공",
-                voteService.getAllVotes(keyword, sortType, page, size)));
+                voteService.getAllVotes(keyword, sortType, category, page, size)));
     }
 
     @GetMapping("/{voteSq}")

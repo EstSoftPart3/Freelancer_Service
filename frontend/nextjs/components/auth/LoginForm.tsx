@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { setCookie } from '@/lib/cookies'
+import { clearAuthCookies, setCookie } from '@/lib/cookies'
 import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
@@ -39,7 +39,7 @@ const SOCIAL_PROVIDERS = [
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { setUser } = useUserStore()
+  const { setUser, clearUser, isLoggedIn } = useUserStore()
 
   // 헤더 "로그인"은 개인, "기업서비스 > 기업 로그인"은 ?loginType=COMPANY 로 들어온다.
   // 회원가입(SignUpPageClient)과 동일한 방식 — 진입 경로가 그대로 회원 유형을 정하고,
@@ -70,6 +70,14 @@ export default function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+
+    // 개인으로 로그인해 둔 채 헤더의 "기업서비스 > 기업 로그인"으로 들어와도(그 반대도 마찬가지)
+    // 새 로그인 전에 이전 세션을 먼저 정리한다 — 안 그러면 이전 계정의 쿠키·스토어 값이
+    // 새 토큰 저장 사이에 잠깐 섞여 있을 수 있다.
+    if (isLoggedIn()) {
+      clearUser()
+      clearAuthCookies()
+    }
 
     const payload = {
       userId: id,

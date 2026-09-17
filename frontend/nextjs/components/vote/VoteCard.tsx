@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, Clock } from 'lucide-react'
-import type { VoteListItem } from './types'
+import { VOTE_CATEGORIES, type VoteListItem } from './types'
 
 function isClosed(voteEndDt: string) {
   return new Date(voteEndDt).getTime() < Date.now()
@@ -10,6 +10,7 @@ function isClosed(voteEndDt: string) {
 
 export default function VoteCard({ vote }: { vote: VoteListItem }) {
   const closed = isClosed(vote.voteEndDt)
+  const categoryNm = VOTE_CATEGORIES.find((c) => c.commonCodeSq === vote.voteCategoryCd)?.commonCodeNm
 
   return (
     <Link href={`/vote/${vote.voteSq}`}>
@@ -17,6 +18,7 @@ export default function VoteCard({ vote }: { vote: VoteListItem }) {
         <CardHeader>
           <div className="mb-1 flex items-center gap-2">
             <Badge variant={closed ? 'secondary' : 'default'}>{closed ? '마감' : '진행중'}</Badge>
+            {categoryNm && <Badge variant="outline">{categoryNm}</Badge>}
             <span className="text-xs text-muted-foreground">{vote.optionCnt}개 선택지</span>
           </div>
           <CardTitle className="line-clamp-2">{vote.voteTtl}</CardTitle>

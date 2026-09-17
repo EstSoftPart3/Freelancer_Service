@@ -2,6 +2,7 @@ package com.example.demo.domain.vote.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,10 @@ public class VoteService {
 
     private final VoteMapper voteMapper;
 
-    public VoteListResponse getAllVotes(String keyword, String sortType, Long page, Long size) {
+    // 공통코드 3250(IT) / 3251(일반) — parent 1410(투표_카테고리).
+    private static final Set<Long> VALID_CATEGORY_CODES = Set.of(3250L, 3251L);
+
+    public VoteListResponse getAllVotes(String keyword, String sortType, Long category, Long page, Long size) {
         // page/size 를 그대로 LIMIT/OFFSET 에 흘려보내면 ?page=0·음수 는 음수 OFFSET 으로,
         // ?size=0·음수 는 음수 LIMIT 으로 내려가 SQL 문법 오류 500 이 난다
         // (BoardService.getAllBoards 와 동일한 함정). 여기서 방어한다.
@@ -50,8 +54,8 @@ public class VoteService {
             size = 100L;
         }
         Long offset = (page - 1L) * size;
-        List<VoteListItemDTO> votes = voteMapper.findAll(keyword, sortType, size, offset);
-        Long totalElements = voteMapper.findAllCnt(keyword);
+        List<VoteListItemDTO> votes = voteMapper.findAll(keyword, sortType, category, size, offset);
+        Long totalElements = voteMapper.findAllCnt(keyword, category);
         return VoteListResponse.builder()
                 .page(page)
                 .size(size)
@@ -76,6 +80,7 @@ public class VoteService {
                 .voteDescriptionEdt(vote.getVoteDescriptionEdt())
                 .userSq(vote.getUserSq())
                 .userNickname(vote.getUserNickname())
+                .voteCategoryCd(vote.getVoteCategoryCd())
                 .voteEndDt(vote.getVoteEndDt())
                 .voteCreatedAtDtm(vote.getVoteCreatedAtDtm())
                 .voteViewCnt(vote.getVoteViewCnt())
@@ -101,11 +106,15 @@ public class VoteService {
         if (request.getOptions() == null || request.getOptions().size() < 2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상이어야 합니다.");
         }
+        if (request.getVoteCategoryCd() == null || !VALID_CATEGORY_CODES.contains(request.getVoteCategoryCd())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
+        }
 
         Vote vote = new Vote();
         vote.setUserSq(request.getUserSq());
         vote.setVoteTtl(request.getVoteTtl());
         vote.setVoteDescriptionEdt(request.getVoteDescriptionEdt());
+        vote.setVoteCategoryCd(request.getVoteCategoryCd());
         vote.setVoteEndDt(request.getVoteEndDt());
         voteMapper.insertVote(vote);
 

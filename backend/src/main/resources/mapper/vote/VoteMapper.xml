@@ -5,8 +5,8 @@
 
     <insert id="insertVote" parameterType="com.example.demo.domain.vote.entity.Vote"
         useGeneratedKeys="true" keyProperty="voteSq" keyColumn="vote_sq">
-        INSERT INTO TBL_VOTE_M (user_sq, vote_ttl, vote_description_edt, vote_end_dt)
-        VALUES (#{userSq}, #{voteTtl}, #{voteDescriptionEdt}, #{voteEndDt})
+        INSERT INTO TBL_VOTE_M (user_sq, vote_ttl, vote_description_edt, vote_category_cd, vote_end_dt)
+        VALUES (#{userSq}, #{voteTtl}, #{voteDescriptionEdt}, #{voteCategoryCd}, #{voteEndDt})
     </insert>
 
     <insert id="insertOption" parameterType="com.example.demo.domain.vote.entity.VoteOption"
@@ -23,7 +23,7 @@
     </select>
 
     <select id="findAll" resultType="com.example.demo.domain.vote.dto.response.VoteListItemDTO">
-        SELECT v.vote_sq, v.vote_ttl, v.user_sq, u.user_nickname, v.vote_end_dt,
+        SELECT v.vote_sq, v.vote_ttl, v.user_sq, u.user_nickname, v.vote_category_cd, v.vote_end_dt,
         v.vote_created_at_dtm, v.vote_view_cnt,
         (SELECT COUNT(*) FROM TBL_VOTE_OPTION_S o WHERE o.vote_sq = v.vote_sq) AS option_cnt,
         (SELECT COUNT(*) FROM TBL_VOTE_RECORD_S r WHERE r.vote_sq = v.vote_sq) AS total_vote_cnt
@@ -32,6 +32,9 @@
         WHERE v.vote_is_deleted_yn = 'N'
         <if test="keyword != null and keyword != ''">
             AND v.vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null">
+            AND v.vote_category_cd = #{category}
         </if>
         <choose>
             <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC </when>
@@ -45,6 +48,9 @@
         SELECT COUNT(*) FROM TBL_VOTE_M WHERE vote_is_deleted_yn = 'N'
         <if test="keyword != null and keyword != ''">
             AND vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null">
+            AND vote_category_cd = #{category}
         </if>
     </select>
 

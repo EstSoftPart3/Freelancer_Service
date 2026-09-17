@@ -6,7 +6,7 @@ import VoteCard from '@/components/vote/VoteCard'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
-import type { VoteListItem, VoteListResponse } from '@/components/vote/types'
+import { VOTE_CATEGORIES, type VoteListItem, type VoteListResponse } from '@/components/vote/types'
 
 const PAGE_SIZE = 9
 
@@ -18,6 +18,7 @@ export default function VoteListClient({ initialData }: Props) {
   const { authChecked, isLoggedIn } = useUserStore()
   const [votes, setVotes] = useState<VoteListItem[]>(initialData?.votes ?? [])
   const [page, setPage] = useState(1)
+  const [category, setCategory] = useState<number | null>(null)
   const [totalPages, setTotalPages] = useState(
     initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
   )
@@ -26,12 +27,13 @@ export default function VoteListClient({ initialData }: Props) {
   // 응답 순서가 아니라 "가장 마지막으로 보낸 요청"만 반영한다(BoardListClient와 같은 패턴).
   const requestSeqRef = useRef(0)
 
-  const fetchPage = useCallback(async (p: number) => {
+  const fetchPage = useCallback(async (p: number, categoryFilter: number | null) => {
     const seq = ++requestSeqRef.current
     setIsLoading(true)
     try {
+      const categoryQs = categoryFilter != null ? `&category=${categoryFilter}` : ''
       const { data } = await api.get<{ output: VoteListResponse }>(
-        `/votes?page=${p}&size=${PAGE_SIZE}&sortType=latest`,
+        `/votes?page=${p}&size=${PAGE_SIZE}&sortType=latest${categoryQs}`,
       )
       if (seq !== requestSeqRef.current) return
       setVotes(data.output.votes)
@@ -45,6 +47,11 @@ export default function VoteListClient({ initialData }: Props) {
     }
   }, [])
 
+  const handleCategoryChange = (c: number | null) => {
+    setCategory(c)
+    fetchPage(1, c)
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -57,6 +64,28 @@ export default function VoteListClient({ initialData }: Props) {
             투표 만들기
           </Link>
         )}
+      </div>
+
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={() => handleCategoryChange(null)}
+          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+            category === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-foreground hover:bg-muted'
+          }`}
+        >
+          전체
+        </button>
+        {VOTE_CATEGORIES.map((c) => (
+          <button
+            key={c.commonCodeSq}
+            onClick={() => handleCategoryChange(c.commonCodeSq)}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              category === c.commonCodeSq ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-foreground hover:bg-muted'
+            }`}
+          >
+            {c.commonCodeNm}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
@@ -74,7 +103,7 @@ export default function VoteListClient({ initialData }: Props) {
       )}
 
       {totalPages > 1 && (
-        <CommonPagination currentPage={page} totalPages={totalPages} onPageChange={fetchPage} />
+        <CommonPagination currentPage={page} totalPages={totalPages} onPageChange={(p) => fetchPage(p, category)} />
       )}
     </div>
   )

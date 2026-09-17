@@ -69,7 +69,7 @@ export const BOARD_PAGE_TITLE: Record<BoardType, string> = {
   tech: '기술소통',
   company: '요즘회사',
   teamup: '프로젝트',
-  lounge: '라운지',
+  lounge: '라운지(자유게시판)',
 }
 
 // 전체보기(all)에서는 항목별 boardType이 채워지고, 개별 게시판에서는 목록 타입을 그대로 쓴다.
@@ -116,8 +116,8 @@ export const BOARD_CATEGORY_FALLBACK: Partial<Record<BoardType, readonly BoardCa
     { commonCodeSq: 3231, commonCodeNm: '팀원모집' },
   ],
   lounge: [
-    { commonCodeSq: 3240, commonCodeNm: '말머리' },
-    { commonCodeSq: 3241, commonCodeNm: '잡담' },
+    { commonCodeSq: 3240, commonCodeNm: '유머' },
+    { commonCodeSq: 3241, commonCodeNm: '일상' },
   ],
 }
 
@@ -130,8 +130,8 @@ export const BOARD_CATEGORY_TIPS: Record<number, string> = {
   3221: 'AI개발, LLM, GPT, Cursor, Claude 등을 나누는 곳입니다.',
   3230: '스타트업, 소규모 턴키 등 프로젝트를 의뢰하고 싶을 때 남기는 곳입니다.',
   3231: '스터디, 협업프로젝트 등 팀원을 모집할 때 남기는 곳입니다.',
-  3240: '자유 주제 대화의 말머리(질문/정보/후기 등)를 붙여 올리는 곳입니다.',
-  3241: '유머, 일상 등 잡담을 나누는 곳입니다.',
+  3240: '개발자 밈, 웃긴 이야기 등 유머를 나누는 곳입니다.',
+  3241: '일상 이야기, 소소한 잡담을 나누는 곳입니다.',
 }
 
 /** 중분류가 없는 게시판(요즘회사)·별도 도메인(면접후기) 안내 — commonCodeSq가 없어 위 맵과 분리한다. */

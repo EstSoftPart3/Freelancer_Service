@@ -3,8 +3,9 @@
 // GET /salary/report(로그인 필수, 내 제출 기준 실통계) 를 함께 읽어 리포트를 그린다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Award, Briefcase, Building2, Flame, RotateCcw, Sparkles, TrendingUp, Users } from 'lucide-react'
+import { Award, Briefcase, Flame, RotateCcw, Sparkles, TrendingUp, Users } from 'lucide-react'
 import api from '@/lib/api'
+import { useUserStore } from '@/stores/userStore'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import {
@@ -24,6 +25,8 @@ function formatManShort(n: number): string {
 }
 
 export default function SalaryReportScreen() {
+  const { userNickname } = useUserStore()
+  const myLabel = userNickname ?? '나'
   const [input, setInput] = useState<SalaryCalcInput | null | undefined>(undefined) // undefined = 아직 확인 전
   const [report, setReport] = useState<SalaryReportApiResponse | null | undefined>(undefined)
 
@@ -95,6 +98,8 @@ export default function SalaryReportScreen() {
 
   const maxBucketCount = Math.max(...report.histogram.map((b) => b.count))
   const gaugePosition = Math.min(96, Math.max(4, 100 - report.percentileTop))
+  // "상위 N%" 는 직관적이지 않아 "표본 N명 중 내 등수" 로 바꿔 보여준다.
+  const myRank = Math.max(1, Math.round((report.percentileTop / 100) * report.sampleCount))
 
   const projection = report.yearProjection[scenario]
   const isGrind = scenario === 'grind'
@@ -155,7 +160,10 @@ export default function SalaryReportScreen() {
             </div>
             <div className="flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2.5 text-amber-800">
               <Award className="h-5 w-5" />
-              <span className="text-lg font-extrabold">상위 {report.percentileTop}%</span>
+              <span className="text-sm font-semibold">
+                {report.sampleCount.toLocaleString()}명 중{' '}
+                <span className="text-2xl font-extrabold">{myRank.toLocaleString()}등</span>
+              </span>
             </div>
           </div>
 
@@ -167,7 +175,7 @@ export default function SalaryReportScreen() {
               style={{ left: `${gaugePosition}%` }}
             >
               <span className="mb-1 whitespace-nowrap rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">
-                나
+                {myLabel}
               </span>
               <span className="h-4 w-4 rounded-full border-[3px] border-white bg-indigo-600 shadow" />
             </div>
@@ -208,7 +216,7 @@ export default function SalaryReportScreen() {
                 >
                   {bucket.isMine && (
                     <span className="mb-1 whitespace-nowrap rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                      나
+                      {myLabel}
                     </span>
                   )}
                   {hoveredBucket === i && (
@@ -415,7 +423,7 @@ export default function SalaryReportScreen() {
           </div>
         </section>
 
-        {/* 같은 조건 개발자가 많이 다니는 회사 */}
+        {/* 같은 조건 개발자가 많이 다니는 회사 — 데이터 수집 등 복잡도가 높아 일단 보류, 추후 개발 예정.
         <section className="mb-6 rounded-2xl border border-border bg-white p-6 shadow-sm md:p-8">
           <h2 className="mb-1 flex items-center gap-1.5 text-lg font-bold text-foreground">
             <Building2 className="h-4 w-4 text-indigo-600" />
@@ -450,6 +458,7 @@ export default function SalaryReportScreen() {
             </div>
           )}
         </section>
+        */}
 
         {/* 최근 이직 연봉 동향 + 이직했을 때 예상 연봉 */}
         <section className="mb-6 rounded-2xl border border-border bg-white p-6 shadow-sm md:p-8">

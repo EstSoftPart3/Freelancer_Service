@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { ArrowLeft, Sparkles, TrendingUp, Wrench } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Sparkles, TrendingUp, Wrench } from 'lucide-react'
 import api from '@/lib/api'
 import ProjectCard from '@/components/project/ProjectCard'
 import { useUserStore } from '@/stores/userStore'
@@ -185,6 +185,23 @@ export default function SalaryRecommendScreen() {
             ))}
           </div>
         </section>
+
+        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-8 sm:flex-row">
+          <Link
+            href="/salary/ranking"
+            className="salary-cta group flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+          >
+            <TrendingUp className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+            연봉순위표
+          </Link>
+          <Link
+            href="/projects"
+            className="salary-cta group flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+          >
+            프로젝트 더보기
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
       </div>
     </div>
   )

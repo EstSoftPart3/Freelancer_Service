@@ -18,7 +18,7 @@ interface Props {
 
 const emptyVote: VoteDetail = {
   voteSq: 0, voteTtl: '', voteDescriptionEdt: null, userSq: 0, userNickname: null,
-  voteEndDt: new Date().toISOString(), voteCreatedAtDtm: '', voteViewCnt: 0,
+  voteCategoryCd: 0, voteEndDt: new Date().toISOString(), voteCreatedAtDtm: '', voteViewCnt: 0,
   closed: true, totalVoteCnt: 0, myVoteOptionSq: null, options: [],
 }
 

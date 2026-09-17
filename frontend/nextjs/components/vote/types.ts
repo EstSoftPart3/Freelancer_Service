@@ -5,11 +5,18 @@ export interface VoteOptionResult {
   voteCnt: number
 }
 
+// 공통코드 3250(IT) / 3251(일반) — parent 1410(투표_카테고리).
+export const VOTE_CATEGORIES = [
+  { commonCodeSq: 3250, commonCodeNm: 'IT' },
+  { commonCodeSq: 3251, commonCodeNm: '일반' },
+] as const
+
 export interface VoteListItem {
   voteSq: number
   voteTtl: string
   userSq: number
   userNickname: string | null
+  voteCategoryCd: number
   voteEndDt: string
   voteCreatedAtDtm: string
   voteViewCnt: number
@@ -30,6 +37,7 @@ export interface VoteDetail {
   voteDescriptionEdt: string | null
   userSq: number
   userNickname: string | null
+  voteCategoryCd: number
   voteEndDt: string
   voteCreatedAtDtm: string
   voteViewCnt: number

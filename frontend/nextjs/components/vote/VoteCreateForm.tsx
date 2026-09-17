@@ -9,13 +9,15 @@ import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { VOTE_CATEGORIES } from './types'
 
-type FieldKey = 'ttl' | 'endDt' | 'options'
+type FieldKey = 'ttl' | 'endDt' | 'options' | 'category'
 
 export default function VoteCreateForm() {
   const router = useRouter()
   const [ttl, setTtl] = useState('')
   const [description, setDescription] = useState('')
+  const [category, setCategory] = useState<number | null>(null)
   const [endDt, setEndDt] = useState('')
   const [options, setOptions] = useState(['', ''])
   const [submitting, setSubmitting] = useState(false)
@@ -31,6 +33,7 @@ export default function VoteCreateForm() {
 
     const ok = validate([
       { key: 'ttl', invalid: ttl.trim().length === 0, message: '제목을 입력해주세요.' },
+      { key: 'category', invalid: category == null, message: '카테고리를 선택해주세요.' },
       { key: 'endDt', invalid: endDt.trim().length === 0, message: '마감 일시를 선택해주세요.' },
       { key: 'options', invalid: trimmedOptions.length < 2, message: '선택지는 2개 이상 입력해주세요.' },
     ])
@@ -41,6 +44,7 @@ export default function VoteCreateForm() {
       await api.post('/votes', {
         voteTtl: ttl.trim(),
         voteDescriptionEdt: description.trim() || null,
+        voteCategoryCd: category,
         voteEndDt: endDt,
         options: trimmedOptions,
       })
@@ -64,6 +68,26 @@ export default function VoteCreateForm() {
           placeholder="투표 제목을 입력해주세요"
         />
       </div>
+
+      <InvalidFrame invalid={isInvalid('category')} {...fieldProps('category')}>
+        <label className="mb-1 block text-sm font-medium">카테고리</label>
+        <div className="flex gap-2">
+          {VOTE_CATEGORIES.map((c) => (
+            <button
+              key={c.commonCodeSq}
+              type="button"
+              onClick={() => setCategory(c.commonCodeSq)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                category === c.commonCodeSq
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border text-foreground hover:bg-muted'
+              }`}
+            >
+              {c.commonCodeNm}
+            </button>
+          ))}
+        </div>
+      </InvalidFrame>
 
       <div>
         <label className="mb-1 block text-sm font-medium">설명 (선택)</label>

@@ -20,9 +20,9 @@ public interface VoteMapper {
     Vote findById(@Param("voteSq") Long voteSq);
 
     List<VoteListItemDTO> findAll(@Param("keyword") String keyword, @Param("sortType") String sortType,
-            @Param("size") Long size, @Param("offset") Long offset);
+            @Param("category") Long category, @Param("size") Long size, @Param("offset") Long offset);
 
-    Long findAllCnt(@Param("keyword") String keyword);
+    Long findAllCnt(@Param("keyword") String keyword, @Param("category") Long category);
 
     List<VoteOption> findOptionsByVoteSq(@Param("voteSq") Long voteSq);
 

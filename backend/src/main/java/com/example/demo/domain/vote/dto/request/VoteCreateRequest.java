@@ -12,6 +12,7 @@ public class VoteCreateRequest {
     private Long userSq;
     private String voteTtl;
     private String voteDescriptionEdt;
+    private Long voteCategoryCd;
     private LocalDateTime voteEndDt;
     private List<String> options;
 }

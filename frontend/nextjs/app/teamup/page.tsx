@@ -26,18 +26,18 @@ export default async function TeamupPage({ searchParams }: Props) {
     `/teamup?page=1&size=10&sortType=latest${categoryQs}`,
     null,
   )
+  const titleAction = (
+    <Link
+      href="/projects"
+      className="salary-cta group flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md transition-transform hover:-translate-y-0.5"
+    >
+      프로젝트 공고 바로가기
+      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+    </Link>
+  )
   return (
-    <>
-      <div className="container mx-auto max-w-6xl px-4 pt-6">
-        <Link
-          href="/projects"
-          className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/30 px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          프로젝트 공고 보러가기
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-      <Suspense><BoardListClient boardCategory="teamup" initialData={initial} /></Suspense>
-    </>
+    <Suspense>
+      <BoardListClient boardCategory="teamup" initialData={initial} titleAction={titleAction} />
+    </Suspense>
   )
 }

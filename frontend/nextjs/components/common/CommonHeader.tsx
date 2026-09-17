@@ -91,8 +91,8 @@ const COMMUNITY_MEGA: { key: string; label: string; href: string; subs: { label:
   {
     key: 'lounge', label: '라운지(자유)', href: '/lounge',
     subs: [
-      { label: '말머리', href: '/lounge?category=3240' },
-      { label: '잡담', href: '/lounge?category=3241' },
+      { label: '유머', href: '/lounge?category=3240' },
+      { label: '일상', href: '/lounge?category=3241' },
     ],
   },
   { key: 'vote', label: '투표', href: '/vote', subs: [] },

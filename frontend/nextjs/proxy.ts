@@ -58,9 +58,19 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // 이미 로그인했으면 로그인/회원가입/계정복구 재진입 차단
+  // 이미 로그인했으면 로그인/회원가입/계정복구 재진입 차단.
+  // 단, /login·/sign-up은 loginType 쿼리로 다른 회원 유형(개인↔기업)을 명시한 경우
+  // 계정을 바꾸려는 의도이므로 통과시킨다 — LoginForm이 제출 시 기존 세션을 정리한다.
   if (token && AUTH_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    return NextResponse.redirect(new URL('/', req.url))
+    const isAccountSwitch =
+      (pathname === '/login' || pathname === '/sign-up') &&
+      (() => {
+        const requestedType = req.nextUrl.searchParams.get('loginType') === 'COMPANY' ? 'COMPANY' : 'PERSONAL'
+        return requestedType !== userType
+      })()
+    if (!isAccountSwitch) {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
   }
 
   if (
