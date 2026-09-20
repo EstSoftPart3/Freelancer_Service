@@ -56,7 +56,10 @@ public class AuthService {
             userDto.setUserEmail(email);
             userDto.setUserNm(name);
             userDto.setUserIsDeletedYn("N");
-            userDto.setUserTypeCd(203L);
+            userDto.setUserTypeCd(301L);
+            userDto.setUserPhoneNum("");
+            userDto.setUserSignupTypeCd(203L);
+            
             
             // DB에 DTO 직접 저장
             userMapper.save(userDto); 
