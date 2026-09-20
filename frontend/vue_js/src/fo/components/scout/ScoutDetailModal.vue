@@ -70,7 +70,7 @@
         </div>
         <div class="modal-footer d-flex justify-content-end">
           <div>
-            <template v-if="scoutDetail && (scoutDetail.status === 'PENDING' || scoutDetail.status === '대기중')">
+            <template v-if="scoutDetail && ['PENDING', 'READ', '대기중', '열람'].includes(scoutDetail.status)">
               <button
                 type="button"
                 class="btn btn-primary px-3 me-2"

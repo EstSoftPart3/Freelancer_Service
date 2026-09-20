@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.freelancer.mapper.FilterMapper">
+
+    <!-- 1. 지역 공통 코드/테이블 조회 (실제 컬럼명: area_code_sq, area_sigungu) -->
+    <select id="selectAddressOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
+        SELECT 
+            area_code_sq AS value,
+            area_sigungu AS label
+        FROM TBL_AREA_C
+        ORDER BY area_code_sq ASC
+    </select>
+
+    <!-- 2. 경력 구간 공통 코드 조회 -->
+    <select id="selectCareerOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
+        SELECT 
+            career_code_sq AS value,
+            career_nm      AS label
+        FROM TBL_CAREER_CODE_C
+        ORDER BY career_code_sq ASC
+    </select>
+
+    <!-- 3. 구직 상태 공통 코드 조회 -->
+    <select id="selectJobStatusOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
+        SELECT 
+            job_status_code_sq AS value,
+            job_status_nm      AS label
+        FROM TBL_JOB_STATUS_CODE_C
+        ORDER BY job_status_code_sq ASC
+    </select>
+
+    <!-- 4. 기술 스택 마스터 조회 -->
+    <select id="selectSkillOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
+        SELECT 
+            skill_tag_sq AS value,
+            skill_tag_nm AS label
+        FROM TBL_SKILL_TAG_C
+        ORDER BY skill_tag_nm ASC
+    </select>
+
+</mapper>

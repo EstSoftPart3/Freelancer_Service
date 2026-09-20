@@ -266,6 +266,29 @@ export const usersColumns: ColumnDef<AdminUser>[] = [
       )
     },
   },
+
+  {
+    accessorKey: 'hasResumeYn',
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={column.columnDef.meta?.title as string ?? '이력서'}
+      />
+    ),
+    cell: ({ row }) => {
+      const { hasResumeYn } = row.original as AdminUser
+      const isExist = hasResumeYn === 'Y' 
+
+      return (
+          <div className="w-full text-center">
+          {isExist ? 'Y' : 'N'}
+        </div>
+      )
+    },
+    enableSorting: true,
+    sortingFn: 'alphanumeric',
+  },
+  
   {
     accessorKey: 'userIsActivateYn',
     header: ({ column }) => (

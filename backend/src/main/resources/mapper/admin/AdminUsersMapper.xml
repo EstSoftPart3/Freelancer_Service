@@ -23,7 +23,18 @@
         u.user_is_deleted_yn AS userIsDeletedYn,
         u.user_signup_type_cd AS userSignupTypeCd,
         u.user_is_activate_yn AS userIsActivateYn,
-        u.user_agreed_privacy_policy_yn AS userAgreedPrivacyPolicyYn
+        u.user_agreed_privacy_policy_yn AS userAgreedPrivacyPolicyYn,
+
+        CASE 
+            WHEN EXISTS (
+                SELECT 1 
+                FROM TBL_RESUME_M r 
+                WHERE r.user_sq = u.user_sq 
+                  AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
+            ) THEN 'Y'
+            ELSE 'N'
+        END AS hasResumeYn
+        
         FROM TBL_USER_M u
         LEFT JOIN TBL_COMPANY_S c
         ON c.user_sq = u.user_sq
@@ -72,6 +83,7 @@
             <when test="sortField == 'userSignupTypeCd'">u.user_signup_type_cd</when>
             <when test="sortField == 'userIsActivateYn'">u.user_is_activate_yn</when>
             <when test="sortField == 'userAgreedPrivacyPolicyYn'">u.user_agreed_privacy_policy_yn</when>
+            <when test="sortField == 'hasResumeYn'">hasResumeYn</when>
             <otherwise>u.user_sq</otherwise>
         </choose>
         ${sortOrder}

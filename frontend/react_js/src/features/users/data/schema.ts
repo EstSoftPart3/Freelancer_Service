@@ -19,6 +19,7 @@ export const adminUserSchema = z.object({
   userAgreedPrivacyPolicyYn: z.string(),
   companyNm: z.string().nullable(),
   companySq: z.number().nullable().optional(),
+  hasResumeYn: z.string(),
 })
 
 export type AdminUser = z.infer<typeof adminUserSchema>

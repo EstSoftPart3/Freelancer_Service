@@ -69,5 +69,61 @@
     <update id="updateReportStatus"> UPDATE tbl_report_s SET report_process_status_cd = #{statusCd},
         report_process_desc_edt = #{processDesc}, report_process_user_sq = #{adminSq},
         report_processed_at_dtm = NOW() WHERE report_sq = #{reportSq} </update>
+        
+        <select id="findReportedUserSq" resultType="Long">
+        <choose>
+            <when test="targetTypeCd == 2001">
+                SELECT user_sq FROM tbl_board_m WHERE board_sq = #{targetSq}
+            </when>
+            <when test="targetTypeCd == 2002">
+                SELECT user_sq FROM tbl_board_answer_s WHERE answer_sq = #{targetSq}
+            </when>
+            <when test="targetTypeCd == 2003 or targetTypeCd == 2004">
+                SELECT user_sq FROM tbl_board_comment_s WHERE comment_sq = #{targetSq}
+            </when>
+            <otherwise>
+                SELECT NULL
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="countUserSanctions" resultType="int">
+        SELECT COUNT(*) 
+        FROM tbl_user_sanction_h 
+        WHERE user_sq = #{userSq}
+    </select>
+
+    <insert id="insertSanctionHistory">
+    INSERT INTO tbl_user_sanction_h (
+        user_sq,
+        report_sq,
+        sanction_count,
+        sanction_type_cd,
+        sanction_reason_txt,
+        sanction_start_dtm,
+        sanction_end_dtm,
+        sanction_is_active_yn,
+        sanction_created_user_sq,
+        sanction_created_at_dtm
+    ) VALUES (
+        #{userSq},
+        #{reportSq},
+        #{sanctionCount},
+        #{sanctionTypeCd},
+        #{sanctionReason},
+        #{sanctionStartDtm},
+        #{sanctionEndDtm},
+        'Y',
+        #{adminSq},
+        NOW()
+    )
+	</insert>
+
+    <update id="updateUserActivateStatus">
+        UPDATE tbl_user_m 
+        SET user_is_activate_yn = #{isActivateYn},
+            user_modified_at_dtm = NOW()
+        WHERE user_sq = #{userSq}
+    </update>
 
 </mapper>

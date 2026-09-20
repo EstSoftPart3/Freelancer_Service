@@ -34,7 +34,8 @@
             style="cursor: pointer"
           >
             <img
-              :src="scout.profile_image_url || '/img/avatars/default_avatar.png'"
+              :src="getProfileImage(scout.profile_image_url || scout.profileImgUrl)"
+              @error="handleImageError"
               alt="프로필 이미지"
               class="rounded-circle"
               style="
@@ -125,8 +126,20 @@ import { defineProps, defineEmits } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
 import { api } from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
+const defaultPersonImg = '/img/person.png'
 
 const alertStore = useAlertStore()
+
+const getProfileImage = (url) => {
+  if (!url || url.trim() === '') {
+    return defaultPersonImg
+  }
+  return url
+}
+
+const handleImageError = (e) => {
+  e.target.src = defaultPersonImg
+}
 
 const props = defineProps({
   scouts: {

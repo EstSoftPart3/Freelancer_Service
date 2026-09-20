@@ -1,5 +1,6 @@
 package com.example.demo.domain.admin.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -70,6 +71,8 @@ public class AdminReportService {
         if (statusCd == 2902L) {
             Long targetSq = report.getTargetSq();
             Long type = report.getTargetTypeCd();
+            
+            Long reportedUserSq = adminReportMapper.findReportedUserSq(type, targetSq);
 
             if (type == 2001L)
                 adminBoardMapper.deleteBoardMaster(targetSq);
@@ -77,6 +80,41 @@ public class AdminReportService {
                 adminBoardMapper.deleteAnswerMaster(targetSq);
             else if (type == 2003L || type == 2004L)
                 adminBoardMapper.deleteCommentByAdmin(targetSq);
+            
+            if (reportedUserSq != null) {
+                int previousSanctionCount = adminReportMapper.countUserSanctions(reportedUserSq);
+                int nextSanctionCount = previousSanctionCount + 1;
+
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime sanctionEndDtm;
+                Long sanctionTypeCd;
+
+                if (nextSanctionCount == 1) {
+                    sanctionEndDtm = now.plusDays(7);
+                    sanctionTypeCd = 3209L;
+                } else if (nextSanctionCount == 2) {
+                    sanctionEndDtm = now.plusDays(30);
+                    sanctionTypeCd = 3210L;
+                } else {
+                    sanctionEndDtm = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+                    sanctionTypeCd = 3211L;
+                }
+
+                String sanctionReason = report.getReasonNm() != null ? report.getReasonNm() : "신고 처리에 의한 제재";
+
+                adminReportMapper.insertSanctionHistory(
+                        reportedUserSq,
+                        reportSq,
+                        nextSanctionCount,
+                        sanctionTypeCd,
+                        sanctionReason,
+                        now,
+                        sanctionEndDtm,
+                        adminSq
+                );
+
+                adminReportMapper.updateUserActivateStatus(reportedUserSq, "N");
+            }
         }
     }
 }

@@ -69,6 +69,11 @@ export const sidebarData: SidebarData = {
               url: '/users',
               icon: Users,
             },
+            {
+              title: '제재 및 정지 유저 목록',
+              url : '/sanctions',
+              icon: ShieldAlert,
+            },
           ],
         },
         {

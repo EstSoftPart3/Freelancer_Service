@@ -4,6 +4,18 @@
 
 <mapper namespace="com.example.demo.domain.scout.mapper.ScoutMapper">
 
+    <select id="selectScoutTabCounts" resultType="com.example.demo.domain.scout.dto.response.ScoutCountResponseDto">
+        SELECT 
+            COUNT(*) AS totalCount,
+            /* 열람: READ, ACCEPTED(수락), REJECTED(거절) 상태 포함 */
+            COUNT(CASE WHEN so.scout_offer_status_cd IN ('READ', 'ACCEPTED', 'REJECTED') THEN 1 END) AS readCount,
+            /* 미열람: PENDING(대기/미열람) 상태 */
+            COUNT(CASE WHEN so.scout_offer_status_cd = 'PENDING' THEN 1 END) AS unreadCount
+        FROM tbl_scout_offer_m so
+        LEFT JOIN tbl_resume_m r ON so.resume_sq = r.resume_sq
+        WHERE r.user_sq = #{userSq}
+    </select>
+
     <!-- 스카우트 제안 등록 -->
     <insert id="insertScoutOffer" parameterType="com.example.demo.domain.scout.entity.ScoutEntity" useGeneratedKeys="true" keyProperty="scoutOfferSq">
         INSERT INTO tbl_scout_offer_m (
@@ -67,7 +79,19 @@
         
         <!-- 상태 코드 필터링 -->
         <if test="status != null and status != '' and status != 'all'">
-            AND so.scout_offer_status_cd = #{status}
+            <choose>
+                <!-- 열람 선택 시: READ(열람), ACCEPTED(수락), REJECTED(거절) 모두 포함 -->
+                <when test="status == 'READ' or status == 'read'">
+                    AND so.scout_offer_status_cd IN ('READ', 'ACCEPTED', 'REJECTED')
+                </when>
+                <!-- 미열람 선택 시: PENDING(대기) 상태만 -->
+                <when test="status == 'UNREAD' or status == 'unread' or status == 'PENDING'">
+                    AND so.scout_offer_status_cd = 'PENDING'
+                </when>
+                <otherwise>
+                    AND so.scout_offer_status_cd = #{status}
+                </otherwise>
+            </choose>
         </if>
         
         <!-- 키워드 검색 (제목 / 기업명 / 전체) -->
@@ -102,14 +126,14 @@
         
         <if test="keyword != null and keyword != ''">
             <choose>
-                <when test="searchType == 'title'">
-                    AND so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%')
+                <when test="status == 'READ' or status == 'read'">
+                    AND so.scout_offer_status_cd IN ('READ', 'ACCEPTED', 'REJECTED')
                 </when>
-                <when test="searchType == 'company'">
-                    AND c.company_nm LIKE CONCAT('%', #{keyword}, '%')
+                <when test="status == 'UNREAD' or status == 'unread' or status == 'PENDING'">
+                    AND so.scout_offer_status_cd = 'PENDING'
                 </when>
                 <otherwise>
-                    AND (so.scout_offer_ttl LIKE CONCAT('%', #{keyword}, '%') OR c.company_nm LIKE CONCAT('%', #{keyword}, '%'))
+                    AND so.scout_offer_status_cd = #{status}
                 </otherwise>
             </choose>
         </if>

@@ -35,4 +35,6 @@ public class AdminUsersListDTO {
     private Long userSignupTypeCd;
     private String userIsActivateYn;
     private String userAgreedPrivacyPolicyYn;
+    
+    private String hasResumeYn;
 }

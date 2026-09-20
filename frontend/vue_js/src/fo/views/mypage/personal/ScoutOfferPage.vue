@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="d-flex gap-2 align-items-center">
-                  <template v-if="item.status === 'PENDING' || item.status === '대기중'">
+                  <template v-if="['PENDING', 'READ', '대기중', '열람'].includes(item.status)">
                     <button
                       class="btn btn-primary btn-sm px-3"
                       @click="handleRespond(item, 'ACCEPTED')"
@@ -93,12 +93,7 @@
                       거절
                     </button>
                   </template>
-                  <template v-else-if="item.status === 'ACCEPTED' || item.status === '수락'">
-                    <span class="badge bg-primary fs-7 px-3 py-2">수락됨</span>
-                  </template>
-                  <template v-else-if="item.status === 'REJECTED' || item.status === '거절'">
-                    <span class="badge bg-secondary fs-7 px-3 py-2">거절됨</span>
-                  </template>
+                  
                 </div>
               </div>
 
@@ -222,7 +217,7 @@ const fetchScoutList = async () => {
     let statusParam = null
     
     if (readType.value === 'read') {
-      statusParam = 'ACCEPTED,REJECTED,CANCELLED'
+      statusParam = 'READ'
     } else if (readType.value === 'unread') {
       statusParam = 'PENDING'
     }
@@ -240,8 +235,17 @@ const fetchScoutList = async () => {
 
     const resData = response.data || response.output || response || {}
     scoutList.value = resData.scouts || resData.list || []
+
+    const counts = resData.counts || {}
+    readFilters.value = [
+      { type: 'all', label: '전체', count: counts.totalCount || 0 },
+      { type: 'read', label: '열람', count: counts.readCount || 0 },
+      { type: 'unread', label: '미열람', count: counts.unreadCount || 0 },
+    ]
     
-    if (resData.page_info) {
+    if (resData.pageInfo) {
+      totalPages.value = Math.max(1, resData.pageInfo.totalPages)
+    } else if (resData.page_info) {
       totalPages.value = Math.max(1, resData.page_info.total_pages)
     } else if (resData.totalPages) {
       totalPages.value = Math.max(1, resData.totalPages)

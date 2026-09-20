@@ -1,208 +1,235 @@
 <template>
-  <!-- Web Layout -->
-  <div class="filter-bar border rounded p-3 d-none d-lg-flex align-items-center gap-3 flex-wrap" style="max-width: 1300px; margin: 0 auto;">
-    
-    <!-- 1. 지역 Dropdown -->
+  <div class="filter-bar border rounded p-3 d-flex align-items-center gap-3 flex-wrap">
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
         {{ selectedRegionText }}
       </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" @click.prevent="resetFilter('region')">전체</a></li>
-        <li v-for="item in regionOptions" :key="item.value">
+      <ul class="dropdown-menu" @click.stop>
+        <li>
+          <a class="dropdown-item" href="#" @click.prevent="clearSelection('regions')">전체</a>
+        </li>
+        <li v-for="(local, index) in localOptions" :key="getItemKey(local, index, 'areaSq')">
           <div class="dropdown-item">
-            <input 
-              type="checkbox" 
-              :id="'region-' + item.value" 
-              class="form-check-input me-2" 
-              :value="item.value"
-              v-model="filters.regions"
-              @change="emitUpdate"
-            >
-            <label :for="'region-' + item.value">{{ item.label }}</label>
+            <input
+              type="checkbox"
+              :id="'scout-region-' + local.areaSq"
+              :value="local.areaSq"
+              v-model="selectedRegions"
+              class="form-check-input me-2"
+            />
+            <label :for="'scout-region-' + local.areaSq" class="form-check-label">{{ local.areaName }}</label>
           </div>
         </li>
       </ul>
     </div>
 
-    <!-- 2. 경력 Dropdown -->
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
         {{ selectedCareerText }}
       </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" @click.prevent="resetFilter('career')">전체</a></li>
-        <li v-for="item in careerOptions" :key="item.value">
+      <ul class="dropdown-menu" @click.stop>
+        <li>
+          <a class="dropdown-item" href="#" @click.prevent="clearSelection('careers')">전체</a>
+        </li>
+        <li v-for="(career, index) in careerOptions" :key="getItemKey(career, index, 'common_code_sq')">
           <div class="dropdown-item">
-            <input 
-              type="checkbox" 
-              :id="'career-' + item.value" 
-              class="form-check-input me-2" 
-              :value="item.value"
-              v-model="filters.careers"
-              @change="emitUpdate"
-            >
-            <label :for="'career-' + item.value">{{ item.label }}</label>
+            <input
+              type="checkbox"
+              :id="'scout-career-' + career.common_code_sq"
+              :value="career.common_code_sq"
+              v-model="selectedCareers"
+              class="form-check-input me-2"
+            />
+            <label :for="'scout-career-' + career.common_code_sq" class="form-check-label">{{ career.common_code_nm }}</label>
           </div>
         </li>
       </ul>
     </div>
 
-    <!-- 3. 기술 스택 Dropdown (스카우트용 변경) -->
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
         {{ selectedSkillText }}
       </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" @click.prevent="resetFilter('skill')">전체</a></li>
-        <li v-for="item in skillOptions" :key="item.value">
+      <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto;" @click.stop>
+        <li>
+          <a class="dropdown-item" href="#" @click.prevent="clearSelection('skills')">전체</a>
+        </li>
+        <li v-for="(skill, index) in skillOptions" :key="getItemKey(skill, index, 'skillSq')">
           <div class="dropdown-item">
-            <input 
-              type="checkbox" 
-              :id="'skill-' + item.value" 
-              class="form-check-input me-2" 
-              :value="item.value"
-              v-model="filters.skills"
-              @change="emitUpdate"
-            >
-            <label :for="'skill-' + item.value">{{ item.label }}</label>
+            <input
+              type="checkbox"
+              :id="'scout-skill-' + (skill.skillSq || skill.skill_sq || skill.common_code_sq)"
+              :value="skill.skillSq || skill.skill_sq || skill.common_code_sq"
+              v-model="selectedSkills"
+              class="form-check-input me-2"
+            />
+            <label :for="'scout-skill-' + (skill.skillSq || skill.skill_sq || skill.common_code_sq)" class="form-check-label">
+              {{ skill.skillName || skill.skill_name || skill.common_code_nm }}
+            </label>
           </div>
         </li>
       </ul>
     </div>
 
-    <!-- 4. 구직 상태 Dropdown (스카우트용 추가) -->
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
         {{ selectedJobStatusText }}
       </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" @click.prevent="resetFilter('jobStatus')">전체</a></li>
-        <li v-for="item in jobStatusOptions" :key="item.value">
+      <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto;" @click.stop>
+        <li>
+          <a class="dropdown-item" href="#" @click.prevent="clearSelection('jobStatus')">전체</a>
+        </li>
+        <li v-for="(status, index) in jobStatusOptions" :key="getItemKey(status, index, 'common_code_sq')">
           <div class="dropdown-item">
-            <input 
-              type="checkbox" 
-              :id="'jobstatus-' + item.value" 
-              class="form-check-input me-2" 
-              :value="item.value"
-              v-model="filters.jobStatus"
-              @change="emitUpdate"
-            >
-            <label :for="'jobstatus-' + item.value">{{ item.label }}</label>
+            <input
+              type="checkbox"
+              :id="'scout-status-' + (status.common_code_sq || status.commonCodeSq || status.codeSq)"
+              :value="status.common_code_sq || status.commonCodeSq || status.codeSq"
+              v-model="selectedJobStatus"
+              class="form-check-input me-2"
+            />
+            <label :for="'scout-status-' + (status.common_code_sq || status.commonCodeSq || status.codeSq)" class="form-check-label">
+              {{ status.common_code_nm || status.commonCodeNm || status.codeNm }}
+            </label>
           </div>
         </li>
       </ul>
     </div>
 
-    <!-- 5. Search Input -->
     <div class="flex-grow-1">
-      <input 
-        type="text" 
-        class="form-control" 
-        placeholder="프리랜서 이름 또는 키워드 입력..." 
-        v-model="filters.keyword"
-        @keyup.enter="handleSearch"
-        style="max-width: 400px;"
-      >
+      <input
+        type="text"
+        class="form-control"
+        placeholder="프리랜서 이름 또는 키워드 입력..."
+        v-model="searchKeyword"
+        @keyup.enter="$emit('search')"
+      />
     </div>
 
-    <!-- 6. Sort Dropdown -->
-    <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle text-truncate" type="button" data-bs-toggle="dropdown" style="max-width: 120px;">
-        {{ selectedSortText }}
-      </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" @click.prevent="setSort('latest')">최신순</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="setSort('views')">조회순</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="setSort('popular')">인기순</a></li>
-      </ul>
-    </div>
-
-    <!-- 검색 버튼 -->
-    <button class="btn btn-primary" @click="handleSearch">검색</button>
+    <button class="btn btn-primary" @click="$emit('search')">검색</button>
   </div>
 </template>
 
 <script setup>
-import { reactive, computed, defineEmits } from 'vue'
+import { ref, computed, watch, onMounted, defineEmits } from 'vue'
+import { api } from '@/axios.js'
 
 const emit = defineEmits(['update', 'search'])
 
-const filters = reactive({
-  regions: [],
-  careers: [],
-  skills: [],
-  jobStatus: '',
-  keyword: '',
-  sort: 'latest'
-})
+const localOptions = ref([])
+const careerOptions = ref([])
+const skillOptions = ref([])
+const jobStatusOptions = ref([])
 
-const regionOptions = [
-  { label: '서울특별시', value: '11000' },
-  { label: '경기도', value: '41000' },
-  { label: '인천광역시', value: '28000' },
-  { label: '부산광역시', value: '26000' }
-]
+const selectedRegions = ref([])
+const selectedCareers = ref([])
+const selectedSkills = ref([])
+const selectedJobStatus = ref([])
+const searchKeyword = ref('')
 
-const careerOptions = [
-  { label: '신입', value: '701' },
-  { label: '1~3년', value: '702' },
-  { label: '4~6년', value: '703' },
-  { label: '7년 이상', value: '704' }
-]
+const getItemKey = (item, index, preferredKey) => {
+  if (!item) return index
+  return item[preferredKey] ?? item.common_code_sq ?? item.commonCodeSq ?? item.areaSq ?? item.skillSq ?? item.skill_sq ?? item.codeSq ?? item.value ?? index
+}
 
-const skillOptions = [
-  { label: 'Java', value: 'JAVA' },
-  { label: 'Spring', value: 'SPRING' },
-  { label: 'Vue.js', value: 'VUE' },
-  { label: 'React', value: 'REACT' }
-]
+const getItemName = (item, preferredName) => {
+  if (!item) return ''
+  return item[preferredName] ?? item.common_code_nm ?? item.commonCodeNm ?? item.areaName ?? item.skillName ?? item.skill_name ?? item.codeNm ?? item.label ?? ''
+}
 
-const jobStatusOptions = [
-  { label: '구직중', value: 'LOOKING' },
-  { label: '재직중', value: 'WORKING' },
-  { label: '협의가능', value: 'OPEN' }
-]
+const fetchFilterOptions = async () => {
+  try {
+    const res = await api.$get('/v1/scout/filters')
+    console.log('[스카우트 필터 응답 raw 데이터]:', res)
 
-// 버튼 텍스트 가공 Computed
+    // axios 응답 구조에 맞춰 3단계 확인
+    let data = res
+    if (res && res.data) data = res.data
+    if (data && data.output) data = data.output
+
+    console.log('[파싱된 필터 데이터]:', data)
+
+    localOptions.value = data.addresses || data.addressList || data.localList || []
+    careerOptions.value = data.careers || data.careerList || []
+    skillOptions.value = data.skills || data.skillList || []
+    jobStatusOptions.value = data.jobStatuses || data.jobStatusList || []
+
+  } catch (e) {
+    console.error('스카우트 필터 옵션 로드 실패:', e)
+  }
+}
+
+onMounted(fetchFilterOptions)
+
+// 드롭다운 버튼 표시 텍스트 Computed
 const selectedRegionText = computed(() => {
-  return filters.regions.length ? `지역 (${filters.regions.length})` : '지역 (전체)'
+  if (selectedRegions.value.length === 0) return '지역 (전체)'
+  if (selectedRegions.value.length === 1) {
+    const selected = localOptions.value.find(
+      (opt) => (opt.areaSq || opt.value) === selectedRegions.value[0]
+    )
+    return selected ? getItemName(selected, 'areaName') : '지역'
+  }
+  return `지역 (${selectedRegions.value.length}개)`
 })
+
 const selectedCareerText = computed(() => {
-  return filters.careers.length ? `경력 (${filters.careers.length})` : '경력 (전체)'
+  if (selectedCareers.value.length === 0) return '경력 (전체)'
+  if (selectedCareers.value.length === 1) {
+    const selected = careerOptions.value.find(
+      (opt) => (opt.common_code_sq || opt.value) === selectedCareers.value[0]
+    )
+    return selected ? getItemName(selected, 'common_code_nm') : '경력'
+  }
+  return `경력 (${selectedCareers.value.length}개)`
 })
+
 const selectedSkillText = computed(() => {
-  return filters.skills.length ? `기술 (${filters.skills.length})` : '기술 (전체)'
+  if (selectedSkills.value.length === 0) return '기술 스택 (전체)'
+  if (selectedSkills.value.length === 1) {
+    const selected = skillOptions.value.find(
+      (opt) => (opt.skillSq || opt.skill_sq || opt.common_code_sq || opt.value) === selectedSkills.value[0]
+    )
+    return selected ? getItemName(selected, 'skillName') : '기술 스택'
+  }
+  return `기술 스택 (${selectedSkills.value.length}개)`
 })
+
 const selectedJobStatusText = computed(() => {
-  const match = jobStatusOptions.find(o => o.value === filters.jobStatus)
-  return match ? `구직 상태 (${match.label})` : '구직 상태 (전체)'
+  if (selectedJobStatus.value.length === 0) return '구직 상태 (전체)'
+  if (selectedJobStatus.value.length === 1) {
+    const selected = jobStatusOptions.value.find(
+      (opt) => (opt.common_code_sq || opt.commonCodeSq || opt.codeSq || opt.value) === selectedJobStatus.value[0]
+    )
+    return selected ? getItemName(selected, 'common_code_nm') : '구직 상태'
+  }
+  return `구직 상태 (${selectedJobStatus.value.length}개)`
 })
-const selectedSortText = computed(() => {
-  if (filters.sort === 'views') return '조회순'
-  if (filters.sort === 'popular') return '인기순'
-  return '최신순'
-})
 
-const emitUpdate = () => {
-  emit('update', { ...filters })
-}
+watch(
+  [selectedRegions, selectedCareers, selectedSkills, selectedJobStatus, searchKeyword],
+  () => {
+    emit('update', {
+      addressCodeSq: selectedRegions.value,
+      careerCodeSq: selectedCareers.value,
+      skillSq: selectedSkills.value,
+      jobStatusCodeSq: selectedJobStatus.value,
+      searchKeyword: searchKeyword.value
+    })
+  },
+  { deep: true }
+)
 
-const handleSearch = () => {
-  emit('search', { ...filters })
-}
-
-const resetFilter = (type) => {
-  if (type === 'region') filters.regions = []
-  if (type === 'career') filters.careers = []
-  if (type === 'skill') filters.skills = []
-  if (type === 'jobStatus') filters.jobStatus = ''
-  emitUpdate()
-}
-
-const setSort = (sortValue) => {
-  filters.sort = sortValue
-  emitUpdate()
-  handleSearch()
+const clearSelection = (type) => {
+  if (type === 'regions') selectedRegions.value = []
+  if (type === 'careers') selectedCareers.value = []
+  if (type === 'skills') selectedSkills.value = []
+  if (type === 'jobStatus') selectedJobStatus.value = []
 }
 </script>
+
+<style scoped>
+.filter-bar .dropdown .btn-outline-primary {
+  border-width: 2px;
+}
+</style>

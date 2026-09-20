@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.demo.domain.scout.dto.response.ScoutCountResponseDto;
 import com.example.demo.domain.scout.dto.response.ScoutDetailResponse;
 import com.example.demo.domain.scout.dto.response.ScoutListResponseDto;
 import com.example.demo.domain.scout.entity.ScoutEntity;
@@ -17,6 +18,8 @@ public interface ScoutMapper {
     
     // 생성된 데이터 단건 조회 (응답 데이터 생성용)
     ScoutEntity selectScoutOfferById(Long scoutOfferSq);
+    
+    ScoutCountResponseDto selectScoutTabCounts(@Param("userSq") Long userSq);
     
     List<ScoutListResponseDto.ScoutItem> selectScoutList(
             @Param("userSq") Long userSq,

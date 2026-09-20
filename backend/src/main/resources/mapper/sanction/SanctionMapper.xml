@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.domain.sanction.mapper.SanctionMapper">
+
+    <select id="selectSanctionedUsers" resultType="com.example.demo.domain.sanction.dto.response.SanctionUserResponseDto$SanctionUserItem">
+        SELECT
+            u.user_sq AS userSq,
+            u.user_type_cd AS userType,
+            u.user_email AS email,
+            u.user_nm AS userNm,
+            c.company_nm AS companyNm,
+            u.user_phone_num AS phone,
+            s.sanction_count AS sanctionCount,
+            s.report_sq AS reportSq,
+            s.sanction_type_cd AS sanctionStatus,
+            s.sanction_reason_txt AS sanctionReason,
+            DATE_FORMAT(s.sanction_end_dtm, '%Y-%m-%d %H:%i:%s') AS suspendedUntilDtm
+        FROM tbl_user_m u
+        INNER JOIN tbl_user_sanction_h s ON u.user_sq = s.user_sq
+        LEFT JOIN tbl_company_s c ON u.user_sq = c.user_sq
+        WHERE s.sanction_is_active_yn = 'Y'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (u.user_nm LIKE CONCAT('%', #{searchKeyword}, '%') 
+                 OR u.user_email LIKE CONCAT('%', #{searchKeyword}, '%')
+                 OR u.user_phone_num LIKE CONCAT('%', #{searchKeyword}, '%')
+                 OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="userType != null and userType != ''">
+            AND u.user_type_cd = #{userType}
+        </if>
+        ORDER BY s.sanction_created_at_dtm DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectSanctionedUsersCount" resultType="long">
+        SELECT COUNT(1)
+        FROM tbl_user_m u
+        INNER JOIN tbl_user_sanction_h s ON u.user_sq = s.user_sq
+        LEFT JOIN tbl_company_s c ON u.user_sq = c.user_sq
+        WHERE s.sanction_is_active_yn = 'Y'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (u.user_nm LIKE CONCAT('%', #{searchKeyword}, '%') 
+                 OR u.user_email LIKE CONCAT('%', #{searchKeyword}, '%')
+                 OR u.user_phone_num LIKE CONCAT('%', #{searchKeyword}, '%')
+                 OR c.company_nm LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="userType != null and userType != ''">
+            AND u.user_type_cd = #{userType}
+        </if>
+    </select>
+
+</mapper>

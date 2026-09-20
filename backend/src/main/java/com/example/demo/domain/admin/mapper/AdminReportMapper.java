@@ -1,5 +1,6 @@
 package com.example.demo.domain.admin.mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -33,4 +34,26 @@ public interface AdminReportMapper {
             @Param("statusCd") Long statusCd,
             @Param("processDesc") String processDesc,
             @Param("adminSq") Long adminSq);
+    
+    Long findReportedUserSq(
+            @Param("targetTypeCd") Long targetTypeCd,
+            @Param("targetSq") Long targetSq);
+
+    int countUserSanctions(@Param("userSq") Long userSq);
+
+    void insertSanctionHistory(
+            @Param("userSq") Long userSq,
+            @Param("reportSq") Long reportSq,
+            @Param("sanctionCount") int sanctionCount,
+            @Param("sanctionTypeCd") Long sanctionTypeCd,
+            @Param("sanctionReason") String sanctionReason,
+            @Param("sanctionStartDtm") LocalDateTime sanctionStartDtm,
+            @Param("sanctionEndDtm") LocalDateTime sanctionEndDtm,
+            @Param("adminSq") Long adminSq);
+
+    void updateUserActivateStatus(
+            @Param("userSq") Long userSq,
+            @Param("isActivateYn") String isActivateYn);
+    
+    
 }

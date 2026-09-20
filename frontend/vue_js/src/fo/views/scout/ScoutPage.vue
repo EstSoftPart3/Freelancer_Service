@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import CommonPageHeader from '@/fo/components/common/CommonPageHeader.vue'
 import ScoutFilterBar from '@/fo/components/common/ScoutFilterBar.vue'
 import ScoutCardList from '@/fo/components/scout/ScoutCardList.vue'
@@ -52,25 +52,44 @@ const scoutOfferModalRef = ref(null)
 const scoutResumeModalRef = ref(null)
 
 const scoutList = ref([])
-const selectedSkills = ref([])
+
 const currentFilters = reactive({
-  skills: '',
-  experience: null,
+  addressCodeSq: [],
+  careerCodeSq: [],
+  skillSq: [],
+  jobStatusCodeSq: [],
+  searchKeyword: '',
   page: 0,
-  size: 10,
+  size: 10
 })
+
+const selectedSkills = computed(() => currentFilters.skillSq)
 
 const fetchScouts = async () => {
   isLoading.value = true
   try {
-    const res = await api.$get(
-      `/v1/freelancers?page=${currentFilters.page}&size=${currentFilters.size}&skills=${encodeURIComponent(currentFilters.skills || '')}`
-    )
+
+  const addressParam = currentFilters.addressCodeSq.length > 0 ? currentFilters.addressCodeSq.join(',') : undefined
+    const careerParam = currentFilters.careerCodeSq.length > 0 ? currentFilters.careerCodeSq.join(',') : undefined
+    const skillParam = currentFilters.skillSq.length > 0 ? currentFilters.skillSq.join(',') : undefined
+    const jobStatusParam = currentFilters.jobStatusCodeSq.length > 0 ? currentFilters.jobStatusCodeSq.join(',') : undefined
+
+    const res = await api.$get('/v1/freelancers', {
+      params: {
+        addressCodeSq: addressParam,
+        careerCodeSq: careerParam,
+        skillSq: skillParam,
+        jobStatusCodeSq: jobStatusParam,
+        searchKeyword: currentFilters.searchKeyword || undefined,
+        page: currentFilters.page,
+        size: currentFilters.size
+      }
+    })
 
     if (res && res.output) {
-      scoutList.value = res.output.freelancers || []
+      scoutList.value = res.output.freelancers || res.output || []
     } else if (res && res.data) {
-      scoutList.value = res.data.freelancers || []
+      scoutList.value = res.data.freelancers || res.data || []
     }
   } catch (error) {
     alertStore.show('인재 목록을 불러오는데 실패했습니다.', 'danger')
@@ -89,14 +108,13 @@ const handleSearch = () => {
 }
 
 const handleSkillTagClick = (skill) => {
-  const index = selectedSkills.value.indexOf(skill)
+  const index = currentFilters.skillSq.indexOf(skill)
   if (index > -1) {
-    selectedSkills.value.splice(index, 1)
+    currentFilters.skillSq.splice(index, 1)
   } else {
-    selectedSkills.value.push(skill)
+    currentFilters.skillSq.push(skill)
   }
 
-  currentFilters.skills = selectedSkills.value.join(',')
   currentFilters.page = 0
   fetchScouts()
 }

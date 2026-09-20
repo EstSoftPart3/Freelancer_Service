@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.demo.domain.scout.dto.request.ScoutListRequestDto;
 import com.example.demo.domain.scout.dto.request.ScoutRequestDto;
 import com.example.demo.domain.scout.dto.request.ScoutStatusUpdateRequestDto;
+import com.example.demo.domain.scout.dto.response.ScoutCountResponseDto;
 import com.example.demo.domain.scout.dto.response.ScoutDetailResponse;
 import com.example.demo.domain.scout.dto.response.ScoutListResponseDto;
 import com.example.demo.domain.scout.dto.response.ScoutResponseDto;
@@ -54,6 +55,8 @@ public class ScoutService {
         List<ScoutListResponseDto.ScoutItem> scouts = scoutMapper.selectScoutList(userSq, request.getStatus(), offset, size, request.getSearchType(), request.getKeyword());
         long totalElements = scoutMapper.selectScoutCount(userSq, request.getStatus(), request.getSearchType(), request.getKeyword());
 
+        ScoutCountResponseDto counts = scoutMapper.selectScoutTabCounts(userSq);
+        
         int totalPages = (int) Math.ceil((double) totalElements / size);
         boolean isLast = (request.getPage() + 1) >= totalPages;
 
@@ -65,6 +68,7 @@ public class ScoutService {
                 .build();
 
         ScoutListResponseDto.DataContainer dataContainer = ScoutListResponseDto.DataContainer.builder()
+        		.counts(counts)
                 .scouts(scouts)
                 .pageInfo(pageInfo)
                 .build();
@@ -80,6 +84,12 @@ public class ScoutService {
         if (detail == null) {
             throw new IllegalArgumentException("존재하지 않는 스카우트 제안입니다. (sq: " + scoutSq + ")");
         }
+        
+        if ("PENDING".equalsIgnoreCase(detail.getStatus())) {
+            scoutMapper.updateScoutStatus(scoutSq, "READ", null);
+            detail.setStatus("READ");
+        }
+        
         return detail;
     }
 

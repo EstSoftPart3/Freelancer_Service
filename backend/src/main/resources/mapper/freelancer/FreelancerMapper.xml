@@ -6,7 +6,6 @@
 
     <select id="selectFreelancers" resultType="com.example.demo.domain.freelancer.dto.response.FreelancerResponseDto">
         SELECT 
-            /* [수정] DTO의 @JsonProperty("freelancer_sq")에 매핑되도록 Alias 변경 */
             r.resume_sq             AS freelancerSq,
             r.user_sq               AS userSq,
             u.user_nm               AS name,
@@ -28,37 +27,55 @@
         INNER JOIN (
             SELECT user_sq, MAX(resume_sq) AS max_resume_sq
             FROM TBL_RESUME_M
+            WHERE (resume_is_deleted_yn = 'N' OR resume_is_deleted_yn IS NULL)
             GROUP BY user_sq
         ) latest_r ON r.resume_sq = latest_r.max_resume_sq
+        
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
         LEFT JOIN tbl_user_profile_image_s p 
             ON u.user_sq = p.user_sq
-        
         LEFT JOIN tbl_address_s a
             ON r.address_sq = a.address_sq
         <where>
-            <if test="req.experience != null">
-                AND COALESCE(
-                    (
-                        SELECT FLOOR(SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) / 12)
-                        FROM TBL_RESUME_CAREER_S c
-                        WHERE c.resume_sq = r.resume_sq
-                    ), 0
-                ) &gt;= #{req.experience}
+            <if test="req.addressCodeSq != null and req.addressCodeSq.size() > 0">
+            AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
+            AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
+            AND r.resume_ttl IS NOT NULL 
+            AND TRIM(r.resume_ttl) != ''
+                <foreach item="item" collection="req.addressCodeSq" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
             </if>
 
-            <if test="req.skills != null and req.skills != ''">
+            <if test="req.careerCodeSq != null and req.careerCodeSq.size() > 0">
+                AND r.career_code_sq IN
+                <foreach item="item" collection="req.careerCodeSq" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="req.jobStatusCodeSq != null and req.jobStatusCodeSq.size() > 0">
+                AND r.job_status_code_sq IN
+                <foreach item="item" collection="req.jobStatusCodeSq" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="req.skillSq != null and req.skillSq.size() > 0">
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
                     FROM TBL_RESUME_SKILL_SEARCH_S rss
-                    INNER JOIN TBL_SKILL_TAG_C st 
-                        ON rss.skill_tag_sq = st.skill_tag_sq
-                    WHERE LOWER(st.skill_tag_nm) IN 
-                    <foreach item="skill" collection="req.skills.split(',')" open="(" separator="," close=")">
-                        LOWER(TRIM(#{skill}))
+                    WHERE rss.skill_tag_sq IN 
+                    <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 )
+            </if>
+
+            <if test="req.searchKeyword != null and req.searchKeyword != ''">
+                AND (u.user_nm LIKE CONCAT('%', #{req.searchKeyword}, '%') 
+                     OR r.resume_ttl LIKE CONCAT('%', #{req.searchKeyword}, '%'))
             </if>
         </where>
         ORDER BY r.resume_sq DESC
@@ -73,14 +90,24 @@
         WHERE rss.resume_sq = #{resumeSq}
         ORDER BY st.skill_tag_nm ASC
     </select>
-    
-    <!-- 3. 프리랜서(이력서) 전체 개수 조회 -->
+   
     <select id="countFreelancers" resultType="long">
         SELECT COUNT(DISTINCT r.resume_sq)
         FROM TBL_RESUME_M r
+        INNER JOIN (
+            SELECT user_sq, MAX(resume_sq) AS max_resume_sq
+            FROM TBL_RESUME_M
+            WHERE (resume_is_deleted_yn = 'N' OR resume_is_deleted_yn IS NULL)
+            GROUP BY user_sq
+        ) latest_r ON r.resume_sq = latest_r.max_resume_sq
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
         <where>
+            AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
+            AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
+            AND r.resume_ttl IS NOT NULL 
+            AND TRIM(r.resume_ttl) != ''
+
             <if test="req.experience != null">
                 AND COALESCE(
                     (

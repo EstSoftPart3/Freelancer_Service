@@ -17,6 +17,8 @@ public class ScoutListResponseDto {
     @Getter
     @Builder
     public static class DataContainer {
+    	private ScoutCountResponseDto counts;
+    	
         private List<ScoutItem> scouts;
 
         @JsonProperty("page_info")
