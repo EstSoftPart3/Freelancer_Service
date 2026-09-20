@@ -37,7 +37,8 @@ public class SecurityConfigDev {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOriginPatterns(List.of("http://localhost:8504", "http://localhost:5173",
-				"https://job.estsw.co.kr", "https://admin-job.estsw.co.kr", "https://vue-js-sigma-two.vercel.app"));
+				"https://job.estsw.co.kr", "https://admin-job.estsw.co.kr", "https://vue-js-sigma-two.vercel.app",
+				"https://funny-lokum-f8f70f.netlify.app"));
 
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("*"));
