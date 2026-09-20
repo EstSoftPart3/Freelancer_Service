@@ -41,6 +41,7 @@ public class AuthService {
 
         String email = (String) googleUserInfo.get("email");
         String name = (String) googleUserInfo.get("name");
+        String googleSub = (String) googleUserInfo.get("sub");
 
         // 2. 신규 가입 여부 확인 및 DTO 생성/조회
         boolean isNewUser = !userMapper.existsByUserEmail(email);
@@ -48,12 +49,21 @@ public class AuthService {
 
         if (isNewUser) {
             userDto = new UserDTO();
+            
+            String googleUserId = "google_" + (googleSub != null ? googleSub.substring(0, Math.min(googleSub.length(), 10)) : System.currentTimeMillis());
+            userDto.setUserId(googleUserId);
+            
             userDto.setUserEmail(email);
             userDto.setUserNm(name);
             userDto.setUserIsDeletedYn("N");
+            userDto.setUserTypeCd(203L);
             
             // DB에 DTO 직접 저장
             userMapper.save(userDto); 
+            
+            userDto = userMapper.findByUserEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자 등록 후 조회가 실패했습니다."));
+            
         } else {
             userDto = userMapper.findByUserEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
