@@ -1,8 +1,9 @@
 import axios from 'axios'
 
 // const baseUrl = 'https://job.estsw.co.kr/api' // CasaOs 배포용
-const baseUrl = 'http://localhost:8080/api' // 개발용
-// const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api' // ngrok + vercel 배포용
+// const baseUrl = 'http://localhost:8080/api' // 개발용
+const rawUrl = process.env.VUE_APP_API_BASE_URL || 'http://52.78.148.174:8080'
+const baseUrl = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`
 
 // axios 인스턴스 생성
 const apiInstance = axios.create({
