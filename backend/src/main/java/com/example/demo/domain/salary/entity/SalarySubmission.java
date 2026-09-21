@@ -34,6 +34,9 @@ public class SalarySubmission {
     private String companyNm;
     private Integer prevAnnualSalary;
     private String jobChangedYm;
+    // 컬럼명이 salary_submission_is_deleted_yn이라 MyBatis camelCase 매핑이 이 이름으로 떨어진다
+    // (다른 도메인처럼 짧게 isDeletedYn으로 지으면 SELECT m.* 결과가 채워지지 않는다).
+    private String salarySubmissionIsDeletedYn;
     private LocalDateTime createdAtDtm;
     private LocalDateTime updatedAtDtm;
 

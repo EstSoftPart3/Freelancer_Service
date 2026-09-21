@@ -37,6 +37,7 @@ import { Route as AuthenticatedManagementProjectIndexRouteImport } from './route
 import { Route as AuthenticatedManagementCompanyIndexRouteImport } from './routes/_authenticated/management/company/index'
 import { Route as AuthenticatedContentsVoteIndexRouteImport } from './routes/_authenticated/contents/vote/index'
 import { Route as AuthenticatedContentsVocIndexRouteImport } from './routes/_authenticated/contents/voc/index'
+import { Route as AuthenticatedContentsSalaryIndexRouteImport } from './routes/_authenticated/contents/salary/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
 import { Route as AuthenticatedContentsInterviewIndexRouteImport } from './routes/_authenticated/contents/interview/index'
@@ -195,6 +196,12 @@ const AuthenticatedContentsVocIndexRoute =
     path: '/contents/voc/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsSalaryIndexRoute =
+  AuthenticatedContentsSalaryIndexRouteImport.update({
+    id: '/contents/salary/',
+    path: '/contents/salary/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsReportIndexRoute =
   AuthenticatedContentsReportIndexRouteImport.update({
     id: '/contents/report/',
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/salary/': typeof AuthenticatedContentsSalaryIndexRoute
   '/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
   '/contents/vote/': typeof AuthenticatedContentsVoteIndexRoute
   '/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
@@ -296,6 +304,7 @@ export interface FileRoutesByTo {
   '/contents/interview': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/salary': typeof AuthenticatedContentsSalaryIndexRoute
   '/contents/voc': typeof AuthenticatedContentsVocIndexRoute
   '/contents/vote': typeof AuthenticatedContentsVoteIndexRoute
   '/management/company': typeof AuthenticatedManagementCompanyIndexRoute
@@ -333,6 +342,7 @@ export interface FileRoutesById {
   '/_authenticated/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/_authenticated/contents/salary/': typeof AuthenticatedContentsSalaryIndexRoute
   '/_authenticated/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
   '/_authenticated/contents/vote/': typeof AuthenticatedContentsVoteIndexRoute
   '/_authenticated/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/contents/interview/'
     | '/contents/notice/'
     | '/contents/report/'
+    | '/contents/salary/'
     | '/contents/voc/'
     | '/contents/vote/'
     | '/management/company/'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/contents/interview'
     | '/contents/notice'
     | '/contents/report'
+    | '/contents/salary'
     | '/contents/voc'
     | '/contents/vote'
     | '/management/company'
@@ -440,6 +452,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/interview/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
+    | '/_authenticated/contents/salary/'
     | '/_authenticated/contents/voc/'
     | '/_authenticated/contents/vote/'
     | '/_authenticated/management/company/'
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContentsVocIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/salary/': {
+      id: '/_authenticated/contents/salary/'
+      path: '/contents/salary'
+      fullPath: '/contents/salary/'
+      preLoaderRoute: typeof AuthenticatedContentsSalaryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/report/': {
       id: '/_authenticated/contents/report/'
       path: '/contents/report'
@@ -741,6 +761,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsInterviewIndexRoute: typeof AuthenticatedContentsInterviewIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
+  AuthenticatedContentsSalaryIndexRoute: typeof AuthenticatedContentsSalaryIndexRoute
   AuthenticatedContentsVocIndexRoute: typeof AuthenticatedContentsVocIndexRoute
   AuthenticatedContentsVoteIndexRoute: typeof AuthenticatedContentsVoteIndexRoute
   AuthenticatedManagementCompanyIndexRoute: typeof AuthenticatedManagementCompanyIndexRoute
@@ -764,6 +785,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedContentsInterviewIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
+  AuthenticatedContentsSalaryIndexRoute: AuthenticatedContentsSalaryIndexRoute,
   AuthenticatedContentsVocIndexRoute: AuthenticatedContentsVocIndexRoute,
   AuthenticatedContentsVoteIndexRoute: AuthenticatedContentsVoteIndexRoute,
   AuthenticatedManagementCompanyIndexRoute:

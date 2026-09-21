@@ -25,7 +25,8 @@
             position_nm = #{positionNm}, team_size = #{teamSize}, employment_subtype = #{employmentSubtype},
             remote_type = #{remoteType}, bonus_amount = #{bonusAmount}, stock_opt = #{stockOpt},
             job_change_count = #{jobChangeCount}, company_nm = #{companyNm},
-            prev_annual_salary = #{prevAnnualSalary}, job_changed_ym = #{jobChangedYm}
+            prev_annual_salary = #{prevAnnualSalary}, job_changed_ym = #{jobChangedYm},
+            salary_submission_is_deleted_yn = 'N'
         WHERE salary_submission_sq = #{salarySubmissionSq}
     </update>
 
@@ -57,6 +58,7 @@
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
         AND m.employment_type = #{employmentType}
         <if test="!includeSeed">AND m.is_seed_yn = 'N'</if>
+        AND m.salary_submission_is_deleted_yn = 'N'
     </sql>
 
     <select id="findGroup" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
@@ -73,11 +75,13 @@
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
         AND m.employment_type = #{employmentType}
         AND m.is_seed_yn = 'N'
+        AND m.salary_submission_is_deleted_yn = 'N'
     </select>
 
     <select id="findByJobAndEmployment" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
         SELECT m.* FROM TBL_SALARY_SUBMISSION_M m
         WHERE m.job_nm = #{jobNm} AND m.employment_type = #{employmentType}
+        AND m.salary_submission_is_deleted_yn = 'N'
     </select>
 
     <select id="findSkillAverages" resultType="com.example.demo.domain.salary.dto.response.SkillAverageDTO">
@@ -93,6 +97,7 @@
             <foreach item="s" collection="excludeSkills" open="(" separator="," close=")">#{s}</foreach>
         </if>
         <if test="!includeSeed">AND m.is_seed_yn = 'N'</if>
+        AND m.salary_submission_is_deleted_yn = 'N'
         GROUP BY skl.skill_tag_nm
         HAVING COUNT(*) >= 5
     </select>
@@ -105,6 +110,7 @@
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
         AND m.employment_type = #{employmentType}
         AND m.is_seed_yn = 'N'
+        AND m.salary_submission_is_deleted_yn = 'N'
         AND m.company_nm IS NOT NULL AND TRIM(m.company_nm) != ''
         GROUP BY TRIM(m.company_nm)
         HAVING COUNT(*) >= 3
@@ -127,6 +133,7 @@
         WHERE m.job_nm = #{jobNm}
         AND m.job_changed_ym IS NOT NULL AND m.job_changed_ym >= #{yearMonthFrom}
         AND m.prev_annual_salary IS NOT NULL
+        AND m.salary_submission_is_deleted_yn = 'N'
         ORDER BY m.job_changed_ym DESC
         LIMIT #{limit}
     </select>
@@ -136,6 +143,7 @@
         <if test="jobNm != null">AND m.job_nm = #{jobNm}</if>
         <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
+        AND m.salary_submission_is_deleted_yn = 'N'
     </sql>
 
     <select id="findRanking" resultType="com.example.demo.domain.salary.entity.SalarySubmission">

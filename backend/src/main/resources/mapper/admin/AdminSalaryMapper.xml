@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminSalaryMapper">
+
+    <sql id="adminWhere">
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (m.job_nm LIKE CONCAT('%', #{keyword}, '%')
+                 OR m.company_nm LIKE CONCAT('%', #{keyword}, '%')
+                 OR u.user_nickname LIKE CONCAT('%', #{keyword}, '%')
+                 OR m.seed_nickname LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="isSeedYn != null and isSeedYn != ''">AND m.is_seed_yn = #{isSeedYn}</if>
+    </sql>
+
+    <!--
+        FO의 통계 쿼리들은 salary_submission_is_deleted_yn = 'N'만 집계한다. BO는 감사 목적으로
+        삭제된 제출건도 뱃지로 구분해 그대로 보여주기로 했다(투표·면접후기 BO와 동일 정책).
+    -->
+    <select id="findAllForAdmin" resultType="com.example.demo.domain.salary.dto.response.SalaryListItemDTO">
+        SELECT m.salary_submission_sq, m.user_sq, u.user_nickname, m.is_seed_yn, m.seed_nickname,
+        m.employment_type, m.job_nm, m.career_bucket, m.region_nm, m.annual_salary, m.company_nm,
+        m.salary_submission_is_deleted_yn AS is_deleted_yn, m.created_at_dtm
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        <include refid="adminWhere" />
+        <choose>
+            <when test="sortType == 'oldest'"> ORDER BY m.created_at_dtm ASC </when>
+            <when test="sortType == 'salary_desc'"> ORDER BY m.annual_salary DESC </when>
+            <otherwise> ORDER BY m.created_at_dtm DESC </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countForAdmin" resultType="Long">
+        SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        <include refid="adminWhere" />
+    </select>
+
+    <select id="findByIdForAdmin" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
+        SELECT m.*, u.user_nickname
+        FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
+        WHERE m.salary_submission_sq = #{salarySubmissionSq}
+    </select>
+
+    <insert id="insertSubmission" parameterType="com.example.demo.domain.salary.entity.SalarySubmission"
+        useGeneratedKeys="true" keyProperty="salarySubmissionSq" keyColumn="salary_submission_sq">
+        INSERT INTO TBL_SALARY_SUBMISSION_M
+        (user_sq, is_seed_yn, seed_nickname, employment_type, job_nm, career_bucket, region_nm,
+         annual_salary, age_band, education_nm, company_size, company_type, position_nm, team_size,
+         employment_subtype, remote_type, bonus_amount, stock_opt, job_change_count,
+         company_nm, prev_annual_salary, job_changed_ym)
+        VALUES
+        (#{userSq}, #{isSeedYn}, #{seedNickname}, #{employmentType}, #{jobNm}, #{careerBucket}, #{regionNm},
+         #{annualSalary}, #{ageBand}, #{educationNm}, #{companySize}, #{companyType}, #{positionNm}, #{teamSize},
+         #{employmentSubtype}, #{remoteType}, #{bonusAmount}, #{stockOpt}, #{jobChangeCount},
+         #{companyNm}, #{prevAnnualSalary}, #{jobChangedYm})
+    </insert>
+
+    <update id="updateSubmissionMaster" parameterType="com.example.demo.domain.salary.entity.SalarySubmission">
+        UPDATE TBL_SALARY_SUBMISSION_M SET
+            employment_type = #{employmentType}, job_nm = #{jobNm}, career_bucket = #{careerBucket},
+            region_nm = #{regionNm}, annual_salary = #{annualSalary}, age_band = #{ageBand},
+            education_nm = #{educationNm}, company_size = #{companySize}, company_type = #{companyType},
+            position_nm = #{positionNm}, team_size = #{teamSize}, employment_subtype = #{employmentSubtype},
+            remote_type = #{remoteType}, bonus_amount = #{bonusAmount}, stock_opt = #{stockOpt},
+            job_change_count = #{jobChangeCount}, company_nm = #{companyNm},
+            prev_annual_salary = #{prevAnnualSalary}, job_changed_ym = #{jobChangedYm}
+        WHERE salary_submission_sq = #{salarySubmissionSq}
+    </update>
+
+    <update id="deleteSubmissionMaster">
+        UPDATE TBL_SALARY_SUBMISSION_M SET salary_submission_is_deleted_yn = 'Y'
+        WHERE salary_submission_sq = #{salarySubmissionSq}
+    </update>
+
+</mapper>

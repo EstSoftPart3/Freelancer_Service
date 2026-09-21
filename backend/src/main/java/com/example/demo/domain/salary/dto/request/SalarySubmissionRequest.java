@@ -33,4 +33,9 @@ public class SalarySubmissionRequest {
     private String companyNm;
     private Integer prevAnnualSalary;
     private String jobChangedYm;
+
+    // BO 등록 전용 — FO 요청에는 절대 실리지 않는다(컨트롤러가 userSq를 항상 덮어쓰므로).
+    // 시드 행을 등록할 때만 "Y"+닉네임으로 채우고, 실데이터 등록이면 null로 둔다.
+    private String isSeedYn;
+    private String seedNickname;
 }

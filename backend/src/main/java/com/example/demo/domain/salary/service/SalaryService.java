@@ -218,7 +218,8 @@ public class SalaryService {
         return new GroupResolution(group, real);
     }
 
-    private void validate(SalarySubmissionRequest request) {
+    /** AdminSalaryService가 등록 검증 규칙을 그대로 재사용한다(FO와 다른 검증 규칙이 생기지 않도록). */
+    public void validate(SalarySubmissionRequest request) {
         if (!EMPLOYMENT_TYPES.contains(request.getEmploymentType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "고용형태를 선택해주세요.");
         }
@@ -239,7 +240,8 @@ public class SalaryService {
         }
     }
 
-    private SalarySubmission toEntity(SalarySubmissionRequest request) {
+    /** AdminSalaryService가 등록 시 매핑 규칙을 그대로 재사용한다. */
+    public SalarySubmission toEntity(SalarySubmissionRequest request) {
         SalarySubmission submission = new SalarySubmission();
         submission.setUserSq(request.getUserSq());
         submission.setEmploymentType(request.getEmploymentType());

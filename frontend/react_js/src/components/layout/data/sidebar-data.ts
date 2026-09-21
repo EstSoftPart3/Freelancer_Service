@@ -33,6 +33,7 @@ import {
   FolderKanban,
   Sprout,
   UserRoundPlus,
+  Wallet,
 } from 'lucide-react'
 // import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -120,6 +121,11 @@ export const sidebarData: SidebarData = {
               title: '면접후기 관리',
               url: '/contents/interview',
               icon: MessagesSquare,
+            },
+            {
+              title: '연봉 제출건 관리',
+              url: '/contents/salary',
+              icon: Wallet,
             },
             {
               title: '공지사항 관리',
