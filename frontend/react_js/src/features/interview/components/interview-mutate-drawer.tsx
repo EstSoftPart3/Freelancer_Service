@@ -58,7 +58,7 @@ export function InterviewMutateDrawer({ open, onOpenChange, currentRow }: Props)
   const [difficultyStar, setDifficultyStar] = useState(0)
   const [isFetching, setIsFetching] = useState(false)
 
-  const { register, handleSubmit, setValue, watch, reset } = useForm<InterviewForm>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { isSubmitting } } = useForm<InterviewForm>({
     resolver: zodResolver(schema),
     defaultValues: {
       companyNm: '',
@@ -311,7 +311,7 @@ export function InterviewMutateDrawer({ open, onOpenChange, currentRow }: Props)
               </div>
 
               <SheetFooter>
-                <Button type='submit'>{isUpdate ? '수정완료' : '등록하기'}</Button>
+                <Button type='submit' disabled={isSubmitting}>{isUpdate ? '수정완료' : '등록하기'}</Button>
               </SheetFooter>
             </form>
           </>

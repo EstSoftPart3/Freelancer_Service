@@ -11,6 +11,7 @@ import {
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { CAREER_LEVELS, INTERVIEW_STAGES } from '@/components/interview/types'
 
 type FieldKey = 'companyNm' | 'jobNm' | 'careerLevel'
@@ -86,8 +87,8 @@ export default function InterviewWriteForm() {
       })
       alertStore.show('면접후기가 등록되었습니다.', 'success')
       router.push('/interview')
-    } catch {
-      alertStore.show('면접후기 등록에 실패했습니다.', 'danger')
+    } catch (err) {
+      alertStore.show(getApiErrorMessage(err, '면접후기 등록에 실패했습니다.'), 'danger')
     } finally {
       setSubmitting(false)
     }

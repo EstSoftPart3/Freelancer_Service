@@ -68,9 +68,11 @@ public class CommunityController {
 	 *
 	 * <p>
 	 * Phase2 게시판 재설계(2026-09) 이후 중분류는 공통코드 3200 그룹 밑에 평평하게 있지 않고,
-	 * 각 대분류 게시판 코드(1405 커리어소통 등)를 parent로 둔다. {@code boardType}을 주면 그
-	 * 대분류의 중분류만, 생략하면 옛 3200 그룹(현재는 전부 비활성)을 돌려준다 — 하위 호환용으로만
-	 * 남겨둔다.
+	 * 각 대분류 게시판 코드(1405 커리어소통 등)를 parent로 둔다 — 단, 일반게시판(NORMAL, 1401)만은
+	 * 예외로 지금도 3200 그룹 아래에 남아 있고 그 그룹은 여전히 활성이다(아래 activeCategoryCds의
+	 * 같은 예외 처리, {@code AdminSeedService} 시드 로직도 여전히 3200을 쓴다). {@code boardType}을
+	 * 주면 그 대분류의 중분류만(NORMAL이면 3200 그룹), 생략하면 옛 3200 그룹을 그대로 돌려준다 —
+	 * 하위 호환용으로만 남겨둔다.
 	 * </p>
 	 *
 	 * <p>
@@ -92,7 +94,11 @@ public class CommunityController {
 					.findFirst()
 					.orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
 							HttpStatus.BAD_REQUEST, "알 수 없는 게시판입니다: " + boardType));
-			parentCodeSq = type.getCode();
+			// 일반게시판(NORMAL, 1401)은 새 게시판 종류처럼 자기 코드를 parent로 카테고리를 새로 두지
+			// 않았다 — 예전 그대로 3200 그룹 아래에 있다(BoardService.activeCategoryCds와 같은 이유의
+			// 같은 예외 처리).
+			parentCodeSq = BoardTypeCode.NORMAL.equals(type) ? ParentCodeEnum.BOARD_CATEGORY.getCode()
+					: type.getCode();
 		}
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "게시판 카테고리 조회 성공",
 				commonCodeMapper.findActiveChildrenByParent(parentCodeSq)));

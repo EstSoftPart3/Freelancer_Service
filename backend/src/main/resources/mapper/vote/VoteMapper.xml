@@ -37,9 +37,9 @@
             AND v.vote_category_cd = #{category}
         </if>
         <choose>
-            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC </when>
-            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC </when>
-            <otherwise> ORDER BY v.vote_created_at_dtm DESC </otherwise>
+            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC, v.vote_sq ASC </when>
+            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC, v.vote_sq DESC </when>
+            <otherwise> ORDER BY v.vote_created_at_dtm DESC, v.vote_sq DESC </otherwise>
         </choose>
         LIMIT #{size} OFFSET #{offset}
     </select>
@@ -52,10 +52,6 @@
         <if test="category != null">
             AND vote_category_cd = #{category}
         </if>
-    </select>
-
-    <select id="findOptionsByVoteSq" resultType="com.example.demo.domain.vote.entity.VoteOption">
-        SELECT * FROM TBL_VOTE_OPTION_S WHERE vote_sq = #{voteSq} ORDER BY vote_option_order ASC
     </select>
 
     <select id="findOptionResultsByVoteSq" resultType="com.example.demo.domain.vote.dto.response.VoteOptionResultDTO">

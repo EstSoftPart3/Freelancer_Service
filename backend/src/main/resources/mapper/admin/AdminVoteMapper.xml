@@ -22,9 +22,9 @@
             AND v.vote_category_cd = #{category}
         </if>
         <choose>
-            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC </when>
-            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC </when>
-            <otherwise> ORDER BY v.vote_created_at_dtm DESC </otherwise>
+            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC, v.vote_sq ASC </when>
+            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC, v.vote_sq DESC </when>
+            <otherwise> ORDER BY v.vote_created_at_dtm DESC, v.vote_sq DESC </otherwise>
         </choose>
         LIMIT #{size} OFFSET #{offset}
     </select>

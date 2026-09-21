@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ListOrdered, Trophy } from 'lucide-react'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import { YEAR_BUCKETS, type PlatformRankingBoard, type RankingDimension } from '@/lib/salaryRanking'
 import type { RequiredSkillGroup } from '@/types'
@@ -58,6 +59,7 @@ export default function SalaryRankingScreen() {
   }, [forms])
 
   const [board, setBoard] = useState<PlatformRankingBoard | null>(null)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     // dimension별로 실제 필터 대상 값이 아직 안 정해졌으면(예: job 기준인데 forms 로딩 전) 기다린다
@@ -71,13 +73,30 @@ export default function SalaryRankingScreen() {
           years: dimension === 'years' ? years : undefined,
           region: dimension === 'region' ? region : undefined },
       })
-      .then(({ data }) => { if (!cancelled) setBoard(data.output) })
-      .catch(() => console.error('[SalaryRanking] 순위표 조회 실패'))
+      .then(({ data }) => { if (!cancelled) { setBoard(data.output); setLoadError('') } })
+      .catch((err) => {
+        if (!cancelled) setLoadError(getApiErrorMessage(err, '순위표를 불러오지 못했습니다.'))
+      })
     return () => { cancelled = true }
   }, [dimension, job, years, region])
 
   if (!board) {
-    return <div className="min-h-[calc(100vh-104px)] bg-white" />
+    return (
+      <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-3 bg-white px-4 text-center">
+        {loadError && (
+          <>
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="cursor-pointer rounded-full bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:opacity-90"
+            >
+              다시 시도
+            </button>
+          </>
+        )}
+      </div>
+    )
   }
 
   const conditionLabel =
@@ -102,6 +121,9 @@ export default function SalaryRankingScreen() {
           <p className="text-sm text-muted-foreground">
             전체 · 직무별 · 연차별 · 지역별로 랭킹을 나눠 볼 수 있어요. 실제 회원 제출 데이터
             기준이며, 표본이 부족한 조건은 예시 데이터가 섞여요.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            재직자의 연봉 기준 랭킹이에요. 프리랜서는 월 단가로 입력하기 때문에 연봉 랭킹에 포함되지 않아요.
           </p>
         </div>
 
@@ -191,12 +213,13 @@ export default function SalaryRankingScreen() {
             <ListOrdered className="h-4 w-4 text-indigo-600" />
             {conditionLabel} 랭킹
             <InfoTooltip label="랭킹 안내">
-              직무 · 연차 · 지역이 섞인 추정 인구 집단에서, 선택한 기준으로 걸러 연봉이 높은 순으로
-              보여드려요.
+              재직자 제출 데이터에서, 선택한 기준으로 걸러 연봉이 높은 순으로 보여드려요. 프리랜서는
+              월 단가로 입력하므로 연봉 랭킹에서 제외돼요.
             </InfoTooltip>
           </h2>
+          {loadError && <p className="mb-2 text-xs text-red-600">{loadError}</p>}
           <p className="mb-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            총 {board.totalCount.toLocaleString()}명 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
+            총 {board.totalCount.toLocaleString()}명(재직자 기준) 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
             {board.includesSeed && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                 예시 데이터 포함

@@ -47,6 +47,12 @@ public class SalaryStatsCalculator {
         return Math.min(99, Math.max(1, pct));
     }
 
+    /** 그룹 내 실제 등수 — 나보다 연봉이 높은 사람 수 + 1(동률은 같은 등수). */
+    public int rank(int mySalary, List<SalarySubmission> group) {
+        long higher = group.stream().filter(s -> s.getAnnualSalary() > mySalary).count();
+        return (int) Math.min(higher + 1, Math.max(1, group.size()));
+    }
+
     /** 히스토그램 9구간 — 그룹의 실제 최소~최대 범위를 균등 분할한다. */
     public List<HistogramBucketDTO> histogram(int mySalary, List<SalarySubmission> group) {
         int bucketCount = 9;
@@ -62,6 +68,10 @@ public class SalaryStatsCalculator {
             min -= pad;
             max += pad;
         }
+        // 양 끝을 10 단위로 바깥쪽 정렬한다 — 안 그러면 첫/마지막 구간 경계가 roundTo10 으로 안쪽에 깎여
+        // 최솟값·최댓값 표본(예: 5205)이 어느 구간에도 안 걸린다.
+        min = Math.floorDiv(min, 10) * 10;
+        max = -Math.floorDiv(-max, 10) * 10;
         double bucketWidth = (max - min) / (double) bucketCount;
 
         List<HistogramBucketDTO> buckets = new ArrayList<>();

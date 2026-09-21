@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { salaryApi } from '../api/salary-api'
+import { salaryApi, apiErrorMessage } from '../api/salary-api'
 import { SalaryMutateDrawer } from './salary-mutate-drawer'
 import { useSalary } from './salary-provider'
 import { SalaryViewDrawer } from './salary-view-drawer'
@@ -17,8 +17,8 @@ export function SalaryDialogs() {
       setOpen(null)
       setCurrentRow(null)
       setTimeout(() => window.location.reload(), 500)
-    } catch (_) {
-      toast.error('삭제 중 오류가 발생했습니다.')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, '삭제 중 오류가 발생했습니다.'))
     }
   }
 

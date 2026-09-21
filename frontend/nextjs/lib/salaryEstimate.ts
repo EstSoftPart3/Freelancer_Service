@@ -54,6 +54,7 @@ export interface JobChangeFeedItem {
 
 /** GET /salary/report 응답 전체 — SalaryReportData + 이직동향 피드 + 표본 메타. */
 export interface SalaryReportApiResponse extends SalaryReportData {
+  myRank: number // 비교 그룹 안 내 실제 등수(서버가 센 값)
   jobChangeFeed: JobChangeFeedItem[]
   sampleCount: number
   realSampleCount: number

@@ -20,6 +20,7 @@ export function VoteList() {
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [sortType, setSortType] = useState('latest')
   const [page, setPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -37,6 +38,7 @@ export function VoteList() {
 
       if (response.status === 'OK' || response.output) {
         setData(response.output.votes)
+        setTotalCount(response.output.totalElements)
       }
     } catch (_) {
       toast.error('목록 조회 실패')
@@ -78,6 +80,7 @@ export function VoteList() {
         ) : (
           <VoteTable
             data={data}
+            totalCount={totalCount}
             keyword={keyword}
             setKeyword={setKeyword}
             setPage={setPage}

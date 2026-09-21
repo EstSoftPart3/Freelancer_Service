@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Award, Briefcase, Flame, RotateCcw, Sparkles, TrendingUp, Users } from 'lucide-react'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { useUserStore } from '@/stores/userStore'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { InfoTooltip } from '@/components/ui/tooltip'
@@ -13,6 +14,16 @@ import {
   type SalaryCalcInput,
   type SalaryReportApiResponse,
 } from '@/lib/salaryEstimate'
+
+// GET /salary/submissions/me 중 이 화면 헤더에 필요한 필드만
+interface SubmissionMe {
+  employmentType: SalaryCalcInput['employment']
+  jobNm: string
+  careerBucket: string
+  regionNm: string
+  skillTagNms: string[]
+  annualSalary: number
+}
 
 function formatMan(n: number): string {
   return `${Math.round(n).toLocaleString()}만원`
@@ -29,34 +40,47 @@ export default function SalaryReportScreen() {
   const myLabel = userNickname ?? '나'
   const [input, setInput] = useState<SalaryCalcInput | null | undefined>(undefined) // undefined = 아직 확인 전
   const [report, setReport] = useState<SalaryReportApiResponse | null | undefined>(undefined)
+  const [loadError, setLoadError] = useState('')
 
   const [scenario, setScenario] = useState<'normal' | 'grind'>('normal')
   const [selectedBumps, setSelectedBumps] = useState<Set<string>>(new Set())
   const [hoveredBucket, setHoveredBucket] = useState<number | null>(null)
 
   useEffect(() => {
-    // sessionStorage는 서버에 없어서 SSR과 값이 다를 수밖에 없다 — 하이드레이션 직후
-    // 이펙트에서 한 번만 읽어야 서버·클라이언트 첫 렌더가 어긋나지 않는다.
-    const raw = sessionStorage.getItem('salaryCalcInput')
-    if (!raw) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInput(null)
-      return
-    }
-    try {
-      setInput(JSON.parse(raw))
-    } catch {
-      setInput(null)
-    }
-  }, [])
-
-  useEffect(() => {
     // Analyzing(D) 화면이 이미 제출을 끝내고 넘어온 경우다 — 여기서는 결과만 읽는다.
-    // 401/404(제출 이력 없음)면 계산기로 돌려보낸다.
-    api
-      .get<{ output: SalaryReportApiResponse }>('/salary/report')
-      .then(({ data }) => setReport(data.output))
-      .catch(() => setReport(null))
+    // 헤더의 조건 문구는 sessionStorage(탭 단위·다른 계정 값이 남을 수 있음) 대신 서버에 저장된
+    // 내 제출 이력에서 가져온다 — 새 탭·재방문에서도 리포트가 열리고 리포트 수치와 항상 일치한다.
+    // 404(제출 이력 없음)만 계산기 안내로 돌려보내고, 그 외 실패는 서버 메시지를 보여준다.
+    let cancelled = false
+    Promise.all([
+      api.get<{ output: SubmissionMe }>('/salary/submissions/me'),
+      api.get<{ output: SalaryReportApiResponse }>('/salary/report'),
+    ])
+      .then(([me, rep]) => {
+        if (cancelled) return
+        const m = me.data.output
+        setInput({
+          employment: m.employmentType,
+          job: m.jobNm,
+          years: m.careerBucket,
+          region: m.regionNm,
+          stack: m.skillTagNms,
+          salary: m.annualSalary,
+        })
+        setReport(rep.data.output)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        if ((err as { response?: { status?: number } })?.response?.status === 404) {
+          setInput(null)
+          setReport(null)
+          return
+        }
+        setLoadError(getApiErrorMessage(err, '연봉 리포트를 불러오지 못했습니다.'))
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const feed = useMemo(() => report?.jobChangeFeed ?? [], [report])
@@ -66,7 +90,23 @@ export default function SalaryReportScreen() {
     return buildJobChangeSalaryBands(report.mySalary, feed)
   }, [report, feed])
 
-  // 로딩 중(아직 sessionStorage·리포트 확인 전)
+  if (loadError) {
+    return (
+      <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-4 bg-white px-4 text-center">
+        <h1 className="text-xl font-bold text-foreground">{loadError}</h1>
+        <p className="text-sm text-muted-foreground">잠시 후 다시 시도해 주세요.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-2 cursor-pointer rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:opacity-90"
+        >
+          다시 시도
+        </button>
+      </div>
+    )
+  }
+
+  // 로딩 중(아직 내 제출 이력·리포트 확인 전)
   if (input === undefined || report === undefined) {
     return <div className="min-h-[calc(100vh-104px)] bg-white" />
   }
@@ -96,10 +136,10 @@ export default function SalaryReportScreen() {
     .reduce((sum, c) => sum + c.bumpPct, 0)
   const bumpedSalary = report.mySalary * (1 + combinedBumpPct / 100)
 
-  const maxBucketCount = Math.max(...report.histogram.map((b) => b.count))
+  const maxBucketCount = Math.max(1, ...report.histogram.map((b) => b.count))
   const gaugePosition = Math.min(96, Math.max(4, 100 - report.percentileTop))
   // "상위 N%" 는 직관적이지 않아 "표본 N명 중 내 등수" 로 바꿔 보여준다.
-  const myRank = Math.max(1, Math.round((report.percentileTop / 100) * report.sampleCount))
+  const myRank = report.myRank
 
   const projection = report.yearProjection[scenario]
   const isGrind = scenario === 'grind'
@@ -202,7 +242,7 @@ export default function SalaryReportScreen() {
         {/* 연봉 분포 히스토그램 */}
         <section className="mb-6 rounded-2xl border border-border bg-white p-6 shadow-sm md:p-8">
           <h2 className="mb-1 text-lg font-bold text-foreground">같은 조건 동료들과 비교하면</h2>
-          <p className="mb-6 text-xs text-muted-foreground">동료 약 1,200명 추정 분포 안에서 내 위치예요.</p>
+          <p className="mb-6 text-xs text-muted-foreground">표본 {report.sampleCount.toLocaleString()}명의 분포 안에서 내 위치예요.</p>
 
           <div className="relative flex h-40 items-end gap-1.5">
             {report.histogram.map((bucket, i) => {
@@ -245,7 +285,7 @@ export default function SalaryReportScreen() {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="mb-1 text-lg font-bold text-foreground">앞으로 {projection.length - 1}년, 이렇게 늘어날 수 있어요</h2>
-              <p className="text-xs text-muted-foreground">과거 성장 추세를 시드로 추정한 값이에요. 실제와 다를 수 있어요.</p>
+              <p className="text-xs text-muted-foreground">같은 직무·고용형태의 연차별 연봉 중앙값으로 추정한 값이에요. 실제와 다를 수 있어요.</p>
             </div>
             <div className="flex items-center gap-2">
               <div className="inline-flex rounded-full bg-muted p-1 text-xs font-semibold">
@@ -481,12 +521,18 @@ export default function SalaryReportScreen() {
                       {formatMan(f.fromSalary)} → {formatMan(f.toSalary)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {input.job} · {input.years} · {f.relativeTime}
+                      {input.job} · {f.relativeTime}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs font-bold text-[#0ca30c]">
-                    +{Math.round(((f.toSalary - f.fromSalary) / f.fromSalary) * 100)}%
-                  </span>
+                  {(() => {
+                    const pct = Math.round(((f.toSalary - f.fromSalary) / f.fromSalary) * 100)
+                    return (
+                      <span className={`shrink-0 text-xs font-bold ${pct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'}`}>
+                        {pct >= 0 ? '+' : ''}
+                        {pct}%
+                      </span>
+                    )
+                  })()}
                 </div>
               ))}
             </div>
@@ -506,7 +552,10 @@ export default function SalaryReportScreen() {
                   <div key={b.label} className="rounded-xl bg-muted/40 p-3.5 text-center">
                     <p className="text-xs font-medium text-muted-foreground">{b.label}</p>
                     <p className="mt-1 text-lg font-bold text-foreground">{formatMan(b.salary)}</p>
-                    <p className="text-xs font-semibold text-[#0ca30c]">+{b.pct}%</p>
+                    <p className={`text-xs font-semibold ${b.pct >= 0 ? 'text-[#0ca30c]' : 'text-red-500'}`}>
+                      {b.pct >= 0 ? '+' : ''}
+                      {b.pct}%
+                    </p>
                   </div>
                 ))}
               </div>

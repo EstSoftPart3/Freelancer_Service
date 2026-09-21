@@ -26,6 +26,7 @@ const route = getRouteApi('/_authenticated/contents/vote/')
 
 type DataTableProps = {
   data: AdminVote[]
+  totalCount: number
   keyword: string
   setKeyword: (val: string) => void
   setPage: (page: number) => void
@@ -34,6 +35,7 @@ type DataTableProps = {
 
 export function VoteTable({
   data,
+  totalCount,
   keyword,
   setKeyword,
   setPage,
@@ -65,6 +67,9 @@ export function VoteTable({
     manualSorting: true,
     manualFiltering: true,
     manualPagination: true,
+    // 서버 페이지네이션 — 전체 건수를 알려 주지 않으면 pageCount 가 현재 페이지 행수(<=10)로
+    // 계산돼 2페이지 이상으로 갈 수 없고 ensurePageInRange 가 매번 1페이지로 되돌린다.
+    pageCount: Math.ceil(totalCount / 10),
 
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,

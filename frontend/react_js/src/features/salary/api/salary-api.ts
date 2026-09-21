@@ -1,6 +1,12 @@
 import { api } from '@/lib/api'
 import type { AdminSalary } from '../data/schema'
 
+// 서버가 내려준 실패 사유(400/409 등 { message })를 그대로 보여주기 위한 추출기 — 없으면 fallback.
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+  return message || fallback
+}
+
 export interface ApiResponse<T> {
   status: string
   message: string

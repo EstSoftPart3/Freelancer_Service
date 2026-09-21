@@ -26,9 +26,10 @@
         LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
         <include refid="adminWhere" />
         <choose>
-            <when test="sortType == 'oldest'"> ORDER BY m.created_at_dtm ASC </when>
-            <when test="sortType == 'salary_desc'"> ORDER BY m.annual_salary DESC </when>
-            <otherwise> ORDER BY m.created_at_dtm DESC </otherwise>
+            <when test="sortType == 'oldest'"> ORDER BY m.created_at_dtm ASC, m.salary_submission_sq ASC </when>
+            <when test="sortType == 'salary_desc'"> ORDER BY m.annual_salary DESC, m.salary_submission_sq DESC </when>
+            <when test="sortType == 'salary_asc'"> ORDER BY m.annual_salary ASC, m.salary_submission_sq DESC </when>
+            <otherwise> ORDER BY m.created_at_dtm DESC, m.salary_submission_sq DESC </otherwise>
         </choose>
         LIMIT #{size} OFFSET #{offset}
     </select>

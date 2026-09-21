@@ -203,6 +203,18 @@ public class AnswerService {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "고객의 소리 답변은 운영자만 등록할 수 있습니다.");
 		}
 
+		// adoptAnswer 와 같은 가드다. vocTarget 조회는 VOC 여부만 가리므로 그 외
+		// 답변 미지원 게시판(공고/팀업/라운지 등)에 대한 답변 생성 자체를 막지 못했다.
+		if (vocTarget == null) {
+			Board targetBoard = boardMapper.findByIdAny(answerRequest.getBoardSq());
+			if (targetBoard == null) {
+				throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
+			}
+			if (!BoardTypeCode.of(targetBoard.getBoardTypeCd()).isSupportsAnswer()) {
+				throw new IllegalArgumentException("답변은 답변이 지원되는 게시판에서만 등록할 수 있습니다.");
+			}
+		}
+
 		Answer answer = Answer.builder()
 				.userSq(answerRequest.getUserSq())
 				.boardSq(answerRequest.getBoardSq())
@@ -227,8 +239,11 @@ public class AnswerService {
 				notificationService.send(
 						questionerSq, // 수신자: 질문자/문의자
 						answer.getUserSq(), // 발신자: 답변자
-						isVoc ? 2607L : 2605L, // 타입: 고객의소리 답변 / Q&A 답변
-						isVoc ? "내 문의에 답변이 등록되었습니다." : "내 질문에 새로운 답변이 등록되었습니다.",
+						isVoc ? 2607L : 2605L, // 타입: 고객의소리 답변 / 게시판 답변
+						// 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 "질문"으로 못박아도 됐지만,
+						// 커리어/기술소통도 답변을 지원하게 되면서 문구를 게시판 유형에 못박지 않는다
+						// (CommentService 의 같은 이유의 같은 수정).
+						isVoc ? "내 문의에 답변이 등록되었습니다." : "내 게시글에 새로운 답변이 등록되었습니다.",
 						isVoc ? targetUrl : targetUrl + "?answerSq=" + answer.getAnswerSq());
 			}
 		}

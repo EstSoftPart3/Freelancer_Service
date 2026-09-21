@@ -115,9 +115,14 @@ public class AdminSalaryService {
             if (request.getSeedNickname() == null || request.getSeedNickname().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "시드 닉네임을 입력해주세요.");
             }
+            // seed_nickname VARCHAR(20) — 초과하면 DB 에서 500 으로 터지므로 여기서 400 으로 막는다.
+            String seedNickname = request.getSeedNickname().trim();
+            if (seedNickname.length() > 20) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "시드 닉네임은 20자 이하로 입력해주세요.");
+            }
             submission.setUserSq(null);
             submission.setIsSeedYn("Y");
-            submission.setSeedNickname(request.getSeedNickname());
+            submission.setSeedNickname(seedNickname);
         } else {
             if (request.getUserSq() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "실데이터 등록은 회원을 지정해야 합니다.");

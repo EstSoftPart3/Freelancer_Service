@@ -35,8 +35,8 @@ export default function SkillPickerModal({ open, groups, selected, onClose, onCo
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (o) { setLocal(selected); setSearch('') }
-        if (!o) onClose()
+        // open 은 부모가 제어해 o=true 콜백이 오지 않는다 — 검색어 초기화는 닫을 때 한다.
+        if (!o) { setLocal(selected); setSearch(''); onClose() }
       }}
     >
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-xl">
@@ -109,14 +109,14 @@ export default function SkillPickerModal({ open, groups, selected, onClose, onCo
         <DialogFooter className="border-t px-5 py-4">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { setLocal(selected); setSearch(''); onClose() }}
             className="cursor-pointer rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             취소
           </button>
           <button
             type="button"
-            onClick={() => { onConfirm(local); onClose() }}
+            onClick={() => { onConfirm(local); setSearch(''); onClose() }}
             className="cursor-pointer rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
           >
             선택 완료

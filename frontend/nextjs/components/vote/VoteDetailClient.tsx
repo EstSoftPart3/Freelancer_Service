@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { incrementView } from '@/lib/viewCount'
 import type { VoteDetail } from '@/components/vote/types'
 
@@ -43,17 +44,22 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
 
   useEffect(() => {
     // SSR 조회가 일시 장애로 실패했다면(initialData null) 인증 여부와 무관하게 즉시 재시도한다.
-    if (initialData == null) {
-      api
-        .get<{ output: VoteDetail }>(`/votes/${voteSq}`)
-        .then(({ data }) => {
-          setVote(data.output)
-          if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
-        })
-        .catch(() => alertStore.show('투표 정보를 불러올 수 없습니다.', 'danger'))
-      return
-    }
+    // authChecked 를 의존성에 넣지 않는다 — 넣으면 authChecked 가 false→true 로 바뀔 때
+    // 아래 authChecked 갱신용 effect와 함께 이 fetch도 다시 돌아 같은 요청이 중복 발생한다.
+    if (initialData != null) return
+    api
+      .get<{ output: VoteDetail }>(`/votes/${voteSq}`)
+      .then(({ data }) => {
+        setVote(data.output)
+        if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
+      })
+      .catch(() => alertStore.show('투표 정보를 불러올 수 없습니다.', 'danger'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voteSq, initialData])
 
+  useEffect(() => {
+    // SSR 조회 자체가 실패했다면 위 effect가 이미 처리한다.
+    if (initialData == null) return
     // 서버 SSR 조회는 비인증 요청이라 내 투표 여부(myVoteOptionSq)를 알 수 없다 — 마운트 후 1회 갱신한다
     // (BoardDetailClient가 viewerSq를 처리하는 것과 같은 패턴).
     if (!authChecked) return
@@ -87,8 +93,20 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
       setVote(data.output)
       setShowBars(true)
       alertStore.show('투표가 완료되었습니다.', 'success')
-    } catch {
-      alertStore.show('투표에 실패했습니다. 이미 참여했거나 마감된 투표일 수 있습니다.', 'danger')
+    } catch (err) {
+      alertStore.show(
+        getApiErrorMessage(err, '투표에 실패했습니다. 이미 참여했거나 마감된 투표일 수 있습니다.'),
+        'danger',
+      )
+      // 다른 탭·기기에서 이미 참여했거나 그새 마감된 경우(409/400) 화면이 옛 상태로 남아
+      // 같은 실패를 되풀이하지 않도록 서버 상태로 다시 맞춘다.
+      api
+        .get<{ output: VoteDetail }>(`/votes/${voteSq}`)
+        .then(({ data }) => {
+          setVote(data.output)
+          if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
+        })
+        .catch(() => {})
     } finally {
       setSubmitting(false)
     }

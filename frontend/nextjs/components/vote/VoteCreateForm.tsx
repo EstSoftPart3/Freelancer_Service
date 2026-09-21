@@ -9,6 +9,7 @@ import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { VOTE_CATEGORIES } from './types'
 
 type FieldKey = 'ttl' | 'endDt' | 'options' | 'category'
@@ -50,8 +51,8 @@ export default function VoteCreateForm() {
       })
       alertStore.show('투표가 등록되었습니다.', 'success')
       router.push('/vote')
-    } catch {
-      alertStore.show('투표 등록에 실패했습니다.', 'danger')
+    } catch (err) {
+      alertStore.show(getApiErrorMessage(err, '투표 등록에 실패했습니다.'), 'danger')
     } finally {
       setSubmitting(false)
     }

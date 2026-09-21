@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { boardApi } from '../api/board-api'
-import { ANSWER_TYPE_CD, MANAGED_BOARD_TYPES } from '../data/board-type'
+import { ANSWER_TYPE_CD, BOARD_TYPE_BADGE, LEGACY_BOARD_META, MANAGED_BOARD_TYPES } from '../data/board-type'
 import { type AdminBoard } from '../data/schema'
 import { boardColumns as columns } from './board-columns'
 
@@ -67,13 +67,17 @@ export function BoardTable({
     { label: string; value: string }[]
   >([])
 
-  // 카테고리 필터는 유형과 별개 축(전역 다중선택)이라, 관리 대상 5종 게시판의 중분류를
-  // 전부 모아 한 번에 보여준다. 이름이 서로 겹치지 않아 게시판 구분 없이 평평하게 나열해도 된다.
+  // 카테고리 필터는 유형과 별개 축(전역 다중선택)이라, 관리 대상 5종 게시판 + 레거시
+  // 일반게시판(1401, 이관 후에도 목록엔 여전히 남는다)의 중분류를 전부 모아 한 번에 보여준다.
+  // 이름이 서로 겹치지 않아 게시판 구분 없이 평평하게 나열해도 된다.
   useEffect(() => {
     let cancelled = false
+    const legacyPaths = Object.values(LEGACY_BOARD_META)
+      .filter((t) => t.hasCategory)
+      .map((t) => t.path)
     Promise.all(
-      MANAGED_BOARD_TYPES.filter((t) => t.hasCategory).map((t) =>
-        boardApi.getBoardCategories(t.path).then((res) => res.output ?? [])
+      [...MANAGED_BOARD_TYPES.filter((t) => t.hasCategory).map((t) => t.path), ...legacyPaths].map((path) =>
+        boardApi.getBoardCategories(path).then((res) => res.output ?? [])
       )
     ).then((lists) => {
       if (cancelled) return
@@ -157,7 +161,14 @@ export function BoardTable({
     getCoreRowModel: getCoreRowModel(),
   })
 
+  // 관리 목록(managedTypeCds)엔 이관 후에도 옛 유형(1401·1402) 글이 여전히 남아 보이므로,
+  // 새 글 작성 선택지(MANAGED_BOARD_TYPES)만으로 필터를 구성하면 그 글들을 걸러볼 방법이
+  // 없어진다 — LEGACY_BOARD_META 키(1401·1402)를 필터 전용으로 추가한다.
   const typeOptions = [
+    ...Object.keys(LEGACY_BOARD_META).map((code) => ({
+      label: BOARD_TYPE_BADGE[Number(code)]?.label ?? code,
+      value: code,
+    })),
     ...MANAGED_BOARD_TYPES.map((t) => ({ label: t.label, value: String(t.code) })),
     { label: '답변', value: String(ANSWER_TYPE_CD) },
   ]

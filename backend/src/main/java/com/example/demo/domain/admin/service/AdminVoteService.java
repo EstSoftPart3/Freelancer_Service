@@ -2,7 +2,6 @@ package com.example.demo.domain.admin.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +17,7 @@ import com.example.demo.domain.vote.dto.response.VoteOptionResultDTO;
 import com.example.demo.domain.vote.entity.Vote;
 import com.example.demo.domain.vote.entity.VoteOption;
 import com.example.demo.domain.vote.mapper.VoteMapper;
+import com.example.demo.domain.vote.service.VoteService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,9 +32,6 @@ public class AdminVoteService {
 
     private final AdminVoteMapper adminVoteMapper;
     private final VoteMapper voteMapper;
-
-    // 공통코드 3250(IT) / 3251(일반) — parent 1410(투표_카테고리). VoteService 와 동일 기준.
-    private static final Set<Long> VALID_CATEGORY_CODES = Set.of(3250L, 3251L);
 
     @Transactional(readOnly = true)
     public VoteListResponse getAdminVotes(String keyword, Long category, String sortType, Long page, Long size) {
@@ -101,8 +98,14 @@ public class AdminVoteService {
         if (vote == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 투표입니다.");
         }
-        if (request.getVoteCategoryCd() == null || !VALID_CATEGORY_CODES.contains(request.getVoteCategoryCd())) {
+        if (request.getVoteCategoryCd() == null || !VoteService.VALID_CATEGORY_CODES.contains(request.getVoteCategoryCd())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
+        }
+        if (request.getVoteTtl() == null || request.getVoteTtl().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "제목을 입력해주세요.");
+        }
+        if (request.getVoteEndDt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "마감 일시를 선택해주세요.");
         }
 
         vote.setVoteTtl(request.getVoteTtl());
@@ -116,8 +119,9 @@ public class AdminVoteService {
             if (ballotCnt > 0) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 참여자가 있어 선택지를 수정할 수 없습니다.");
             }
-            if (request.getOptions().size() < 2) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상이어야 합니다.");
+            if (request.getOptions().size() < 2
+                    || request.getOptions().stream().anyMatch(opt -> opt == null || opt.isBlank())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상 입력해주세요.");
             }
             adminVoteMapper.deleteOptionsByVoteSq(voteSq);
             int order = 0;

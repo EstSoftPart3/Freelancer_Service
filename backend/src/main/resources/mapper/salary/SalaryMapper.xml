@@ -114,7 +114,7 @@
         AND m.company_nm IS NOT NULL AND TRIM(m.company_nm) != ''
         GROUP BY TRIM(m.company_nm)
         HAVING COUNT(*) >= 3
-        ORDER BY matchedCount DESC
+        ORDER BY matchedCount DESC, companyNm ASC
         LIMIT 5
     </select>
 
@@ -131,15 +131,17 @@
         FROM TBL_SALARY_SUBMISSION_M m
         LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
         WHERE m.job_nm = #{jobNm}
+        AND m.employment_type = #{employmentType}
         AND m.job_changed_ym IS NOT NULL AND m.job_changed_ym >= #{yearMonthFrom}
         AND m.prev_annual_salary IS NOT NULL
         AND m.salary_submission_is_deleted_yn = 'N'
-        ORDER BY m.job_changed_ym DESC
+        ORDER BY m.job_changed_ym DESC, m.salary_submission_sq DESC
         LIMIT #{limit}
     </select>
 
+    <!-- 프리랜서는 annual_salary 에 월단가(만원)가 들어가므로 연봉 순위·총원에 섞이지 않게 재직자만 집계한다. -->
     <sql id="rankingWhere">
-        WHERE 1=1
+        WHERE m.employment_type = 'EMPLOYED'
         <if test="jobNm != null">AND m.job_nm = #{jobNm}</if>
         <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
@@ -151,7 +153,7 @@
         FROM TBL_SALARY_SUBMISSION_M m
         LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
         <include refid="rankingWhere" />
-        ORDER BY m.annual_salary DESC
+        ORDER BY m.annual_salary DESC, m.salary_submission_sq ASC
         LIMIT #{limit}
     </select>
 

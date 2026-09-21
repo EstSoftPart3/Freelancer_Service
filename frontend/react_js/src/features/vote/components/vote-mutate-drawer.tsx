@@ -120,6 +120,12 @@ export function VoteMutateDrawer({ open, onOpenChange, currentRow }: Props) {
       toast.error('카테고리를 선택해주세요.')
       return
     }
+    // 서버(VoteService.createVote)가 과거 마감 일시를 400 으로 거절하는데, 이 화면은 실패 사유를
+    // 그대로 못 보여주고 일반 실패 문구만 띄우므로 등록 시에는 미리 안내한다.
+    if (!isUpdate && new Date(data.voteEndDt).getTime() <= Date.now()) {
+      toast.error('마감 일시는 현재 이후여야 합니다.')
+      return
+    }
     const trimmedOptions = options.map((o) => o.trim()).filter((o) => o.length > 0)
     if (!optionsLocked && trimmedOptions.length < 2) {
       toast.error('선택지는 2개 이상 입력해주세요.')

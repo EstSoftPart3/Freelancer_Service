@@ -1,10 +1,12 @@
 package com.example.demo.domain.salary.service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -43,6 +45,9 @@ public class SalaryService {
     private static final int MIN_GROUP_SAMPLE = 30;
     private static final Set<String> EMPLOYMENT_TYPES = Set.of("EMPLOYED", "FREELANCE");
     private static final Set<String> YEAR_BUCKETS = Set.of("1~2년", "3~5년", "6~9년", "10년+");
+    // 만원 단위 금액 상한(10억) — 순위표는 비로그인 공개라 터무니없는 값이 1위를 차지하지 못하게 막는다.
+    private static final int MAX_AMOUNT = 100_000;
+    private static final Pattern YM_PATTERN = Pattern.compile("[0-9]{4}-(0[1-9]|1[0-2])");
     private static final DateTimeFormatter YM_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
     private final SalaryMapper salaryMapper;
@@ -154,12 +159,13 @@ public class SalaryService {
         List<CompanyRecommendationDTO> companies = salaryMapper.findCompanyRecommendations(jobNm, careerFilter,
                 regionFilter, employmentType);
         String yearMonthFrom = LocalDate.now().minusMonths(3).format(YM_FORMAT);
-        List<JobChangeRawDTO> jobChangeRaw = salaryMapper.findJobChangeFeed(jobNm, yearMonthFrom, 4);
+        List<JobChangeRawDTO> jobChangeRaw = salaryMapper.findJobChangeFeed(jobNm, employmentType, yearMonthFrom, 4);
 
         return SalaryReportResponse.builder()
                 .mySalary(mySalary)
                 .meanSalary(meanSalary)
                 .percentileTop(calculator.percentileTop(mySalary, group))
+                .myRank(calculator.rank(mySalary, group))
                 .histogram(calculator.histogram(mySalary, group))
                 .yearProjection(calculator.yearProjection(mySalary, careerBucket, careerSeries))
                 .skillCandidates(calculator.skillCandidates(meanSalary, skillAverages))
@@ -214,7 +220,8 @@ public class SalaryService {
 
         relaxedConditions.add("연차");
         real = salaryMapper.countRealInGroup(jobNm, null, null, employmentType);
-        group = salaryMapper.findGroup(jobNm, null, null, employmentType, true);
+        includeSeed = real < MIN_REAL_SAMPLE;
+        group = salaryMapper.findGroup(jobNm, null, null, employmentType, includeSeed);
         return new GroupResolution(group, real);
     }
 
@@ -235,8 +242,62 @@ public class SalaryService {
         if (request.getAnnualSalary() == null || request.getAnnualSalary() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연봉을 입력해주세요.");
         }
-        if (request.getSkillTagNms() == null || request.getSkillTagNms().isEmpty()) {
+        if (request.getAnnualSalary() > MAX_AMOUNT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연봉은 " + MAX_AMOUNT + "만원 이하로 입력해주세요.");
+        }
+        if (request.getSkillTagNms() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "기술스택을 1개 이상 선택해주세요.");
+        }
+        // 공백·중복 제거(스킬별 평균 집계에서 같은 제출이 두 번 세어지지 않게) 후 다시 검사한다.
+        List<String> skills = request.getSkillTagNms().stream()
+                .filter(s -> s != null && !s.isBlank()).map(String::trim).distinct().toList();
+        if (skills.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "기술스택을 1개 이상 선택해주세요.");
+        }
+        request.setSkillTagNms(skills);
+
+        // 컬럼 길이 초과는 DB 에서 500 으로 터지므로 여기서 400 으로 막는다(TBL_SALARY_SUBMISSION_M/_SKILL_S 정의와 동일).
+        checkLength(request.getJobNm(), 100, "직무");
+        checkLength(request.getRegionNm(), 30, "지역");
+        checkLength(request.getAgeBand(), 20, "나이대");
+        checkLength(request.getEducationNm(), 50, "학력");
+        checkLength(request.getCompanySize(), 30, "회사 규모");
+        checkLength(request.getCompanyType(), 30, "회사 유형");
+        checkLength(request.getPositionNm(), 50, "직급");
+        checkLength(request.getTeamSize(), 30, "팀 규모");
+        checkLength(request.getEmploymentSubtype(), 30, "고용 세부");
+        checkLength(request.getRemoteType(), 30, "근무 형태");
+        checkLength(request.getStockOpt(), 10, "스톡옵션");
+        checkLength(request.getJobChangeCount(), 20, "이직 횟수");
+        checkLength(request.getCompanyNm(), 100, "회사명");
+        skills.forEach(s -> checkLength(s, 50, "기술스택"));
+
+        if (request.getBonusAmount() != null && (request.getBonusAmount() < 0 || request.getBonusAmount() > MAX_AMOUNT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "성과급을 올바르게 입력해주세요.");
+        }
+        // 0·음수 직전연봉은 이직 동향 인상률 계산(÷직전연봉)을 깨뜨린다.
+        if (request.getPrevAnnualSalary() != null
+                && (request.getPrevAnnualSalary() <= 0 || request.getPrevAnnualSalary() > MAX_AMOUNT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "직전 연봉을 올바르게 입력해주세요.");
+        }
+        // job_changed_ym CHAR(7) — 이직 동향 쿼리가 문자열 비교(>= 'yyyy-MM')를 하므로 형식이 어긋나면 안 된다.
+        if (request.getJobChangedYm() != null && !request.getJobChangedYm().isEmpty()
+                && !YM_PATTERN.matcher(request.getJobChangedYm()).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이직 시기는 YYYY-MM 형식으로 입력해주세요.");
+        }
+        // 미래 연월은 "이직 시기 >= 3개월 전" 조건을 영원히 만족해 이직 동향 피드 맨 위에 고정된다.
+        if (request.getJobChangedYm() != null && !request.getJobChangedYm().isEmpty()
+                && YearMonth.parse(request.getJobChangedYm(), YM_FORMAT).isAfter(YearMonth.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이직 시기는 이번 달 이전으로 입력해주세요.");
+        }
+        if (request.getJobChangedYm() != null && request.getJobChangedYm().isEmpty()) {
+            request.setJobChangedYm(null);
+        }
+    }
+
+    private static void checkLength(String value, int max, String label) {
+        if (value != null && value.length() > max) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, label + " 값이 너무 깁니다.");
         }
     }
 

@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import { incrementView } from '@/lib/viewCount'
 import { RESULT_LABEL, type InterviewDetail } from '@/components/interview/types'
 
@@ -63,8 +64,8 @@ export default function InterviewDetailClient({ interviewReviewSq, initialData }
       await api.patch(`/interviews/${interviewReviewSq}`)
       alertStore.show('면접후기가 삭제되었습니다.', 'success')
       router.push('/interview')
-    } catch {
-      alertStore.show('삭제에 실패했습니다.', 'danger')
+    } catch (err) {
+      alertStore.show(getApiErrorMessage(err, '삭제에 실패했습니다.'), 'danger')
     }
   }
 

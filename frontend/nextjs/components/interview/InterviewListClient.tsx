@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import CommonPagination from '@/components/community/CommonPagination'
 import InterviewCard from '@/components/interview/InterviewCard'
@@ -23,7 +23,8 @@ export default function InterviewListClient({ initialData }: Props) {
   const [totalPages, setTotalPages] = useState(
     initialData ? Math.max(1, Math.ceil(initialData.totalElements / PAGE_SIZE)) : 1,
   )
-  const [isLoading, setIsLoading] = useState(false)
+  // SSR 조회 실패(initialData null)면 첫 렌더부터 로딩 상태 — 빈 목록 문구가 SSR HTML 에 먼저 찍히지 않게 한다.
+  const [isLoading, setIsLoading] = useState(initialData == null)
   // 페이지 버튼을 연달아 누르면 먼저 보낸 느린 요청이 나중 요청보다 늦게 응답할 수 있다 —
   // 응답 순서가 아니라 "가장 마지막으로 보낸 요청"만 반영한다(BoardListClient와 같은 패턴).
   const requestSeqRef = useRef(0)
@@ -46,6 +47,12 @@ export default function InterviewListClient({ initialData }: Props) {
       if (seq === requestSeqRef.current) setIsLoading(false)
     }
   }, [])
+
+  // SSR 조회가 일시 장애로 실패했다면(initialData null) 빈 목록 문구 대신 마운트 후 CSR로 재시도한다
+  // (InterviewDetailClient 와 같은 처리).
+  useEffect(() => {
+    if (initialData == null) fetchPage(1)
+  }, [initialData, fetchPage])
 
   return (
     <div>

@@ -49,8 +49,15 @@ export default function LoginForm() {
   // 외부 도메인으로 열린 리다이렉트(오픈 리다이렉트)를 막기 위해 "/"로 시작하는 내부 경로만 허용한다.
   const redirectParam = searchParams.get('redirect')
   // "//evil.com" 처럼 "/"로 시작하지만 스킴 상대 URL로 해석돼 외부로 나가는 경우까지 막는다.
+  // "/\evil.com" 도 브라우저가 "//evil.com" 으로 정규화해 외부로 나가므로 백슬래시도 함께 막는다.
+  // 탭·개행 등 제어문자도 막는다 — URL 파서가 "/\t/evil.com" 의 탭을 지워 "//evil.com" 으로 만든다.
   const redirectTo =
-    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/'
+    redirectParam &&
+    redirectParam.startsWith('/') &&
+    !/^\/[/\\]/.test(redirectParam) &&
+    !/[\x00-\x1f\x7f]/.test(redirectParam)
+      ? redirectParam
+      : '/'
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
   const [autoLogin, setAutoLogin] = useState(false)

@@ -19,9 +19,9 @@
             AND (i.company_nm LIKE CONCAT('%', #{keyword}, '%') OR i.job_nm LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         <choose>
-            <when test="sortType == 'oldest'"> ORDER BY i.interview_created_at_dtm ASC </when>
-            <when test="sortType == 'view'"> ORDER BY i.interview_view_cnt DESC </when>
-            <otherwise> ORDER BY i.interview_created_at_dtm DESC </otherwise>
+            <when test="sortType == 'oldest'"> ORDER BY i.interview_created_at_dtm ASC, i.interview_review_sq ASC </when>
+            <when test="sortType == 'view'"> ORDER BY i.interview_view_cnt DESC, i.interview_review_sq DESC </when>
+            <otherwise> ORDER BY i.interview_created_at_dtm DESC, i.interview_review_sq DESC </otherwise>
         </choose>
         LIMIT #{size} OFFSET #{offset}
     </select>

@@ -38,7 +38,9 @@ public class VoteService {
     private final VoteMapper voteMapper;
 
     // 공통코드 3250(IT) / 3251(일반) — parent 1410(투표_카테고리).
-    private static final Set<Long> VALID_CATEGORY_CODES = Set.of(3250L, 3251L);
+    // public: AdminVoteService 가 같은 기준을 그대로 재사용한다(따로 선언하면 한쪽만 갱신되는
+    // 함정이 생긴다).
+    public static final Set<Long> VALID_CATEGORY_CODES = Set.of(3250L, 3251L);
 
     public VoteListResponse getAllVotes(String keyword, String sortType, Long category, Long page, Long size) {
         // page/size 를 그대로 LIMIT/OFFSET 에 흘려보내면 ?page=0·음수 는 음수 OFFSET 으로,
@@ -103,8 +105,20 @@ public class VoteService {
         if (request.getUserSq() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
         }
-        if (request.getOptions() == null || request.getOptions().size() < 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상이어야 합니다.");
+        // 프런트는 제목·마감일시를 필수로 검증하지만, 서버는 지금까지 옵션·카테고리만 막고 있었다
+        // — 직접 API를 호출하면 제목 없는 투표나, 영영 안 닫히는(마감일 없는) 투표가 생길 수 있었다.
+        if (request.getVoteTtl() == null || request.getVoteTtl().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "제목을 입력해주세요.");
+        }
+        if (request.getVoteEndDt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "마감 일시를 선택해주세요.");
+        }
+        if (!request.getVoteEndDt().isAfter(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "마감 일시는 현재 이후여야 합니다.");
+        }
+        if (request.getOptions() == null || request.getOptions().size() < 2
+                || request.getOptions().stream().anyMatch(opt -> opt == null || opt.isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상 입력해주세요.");
         }
         if (request.getVoteCategoryCd() == null || !VALID_CATEGORY_CODES.contains(request.getVoteCategoryCd())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
@@ -138,10 +152,13 @@ public class VoteService {
         if (vote == null || "Y".equals(vote.getVoteIsDeletedYn())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 투표입니다.");
         }
-        int updated = voteMapper.deleteVote(voteSq, userSq);
-        if (updated == 0) {
+        // 소유자 확인은 이미 읽어 둔 vote 로 여기서 끝낸다 — UPDATE 의 영향행수(0건)로
+        // "내 것이 아님"과 "그새 삭제됨"(동시에 다른 요청이 먼저 삭제한 경우)을 구분하려 하면
+        // 후자를 전자로 오판해 엉뚱한 403 메시지가 나간다.
+        if (!userSq.equals(vote.getUserSq())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인이 작성한 투표만 삭제할 수 있습니다.");
         }
+        voteMapper.deleteVote(voteSq, userSq);
     }
 
     public void addViewCnt(Long voteSq) {

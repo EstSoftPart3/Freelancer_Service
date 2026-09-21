@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { salaryApi } from '../api/salary-api'
+import { salaryApi, apiErrorMessage } from '../api/salary-api'
 import { employmentTypeLabel } from '../data/constants'
 import { type AdminSalary } from '../data/schema'
 import { useSalary } from './salary-provider'
@@ -24,10 +24,11 @@ export function SalaryViewDrawer() {
     if (open === 'view' && currentRow?.salarySubmissionSq) {
       try {
         setIsLoading(true)
+        setDetail(null) // 실패 시 이전 행의 상세가 남아 다른 제출건처럼 보이지 않게
         const response = await salaryApi.getSubmissionDetail(currentRow.salarySubmissionSq)
         setDetail(response.output)
-      } catch (_) {
-        toast.error('데이터를 불러오는 중 에러가 발생했습니다.')
+      } catch (err) {
+        toast.error(apiErrorMessage(err, '데이터를 불러오는 중 에러가 발생했습니다.'))
       } finally {
         setIsLoading(false)
       }

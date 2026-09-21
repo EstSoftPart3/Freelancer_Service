@@ -51,3 +51,12 @@ export const ANSWER_SUPPORTED_TYPE_CDS: readonly number[] = [
   1402,
   ...MANAGED_BOARD_TYPES.filter((t) => t.supportsAnswer).map((t) => t.code),
 ]
+
+// 새 글 작성 유형 선택지(MANAGED_BOARD_TYPES)에는 안 올린다 — 하지만 이관 후에도 남아있을 수
+// 있는 옛 글(1401·1402)을 BO 목록에서 열면(관리 목록은 managedTypeCds로 이 둘도 여전히 보여준다)
+// 카테고리/기술태그 표시가 필요하다. 이 값이 없으면 수정 드로어가 유형을 못 찾아 카테고리
+// 선택 UI 자체가 사라지고, 카테고리가 필수인 일반게시글(1401)은 저장이 항상 실패한다.
+export const LEGACY_BOARD_META: Record<string, { path: string; hasCategory: boolean; supportsSkillTag: boolean }> = {
+  '1401': { path: 'board', hasCategory: true, supportsSkillTag: false },
+  '1402': { path: 'qna', hasCategory: false, supportsSkillTag: true },
+}

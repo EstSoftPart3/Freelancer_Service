@@ -22,7 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { salaryApi } from '../api/salary-api'
+import { salaryApi, apiErrorMessage } from '../api/salary-api'
 import {
   COMPANY_SIZES,
   COMPANY_TYPES,
@@ -140,7 +140,14 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
   const [isFetching, setIsFetching] = useState(false)
   const [isSeedYn, setIsSeedYn] = useState<'Y' | 'N'>('N')
 
-  const { register, handleSubmit, setValue, watch, reset } = useForm<SalaryForm>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<SalaryForm>({
     resolver: zodResolver(schema),
     defaultValues: EMPTY_VALUES,
   })
@@ -178,8 +185,8 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
           jobChangedYm: detail.jobChangedYm ?? '',
         })
         setIsSeedYn(detail.isSeedYn)
-      } catch (_) {
-        toast.error('데이터를 불러오는데 실패했습니다.')
+      } catch (err) {
+        toast.error(apiErrorMessage(err, '데이터를 불러오는데 실패했습니다.'))
         onOpenChange(false)
       } finally {
         setIsFetching(false)
@@ -247,8 +254,8 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
 
       onOpenChange(false)
       setTimeout(() => window.location.reload(), 500)
-    } catch (_) {
-      toast.error('저장에 실패했습니다.')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, '저장에 실패했습니다.'))
     }
   }
 
@@ -316,7 +323,7 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 />
                 <div className='space-y-2'>
                   <Label htmlFor='jobNm'>직무</Label>
-                  <Input id='jobNm' {...register('jobNm')} placeholder='직무를 입력하세요.' />
+                  <Input id='jobNm' {...register('jobNm')} placeholder='FO 직무명과 동일하게 (예: 백엔드/서버개발)' />
                 </div>
               </div>
 
@@ -330,7 +337,7 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
                 />
                 <div className='space-y-2'>
                   <Label htmlFor='regionNm'>지역</Label>
-                  <Input id='regionNm' {...register('regionNm')} placeholder='예: 서울' />
+                  <Input id='regionNm' {...register('regionNm')} placeholder='FO 지역명과 동일하게 (예: 서울특별시)' />
                 </div>
               </div>
 
@@ -431,7 +438,7 @@ export function SalaryMutateDrawer({ open, onOpenChange, currentRow }: Props) {
               </div>
 
               <SheetFooter>
-                <Button type='submit'>{isUpdate ? '수정완료' : '등록하기'}</Button>
+                <Button type='submit' disabled={isSubmitting}>{isUpdate ? '수정완료' : '등록하기'}</Button>
               </SheetFooter>
             </form>
           </>

@@ -65,6 +65,11 @@ public class InterviewService {
         if (review == null || "Y".equals(review.getInterviewIsDeletedYn())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 면접후기입니다.");
         }
+        return toDetail(review);
+    }
+
+    /** FO 상세와 BO 상세(삭제된 후기 포함)가 같이 쓰는 엔티티 → 응답 변환. */
+    public InterviewDetailResponse toDetail(InterviewReview review) {
         return InterviewDetailResponse.builder()
                 .interviewReviewSq(review.getInterviewReviewSq())
                 .userSq(review.getUserSq())
@@ -96,18 +101,7 @@ public class InterviewService {
         if (request.getUserSq() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 이용해주세요.");
         }
-        if (request.getCompanyNm() == null || request.getCompanyNm().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회사명을 입력해주세요.");
-        }
-        if (request.getJobNm() == null || request.getJobNm().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "직무를 선택해주세요.");
-        }
-        if (request.getCareerLevel() == null || request.getCareerLevel().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "경력을 선택해주세요.");
-        }
-        if (request.getDifficultyStar() != null && (request.getDifficultyStar() < 1 || request.getDifficultyStar() > 5)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "면접난이도는 1~5 사이여야 합니다.");
-        }
+        validateContent(request);
 
         InterviewReview review = new InterviewReview();
         review.setUserSq(request.getUserSq());
@@ -123,6 +117,25 @@ public class InterviewService {
         review.setProposedSalary(request.getProposedSalary());
         interviewMapper.insert(review);
         return review.getInterviewReviewSq();
+    }
+
+    /** 등록(FO·BO)과 BO 수정이 같이 쓰는 내용 검증 — 두 곳에 규칙이 따로 생기지 않게 한다. */
+    public void validateContent(InterviewReviewRequest request) {
+        if (request.getCompanyNm() == null || request.getCompanyNm().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회사명을 입력해주세요.");
+        }
+        if (request.getJobNm() == null || request.getJobNm().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "직무를 선택해주세요.");
+        }
+        if (request.getCareerLevel() == null || request.getCareerLevel().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "경력을 선택해주세요.");
+        }
+        if (request.getDifficultyStar() != null && (request.getDifficultyStar() < 1 || request.getDifficultyStar() > 5)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "면접난이도는 1~5 사이여야 합니다.");
+        }
+        if (request.getProposedSalary() != null && request.getProposedSalary() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "제안 연봉은 0 이상이어야 합니다.");
+        }
     }
 
     public void deleteReview(Long userSq, Long interviewReviewSq) {

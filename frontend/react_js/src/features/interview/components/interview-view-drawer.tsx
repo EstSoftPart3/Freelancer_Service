@@ -24,6 +24,8 @@ export function InterviewViewDrawer() {
     if (open === 'view' && currentRow?.interviewReviewSq) {
       try {
         setIsLoading(true)
+        // 이전 행의 상세가 새 행 로딩·실패 화면에 그대로 비치지 않게 먼저 비운다.
+        setDetail(null)
         const response = await interviewApi.getReviewDetail(currentRow.interviewReviewSq)
         setDetail(response.output)
       } catch (_) {

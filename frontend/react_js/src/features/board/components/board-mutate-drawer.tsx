@@ -31,7 +31,7 @@ import {
 // 1. [에러 해결] boardApi와 AdminBoard로 임포트 변경
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { boardApi, type BoardCategory } from '../api/board-api'
-import { ANSWER_TYPE_CD, MANAGED_BOARD_TYPES } from '../data/board-type'
+import { ANSWER_TYPE_CD, LEGACY_BOARD_META, MANAGED_BOARD_TYPES } from '../data/board-type'
 import {
   templateFor,
   isHtmlEmpty,
@@ -108,9 +108,12 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
   const boardTypeCdValue = watch('boardTypeCd') // 유형 모니터링
   const categoryCdValue = watch('categoryCd')
 
-  const currentTypeMeta = MANAGED_BOARD_TYPES.find(
-    (t) => String(t.code) === boardTypeCdValue
-  )
+  // 관리 목록(managedTypeCds)은 이관 후에도 옛 유형(1401·1402) 글을 계속 보여줄 수 있다 —
+  // 새 글 유형 선택지엔 없지만, 그런 글을 열었을 때 카테고리/기술태그 UI가 사라지지 않도록
+  // LEGACY_BOARD_META로 보강한다.
+  const currentTypeMeta =
+    MANAGED_BOARD_TYPES.find((t) => String(t.code) === boardTypeCdValue) ??
+    LEGACY_BOARD_META[boardTypeCdValue ?? '']
   const showCategory = !isAnswerMode && !!currentTypeMeta?.hasCategory
   const showSkillTag = !isAnswerMode && !!currentTypeMeta?.supportsSkillTag
 
@@ -334,8 +337,9 @@ export function BoardMutateDrawer({ open, onOpenChange, currentRow, parentBoardS
                   value={boardTypeCdValue}
                   onValueChange={(val) => {
                     setValue('boardTypeCd', val)
-                    // 유형이 바뀌면 이전 유형의 카테고리 값은 더 이상 유효하지 않다 —
-                    // 비워둬야 카테고리 fetch 완료 후 새 유형의 첫 옵션이 자동 선택된다.
+                    // 유형이 바뀌면 이전 유형의 카테고리 값은 더 이상 유효하지 않다 — 비워서
+                    // 무효화한다. 자동으로 다시 채워지지 않는다(첫 옵션을 자동 선택하지 않는
+                    // 이유는 위 categoryOptions useEffect 주석 참고) — 관리자가 새로 골라야 한다.
                     setValue('categoryCd', '')
                   }}
                   disabled={isUpdate}

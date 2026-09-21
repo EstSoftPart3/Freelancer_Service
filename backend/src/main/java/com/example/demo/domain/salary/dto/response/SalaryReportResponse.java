@@ -21,6 +21,8 @@ public class SalaryReportResponse {
     private Integer mySalary;
     private Integer meanSalary;
     private Integer percentileTop;
+    // 비교 그룹 안 내 실제 등수(나보다 연봉 높은 사람 수 + 1) — percentileTop 을 되돌려 계산하면 clamp·반올림으로 왜곡된다.
+    private Integer myRank;
     private List<HistogramBucketDTO> histogram;
     private YearProjectionDTO yearProjection;
     private List<SkillBumpDTO> skillCandidates;

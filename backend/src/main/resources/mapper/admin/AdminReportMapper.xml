@@ -69,7 +69,7 @@
             <when test="sortField == 'statusCd'"> r.report_process_status_cd </when>
             <when test="sortField == 'originTypeCd'"> originTypeCd </when>
             <otherwise> r.report_created_at_dtm </otherwise>
-        </choose> ${sortOrder} LIMIT
+        </choose> ${sortOrder}, r.report_sq DESC LIMIT
         #{size} OFFSET #{offset} </select>
 
     <select id="findById" resultType="com.example.demo.domain.admin.dto.AdminReportListDTO"> SELECT <include

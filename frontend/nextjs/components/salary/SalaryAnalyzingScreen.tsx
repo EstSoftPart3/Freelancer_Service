@@ -112,7 +112,9 @@ export default function SalaryAnalyzingScreen() {
       api.post('/salary/submissions', toSubmissionRequest(input)),
       new Promise((resolve) => setTimeout(resolve, MIN_DISPLAY_MS)),
     ])
-      .then(() => { if (!cancelled) router.push('/salary/report') })
+      // replace — push 로 쌓으면 리포트에서 뒤로가기가 이 화면으로 돌아와 재제출+자동 이동이 반복돼
+      // 사용자가 리포트 이전(계산기)으로 못 돌아간다.
+      .then(() => { if (!cancelled) router.replace('/salary/report') })
       .catch((err) => {
         if (cancelled) return
         alertStore.show(getApiErrorMessage(err, '연봉 정보 제출에 실패했습니다.'), 'danger')

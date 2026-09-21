@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import CommonPagination from '@/components/community/CommonPagination'
 import VoteCard from '@/components/vote/VoteCard'
@@ -45,6 +45,13 @@ export default function VoteListClient({ initialData }: Props) {
     } finally {
       if (seq === requestSeqRef.current) setIsLoading(false)
     }
+  }, [])
+
+  // SSR 조회가 일시 장애로 실패했다면(initialData null) 빈 목록 문구가 그대로 남지 않도록
+  // 마운트 직후 1회 재시도한다(VoteDetailClient·BoardListClient와 같은 복구 경로).
+  useEffect(() => {
+    if (initialData == null) fetchPage(1, null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleCategoryChange = (c: number | null) => {

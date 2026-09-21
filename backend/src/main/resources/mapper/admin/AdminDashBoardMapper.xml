@@ -113,7 +113,7 @@
 		LEFT JOIN TBL_USER_M m ON t.user_sq = m.user_sq
 		WHERE t.board_is_deleted_yn = 'N'
 		  AND t.board_type_cd IN <foreach item="c" collection="dashboardTypeCds" open="(" separator="," close=")">#{c}</foreach>
-		ORDER BY t.board_created_at_dtm DESC
+		ORDER BY t.board_created_at_dtm DESC, t.board_sq DESC
 		LIMIT 5
 	</select>
 </mapper>

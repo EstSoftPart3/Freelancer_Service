@@ -54,8 +54,9 @@ public interface SalaryMapper {
             @Param("careerBucket") String careerBucket, @Param("regionNm") String regionNm,
             @Param("employmentType") String employmentType);
 
-    /** 최근 이직 동향 — 실+시드, 같은 직무, 최근 N개월(yearMonthFrom 이상). */
+    /** 최근 이직 동향 — 실+시드, 같은 직무·고용형태(프리랜서는 월단가라 연봉과 섞으면 안 된다), 최근 N개월(yearMonthFrom 이상). */
     List<JobChangeRawDTO> findJobChangeFeed(@Param("jobNm") String jobNm,
+            @Param("employmentType") String employmentType,
             @Param("yearMonthFrom") String yearMonthFrom, @Param("limit") int limit);
 
     /** 순위표 — dimension에 따라 job/years/region 중 필요한 것만 필터, 나머지는 null. */

@@ -71,11 +71,12 @@ export const salaryColumns: ColumnDef<AdminSalary>[] = [
     cell: ({ row }) => (
       <div className='w-[60px] text-center'>{row.getValue('salarySubmissionSq')}</div>
     ),
-    enableSorting: true,
+    enableSorting: false,
     enableHiding: false,
   },
   {
     accessorKey: 'jobNm',
+    enableSorting: false, // 서버는 최신/오래된/연봉 정렬만 지원
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='직무' />
     ),
@@ -83,6 +84,7 @@ export const salaryColumns: ColumnDef<AdminSalary>[] = [
   },
   {
     accessorKey: 'employmentType',
+    enableSorting: false, // 서버는 최신/오래된/연봉 정렬만 지원
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='고용형태' />
     ),
@@ -94,6 +96,7 @@ export const salaryColumns: ColumnDef<AdminSalary>[] = [
   },
   {
     accessorKey: 'careerBucket',
+    enableSorting: false, // 서버는 최신/오래된/연봉 정렬만 지원
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='연차' />
     ),
@@ -103,6 +106,7 @@ export const salaryColumns: ColumnDef<AdminSalary>[] = [
   },
   {
     accessorKey: 'regionNm',
+    enableSorting: false, // 서버는 최신/오래된/연봉 정렬만 지원
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='지역' />
     ),
@@ -123,6 +127,7 @@ export const salaryColumns: ColumnDef<AdminSalary>[] = [
   },
   {
     accessorKey: 'userNickname',
+    enableSorting: false, // 서버는 최신/오래된/연봉 정렬만 지원
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='작성자' />
     ),

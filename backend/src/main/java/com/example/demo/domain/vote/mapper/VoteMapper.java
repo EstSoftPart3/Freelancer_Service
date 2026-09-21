@@ -24,8 +24,6 @@ public interface VoteMapper {
 
     Long findAllCnt(@Param("keyword") String keyword, @Param("category") Long category);
 
-    List<VoteOption> findOptionsByVoteSq(@Param("voteSq") Long voteSq);
-
     List<VoteOptionResultDTO> findOptionResultsByVoteSq(@Param("voteSq") Long voteSq);
 
     Long countTotalBallots(@Param("voteSq") Long voteSq);

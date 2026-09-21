@@ -220,6 +220,8 @@ export default function MainPage({ initialProjects }: Props = {}) {
   const [projects, setProjects] = useState<PopularProject[]>(initialProjects ?? [])
   // 모집중 공고만 노출하므로 정말 0건일 수 있다 — "불러오는 중"과 "없음"을 구분한다
   const [loading, setLoading] = useState(!initialProjects?.length)
+  // 조회 실패는 "공고 없음"과 다르다 — 실패했는데 예시(더미) 카드를 실제 추천처럼 보여주지 않도록 구분한다
+  const [projectsFailed, setProjectsFailed] = useState(false)
   const [posts, setPosts] = useState<CommunityBestItem[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
@@ -258,6 +260,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
   const fetchPopularProjects = useCallback(async () => {
     const requestId = ++sortRequestSeq.current
     setLoading(true)
+    setProjectsFailed(false)
     try {
       // /projects/popular 는 ApiResponse 없이 List<> 직접 반환
       const { data } = await api.get<PopularProject[]>('/projects/popular', {
@@ -270,6 +273,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
     } catch {
       if (requestId !== sortRequestSeq.current) return
       console.error('[MainPage] 인기 프로젝트 로드 실패')
+      setProjectsFailed(true)
     } finally {
       if (requestId === sortRequestSeq.current) setLoading(false)
     }
@@ -281,12 +285,12 @@ export default function MainPage({ initialProjects }: Props = {}) {
 
   // 추천 게시글 — 커뮤니티 인기글과 같은 API(/community/best)를 직접 불러 카드로 렌더한다.
   // 기준은 월간 인기(최근 30일, 조회×1+댓글×2+추천×3)로 고정 — 탭 없이 안내 아이콘으로만 알려준다.
-  // 노출량이 많아야 해서(최대 50건) 주간보다 표본이 넉넉한 월간으로 잡았다.
+  // 노출량이 많아야 해서(서버 상한 20건) 주간보다 표본이 넉넉한 월간으로 잡았다.
   useEffect(() => {
     let cancelled = false
     setPostsLoading(true)
     api
-      .get<{ output: CommunityBestItem[] }>('/community/best', { params: { period: 'monthly', size: 50 } })
+      .get<{ output: CommunityBestItem[] }>('/community/best', { params: { period: 'monthly', size: 20 } })
       .then(({ data }) => { if (!cancelled) setPosts(data.output ?? []) })
       .catch(() => { if (!cancelled) setPosts([]) })
       .finally(() => { if (!cancelled) setPostsLoading(false) })
@@ -412,6 +416,17 @@ export default function MainPage({ initialProjects }: Props = {}) {
               </div>
             ) : loading ? (
               <p className="py-8 text-center text-sm text-muted-foreground">프로젝트를 불러오는 중...</p>
+            ) : projectsFailed ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                <p>프로젝트를 불러오지 못했습니다.</p>
+                <button
+                  type="button"
+                  onClick={fetchPopularProjects}
+                  className="mt-3 cursor-pointer rounded-full border border-input bg-background px-4 py-1.5 font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  다시 시도
+                </button>
+              </div>
             ) : (
               // 모집중 공고가 하나도 없을 때 — 카드 그리드가 실제로 채워지면 어떤 모습일지 예시 데이터로 보여준다(시연용).
               <div>

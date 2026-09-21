@@ -758,10 +758,10 @@
 			<property name="alias" value="" />
 		</include>
 		<choose>
-			<when test="sortType == 'views'"> ORDER BY project_view_cnt DESC </when>
-			<when test="sortType == 'scraps'"> ORDER BY project_scrap_cnt DESC </when>
-			<when test="sortType == 'apps'"> ORDER BY project_candidate_cnt DESC </when>
-			<otherwise> ORDER BY project_created_at_dtm DESC </otherwise>
+			<when test="sortType == 'views'"> ORDER BY project_view_cnt DESC, project_sq DESC </when>
+			<when test="sortType == 'scraps'"> ORDER BY project_scrap_cnt DESC, project_sq DESC </when>
+			<when test="sortType == 'apps'"> ORDER BY project_candidate_cnt DESC, project_sq DESC </when>
+			<otherwise> ORDER BY project_created_at_dtm DESC, project_sq DESC </otherwise>
 		</choose> LIMIT
 		#{limit} </select>
 

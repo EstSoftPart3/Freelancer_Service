@@ -305,10 +305,21 @@ public class BoardService {
 	 * 코드(1405 커리어소통 등)를 parent로 둔다. {@code boardTypeCd}가 null이면(통합목록) 중분류
 	 * 개념이 없으므로 빈 집합을 돌려준다 — 통합목록에서 카테고리 필터를 걸 일이 없다.
 	 * </p>
+	 *
+	 * <p>
+	 * 일반게시판(NORMAL, 1401)만은 예외다 — 새 게시판 종류처럼 자기 코드(1401)를 parent로 카테고리를
+	 * 새로 두지 않았고, 예전 그대로 {@link ParentCodeEnum#BOARD_CATEGORY}(3200) 그룹 아래에 있다
+	 * ({@code AdminSeedService}의 시드 로직도 여전히 3200을 쓴다 — 여기서만 1401을 parent로 조회하면
+	 * 활성 카테고리가 하나도 안 잡혀서, 기존 글의 카테고리를 그대로 보낸 수정 요청까지 "존재하지
+	 * 않는 카테고리"로 거절된다).
+	 * </p>
 	 */
 	private Set<Long> activeCategoryCds(Long boardTypeCd) {
 		if (boardTypeCd == null) return Set.of();
-		return commonCodeMapper.findActiveChildrenByParent(boardTypeCd)
+		Long parentCodeSq = BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)
+				? ParentCodeEnum.BOARD_CATEGORY.getCode()
+				: boardTypeCd;
+		return commonCodeMapper.findActiveChildrenByParent(parentCodeSq)
 				.stream()
 				.map(CommonCodeDTO::getCommonCodeSq)
 				.collect(Collectors.toSet());

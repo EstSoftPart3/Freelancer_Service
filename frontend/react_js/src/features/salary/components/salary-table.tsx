@@ -26,17 +26,17 @@ const route = getRouteApi('/_authenticated/contents/salary/')
 
 type DataTableProps = {
   data: AdminSalary[]
+  totalCount: number
   keyword: string
   setKeyword: (val: string) => void
-  setPage: (page: number) => void
   setSortType: (sortType: string) => void
 }
 
 export function SalaryTable({
   data,
+  totalCount,
   keyword,
   setKeyword,
-  setPage,
   setSortType,
 }: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
@@ -52,6 +52,10 @@ export function SalaryTable({
       pagination: { defaultPage: 1, defaultPageSize: 10 },
     })
 
+  // 정렬·검색이 바뀌면 URL 의 page 도 1 로 되돌린다(표시 페이지와 조회 페이지가 어긋나지 않게).
+  const resetPage = () =>
+    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize })
+
   const table = useReactTable({
     data,
     columns,
@@ -65,38 +69,36 @@ export function SalaryTable({
     manualSorting: true,
     manualFiltering: true,
     manualPagination: true,
+    // 서버 페이지네이션 — 전체 건수를 안 주면 pageCount 가 현재 페이지 행수(<=10)라 2페이지로 못 간다.
+    pageCount: Math.ceil(totalCount / 10),
 
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
 
-    // 백엔드는 latest/oldest/salary_desc 세 가지 정렬만 지원한다.
+    // 백엔드는 latest/oldest/salary_desc/salary_asc 네 가지 정렬만 지원한다.
     onSortingChange: (updater) => {
       const nextSorting =
         typeof updater === 'function' ? updater(sorting) : updater
       setSorting(nextSorting)
       const sort = nextSorting[0]
       if (!sort) return
-      if (sort.id === 'annualSalary') setSortType('salary_desc')
+      if (sort.id === 'annualSalary')
+        setSortType(sort.desc ? 'salary_desc' : 'salary_asc')
       else if (sort.id === 'createdAtDtm' && !sort.desc) setSortType('oldest')
       else setSortType('latest')
-      setPage(1)
+      resetPage()
     },
 
     onColumnVisibilityChange: setColumnVisibility,
 
     onGlobalFilterChange: (val) => {
       setKeyword(String(val))
-      setPage(1)
+      resetPage()
     },
 
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: (updater) => {
-      onPaginationChange(updater)
-      const nextState =
-        typeof updater === 'function' ? updater(pagination) : updater
-      setPage(nextState.pageIndex + 1)
-    },
+    onPaginationChange,
   })
 
   const pageCount = table.getPageCount()

@@ -71,24 +71,7 @@ public class AdminInterviewService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 면접후기입니다.");
         }
 
-        return InterviewDetailResponse.builder()
-                .interviewReviewSq(review.getInterviewReviewSq())
-                .userSq(review.getUserSq())
-                .userNickname(review.getUserNickname())
-                .companyNm(review.getCompanyNm())
-                .jobNm(review.getJobNm())
-                .careerLevel(review.getCareerLevel())
-                .interviewDt(review.getInterviewDt())
-                .interviewStages(interviewService.splitStages(review.getInterviewStages()))
-                .questionEdt(review.getQuestionEdt())
-                .difficultyStar(review.getDifficultyStar())
-                .atmosphereEdt(review.getAtmosphereEdt())
-                .resultCd(review.getResultCd())
-                .proposedSalary(review.getProposedSalary())
-                .interviewViewCnt(review.getInterviewViewCnt())
-                .interviewCreatedAtDtm(review.getInterviewCreatedAtDtm())
-                .interviewIsDeletedYn(review.getInterviewIsDeletedYn())
-                .build();
+        return interviewService.toDetail(review);
     }
 
     @Transactional
@@ -97,19 +80,7 @@ public class AdminInterviewService {
         if (review == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 면접후기입니다.");
         }
-        if (request.getCompanyNm() == null || request.getCompanyNm().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회사명을 입력해주세요.");
-        }
-        if (request.getJobNm() == null || request.getJobNm().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "직무를 선택해주세요.");
-        }
-        if (request.getCareerLevel() == null || request.getCareerLevel().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "경력을 선택해주세요.");
-        }
-        if (request.getDifficultyStar() != null
-                && (request.getDifficultyStar() < 1 || request.getDifficultyStar() > 5)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "면접난이도는 1~5 사이여야 합니다.");
-        }
+        interviewService.validateContent(request);
 
         review.setCompanyNm(request.getCompanyNm());
         review.setJobNm(request.getJobNm());

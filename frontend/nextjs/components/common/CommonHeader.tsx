@@ -468,7 +468,7 @@ export default function CommonHeader() {
           {/* 기업서비스 — 클릭 시 실제로 있는 기업 기능만 나열 */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className={cn(buttonVariants({ variant: 'outline' }), 'hidden xl:inline-flex')}
+              className={cn(buttonVariants({ variant: 'outline' }), 'hidden lg:inline-flex')}
             >
               기업서비스
             </DropdownMenuTrigger>
@@ -512,7 +512,15 @@ export default function CommonHeader() {
             >
               <Menu className="h-5 w-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-80 flex-col overflow-y-auto pt-10">
+            <SheetContent
+              side="left"
+              className="flex w-80 flex-col overflow-y-auto pt-10"
+              // pathname 변화로만 닫으면 같은 경로의 쿼리만 바뀌는 링크(/career → /career?category=…)에서
+              // 시트가 안 닫힌다 — 링크 클릭이면 무조건 닫는다.
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest('a')) setMobileOpen(false)
+              }}
+            >
               <Link href="/" className="mb-4 flex items-center" aria-label="Ctrl + F 홈">
                 <img
                   src="/img/brand/logo-horizontal.png"
