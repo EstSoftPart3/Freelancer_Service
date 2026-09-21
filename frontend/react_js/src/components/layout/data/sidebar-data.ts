@@ -17,7 +17,7 @@ import {
   UserCog,
   // UserX,
   Users,
-  // MessagesSquare,
+  MessagesSquare,
   ShieldAlert,
   // ShieldCheck,
   // HelpCircle,
@@ -115,6 +115,11 @@ export const sidebarData: SidebarData = {
               title: '투표 관리',
               url: '/contents/vote',
               icon: Vote,
+            },
+            {
+              title: '면접후기 관리',
+              url: '/contents/interview',
+              icon: MessagesSquare,
             },
             {
               title: '공지사항 관리',

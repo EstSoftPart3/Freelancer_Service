@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminInterviewMapper">
+
+    <!--
+        FO의 InterviewMapper.findAll은 interview_is_deleted_yn = 'N'만 조회한다(비삭제 목록만 공개).
+        BO는 감사 목적으로 삭제된 후기도 뱃지로 구분해 그대로 보여주기로 했으므로(투표 BO와 동일 정책)
+        그 조건을 뺀다.
+    -->
+    <select id="findAllForAdmin" resultType="com.example.demo.domain.interview.dto.response.InterviewListItemDTO">
+        SELECT i.interview_review_sq, i.user_sq, u.user_nickname, i.company_nm, i.job_nm, i.career_level,
+        i.interview_dt, i.difficulty_star, i.result_cd, i.interview_view_cnt, i.interview_created_at_dtm,
+        i.interview_is_deleted_yn
+        FROM TBL_INTERVIEW_REVIEW_M i
+        LEFT JOIN TBL_USER_M u ON u.user_sq = i.user_sq
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (i.company_nm LIKE CONCAT('%', #{keyword}, '%') OR i.job_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <choose>
+            <when test="sortType == 'oldest'"> ORDER BY i.interview_created_at_dtm ASC </when>
+            <when test="sortType == 'view'"> ORDER BY i.interview_view_cnt DESC </when>
+            <otherwise> ORDER BY i.interview_created_at_dtm DESC </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countForAdmin" resultType="Long">
+        SELECT COUNT(*) FROM TBL_INTERVIEW_REVIEW_M i
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (i.company_nm LIKE CONCAT('%', #{keyword}, '%') OR i.job_nm LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <update id="updateReviewMaster" parameterType="com.example.demo.domain.interview.entity.InterviewReview">
+        UPDATE TBL_INTERVIEW_REVIEW_M
+        SET company_nm = #{companyNm},
+            job_nm = #{jobNm},
+            career_level = #{careerLevel},
+            interview_dt = #{interviewDt},
+            interview_stages = #{interviewStages},
+            question_edt = #{questionEdt},
+            difficulty_star = #{difficultyStar},
+            atmosphere_edt = #{atmosphereEdt},
+            result_cd = #{resultCd},
+            proposed_salary = #{proposedSalary}
+        WHERE interview_review_sq = #{interviewReviewSq}
+    </update>
+
+    <!-- FO의 deleteById는 WHERE ... AND user_sq = #{userSq}라 관리자가 남의 후기를 지우면
+         0행이 반영되고 조용히 성공한다(AdminVoteMapper.deleteVoteMaster와 동일한 함정) — 작성자
+         조건 없는 마스터 쿼리를 따로 둔다. -->
+    <update id="deleteReviewMaster">
+        UPDATE TBL_INTERVIEW_REVIEW_M SET interview_is_deleted_yn = 'Y'
+        WHERE interview_review_sq = #{interviewReviewSq}
+    </update>
+
+</mapper>

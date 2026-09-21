@@ -39,6 +39,7 @@ import { Route as AuthenticatedContentsVoteIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedContentsVocIndexRouteImport } from './routes/_authenticated/contents/voc/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
+import { Route as AuthenticatedContentsInterviewIndexRouteImport } from './routes/_authenticated/contents/interview/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
 import { Route as AuthenticatedManagementProjectApplySeedRouteImport } from './routes/_authenticated/management/project/apply-seed'
 import { Route as AuthenticatedContentsBoardSeedRouteImport } from './routes/_authenticated/contents/board/seed'
@@ -206,6 +207,12 @@ const AuthenticatedContentsNoticeIndexRoute =
     path: '/contents/notice/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsInterviewIndexRoute =
+  AuthenticatedContentsInterviewIndexRouteImport.update({
+    id: '/contents/interview/',
+    path: '/contents/interview/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsBoardIndexRoute =
   AuthenticatedContentsBoardIndexRouteImport.update({
     id: '/contents/board/',
@@ -252,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
+  '/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
   '/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
@@ -285,6 +293,7 @@ export interface FileRoutesByTo {
   '/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
+  '/contents/interview': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
   '/contents/voc': typeof AuthenticatedContentsVocIndexRoute
@@ -321,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/_authenticated/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
+  '/_authenticated/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
   '/_authenticated/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/contents/board/seed'
     | '/management/project/apply-seed'
     | '/contents/board/'
+    | '/contents/interview/'
     | '/contents/notice/'
     | '/contents/report/'
     | '/contents/voc/'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/contents/board/seed'
     | '/management/project/apply-seed'
     | '/contents/board'
+    | '/contents/interview'
     | '/contents/notice'
     | '/contents/report'
     | '/contents/voc'
@@ -425,6 +437,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/board/seed'
     | '/_authenticated/management/project/apply-seed'
     | '/_authenticated/contents/board/'
+    | '/_authenticated/contents/interview/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
     | '/_authenticated/contents/voc/'
@@ -659,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContentsNoticeIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/interview/': {
+      id: '/_authenticated/contents/interview/'
+      path: '/contents/interview'
+      fullPath: '/contents/interview/'
+      preLoaderRoute: typeof AuthenticatedContentsInterviewIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/board/': {
       id: '/_authenticated/contents/board/'
       path: '/contents/board'
@@ -718,6 +738,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsBoardSeedRoute: typeof AuthenticatedContentsBoardSeedRoute
   AuthenticatedManagementProjectApplySeedRoute: typeof AuthenticatedManagementProjectApplySeedRoute
   AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
+  AuthenticatedContentsInterviewIndexRoute: typeof AuthenticatedContentsInterviewIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
   AuthenticatedContentsVocIndexRoute: typeof AuthenticatedContentsVocIndexRoute
@@ -739,6 +760,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagementProjectApplySeedRoute:
     AuthenticatedManagementProjectApplySeedRoute,
   AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
+  AuthenticatedContentsInterviewIndexRoute:
+    AuthenticatedContentsInterviewIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
   AuthenticatedContentsVocIndexRoute: AuthenticatedContentsVocIndexRoute,

@@ -81,6 +81,7 @@ public class InterviewService {
                 .proposedSalary(review.getProposedSalary())
                 .interviewViewCnt(review.getInterviewViewCnt())
                 .interviewCreatedAtDtm(review.getInterviewCreatedAtDtm())
+                .interviewIsDeletedYn(review.getInterviewIsDeletedYn())
                 .build();
     }
 
@@ -142,12 +143,13 @@ public class InterviewService {
         interviewMapper.addViewCnt(interviewReviewSq);
     }
 
-    private String joinStages(List<String> stages) {
+    // BO(AdminInterviewService)도 동일 구분자로 join/split해야 해서 public으로 연다.
+    public String joinStages(List<String> stages) {
         if (stages == null || stages.isEmpty()) return null;
         return String.join(STAGE_DELIMITER, stages);
     }
 
-    private List<String> splitStages(String stages) {
+    public List<String> splitStages(String stages) {
         if (stages == null || stages.isBlank()) return List.of();
         return Arrays.asList(stages.split(STAGE_DELIMITER));
     }

@@ -31,4 +31,6 @@ public class InterviewDetailResponse {
     private Integer proposedSalary;
     private Integer interviewViewCnt;
     private LocalDateTime interviewCreatedAtDtm;
+    // BO 상세 전용(삭제됨 뱃지) — FO getReview는 삭제된 글을 404로 막아 항상 "N"이다.
+    private String interviewIsDeletedYn;
 }

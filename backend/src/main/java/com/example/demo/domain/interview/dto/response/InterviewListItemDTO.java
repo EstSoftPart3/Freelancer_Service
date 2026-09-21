@@ -20,4 +20,6 @@ public class InterviewListItemDTO {
     private String resultCd;
     private Integer interviewViewCnt;
     private LocalDateTime interviewCreatedAtDtm;
+    // BO 목록 전용(삭제됨 뱃지) — FO 쿼리는 이 컬럼을 셀렉트하지 않아 항상 null로 온다.
+    private String interviewIsDeletedYn;
 }
