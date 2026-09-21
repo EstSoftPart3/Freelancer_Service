@@ -1,7 +1,12 @@
 <template>
-  <div class="filter-bar border rounded p-3 d-flex align-items-center gap-3 flex-wrap">
+  <div class="filter-bar border rounded p-3 d-flex align-items-center gap-3 flex-wrap"
+    style="max-width: 1300px; margin: 0 auto"
+  >
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" 
+      type="button" 
+      data-bs-toggle="dropdown"
+      style="max-width: 130px">
         {{ selectedRegionText }}
       </button>
       <ul class="dropdown-menu" @click.stop>
@@ -24,7 +29,10 @@
     </div>
 
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" 
+      type="button" 
+      data-bs-toggle="dropdown"
+      style="max-width: 130px">
         {{ selectedCareerText }}
       </button>
       <ul class="dropdown-menu" @click.stop>
@@ -47,7 +55,10 @@
     </div>
 
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" 
+      type="button" 
+      data-bs-toggle="dropdown"
+      style="max-width: 140px">
         {{ selectedSkillText }}
       </button>
       <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto;" @click.stop>
@@ -72,7 +83,10 @@
     </div>
 
     <div class="dropdown">
-      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+      <button class="btn btn-outline btn-primary dropdown-toggle fw-semibold" 
+      type="button" 
+      data-bs-toggle="dropdown"
+      style="max-width: 140px">
         {{ selectedJobStatusText }}
       </button>
       <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto;" @click.stop>
@@ -101,6 +115,7 @@
         type="text"
         class="form-control"
         placeholder="프리랜서 이름 또는 키워드 입력..."
+        style="max-width: 400px"
         v-model="searchKeyword"
         @keyup.enter="$emit('search')"
       />
