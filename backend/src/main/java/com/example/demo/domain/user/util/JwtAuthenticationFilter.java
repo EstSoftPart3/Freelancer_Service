@@ -102,6 +102,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects/applications"
     );
 
+    // EXCLUDE_URLS 는 HTTP 메서드를 보지 않는 접두사 목록이라 POST/PUT/DELETE 까지 같이 풀렸다.
+    // SecurityConfigProd 는 조회(GET)·조회수 PATCH·아래 계정 흐름 POST 만 permitAll 이라, 필터도
+    // 그 범위에서만 예외를 적용한다. 그 외 메서드는 만료·누락 토큰이면 401 로 끊는다 —
+    // 안 그러면 Dev(anyRequest permitAll)에서 만료 토큰 POST 가 userSq=null 로 컨트롤러에 들어가 500 이 난다.
+    private static final List<String> PUBLIC_POST_URLS = List.of(
+            "/api/login", "/api/logout", "/api/refresh-token", "/api/signup",
+            "/api/email", "/api/find-id", "/api/reset-password",
+            "/api/admin/login", "/api/admin/refresh-token");
+
+    private static boolean isPublicMethod(String method, String uri) {
+        return switch (method) {
+            case "GET", "HEAD", "OPTIONS" -> true;
+            case "PATCH" -> uri.endsWith("/increment-view");
+            case "POST" -> PUBLIC_POST_URLS.stream().anyMatch(uri::startsWith);
+            default -> false;
+        };
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
@@ -112,7 +130,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 인증 제외 경로 처리
         boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(uri::startsWith)
-                && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith);
+                && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith)
+                && isPublicMethod(request.getMethod(), uri);
         if (isExcluded) {
             if (token != null && jwtProvider.validateToken(token)) {
                 try {
