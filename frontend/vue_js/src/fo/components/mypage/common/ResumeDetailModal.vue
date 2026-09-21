@@ -42,8 +42,9 @@
                 "
               >
                 <img
-                  :src="resumeInfo.resumePhotoUrl || null"
-                  alt="사진"
+                  :src="getProfileImg(resumeInfo.resumePhotoUrl || resumeInfo.photo)"
+                  @error="handleImgError"
+                  alt="프로필 이미지"
                   class="img-fluid rounded"
                   style="max-height: 100%; object-fit: cover"
                 />
@@ -364,6 +365,19 @@ import { ref, watchEffect, defineProps, defineEmits } from 'vue'
 import { useModalStore } from '@/fo/stores/modalStore'
 import { api } from '@/axios'
 import skillIconMap from '@/assets/skillIconMap.js'
+
+const defaultPersonImg = '/img/person.png'
+
+// 프로필 이미지 URL 계산 (값 존재 여부에 따라 분기)
+const getProfileImg = (photoUrl) => {
+  if (!photoUrl) return defaultPersonImg
+  return photoUrl
+}
+
+// 이미지 로드 실패 시 기본 이미지로 대체하는 에러 핸들러
+const handleImgError = (event) => {
+  event.target.src = defaultPersonImg
+}
 
 const props = defineProps({
   resumeSq: {
