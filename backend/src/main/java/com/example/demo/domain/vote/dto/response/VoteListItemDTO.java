@@ -18,4 +18,6 @@ public class VoteListItemDTO {
     private Integer voteViewCnt;
     private Long optionCnt;
     private Long totalVoteCnt;
+    // BO 목록 전용 — FO 응답에서는 항상 null(findAll 이 이미 vote_is_deleted_yn='N' 만 조회).
+    private String voteIsDeletedYn;
 }

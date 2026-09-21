@@ -28,4 +28,6 @@ public class VoteDetailResponse {
     private Long totalVoteCnt;
     private Long myVoteOptionSq;
     private List<VoteOptionResultDTO> options;
+    // BO 상세 전용 — FO 응답에서는 항상 null(getVote 가 삭제된 투표를 404 로 막는다).
+    private String voteIsDeletedYn;
 }

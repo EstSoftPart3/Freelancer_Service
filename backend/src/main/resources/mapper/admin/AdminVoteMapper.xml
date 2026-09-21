@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.domain.admin.mapper.AdminVoteMapper">
+
+    <!--
+        FO 의 VoteMapper.findAll 은 vote_is_deleted_yn = 'N' 만 조회한다(비삭제 목록만 공개).
+        BO 는 감사 목적으로 삭제된 투표도 뱃지로 구분해 그대로 보여주기로 했으므로 그 조건을 뺀다.
+    -->
+    <select id="findAllForAdmin" resultType="com.example.demo.domain.vote.dto.response.VoteListItemDTO">
+        SELECT v.vote_sq, v.vote_ttl, v.user_sq, u.user_nickname, v.vote_category_cd, v.vote_end_dt,
+        v.vote_created_at_dtm, v.vote_view_cnt, v.vote_is_deleted_yn,
+        (SELECT COUNT(*) FROM TBL_VOTE_OPTION_S o WHERE o.vote_sq = v.vote_sq) AS option_cnt,
+        (SELECT COUNT(*) FROM TBL_VOTE_RECORD_S r WHERE r.vote_sq = v.vote_sq) AS total_vote_cnt
+        FROM TBL_VOTE_M v
+        LEFT JOIN TBL_USER_M u ON u.user_sq = v.user_sq
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND v.vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null">
+            AND v.vote_category_cd = #{category}
+        </if>
+        <choose>
+            <when test="sortType == 'oldest'"> ORDER BY v.vote_created_at_dtm ASC </when>
+            <when test="sortType == 'view'"> ORDER BY v.vote_view_cnt DESC </when>
+            <otherwise> ORDER BY v.vote_created_at_dtm DESC </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countForAdmin" resultType="Long">
+        SELECT COUNT(*) FROM TBL_VOTE_M v
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND v.vote_ttl LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null">
+            AND v.vote_category_cd = #{category}
+        </if>
+    </select>
+
+    <update id="updateVoteMaster" parameterType="com.example.demo.domain.vote.entity.Vote">
+        UPDATE TBL_VOTE_M
+        SET vote_ttl = #{voteTtl},
+            vote_description_edt = #{voteDescriptionEdt},
+            vote_category_cd = #{voteCategoryCd},
+            vote_end_dt = #{voteEndDt}
+        WHERE vote_sq = #{voteSq}
+    </update>
+
+    <delete id="deleteOptionsByVoteSq">
+        DELETE FROM TBL_VOTE_OPTION_S WHERE vote_sq = #{voteSq}
+    </delete>
+
+    <!-- FO 의 deleteVote 는 WHERE ... AND user_sq = #{userSq} 라 관리자가 남의 투표를 지우면
+         0행이 반영되고 조용히 성공한다(AdminVocService.deleteVoc 와 동일한 함정) — 작성자 조건 없는
+         마스터 쿼리를 따로 둔다. -->
+    <update id="deleteVoteMaster">
+        UPDATE TBL_VOTE_M SET vote_is_deleted_yn = 'Y' WHERE vote_sq = #{voteSq}
+    </update>
+
+</mapper>

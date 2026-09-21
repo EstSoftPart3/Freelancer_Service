@@ -27,6 +27,7 @@ import {
   ClipboardPen,
   ClipboardList,
   MessageCircleQuestion,
+  Vote,
   Building2,
   Briefcase,
   FolderKanban,
@@ -109,6 +110,11 @@ export const sidebarData: SidebarData = {
               title: '커뮤니티 시드',
               url: '/contents/board/seed',
               icon: Sprout,
+            },
+            {
+              title: '투표 관리',
+              url: '/contents/vote',
+              icon: Vote,
             },
             {
               title: '공지사항 관리',
