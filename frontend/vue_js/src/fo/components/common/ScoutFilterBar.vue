@@ -17,12 +17,13 @@
           <div class="dropdown-item">
             <input
               type="checkbox"
-              :id="'scout-region-' + local.areaSq"
-              :value="local.areaSq"
+              :id="'scout-region-' + getItemValue(local)"
+              :value="getItemValue(local)"
               v-model="selectedRegions"
               class="form-check-input me-2"
             />
-            <label :for="'scout-region-' + local.areaSq" class="form-check-label">{{ local.areaName }}</label>
+            <label :for="'scout-region-' + getItemValue(local)" class="form-check-label">
+              {{ getItemName(local) }}
           </div>
         </li>
       </ul>
@@ -43,12 +44,13 @@
           <div class="dropdown-item">
             <input
               type="checkbox"
-              :id="'scout-career-' + career.common_code_sq"
-              :value="career.common_code_sq"
+              :id="'scout-career-' + getItemValue(career)"
+              :value="getItemValue(career)"
               v-model="selectedCareers"
               class="form-check-input me-2"
             />
-            <label :for="'scout-career-' + career.common_code_sq" class="form-check-label">{{ career.common_code_nm }}</label>
+            <label :for="'scout-career-' + getItemValue(career)" class="form-check-label">
+              {{ getItemName(career) }}
           </div>
         </li>
       </ul>
@@ -69,13 +71,13 @@
           <div class="dropdown-item">
             <input
               type="checkbox"
-              :id="'scout-skill-' + (skill.skillSq || skill.skill_sq || skill.common_code_sq)"
-              :value="skill.skillSq || skill.skill_sq || skill.common_code_sq"
+              :id="'scout-skill-' + getItemValue(skill)"
+              :value="getItemValue(skill)"
               v-model="selectedSkills"
               class="form-check-input me-2"
             />
-            <label :for="'scout-skill-' + (skill.skillSq || skill.skill_sq || skill.common_code_sq)" class="form-check-label">
-              {{ skill.skillName || skill.skill_name || skill.common_code_nm }}
+            <label :for="'scout-skill-' + getItemValue(skill)" class="form-check-label">
+              {{ getItemName(skill) }}
             </label>
           </div>
         </li>
@@ -97,13 +99,13 @@
           <div class="dropdown-item">
             <input
               type="checkbox"
-              :id="'scout-status-' + (status.common_code_sq || status.commonCodeSq || status.codeSq)"
-              :value="status.common_code_sq || status.commonCodeSq || status.codeSq"
+              :id="'scout-status-' + getItemValue(status)"
+              :value="getItemValue(status)"
               v-model="selectedJobStatus"
               class="form-check-input me-2"
             />
-            <label :for="'scout-status-' + (status.common_code_sq || status.commonCodeSq || status.codeSq)" class="form-check-label">
-              {{ status.common_code_nm || status.commonCodeNm || status.codeNm }}
+            <label :for="'scout-status-' + getItemValue(status)" class="form-check-label">
+              {{ getItemName(status) }}
             </label>
           </div>
         </li>
@@ -142,14 +144,19 @@ const selectedSkills = ref([])
 const selectedJobStatus = ref([])
 const searchKeyword = ref('')
 
+const getItemValue = (item) => {
+  if (!item) return ''
+  return item.value ?? item.areaSq ?? item.common_code_sq ?? item.commonCodeSq ?? item.skillSq ?? item.codeSq ?? ''
+}
+
 const getItemKey = (item, index, preferredKey) => {
   if (!item) return index
-  return item[preferredKey] ?? item.common_code_sq ?? item.commonCodeSq ?? item.areaSq ?? item.skillSq ?? item.skill_sq ?? item.codeSq ?? item.value ?? index
+  return item[preferredKey] ?? getItemValue(item) ?? index
 }
 
 const getItemName = (item, preferredName) => {
   if (!item) return ''
-  return item[preferredName] ?? item.common_code_nm ?? item.commonCodeNm ?? item.areaName ?? item.skillName ?? item.skill_name ?? item.codeNm ?? item.label ?? ''
+  return item.label ?? item[preferredName] ?? item.areaName ?? item.common_code_nm ?? item.commonCodeNm ?? item.skillName ?? item.codeNm ?? ''
 }
 
 const fetchFilterOptions = async () => {
