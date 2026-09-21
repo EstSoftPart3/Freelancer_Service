@@ -24,6 +24,7 @@
             />
             <label :for="'scout-region-' + getItemValue(local)" class="form-check-label">
               {{ getItemName(local) }}
+              </label>
           </div>
         </li>
       </ul>
@@ -51,6 +52,7 @@
             />
             <label :for="'scout-career-' + getItemValue(career)" class="form-check-label">
               {{ getItemName(career) }}
+              </label>
           </div>
         </li>
       </ul>
