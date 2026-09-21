@@ -13,8 +13,8 @@
         <li>
           <a class="dropdown-item" href="#" @click.prevent="clearSelection('regions')">전체</a>
         </li>
-        <li v-for="(local, index) in localOptions" :key="getItemKey(local, index, 'areaSq')">
-          <div class="dropdown-item">
+        <li v-for="(local, index) in localOptions" :key="getItemKey(local, index, 'value')">
+          <div class="dropdown-item d-flex align-items-center">
             <input
               type="checkbox"
               :id="'scout-region-' + getItemValue(local)"
@@ -22,9 +22,9 @@
               v-model="selectedRegions"
               class="form-check-input me-2"
             />
-            <label :for="'scout-region-' + getItemValue(local)" class="form-check-label">
+            <label :for="'scout-region-' + getItemValue(local)" class="form-check-label text-dark w-100 cursor-pointer">
               {{ getItemName(local) }}
-              </label>
+            </label>
           </div>
         </li>
       </ul>
@@ -151,14 +151,14 @@ const getItemValue = (item) => {
   return item.value ?? item.areaSq ?? item.common_code_sq ?? item.commonCodeSq ?? item.skillSq ?? item.codeSq ?? ''
 }
 
-const getItemKey = (item, index, preferredKey) => {
-  if (!item) return index
-  return item[preferredKey] ?? getItemValue(item) ?? index
-}
-
 const getItemName = (item, preferredName) => {
   if (!item) return ''
-  return item.label ?? item[preferredName] ?? item.areaName ?? item.common_code_nm ?? item.commonCodeNm ?? item.skillName ?? item.codeNm ?? ''
+  return item.label ?? (preferredName && item[preferredName]) ?? item.areaName ?? item.common_code_nm ?? item.commonCodeNm ?? item.skillName ?? item.codeNm ?? ''
+}
+
+const getItemKey = (item, index, preferredKey) => {
+  if (!item) return index
+  return item.value ?? (preferredKey && item[preferredKey]) ?? getItemValue(item) ?? index
 }
 
 const fetchFilterOptions = async () => {
@@ -189,10 +189,8 @@ onMounted(fetchFilterOptions)
 const selectedRegionText = computed(() => {
   if (selectedRegions.value.length === 0) return '지역 (전체)'
   if (selectedRegions.value.length === 1) {
-    const selected = localOptions.value.find(
-      (opt) => (opt.areaSq || opt.value) === selectedRegions.value[0]
-    )
-    return selected ? getItemName(selected, 'areaName') : '지역'
+    const selected = localOptions.value.find((opt) => getItemValue(opt) === selectedRegions.value[0])
+    return selected ? getItemName(selected) : '지역'
   }
   return `지역 (${selectedRegions.value.length}개)`
 })
@@ -200,10 +198,8 @@ const selectedRegionText = computed(() => {
 const selectedCareerText = computed(() => {
   if (selectedCareers.value.length === 0) return '경력 (전체)'
   if (selectedCareers.value.length === 1) {
-    const selected = careerOptions.value.find(
-      (opt) => (opt.common_code_sq || opt.value) === selectedCareers.value[0]
-    )
-    return selected ? getItemName(selected, 'common_code_nm') : '경력'
+    const selected = careerOptions.value.find((opt) => getItemValue(opt) === selectedCareers.value[0])
+    return selected ? getItemName(selected) : '경력'
   }
   return `경력 (${selectedCareers.value.length}개)`
 })
@@ -211,10 +207,8 @@ const selectedCareerText = computed(() => {
 const selectedSkillText = computed(() => {
   if (selectedSkills.value.length === 0) return '기술 스택 (전체)'
   if (selectedSkills.value.length === 1) {
-    const selected = skillOptions.value.find(
-      (opt) => (opt.skillSq || opt.skill_sq || opt.common_code_sq || opt.value) === selectedSkills.value[0]
-    )
-    return selected ? getItemName(selected, 'skillName') : '기술 스택'
+    const selected = skillOptions.value.find((opt) => getItemValue(opt) === selectedSkills.value[0])
+    return selected ? getItemName(selected) : '기술 스택'
   }
   return `기술 스택 (${selectedSkills.value.length}개)`
 })
@@ -222,10 +216,8 @@ const selectedSkillText = computed(() => {
 const selectedJobStatusText = computed(() => {
   if (selectedJobStatus.value.length === 0) return '구직 상태 (전체)'
   if (selectedJobStatus.value.length === 1) {
-    const selected = jobStatusOptions.value.find(
-      (opt) => (opt.common_code_sq || opt.commonCodeSq || opt.codeSq || opt.value) === selectedJobStatus.value[0]
-    )
-    return selected ? getItemName(selected, 'common_code_nm') : '구직 상태'
+    const selected = jobStatusOptions.value.find((opt) => getItemValue(opt) === selectedJobStatus.value[0])
+    return selected ? getItemName(selected) : '구직 상태'
   }
   return `구직 상태 (${selectedJobStatus.value.length}개)`
 })
