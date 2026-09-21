@@ -21,7 +21,7 @@
         FROM tbl_common_code_c
         WHERE parent_common_code_sq = 700
           AND common_code_is_active_yn = 'Y'
-        ORDER BY career_code_sq ASC
+        ORDER BY common_code_sq ASC
     </select>
 
     <!-- 3. 구직 상태 공통 코드 조회 -->
