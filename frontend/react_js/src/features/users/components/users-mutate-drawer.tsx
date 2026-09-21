@@ -81,12 +81,15 @@ const schema = z.object({
       }
     ),
   userPhoneNum: z
-    .string()
-    .min(1, '휴대폰 번호를 입력해주세요.')
-    .regex(
-      /^(01[016789]\d{7,8}|02\d{7,8}|0[3-9][0-9]\d{6,7})$/,
-      '올바른 휴대폰 번호를 입력해주세요. (예: 01012345678)'
-    ),
+  .string()
+  .optional()
+  .or(z.literal('')) // 빈 문자열("") 허용
+  .refine(
+    (val) => !val || /^(01[016789]\d{7,8}|02\d{7,8}|0[3-9][0-9]\d{6,7})$/.test(val),
+    {
+      message: '올바른 휴대폰 번호를 입력해주세요. (예: 01012345678)',
+    }
+  ),
   userBirthDt: z.date().optional().nullable(),
   userTypeCd: z.number(),
   userGenderCd: z.number().nullable(),

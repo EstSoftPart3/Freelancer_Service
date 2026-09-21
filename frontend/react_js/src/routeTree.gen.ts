@@ -191,7 +191,6 @@ const AuthenticatedContentsBoardIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/otp': typeof authOtpRoute
@@ -203,21 +202,22 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
-  '/apps/': typeof AuthenticatedAppsIndexRoute
-  '/chats/': typeof AuthenticatedChatsIndexRoute
-  '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
-  '/sanctions/': typeof AuthenticatedSanctionsIndexRoute
+  '/apps': typeof AuthenticatedAppsIndexRoute
+  '/chats': typeof AuthenticatedChatsIndexRoute
+  '/help-center': typeof AuthenticatedHelpCenterIndexRoute
+  '/sanctions': typeof AuthenticatedSanctionsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/tasks/': typeof AuthenticatedTasksIndexRoute
-  '/users/': typeof AuthenticatedUsersIndexRoute
-  '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
-  '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
-  '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/users': typeof AuthenticatedUsersIndexRoute
+  '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
+  '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
+  '/contents/report': typeof AuthenticatedContentsReportIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -281,7 +281,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/settings'
     | '/forgot-password'
     | '/otp'
@@ -293,21 +292,22 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/'
     | '/errors/$error'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
-    | '/apps/'
-    | '/chats/'
-    | '/help-center/'
-    | '/sanctions/'
+    | '/apps'
+    | '/chats'
+    | '/help-center'
+    | '/sanctions'
     | '/settings/'
-    | '/tasks/'
-    | '/users/'
-    | '/contents/board/'
-    | '/contents/notice/'
-    | '/contents/report/'
+    | '/tasks'
+    | '/users'
+    | '/contents/board'
+    | '/contents/notice'
+    | '/contents/report'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -387,7 +387,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: '/'
+      fullPath: ''
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -478,14 +478,14 @@ declare module '@tanstack/react-router' {
     '/_authenticated/users/': {
       id: '/_authenticated/users/'
       path: '/users'
-      fullPath: '/users/'
+      fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tasks/': {
       id: '/_authenticated/tasks/'
       path: '/tasks'
-      fullPath: '/tasks/'
+      fullPath: '/tasks'
       preLoaderRoute: typeof AuthenticatedTasksIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -499,28 +499,28 @@ declare module '@tanstack/react-router' {
     '/_authenticated/sanctions/': {
       id: '/_authenticated/sanctions/'
       path: '/sanctions'
-      fullPath: '/sanctions/'
+      fullPath: '/sanctions'
       preLoaderRoute: typeof AuthenticatedSanctionsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/help-center/': {
       id: '/_authenticated/help-center/'
       path: '/help-center'
-      fullPath: '/help-center/'
+      fullPath: '/help-center'
       preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
       path: '/chats'
-      fullPath: '/chats/'
+      fullPath: '/chats'
       preLoaderRoute: typeof AuthenticatedChatsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/apps/': {
       id: '/_authenticated/apps/'
       path: '/apps'
-      fullPath: '/apps/'
+      fullPath: '/apps'
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -562,21 +562,21 @@ declare module '@tanstack/react-router' {
     '/_authenticated/contents/report/': {
       id: '/_authenticated/contents/report/'
       path: '/contents/report'
-      fullPath: '/contents/report/'
+      fullPath: '/contents/report'
       preLoaderRoute: typeof AuthenticatedContentsReportIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contents/notice/': {
       id: '/_authenticated/contents/notice/'
       path: '/contents/notice'
-      fullPath: '/contents/notice/'
+      fullPath: '/contents/notice'
       preLoaderRoute: typeof AuthenticatedContentsNoticeIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contents/board/': {
       id: '/_authenticated/contents/board/'
       path: '/contents/board'
-      fullPath: '/contents/board/'
+      fullPath: '/contents/board'
       preLoaderRoute: typeof AuthenticatedContentsBoardIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
