@@ -10,6 +10,7 @@
             area_code_sq AS value,
             area_sigungu AS label
         FROM TBL_AREA_C
+        WHERE (area_code_sq % 1000 = 0 OR area_code_sq = 36110) -- 1000단위 최상위 지역 (36110은 세종특별자치시 예외 처리)
         ORDER BY area_code_sq ASC
     </select>
 
