@@ -16,19 +16,23 @@
     <!-- 2. 경력 구간 공통 코드 조회 -->
     <select id="selectCareerOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
         SELECT 
-            career_code_sq AS value,
-            career_nm      AS label
-        FROM TBL_CAREER_CODE_C
+            common_code_sq AS value,
+            common_code_nm AS label
+        FROM tbl_common_code_c
+        WHERE parent_common_code_sq = 700
+          AND common_code_is_active_yn = 'Y'
         ORDER BY career_code_sq ASC
     </select>
 
     <!-- 3. 구직 상태 공통 코드 조회 -->
     <select id="selectJobStatusOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
         SELECT 
-            job_status_code_sq AS value,
-            job_status_nm      AS label
-        FROM TBL_JOB_STATUS_CODE_C
-        ORDER BY job_status_code_sq ASC
+            common_code_sq AS value,
+            common_code_nm AS label
+        FROM tbl_common_code_c
+        WHERE common_code_sq IN (401, 501)
+          AND common_code_is_active_yn = 'Y'
+        ORDER BY common_code_sq ASC
     </select>
 
     <!-- 4. 기술 스택 마스터 조회 -->
