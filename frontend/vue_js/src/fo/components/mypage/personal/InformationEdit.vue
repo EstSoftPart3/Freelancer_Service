@@ -701,10 +701,14 @@ const phoneValid = ref(false)
 // 휴대폰 번호 유효성 검사
 const validatePhone = () => {
   phoneError.value = ''
-  phoneValid.value = true
-  if (form.userPhoneNum && !/^\d{10,11}$/.test(form.userPhoneNum)) {
+  phoneValid.value = false
+  if (!form.userPhoneNum) {
+    phoneError.value = '휴대폰 번호를 입력해주세요.'
+  } else if (!/^\d{10,11}$/.test(form.userPhoneNum)) {
     phoneError.value = '올바른 휴대폰 번호 형식이 아닙니다. (하이픈 제외)'
-    phoneValid.value = false
+  } else {
+    phoneError.value = ''
+    phoneValid.value = true
   }
 }
 
