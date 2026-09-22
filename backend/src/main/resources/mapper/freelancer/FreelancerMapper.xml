@@ -38,15 +38,28 @@
         LEFT JOIN tbl_address_s a
             ON r.address_sq = a.address_sq
         <where>
-            <if test="req.addressCodeSq != null and req.addressCodeSq.size() > 0">
             AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
             AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
-                <foreach item="item" collection="req.addressCodeSq" open="(" separator="," close=")">
-                    #{item}
+            <if test="req.addressCodeSq != null and req.addressCodeSq.size() > 0">
+                AND (
+                <foreach item="code" collection="req.addressCodeSq" separator=" OR ">
+                    <choose>
+                        <when test="code == 36110">
+                            a.area_code_sq = 36110
+                        </when>
+                        <when test="code % 1000 == 0">
+                            (a.area_code_sq &gt;= #{code} AND a.area_code_sq &lt; #{code} + 1000)
+                        </when>
+                        <otherwise>
+                            a.area_code_sq = #{code}
+                        </otherwise>
+                    </choose>
                 </foreach>
+                )
             </if>
+            
 
             <if test="req.careerCodeSq != null and req.careerCodeSq.size() > 0">
                 AND r.career_code_sq IN

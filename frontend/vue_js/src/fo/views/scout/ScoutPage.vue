@@ -100,6 +100,8 @@ const fetchScouts = async () => {
 
 const updateFilters = (filters) => {
   Object.assign(currentFilters, filters)
+  currentFilters.page = 0
+  fetchScouts()
 }
 
 const handleSearch = () => {
