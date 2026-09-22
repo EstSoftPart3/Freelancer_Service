@@ -82,7 +82,7 @@
             <div class="text-muted fs-6 mb-2">
               <span class="d-flex align-items-center">
                 <i class="bi bi-geo-alt me-1 text-primary"></i>
-                {{ scout.sigungu || scout.address || '지역 정보 없음' }}
+                {{ (scout.address ? (scout.address + ' ' + (scout.detailAddress || '')) : scout.sigungu) || '지역 정보 없음' }}
               </span>
             </div>
 
