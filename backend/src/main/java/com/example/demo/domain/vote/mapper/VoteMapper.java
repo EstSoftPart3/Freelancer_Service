@@ -19,6 +19,9 @@ public interface VoteMapper {
 
     Vote findById(@Param("voteSq") Long voteSq);
 
+    /** AdminVoteService.updateVote 전용 — 옵션 교체 전 vote 행을 잠가 동시 요청을 직렬화한다. */
+    Vote findByIdForUpdate(@Param("voteSq") Long voteSq);
+
     List<VoteListItemDTO> findAll(@Param("keyword") String keyword, @Param("sortType") String sortType,
             @Param("category") Long category, @Param("size") Long size, @Param("offset") Long offset);
 

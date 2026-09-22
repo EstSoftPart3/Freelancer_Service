@@ -91,10 +91,18 @@ public class AdminVoteService {
     /**
      * 수정. 선택지(options)는 참여자가 한 명도 없을 때만 바꿀 수 있다 — 사용자 확정 정책
      * (참여자가 있으면 결과 집계 무결성이 깨지므로 제목/설명/카테고리/마감일만 허용).
+     *
+     * <p>
+     * {@code findByIdForUpdate}로 vote 행을 잠근 채로 ballotCnt 체크→옵션 교체를 한다 —
+     * 잠그지 않으면 관리자 두 명(또는 같은 관리자의 중복 클릭)이 "참여자 0명" 상태를 동시에
+     * 읽고 둘 다 통과해, deleteOptionsByVoteSq/insertOption이 겹쳐 실행되는 레이스가 있었다.
+     * 이 락으로 같은 voteSq에 대한 수정 요청을 직렬화한다(뒤 요청은 앞 요청 커밋 후에야
+     * ballotCnt를 다시 읽으므로 그 사이 들어온 참여를 놓치지 않는다).
+     * </p>
      */
     @Transactional
     public void updateVote(Long voteSq, AdminVoteUpdateRequestDTO request) {
-        Vote vote = voteMapper.findById(voteSq);
+        Vote vote = voteMapper.findByIdForUpdate(voteSq);
         if (vote == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 투표입니다.");
         }
@@ -119,10 +127,7 @@ public class AdminVoteService {
             if (ballotCnt > 0) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 참여자가 있어 선택지를 수정할 수 없습니다.");
             }
-            if (request.getOptions().size() < 2
-                    || request.getOptions().stream().anyMatch(opt -> opt == null || opt.isBlank())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상 입력해주세요.");
-            }
+            VoteService.validateOptions(request.getOptions());
             adminVoteMapper.deleteOptionsByVoteSq(voteSq);
             int order = 0;
             for (String optionNm : request.getOptions()) {

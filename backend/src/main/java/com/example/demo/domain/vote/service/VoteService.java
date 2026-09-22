@@ -42,6 +42,26 @@ public class VoteService {
     // 함정이 생긴다).
     public static final Set<Long> VALID_CATEGORY_CODES = Set.of(3250L, 3251L);
 
+    // TBL_VOTE_OPTION_S.vote_option_nm 은 VARCHAR(200) — 길이 초과는 여기서 400으로 막지
+    // 않으면 INSERT 단계에서 500(Data too long)으로 터진다. 개수 상한은 DB 제약이 없어
+    // 지금까지 무제한이었다(직접 API 호출로 수백 개짜리 투표를 만들 수 있었음).
+    private static final int MAX_OPTION_COUNT = 10;
+    private static final int MAX_OPTION_LENGTH = 200;
+
+    /** createVote/AdminVoteService.updateVote가 공유하는 선택지 검증 — 한쪽만 고치는 함정 방지. */
+    public static void validateOptions(List<String> options) {
+        if (options == null || options.size() < 2
+                || options.stream().anyMatch(opt -> opt == null || opt.isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상 입력해주세요.");
+        }
+        if (options.size() > MAX_OPTION_COUNT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 " + MAX_OPTION_COUNT + "개 이하로 입력해주세요.");
+        }
+        if (options.stream().anyMatch(opt -> opt.length() > MAX_OPTION_LENGTH)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 " + MAX_OPTION_LENGTH + "자 이하로 입력해주세요.");
+        }
+    }
+
     public VoteListResponse getAllVotes(String keyword, String sortType, Long category, Long page, Long size) {
         // page/size 를 그대로 LIMIT/OFFSET 에 흘려보내면 ?page=0·음수 는 음수 OFFSET 으로,
         // ?size=0·음수 는 음수 LIMIT 으로 내려가 SQL 문법 오류 500 이 난다
@@ -116,10 +136,7 @@ public class VoteService {
         if (!request.getVoteEndDt().isAfter(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "마감 일시는 현재 이후여야 합니다.");
         }
-        if (request.getOptions() == null || request.getOptions().size() < 2
-                || request.getOptions().stream().anyMatch(opt -> opt == null || opt.isBlank())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택지는 2개 이상 입력해주세요.");
-        }
+        validateOptions(request.getOptions());
         if (request.getVoteCategoryCd() == null || !VALID_CATEGORY_CODES.contains(request.getVoteCategoryCd())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
         }

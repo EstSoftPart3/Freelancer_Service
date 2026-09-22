@@ -239,8 +239,11 @@ public class SalaryService {
         if (request.getRegionNm() == null || request.getRegionNm().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지역을 선택해주세요.");
         }
-        if (request.getAnnualSalary() == null || request.getAnnualSalary() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연봉을 입력해주세요.");
+        // 5 미만이면 SalaryStatsCalculator.roundTo10 이 0으로 뭉개진다(round(4/10.0)*10=0) —
+        // 5년 추정 리포트가 0으로 나눠 Infinity%를 보여주는 사고(SalaryReportScreen.tsx의
+        // (last-first)/first 계산)로 이어져 5를 최소값으로 막는다.
+        if (request.getAnnualSalary() == null || request.getAnnualSalary() < 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연봉은 5만원 이상 입력해주세요.");
         }
         if (request.getAnnualSalary() > MAX_AMOUNT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연봉은 " + MAX_AMOUNT + "만원 이하로 입력해주세요.");

@@ -237,6 +237,19 @@ public class BoardService {
 	}
 
 	/**
+	 * 옛 일반게시판(1401)·QnA(1402)는 Phase2 게시판 재설계로 데이터가 전부 새 5종 게시판으로
+	 * 이관되고 빈 껍데기만 남았다(FO 메뉴에도 없음, BoardController/QnaController만 남아있는
+	 * 레거시 라우트). 프론트는 이 라우트로 글을 쓸 방법이 없지만 백엔드가 POST/PUT을 그대로
+	 * 받아줘서 API 직접 호출로는 여전히 새 글을 쓸 수 있었다 — 여기서 한 번에 막는다
+	 * (BoardController·QnaController·AdminBoardController.createBoard가 전부 이 메서드를 거친다).
+	 */
+	private void requireNotLegacyBoard(Long boardTypeCd) {
+		if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd) || BoardTypeCode.QNA.getCode().equals(boardTypeCd)) {
+			throw new ResponseStatusException(HttpStatus.GONE, "이 게시판은 더 이상 글쓰기를 지원하지 않습니다.");
+		}
+	}
+
+	/**
 	 * 카테고리는 {@link BoardTypeCode#isHasCategory()} 가 true 인 게시판(일반·커리어소통·기술소통·
 	 * 프로젝트·라운지)에만 쓴다. Q&A·공지·고객의소리·요즘회사는 카테고리 개념이 없으므로
 	 * 값이 실려 와도 무시한다(FO 실수로 엉뚱한 게시판에 카테고리가 박히는 것을 막는다).
@@ -333,6 +346,7 @@ public class BoardService {
 	@Transactional
 	public Long createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
 		requireWriter(boardRequest.getUserSq());
+		requireNotLegacyBoard(BoardTypeCd);
 
 		// 게시글 오류 처리
 		if (boardRequest.getTtl() == null) {
@@ -419,6 +433,7 @@ public class BoardService {
 	@Transactional
 	public void updateBoard(BoardRequest boardRequest, Long boardSq, Long boardTypeCd) {
 		requireWriter(boardRequest.getUserSq());
+		requireNotLegacyBoard(boardTypeCd);
 
 		// 게시글 업데이트
 		if (boardRequest.getTtl() == null) {

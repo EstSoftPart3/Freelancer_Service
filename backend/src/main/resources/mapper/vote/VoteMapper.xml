@@ -22,6 +22,12 @@
         WHERE v.vote_sq = #{voteSq}
     </select>
 
+    <!-- AdminVoteService.updateVote 전용 — 옵션 교체 동시 요청 레이스를 막는 락.
+         유저 조인 없이 vote 행만 잠근다(JOIN 대상인 TBL_USER_M까지 잠그면 안 된다). -->
+    <select id="findByIdForUpdate" resultType="com.example.demo.domain.vote.entity.Vote">
+        SELECT * FROM TBL_VOTE_M WHERE vote_sq = #{voteSq} FOR UPDATE
+    </select>
+
     <select id="findAll" resultType="com.example.demo.domain.vote.dto.response.VoteListItemDTO">
         SELECT v.vote_sq, v.vote_ttl, v.user_sq, u.user_nickname, v.vote_category_cd, v.vote_end_dt,
         v.vote_created_at_dtm, v.vote_view_cnt,
