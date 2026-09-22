@@ -1,0 +1,2 @@
+projectEndDt=None  devGrade='초급'
+recruitHeadcounts=[{'headcountSq': 41, 'grade': '상상', 'count': 1}, {'headcountSq': 40, 'grade': '초급', 'count': 2}]

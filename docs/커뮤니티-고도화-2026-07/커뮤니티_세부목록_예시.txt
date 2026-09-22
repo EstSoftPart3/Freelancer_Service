@@ -1,0 +1,203 @@
+<div id="layout-container" class="{NV_admin_class}">
+<div id="Layout-wrap"><div class="ABA-container-box-820"><div class="ABA-subcontent GNB-color-09" id="ABA-read-top" style="_width:550px;margin:10px 0 0 0; display:none;">
+	<h3 class="AB-sj-h3 GNB-color-09" id="ABA-contents-title-1486504php">자유게시판</h3>	<ul class="map"><li id="AB-navi-home"><a href="/ab-home">HOME</a></li><li id="AB-navi-1">커뮤니티</li><li id="AB-navi-last">자유게시판</li></ul></div>
+<div id="AB_contents"><form name="TCBOARD_BD1486504_LIST_index192" id="TCBOARD_BD1486504_LIST_index192" method="get" action="insiter.php" enctype="multipart/form-data" onsubmit="return TCBOARD_BD1486504_LIST_index192_submit()" data-ajax="false"><input type="hidden" name="design_file" value="1486504.php"><input type="hidden" name="return_url" value="insiter.php?design_file=1486504.php"><input type="hidden" name="board" value="BD1486504"><input type="hidden" name="after_db_script" value=""><input type="hidden" name="after_db_msg" value=""><input type="hidden" name="Q_STRING" value=""><input type="hidden" name="flag" value="i-boss.co.kr"><div>
+<div class="ABA-bbs-wrap"><div><div></div><div class="outer-container">
+	<div class="board-header"><div class="board-title breadcrumbs type-LIST">
+	<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{"@type":"ListItem","position":1,"name":"홈","item":"https://www.i-boss.co.kr/"},{"@type":"ListItem","position":2,"name":"커뮤니티","item":"https://www.i-boss.co.kr/ab-2936"},{"@type":"ListItem","position":3,"name":"자유게시판","item":"https://www.i-boss.co.kr/ab-1486504"}]
+}
+</script><ol id="breadcrumb">
+    <li>
+        <a href="/ab-2936">
+            <span>커뮤니티</span>
+        </a>
+    </li>
+    <li>
+        <a href="/ab-1486504">
+            <span>일반게시판</span>
+        </a>
+    </li>
+</ol></div>
+</div><div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<style>
+.board_category_snb {overflow:hidden; padding:4px 0 12px; position:relative;}
+.board_category_snb li {display:flex; align-items:center; height:32px; font-size:13px; font-weight:500; width:auto;}
+.board_category_snb li a {display:flex; align-items:center; border:1px solid #E0E0E0; border-radius:8px; font-weight:500; padding:0 12px; font-size:13px; height:32px; box-sizing:border-box; cursor:pointer; transition:all 0.2s; color:#555; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;}
+.board_category_snb li a:hover {background:#EAEAEA; color:#000;}
+.board_category_snb li.active a {background:#000; border-color:#000; color:#FFF; font-weight:bold;}
+.board_category_snb li em {position:absolute; text-indent:-999em; width:5px; height:5px; background:#ff4949; right:-2px; top:-2px; border-radius:50%; border:2px solid #FFF;}
+.board_category_snb div[class^="snb-btn-"] {position:absolute; top:4px; z-index:99; cursor:pointer; transition:all 0.2s;}
+.board_category_snb div[class^="snb-btn-"] i {font-size:18px; color:var(--font-gray); display:flex; align-items:center; justify-content:center; border:1px solid #EEE; width:32px; height:32px; background:#FFF; border-radius:50%;}
+.board_category_snb .swiper-button-disabled {display:none;}
+.board_category_snb .snb-btn-prev {left:0;}
+.board_category_snb .snb-btn-next {right:0;}
+</style><div class="board_category_snb swiper-initialized swiper-horizontal swiper-free-mode swiper-backface-hidden"><ul class="swiper-wrapper" id="swiper-wrapper-71c10eb9c25a22584" aria-live="polite" style="transition-duration: 0ms; transition-delay: 0ms;"><li class="swiper-slide" role="group" aria-label="1 / 8" style="margin-right: 6px;"><a href="ab-2936">전체보기</a></li><li class="swiper-slide active" role="group" aria-label="2 / 8" style="margin-right: 6px;"><a href="ab-1486504">일반게시판</a><em class="gnb_btn new">새글</em></li><li class="swiper-slide" role="group" aria-label="3 / 8" style="margin-right: 6px;"><a href="ab-8083">Q&amp;A 게시판</a></li></ul><div class="snb-btn-prev swiper-button-disabled" tabindex="-1" role="button" aria-label="Previous slide" aria-controls="swiper-wrapper-71c10eb9c25a22584" aria-disabled="true"><i class="fa-regular fa-chevron-left"></i></div><div class="snb-btn-next swiper-button-disabled" tabindex="-1" role="button" aria-label="Next slide" aria-controls="swiper-wrapper-71c10eb9c25a22584" aria-disabled="true"><i class="fa-regular fa-chevron-right"></i></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div><script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+        const allSlides = $('.swiper-slide');
+        const activeSlide = $('.swiper-slide.active');
+        let activeIndex = 0;
+        activeIndex = allSlides.index(activeSlide); 
+        if (!activeIndex) { 
+            var swiper = new Swiper(".board_category_snb", {
+                slidesPerView: 'auto',
+                freeMode: true,
+                spaceBetween: 6,
+                navigation: { nextEl: '.snb-btn-next', prevEl: '.snb-btn-prev' },
+                watchOverflow: true,
+                observer: true,
+                observeParents: true,
+                initialSlide: activeIndex,
+                centeredSlides: false,  // 중앙 정렬 비활성화
+                roundLengths: true,  // 픽셀 반올림 추가
+                setWrapperTranslate: 0,
+                on: {
+                    init: function() {
+                        this.setTranslate(0);
+                        this.update();
+                    }
+                }
+            });
+        }else{
+            var swiper = new Swiper(".board_category_snb", {
+                slidesPerView: 'auto',
+                spaceBetween: 6,
+                freeMode: true,
+                navigation: { nextEl: '.snb-btn-next', prevEl: '.snb-btn-prev' },
+                initialSlide: activeIndex,
+                centeredSlides: true,
+                centeredSlidesBounds: true,
+                watchOverflow: true,
+                observer: true,
+                observeParents: true,
+            });
+        }
+        // 끝에서 처음/처음에서 끝 이동 버튼
+        $('.snb-btn-next').on('click', () => swiper.slideTo(swiper.slides.length - 1));
+        $('.snb-btn-prev').on('click', () => swiper.slideTo(0));
+
+        // overflow 안 될 때 드래그도 막고 싶으면:
+        swiper.on('lock',  sw => { sw.allowTouchMove = false; sw.params.simulateTouch = false; sw.setTranslate(0); sw.update(); });
+        swiper.on('unlock',sw => { sw.allowTouchMove = true;  sw.params.simulateTouch = true;  sw.update(); });
+        
+</script></div><div><table width="100%" cellpadding="0" cellspacing="0" border="0" class="table-mbb"><tbody>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53632" title="공식대행사는 어디서 찾아요~?" class="mb_subject like_1"><span class="AB-LF-common"><span class="ellipsis-1">공식대행사는 어디서 찾아요~?</span></span></a><span class="AB-comm">6</span></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53632" link="/ab-5108&amp;AJAX=Y" offset="1">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_profile_img_33.png" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>피크라이그</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 12:38">04.23</span></td><td class="ViewCount font_num">162</td><td class="voteCount">1</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53631" title="💐 꼬마 선장 역주행 2트" class="mb_subject like_1"><span class="AB-LF-common"><span class="ellipsis-1">💐 꼬마 선장 역주행 2트</span></span></a><i class="far fa-image-polaroid"></i></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53631" link="/ab-5108&amp;AJAX=Y" offset="1">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_1763354329_94535.jpg" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>오다주웠다</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 11:37">04.23</span></td><td class="ViewCount font_num">139</td><td class="voteCount">1</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53629" title="다들 바이럴 마케팅 영업 어떻게 하시나요?" class="mb_subject like_0"><span class="AB-LF-common"><span class="ellipsis-1">다들 바이럴 마케팅 영업 어떻게 하시나요?</span></span></a></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53629" link="/ab-5108&amp;AJAX=Y" offset="1" style="cursor: pointer;">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_profile_img_52.jpg" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>비버너구리</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 11:05">04.23</span></td><td class="ViewCount font_num">82</td><td class="voteCount">0</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53628" title="광고대행사 직원분들 영업시 하루 콜 수" class="mb_subject like_0"><span class="AB-LF-common"><span class="ellipsis-1">광고대행사 직원분들 영업시 하루 콜 수</span></span></a><span class="AB-comm">2</span></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53628" link="/ab-5108&amp;AJAX=Y" offset="1" style="cursor: pointer;">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_profile_img_19.png" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>금길</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 10:45">04.23</span></td><td class="ViewCount font_num">188</td><td class="voteCount">0</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53626" title="숨은 광고매체 발견" class="mb_subject like_2"><span class="AB-LF-common"><span class="ellipsis-1">숨은 광고매체 발견</span></span></a></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53626" link="/ab-5108&amp;AJAX=Y" offset="1" style="cursor: pointer;">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_1678761189_38080.png" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>퍼리미디어</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 09:27">04.23</span></td><td class="ViewCount font_num">118</td><td class="voteCount">2</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53624" title="여러분의 직업병은 무엇인가요?" class="mb_subject like_5"><span class="AB-LF-common"><span class="ellipsis-1">여러분의 직업병은 무엇인가요?</span></span></a><span class="AB-comm">17</span></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53624" link="/ab-5108&amp;AJAX=Y" offset="1">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_profile_img_37.png" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>ChRi</span></p></div>
+</div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.23 07:24">04.23</span></td><td class="ViewCount font_num">316</td><td class="voteCount">5</td></tr>
+<tr class="_t">
+	<td height="37px"><div class="articleSubject"><a href="ab-1486505-53619" title="GPT로 바로 사용할 수 있는 배너를 만들었어요" class="mb_subject like_24"><span class="AB-LF-common"><span class="ellipsis-1">GPT로 바로 사용할 수 있는 배너를 만들었어요</span></span></a><i class="far fa-image-polaroid"></i><span class="AB-comm">11</span></div></td><td width="110" align="left"><div class="writer-container"><div><p class="mb_writer" id="ABP-btn-fdmenu-board-BD1486504-53619" link="/ab-5108&amp;AJAX=Y" offset="1" style="cursor: pointer;">
+<img src="https://cdn.ibos.kr/user_dir/member/THUMBNAIL_40_40_1773989559_67551.png" width="20" height="20" border="0" class="bd_R50" style="margin-right:4px;"><span>유리나</span></p></div>
+<i class="fa-solid fa-stars bstip plusBadge list" data-tip="플러스 멤버십 회원입니다."></i></div></td><td class="DateTime font_num"><span class="bstip" data-tip="2026.04.22 17:15">04.22</span></td><td class="ViewCount font_num">1,187</td><td class="voteCount"><span>24</span></td></tr>
+</tbody></table></div></div>
+<div class="n-article-buttons"><a href="/ab-1486504">목록</a><div class="list-paging"><span class="LF_page_link_current"><b>1</b></span><a href="ab-1486504?PB_1365657402=2" class="LF_page_link" title="2 페이지로 이동">2</a><a href="ab-1486504?PB_1365657402=3" class="LF_page_link" title="3 페이지로 이동">3</a><a href="ab-1486504?PB_1365657402=4" class="LF_page_link" title="4 페이지로 이동">4</a><a href="ab-1486504?PB_1365657402=5" class="LF_page_link" title="5 페이지로 이동">5</a><a href="ab-1486504?PB_1365657402=6" class="LF_page_link" title="6 페이지로 이동">6</a><a href="ab-1486504?PB_1365657402=7" class="LF_page_link" title="7 페이지로 이동">7</a><a href="ab-1486504?PB_1365657402=8" class="LF_page_link" title="8 페이지로 이동">8</a><a href="ab-1486504?PB_1365657402=9" class="LF_page_link" title="9 페이지로 이동">9</a><a href="ab-1486504?PB_1365657402=10" class="LF_page_link" title="10 페이지로 이동">10</a><a href="ab-1486504?PB_1365657402=11" class="LF_page_link_next_block" title="11 페이지로 이동"><img src="images/btn_next_1.jpg" border="0" align="center" class="LF_page_link_next_block_img" alt="11 페이지로 이동"></a></div><div><a href="/ab-login" class="btn_write" title="글쓰기">글쓰기</a></div></div></div></div></div>
+</form>
+</div></div><div class="ABA-container-box-20"><div style="height:1px;"></div></div><div class="ABA-container-box-300" id="Layout-sub"><div><div><form name="TCSYSTEM_LOGIN_FORM_I49843" id="TCSYSTEM_LOGIN_FORM_I49843" method="post" action="./member/login_process.php" enctype="multipart/form-data" onsubmit="return TCSYSTEM_LOGIN_FORM_I49843_submit()" data-ajax="false"><input type="hidden" name="after_db_script" value="%SELF%"><input type="hidden" name="after_db_msg" value="">
+		<input type="hidden" name="flag" value="i-boss.co.kr">
+		<input type="hidden" name="Q_STRING" value="design_file=1486504.php">
+		<input type="hidden" name="http_referer" value="https://www.i-boss.co.kr/ab-1486504">
+	<input type="hidden" name="VG_live_code" value="d82c8d1619ad8176d665453cfb2e55f0"><input type="hidden" name="P_SELF" value="insiter.php"><div id="login-box">
+
+	</div>
+</form>
+</div></div><div></div><div id="BnSub"></div><div class="layout_col"><style>
+.subb1 img {border-radius:8px;}
+</style>
+<div class="most_popular"><div class="tab-wrap"><span class="active">지금 인기</span>
+<span class="">주간 인기</span>
+<span class="">월간 인기</span></div><div class="tab-container"><div style="display: block;">
+	<div class="cell"><a class="num_1 text-ellipsis" href="/ab-1486505-53653" title="태국에 요상한 마케팅 회사가 하나 생겼군요">
+	<em>1</em><span>태국에 요상한 마케팅 회사가 하나 생겼군요</span><label>3</label></a></div><div class="cell"><a class="num_2 text-ellipsis" href="/ab-1486505-53649" title="바이럴마케팅 처음 맡겼을 때 돈만 날린 이야기">
+<em>2</em><span>바이럴마케팅 처음 맡겼을 때 돈만 날린 이야기</span><label>2</label></a></div><div class="cell"><a class="num_3 text-ellipsis" href="/ab-1486505-53652" title="마케터는 외로운 사람이 맞을까?">
+<em>3</em><span>마케터는 외로운 사람이 맞을까?</span><i class="icon-poll fa-solid fa-square-poll-vertical"></i><label>2</label></a></div><div class="cell"><a class="num_4 text-ellipsis" href="/ab-1486505-53651" title="대행사 기준 이력서에 광고주명 오픈하나요?">
+<em>4</em><span>대행사 기준 이력서에 광고주명 오픈하나요?</span><label>2</label></a></div><div class="cell"><a class="num_5 text-ellipsis" href="/ab-2110-32465" title="메타광고 소재 관리 및 off 기준 도와주세요">
+<em>5</em><span>메타광고 소재 관리 및 off 기준 도와주세요</span><label>1</label></a></div><div class="cell cellAd">
+            <a class="text-ellipsis" href="/ab-7729-1070" data-bd="BD7728" data-sr="1070" data-id="uuib_PCBZ68IX" target="_blank" gtm-ev-visibility="" gtm-ev-click="" gtm-ev-action="uuib_PCBZ68IX" gtm-ev-category="layout-popular-articles" data-gtm-vis-first-on-screen1645705_271="29561" data-gtm-vis-total-visible-time1645705_271="100" data-gtm-vis-has-fired1645705_271="1">
+                <em style="font-size:11px">AD</em><span>📢[무료 리포트] 2026년 2분기 인플루언서 마케팅 트렌드</span>
+            </a>
+        </div><div></div><div class="cell"><a class="num_6 text-ellipsis" href="/ab-1486505-53660" title="직장인 대학원생 무사 졸업을 위해 도와주세요!">
+<em>6</em><span>직장인 대학원생 무사 졸업을 위해 도와주세요!</span></a></div><div class="cell"><a class="num_7 text-ellipsis" href="/ab-1486505-53661" title="계정 해킹 당하고 배포되고 계신분들 계실까요?">
+<em>7</em><span>계정 해킹 당하고 배포되고 계신분들 계실까요?</span></a></div><div class="cell"><a class="num_8 text-ellipsis" href="/ab-1486505-53659" title="필립 코틀러(Philip Kotler), 과연 마케팅의 아버지인가?">
+<em>8</em><span>필립 코틀러(Philip Kotler), 과연 마케팅의 아버지인가?</span></a></div><div class="cell"><a class="num_9 text-ellipsis" href="/ab-1486505-53658" title="사업썰 ) 퇴사직전 6편">
+<em>9</em><span>사업썰 ) 퇴사직전 6편</span><label>1</label></a></div><div class="cell"><a class="num_10 text-ellipsis" href="/ab-2110-32460" title="DA 모아보는 사이트 있을까요?">
+<em>10</em><span>DA 모아보는 사이트 있을까요?</span><label>1</label></a></div></div>
+<div style="display: none;">
+	<div class="cell"><a class="num_1 text-ellipsis" href="/ab-1486505-53619" title="GPT로 바로 사용할 수 있는 배너를 만들었어요">
+	<em>1</em><span>GPT로 바로 사용할 수 있는 배너를 만들었어요</span><label>11</label></a></div><div class="cell"><a class="num_2 text-ellipsis" href="/ab-1486505-53609" title="퇴사할 때 내가 만든 개인 파일 지웠는데 회사한테 고소당할 위기ㅠ">
+<em>2</em><span>퇴사할 때 내가 만든 개인 파일 지웠는데 회사한테 고소당할 위기ㅠ</span><i class="icon-poll fa-solid fa-square-poll-vertical"></i><label>15</label></a></div><div class="cell"><a class="num_3 text-ellipsis" href="/ab-1486505-53584" title="사업썰 ) 퇴사직전 1편">
+<em>3</em><span>사업썰 ) 퇴사직전 1편</span><label>5</label></a></div><div class="cell"><a class="num_4 text-ellipsis" href="/ab-1486505-53624" title="여러분의 직업병은 무엇인가요?">
+<em>4</em><span>여러분의 직업병은 무엇인가요?</span><label>17</label></a></div><div class="cell"><a class="num_5 text-ellipsis" href="/ab-6141-70213" title="요즘 블로그 왜 안 뜰까요? 키워드보다 중요한 게 따로 있습니다">
+<em>5</em><span>요즘 블로그 왜 안 뜰까요? 키워드보다 중요한 게 따로 있습니다</span><label>4</label></a></div><div class="cell cellAd">
+            <a class="text-ellipsis" href="https://www.i-boss.co.kr/ab-7610?ref=7755&amp;ibfs=FAVYRJ4L" data-bd="BD7728" data-sr="436" data-id="uuib_OAJRG7XO" target="_blank" gtm-ev-visibility="" gtm-ev-click="" gtm-ev-action="uuib_OAJRG7XO" gtm-ev-category="layout-popular-articles" data-gtm-vis-first-on-screen1645705_271="279915" data-gtm-vis-total-visible-time1645705_271="100" data-gtm-vis-has-fired1645705_271="1">
+                <em style="font-size:11px">AD</em><span>광고비 결제할 카드 찾을 땐? 롯데 법인카드! 💳</span>
+            </a>
+        </div><div></div><div class="cell"><a class="num_6 text-ellipsis" href="/ab-1486505-53582" title="쿠팡 상품명 SEO 로직이 궁금합니다!">
+<em>6</em><span>쿠팡 상품명 SEO 로직이 궁금합니다!</span><label>4</label></a></div><div class="cell"><a class="num_7 text-ellipsis" href="/ab-1486505-53592" title="스레드 마케터들 혼좀 나야겠네요..">
+<em>7</em><span>스레드 마케터들 혼좀 나야겠네요..</span><label>7</label></a></div><div class="cell"><a class="num_8 text-ellipsis" href="/ab-1486505-53595" title="사업썰 ) 퇴사직전 3편">
+<em>8</em><span>사업썰 ) 퇴사직전 3편</span><label>7</label></a></div><div class="cell"><a class="num_9 text-ellipsis" href="/ab-1486505-53580" title="블로그 원고 배포(기자단) 건당 단가랑 실행사 어디서 구하시나요?ㅜ">
+<em>9</em><span>블로그 원고 배포(기자단) 건당 단가랑 실행사 어디서 구하시나요?ㅜ</span><label>8</label></a></div><div class="cell"><a class="num_10 text-ellipsis" href="/ab-1486505-53581" title="사업썰 수요 있을까요">
+<em>10</em><span>사업썰 수요 있을까요</span><label>6</label></a></div></div>
+<div style="display: none;">
+	<div class="cell"><a class="num_1 text-ellipsis" href="/ab-1486505-53609" title="퇴사할 때 내가 만든 개인 파일 지웠는데 회사한테 고소당할 위기ㅠ">
+<em>1</em><span>퇴사할 때 내가 만든 개인 파일 지웠는데 회사한테 고소당할 위기ㅠ</span><label>15</label></a></div><div class="cell"><a class="num_2 text-ellipsis" href="/ab-1486505-53422" title="보고 배울만한 떡집 클레임 대응">
+<em>2</em><span>보고 배울만한 떡집 클레임 대응</span><label>9</label></a></div><div class="cell"><a class="num_3 text-ellipsis" href="/ab-6141-69995" title="우리은행과 bbq가 김선태에게 1억을 쓰고 얻은 효과는?">
+<em>3</em><span>우리은행과 bbq가 김선태에게 1억을 쓰고 얻은 효과는?</span><label>2</label></a></div><div class="cell"><a class="num_4 text-ellipsis" href="/ab-6141-70040" title="AI 딸깍으로 안 됩니다 그 이유 5가지">
+<em>4</em><span>AI 딸깍으로 안 됩니다 그 이유 5가지</span><label>19</label></a></div><div class="cell"><a class="num_5 text-ellipsis" href="/ab-6141-70085" title="업무하다가 막힐 때 들여다보는 계정들 공유드려요">
+<em>5</em><span>업무하다가 막힐 때 들여다보는 계정들 공유드려요</span><label>8</label></a></div><div class="cell cellAd">
+            <a class="text-ellipsis" href="/ab-7729-732" data-bd="BD7728" data-sr="732" data-id="uuib_HKZW8QI6" target="_blank" gtm-ev-visibility="" gtm-ev-click="" gtm-ev-action="uuib_HKZW8QI6" gtm-ev-category="layout-popular-articles" data-gtm-vis-first-on-screen1645705_271="279932" data-gtm-vis-total-visible-time1645705_271="100" data-gtm-vis-has-fired1645705_271="1">
+                <em style="font-size:11px">AD</em><span>광고 맡길 곳 고민될 땐, 아이보스 파트너스로 가보세요.</span>
+            </a>
+        </div><div></div><div class="cell"><a class="num_6 text-ellipsis" href="/ab-6141-70142" title="(우뇌) 우리가 알던 메타의 타겟팅 기법은 멸종했습니다.">
+<em>6</em><span>(우뇌) 우리가 알던 메타의 타겟팅 기법은 멸종했습니다.</span><label>17</label></a></div><div class="cell"><a class="num_7 text-ellipsis" href="/ab-8084-77" title="마케팅 업무량 좀 봐주세요.. 퇴사 고민 중ㅠㅠ">
+<em>7</em><span>마케팅 업무량 좀 봐주세요.. 퇴사 고민 중ㅠㅠ</span><label>49</label></a></div><div class="cell"><a class="num_8 text-ellipsis" href="/ab-6141-70009" title="마케터들은 AI를 어떻게 쓰고 있을까?">
+<em>8</em><span>마케터들은 AI를 어떻게 쓰고 있을까?</span><label>2</label></a></div><div class="cell"><a class="num_9 text-ellipsis" href="/ab-1486505-53402" title="네이버 광고주센터 개편">
+<em>9</em><span>네이버 광고주센터 개편</span><label>27</label></a></div><div class="cell"><a class="num_10 text-ellipsis" href="/ab-1486505-53619" title="GPT로 바로 사용할 수 있는 배너를 만들었어요">
+<em>10</em><span>GPT로 바로 사용할 수 있는 배너를 만들었어요</span><label>11</label></a></div></div>
+</div></div><!-- NEW 서브배너B -->
+		
+	<!--0.88459300994873, VER20140318--></div><div class="adropB2" data-unit="01JDP816KQ3NQ8HX2ENYEHNPM2"></div></div></div></div>
