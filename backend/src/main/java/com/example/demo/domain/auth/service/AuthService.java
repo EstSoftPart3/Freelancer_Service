@@ -3,6 +3,7 @@ package com.example.demo.domain.auth.service;
 import com.example.demo.domain.auth.dto.request.GoogleLoginRequestDTO;
 import com.example.demo.domain.auth.dto.response.GoogleLoginResponseDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.mapper.UserMapper;
 import com.example.demo.domain.user.repository.UserRepository;
 import com.example.demo.domain.user.util.JwtProvider;
@@ -70,6 +71,17 @@ public class AuthService {
         } else {
             userDto = userMapper.findByUserEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            
+            
+            if ("Y".equalsIgnoreCase(userDto.getUserIsDeletedYn())) {
+                throw new IllegalArgumentException("탈퇴한 사용자입니다.");
+            }
+
+            UsersDTO users = userMapper.findUserByUserId(userDto.getUserId());
+            if (users == null || "N".equalsIgnoreCase(users.getUserIsActivateYn())) {
+                throw new IllegalArgumentException("비활성화된 사용자입니다.");
+            }
+            
         }
 
         // 3. JWT Access Token 발급 및 DTO에 세팅
