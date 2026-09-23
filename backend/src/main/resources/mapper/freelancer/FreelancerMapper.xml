@@ -78,8 +78,12 @@
             <if test="req.skillSq != null and req.skillSq.size() > 0">
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
-                    FROM TBL_RESUME_SKILL_SEARCH_S rss
+                    FROM TBL_RESUME_SKILL_TAG_S rss
                     WHERE rss.skill_tag_sq IN 
+                    <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                       OR rss.parent_skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
@@ -97,7 +101,7 @@
     
     <select id="selectFreelancerSkills" resultType="string">
         SELECT st.skill_tag_nm
-        FROM TBL_RESUME_SKILL_SEARCH_S rss
+        FROM TBL_RESUME_SKILL_TAG_S rss
         INNER JOIN TBL_SKILL_TAG_C st 
             ON rss.skill_tag_sq = st.skill_tag_sq
         WHERE rss.resume_sq = #{resumeSq}
@@ -134,8 +138,12 @@
             <if test="req.skillSq != null and req.skillSq.size() > 0">
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
-                    FROM TBL_RESUME_SKILL_SEARCH_S rss
+                    FROM TBL_RESUME_SKILL_TAG_S rss
                     WHERE rss.skill_tag_sq IN
+                    <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                       OR rss.parent_skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
