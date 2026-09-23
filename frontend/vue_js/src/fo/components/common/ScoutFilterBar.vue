@@ -228,7 +228,7 @@ watch(
     emit('update', {
       addressCodeSq: selectedRegions.value,
       careerCodeSq: selectedCareers.value,
-      skillSq: selectedSkills.value,
+      skillSq: selectedSkills.value.map(Number),
       jobStatusCodeSq: selectedJobStatus.value,
       searchKeyword: searchKeyword.value
     })
