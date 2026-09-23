@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.domain.user.dto.AddressDTO;
 import com.example.demo.domain.user.dto.CompanyProfileDTO;
 import com.example.demo.domain.user.dto.UserDTO;
+import com.example.demo.domain.user.dto.UsersDTO;
 import com.example.demo.domain.user.dto.request.SignUpRequestDTO;
 import com.example.demo.domain.user.dto.response.FindIdResponseDTO;
 import com.example.demo.domain.user.dto.response.LoginResponseDTO;
@@ -143,6 +144,20 @@ public class UserService {
             // 2-A. 기존 유저가 존재하면 해당 유저 정보 조회
             // (findUserByInfo 매퍼를 활용하거나 이메일 기준 유저 정보를 받아옵니다)
             user = userRepository.findUserByInfo(null, null, email);
+            
+            if (user != null) {
+                // 1) 탈퇴 여부 검증 ('Y'인 경우 로그인 차단)
+                if ("Y".equalsIgnoreCase(user.getUserIsDeletedYn())) {
+                    throw new IllegalArgumentException("탈퇴한 사용자입니다.");
+                }
+
+                // 2) 계정 활성화 여부 검증 (UsersDTO 조회)
+                UsersDTO users = userRepository.findUserByUserId(user.getUserId());
+                if (users != null && "N".equalsIgnoreCase(users.getUserIsActivateYn())) {
+                    throw new IllegalArgumentException("비활성화된 사용자입니다.");
+                }
+            
+            
         } else {
             // 2-B. 신규 소셜 회원 가입 처리
             user = new UserDTO();
@@ -165,7 +180,8 @@ public class UserService {
 
             // 신규 사용자 저장 (useGeneratedKeys로 userSq 자동 채움)
             userRepository.insertUser(user);
-        }
+       	}
+    }
 
         return user;
     }
