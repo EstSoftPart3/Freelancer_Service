@@ -156,6 +156,7 @@ public class UserService {
                 if (users != null && "N".equalsIgnoreCase(users.getUserIsActivateYn())) {
                     throw new IllegalArgumentException("비활성화된 사용자입니다.");
                 }
+            }
             
             
         } else {
@@ -181,9 +182,7 @@ public class UserService {
             // 신규 사용자 저장 (useGeneratedKeys로 userSq 자동 채움)
             userRepository.insertUser(user);
        	}
-    }
 
         return user;
-    }
-
+        }
 }
