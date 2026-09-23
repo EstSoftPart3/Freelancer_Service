@@ -205,10 +205,10 @@ const selectedCareerText = computed(() => {
 })
 
 const selectedSkillText = computed(() => {
-  if (selectedSkills.value.length === 0) return '기술 스택 (전체)'
+  if (selectedSkills.value.length === 0) return '기술 (전체)'
   if (selectedSkills.value.length === 1) {
     const selected = skillOptions.value.find((opt) => getItemValue(opt) === selectedSkills.value[0])
-    return selected ? getItemName(selected) : '기술 스택'
+    return selected ? getItemName(selected) : '기술'
   }
   return `기술 스택 (${selectedSkills.value.length}개)`
 })

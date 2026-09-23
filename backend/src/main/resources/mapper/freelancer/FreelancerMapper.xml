@@ -131,15 +131,13 @@
                 ) &gt;= #{req.experience}
             </if>
 
-            <if test="req.skills != null and req.skills != ''">
+            <if test="req.skillSq != null and req.skillSq.size() > 0">
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
                     FROM TBL_RESUME_SKILL_SEARCH_S rss
-                    INNER JOIN TBL_SKILL_TAG_C st 
-                        ON rss.skill_tag_sq = st.skill_tag_sq
-                    WHERE LOWER(st.skill_tag_nm) IN 
-                    <foreach item="skill" collection="req.skills.split(',')" open="(" separator="," close=")">
-                        LOWER(TRIM(#{skill}))
+                    WHERE rss.skill_tag_sq IN
+                    <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 )
             </if>
