@@ -118,7 +118,7 @@
       <input
         type="text"
         class="form-control"
-        placeholder="프리랜서 이름 또는 키워드 입력..."
+        placeholder="프리랜서 이름 입력..."
         style="max-width: 400px"
         v-model="searchKeyword"
         @keyup.enter="$emit('search')"
