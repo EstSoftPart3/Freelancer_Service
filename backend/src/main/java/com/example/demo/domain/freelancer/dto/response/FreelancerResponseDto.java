@@ -37,6 +37,12 @@ public class FreelancerResponseDto {
     private String detailAddress;
 
     private String sigungu;
+    
+    @JsonProperty("job_status_code_sq")
+    private Integer jobStatusCodeSq;
+
+    @JsonProperty("job_status_nm")
+    private String jobStatusNm;
 	
 
 }

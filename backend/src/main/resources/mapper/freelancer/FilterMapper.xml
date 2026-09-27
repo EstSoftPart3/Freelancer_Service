@@ -27,13 +27,14 @@
 
     <!-- 3. 구직 상태 공통 코드 조회 -->
     <select id="selectJobStatusOptions" resultType="com.example.demo.domain.freelancer.dto.response.FilterOptionResponseDto$Option">
-        SELECT 
-            common_code_sq AS value,
-            common_code_nm AS label
-        FROM tbl_common_code_c
-        WHERE common_code_sq IN (401, 501)
-          AND common_code_is_active_yn = 'Y'
-        ORDER BY common_code_sq ASC
+	    SELECT 0 AS value, '구직중' AS label
+	    UNION ALL
+	    SELECT 
+	        common_code_sq AS value,
+	        common_code_nm AS label
+	    FROM tbl_common_code_c
+	    WHERE common_code_sq = 401
+	      AND common_code_is_active_yn = 'Y'
     </select>
 
     <!-- 4. 기술 스택 마스터 조회 -->

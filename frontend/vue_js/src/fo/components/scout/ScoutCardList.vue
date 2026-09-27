@@ -61,7 +61,7 @@
                 </a>
               </h4>
               <span class="badge bg-primary px-2 py-1 fs-6 fw-normal">
-                {{ scout.jobStatusNm || '구직중' }}
+                {{ scout.jobStatusNm || scout.job_status_nm || '구직중' }}
               </span>
             </div>
 

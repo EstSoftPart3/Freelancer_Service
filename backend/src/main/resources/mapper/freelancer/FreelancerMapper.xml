@@ -16,6 +16,29 @@
             a.address               AS address,
             a.detail_address        AS detailAddress,
             a.sigungu               AS sigungu
+            
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 
+                    FROM TBL_RESUME_CAREER_S c 
+                    WHERE c.resume_sq = r.resume_sq 
+                      AND c.career_start_dt &lt;= CURDATE() 
+                      AND (c.career_end_dt IS NULL OR c.career_end_dt &gt;= CURDATE())
+                ) THEN 401
+                ELSE 0
+            END AS jobStatusCodeSq,
+            
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 
+                    FROM TBL_RESUME_CAREER_S c 
+                    WHERE c.resume_sq = r.resume_sq 
+                      AND c.career_start_dt &lt;= CURDATE() 
+                      AND (c.career_end_dt IS NULL OR c.career_end_dt &gt;= CURDATE())
+                ) THEN '소속중'
+                ELSE '구직중'
+            END AS jobStatusNm
+            
         FROM TBL_RESUME_M r
 
         INNER JOIN (
@@ -209,6 +232,33 @@
                     #{item}
                 </foreach>
             </if>
+            
+            <!-- 동적 구직 상태 필터링 (0: 구직중, 401: 소속중) -->
+            <if test="req.jobStatusCodeSq != null and req.jobStatusCodeSq.size() > 0">
+                AND (
+                <foreach item="code" collection="req.jobStatusCodeSq" separator=" OR ">
+                    <if test="code == 401">
+                        EXISTS (
+                            SELECT 1 
+                            FROM TBL_RESUME_CAREER_S c 
+                            WHERE c.resume_sq = r.resume_sq 
+                              AND c.career_start_dt &lt;= CURDATE() 
+                              AND (c.career_end_dt IS NULL OR c.career_end_dt &gt;= CURDATE())
+                        )
+                    </if>
+                    <if test="code == 0">
+                        NOT EXISTS (
+                            SELECT 1 
+                            FROM TBL_RESUME_CAREER_S c 
+                            WHERE c.resume_sq = r.resume_sq 
+                              AND c.career_start_dt &lt;= CURDATE() 
+                              AND (c.career_end_dt IS NULL OR c.career_end_dt &gt;= CURDATE())
+                        )
+                    </if>
+                </foreach>
+                )
+            </if>
+            
 
             <!-- 기술 스택 필터링 -->
             <if test="req.skillSq != null and req.skillSq.size() > 0">
