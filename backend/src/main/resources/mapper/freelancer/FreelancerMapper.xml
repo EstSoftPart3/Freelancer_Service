@@ -17,6 +17,9 @@
                     WHERE c.resume_sq = r.resume_sq
                 ), 0
             )                       AS experienceYears,
+            
+            cc.common_code_nm       AS developerGradeNm,
+            
             CONCAT('/api/v1/files/', p.file_sq) AS profileImageUrl,
             r.resume_greeting_txt   AS summary,
             a.address               AS address,
@@ -33,6 +36,10 @@
         
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
+            
+        LEFT JOIN tbl_common_code_c cc
+            ON r.career_code_sq = cc.common_code_sq
+            
         LEFT JOIN tbl_user_profile_image_s p 
             ON u.user_sq = p.user_sq
         LEFT JOIN tbl_address_s a

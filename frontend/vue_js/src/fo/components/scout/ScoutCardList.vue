@@ -69,9 +69,14 @@
             <div class="text-muted fs-6 mb-1">
               <span>
                 경력 : 
-                <template v-if="scout.experienceYears > 0">
+                <template v-if="scout.developer_grade_nm || scout.developerGradeNm">
+                  {{ scout.developer_grade_nm || scout.developerGradeNm }}
+                </template>
+
+                <template v-else-if="scout.experienceYears > 0">
                   {{ scout.experienceYears }}년차
                 </template>
+
                 <template v-else>
                   신입
                 </template>

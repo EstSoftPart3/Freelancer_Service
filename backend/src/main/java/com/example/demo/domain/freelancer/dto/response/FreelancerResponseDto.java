@@ -20,6 +20,9 @@ public class FreelancerResponseDto {
 
     @JsonProperty("experience_years")
     private Integer experienceYears;
+    
+    @JsonProperty("developer_grade_nm")
+    private String developerGradeNm;
 
     private List<String> skills;
 
