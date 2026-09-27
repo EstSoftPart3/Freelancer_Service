@@ -18,7 +18,16 @@
                 ), 0
             )                       AS experienceYears,
             
-            cc.common_code_nm       AS developerGradeNm,
+            /* career_code_sq 컬럼이 없으므로 경력 연수를 기반으로 문자열 생성 (예: '3년차') */
+            CONCAT(
+                COALESCE(
+                    (
+                        SELECT FLOOR(SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) / 12)
+                        FROM TBL_RESUME_CAREER_S c
+                        WHERE c.resume_sq = r.resume_sq
+                    ), 0
+                ), '년차'
+            )                       AS developerGradeNm,
             
             CONCAT('/api/v1/files/', p.file_sq) AS profileImageUrl,
             r.resume_greeting_txt   AS summary,
@@ -37,9 +46,6 @@
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
             
-        LEFT JOIN tbl_common_code_c cc
-    		ON u.career_code_sq = cc.common_code_sq
-            
         LEFT JOIN tbl_user_profile_image_s p 
             ON u.user_sq = p.user_sq
         LEFT JOIN tbl_address_s a
@@ -49,6 +55,7 @@
             AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
+            
             <if test="req.addressCodeSq != null and req.addressCodeSq.size() > 0">
 			    AND (
 			    <foreach item="code" collection="req.addressCodeSq" separator=" OR ">
@@ -65,14 +72,6 @@
 			        </choose>
 			    </foreach>
 			    )
-			</if>
-            
-
-            <if test="req.careerCodeSq != null and req.careerCodeSq.size() > 0">
-			    AND u.career_code_sq IN
-			    <foreach item="item" collection="req.careerCodeSq" open="(" separator="," close=")">
-			        #{item}
-			    </foreach>
 			</if>
 
             <if test="req.jobStatusCodeSq != null and req.jobStatusCodeSq.size() > 0">
@@ -115,7 +114,6 @@
         ORDER BY st.skill_tag_nm ASC
     </select>
    
-    <!-- countFreelancers에 모든 필터 조건 추가 및 괄호 문법 수정 완료 -->
     <select id="countFreelancers" resultType="long">
         SELECT COUNT(DISTINCT r.resume_sq)
         FROM TBL_RESUME_M r
@@ -137,7 +135,6 @@
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
 
-            <!-- 1. 지역 필터 -->
             <if test="req.addressCodeSq != null and req.addressCodeSq.size() > 0">
                 AND (
                 <foreach item="code" collection="req.addressCodeSq" separator=" OR ">
@@ -156,15 +153,6 @@
                 )
             </if>
 
-            <!-- 2. 경력 필터 -->
-            <if test="req.careerCodeSq != null and req.careerCodeSq.size() > 0">
-                AND u.career_code_sq IN
-                <foreach item="item" collection="req.careerCodeSq" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-
-            <!-- 3. 구직 상태 필터 -->
             <if test="req.jobStatusCodeSq != null and req.jobStatusCodeSq.size() > 0">
                 AND r.job_status_code_sq IN
                 <foreach item="item" collection="req.jobStatusCodeSq" open="(" separator="," close=")">
@@ -172,7 +160,6 @@
                 </foreach>
             </if>
 
-            <!-- 4. 기술 스택 필터 -->
             <if test="req.skillSq != null and req.skillSq.size() > 0">
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
@@ -190,7 +177,6 @@
                 )
             </if>
 
-            <!-- 5. 키워드 검색 필터 -->
             <if test="req.searchKeyword != null and req.searchKeyword != ''">
                 AND (u.user_nm LIKE CONCAT('%', #{req.searchKeyword}, '%') 
                      OR r.resume_ttl LIKE CONCAT('%', #{req.searchKeyword}, '%'))
