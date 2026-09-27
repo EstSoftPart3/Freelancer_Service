@@ -61,7 +61,7 @@ public class SecurityConfigDev {
 					.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 		
 					// 1. 로그인/인증/헬스체크 관련 경로 최상단에서 전면 허용
-					.requestMatchers("/login/**", "/api/login", "/v1/auth/**", "/api/v1/auth/**","/refresh-token", "/api/refresh-token",).permitAll()
+					.requestMatchers("/login/**", "/api/login", "/v1/auth/**", "/api/v1/auth/**","/refresh-token", "/api/refresh-token").permitAll()
 					.requestMatchers("/login/oauth2/**", "/oauth2/**", "/v1/auth/google/login").permitAll()
 					.requestMatchers("/actuator/**", "/admin/login", "/admin/refresh-token").permitAll()
 		
