@@ -122,7 +122,7 @@
         INNER JOIN TBL_USER_M u 
             ON r.user_sq = u.user_sq
         <where>
-            AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
+            (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
             AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
