@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.domain.freelancer.dto.request.FreelancerRequestDto;
 import com.example.demo.domain.freelancer.dto.response.FreelancerResponseDto;
+import com.example.demo.domain.scout.util.CareerCalculator;
 
 
 @Mapper
@@ -19,5 +20,7 @@ public interface FreelancerMapper {
     List<String> selectFreelancerSkills(@Param("resumeSq") Long freelancerSq);
 
     long countFreelancers(@Param("req") FreelancerRequestDto req);
+    
+    List<CareerCalculator.ProjectPeriod> selectProjectPeriodsByResumeSq(@Param("resumeSq") Long resumeSq);
 
 }

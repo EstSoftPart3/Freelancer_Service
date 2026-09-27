@@ -11,6 +11,7 @@ import com.example.demo.domain.freelancer.dto.response.FreelancerResponseDto;
 import com.example.demo.domain.freelancer.dto.response.FreelancerSearchResponse;
 import com.example.demo.domain.freelancer.dto.response.FreelancerSearchResponse.Container;
 import com.example.demo.domain.freelancer.mapper.FreelancerMapper;
+import com.example.demo.domain.scout.util.CareerCalculator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,13 @@ public class FreelancerService {
         for (FreelancerResponseDto item : freelancers) {
             List<String> skillList = freelancerMapper.selectFreelancerSkills(item.getFreelancerSq());
             item.setSkills(skillList);
+            
+            List<CareerCalculator.ProjectPeriod> periods = 
+                    freelancerMapper.selectProjectPeriodsByResumeSq(item.getFreelancerSq());
+            
+            // 3. 추가: CareerCalculator로 등급(초초, 초중 등) 계산 후 DTO에 저장
+            String gradeNm = CareerCalculator.calculateCareerGrade(periods);
+            item.setDeveloperGradeNm(gradeNm);
         }
 
         long totalElements = freelancerMapper.countFreelancers(requestDto);
