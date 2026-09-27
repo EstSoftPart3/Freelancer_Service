@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/answer",
             "/api/answer/*/increment-view",
             "/api/notice",
-            "/api/notice/*/increment-view\"",
+            "/api/notice/*/increment-view",
             "/api/affiliation",
             "/api/affiliation/*/increment-view",
             "/api/affiliation/address",
