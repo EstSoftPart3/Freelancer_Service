@@ -18,15 +18,21 @@
                 ), 0
             )                       AS experienceYears,
             
-            /* career_code_sq 컬럼이 없으므로 경력 연수를 기반으로 문자열 생성 (예: '3년차') */
-            CONCAT(
-                COALESCE(
-                    (
-                        SELECT FLOOR(SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) / 12)
-                        FROM TBL_RESUME_CAREER_S c
-                        WHERE c.resume_sq = r.resume_sq
-                    ), 0
-                ), '년차'
+            
+            (
+                SELECT 
+                    CASE 
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) IS NULL THEN '초초'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 12 THEN '초초'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 24 THEN '초중'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 36 THEN '초상'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 60 THEN '중초'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 84 THEN '중상'
+                        WHEN SUM(TIMESTAMPDIFF(MONTH, c.career_start_dt, COALESCE(c.career_end_dt, CURDATE()))) < 120 THEN '고급'
+                        ELSE '특급'
+                    END
+                FROM TBL_RESUME_CAREER_S c
+                WHERE c.resume_sq = r.resume_sq
             )                       AS developerGradeNm,
             
             CONCAT('/api/v1/files/', p.file_sq) AS profileImageUrl,
@@ -51,7 +57,7 @@
         LEFT JOIN tbl_address_s a
             ON r.address_sq = a.address_sq
         <where>
-            AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
+            (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
             AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
@@ -85,12 +91,13 @@
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
                     FROM TBL_RESUME_SKILL_TAG_S rss
+                    INNER JOIN TBL_SKILL_TAG_C st ON rss.skill_tag_sq = st.skill_tag_sq
                     WHERE (
-                        rss.skill_tag_sq IN
+                        st.skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
-                       OR rss.parent_skill_tag_sq IN
+                       OR st.parent_skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
@@ -103,6 +110,8 @@
 			         OR r.resume_ttl LIKE CONCAT('%', #{req.searchKeyword}, '%'))
 			</if>
         </where>
+        ORDER BY r.resume_sq DESC
+        LIMIT #{req.size} OFFSET #{offset}
     </select>
     
     <select id="selectFreelancerSkills" resultType="string">
@@ -130,7 +139,7 @@
             ON r.address_sq = a.address_sq    
             
         <where>
-            AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
+            (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
             AND (r.resume_is_deleted_yn = 'N' OR r.resume_is_deleted_yn IS NULL)
             AND r.resume_ttl IS NOT NULL 
             AND TRIM(r.resume_ttl) != ''
@@ -164,12 +173,13 @@
                 AND r.resume_sq IN (
                     SELECT rss.resume_sq 
                     FROM TBL_RESUME_SKILL_TAG_S rss
+                    INNER JOIN TBL_SKILL_TAG_C st ON rss.skill_tag_sq = st.skill_tag_sq
                     WHERE (
-                    	rss.skill_tag_sq IN
+                    	st.skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
-                       OR rss.parent_skill_tag_sq IN
+                       OR st.parent_skill_tag_sq IN
                     <foreach item="item" collection="req.skillSq" open="(" separator="," close=")">
                         #{item}
                     </foreach>
