@@ -76,15 +76,15 @@
             <if test="req.careerCodeSq != null and req.careerCodeSq.size() > 0">
                 AND (
                     CASE 
-                        WHEN COALESCE(career.exp_years, 0) &lt; 1 THEN 701  <!-- 1년차(초초) -->
-                        WHEN COALESCE(career.exp_years, 0) = 1 THEN 702  <!-- 2년차(초중) -->
-                        WHEN COALESCE(career.exp_years, 0) = 2 THEN 703  <!-- 3년차(초상) -->
-                        WHEN COALESCE(career.exp_years, 0) = 3 THEN 704  <!-- 4년차(중초) -->
-                        WHEN COALESCE(career.exp_years, 0) = 4 THEN 705  <!-- 5년차(중중) -->
-                        WHEN COALESCE(career.exp_years, 0) = 5 THEN 706  <!-- 6년차(중상) -->
-                        WHEN COALESCE(career.exp_years, 0) = 6 THEN 707  <!-- 7년차(고초) -->
-                        WHEN COALESCE(career.exp_years, 0) = 7 THEN 708  <!-- 8년차(고중) -->
-                        ELSE 709                                          <!-- 9년차 이상(고상) -->
+                        WHEN COALESCE(career.exp_years, 0) &lt; 1 THEN 701  
+                        WHEN COALESCE(career.exp_years, 0) = 1 THEN 702  
+                        WHEN COALESCE(career.exp_years, 0) = 2 THEN 703  
+                        WHEN COALESCE(career.exp_years, 0) = 3 THEN 704  
+                        WHEN COALESCE(career.exp_years, 0) = 4 THEN 705  
+                        WHEN COALESCE(career.exp_years, 0) = 5 THEN 706  
+                        WHEN COALESCE(career.exp_years, 0) = 6 THEN 707  
+                        WHEN COALESCE(career.exp_years, 0) = 7 THEN 708  
+                        ELSE 709                                          
                     END
                 ) IN
                 <foreach item="item" collection="req.careerCodeSq" open="(" separator="," close=")">
