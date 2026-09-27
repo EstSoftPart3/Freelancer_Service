@@ -34,12 +34,18 @@
         
         <!-- 이력서별 총 근무 연차 미리 계산 -->
         LEFT JOIN (
-            SELECT 
-                resume_sq,
-                FLOOR(SUM(TIMESTAMPDIFF(MONTH, career_start_dt, COALESCE(career_end_dt, CURDATE()))) / 12) AS exp_years
-            FROM TBL_RESUME_CAREER_S
-            GROUP BY resume_sq
-        ) career ON r.resume_sq = career.resume_sq
+		    SELECT 
+		        c.resume_sq,
+		        FLOOR(SUM(GREATEST(DATEDIFF(COALESCE(c.career_end_dt, CURDATE()), c.career_start_dt) + 1, 0)) / 365) AS exp_years
+		    FROM TBL_RESUME_CAREER_S c
+		    INNER JOIN (
+		        SELECT user_sq, MAX(resume_sq) AS max_resume_sq
+		        FROM TBL_RESUME_M
+		        WHERE (resume_is_deleted_yn = 'N' OR resume_is_deleted_yn IS NULL)
+		        GROUP BY user_sq
+		    ) latest ON c.resume_sq = latest.max_resume_sq
+		    GROUP BY c.resume_sq
+		) career ON r.resume_sq = career.resume_sq
 
         <where>
             AND (u.user_is_deleted_yn = 'N' OR u.user_is_deleted_yn IS NULL)
