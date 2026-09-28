@@ -117,7 +117,7 @@
 
             <!-- 하단 우측 조회수 -->
             <div class="text-muted text-end fs-6">
-              조회수: {{ scout.viewCnt || 0 }}
+              조회수: {{ scout.viewCnt ?? scout.view_cnt ?? 0 }}
             </div>
           </div>
         </div>
@@ -159,13 +159,32 @@ const props = defineProps({
 
 const emit = defineEmits(['click-skill-tag', 'open-resume'])
 
-const goToScoutSpec = (scout) => {
-  console.log('클릭한 scout 객체 데이터:', scout)
+const goToScoutSpec = async (scout) => {
 
   if (!scout) {
     console.warn('scout 데이터가 없습니다.')
     return
   }
+
+  const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
+
+  try {
+    const response = await api.post(`/scouts/${targetId}/views`)
+    
+    const newViewCnt = response.data?.viewCnt ?? response.data
+
+    if (newViewCnt !== undefined) {
+      scout.viewCnt = newViewCnt
+      scout.view_cnt = newViewCnt
+    } else {
+      scout.viewCnt = (scout.viewCnt || scout.view_cnt || 0) + 1
+      scout.view_cnt = scout.viewCnt
+    }
+
+  } catch (error) {
+    console.error('조회수 증가 처리 중 오류 발생:', error)
+  }
+
 
   emit('open-resume', scout)
 }
