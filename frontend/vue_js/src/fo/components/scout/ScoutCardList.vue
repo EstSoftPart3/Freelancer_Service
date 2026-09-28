@@ -165,25 +165,21 @@ const goToScoutSpec = async (scout) => {
     return
   }
 
-  const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
+  const targetId = scout.resumeSq || scout.userSq || scout.id
 
   try {
-    const response = await api.post(`/scouts/${targetId}/views`)
+    const res = await api.post(`/v1/scouts/${targetId}/views`)
     
-    const newViewCnt = response.data?.viewCnt ?? response.data
-
-    if (newViewCnt !== undefined) {
-      scout.viewCnt = newViewCnt
-      scout.view_cnt = newViewCnt
-    } else {
-      scout.viewCnt = (scout.viewCnt || scout.view_cnt || 0) + 1
-      scout.view_cnt = scout.viewCnt
+    if (res && res.data && res.data.viewCnt !== undefined) {
+      scout.viewCnt = res.data.viewCnt
+    } else if (res && res.viewCnt !== undefined) {
+      scout.viewCnt = res.viewCnt
     }
   } catch (error) {
     console.error('조회수 증가 처리 중 오류 발생:', error)
+  } finally {
+    emit('open-resume', scout)
   }
-
-  emit('open-resume', scout)
 }
 
 const getSkillName = (skill) => {
