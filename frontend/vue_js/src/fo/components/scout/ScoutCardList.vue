@@ -169,18 +169,13 @@ const goToScoutSpec = async (scout) => {
   const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
 
   try {
-    const response = await api.post(`/scouts/${targetId}/views`)
+    const response = await api.$post(`/scouts/${targetId}/views`)
     
-    const newViewCnt = response.data?.viewCnt ?? response.data
-
+    const newViewCnt = response?.data?.viewCnt ?? response?.viewCnt ?? response
     if (newViewCnt !== undefined) {
       scout.viewCnt = newViewCnt
       scout.view_cnt = newViewCnt
-    } else {
-      scout.viewCnt = (scout.viewCnt || scout.view_cnt || 0) + 1
-      scout.view_cnt = scout.viewCnt
     }
-
   } catch (error) {
     console.error('조회수 증가 처리 중 오류 발생:', error)
   }
