@@ -6,6 +6,24 @@
         :key="scout.resumeSq || scout.userSq || scout.id"
         class="card position-relative p-4 shadow-sm mb-3"
       >
+        <!-- 스크랩 아이콘 (카드 우측 상단 고정) -->
+        <div class="position-absolute top-0 end-0 m-3">
+          <a
+            @click.stop="clickScrap(scout)"
+            class="text-decoration-none"
+            style="cursor: pointer"
+          >
+            <i
+              :class="[
+                'bi',
+                scout.hasScrapped === 'Y'
+                  ? 'bi-heart-fill text-danger'
+                  : 'bi-heart text-muted',
+                'fs-4',
+              ]"
+            ></i>
+          </a>
+        </div>
 
         <!-- 카드 본문 -->
         <div class="d-flex flex-row align-items-center">
@@ -97,7 +115,10 @@
               </button>
             </div>
 
-            
+            <!-- 하단 우측 조회수 -->
+            <div class="text-muted text-end fs-6">
+              조회수: {{ scout.viewCnt || 0 }}
+            </div>
           </div>
         </div>
       </div>
