@@ -174,5 +174,12 @@
         WHERE resume_sq = #{scoutSq}
     </update>
     
+    <!-- 최신 조회수 조회 -->
+    <select id="selectViewCount" resultType="int">
+        SELECT COALESCE(view_cnt, 0)
+        FROM tbl_resume_m
+        WHERE resume_sq = #{scoutSq}
+    </select>
+    
 
 </mapper>

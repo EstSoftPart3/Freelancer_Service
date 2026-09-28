@@ -101,10 +101,12 @@ public class ScoutService {
         }
     }
     
-   
     @Transactional
-    public void increaseViewCount(Long scoutId) {
-        scoutMapper.updateViewCount(scoutId);
+    public int increaseViewCount(Long scoutSq) {
+        scoutMapper.updateViewCount(scoutSq);
+        
+        return scoutMapper.selectViewCount(scoutSq);
+        
     }
 
 }

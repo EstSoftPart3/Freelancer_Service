@@ -81,7 +81,12 @@ public class ScoutController {
 	
 	@PostMapping("/{scoutSq}/views")
     public ResponseEntity<Void> increaseViewCount(@PathVariable("scoutSq") Long scoutSq) {
-        scoutService.increaseViewCount(scoutSq);
+		
+		int updatedViewCnt = scoutService.increaseViewCount(scoutSq);
+		
+        Map<String, Object> response = new HashMap<>();
+        response.put("viewCnt", updatedViewCnt);
+        
         return ResponseEntity.ok().build();
     }
 
