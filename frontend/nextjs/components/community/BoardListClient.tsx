@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -14,9 +14,9 @@ import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import { useCommunityStore } from '@/stores/communityStore'
 import api from '@/lib/api'
+import { InfoTooltip } from '@/components/ui/tooltip'
+import { BOARD_INTRO_TIPS, BOARD_PAGE_TITLE, supportsAnswer, hasCategory, type BoardType as BoardCategory } from '@/components/community/boardMeta'
 import type { BoardItem, BoardListResponse } from '@/types'
-
-type BoardCategory = 'board' | 'qna' | 'notice' | 'voc' | 'all'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: '상태' },
@@ -31,6 +31,8 @@ interface Props {
   // 서버에서 미리 조회한 첫 페이지(기본 정렬) — SEO용으로 초기 HTML에 목록을 포함시킨다.
   // 마운트 후 fetchList가 URL/스토어 필터 기준으로 1회 갱신한다(기존 동작 유지).
   initialData?: BoardListResponse | null
+  // 제목(h1) 오른쪽에 붙는 페이지 전용 액션 — 예: teamup의 "프로젝트 공고 바로가기" 버튼.
+  titleAction?: ReactNode
 }
 
 const PAGE_SIZE = 10
@@ -43,7 +45,7 @@ function parseCategory(raw: string | null): number | null {
   return Number.isInteger(n) && n > 0 ? n : null
 }
 
-export default function BoardListClient({ boardCategory, initialData }: Props) {
+export default function BoardListClient({ boardCategory, initialData, titleAction }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isLoggedIn, authChecked, userSq } = useUserStore()
@@ -78,14 +80,28 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
   // 사용자가 "글이 없어졌다"고 느낀다(게시판 종류와 카테고리는 다른 축이다).
   const [categoryCd, setCategoryCd] = useState(() => parseCategory(searchParams.get('category')))
 
-  const isQna = boardCategory === 'qna'
-  const isBoard = boardCategory === 'board'
+  // 답변+채택을 지원하는 게시판(QnA·커리어소통·기술소통) — 채택상태 필터·드롭다운을 함께 보여준다.
+  const isAnswerBoard = supportsAnswer(boardCategory)
   const isNotice = boardCategory === 'notice'
   const isVoc = boardCategory === 'voc'
   const isAll = boardCategory === 'all'
+  // 중분류(카테고리) 필터 줄 — hasCategory()가 정본이다(중분류가 실제로 있는 종류인지).
+  // 예전엔 "notice/voc/all이 아니면 전부"로 하드코딩해서, 중분류가 없는 요즘회사(company)에도
+  // 이 축이 있는 것처럼 취급돼 불필요한 카테고리 조회·잘못된 category 파라미터 전송으로 샜다.
+  // hasCategory()의 BOARD_CATEGORY_FALLBACK엔 'board'(일반게시판) 키가 없다 — 옛 3200 그룹이
+  // 지금은 전부 비활성이라 "새로 고를 수 있는" 카테고리가 없다는 뜻으로 뺀 것이지만, 이미 옛
+  // 카테고리가 달려 있는 기존 글을 그 카테고리로 걸러보는 조회 기능 자체는 여전히 유효하다
+  // (BoardTypeCode.NORMAL도 hasCategory=true로 선언돼 있다) — 'board'는 명시적으로 포함한다.
+  const hasCategoryTabs = boardCategory === 'board' || hasCategory(boardCategory)
   // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
   // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
-  const canRegister = authChecked && !isNotice && !isAll && isLoggedIn()
+  // 'board'·'qna'(레거시 일반게시판·QnA)는 Phase2 재설계로 데이터를 전부 이관하고 비활성화한
+  // 빈 껍데기다(BoardTypeCode.java 참고) — 신규 글은 career/tech 등 새 종류로만 들어가야 하므로
+  // 두 레거시 종류 모두 등록 진입점을 막는다. BO(MANAGED_BOARD_TYPES)도 이 둘을 신규 작성
+  // 선택지에서 뺐다 — 한쪽만 막으면 그 경로로 빈 껍데기에 새 글이 계속 쌓인다.
+  // 기존 글 수정(BoardPost.tsx의 handleEdit)은 같은 라우트를 쓰지만 별도 진입점이라 영향 없다.
+  const canRegister =
+    authChecked && !isNotice && !isAll && boardCategory !== 'board' && boardCategory !== 'qna' && isLoggedIn()
 
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
@@ -97,9 +113,9 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
         ? `/community/boards?boardType=all&page=${p}&size=${PAGE_SIZE}&sortType=${sort}`
         : `/${boardCategory}?page=${p}&size=${PAGE_SIZE}&sortType=${sort}`
       if (kw.trim()) url += `&searchType=${sType}&keyword=${encodeURIComponent(kw.trim())}`
-      if (isQna && status !== 'all') url += `&boardAdoptStatusCd=${status}`
+      if (isAnswerBoard && status !== 'all') url += `&boardAdoptStatusCd=${status}`
       if (t) url += `&tag=${encodeURIComponent(t)}`
-      if (isBoard && cat !== null) url += `&category=${cat}`
+      if (hasCategoryTabs && cat !== null) url += `&category=${cat}`
 
       const { data } = await api.get<{ output: BoardListResponse }>(url)
       if (seq !== requestSeqRef.current) return // 그 사이 더 최신 요청이 나갔다 — 이 응답은 버린다
@@ -113,7 +129,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     } finally {
       if (seq === requestSeqRef.current) setIsLoading(false)
     }
-  }, [boardCategory, isQna, isAll, isBoard])
+  }, [boardCategory, isAnswerBoard, isAll, hasCategoryTabs])
 
   // URL 반영
   const syncUrl = useCallback((params: Record<string, string>) => {
@@ -183,13 +199,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
     router.replace(`${basePath}?${qs.toString()}`)
   }
 
-  const title = tag
-    ? `${boardCategory === 'board' ? '일반' : boardCategory === 'qna' ? 'QnA' : boardCategory === 'notice' ? '공지' : boardCategory === 'voc' ? '고객의 소리' : '전체'} 게시판 (#${tag})`
-    : boardCategory === 'board' ? '일반 게시판'
-    : boardCategory === 'qna' ? 'QnA 게시판'
-    : boardCategory === 'notice' ? '공지사항'
-    : boardCategory === 'voc' ? '고객의 소리'
-    : '커뮤니티 전체글'
+  const title = tag ? `${BOARD_PAGE_TITLE[boardCategory]} (#${tag})` : BOARD_PAGE_TITLE[boardCategory]
 
   // 탭 줄 오른쪽(공지는 단독 줄)에 들어가는 필터·검색 컨트롤
   const filterControls = (
@@ -205,7 +215,7 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
         <option value="comment">댓글순</option>
         <option value="recommend">추천순</option>
       </select>
-      {isQna && (
+      {isAnswerBoard && (
         <select
           value={statusCd}
           onChange={(e) => onStatus(e.target.value)}
@@ -243,15 +253,24 @@ export default function BoardListClient({ boardCategory, initialData }: Props) {
       {!isNotice && <CategoryTabs rightSlot={filterControls} />}
       <div className="lg:flex lg:gap-6">
       <main className="min-w-0 flex-1">
-      <h1 className="mb-6 text-2xl font-bold">{title}</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-1.5 text-2xl font-bold">
+          {title}
+          {BOARD_INTRO_TIPS[boardCategory] && (
+            <InfoTooltip label={`${BOARD_PAGE_TITLE[boardCategory]} 안내`}>{BOARD_INTRO_TIPS[boardCategory]}</InfoTooltip>
+          )}
+        </h1>
+        {titleAction}
+      </div>
 
       {/* 공지는 카테고리 탭이 없으므로 필터를 단독 줄로 노출 */}
       {isNotice && (
         <div className="mb-4 flex flex-wrap items-center gap-2 border-b pb-4">{filterControls}</div>
       )}
 
-      {/* 게시판 카테고리 — 일반게시판에만 있는 축이라 Q&A·공지·전체보기에는 렌더하지 않는다 */}
-      {isBoard && <BoardCategoryTabs selected={categoryCd} onSelect={onCategory} />}
+      {/* 게시판 중분류 — 공지·고객의소리·전체보기에는 이 축이 없다. 중분류가 없는 게시판은
+          BoardCategoryTabs 스스로 아무것도 그리지 않는다. */}
+      {hasCategoryTabs && <BoardCategoryTabs boardType={boardCategory} selected={categoryCd} onSelect={onCategory} />}
 
       {isVoc && (
         <p className="mb-4 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">

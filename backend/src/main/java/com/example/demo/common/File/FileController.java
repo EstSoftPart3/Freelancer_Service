@@ -53,8 +53,10 @@ public class FileController {
 
         try {
             // 1. 암호화된 파일 읽기
-            Path filePath = Paths.get(uploadDir).resolve(savedName);
-            if (!Files.exists(filePath)) {
+            // 비로그인 공개 엔드포인트라 업로드 루트 이탈을 여기서도 막는다(copyFile 과 같은 방어).
+            Path root = Paths.get(uploadDir).normalize();
+            Path filePath = root.resolve(savedName).normalize();
+            if (!filePath.startsWith(root) || !Files.isRegularFile(filePath)) {
                 log.warn("파일을 찾을 수 없습니다: {}", savedName);
                 return ResponseEntity.notFound().build();
             }

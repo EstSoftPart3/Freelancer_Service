@@ -7,9 +7,8 @@ import BoardPost from '@/components/community/BoardPost'
 import BoardComment from '@/components/community/BoardComment'
 import api from '@/lib/api'
 import { incrementView } from '@/lib/viewCount'
+import type { BoardType as BoardCategory } from '@/components/community/boardMeta'
 import type { BoardDetail } from '@/types'
-
-type BoardCategory = 'board' | 'notice'
 
 interface Props {
   boardSq: string
@@ -41,7 +40,7 @@ export default function BoardDetailClient({ boardSq, boardCategory, initialData 
       const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response
       if (res?.status === 400) {
         alertStore.show(res.data?.message ?? '삭제되었거나 존재하지 않는 게시글입니다.', 'danger')
-        router.replace(boardCategory === 'notice' ? '/notice' : '/board')
+        router.replace(`/${boardCategory}`)
       } else {
         alertStore.show('게시글을 불러올 수 없습니다.', 'danger')
       }
@@ -57,7 +56,7 @@ export default function BoardDetailClient({ boardSq, boardCategory, initialData 
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <BoardPost
         boardInfo={boardInfo}
-        boardType={boardCategory === 'notice' ? 'notice' : 'board'}
+        boardType={boardCategory}
         onRefresh={getBoard}
       />
       <BoardComment

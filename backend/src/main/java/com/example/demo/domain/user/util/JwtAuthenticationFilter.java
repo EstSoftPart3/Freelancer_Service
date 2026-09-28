@@ -57,6 +57,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // SecurityConfig 의 permitAll 과 **이 목록 양쪽**에 넣어야 한다 —
             // 한쪽만 넣으면 설정상 공개인데 실제로는 401 이 나간다.
             "/api/community/board-categories",
+            // Phase2 게시판 재설계(2026-09) 신설 5종(CommunityBoardController) — board/qna와 같은 이유로 공개.
+            "/api/career",
+            "/api/tech",
+            "/api/company",
+            "/api/teamup",
+            "/api/lounge",
+            "/api/votes",
+            "/api/interviews",
+            // 연봉순위표만 공개(계산기 제출·리포트는 로그인 필수) — votes/interviews처럼 도메인
+            // 전체를 열지 않고 이 접두사 하나만. startsWith 매칭이라 /api/salary/report·
+            // /api/salary/submissions 는 걸리지 않는다.
+            "/api/salary/ranking",
             "/api/affiliation",
             "/api/affiliation/address",
             "/api/projects/interviews",
@@ -90,6 +102,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/projects/applications"
     );
 
+    // EXCLUDE_URLS 는 HTTP 메서드를 보지 않는 접두사 목록이라 POST/PUT/DELETE 까지 같이 풀렸다.
+    // SecurityConfigProd 는 조회(GET)·조회수 PATCH·아래 계정 흐름 POST 만 permitAll 이라, 필터도
+    // 그 범위에서만 예외를 적용한다. 그 외 메서드는 만료·누락 토큰이면 401 로 끊는다 —
+    // 안 그러면 Dev(anyRequest permitAll)에서 만료 토큰 POST 가 userSq=null 로 컨트롤러에 들어가 500 이 난다.
+    private static final List<String> PUBLIC_POST_URLS = List.of(
+            "/api/login", "/api/logout", "/api/refresh-token", "/api/signup",
+            "/api/email", "/api/find-id", "/api/reset-password",
+            "/api/admin/login", "/api/admin/refresh-token");
+
+    private static boolean isPublicMethod(String method, String uri) {
+        return switch (method) {
+            case "GET", "HEAD", "OPTIONS" -> true;
+            case "PATCH" -> uri.endsWith("/increment-view");
+            case "POST" -> PUBLIC_POST_URLS.stream().anyMatch(uri::startsWith);
+            default -> false;
+        };
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
@@ -100,7 +130,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 인증 제외 경로 처리
         boolean isExcluded = EXCLUDE_URLS.stream().anyMatch(uri::startsWith)
-                && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith);
+                && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith)
+                && isPublicMethod(request.getMethod(), uri);
         if (isExcluded) {
             if (token != null && jwtProvider.validateToken(token)) {
                 try {

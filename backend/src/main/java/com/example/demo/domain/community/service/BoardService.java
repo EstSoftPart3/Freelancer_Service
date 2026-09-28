@@ -102,17 +102,17 @@ public class BoardService {
 
 		// 알 수 없는 카테고리 코드는 무시하고 전체를 보여준다 — URL을 손으로 고친 경우
 		// 빈 목록보다 전체 목록이 덜 혼란스럽고, 검색 조건이라 예외로 막을 성질은 아니다.
-		Long safeCategoryCd = (boardCategoryCd != null && activeCategoryCds().contains(boardCategoryCd))
+		Long safeCategoryCd = (boardCategoryCd != null && activeCategoryCds(boardTypeCd).contains(boardCategoryCd))
 				? boardCategoryCd
 				: null;
 
 		List<Board> boards = boardMapper.findAll(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
 				searchSkillTags,
-				sortType, size, offset);
+				sortType, size, offset, BoardTypeCode.communityListCodes());
 		Long totalElements = boardMapper.findAllCnt(boardTypeCd, safeCategoryCd, boardAdoptStatusCd, searchType, keyword,
 				tag,
-				searchSkillTags);
+				searchSkillTags, BoardTypeCode.communityListCodes());
 
 		List<BoardListDTO> responses = boards.stream()
 				.filter(Objects::nonNull)
@@ -147,7 +147,7 @@ public class BoardService {
 	public List<CommunityBestItemDTO> getBestBoards(String period, int size) {
 		String safePeriod = ALLOWED_BEST_PERIODS.contains(period) ? period : "all";
 		int safeSize = Math.max(1, Math.min(size, 20));
-		return boardMapper.findBestBoards(safePeriod, safeSize);
+		return boardMapper.findBestBoards(safePeriod, safeSize, BoardTypeCode.communityListCodes());
 	}
 
 	@Transactional
@@ -237,11 +237,25 @@ public class BoardService {
 	}
 
 	/**
-	 * 카테고리는 일반게시판(1401)에만 쓴다. Q&A·공지·고객의소리는 카테고리 개념이 없으므로
+	 * 옛 일반게시판(1401)·QnA(1402)는 Phase2 게시판 재설계로 데이터가 전부 새 5종 게시판으로
+	 * 이관되고 빈 껍데기만 남았다(FO 메뉴에도 없음, BoardController/QnaController만 남아있는
+	 * 레거시 라우트). 프론트는 이 라우트로 글을 쓸 방법이 없지만 백엔드가 POST/PUT을 그대로
+	 * 받아줘서 API 직접 호출로는 여전히 새 글을 쓸 수 있었다 — 여기서 한 번에 막는다
+	 * (BoardController·QnaController·AdminBoardController.createBoard가 전부 이 메서드를 거친다).
+	 */
+	private void requireNotLegacyBoard(Long boardTypeCd) {
+		if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd) || BoardTypeCode.QNA.getCode().equals(boardTypeCd)) {
+			throw new ResponseStatusException(HttpStatus.GONE, "이 게시판은 더 이상 글쓰기를 지원하지 않습니다.");
+		}
+	}
+
+	/**
+	 * 카테고리는 {@link BoardTypeCode#isHasCategory()} 가 true 인 게시판(일반·커리어소통·기술소통·
+	 * 프로젝트·라운지)에만 쓴다. Q&A·공지·고객의소리·요즘회사는 카테고리 개념이 없으므로
 	 * 값이 실려 와도 무시한다(FO 실수로 엉뚱한 게시판에 카테고리가 박히는 것을 막는다).
 	 *
 	 * <p>
-	 * 일반게시판에서는 <b>미선택(null)도 거절한다</b>(400). 기존 글의 NULL 은 '미분류'로 남겨 두지만,
+	 * 카테고리가 있는 게시판에서는 <b>미선택(null)도 거절한다</b>(400). 기존 글의 NULL 은 '미분류'로 남겨 두지만,
 	 * 새 글·수정 글까지 미분류를 허용하면 어느 카테고리 탭에도 걸리지 않는 글이 계속 늘어난다.
 	 * 그래서 수정 요청에도 카테고리를 반드시 실어 보내야 한다 — 카테고리를 빼고 제목만 고치는
 	 * 클라이언트가 있으면 그쪽이 400 을 맞는다.
@@ -258,13 +272,13 @@ public class BoardService {
 	 * </p>
 	 */
 	public Long resolveCategoryCd(Long boardTypeCd, Long categoryCd) {
-		if (!BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
+		if (!BoardTypeCode.of(boardTypeCd).isHasCategory()) {
 			return null;
 		}
 		if (categoryCd == null) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 선택해주세요.");
 		}
-		if (!activeCategoryCds().contains(categoryCd)) {
+		if (!activeCategoryCds(boardTypeCd).contains(categoryCd)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 게시판 카테고리입니다.");
 		}
 		return categoryCd;
@@ -280,7 +294,7 @@ public class BoardService {
 	 * </p>
 	 */
 	private String resolveSecretYn(Long boardTypeCd, Boolean isSecret) {
-		if (!BoardTypeCode.VOC.getCode().equals(boardTypeCd)) {
+		if (!BoardTypeCode.of(boardTypeCd).isSupportsSecret()) {
 			return "N";
 		}
 		if (isSecret == null) {
@@ -298,9 +312,27 @@ public class BoardService {
 	 * 목록·뱃지·검증이 전부 같은 표를 보게 해서 그 어긋남을 없앤다.
 	 * 글쓰기는 드문 요청이라 여기서 매번 조회해도 비용이 문제되지 않는다.
 	 * </p>
+	 *
+	 * <p>
+	 * Phase2 게시판 재설계(2026-09) 이후 중분류는 공통코드 3200 그룹이 아니라 각 게시판 종류
+	 * 코드(1405 커리어소통 등)를 parent로 둔다. {@code boardTypeCd}가 null이면(통합목록) 중분류
+	 * 개념이 없으므로 빈 집합을 돌려준다 — 통합목록에서 카테고리 필터를 걸 일이 없다.
+	 * </p>
+	 *
+	 * <p>
+	 * 일반게시판(NORMAL, 1401)만은 예외다 — 새 게시판 종류처럼 자기 코드(1401)를 parent로 카테고리를
+	 * 새로 두지 않았고, 예전 그대로 {@link ParentCodeEnum#BOARD_CATEGORY}(3200) 그룹 아래에 있다
+	 * ({@code AdminSeedService}의 시드 로직도 여전히 3200을 쓴다 — 여기서만 1401을 parent로 조회하면
+	 * 활성 카테고리가 하나도 안 잡혀서, 기존 글의 카테고리를 그대로 보낸 수정 요청까지 "존재하지
+	 * 않는 카테고리"로 거절된다).
+	 * </p>
 	 */
-	private Set<Long> activeCategoryCds() {
-		return commonCodeMapper.findActiveChildrenByParent(ParentCodeEnum.BOARD_CATEGORY.getCode())
+	private Set<Long> activeCategoryCds(Long boardTypeCd) {
+		if (boardTypeCd == null) return Set.of();
+		Long parentCodeSq = BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)
+				? ParentCodeEnum.BOARD_CATEGORY.getCode()
+				: boardTypeCd;
+		return commonCodeMapper.findActiveChildrenByParent(parentCodeSq)
 				.stream()
 				.map(CommonCodeDTO::getCommonCodeSq)
 				.collect(Collectors.toSet());
@@ -314,6 +346,7 @@ public class BoardService {
 	@Transactional
 	public Long createBoard(BoardRequest boardRequest, Long BoardTypeCd) {
 		requireWriter(boardRequest.getUserSq());
+		requireNotLegacyBoard(BoardTypeCd);
 
 		// 게시글 오류 처리
 		if (boardRequest.getTtl() == null) {
@@ -348,7 +381,7 @@ public class BoardService {
 		}
 
 		// 2. 스킬 태그 처리 수정 (updateBoard 포함)
-		if (BoardTypeCode.QNA.getCode().equals(board.getBoardTypeCd()) &&
+		if (BoardTypeCode.of(board.getBoardTypeCd()).isSupportsSkillTag() &&
 				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
 			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
 					board.getBoardSq(), null, boardRequest.getSkillTags()));
@@ -400,6 +433,7 @@ public class BoardService {
 	@Transactional
 	public void updateBoard(BoardRequest boardRequest, Long boardSq, Long boardTypeCd) {
 		requireWriter(boardRequest.getUserSq());
+		requireNotLegacyBoard(boardTypeCd);
 
 		// 게시글 업데이트
 		if (boardRequest.getTtl() == null) {
@@ -432,22 +466,22 @@ public class BoardService {
 		// 일반게시판은 카테고리가 필수라 수정에서도 검증한다.
 		// 카테고리 개념이 없는 게시판(공지 등)은 resolveCategoryCd가 null을 돌려주므로,
 		// 그쪽 호출부가 기존 값을 지우지 않도록 1401일 때만 대입한다.
-		if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd)) {
+		if (BoardTypeCode.of(boardTypeCd).isHasCategory()) {
 			board.setBoardCategoryCd(resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
 		}
-		// 고객의 소리만 공개/비공개 전환을 허용한다. null 이면 기존 값을 유지한다(매퍼 COALESCE).
-		if (BoardTypeCode.VOC.getCode().equals(boardTypeCd)) {
+		// 비공개 전환을 지원하는 게시판만 허용한다. null 이면 기존 값을 유지한다(매퍼 COALESCE).
+		if (BoardTypeCode.of(boardTypeCd).isSupportsSecret()) {
 			board.setBoardIsSecretYn(resolveSecretYn(boardTypeCd, boardRequest.getIsSecret()));
 		}
 
-		// 채택 상태는 Q&A 전용이고, updateStatusBoard 와 같은 규칙으로 검증한다.
+		// 채택 상태는 답변을 지원하는 게시판 전용이고, updateStatusBoard 와 같은 규칙으로 검증한다.
 		// 검증 없이 대입하면 PUT /qna/{내 글} 본문에 boardAdoptStatusCd=1502 를 실어
 		// "채택완료인데 채택된 답변이 0건"인 글을 만들 수 있고(BoardAdoptStatusCode 의 불변식 위반),
 		// 9999 같은 값이면 목록 필터·라벨이 전부 어긋난다.
 		// 값이 지금과 같으면(폼이 기존 값을 그대로 되돌려 보내는 경우) 그냥 통과시킨다.
 		Long requestedAdoptStatus = boardRequest.getBoardAdoptStatusCd();
 		if (requestedAdoptStatus != null
-				&& BoardTypeCode.QNA.getCode().equals(boardTypeCd)
+				&& BoardTypeCode.of(boardTypeCd).isSupportsAnswer()
 				&& !requestedAdoptStatus.equals(board.getBoardAdoptStatusCd())) {
 			if (!BoardAdoptStatusCode.isUserSelectable(requestedAdoptStatus)
 					|| BoardAdoptStatusCode.ADOPTED.getCode().equals(board.getBoardAdoptStatusCd())) {
@@ -471,7 +505,7 @@ public class BoardService {
 		// 2. 스킬 태그 처리 수정
 		// createBoard 쪽과 같은 비교를 쓴다 — Long == int 리터럴은 언박싱이라
 		// board_type_cd 가 NULL 인 행을 만나면 여기서 NPE 가 난다.
-		if (BoardTypeCode.QNA.getCode().equals(board.getBoardTypeCd()) &&
+		if (BoardTypeCode.of(board.getBoardTypeCd()).isSupportsSkillTag() &&
 				boardRequest.getSkillTags() != null && !boardRequest.getSkillTags().isEmpty()) {
 			cmntTagMapper.insertST(skillTagConverter.convertStringsToSkillTags(
 					board.getBoardSq(), null, boardRequest.getSkillTags()));
@@ -659,11 +693,13 @@ public class BoardService {
 	@Transactional
 	public void updateStatusBoard(Long userSq, Long boardSq, Long statusCd) {
 
-		Board board = boardMapper.findByIdBoard(boardSq, BoardTypeCode.QNA.getCode());
-		// 채택 상태는 Q&A 전용이다. 다른 게시판 번호로 부르면 findByIdBoard 가 null 을 주고,
-		// 그대로 두면 getUserSq() 에서 NPE 500 이 난다(AnswerService.adoptAnswer 와 같은 처리).
+		Board board = boardMapper.findByIdAny(boardSq);
 		if (board == null) {
-			throw new IllegalArgumentException("채택 상태 변경은 Q&A 글에만 가능합니다.");
+			throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
+		}
+		// 채택 상태 변경은 답변을 지원하는 게시판 전용이다(BoardTypeCode.supportsAnswer).
+		if (!BoardTypeCode.of(board.getBoardTypeCd()).isSupportsAnswer()) {
+			throw new IllegalArgumentException("채택 상태 변경은 답변이 지원되는 게시판에서만 가능합니다.");
 		}
 
 		// if (board.getUserSq() != userSq) {

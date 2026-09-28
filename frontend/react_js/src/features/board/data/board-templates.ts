@@ -8,24 +8,25 @@
 // Quill(react-quill-new)의 clipboard.dangerouslyPasteHTML 로 주입되므로 Quill 이 다룰 수 있는
 // 태그만 쓴다. <table>·<div> 는 Quill 기본 포맷이 아니어서 붙여넣는 순간 구조가 뭉개진다.
 
-/** 현장정보 — 기본 양식이 붙는 유일한 카테고리 */
-export const CATEGORY_FIELD_INFO = '3203'
-
-const FIELD_INFO_TEMPLATE = [
-  '<p><strong>■ 현장명</strong></p>',
-  '<p><br></p>',
-  '<p><strong>■ 위치</strong></p>',
-  '<p><br></p>',
-  '<p><strong>■ 공정 · 업무</strong></p>',
-  '<p><br></p>',
-  '<p><strong>■ 근무 조건</strong></p>',
-  '<ul><li>기간 : </li><li>근무 시간 : </li><li>단가 · 급여 : </li></ul>',
-  '<p><strong>■ 참고 사항</strong></p>',
-  '<p><br></p>',
-].join('')
-
+// 3203(옛 "현장정보")은 관리 대상 5종(MANAGED_BOARD_TYPES)의 새 카테고리 목록(3210대부터)엔
+// 없지만, 실제 카테고리 자체는 없어지지 않았다 — 일반게시판(1401)은 예전 그대로 공통코드 3200
+// 그룹 아래에 카테고리를 두고 있고 그 그룹은 여전히 활성이다(FO BoardService.activeCategoryCds
+// 참고). BO는 신규 글 작성 시 1401을 고를 수 없어(LEGACY_BOARD_META는 기존 글 수정에만 쓰인다)
+// 지금 당장 이 경로가 열리지는 않지만, FO(frontend/nextjs/components/community/boardTemplates.ts)
+// 와 내용을 맞춘다는 이 파일의 원칙에 따라 여기도 같이 둔다.
 const TEMPLATES: Record<string, string> = {
-  [CATEGORY_FIELD_INFO]: FIELD_INFO_TEMPLATE,
+  '3203': [
+    '<p><strong>■ 현장명</strong></p>',
+    '<p><br></p>',
+    '<p><strong>■ 위치</strong></p>',
+    '<p><br></p>',
+    '<p><strong>■ 공정 · 업무</strong></p>',
+    '<p><br></p>',
+    '<p><strong>■ 근무 조건</strong></p>',
+    '<ul><li>기간 : </li><li>근무 시간 : </li><li>단가 · 급여 : </li></ul>',
+    '<p><strong>■ 참고 사항</strong></p>',
+    '<p><br></p>',
+  ].join(''),
 }
 
 /** 해당 카테고리에 기본 양식이 있으면 HTML 을, 없으면 null. */

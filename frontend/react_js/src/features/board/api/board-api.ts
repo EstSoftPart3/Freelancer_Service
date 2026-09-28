@@ -130,6 +130,22 @@ export const boardApi = {
   getSkillTags: async () => {
     return await api.$get<ApiResponse<RawSkillTag[]>>('/board/skill-tags')
   },
+
+  /**
+   * 게시판 중분류(카테고리) 조회 — FO와 동일 공개 엔드포인트 재사용(GET /community/board-categories).
+   * 라벨이 공통코드에서 나오므로 이름이 바뀌어도 BO 재배포가 필요 없다.
+   */
+  getBoardCategories: async (boardPath: string) => {
+    return await api.$get<ApiResponse<BoardCategory[]>>(
+      '/community/board-categories',
+      { boardType: boardPath }
+    )
+  },
+}
+
+export interface BoardCategory {
+  commonCodeSq: number
+  commonCodeNm: string
 }
 
 export interface RawSkillTag {

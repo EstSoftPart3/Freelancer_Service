@@ -35,9 +35,12 @@ import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_auth
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as AuthenticatedManagementProjectIndexRouteImport } from './routes/_authenticated/management/project/index'
 import { Route as AuthenticatedManagementCompanyIndexRouteImport } from './routes/_authenticated/management/company/index'
+import { Route as AuthenticatedContentsVoteIndexRouteImport } from './routes/_authenticated/contents/vote/index'
 import { Route as AuthenticatedContentsVocIndexRouteImport } from './routes/_authenticated/contents/voc/index'
+import { Route as AuthenticatedContentsSalaryIndexRouteImport } from './routes/_authenticated/contents/salary/index'
 import { Route as AuthenticatedContentsReportIndexRouteImport } from './routes/_authenticated/contents/report/index'
 import { Route as AuthenticatedContentsNoticeIndexRouteImport } from './routes/_authenticated/contents/notice/index'
+import { Route as AuthenticatedContentsInterviewIndexRouteImport } from './routes/_authenticated/contents/interview/index'
 import { Route as AuthenticatedContentsBoardIndexRouteImport } from './routes/_authenticated/contents/board/index'
 import { Route as AuthenticatedManagementProjectApplySeedRouteImport } from './routes/_authenticated/management/project/apply-seed'
 import { Route as AuthenticatedContentsBoardSeedRouteImport } from './routes/_authenticated/contents/board/seed'
@@ -181,10 +184,22 @@ const AuthenticatedManagementCompanyIndexRoute =
     path: '/management/company/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContentsVoteIndexRoute =
+  AuthenticatedContentsVoteIndexRouteImport.update({
+    id: '/contents/vote/',
+    path: '/contents/vote/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContentsVocIndexRoute =
   AuthenticatedContentsVocIndexRouteImport.update({
     id: '/contents/voc/',
     path: '/contents/voc/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContentsSalaryIndexRoute =
+  AuthenticatedContentsSalaryIndexRouteImport.update({
+    id: '/contents/salary/',
+    path: '/contents/salary/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContentsReportIndexRoute =
@@ -197,6 +212,12 @@ const AuthenticatedContentsNoticeIndexRoute =
   AuthenticatedContentsNoticeIndexRouteImport.update({
     id: '/contents/notice/',
     path: '/contents/notice/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContentsInterviewIndexRoute =
+  AuthenticatedContentsInterviewIndexRouteImport.update({
+    id: '/contents/interview/',
+    path: '/contents/interview/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContentsBoardIndexRoute =
@@ -245,9 +266,12 @@ export interface FileRoutesByFullPath {
   '/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
+  '/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/salary/': typeof AuthenticatedContentsSalaryIndexRoute
   '/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
+  '/contents/vote/': typeof AuthenticatedContentsVoteIndexRoute
   '/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
   '/management/project/': typeof AuthenticatedManagementProjectIndexRoute
 }
@@ -277,9 +301,12 @@ export interface FileRoutesByTo {
   '/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/contents/board': typeof AuthenticatedContentsBoardIndexRoute
+  '/contents/interview': typeof AuthenticatedContentsInterviewIndexRoute
   '/contents/notice': typeof AuthenticatedContentsNoticeIndexRoute
   '/contents/report': typeof AuthenticatedContentsReportIndexRoute
+  '/contents/salary': typeof AuthenticatedContentsSalaryIndexRoute
   '/contents/voc': typeof AuthenticatedContentsVocIndexRoute
+  '/contents/vote': typeof AuthenticatedContentsVoteIndexRoute
   '/management/company': typeof AuthenticatedManagementCompanyIndexRoute
   '/management/project': typeof AuthenticatedManagementProjectIndexRoute
 }
@@ -312,9 +339,12 @@ export interface FileRoutesById {
   '/_authenticated/contents/board/seed': typeof AuthenticatedContentsBoardSeedRoute
   '/_authenticated/management/project/apply-seed': typeof AuthenticatedManagementProjectApplySeedRoute
   '/_authenticated/contents/board/': typeof AuthenticatedContentsBoardIndexRoute
+  '/_authenticated/contents/interview/': typeof AuthenticatedContentsInterviewIndexRoute
   '/_authenticated/contents/notice/': typeof AuthenticatedContentsNoticeIndexRoute
   '/_authenticated/contents/report/': typeof AuthenticatedContentsReportIndexRoute
+  '/_authenticated/contents/salary/': typeof AuthenticatedContentsSalaryIndexRoute
   '/_authenticated/contents/voc/': typeof AuthenticatedContentsVocIndexRoute
+  '/_authenticated/contents/vote/': typeof AuthenticatedContentsVoteIndexRoute
   '/_authenticated/management/company/': typeof AuthenticatedManagementCompanyIndexRoute
   '/_authenticated/management/project/': typeof AuthenticatedManagementProjectIndexRoute
 }
@@ -347,9 +377,12 @@ export interface FileRouteTypes {
     | '/contents/board/seed'
     | '/management/project/apply-seed'
     | '/contents/board/'
+    | '/contents/interview/'
     | '/contents/notice/'
     | '/contents/report/'
+    | '/contents/salary/'
     | '/contents/voc/'
+    | '/contents/vote/'
     | '/management/company/'
     | '/management/project/'
   fileRoutesByTo: FileRoutesByTo
@@ -379,9 +412,12 @@ export interface FileRouteTypes {
     | '/contents/board/seed'
     | '/management/project/apply-seed'
     | '/contents/board'
+    | '/contents/interview'
     | '/contents/notice'
     | '/contents/report'
+    | '/contents/salary'
     | '/contents/voc'
+    | '/contents/vote'
     | '/management/company'
     | '/management/project'
   id:
@@ -413,9 +449,12 @@ export interface FileRouteTypes {
     | '/_authenticated/contents/board/seed'
     | '/_authenticated/management/project/apply-seed'
     | '/_authenticated/contents/board/'
+    | '/_authenticated/contents/interview/'
     | '/_authenticated/contents/notice/'
     | '/_authenticated/contents/report/'
+    | '/_authenticated/contents/salary/'
     | '/_authenticated/contents/voc/'
+    | '/_authenticated/contents/vote/'
     | '/_authenticated/management/company/'
     | '/_authenticated/management/project/'
   fileRoutesById: FileRoutesById
@@ -618,11 +657,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManagementCompanyIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contents/vote/': {
+      id: '/_authenticated/contents/vote/'
+      path: '/contents/vote'
+      fullPath: '/contents/vote/'
+      preLoaderRoute: typeof AuthenticatedContentsVoteIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contents/voc/': {
       id: '/_authenticated/contents/voc/'
       path: '/contents/voc'
       fullPath: '/contents/voc/'
       preLoaderRoute: typeof AuthenticatedContentsVocIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contents/salary/': {
+      id: '/_authenticated/contents/salary/'
+      path: '/contents/salary'
+      fullPath: '/contents/salary/'
+      preLoaderRoute: typeof AuthenticatedContentsSalaryIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contents/report/': {
@@ -637,6 +690,13 @@ declare module '@tanstack/react-router' {
       path: '/contents/notice'
       fullPath: '/contents/notice/'
       preLoaderRoute: typeof AuthenticatedContentsNoticeIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contents/interview/': {
+      id: '/_authenticated/contents/interview/'
+      path: '/contents/interview'
+      fullPath: '/contents/interview/'
+      preLoaderRoute: typeof AuthenticatedContentsInterviewIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contents/board/': {
@@ -698,9 +758,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContentsBoardSeedRoute: typeof AuthenticatedContentsBoardSeedRoute
   AuthenticatedManagementProjectApplySeedRoute: typeof AuthenticatedManagementProjectApplySeedRoute
   AuthenticatedContentsBoardIndexRoute: typeof AuthenticatedContentsBoardIndexRoute
+  AuthenticatedContentsInterviewIndexRoute: typeof AuthenticatedContentsInterviewIndexRoute
   AuthenticatedContentsNoticeIndexRoute: typeof AuthenticatedContentsNoticeIndexRoute
   AuthenticatedContentsReportIndexRoute: typeof AuthenticatedContentsReportIndexRoute
+  AuthenticatedContentsSalaryIndexRoute: typeof AuthenticatedContentsSalaryIndexRoute
   AuthenticatedContentsVocIndexRoute: typeof AuthenticatedContentsVocIndexRoute
+  AuthenticatedContentsVoteIndexRoute: typeof AuthenticatedContentsVoteIndexRoute
   AuthenticatedManagementCompanyIndexRoute: typeof AuthenticatedManagementCompanyIndexRoute
   AuthenticatedManagementProjectIndexRoute: typeof AuthenticatedManagementProjectIndexRoute
 }
@@ -718,9 +781,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagementProjectApplySeedRoute:
     AuthenticatedManagementProjectApplySeedRoute,
   AuthenticatedContentsBoardIndexRoute: AuthenticatedContentsBoardIndexRoute,
+  AuthenticatedContentsInterviewIndexRoute:
+    AuthenticatedContentsInterviewIndexRoute,
   AuthenticatedContentsNoticeIndexRoute: AuthenticatedContentsNoticeIndexRoute,
   AuthenticatedContentsReportIndexRoute: AuthenticatedContentsReportIndexRoute,
+  AuthenticatedContentsSalaryIndexRoute: AuthenticatedContentsSalaryIndexRoute,
   AuthenticatedContentsVocIndexRoute: AuthenticatedContentsVocIndexRoute,
+  AuthenticatedContentsVoteIndexRoute: AuthenticatedContentsVoteIndexRoute,
   AuthenticatedManagementCompanyIndexRoute:
     AuthenticatedManagementCompanyIndexRoute,
   AuthenticatedManagementProjectIndexRoute:

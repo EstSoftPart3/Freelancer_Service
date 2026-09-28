@@ -9,8 +9,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 // import { IconFacebook, IconGithub } from '@/assets/brand-icons'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAuthStore, REFRESH_TOKEN } from '@/stores/auth-store'
 import { api } from '@/lib/api'
+import { setCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -109,7 +110,8 @@ export function UserAuthForm({
         exp: Date.now() + 24 * 60 * 60 * 1000,
       })
 
-      localStorage.setItem('refreshToken', token.refreshToken)
+      // 세션 쿠키(max-age 없음) — 브라우저를 닫으면 자동으로 로그아웃되게 한다
+      setCookie(REFRESH_TOKEN, token.refreshToken, null)
       toast.success(`반가워요, ${userInfo.userNm} 관리자님!`)
 
       const targetPath = redirectTo || '/'

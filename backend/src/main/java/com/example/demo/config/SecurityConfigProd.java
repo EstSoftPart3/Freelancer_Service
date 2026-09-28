@@ -102,9 +102,17 @@ public class SecurityConfigProd {
                         .requestMatchers(HttpMethod.GET, "/projects/**").permitAll()
 
                         // ---- SEO public GET: 커뮤니티·공지·소속 ----
+                        // career/tech/company/teamup/lounge — Phase2 게시판 재설계(2026-09) 신설 5종
+                        // (CommunityBoardController). board/qna와 같은 이유로 공개 GET.
                         .requestMatchers(HttpMethod.GET,
-                                "/board/**", "/qna/**", "/notice/**", "/community/**", "/answer/**").permitAll()
+                                "/board/**", "/qna/**", "/notice/**", "/community/**", "/answer/**",
+                                "/career/**", "/tech/**", "/company/**", "/teamup/**", "/lounge/**",
+                                "/votes/**", "/interviews/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/affiliation", "/affiliation/address").permitAll()
+
+                        // ---- 연봉순위표만 공개(사용자 확정) — 계산기 제출·리포트는 로그인 필수라
+                        //      /salary/** 를 통째로 열지 않고 이 경로 하나만 permitAll 한다.
+                        .requestMatchers(HttpMethod.GET, "/salary/ranking").permitAll()
 
                         // ---- 익명 조회수 (FO가 비로그인에도 호출) ----
                         .requestMatchers(HttpMethod.PATCH,
@@ -113,7 +121,14 @@ public class SecurityConfigProd {
                                 "/qna/*/increment-view",
                                 "/answer/*/increment-view",
                                 "/notice/*/increment-view",
-                                "/affiliation/*/increment-view").permitAll()
+                                "/affiliation/*/increment-view",
+                                "/career/*/increment-view",
+                                "/tech/*/increment-view",
+                                "/company/*/increment-view",
+                                "/teamup/*/increment-view",
+                                "/lounge/*/increment-view",
+                                "/votes/*/increment-view",
+                                "/interviews/*/increment-view").permitAll()
 
                         // ---- 고객의 소리(VOC): 목록까지 전부 로그인 필요 ----
                         // anyRequest().authenticated() 로도 잡히지만, 위의 공개 GET 묶음 바로 아래

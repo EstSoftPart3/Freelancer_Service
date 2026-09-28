@@ -9,7 +9,7 @@ import { InfoTooltip } from '@/components/ui/tooltip'
 import SkillTagModal from '@/components/community/SkillTagModal'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { templateFor } from '@/components/community/boardTemplates'
-import { BOARD_CATEGORY_TIPS } from '@/components/community/boardMeta'
+import { BOARD_CATEGORY_TIPS, hasCategory, supportsSkillTag, type BoardType } from '@/components/community/boardMeta'
 import { useBoardCategories } from '@/hooks/useBoardCategories'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { useBoardStore } from '@/stores/boardStore'
@@ -37,7 +37,7 @@ const ALLOWED_EXTENSIONS: readonly string[] = [
 // accept는 OS 파일 선택창의 1차 필터일 뿐 우회 가능하므로, 실제 차단은 아래 검증 로직이 한다.
 const ACCEPT_ATTR = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(',')
 
-type BoardCategory = 'board' | 'qna' | 'voc'
+type BoardCategory = Exclude<BoardType, 'all' | 'notice'>
 
 interface Props {
   boardCategory: BoardCategory
@@ -99,7 +99,7 @@ export default function BoardPostForm({ boardCategory }: Props) {
   // 빈칸을 하나라도 채우면 텍스트가 달라져 사용자 글로 취급된다.
   const injectedTemplateRef = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const categories = useBoardCategories()
+  const categories = useBoardCategories(boardCategory)
 
   // 수정 모드: editSq > 0이면 PUT, 아니면 POST
   //
@@ -110,10 +110,15 @@ export default function BoardPostForm({ boardCategory }: Props) {
   // 원본은 그대로 둔 채 새 글이 하나 더 생겼다. 다른 필드와 똑같이 첫 렌더에 붙잡아 둔다.
   const [editTargetSq] = useState(editSq)
   const isEdit = editTargetSq > 0
-  // 기술태그는 QnA에서만 노출 (Vue 원본 isQna/skillActive 대응)
-  const isQna = boardCategory === 'qna'
-  // 카테고리는 일반게시판에만 있는 축이다 (백엔드도 1401 외에는 값을 무시한다)
-  const isBoard = boardCategory === 'board'
+  // 기술태그는 QnA·기술소통에서만 노출 (Vue 원본 isQna/skillActive 대응, Phase2 재설계로 확장)
+  const isQna = supportsSkillTag(boardCategory)
+  // 카테고리는 중분류를 갖는 게시판에만 있는 축이다 (백엔드도 hasCategory=false면 값을 무시한다).
+  // 'board'(일반게시판)는 BOARD_CATEGORY_FALLBACK엔 키가 없지만(옛 3200 그룹이 지금은 전부
+  // 비활성이라 "새로 고를" 카테고리가 없다는 뜻일 뿐) 이미 카테고리가 달린 기존 글의 수정
+  // 화면(/board/register?edit=...)에서는 여전히 그 값을 보여주고 저장해야 한다 — 빠뜨리면
+  // 카테고리 선택 UI가 안 보이는 채로 저장돼 기존 categoryCd가 조용히 지워진다
+  // (BoardListClient.tsx·BoardPost.tsx와 같은 이유의 같은 수정, 세 번째 지점).
+  const isBoard = boardCategory === 'board' || hasCategory(boardCategory)
   // 고객의 소리 — 태그·기술태그 없이 제목/본문/첨부/공개여부만 받는다
   const isVoc = boardCategory === 'voc'
 

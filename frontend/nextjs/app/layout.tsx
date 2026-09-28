@@ -45,8 +45,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-full flex-col">
         <Providers>
           <CommonHeader />
-          {/* App.vue .main: padding-top은 헤더 높이(64px) 보정 */}
-          <main className="flex-1 pt-16">{children}</main>
+          {/* Phase2: 헤더가 1단(48px)+2단(56px) 두 줄로 늘어나 104px 보정으로 조정 */}
+          <main className="flex-1 pt-[104px]">{children}</main>
           <CommonModalContainer />
           <CommonFooter />
         </Providers>

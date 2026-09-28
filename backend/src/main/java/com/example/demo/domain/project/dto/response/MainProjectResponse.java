@@ -15,4 +15,6 @@ public class MainProjectResponse {
     private Long projectSalary; // 단가 (숫자 데이터)
     private String formattedSalary; // 가공된 단가 (예: "월 900~1,100만원")
     private List<String> projectSkills; // 필수 기술 스택 리스트
+    private Integer viewCnt; // 조회수
+    private Integer candidateCnt; // 지원자 수
 }

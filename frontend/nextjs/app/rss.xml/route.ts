@@ -23,7 +23,7 @@ export async function GET() {
 
   const items = res.boards
     .map((b) => {
-      const link = `${SITE_URL}/${b.boardType === 'qna' ? 'qna' : 'board'}/${b.sq}`
+      const link = `${SITE_URL}/${b.boardType ?? 'board'}/${b.sq}`
       const pubDate = new Date(b.createdAt)
       return [
         '<item>',

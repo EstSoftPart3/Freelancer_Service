@@ -78,10 +78,12 @@ public class AdminBoardService {
                 // sortOrder는 AdminBoardMapper.xml에서 ${sortOrder}로 직접 삽입되므로 ASC/DESC로 정규화(SQL Injection 방지)
                 List<AdminBoardListDTO> boards = adminBoardMapper.findAllUnified(
                                 typeCds, categoryCds, keyword, tagKeyword, sortField,
-                                SortDirectionUtil.normalize(sortOrder), offset, size);
+                                SortDirectionUtil.normalize(sortOrder), offset, size,
+                                BoardTypeCode.communityListCodes(), BoardTypeCode.answerSupportedCodes());
 
                 // 3. 전체 개수 조회
-                Long totalElements = adminBoardMapper.findAllUnifiedCnt(typeCds, categoryCds, keyword, tagKeyword);
+                Long totalElements = adminBoardMapper.findAllUnifiedCnt(typeCds, categoryCds, keyword, tagKeyword,
+                                BoardTypeCode.communityListCodes());
 
                 // 4. Admin 전용 응답 DTO 조립
                 return AdminBoardListResponseDTO.builder()
@@ -174,7 +176,7 @@ public class AdminBoardService {
                 // BO 수정 드로어는 카테고리를 함께 보내는데 예전에는 그 값을 버렸다 —
                 // 관리자가 카테고리를 바꾸고 "수정되었습니다"를 받고도 실제로는 그대로였다.
                 // 카테고리 개념이 없는 게시판(공지 등)은 건드리지 않는다.
-                if (BoardTypeCode.NORMAL.getCode().equals(boardTypeCd) && boardRequest.getCategoryCd() != null) {
+                if (BoardTypeCode.of(boardTypeCd).isHasCategory() && boardRequest.getCategoryCd() != null) {
                         board.setBoardCategoryCd(boardService.resolveCategoryCd(boardTypeCd, boardRequest.getCategoryCd()));
                 }
                 if (boardRequest.getBoardAdoptStatusCd() != null) {
@@ -189,7 +191,7 @@ public class AdminBoardService {
                         cmntTagMapper.insertNT(normalTagConverter.convertStringsToNormalTags(boardSq, null,
                                         boardRequest.getNormalTags()));
                 }
-                if (boardTypeCd == 1402L && boardRequest.getSkillTags() != null) {
+                if (BoardTypeCode.of(boardTypeCd).isSupportsSkillTag() && boardRequest.getSkillTags() != null) {
                         // 1. 기존 태그 삭제 (이미 adminTagMapper 사용 중이므로 안전)
                         adminTagMapper.deleteST(boardSq, null);
 
@@ -298,6 +300,11 @@ public class AdminBoardService {
                                         }).collect(Collectors.toList());
                         List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
 
+                        // 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 부모 유형을 1402로 못박아도
+                        // 됐지만, 커리어/기술소통도 답변을 지원하게 되면서 실제 부모 글을 찾아야 한다.
+                        Long parentBoardTypeCd = boardMapper.findParentBoardTypeCdOrDefault(answer.getBoardSq(),
+                                        BoardTypeCode.QNA.getCode());
+
                         return AdminBoardDetailResponseDTO.builder()
                                         .sq(answer.getAnswerSq())
                                         .userSq(answer.getUserSq())
@@ -308,7 +315,7 @@ public class AdminBoardService {
                                         .boardTypeCd(AdminBoardPseudoType.ANSWER)
                                         .mainType("ANSWER")
                                         .parentBoardSq(answer.getBoardSq())
-                                        .parentBoardTypeCd(1402L)
+                                        .parentBoardTypeCd(parentBoardTypeCd)
                                         .attachments(getAnswerAttachments(sq))
                                         .normalTags(normalTagConverter
                                                         .convertNormalTagsToStrings(cmntTagMapper.findNT(null, sq)))
@@ -339,8 +346,8 @@ public class AdminBoardService {
                                         }).collect(Collectors.toList());
                         List<CommentResponse> commentTree = commentService.convertToTree(flatComments);
 
-                        // Q&A인 경우 답변 목록 조회
-                        List<AnswerListResponse> answers = (boardTypeCd == 1402L)
+                        // 답변을 지원하는 게시판인 경우 답변 목록 조회
+                        List<AnswerListResponse> answers = BoardTypeCode.of(boardTypeCd).isSupportsAnswer()
                                         ? answerService.getAllAnswers(sq)
                                         : null;
 
@@ -441,9 +448,17 @@ public class AdminBoardService {
 
                         if (answer != null) {
                                 receiverSq = answer.getUserSq();
+                                // 답변을 지원하는 게시판이 QnA 하나뿐이던 시절엔 "/qna/"로 못박아도 됐지만,
+                                // 커리어/기술소통도 답변을 지원하게 되면서 실제 부모 글의 타입을 찾아야 한다
+                                // (getAdminBoardDetail과 같은 이유의 같은 수정).
+                                Long parentBoardTypeCd = boardMapper.findParentBoardTypeCdOrDefault(
+                                                answer.getBoardSq(), BoardTypeCode.QNA.getCode());
                                 // 상세 페이지 URL 뒤에 answerSq 파라미터를 붙여 모달 띄우기 대응
-                                targetUrl = "/qna/" + answer.getBoardSq() + "?answerSq=" + comment.getAnswerSq();
-                                notiContent = "관리자가 내 Q&A 답변에 댓글을 남겼습니다.";
+                                targetUrl = "/" + BoardTypeCode.pathOfCode(parentBoardTypeCd) + "/" + answer.getBoardSq()
+                                                + "?answerSq=" + comment.getAnswerSq();
+                                // 링크와 같은 이유로 문구도 "Q&A" 로 못박지 않는다 — 커리어/기술소통 답변에 달린
+                                // 댓글에도 이 분기가 타므로 "Q&A 답변" 이라고 하면 실제 게시판과 다른 문구가 나간다.
+                                notiContent = "관리자가 내 답변에 댓글을 남겼습니다.";
                         }
                 }
 
