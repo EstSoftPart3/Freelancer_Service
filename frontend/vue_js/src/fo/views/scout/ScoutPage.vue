@@ -123,6 +123,23 @@ const handleSkillTagClick = (skill) => {
 
 const handleOpenResume = (scoutData) => {
   console.log('카드 클릭 -> 이력서 상세 오픈:', scoutData)
+
+  if (!scoutData) return
+  const targetSq = scoutData.freelancer_sq || scoutData.freelancerSq || scoutData.scoutSq
+
+  if (targetSq) {
+    try {
+      await api.$post(`/v1/scouts/${targetSq}/views`)
+      
+      if (scoutData.viewCnt !== undefined) {
+        scoutData.viewCnt++
+      }
+    } catch (error) {
+      console.error('조회수 증가 실패:', error)
+    }
+  }
+
+
   if (scoutResumeModalRef.value) {
     scoutResumeModalRef.value.openModal(scoutData)
   }
