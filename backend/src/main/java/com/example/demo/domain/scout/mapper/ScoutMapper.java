@@ -48,6 +48,8 @@ public interface ScoutMapper {
     // 조회수 증가
     int updateViewCount(@Param("scoutSq") Long scoutSq);
     
+    int selectViewCount(@Param("scoutSq") Long scoutSq);
+
 }
 
 
