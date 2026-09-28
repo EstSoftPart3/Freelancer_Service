@@ -38,7 +38,18 @@
                       AND (c.career_end_dt IS NULL OR c.career_end_dt &gt;= CURDATE())
                 ) THEN '소속중'
                 ELSE '구직중'
-            END AS jobStatusNm
+            END AS jobStatusNm,
+            
+            CASE 
+		        WHEN EXISTS (
+		            SELECT 1 
+		            FROM tbl_scrap_s s
+		            WHERE s.company_sq = r.user_sq 
+		              AND s.user_sq = #{loginUserSq}
+		              AND s.scrap_type_cd = 1
+        		) THEN 1
+        	ELSE 0
+   		 END AS isScrapped
             
         FROM TBL_RESUME_M r
 
