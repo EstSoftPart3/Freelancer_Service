@@ -129,7 +129,7 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
-import api from '@/axios.js'
+import { api } from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
 
 const defaultPersonImg = '/img/person.png'
@@ -180,7 +180,7 @@ const goToScoutSpec = async (scout) => {
   const targetId = scout.resumeSq || scout.userSq || scout.id
 
   try {
-    const res = await api.post(`/v1/scouts/${targetId}/views`)
+    const res = await api.$post(`/v1/scouts/${targetId}/views`)
     
     if (res && res.data && res.data.viewCnt !== undefined) {
       scout.viewCnt = res.data.viewCnt
@@ -216,7 +216,7 @@ const clickScrap = async (scout) => {
   try {
     scout.hasScrapped = isScrapped ? 'N' : 'Y'
 
-    await api.post(`/scouts/${targetId}/scraps`, {
+    await api.$post(`/scouts/${targetId}/scraps`, {
       hasScrapped: isScrapped,
       target: '인재',
     })
