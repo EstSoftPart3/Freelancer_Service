@@ -19,6 +19,10 @@ const apiInstance = axios.create({
 // 요청 인터셉터 설정
 apiInstance.interceptors.request.use(
   (config) => {
+    if (config.url === '/refresh-token' || config.url === `${baseUrl}/refresh-token`) {
+      return config
+    }
+    
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
@@ -66,7 +70,7 @@ apiInstance.interceptors.response.use(
     // console.log('_retry:', originalRequest._retry)
 
     // refresh-token 요청에 대해선 인터셉터 로직 skip
-    if (originalRequest.url === '/refresh-token') {
+    if (originalRequest.url === '/refresh-token' || originalRequest.url === `${baseUrl}/refresh-token`) {
       return Promise.reject(error)
     }
 
@@ -98,8 +102,10 @@ apiInstance.interceptors.response.use(
         )
         // console.log('refresh-token 요청 성공')
 
-        const newAccessToken = response.data.data.accessToken
-        const newRefreshToken = response.data.data.refreshToken
+        const responseData = response.data.output || response.data.data
+        const newAccessToken = responseData.accessToken
+        const newRefreshToken = responseData.refreshToken
+        
         localStorage.setItem('accessToken', newAccessToken)
         localStorage.setItem('refreshToken', newRefreshToken)
 
