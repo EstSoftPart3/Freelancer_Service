@@ -20,12 +20,10 @@
         INSERT INTO tbl_scrap_s (
             user_sq,
             company_sq,                      
-            reg_dt,
             scrap_type_cd                    
         ) VALUES (
             #{userSq},
-            #{resumeSq}, 
-            NOW(),                    
+            #{resumeSq},                        
             1                                
         )
     </insert>
