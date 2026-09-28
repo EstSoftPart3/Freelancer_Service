@@ -580,6 +580,8 @@ public class BoardService {
 		// delete 쿼리가 user_sq 를 조건으로 걸기 때문에, 관리자 삭제에서는 작성자 sq 로 맞춰 준다.
 		// (그러지 않으면 권한만 통과하고 0행 업데이트로 끝나 "삭제했는데 그대로"가 된다)
 		boardMapper.delete(admin ? board.getUserSq() : userSq, boardSq);
+		// 답변을 남겨 두면 부모 없는 답변이 BO 목록에 뜨거나 접근 불가한 고아 행이 된다.
+		answerMapper.softDeleteByBoardSq(boardSq);
 		cmntTagMapper.deleteNT(boardSq, null);
 		cmntTagMapper.deleteST(boardSq, null);
 		recommendationMapper.deleteAll(boardSq, null, null);

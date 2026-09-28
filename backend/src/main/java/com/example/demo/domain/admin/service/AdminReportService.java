@@ -10,6 +10,7 @@ import com.example.demo.domain.admin.dto.AdminReportListDTO;
 import com.example.demo.domain.admin.dto.response.AdminReportListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminBoardMapper;
 import com.example.demo.domain.admin.mapper.AdminReportMapper;
+import com.example.demo.domain.community.mapper.AnswerMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminReportService {
     private final AdminReportMapper adminReportMapper;
     private final AdminBoardMapper adminBoardMapper; // 기존 게시판 매퍼 재사용
+    private final AnswerMapper answerMapper;
 
     @Transactional(readOnly = true)
     public AdminReportListResponseDTO getReports(List<Long> statusCds, String keyword, Long page, Long size,
@@ -73,9 +75,10 @@ public class AdminReportService {
             Long targetSq = report.getTargetSq();
             Long type = report.getTargetTypeCd();
 
-            if (type == 2001L)
+            if (type == 2001L) {
                 adminBoardMapper.deleteBoardMaster(targetSq);
-            else if (type == 2002L)
+                answerMapper.softDeleteByBoardSq(targetSq);
+            } else if (type == 2002L)
                 adminBoardMapper.deleteAnswerMaster(targetSq);
             else if (type == 2003L || type == 2004L)
                 adminBoardMapper.deleteCommentByAdmin(targetSq);

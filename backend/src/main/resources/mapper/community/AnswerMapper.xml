@@ -36,6 +36,13 @@
         WHERE answer_sq = #{answerSq} AND user_sq = #{userSq}
     </update>
 
+    <!-- 게시글 삭제 시 딸린 답변도 함께 소프트삭제한다(FO·BO 삭제 경로 공통). -->
+    <update id="softDeleteByBoardSq" parameterType="Long">
+        UPDATE TBL_BOARD_ANSWER_S
+        SET answer_is_deleted_yn = 'Y'
+        WHERE board_sq = #{boardSq} AND answer_is_deleted_yn = 'N'
+    </update>
+
     <update id="addViewCnt" parameterType="Long">
         UPDATE TBL_BOARD_ANSWER_S
         SET answer_view_cnt = answer_view_cnt + 1

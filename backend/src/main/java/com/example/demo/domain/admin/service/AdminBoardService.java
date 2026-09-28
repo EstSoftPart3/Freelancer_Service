@@ -98,6 +98,7 @@ public class AdminBoardService {
         public void deleteMaster(Long sq, String mainType) {
                 if ("BOARD".equals(mainType)) {
                         adminBoardMapper.deleteBoardMaster(sq);
+                        answerMapper.softDeleteByBoardSq(sq);
                         // FO 로직 이식: 태그 및 추천 삭제
                         cmntTagMapper.deleteNT(sq, null);
                         cmntTagMapper.deleteST(sq, null);
