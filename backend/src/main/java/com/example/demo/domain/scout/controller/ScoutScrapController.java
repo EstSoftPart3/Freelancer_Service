@@ -13,7 +13,7 @@ import com.example.demo.domain.scout.service.ScoutScrapService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/v1/scouts")
+@RequestMapping("/scouts")
 @RequiredArgsConstructor
 public class ScoutScrapController {
 	
