@@ -168,7 +168,7 @@ const goToScoutSpec = async (scout) => {
   const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
 
   try {
-    const response = await api.$post(`/scouts/${targetId}/views`)
+    const response = await api.post(`/scouts/${targetId}/views`)
     
     const newViewCnt = response.data?.viewCnt ?? response.data
 
