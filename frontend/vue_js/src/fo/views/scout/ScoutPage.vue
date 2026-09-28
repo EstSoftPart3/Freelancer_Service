@@ -121,7 +121,7 @@ const handleSkillTagClick = (skill) => {
   fetchScouts()
 }
 
-const handleOpenResume = (scoutData) => {
+const handleOpenResume = async (scoutData) => {
   console.log('카드 클릭 -> 이력서 상세 오픈:', scoutData)
 
   if (!scoutData) return
