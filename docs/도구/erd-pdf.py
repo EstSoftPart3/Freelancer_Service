@@ -3,6 +3,8 @@
 운영 DB(freelancer_project) 스키마로 ERD PDF 를 만든다 — 영역별로 나눠 한 장씩 읽히게.
 
   !python "docs/도구/erd-pdf.py" [--out 경로.pdf] [--dev]
+  !python "docs/도구/erd-pdf.py" --from-sql "docs/Phase1_DB/freelancer_project.sql" --date 2026-09-15 --out ...
+      ↑ 과거 스냅샷: db-backup.py 덤프(CREATE TABLE)를 직접 해석한다. DB 접속 없음. 행수는 같은 폴더 MANIFEST.txt.
 
   1. information_schema 를 읽는다(SELECT 만). --dev 면 개발 DB.
   2. 관계선: 실제 FK 는 실선, 컬럼명 규칙(xxx_sq → PK 가 xxx_sq 인 테이블)으로 추론한 것은 점선.
@@ -25,9 +27,14 @@ except Exception:
     pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-_spec = importlib.util.spec_from_file_location('dbconfig', os.path.join(HERE, 'dbconfig.py'))
-dbconfig = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(dbconfig)
+
+
+def load_dbconfig():
+    # dbconfig 는 import 시점에 FREELANCER_DB_PW 를 읽는다 — --from-sql 모드는 DB 가 필요 없으니 그때만 부른다
+    spec = importlib.util.spec_from_file_location('dbconfig', os.path.join(HERE, 'dbconfig.py'))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
 
 FONT_DIR = 'C:/Windows/Fonts'
 FONTS = {'ko': 'malgun.ttf', 'kob': 'malgunbd.ttf', 'mono': 'consola.ttf', 'monob': 'consolab.ttf'}
@@ -69,7 +76,47 @@ CD_C = (0.45, 0.45, 0.60)
 
 
 # ────────────────────────────── 스키마 읽기
+def load_schema_from_sql(path):
+    """db-backup.py 덤프의 CREATE TABLE 문을 해석한다. 행수는 같은 폴더 MANIFEST.txt 에서."""
+    import re
+    sql = open(path, encoding='utf-8').read()
+    tables, real = {}, {}
+    for m in re.finditer(r"CREATE TABLE `(\w+)` \((.*?)\n\)([^;]*);", sql, re.S):
+        t, body, tail = m.groups()
+        cm = re.search(r"COMMENT='((?:[^']|'')*)'", tail)
+        cols, pks = [], set()
+        for line in body.split('\n'):
+            line = line.strip().rstrip(',')
+            if line.startswith('`'):
+                name, rest = re.match(r"`(\w+)` (.*)", line).groups()
+                ctype = re.match(r"(\w+(?:\([^)]*\))?(?: unsigned)?)", rest).group(1)
+                c = re.search(r"COMMENT '((?:[^']|'')*)'", rest)
+                cols.append({'name': name, 'type': ctype, 'null': 'NOT NULL' not in rest, 'pk': False,
+                             'comment': c.group(1).replace("''", "'") if c else ''})
+            elif line.startswith('PRIMARY KEY'):
+                pks = set(re.findall(r"`(\w+)`", line))
+            elif 'FOREIGN KEY' in line:
+                fc, rt = re.search(r"FOREIGN KEY \(`(\w+)`\) REFERENCES `(\w+)`", line).groups()
+                real[(t, fc)] = rt
+        for c in cols:
+            c['pk'] = c['name'] in pks
+        tables[t] = {'comment': cm.group(1).replace("''", "'") if cm else '', 'cols': cols, 'rows': 0}
+    manifest = os.path.join(os.path.dirname(path), 'MANIFEST.txt')
+    if os.path.exists(manifest):
+        schema = os.path.splitext(os.path.basename(path))[0]
+        on = False
+        for line in open(manifest, encoding='utf-8'):
+            if line.startswith('=='):
+                on = schema in line
+            elif on and '\t' in line:
+                t, n = line.strip().split('\t')
+                if t in tables:
+                    tables[t]['rows'] = int(n)
+    return tables, real
+
+
 def load_schema(schema):
+    dbconfig = load_dbconfig()
     conn = __import__('pymysql').connect(**dbconfig.config(schema))
     cur = conn.cursor()
     cur.execute("SELECT table_name, table_comment FROM information_schema.tables "
@@ -366,8 +413,8 @@ def cover(doc, tables, rels, toc):
     text(p, MARGIN + 20, 150, f'ERD · {STAMP} 스냅샷', 'kob', 11, PK_C)
     text(p, MARGIN + 20, 210, 'freelancer_project', 'monob', 44)
     text(p, MARGIN + 20, 262, '데이터베이스 관계도', 'kob', 34)
-    text(p, MARGIN + 20, 300, '운영 DB 의 information_schema 를 직접 읽어 만들었다. 영역별로 한 장씩 나눴고,'
-         ' 다른 영역 테이블은 흐린 참조 박스로만 보인다.', 'ko', 11, MUTED)
+    text(p, MARGIN + 20, 300, f'{SOURCE} 영역별로 한 장씩 나눴고, 다른 영역 테이블은 흐린 참조 박스로만 보인다.',
+         'ko', 11, MUTED)
     stats = [(len(tables), '테이블'), (len(rels), '관계선'), (sum(v['rows'] for v in tables.values()), '총 행수'),
              (sum(1 for r in rels if r[3]), '실제 FK')]
     x = MARGIN + 20
@@ -513,16 +560,31 @@ def spec_pages(doc, tables, rels, start_no):
 
 
 STAMP = datetime.now().strftime('%Y-%m-%d')
+SOURCE = '운영 DB 의 information_schema 를 직접 읽어 만들었다.'
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=None)
     ap.add_argument('--dev', action='store_true')
+    ap.add_argument('--from-sql', help='db-backup.py 덤프 경로 — 과거 시점 ERD 를 DB 접속 없이 만든다')
+    ap.add_argument('--date', help='표지·꼬리말 날짜(기본: 오늘)')
     a = ap.parse_args()
-    schema = dbconfig.DEVELOP if a.dev else dbconfig.PROD
-    tables, real = load_schema(schema)
+    global STAMP, SOURCE
+    if a.date:
+        STAMP = a.date
+    if a.from_sql:
+        schema = os.path.splitext(os.path.basename(a.from_sql))[0]
+        tables, real = load_schema_from_sql(a.from_sql)
+        SOURCE = f'운영 DB 백업 덤프({os.path.basename(a.from_sql)}, {STAMP})의 CREATE TABLE 문을 읽어 만들었다.'
+    else:
+        dbconfig = load_dbconfig()
+        schema = dbconfig.DEVELOP if a.dev else dbconfig.PROD
+        tables, real = load_schema(schema)
     rels = infer_relations(tables, real)
+    # 그 시점에 테이블이 하나도 없는 영역(과거 스냅샷의 Phase2 등)은 쪽을 만들지 않는다
+    DOMAINS[:] = [(k, n, c, [t for t in ts if t in tables]) for k, n, c, ts in DOMAINS]
+    DOMAINS[:] = [d for d in DOMAINS if d[3]]
     known = {t for d in DOMAINS for t in d[3]}
     extra = [t for t in tables if t not in known]
     if extra:
