@@ -1,6 +1,7 @@
 package com.example.demo.domain.scout.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -22,7 +23,7 @@ public class ScoutScrapController {
 	@PostMapping("/{resumeSq}/scrap")
     public ResponseEntity<ScrapResponseDto> toggleScrap(
             @PathVariable("resumeSq") Long resumeSq,
-            @RequestAttribute("userSq") Long userSq // 로그인 유저 PK (인터셉터/시큐리티 등에서 전달)
+            @AuthenticationPrincipal Long userSq // 로그인 유저 PK (인터셉터/시큐리티 등에서 전달)
     ) {
         ScrapResponseDto result = scoutScrapService.toggleScrap(userSq, resumeSq);
         return ResponseEntity.ok(result);
