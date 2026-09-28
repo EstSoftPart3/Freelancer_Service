@@ -166,27 +166,26 @@ const goToScoutSpec = async (scout) => {
     return
   }
 
-  const currentView = scout.viewCnt ?? scout.view_cnt ?? 0
-  scout.viewCnt = currentView + 1
-  scout.view_cnt = currentView + 1
-
-  emit('open-resume', scout)
-
-  const targetId = scout.resumeSq || scout.userSq || scout.id
+  const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
 
   try {
     const response = await api.post(`/scouts/${targetId}/views`)
-    const updatedViewCnt = response.data?.viewCnt ?? response.data
     
-    if (typeof updatedViewCnt === 'number') {
-      scout.viewCnt = updatedViewCnt
-      scout.view_cnt = updatedViewCnt
+    const newViewCnt = response.data?.viewCnt ?? response.data
+
+    if (newViewCnt !== undefined) {
+      scout.viewCnt = newViewCnt
+      scout.view_cnt = newViewCnt
+    } else {
+      scout.viewCnt = (scout.viewCnt || scout.view_cnt || 0) + 1
+      scout.view_cnt = scout.viewCnt
     }
   } catch (error) {
-    console.error('DB 조회수 업데이트 실패 (백엔드 500 에러):', error)
+    console.error('조회수 증가 처리 중 오류 발생:', error)
   }
+
+  emit('open-resume', scout)
 }
-  
 
 const getSkillName = (skill) => {
   return typeof skill === 'object' ? skill.name : skill
