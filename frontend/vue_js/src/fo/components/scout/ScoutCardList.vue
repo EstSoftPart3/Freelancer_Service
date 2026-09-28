@@ -230,7 +230,7 @@ const clickScrap = async (scout) => {
   try {
     scout.hasScrapped = isScrapped ? 'N' : 'Y'
 
-    await api.$post(`/scouts/${targetId}/scraps`, {
+    await api.$post(`/scouts/${targetId}/scrap`, {
       hasScrapped: isScrapped,
       target: '인재',
     })
