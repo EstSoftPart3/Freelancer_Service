@@ -100,5 +100,11 @@ public class ScoutService {
             throw new IllegalStateException("스카우트 제안 상태 변경 실패. (sq: " + scoutSq + ")");
         }
     }
+    
+   
+    @Transactional
+    public void increaseViewCount(Long scoutId) {
+        scoutMapper.updateViewCount(scoutId);
+    }
 
 }

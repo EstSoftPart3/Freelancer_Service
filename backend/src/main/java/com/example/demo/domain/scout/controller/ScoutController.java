@@ -78,6 +78,12 @@ public class ScoutController {
 	    scoutService.updateStatus(scoutSq, request);
 	    return ResponseEntity.ok().build();
 	}
+	
+	@PostMapping("/{scoutSq}/views")
+    public ResponseEntity<Void> increaseViewCount(@PathVariable("scoutSq") Long scoutSq) {
+        scoutService.increaseViewCount(scoutSq);
+        return ResponseEntity.ok().build();
+    }
 
 	
 }

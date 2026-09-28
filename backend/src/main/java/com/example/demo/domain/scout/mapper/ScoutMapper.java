@@ -44,6 +44,10 @@ public interface ScoutMapper {
     int updateScoutStatus(@Param("scoutSq") Long scoutSq,
     					  @Param("status") String status,
     					  @Param("rejectReason") String rejectReason);
+    
+    // 조회수 증가
+    int updateViewCount(@Param("scoutSq") Long scoutSq);
+    
 }
 
 

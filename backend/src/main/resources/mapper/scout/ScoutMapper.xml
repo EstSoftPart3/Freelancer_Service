@@ -165,7 +165,14 @@
         reject_reason = #{rejectReason},
         scout_offer_updated_at_dtm = NOW()
     WHERE scout_offer_sq = #{scoutSq}
-</update>
+	</update>
+
+	<!-- 조회수 1 증가 쿼리 -->
+    <update id="updateViewCount" parameterType="long">
+        UPDATE tbl_resume_m
+        SET view_cnt = COALESCE(view_cnt, 0) + 1
+        WHERE resume_sq = #{scoutSq}
+    </update>
     
 
 </mapper>
