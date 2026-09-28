@@ -212,7 +212,12 @@ const generateIconUrl = (name) => {
 const clickScrap = async (scout) => {
   if (!scout) return
 
-  const targetId = scout.userSq || scout.scoutSq || scout.resumeSq || scout.userId || scout.id
+  const targetId = 
+    scout.freelancer_sq || 
+    scout.freelancerSq || 
+    scout.resumeSq || 
+    scout.userSq || 
+    scout.id
 
   if (!targetId) {
     console.error('스크랩 대상의 ID(PK)를 찾을 수 없습니다:', scout)
