@@ -10,6 +10,7 @@
             r.user_sq               AS userSq,
             u.user_nm               AS name,
             r.resume_ttl            AS jobTitle,
+            COALESCE(r.view_cnt, 0)  AS viewCnt,
             COALESCE(career.exp_years, 0) AS experienceYears,
             CONCAT('/api/v1/files/', p.file_sq) AS profileImageUrl,
             r.resume_greeting_txt   AS summary,

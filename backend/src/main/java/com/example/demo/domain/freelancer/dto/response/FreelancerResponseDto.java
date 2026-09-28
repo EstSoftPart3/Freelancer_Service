@@ -43,6 +43,9 @@ public class FreelancerResponseDto {
 
     @JsonProperty("job_status_nm")
     private String jobStatusNm;
+    
+    @JsonProperty("view_cnt")
+    private Integer viewCnt;
 	
 
 }
