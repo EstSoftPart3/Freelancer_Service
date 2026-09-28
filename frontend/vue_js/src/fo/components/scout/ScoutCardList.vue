@@ -129,8 +129,9 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
-import { api } from '@/axios.js'
+import api from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
+
 const defaultPersonImg = '/img/person.png'
 
 const alertStore = useAlertStore()
