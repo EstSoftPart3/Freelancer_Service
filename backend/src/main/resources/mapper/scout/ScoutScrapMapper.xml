@@ -10,8 +10,8 @@
             SELECT 1
             FROM tbl_scrap_s
             WHERE user_sq = #{userSq}
-              AND resume_sq = #{resumeSq} 
-              AND scrap_type_cd = 1          <!-- 스크랩 타입 코드 (예: 1 - 인재/프리랜서) -->
+              AND company_sq = #{resumeSq}   
+              AND scrap_type_cd = 1          
         )
     </select>
 
@@ -19,14 +19,14 @@
     <insert id="insertScrap">
         INSERT INTO tbl_scrap_s (
             user_sq,
-            resume_sq,
+            company_sq,                      
             reg_dt,
-            
+            scrap_type_cd                    
         ) VALUES (
             #{userSq},
             #{resumeSq}, 
             NOW(),                    
-            1                                <!-- 스크랩 타입 코드 (예: 1 - 인재/프리랜서) -->
+            1                                
         )
     </insert>
 
@@ -34,7 +34,7 @@
     <delete id="deleteScrap">
         DELETE FROM tbl_scrap_s
         WHERE user_sq = #{userSq}
-          AND resume_sq = #{resumeSq}
+          AND company_sq = #{resumeSq}       
           AND scrap_type_cd = 1
     </delete>
 
