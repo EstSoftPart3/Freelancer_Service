@@ -5,7 +5,7 @@
 <mapper namespace="com.example.demo.domain.scout.mapper.ScoutScrapMapper">
 
     <!-- 1. 프리랜서 스크랩 존재 여부 확인 -->
-    <select id="existsScrap" resultType="boolean">
+    <select id="checkScrapExists" resultType="int">
         SELECT EXISTS (
             SELECT 1
             FROM tbl_scrap_s
