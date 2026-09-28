@@ -210,7 +210,16 @@ const generateIconUrl = (name) => {
 }
 
 const clickScrap = async (scout) => {
-  const targetId = scout.userSq || scout.id
+  if (!scout) return
+
+  const targetId = scout.userSq || scout.scoutSq || scout.resumeSq || scout.userId || scout.id
+
+  if (!targetId) {
+    console.error('스크랩 대상의 ID(PK)를 찾을 수 없습니다:', scout)
+    alertStore.show('대상 식별자 정보가 부족하여 스크랩에 실패했습니다.', 'danger')
+    return
+  }
+
   const isScrapped = scout.hasScrapped === 'Y'
 
   try {
@@ -225,8 +234,9 @@ const clickScrap = async (scout) => {
       isScrapped ? '스크랩 해제에 성공하였습니다.' : '스크랩에 성공하였습니다.',
     )
   } catch (error) {
+    // 실패 시 상태 복구
     scout.hasScrapped = isScrapped ? 'Y' : 'N'
-    console.error(error)
+    console.error('스크랩 처리 오류:', error)
     alertStore.show('스크랩에 실패했습니다.', 'danger')
   }
 }
