@@ -280,8 +280,8 @@ def draw_domain_page(doc, tables, rels, dom, page_no):
     # 카드를 임시 페이지에 1배로 그리고 show_pdf_page 로 축소해 붙인다
     tmp = fitz.open()
     tp = tmp.new_page(width=lw + 4, height=lh + 4)
-    for k, fname in FONTS.items():
-        tp.insert_font(fontname=k, fontfile=os.path.join(FONT_DIR, fname))
+    for k in ('ko', 'mono', 'monob'):  # 카드에 쓰는 글꼴만 — 안 쓰는 굵은체를 넣으면 12MB 가 통째로 실린다
+        tp.insert_font(fontname=k, fontfile=os.path.join(FONT_DIR, FONTS[k]))
     rowmap = {}
     # 선을 먼저(카드 아래로)
     anchors = {}
@@ -322,6 +322,7 @@ def draw_domain_page(doc, tables, rels, dom, page_no):
     for n in names + ghosts:
         x, y = pos[n]
         draw_card(tp, doc, x, y, tables[n], color if n in inside else dom_color(n), fk_cols.get(n, set()), ghost=n in ghosts)
+    tmp.subset_fonts()
     p.show_pdf_page(fitz.Rect(ox, top, ox + (lw + 4) * S, top + (lh + 4) * S), tmp, 0)
     return len(my_rels)
 
@@ -535,6 +536,7 @@ def main():
         draw_domain_page(doc, tables, rels, d, 3 + i)
     spec_pages(doc, tables, rels, 3 + len(DOMAINS))
     out = a.out or os.path.join(HERE, '..', 'Phase2_DB', f'{schema} ERD ({STAMP}).pdf')
+    doc.pdf.subset_fonts()  # 맑은 고딕 전체(수 MB)가 쪽마다 들어가지 않게 쓴 글자만 남긴다
     doc.pdf.save(out, garbage=4, deflate=True)
     print(f'{out}  — {len(doc.pdf)}쪽, 테이블 {len(tables)}, 관계 {len(rels)}(실제 FK {sum(r[3] for r in rels)})')
 
