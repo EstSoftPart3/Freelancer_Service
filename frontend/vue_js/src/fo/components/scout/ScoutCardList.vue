@@ -6,25 +6,7 @@
         :key="scout.resumeSq || scout.userSq || scout.id"
         class="card position-relative p-4 shadow-sm mb-3"
       >
-        <!-- 스크랩 아이콘 (카드 우측 상단 고정) -->
-        <div class="position-absolute top-0 end-0 m-3">
-          <a
-            @click.stop="clickScrap(scout)"
-            class="text-decoration-none"
-            style="cursor: pointer"
-          >
-            <i
-              :class="[
-                'bi',
-                scout.hasScrapped === 'Y'
-                  ? 'bi-heart-fill text-danger'
-                  : 'bi-heart text-muted',
-                'fs-4',
-              ]"
-            ></i>
-          </a>
-        </div>
-
+        
         <!-- 카드 본문 -->
         <div class="d-flex flex-row align-items-center">
           <!-- 프로필 이미지 -->
@@ -115,10 +97,6 @@
               </button>
             </div>
 
-            <!-- 하단 우측 조회수 -->
-            <div class="text-muted text-end fs-6">
-              조회수: {{ scout.viewCnt || 0 }}
-            </div>
           </div>
         </div>
       </div>
@@ -127,13 +105,8 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
-import { useAlertStore } from '../../stores/alertStore.js'
-import { api } from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
 const defaultPersonImg = '/img/person.png'
-
-const alertStore = useAlertStore()
 
 const getProfileImage = (url) => {
   if (!url || url.trim() === '') {
@@ -185,27 +158,7 @@ const generateIconUrl = (name) => {
   return skillIconMap[key] || skillIconMap.default
 }
 
-const clickScrap = async (scout) => {
-  const targetId = scout.userSq || scout.id
-  const isScrapped = scout.hasScrapped === 'Y'
 
-  try {
-    scout.hasScrapped = isScrapped ? 'N' : 'Y'
-
-    await api.post(`/scouts/${targetId}/scraps`, {
-      hasScrapped: isScrapped,
-      target: '인재',
-    })
-
-    alertStore.show(
-      isScrapped ? '스크랩 해제에 성공하였습니다.' : '스크랩에 성공하였습니다.',
-    )
-  } catch (error) {
-    scout.hasScrapped = isScrapped ? 'Y' : 'N'
-    console.error(error)
-    alertStore.show('스크랩에 실패했습니다.', 'danger')
-  }
-}
 </script>
 
 <style scoped>
