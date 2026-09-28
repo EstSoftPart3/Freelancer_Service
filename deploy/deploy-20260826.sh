@@ -60,7 +60,9 @@ for _ in $(seq 1 40); do
 done
 curl -s http://localhost:8081/api/actuator/health; echo
 docker logs freelancer-api 2>&1 | grep -E 'profile is active' | tail -2
-docker logs freelancer-api 2>&1 | grep -q 'The following 1 profile is active: "prod"' \
+# grep -q 는 쓰지 않는다 — 일치하자마자 파이프를 닫아 docker logs 가 SIGPIPE 로 죽고,
+# pipefail 때문에 prod 인데도 실패로 판정된다(2026-09-28 오탐으로 배포가 3단계에서 멈췄다).
+[ "$(docker logs freelancer-api 2>&1 | grep -c 'The following 1 profile is active: "prod"')" -gt 0 ] \
   || fail 'prod 프로파일이 아니다 — Security 가 비활성이므로 중단'
 
 # ---------------------------------------------------------------- 4. FO 이미지 빌드
