@@ -41,11 +41,11 @@
             END AS jobStatusNm,
             
             CASE 
-		        WHEN EXISTS (
+		        WHEN #{req.loginUserSq} IS NOT NULL AND EXISTS (
 		            SELECT 1 
 		            FROM tbl_scrap_s s
 		            WHERE s.company_sq = r.user_sq 
-		              AND s.user_sq = #{loginUserSq}
+		              AND s.user_sq = #{req.loginUserSq}
 		              AND s.scrap_type_cd = 1
         		) THEN 1
         	ELSE 0

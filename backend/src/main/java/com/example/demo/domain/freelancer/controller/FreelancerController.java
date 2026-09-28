@@ -11,6 +11,7 @@ import com.example.demo.domain.freelancer.dto.request.FreelancerRequestDto;
 import com.example.demo.domain.freelancer.dto.response.FreelancerSearchResponse;
 import com.example.demo.domain.freelancer.service.FreelancerService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -23,7 +24,13 @@ public class FreelancerController {
 
     @GetMapping
     public ResponseEntity<FreelancerSearchResponse> searchFreelancers(
-            @ModelAttribute FreelancerRequestDto requestDto) {
+            @ModelAttribute FreelancerRequestDto requestDto,
+            HttpSession session) {
+    	
+    	Long loginUserSq = (Long) session.getAttribute("userSq");
+        if (loginUserSq != null) {
+            requestDto.setLoginUserSq(loginUserSq);
+        }
 
         FreelancerSearchResponse response = freelancerService.searchFreelancers(requestDto);
         return ResponseEntity.ok(response);

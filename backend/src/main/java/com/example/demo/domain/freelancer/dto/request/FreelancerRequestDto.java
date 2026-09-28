@@ -19,5 +19,7 @@ public class FreelancerRequestDto {
 	private Integer experience;
 	private Integer page = 0;
 	private Integer size = 10;
+	
+	private Long loginUserSq;
 
 }
