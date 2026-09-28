@@ -117,7 +117,7 @@
 
             <!-- 하단 우측 조회수 -->
             <div class="text-muted text-end fs-6">
-              조회수: {{ scout.viewCnt ?? scout.view_cnt ?? 0 }}
+              조회수: {{ scout.viewCnt || 0 }}
             </div>
           </div>
         </div>
@@ -169,13 +169,18 @@ const goToScoutSpec = async (scout) => {
   const targetId = scout.userSq || scout.id || scout.resumeSq || scout.freelancer_sq || scout.scoutSq
 
   try {
-    const response = await api.$post(`/scouts/${targetId}/views`)
+    const response = await api.post(`/scouts/${targetId}/views`)
     
-    const newViewCnt = response?.data?.viewCnt ?? response?.viewCnt ?? response
+    const newViewCnt = response.data?.viewCnt ?? response.data
+
     if (newViewCnt !== undefined) {
       scout.viewCnt = newViewCnt
       scout.view_cnt = newViewCnt
+    } else {
+      scout.viewCnt = (scout.viewCnt || scout.view_cnt || 0) + 1
+      scout.view_cnt = scout.viewCnt
     }
+    
   } catch (error) {
     console.error('조회수 증가 처리 중 오류 발생:', error)
   }
