@@ -419,6 +419,7 @@ CLAUDE.md
 docs/시크릿.md
 # 운영 DB 덤프 — 회원 개인정보가 들어 있다.
 docs/Phase1_DB/
+docs/Phase2_DB/
 # 28MB 원본 이미지 — 히스토리에 남기면 되돌리기 어렵다.
 docs/오픈-준비-2026-08/브랜딩-원본/
 docs/**/__pycache__/
