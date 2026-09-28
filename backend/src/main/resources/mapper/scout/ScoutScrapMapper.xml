@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="com.example.demo.domain.scout.mapper.ScoutScrapMapper">
+
+    <!-- 1. 프리랜서 스크랩 존재 여부 확인 -->
+    <select id="existsScrap" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM tbl_scrap_s
+            WHERE user_sq = #{userSq}
+              AND company_sq = #{companySq}  
+              AND scrap_type_cd = 1          <!-- 스크랩 타입 코드 (예: 1 - 인재/프리랜서) -->
+        )
+    </select>
+
+    <!-- 2. 스크랩 등록 -->
+    <insert id="insertScrap">
+        INSERT INTO tbl_scrap_s (
+            user_sq,
+            company_sq,
+            project_sq,
+            scrap_type_cd
+        ) VALUES (
+            #{userSq},
+            #{companySq},
+            #{projectSq},                    
+            1                                <!-- 스크랩 타입 코드 (예: 1 - 인재/프리랜서) -->
+        )
+    </insert>
+
+    <!-- 3. 스크랩 해제 -->
+    <delete id="deleteScrap">
+        DELETE FROM tbl_scrap_s
+        WHERE user_sq = #{userSq}
+          AND company_sq = #{companySq}
+          AND scrap_type_cd = 1
+    </delete>
+
+</mapper>

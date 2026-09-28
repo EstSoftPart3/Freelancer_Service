@@ -2,7 +2,7 @@
   <div class="row mb-4 position-relative">
     <div class="col">
       <div
-        v-for="scout in props.scouts"
+        v-for="scout in sortedScouts"
         :key="scout.resumeSq || scout.userSq || scout.id"
         class="card position-relative p-4 shadow-sm mb-3"
       >
@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, computed } from 'vue'
 import { useAlertStore } from '../../stores/alertStore.js'
 import { api } from '@/axios.js'
 import skillIconMap from '@/assets/skillIconMap.js'
@@ -158,6 +158,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click-skill-tag', 'open-resume'])
+
+const sortedScouts = computed(() => {
+  if (!props.scouts) return []
+
+  return [...props.scouts].sort((a, b) => {
+    const aScrapped = a.hasScrapped === 'Y' ? 1 : 0
+    const bScrapped = b.hasScrapped === 'Y' ? 1 : 0
+
+    return bScrapped - aScrapped
+  })
+})
 
 const goToScoutSpec = async (scout) => {
   if (!scout) {

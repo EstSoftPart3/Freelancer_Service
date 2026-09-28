@@ -168,7 +168,9 @@
                      OR r.resume_ttl LIKE CONCAT('%', #{req.searchKeyword}, '%'))
             </if>
         </where>
-        ORDER BY r.resume_sq DESC
+        ORDER BY 
+        isScrapped DESC,
+        r.resume_sq DESC
         LIMIT #{req.size} OFFSET #{offset}
     </select>
 
