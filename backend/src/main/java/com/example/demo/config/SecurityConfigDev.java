@@ -67,6 +67,7 @@ public class SecurityConfigDev {
 		
 					// 2. 권한 제한이 필요한 경로
 					.requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+					.requestMatchers("/api/v1/company/projects").hasAnyRole("ROLE_USER", "ROLE_COMPANY")
 					.requestMatchers("/me").authenticated()
 		
 					// 3. 기타 요청
