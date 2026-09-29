@@ -171,8 +171,10 @@ const openModal = (freelancer) => {
 
 const loadCompanyProjects = async () => {
   try {
-    const res = await axios.get('/api/v1/company/projects');
-    projectList.value = res.data.data || [];
+    // 로그인한 기업의 프로젝트 목록 조회 엔드포인트 호출
+    const res = await axios.get('/api/projects/companies');
+    
+    projectList.value = res.data.data?.projects || res.data.data || [];
   } catch (err) {
     console.error('프로젝트 목록 로드 실패:', err);
   }
