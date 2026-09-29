@@ -64,10 +64,10 @@ public class SecurityConfigDev {
 					.requestMatchers("/login/**", "/api/login", "/v1/auth/**", "/api/v1/auth/**","/refresh-token", "/api/refresh-token").permitAll()
 					.requestMatchers("/login/oauth2/**", "/oauth2/**", "/v1/auth/google/login").permitAll()
 					.requestMatchers("/actuator/**", "/admin/login", "/admin/refresh-token").permitAll()
+					.requestMatchers("/v1/company/**", "/api/v1/company/**").permitAll()
 		
 					// 2. 권한 제한이 필요한 경로
 					.requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-					.requestMatchers("/api/v1/company/projects").permitAll()
 					.requestMatchers("/me").authenticated()
 		
 					// 3. 기타 요청
