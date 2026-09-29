@@ -61,7 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/v1/auth",
             "api/v1/auth",
             "/v1/scouts",
-            "/api/v1/scouts"
+            "/api/v1/scouts",
+            "/v1/company",
+            "/api/v1/company"
 
     // 여기에 더 추가 가능
     );
