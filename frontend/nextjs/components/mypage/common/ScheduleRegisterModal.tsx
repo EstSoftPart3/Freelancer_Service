@@ -88,7 +88,10 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
     const start = new Date(form.scheduleStartDtm)
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const target = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-    const startIsPast = !!form.scheduleStartDtm && (isAllDay ? target < today : start < now)
+    // 이미 지난 일정도 제목·내용은 고칠 수 있어야 한다 — 과거 검사는 새 일정이거나 시작 일시를 바꿀 때만.
+    const origStart = event?.scheduleStartDtm || event?.start || ''
+    const startChanged = !form.scheduleSq || form.scheduleStartDtm !== trimDt(origStart, event?.allDay ?? event?.scheduleAllDayYn === 'Y')
+    const startIsPast = startChanged && !!form.scheduleStartDtm && (isAllDay ? target < today : start < now)
     const endStr = form.scheduleEndDtm || form.scheduleStartDtm
     const endBeforeStart = !!form.scheduleStartDtm && new Date(endStr) < start
 

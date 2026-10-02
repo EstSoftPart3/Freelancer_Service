@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +27,18 @@ export default function AffiliationProjectsClient() {
   const { companyAuthStatusCd } = useUserStore()
   const [authConfirm, setAuthConfirm] = useState(false)
   const [applyStatus, setApplyStatus] = useState<{ open: boolean; projectSq: number | null; projectTtl: string }>({ open: false, projectSq: null, projectTtl: '' })
+
+  // 2602 새 지원자·지원취소 알림은 ?projectSq= 로 들어온다 → 그 공고의 지원현황 모달을 바로 연다.
+  const searchParams = useSearchParams()
+  const notiProjectSq = Number(searchParams.get('projectSq')) || null
+  useEffect(() => {
+    if (!notiProjectSq) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setApplyStatus({ open: true, projectSq: notiProjectSq, projectTtl: '' })
+    api.get(`/projects/${notiProjectSq}/details`)
+      .then(({ data }) => setApplyStatus((s) => (s.projectSq === notiProjectSq ? { ...s, projectTtl: data.output?.projectTtl ?? '' } : s)))
+      .catch(() => {})
+  }, [notiProjectSq])
 
   // Vue ProjectListPage.handleRegisterClick — 미인증(2501)이면 인증 페이지 이동 확인 모달
   function handleRegister() {

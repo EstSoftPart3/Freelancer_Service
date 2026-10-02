@@ -46,6 +46,9 @@ const NOTI_LEGACY_MYPAGE_MAP: Record<string, string> = {
 function normalizeNotificationUrl(url?: string): string {
   if (!url) return '#'
   const [path, query] = url.split('?')
+  // 2604 관심기업 새 공고 — Vue 상세 경로 /project/spec/{company|user}/{sq}
+  const spec = path.match(/^\/project\/spec\/(company|user)\/(\d+)$/)
+  if (spec) return `/projects/${spec[1]}/${spec[2]}`
   const match = path.match(/^\/mypage\/([^/]+)$/)
   if (match) {
     const kebab = NOTI_LEGACY_MYPAGE_MAP[match[1]]
@@ -113,6 +116,7 @@ export default function CommonHeader() {
   const [communityMenuOpen, setCommunityMenuOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [notiOpen, setNotiOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -138,12 +142,18 @@ export default function CommonHeader() {
     }
   }, [loggedIn]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 벨의 안 읽음 점은 화면을 옮길 때마다 갱신한다(목록은 팝오버를 열 때 불러온다).
+  useEffect(() => {
+    if (loggedIn) fetchUnreadCount()
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchNotifications = async () => {
     try {
       const { data } = await api.get<Notification[]>('/notifications')
       setNotifications(data)
     } catch {
-      console.error('[Header] 알림 목록 조회 실패')
+      // 세션 만료면 api.ts 가 로그인으로 보낸다 — error 로 찍으면 개발 오버레이가 떠서 warn 으로 둔다.
+      console.warn('[Header] 알림 목록 조회 실패')
     }
   }
 
@@ -152,7 +162,7 @@ export default function CommonHeader() {
       const { data } = await api.get<number>('/notifications/unread-count')
       setUnreadCount(data)
     } catch {
-      console.error('[Header] 알림 개수 조회 실패')
+      console.warn('[Header] 알림 개수 조회 실패')
     }
   }
 
@@ -217,6 +227,13 @@ export default function CommonHeader() {
     window.location.href = '/?logout=true'
   }
 
+  // 로그인 게이트(연봉 분석·세션 만료)는 회원 구분을 몰라 개인 로그인으로 보낸다 — 거기서
+  // [기업 로그인]으로 바꿔도 로그인 후 원래 화면으로 돌아가도록 redirect 를 이어받는다.
+  const companyLoginHref = () => {
+    const redirect = pathname === '/login' && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null
+    return `/login?${new URLSearchParams({ loginType: 'COMPANY', ...(redirect && { redirect }) })}`
+  }
+
   const isActive = (paths: string[]) => paths.some((p) => pathname.startsWith(p))
   // 곡선이 있는 버튼 형태 — 활성 탭은 은은한 배경, 나머지는 hover 시에만 배경이 뜬다
   const navCls = (active: boolean) =>
@@ -251,7 +268,7 @@ export default function CommonHeader() {
           notifications.map((noti) => (
             <div
               key={noti.notificationSq}
-              onClick={() => markAsRead(noti)}
+              onClick={() => { markAsRead(noti); setNotiOpen(false) }}
               className={cn(
                 'cursor-pointer border-b px-4 py-3 transition-colors hover:bg-muted/50',
                 noti.notificationReadYn === 'N'
@@ -291,6 +308,10 @@ export default function CommonHeader() {
           </div>
         )}
       </div>
+      {/* 목록은 서버가 최근 20건만 준다(NotificationMapper LIMIT 20) — 안 읽음 수는 전체 기준 */}
+      {notifications.length >= 20 && (
+        <p className="border-t px-4 py-2 text-center text-xs text-muted-foreground">최근 알림 20건까지 표시됩니다.</p>
+      )}
     </PopoverContent>
   )
 
@@ -416,7 +437,8 @@ export default function CommonHeader() {
           {loggedIn ? (
             <>
               {/* 알림 팝오버 */}
-              <Popover>
+              {/* 로그인 때 한 번만 불러오면 새 알림이 안 보인다 — 열 때마다 다시 불러온다. */}
+              <Popover open={notiOpen} onOpenChange={(open) => { setNotiOpen(open); if (open) { fetchNotifications(); fetchUnreadCount() } }}>
                 <PopoverTrigger
                   className={cn(
                     buttonVariants({ variant: 'ghost', size: 'icon' }),
@@ -475,7 +497,7 @@ export default function CommonHeader() {
             <DropdownMenuContent align="end" className="w-80 p-2">
               <DropdownMenuItem
                 className="flex-col items-start gap-0.5 py-2"
-                onClick={() => router.push('/login?loginType=COMPANY')}
+                onClick={() => router.push(companyLoginHref())}
               >
                 <span className="font-medium">기업 로그인</span>
                 <span className="text-xs text-muted-foreground">기업 회원으로 로그인합니다</span>
@@ -485,7 +507,7 @@ export default function CommonHeader() {
                 onClick={() => router.push('/sign-up?loginType=COMPANY')}
               >
                 <span className="font-medium">기업 회원가입</span>
-                <span className="text-xs text-muted-foreground">사업자등록번호로 기업 회원을 만듭니다</span>
+                <span className="text-xs text-muted-foreground">기업 담당자 계정을 만듭니다</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -629,7 +651,7 @@ export default function CommonHeader() {
               <div className="mt-4 border-t pt-4">
                 <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">기업서비스</p>
                 <div className="flex flex-col gap-1">
-                  <Link href="/login?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 로그인</Link>
+                  <Link href={companyLoginHref()} className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 로그인</Link>
                   <Link href="/sign-up?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 회원가입</Link>
                   <Link href="/mypage/project-post" className="rounded-md px-3 py-2 text-sm hover:bg-muted">프로젝트 공고 관리</Link>
                   <Link href="/mypage/affiliation-edit" className="rounded-md px-3 py-2 text-sm hover:bg-muted">파트너 모집 관리</Link>

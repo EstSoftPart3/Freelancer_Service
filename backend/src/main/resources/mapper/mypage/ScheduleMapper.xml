@@ -8,22 +8,23 @@
         resultType="com.example.demo.domain.mypage.dto.response.ScheduleResponseDTO"> SELECT * FROM
         ( /* 1. 사용자가 직접 등록한 개인 일정 */ SELECT schedule_sq, user_sq, schedule_ttl, schedule_cnt,
         schedule_all_day_yn, schedule_type_cd, project_sq, NULL as resumeSq, NULL as applicationSq,
-        DATE_FORMAT(schedule_start_dtm, '%Y-%m-%dT%H:%i') as start, DATE_FORMAT(schedule_end_dtm,
+        NULL as company_nm, DATE_FORMAT(schedule_start_dtm, '%Y-%m-%dT%H:%i') as start, DATE_FORMAT(schedule_end_dtm,
         '%Y-%m-%dT%H:%i') as end, DATE_FORMAT(schedule_start_dtm, '%Y-%m-%dT%H:%i') as
         schedule_start_dtm, DATE_FORMAT(schedule_end_dtm, '%Y-%m-%dT%H:%i') as schedule_end_dtm FROM
         tbl_schedule_m WHERE user_sq = #{userSq} UNION ALL <if test="userType == 'PERSONAL'"> /*
         2-1. 개인이 스크랩한 특정 '공고' 마감일 */ SELECT NULL as schedule_sq, s.user_sq, p.project_ttl as
         schedule_ttl, p.project_description_txt as schedule_cnt, 'Y' as schedule_all_day_yn, 2403 as
         schedule_type_cd, p.project_sq, NULL as resumeSq, NULL as applicationSq,
+        (SELECT pc.company_nm FROM tbl_company_s pc WHERE pc.company_sq = p.company_sq) as company_nm,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_start_dtm,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_scrap_s s
         JOIN tbl_project_m p ON s.project_sq = p.project_sq WHERE s.user_sq = #{userSq} AND
-        s.project_sq IS NOT NULL UNION ALL /* 2-2. 개인이 스크랩한 '기업'의 모든 새 공고 (코드 2404) */ SELECT NULL
+        s.project_sq IS NOT NULL AND p.project_is_deleted_yn = 'N' UNION ALL /* 2-2. 개인이 스크랩한 '기업'의 모든 새 공고 (코드 2404) */ SELECT NULL
         as schedule_sq, s.user_sq, p.project_ttl as schedule_ttl, c.company_nm as schedule_cnt, /*
         프론트 말머리용 기업명 */ 'Y' as schedule_all_day_yn, 2404 as schedule_type_cd, p.project_sq, NULL as
-        resumeSq, NULL as applicationSq, DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
+        resumeSq, NULL as applicationSq, c.company_nm as company_nm, DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_start_dtm,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_scrap_s s
@@ -33,27 +34,29 @@
         schedule_sq, #{userSq} as user_sq, p.project_ttl as schedule_ttl, '지원한 프로젝트의 면접 일정입니다.' as
         schedule_cnt, 'N' as schedule_all_day_yn, 2402 as schedule_type_cd, p.project_sq,
         ah.resume_sq as resumeSq, ah.project_application_sq as applicationSq,
+        (SELECT pc.company_nm FROM tbl_company_s pc WHERE pc.company_sq = p.company_sq) as company_nm,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as start,
         DATE_FORMAT(DATE_ADD(ah.selected_interview_dtm, INTERVAL 1 HOUR), '%Y-%m-%dT%H:%i') as end,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_start_dtm,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_end_dtm FROM
         tbl_project_application_h ah JOIN tbl_project_m p ON ah.project_sq = p.project_sq JOIN
         tbl_resume_m r ON ah.resume_sq = r.resume_sq WHERE r.user_sq = #{userSq} AND
-        ah.selected_interview_dtm IS NOT NULL </if>
+        ah.selected_interview_dtm IS NOT NULL AND p.project_is_deleted_yn = 'N' </if>
 
         <if test="userType == 'COMPANY'"> /* 4. 기업이 등록한
         공고 모집 기간 */ SELECT NULL as schedule_sq, #{userSq} as user_sq, p.project_ttl as schedule_ttl,
         p.project_description_txt as schedule_cnt, 'Y' as schedule_all_day_yn, 2403 as
         schedule_type_cd, p.project_sq, NULL as resumeSq, NULL as applicationSq,
+        (SELECT pc.company_nm FROM tbl_company_s pc WHERE pc.company_sq = p.company_sq) as company_nm,
         DATE_FORMAT(p.project_recruit_start_dt, '%Y-%m-%d') as start,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
         DATE_FORMAT(p.project_recruit_start_dt, '%Y-%m-%d') as schedule_start_dtm,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_project_m p
         WHERE p.company_sq = (SELECT c.company_sq FROM tbl_company_s c WHERE c.user_sq = #{userSq})
-        UNION ALL /* 5. 기업이 스크랩한 '다른 기업'의 모든 새 공고 (코드 2404) */ SELECT NULL as schedule_sq,
+        AND p.project_is_deleted_yn = 'N' UNION ALL /* 5. 기업이 스크랩한 '다른 기업'의 모든 새 공고 (코드 2404) */ SELECT NULL as schedule_sq,
         s.user_sq, p.project_ttl as schedule_ttl, c.company_nm as schedule_cnt, /* 프론트 말머리용 기업명 */
         'Y' as schedule_all_day_yn, 2404 as schedule_type_cd, p.project_sq, NULL as resumeSq, NULL
-        as applicationSq, DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
+        as applicationSq, c.company_nm as company_nm, DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as start,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as end,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_start_dtm,
         DATE_FORMAT(p.project_recruit_end_dt, '%Y-%m-%d') as schedule_end_dtm FROM tbl_scrap_s s
@@ -63,13 +66,23 @@
         schedule_sq, #{userSq} as user_sq, p.project_ttl as schedule_ttl, '지원자와의 면접 일정입니다.' as
         schedule_cnt, 'N' as schedule_all_day_yn, 2402 as schedule_type_cd, p.project_sq,
         ah.resume_sq as resumeSq, ah.project_application_sq as applicationSq,
+        (SELECT pc.company_nm FROM tbl_company_s pc WHERE pc.company_sq = p.company_sq) as company_nm,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as start,
         DATE_FORMAT(DATE_ADD(ah.selected_interview_dtm, INTERVAL 1 HOUR), '%Y-%m-%dT%H:%i') as end,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_start_dtm,
         DATE_FORMAT(ah.selected_interview_dtm, '%Y-%m-%dT%H:%i') as schedule_end_dtm FROM
         tbl_project_application_h ah JOIN tbl_project_m p ON ah.project_sq = p.project_sq WHERE
         p.company_sq = (SELECT c.company_sq FROM tbl_company_s c WHERE c.user_sq = #{userSq}) AND
-        ah.selected_interview_dtm IS NOT NULL </if> ) AS combined_schedule ORDER BY start ASC </select>
+        ah.selected_interview_dtm IS NOT NULL AND p.project_is_deleted_yn = 'N' </if> ) AS combined_schedule
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <bind name="kw" value="'%' + searchKeyword + '%'" />
+            <choose>
+                <when test="searchType == '제목'"> WHERE schedule_ttl LIKE #{kw} </when>
+                <when test="searchType == '회사명'"> WHERE company_nm LIKE #{kw} </when>
+                <otherwise> WHERE (schedule_ttl LIKE #{kw} OR company_nm LIKE #{kw}) </otherwise>
+            </choose>
+        </if>
+        ORDER BY start ASC </select>
     <insert id="insertSchedule"
         parameterType="com.example.demo.domain.mypage.dto.request.ScheduleRequestDTO"> INSERT INTO
         tbl_schedule_m ( user_sq, schedule_ttl, schedule_cnt, schedule_start_dtm, schedule_end_dtm,
