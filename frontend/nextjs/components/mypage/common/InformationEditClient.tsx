@@ -12,7 +12,7 @@ import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
 import { loadKakaoMaps } from '@/lib/kakao'
 import { loadDaumPostcode } from '@/lib/daum'
-import type { UserInfo, DaumPostcodeResult } from '@/types'
+import type { UserInfo, DaumPostcodeResult, UserApiResponse } from '@/types'
 import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
@@ -59,7 +59,7 @@ function InfoRow({
 }
 
 export default function InformationEditClient() {
-  const { getUserType } = useUserStore()
+  const { getUserType, setUser } = useUserStore()
   const userType = getUserType()
   const isPersonal = userType === 'PERSONAL'
 
@@ -331,6 +331,8 @@ export default function InformationEditClient() {
       await api.post('/mypage/edit/update', payload)
       toast.success('회원 정보가 수정되었습니다.')
       await fetchInfo()
+      // 헤더의 이름 등은 로그인 때 불러온 /me 값이라, 저장 뒤 다시 불러와야 바로 바뀐다.
+      api.post<{ output: UserApiResponse }>('/me').then(({ data }) => setUser(data.output)).catch(() => {})
     } catch (err) {
       // Vue saveAll: 백엔드 검증 message(비밀번호 규칙 등)를 그대로 노출
       toast.error(getApiErrorMessage(err, '회원 정보 수정에 실패했습니다.'))
@@ -418,8 +420,8 @@ export default function InformationEditClient() {
           />
         </InfoRow>
 
-        {/* 이름 */}
-        <InfoRow label="이름">
+        {/* 이름 — 기업은 가입 폼과 같은 '담당자 이름' */}
+        <InfoRow label={isPersonal ? '이름' : '담당자 이름'}>
           {isPersonal ? (
             <Input value={form.userNm} readOnly className="bg-muted border-0" />
           ) : (

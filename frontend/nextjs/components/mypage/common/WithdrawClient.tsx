@@ -10,6 +10,7 @@ import PasswordCheck from '@/components/mypage/PasswordCheck'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { clearAuthCookies } from '@/lib/cookies'
 import { getApiErrorMessage } from '@/lib/errors'
 import { focusInvalidElement } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
@@ -57,6 +58,7 @@ export default function WithdrawClient() {
     try {
       await api.post('/mypage/withdraw', { userId, userNm: applicantName })
       clearUser()
+      clearAuthCookies()
       toast.success('회원 탈퇴가 완료되었습니다.')
       router.push('/')
     } catch (err) {

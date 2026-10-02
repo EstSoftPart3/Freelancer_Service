@@ -1,6 +1,7 @@
 'use client'
 // Mirrors vue_js/src/fo/views/login&signup/ResetPasswordPage.vue
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
 import { focusInvalidElement } from '@/hooks/useFormErrors'
+import { formatMmSs } from '@/components/auth/VerifyTimer'
 
 const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
   <label className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -16,8 +18,22 @@ const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
   </label>
 )
 
-export default function ResetPasswordForm() {
+// until = 재설정 토큰 쿠키(5분) 만료 시각(ms), isCompany = 끝난 뒤 기업 로그인으로 보낼지. 둘 다 계정 찾기 화면이 넘긴다.
+export default function ResetPasswordForm({ until, isCompany }: { until: number; isCompany: boolean }) {
   const router = useRouter()
+  const [remaining, setRemaining] = useState<number | null>(null)
+  useEffect(() => {
+    if (!until) return
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((until - Date.now()) / 1000))
+      setRemaining(left)
+      return left
+    }
+    if (tick() === 0) return
+    const id = setInterval(() => { if (tick() === 0) clearInterval(id) }, 1000)
+    return () => clearInterval(id)
+  }, [until])
+  const expired = remaining === 0
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [passwordValid, setPasswordValid] = useState(false)
@@ -57,7 +73,7 @@ export default function ResetPasswordForm() {
     try {
       await api.post('/reset-password', { newPassword: password }, { withCredentials: true })
       alertStore.show('비밀번호 재설정 완료', 'success')
-      router.push('/login')
+      router.push(isCompany ? '/login?loginType=COMPANY' : '/login')
     } catch (err) {
       // 토큰 없음 / 유효하지 않은 토큰 / 기존 비밀번호와 동일 — 사유를 그대로 보여준다.
       alertStore.show(getApiErrorMessage(err, '서버 요청 중 오류가 발생했습니다.'), 'danger')
@@ -98,7 +114,14 @@ export default function ResetPasswordForm() {
               />
               {confirmError && <p className="mt-1 text-xs text-destructive">{confirmError}</p>}
             </div>
-            <Button type="submit" className="w-full">비밀번호 재설정</Button>
+            {remaining !== null && (
+              <p className={`text-xs ${expired ? 'text-destructive' : 'text-muted-foreground'}`} aria-live="polite">
+                {expired
+                  ? <>재설정 유효 시간이 지났습니다. <Link href="/find-account?tab=resetPassword" className="underline">비밀번호 찾기</Link>부터 다시 해 주세요.</>
+                  : `${formatMmSs(remaining)} 안에 재설정을 완료해 주세요.`}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={expired}>비밀번호 재설정</Button>
           </form>
         </div>
       </div>

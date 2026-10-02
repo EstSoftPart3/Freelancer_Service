@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 import { focusInvalidElement } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
+import VerifyTimer from '@/components/auth/VerifyTimer'
 
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
 
@@ -154,6 +155,7 @@ function FindIdForm() {
           </Button>
         </div>
         {verifyError && <p className="mt-1 text-xs text-destructive">{verifyError}</p>}
+        <VerifyTimer ev={ev} action="아이디 찾기를" />
       </div>
       <Button type="submit" className="w-full">아이디 찾기</Button>
     </form>
@@ -218,10 +220,14 @@ function ResetPasswordVerifyForm() {
     }
 
     try {
-      await api.post('/reset-password/verify', { userId, name, email: fullEmail() }, { withCredentials: true })
-      // 인터셉터가 OK 상태만 통과시키므로 catch 없이 바로 이동
+      const { data } = await api.post<{ output?: { userTypeCd?: number } }>(
+        '/reset-password/verify', { userId, name, email: fullEmail() }, { withCredentials: true })
+      // 인터셉터가 OK 상태만 통과시키므로 catch 없이 바로 이동.
+      // 재설정 토큰 쿠키가 5분이라 만료 시각(until)과, 끝난 뒤 갈 로그인 화면(회원 구분)을 넘긴다.
+      const params = new URLSearchParams({ until: String(Date.now() + 5 * 60 * 1000) })
+      if (String(data.output?.userTypeCd) === '302') params.set('loginType', 'COMPANY')
       alertStore.show('비밀번호 재설정 페이지로 이동합니다.', 'success')
-      router.push('/reset-password')
+      router.push(`/reset-password?${params}`)
     } catch (err) {
       alertStore.show(getApiErrorMessage(err, '일치하는 회원 정보를 찾을 수 없습니다.'), 'danger')
     }
@@ -259,6 +265,7 @@ function ResetPasswordVerifyForm() {
           </Button>
         </div>
         {verifyError && <p className="mt-1 text-xs text-destructive">{verifyError}</p>}
+        <VerifyTimer ev={ev} action="비밀번호 찾기를" />
       </div>
       <Button type="submit" className="w-full">비밀번호 찾기</Button>
     </form>

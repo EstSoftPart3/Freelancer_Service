@@ -18,6 +18,7 @@ public class SignUpRequestDTO {
     private LocalDate userBirthDt;
     private Long userTypeCd;
     private Long userSignupTypeCd;
+    private String userAgreedPrivacyPolicyYn;
     private String userProfileImageUrl;
 
     // 주소 정보

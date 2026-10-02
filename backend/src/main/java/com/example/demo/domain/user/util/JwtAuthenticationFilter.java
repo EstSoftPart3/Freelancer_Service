@@ -133,6 +133,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && PROJECTS_EXCLUDE_EXCEPTIONS.stream().noneMatch(uri::startsWith)
                 && isPublicMethod(request.getMethod(), uri);
         if (isExcluded) {
+            // 공개 GET 이라도 만료된 토큰을 들고 왔으면 익명으로 넘기지 않고 401 을 준다 — 익명으로 넘기면
+            // 로그인 상태인데 상세가 비로그인처럼 보이고(투표 버튼 재노출 등) 프론트 재발급도 안 탄다.
+            // 401 이면 api.ts 가 재발급 후 재시도한다. GET 만 — 가입·로그인 같은 공개 POST 는 남은 만료
+            // 쿠키 때문에 막히면 안 된다(SSR fetchers 는 토큰을 안 보내므로 영향 없음).
+            if (token != null && "GET".equals(request.getMethod()) && !jwtProvider.validateToken(token)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                return;
+            }
             if (token != null && jwtProvider.validateToken(token)) {
                 try {
                     Long userSq = jwtProvider.getUserSqFromToken(token);

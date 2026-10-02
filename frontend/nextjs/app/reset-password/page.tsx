@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   robots: { index: false }, // 인증 페이지 — 색인 불필요 (robots.txt disallow와 이중 방어)
 }
 
-export default function ResetPasswordPage() {
-  return <ResetPasswordForm />
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ until?: string; loginType?: string }>
+}) {
+  const { until, loginType } = await searchParams
+  return <ResetPasswordForm until={Number(until) || 0} isCompany={loginType === 'COMPANY'} />
 }

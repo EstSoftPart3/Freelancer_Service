@@ -64,6 +64,11 @@ public class UserService {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
+        // 가입 화면은 개인정보 동의가 필수다 — 예전엔 값을 받지도 저장하지도 않아 전원 'N'(컬럼 기본값)으로 남았다.
+        if (!"Y".equals(requestDto.getUserAgreedPrivacyPolicyYn())) {
+            throw new IllegalArgumentException("개인정보 수집·이용에 동의해 주세요.");
+        }
+
         // 2. 지역 코드 조회
         String sigungu = userRepository.findSigunguByAreaCode(requestDto.getSigunguCode());
 
@@ -91,6 +96,7 @@ public class UserService {
         userDTO.setUserBirthDt(requestDto.getUserBirthDt());
         userDTO.setUserTypeCd(requestDto.getUserTypeCd());
         userDTO.setUserSignupTypeCd(requestDto.getUserSignupTypeCd());
+        userDTO.setUserAgreedPrivacyPolicyYn("Y");
 
         userRepository.insertUser(userDTO);
 

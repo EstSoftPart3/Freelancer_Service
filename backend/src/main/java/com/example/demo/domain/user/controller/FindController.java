@@ -34,9 +34,16 @@ public class FindController {
 
     @PostMapping("/find-id")
     public ApiResponse<FindIdResponseDTO> findUserId(@RequestBody FindIdRequestDTO request) {
+        // 비밀번호 재설정과 같은 이유 — 화면의 인증번호 확인만으론 서버가 강제하지 않아, 이름·이메일만 알면
+        // 메일함 없이 아이디를 알아낼 수 있었다. 방금 인증을 통과한 이메일인지 확인한다.
+        if (!emailVerificationService.isEmailVerified(request.getEmail())) {
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, "이메일 인증을 먼저 완료해주세요.");
+        }
+
         FindIdResponseDTO result = userService.findUserIdByNameAndEmail(request.getName(), request.getEmail());
 
         if (result != null) {
+            emailVerificationService.consumeVerifiedFlag(request.getEmail());
             return ApiResponse.of(HttpStatus.OK, "아이디 찾기 성공", result);
         } else {
             return ApiResponse.error(HttpStatus.NOT_FOUND, "일치하는 회원 정보를 찾을 수 없습니다.");
@@ -69,7 +76,8 @@ public class FindController {
         cookie.setMaxAge(300);
         response.addCookie(cookie);
 
-        return ApiResponse.of(HttpStatus.OK, "인증 성공", null);
+        // 재설정을 마친 뒤 회원 구분에 맞는 로그인 화면(개인/기업)으로 보내도록 구분 코드를 준다.
+        return ApiResponse.of(HttpStatus.OK, "인증 성공", java.util.Map.of("userTypeCd", user.getUserTypeCd()));
     }
 
     @PostMapping("/reset-password")

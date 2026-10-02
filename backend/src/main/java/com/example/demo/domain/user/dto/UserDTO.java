@@ -18,5 +18,6 @@ public class UserDTO {
     private LocalDate userBirthDt;
     private Long userTypeCd;
     private Long userSignupTypeCd;
+    private String userAgreedPrivacyPolicyYn;
     private String userIsDeletedYn;
 }

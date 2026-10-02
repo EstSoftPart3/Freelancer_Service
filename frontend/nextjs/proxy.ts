@@ -73,6 +73,15 @@ export function proxy(req: NextRequest) {
     // 원래 가려던 화면을 ?redirect= 로 넘겨 로그인 후 되돌아오게 한다(LoginForm 이 내부 경로만 허용).
     const loginUrl = new URL('/login', req.url)
     loginUrl.searchParams.set('redirect', pathname + req.nextUrl.search)
+    // 토큰 쿠키는 없는데 회원 구분 쿠키가 남아 있으면 로그인하던 세션이 끊긴 것 — 만료 안내와 회원 구분 로그인으로.
+    if (userType) {
+      loginUrl.searchParams.set('expired', '1')
+      if (userType === 'COMPANY') loginUrl.searchParams.set('loginType', 'COMPANY')
+      // 남겨 두면 로그아웃 상태로 보호 화면에 갈 때마다 만료 안내가 다시 뜬다 — 한 번만.
+      const res = NextResponse.redirect(loginUrl)
+      res.cookies.delete('userType')
+      return res
+    }
     return NextResponse.redirect(loginUrl)
   }
 

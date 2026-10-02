@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEmailVerification } from '@/hooks/useEmailVerification'
-import { useField } from '@/hooks/useField'
+import { markServerError, useField } from '@/hooks/useField'
 import { focusInvalidElement } from '@/hooks/useFormErrors'
 import { ErrorMsg, InvalidFrame } from '@/components/ui/invalid-frame'
+import VerifyTimer from '@/components/auth/VerifyTimer'
 import { alertStore } from '@/stores/alertStore'
 import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 import api from '@/lib/api'
@@ -20,7 +21,7 @@ import { DaumPostcodeResult } from '@/types'
 const EMAIL_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'nate.com', 'hotmail.com', 'yahoo.com']
 
 interface Props {
-  onSubmit: (data: Record<string, unknown>) => void
+  onSubmit: (data: Record<string, unknown>) => Promise<string | null>
 }
 
 const FieldLabel = ({ label, valid }: { label: string; valid: boolean }) => (
@@ -236,7 +237,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
       return
     }
 
-    onSubmit({
+    const serverError = await onSubmit({
       id: idField.value, password: pwField.value, name: nameField.value,
       nickname: nicknameField.value,
       phone: phoneField.value, companyName: companyNameField.value,
@@ -245,6 +246,11 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
       emailDomain: isCustomDomain ? customDomain : emailDomain,
       terms, typeCode: 302, signupTypeCode: 204,
     })
+    if (serverError) {
+      markServerError(serverError, [
+        ['아이디', idField], ['닉네임', nicknameField], ['휴대폰', phoneField], ['이메일', emailIdField],
+      ])
+    }
   }
 
   return (
@@ -367,6 +373,7 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
             </Button>
           </div>
           <ErrorMsg msg={verifyError} />
+          <VerifyTimer ev={emailVerify} action="가입을" />
         </div>
 
         {/* 약관 */}

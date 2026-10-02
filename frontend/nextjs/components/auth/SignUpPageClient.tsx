@@ -11,7 +11,8 @@ export default function SignUpPageClient() {
   const router = useRouter()
   const isCompany = searchParams.get('loginType') === 'COMPANY'
 
-  const handleSubmit = async (data: Record<string, unknown>) => {
+  // 실패하면 서버 거절 사유를 돌려준다 — 폼이 그 문구로 해당 칸(휴대폰·이메일 등)에 빨간 프레임을 붙인다.
+  const handleSubmit = async (data: Record<string, unknown>): Promise<string | null> => {
     const {
       id, password, name, nickname, dob, gender, phone,
       address, addressDetail, postcode, sigunguCode, latitude, longitude,
@@ -51,10 +52,13 @@ export default function SignUpPageClient() {
       // 여기서 status를 또 보면 CREATED까지 실패로 오판하는 죽은 분기가 된다 — catch만 남긴다.
       await api.post('/signup', payload)
       alertStore.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
-      router.push('/login')
+      router.push(isCompany ? '/login?loginType=COMPANY' : '/login')
+      return null
     } catch (err) {
       // 중복 아이디·닉네임 등 서버가 보낸 가입 거절 사유를 그대로 노출한다.
-      alertStore.show(getApiErrorMessage(err, '회원가입에 실패했습니다.'), 'danger')
+      const msg = getApiErrorMessage(err, '회원가입에 실패했습니다.')
+      alertStore.show(msg, 'danger')
+      return msg
     }
   }
 

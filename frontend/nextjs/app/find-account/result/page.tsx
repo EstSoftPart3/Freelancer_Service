@@ -69,7 +69,7 @@ export default async function FindAccountResultPage({ searchParams }: Props) {
             </p>
           )}
           <div className="flex gap-2">
-            <Link href="/login" className={cn(buttonVariants({ variant: 'outline' }), 'flex-1 justify-center')}>
+            <Link href={output?.userType === '기업' ? '/login?loginType=COMPANY' : '/login'} className={cn(buttonVariants({ variant: 'outline' }), 'flex-1 justify-center')}>
               로그인
             </Link>
             <Link href="/find-account?tab=resetPassword" className={cn(buttonVariants(), 'flex-1 justify-center')}>

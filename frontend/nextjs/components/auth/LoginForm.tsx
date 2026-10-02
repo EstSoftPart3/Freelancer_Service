@@ -1,6 +1,7 @@
 'use client'
 // Mirrors vue_js/src/fo/views/login&signup/LoginPage.vue
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -63,6 +64,12 @@ export default function LoginForm() {
   const [autoLogin, setAutoLogin] = useState(false)
   const [idSave, setIdSave] = useState(false)
   const [loading, setLoading] = useState(false)
+  const expired = searchParams.get('expired') === '1'
+
+  // 세션 만료로 튕겨 온 경우 토스트도 여기서 띄운다(이동 전에 띄우면 전체 새로고침에 사라짐). id 고정으로 중복 방지.
+  useEffect(() => {
+    if (expired) toast.error('세션이 만료되었습니다. 다시 로그인해 주세요.', { id: 'session-expired' })
+  }, [expired])
 
   // 저장된 아이디 불러오기 — 회원 유형은 더 이상 기억하지 않고(경로가 곧 유형이므로),
   // 그 유형으로 마지막에 저장해둔 아이디만 불러온다.
@@ -152,6 +159,13 @@ export default function LoginForm() {
             ? '기업 회원 계정으로 로그인합니다.'
             : '개인 회원 계정으로 로그인합니다.'}
         </p>
+
+        {/* 세션 만료로 튕겨 왔으면(lib/api.ts 가 ?expired=1 을 붙임) 전체 새로고침에 사라지는 토스트 대신 여기 남겨 둔다. */}
+        {expired && (
+          <p role="alert" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
+            세션이 만료되었습니다. 다시 로그인해 주세요.
+          </p>
+        )}
 
         <div className="rounded-xl border bg-card p-6 shadow-lg">
           <form onSubmit={handleLogin} className="space-y-4">

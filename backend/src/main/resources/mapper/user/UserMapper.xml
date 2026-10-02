@@ -20,9 +20,9 @@
     id="insertUser" parameterType="com.example.demo.domain.user.dto.UserDTO"
     useGeneratedKeys="true" keyProperty="userSq"> INSERT INTO TBL_USER_M ( address_sq, user_id,
     user_email, user_pw, user_nm, user_nickname, user_gender_cd, user_phone_num, user_birth_dt,
-    user_type_cd, user_signup_type_cd ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw},
+    user_type_cd, user_signup_type_cd, user_agreed_privacy_policy_yn ) VALUES ( #{addressSq}, #{userId}, #{userEmail}, #{userPw},
     #{userNm}, #{userNickname}, #{userGenderCd}, #{userPhoneNum}, #{userBirthDt}, #{userTypeCd},
-    #{userSignupTypeCd} ) </insert>
+    #{userSignupTypeCd}, #{userAgreedPrivacyPolicyYn} ) </insert>
 
   <!-- 기업 프로필 INSERT -->
   <insert id="insertCompanyProfile"

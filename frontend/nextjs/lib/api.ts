@@ -1,7 +1,6 @@
 // Mirrors vue_js/src/axios.js — Bearer token injection + 401 refresh queue
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import { getCookie, setCookie, clearAuthCookies } from '@/lib/cookies'
-import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 
 // 브라우저: /api/* → Next.js rewrites → 백엔드 (CORS 우회)
@@ -124,6 +123,8 @@ api.interceptors.response.use(
         return api(original)
       } catch (err) {
         processQueue(err, null)
+        // 헤더 상태(/me)가 아직 안 채워졌을 수 있어 회원 구분 쿠키도 본다 — 쿠키를 지우기 전에 읽어 둔다.
+        const companyCookie = getCookie('userType') === 'COMPANY'
         clearAuthCookies()
         // 🔴 이 실패 이전엔 쿠키만 지우고 헤더 로그인 상태(Zustand userStore)는 그대로 뒀다 —
         // Providers 의 /me 부트스트랩이 최초 마운트 시 한 번만 돌기 때문에, SPA 안에서 페이지를
@@ -134,10 +135,14 @@ api.interceptors.response.use(
         // 인증 요청에 쓰게 되면(이 파일의 baseUrl 분기가 그 경우를 이미 지원한다) Node
         // 프로세스에서 동시에 처리 중인 다른 사용자의 요청까지 이 clearUser 가 건드릴 수
         // 있다 — 브라우저에서만 실행되도록 명시적으로 가드한다.
+        // clearUser 전에 회원 구분을 읽어 둬야 기업 회원을 기업 로그인으로 보낼 수 있다.
+        const wasCompany = typeof window !== 'undefined' && (companyCookie || String(useUserStore.getState().userTypeCd) === '302')
         if (typeof window !== 'undefined') useUserStore.getState().clearUser()
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          alertStore.show('세션이 만료되었습니다. 다시 로그인해 주세요.', 'danger')
-          window.location.href = '/login'
+          // 아래 전체 이동에 토스트가 바로 사라져서, 안내는 로그인 화면이 expired=1 을 보고 띄운다.
+          const params = new URLSearchParams({ redirect: window.location.pathname + window.location.search, expired: '1' })
+          if (wasCompany) params.set('loginType', 'COMPANY')
+          window.location.href = `/login?${params}`
         }
         return Promise.reject(err)
       } finally {
