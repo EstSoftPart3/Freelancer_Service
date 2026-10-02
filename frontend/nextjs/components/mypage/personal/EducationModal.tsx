@@ -21,8 +21,9 @@ interface Props {
   onComplete: (item: EducationItem) => void
 }
 
-// Vue EducationSearchModal과 동일한 career.go.kr 학교정보 OpenAPI
-const API_KEY = '28c12cecb3e103d5b10acd6a0e76209f'
+// Vue EducationSearchModal과 동일한 career.go.kr 학교정보 OpenAPI.
+// 키가 코드에 박혀 있다가 만료돼 검색이 통째로 죽었다 — 환경변수로 빼고, 없거나 실패하면 직접 입력으로 진행한다.
+const API_KEY = process.env.NEXT_PUBLIC_CAREERNET_API_KEY ?? ''
 const PER_PAGE = 3
 
 const todayMonth = () => new Date().toISOString().slice(0, 7)
@@ -42,6 +43,7 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
   const { validate, fieldProps, clearField, clearAll } = useFormErrors<'admissionDt' | 'major'>()
 
   const fetchSchools = useCallback(async (p: number, gubun: 'high' | 'univ', keyword: string) => {
+    if (!API_KEY) return
     try {
       const url = new URL('https://www.career.go.kr/cnet/openapi/getOpenApi')
       url.search = new URLSearchParams({
@@ -51,6 +53,10 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
       }).toString()
       const res = await fetch(url.toString())
       const data = await res.json()
+      // 커리어넷은 인증키 실패 같은 오류도 HTTP 200 + {result:{content:[{code:"-1",message}]}} 로 준다 —
+      // 예전엔 이걸 "검색 결과 없음"으로 보여 줘서 검색이 고장 난 줄 알 수 없었다.
+      const apiError = data?.result?.content?.[0]
+      if (apiError?.code && apiError.code !== '0') throw new Error(apiError.message)
       let content = data?.dataSearch?.content
       if (!content) content = []
       else if (!Array.isArray(content)) content = [content]
@@ -61,7 +67,7 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
       setTotalPages(Math.max(1, Math.ceil(totalCount / PER_PAGE)))
     } catch {
       setSchools([])
-      toast.error('학교 검색에 실패했습니다.')
+      toast.error('학교 검색에 실패했습니다. 학교명을 입력하고 [직접 입력]을 눌러 주세요.')
     }
   }, [])
 
@@ -103,7 +109,9 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
             </div>
             <div className="max-h-72 overflow-y-auto divide-y">
               {schools.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">검색 결과가 없습니다.</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {API_KEY ? '검색 결과가 없습니다.' : '학교 검색을 지금 사용할 수 없습니다. 학교명을 입력하고 [직접 입력]을 눌러 주세요.'}
+                </p>
               ) : schools.map((s) => (
                 <div key={s.id} className="flex items-center justify-between gap-2 py-3">
                   <div className="min-w-0">
@@ -113,6 +121,11 @@ export default function EducationModal({ open, onClose, onComplete }: Props) {
                   <Button size="sm" onClick={() => setSelected(s)}>선택</Button>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">찾는 학교가 없나요? 위 칸에 학교명을 입력하고</span>
+              <Button size="sm" variant="outline" disabled={!search.trim()}
+                onClick={() => setSelected({ id: 'manual', name: search.trim(), address: '' })}>직접 입력</Button>
             </div>
             {totalPages > 1 && (
               <div className="flex justify-end gap-1">

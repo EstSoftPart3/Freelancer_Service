@@ -47,6 +47,25 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+  // 내용 전체가 스크롤되는 모달(className 에 overflow-y-auto)은 제목·닫기 버튼이 같이 올라가
+  // 닫으려면 위로 다시 올려야 했다 — 헤더와 닫기 버튼을 위에 고정한다.
+  const scrolls = typeof className === "string" && className.includes("overflow-y-auto")
+  const close = showCloseButton && (
+    <DialogPrimitive.Close
+      data-slot="dialog-close"
+      render={
+        <Button
+          variant="ghost"
+          className={scrolls ? "relative -top-2 -right-2" : "absolute top-2 right-2"}
+          size="icon-sm"
+        />
+      }
+    >
+      <XIcon
+      />
+      <span className="sr-only">Close</span>
+    </DialogPrimitive.Close>
+  )
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -54,27 +73,16 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          scrolls && "[&>[data-slot=dialog-header]]:sticky [&>[data-slot=dialog-header]]:top-0 [&>[data-slot=dialog-header]]:z-10 [&>[data-slot=dialog-header]]:-mx-4 [&>[data-slot=dialog-header]]:-mt-4 [&>[data-slot=dialog-header]]:bg-popover [&>[data-slot=dialog-header]]:px-4 [&>[data-slot=dialog-header]]:pt-4 [&>[data-slot=dialog-header]]:pb-2",
           className
         )}
         {...props}
       >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-2 right-2"
-                size="icon-sm"
-              />
-            }
-          >
-            <XIcon
-            />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+        {scrolls && close && (
+          <div className="sticky top-4 z-20 -mb-4 h-0 justify-self-end">{close}</div>
         )}
+        {children}
+        {!scrolls && close}
       </DialogPrimitive.Popup>
     </DialogPortal>
   )

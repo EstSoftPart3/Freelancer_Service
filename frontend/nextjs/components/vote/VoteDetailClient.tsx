@@ -33,6 +33,9 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
     initialData != null && (initialData.myVoteOptionSq != null || initialData.closed),
   )
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  // SSR 은 비인증 조회라 내 투표 여부를 모른다 — 재조회가 끝나기 전에 [투표하기]를 그리면
+  // 이미 투표한 사람에게 버튼이 잠깐 보였다 사라진다(A30).
+  const [viewerChecked, setViewerChecked] = useState(false)
 
   useEffect(() => {
     // 조회수 증가는 voteSq당 1회만 — authChecked 갱신 때마다 재실행되는 아래 effect와
@@ -54,6 +57,7 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
         if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
       })
       .catch(() => alertStore.show('투표 정보를 불러올 수 없습니다.', 'danger'))
+      .finally(() => setViewerChecked(true))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voteSq, initialData])
 
@@ -70,12 +74,13 @@ export default function VoteDetailClient({ voteSq, initialData }: Props) {
         if (data.output.myVoteOptionSq != null || data.output.closed) setShowBars(true)
       })
       .catch(() => {})
+      .finally(() => setViewerChecked(true))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voteSq, authChecked, initialData])
 
   const hasVoted = vote.myVoteOptionSq != null
   const isOwner = authChecked && userSq === vote.userSq
-  const canVote = !vote.closed && !hasVoted
+  const canVote = viewerChecked && !vote.closed && !hasVoted
 
   const handleVote = async () => {
     if (!authChecked || !isLoggedIn()) {

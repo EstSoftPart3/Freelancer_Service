@@ -99,6 +99,7 @@ services:
         NEXT_PUBLIC_SITE_URL: ${FO_PUBLIC_URL:-https://job.estsw.co.kr}
         NEXT_PUBLIC_NAVER_SITE_VERIFICATION: ${NAVER_SITE_VERIFICATION:-}
         NEXT_PUBLIC_GA_ID: ${GA_ID:-}
+        NEXT_PUBLIC_CAREERNET_API_KEY: ${CAREERNET_API_KEY:-}
     image: freelancer/frontend-next:${IMAGE_TAG:-latest}
     container_name: freelancer-next
     environment:

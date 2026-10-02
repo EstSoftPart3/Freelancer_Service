@@ -35,7 +35,7 @@ export default function VoteCreateForm() {
     const ok = validate([
       { key: 'ttl', invalid: ttl.trim().length === 0, message: '제목을 입력해주세요.' },
       { key: 'category', invalid: category == null, message: '카테고리를 선택해주세요.' },
-      { key: 'endDt', invalid: endDt.trim().length === 0, message: '마감 일시를 선택해주세요.' },
+      { key: 'endDt', invalid: endDt.trim().length === 0, message: '마감일을 선택해주세요.' },
       { key: 'options', invalid: trimmedOptions.length < 2, message: '선택지는 2개 이상 입력해주세요.' },
     ])
     if (!ok) return
@@ -46,7 +46,8 @@ export default function VoteCreateForm() {
         voteTtl: ttl.trim(),
         voteDescriptionEdt: description.trim() || null,
         voteCategoryCd: category,
-        voteEndDt: endDt,
+        // 날짜만 고르게 한다 — 그날이 끝날 때(23:59:59) 마감.
+        voteEndDt: `${endDt}T23:59:59`,
         options: trimmedOptions,
       })
       alertStore.show('투표가 등록되었습니다.', 'success')
@@ -101,10 +102,12 @@ export default function VoteCreateForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">마감 일시</label>
+        <label className="mb-1 block text-sm font-medium">마감일</label>
         <Input
           {...fieldProps('endDt')}
-          type="datetime-local"
+          type="date"
+          // 로컬 기준 오늘(toISOString 은 UTC 라 오전 9시 전엔 어제가 된다)
+          min={new Date().toLocaleDateString('sv-SE')}
           value={endDt}
           onChange={(e) => setEndDt(e.target.value)}
         />
