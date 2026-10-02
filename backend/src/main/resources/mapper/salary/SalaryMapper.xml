@@ -146,6 +146,8 @@
         <if test="careerBucket != null">AND m.career_bucket = #{careerBucket}</if>
         <if test="regionNm != null">AND m.region_nm = #{regionNm}</if>
         AND m.salary_submission_is_deleted_yn = 'N'
+        <!-- 탈퇴 회원 제출은 리포트 통계에는 남기고 순위표에서만 뺀다(시드는 회원이 없다). 쓰는 쿼리는 TBL_USER_M 을 u 로 조인할 것. -->
+        AND (m.is_seed_yn = 'Y' OR u.user_is_deleted_yn = 'N')
     </sql>
 
     <select id="findRanking" resultType="com.example.demo.domain.salary.entity.SalarySubmission">
@@ -159,6 +161,7 @@
 
     <select id="countRanking" resultType="Long">
         SELECT COUNT(*) FROM TBL_SALARY_SUBMISSION_M m
+        LEFT JOIN TBL_USER_M u ON u.user_sq = m.user_sq
         <include refid="rankingWhere" />
     </select>
 

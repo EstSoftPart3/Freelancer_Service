@@ -123,7 +123,7 @@ export default function SalaryRankingScreen() {
             기준이며, 표본이 부족한 조건은 예시 데이터가 섞여요.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            재직자의 연봉 기준 랭킹이에요. 프리랜서는 월 단가로 입력하기 때문에 연봉 랭킹에 포함되지 않아요.
+            연봉계산기에서 고용형태를 「정규직·계약직」으로 입력한 분들의 연봉 랭킹이에요. 프리랜서는 월 단가로 입력하기 때문에 연봉 랭킹에 포함되지 않아요.
           </p>
         </div>
 
@@ -213,13 +213,13 @@ export default function SalaryRankingScreen() {
             <ListOrdered className="h-4 w-4 text-indigo-600" />
             {conditionLabel} 랭킹
             <InfoTooltip label="랭킹 안내">
-              재직자 제출 데이터에서, 선택한 기준으로 걸러 연봉이 높은 순으로 보여드려요. 프리랜서는
+              「정규직·계약직」으로 입력된 데이터에서, 선택한 기준으로 걸러 연봉이 높은 순으로 보여드려요. 프리랜서는
               월 단가로 입력하므로 연봉 랭킹에서 제외돼요.
             </InfoTooltip>
           </h2>
           {loadError && <p className="mb-2 text-xs text-red-600">{loadError}</p>}
           <p className="mb-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            총 {board.totalCount.toLocaleString()}명(재직자 기준) 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
+            총 {board.totalCount.toLocaleString()}명(정규직·계약직 기준) 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
             {board.includesSeed && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                 예시 데이터 포함

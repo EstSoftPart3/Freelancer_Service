@@ -1,8 +1,8 @@
 'use client'
 // 연봉 리포트(E)에서 분리된 "추천 프로젝트" 전용 화면.
-// 리포트 화면과 같은 sessionStorage 입력값을 읽어, 두 기준으로 각각 3개씩 실제 공고를 보여준다.
+// 리포트 화면과 같이 서버에 저장된 내 제출(/salary/submissions/me)을 읽어, 두 기준으로 각각 3개씩 실제 공고를 보여준다.
 // - 내 기술 기반: /projects?skillTags=... (내가 고른 스택과 겹치는 공고)
-// - 내 연봉에 맞는: /projects 전체에서 내 연봉(만원 단위 → 원 환산)과 가장 가까운 단가 3개
+// - 내 연봉에 맞는: /projects 전체에서 내 월 환산 금액(원)과 가장 가까운 월 단가 3개
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -18,14 +18,10 @@ import type { ProjectItem } from '@/types'
 // 백엔드 ProjectSummary는 salary(Long, 원 단위)를 내려주므로 이 화면에서만 로컬로 확장해 쓴다.
 type ProjectItemWithSalary = ProjectItem & { salary?: number | null }
 
-function distanceFromTarget(p: ProjectItemWithSalary, targetWon: number): number {
-  if (p.salary == null) return Number.POSITIVE_INFINITY
-  return Math.abs(p.salary - targetWon)
-}
 
 export default function SalaryRecommendScreen() {
   const router = useRouter()
-  const { userTypeCd, isLoggedIn } = useUserStore()
+  const { userTypeCd, isLoggedIn, authChecked } = useUserStore()
 
   const [input, setInput] = useState<SalaryCalcInput | null | undefined>(undefined)
   const [stackProjects, setStackProjects] = useState<ProjectItemWithSalary[]>([])
@@ -33,18 +29,21 @@ export default function SalaryRecommendScreen() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('salaryCalcInput')
-    if (!raw) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInput(null)
+    // sessionStorage(탭 단위·이전 계정 값이 남음) 대신 서버의 내 제출 이력 — 리포트와 같은 기준.
+    if (!authChecked) return
+    if (!isLoggedIn()) {
+      router.replace('/login?redirect=/salary/recommend')
       return
     }
-    try {
-      setInput(JSON.parse(raw))
-    } catch {
-      setInput(null)
-    }
-  }, [])
+    let cancelled = false
+    api.get<{ output: { employmentType: SalaryCalcInput['employment']; jobNm: string; careerBucket: string; regionNm: string; skillTagNms: string[]; annualSalary: number } }>('/salary/submissions/me')
+      .then(({ data }) => {
+        const m = data.output
+        if (!cancelled) setInput({ employment: m.employmentType, job: m.jobNm, years: m.careerBucket, region: m.regionNm, stack: m.skillTagNms, salary: m.annualSalary })
+      })
+      .catch(() => { if (!cancelled) setInput(null) }) // 404(제출 이력 없음) 포함 — 계산기 안내
+    return () => { cancelled = true }
+  }, [authChecked, isLoggedIn, router])
 
   useEffect(() => {
     if (!input) return
@@ -67,10 +66,15 @@ export default function SalaryRecommendScreen() {
 
         const poolOut = poolRes.data.output ?? poolRes.data
         const pool: ProjectItemWithSalary[] = poolOut.projects ?? []
-        const targetWon = input!.salary * 10000
-        const closest = [...pool]
-          .sort((a, b) => distanceFromTarget(a, targetWon) - distanceFromTarget(b, targetWon))
-          .slice(0, 3)
+        // 공고 단가는 월 단가(원). 프리랜서는 월 단가(만원), 재직자는 연봉(만원)을 입력하므로 재직자는 12로 나눈다.
+        const targetWon = (input!.employment === 'FREELANCE' ? input!.salary : input!.salary / 12) * 10000
+        // 단가 있는 공고를 금액 근접순으로 먼저, 빈자리는 '단가 협의'(0·없음) 공고를 최신순(pool 순서)으로 채운다 —
+        // 단가를 공개한 공고가 거의 없어서(운영 46건 중 1건) 협의 공고를 빼면 이 칸이 늘 비기 때문(사용자 결정 A25).
+        // ponytail: 최신 30건 안에서만 고른다. 단가 있는 공고가 늘면 서버에서 단가 근접 조회로.
+        const priced = pool
+          .filter((p) => p.salary)
+          .sort((a, b) => Math.abs(a.salary! - targetWon) - Math.abs(b.salary! - targetWon))
+        const closest = [...priced, ...pool.filter((p) => !p.salary)].slice(0, 3)
         setSalaryProjects(closest)
       } catch {
         toast.error('추천 프로젝트를 불러오지 못했습니다.')
@@ -174,6 +178,9 @@ export default function SalaryRecommendScreen() {
             <TrendingUp className="h-4 w-4 text-indigo-600" />내 연봉에 맞는 추천
           </h2>
           {!loaded && <p className="text-sm text-muted-foreground">불러오는 중...</p>}
+          {loaded && salaryProjects.some((p) => !p.salary) && (
+            <p className="mb-3 text-xs text-muted-foreground">단가가 공개된 공고가 적어 단가 협의 공고를 함께 보여드려요.</p>
+          )}
           {loaded && salaryProjects.length === 0 && (
             <p className="rounded-xl border border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
               단가가 비슷한 공고가 아직 없어요.

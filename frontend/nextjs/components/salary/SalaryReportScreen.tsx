@@ -3,6 +3,7 @@
 // GET /salary/report(로그인 필수, 내 제출 기준 실통계) 를 함께 읽어 리포트를 그린다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Award, Briefcase, Flame, RotateCcw, Sparkles, TrendingUp, Users } from 'lucide-react'
 import api from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/errors'
@@ -36,7 +37,8 @@ function formatManShort(n: number): string {
 }
 
 export default function SalaryReportScreen() {
-  const { userNickname } = useUserStore()
+  const router = useRouter()
+  const { userNickname, isLoggedIn, authChecked } = useUserStore()
   const myLabel = userNickname ?? '나'
   const [input, setInput] = useState<SalaryCalcInput | null | undefined>(undefined) // undefined = 아직 확인 전
   const [report, setReport] = useState<SalaryReportApiResponse | null | undefined>(undefined)
@@ -51,6 +53,12 @@ export default function SalaryReportScreen() {
     // 헤더의 조건 문구는 sessionStorage(탭 단위·다른 계정 값이 남을 수 있음) 대신 서버에 저장된
     // 내 제출 이력에서 가져온다 — 새 탭·재방문에서도 리포트가 열리고 리포트 수치와 항상 일치한다.
     // 404(제출 이력 없음)만 계산기 안내로 돌려보내고, 그 외 실패는 서버 메시지를 보여준다.
+    // 비로그인 직접 진입 — API 401 을 "세션 만료"로 처리하게 두지 말고 로그인 후 여기로 돌아오게 한다.
+    if (!authChecked) return
+    if (!isLoggedIn()) {
+      router.replace('/login?redirect=/salary/report')
+      return
+    }
     let cancelled = false
     Promise.all([
       api.get<{ output: SubmissionMe }>('/salary/submissions/me'),
@@ -81,7 +89,7 @@ export default function SalaryReportScreen() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [authChecked, isLoggedIn, router])
 
   const feed = useMemo(() => report?.jobChangeFeed ?? [], [report])
 

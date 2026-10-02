@@ -26,6 +26,9 @@ type Employment = 'EMPLOYED' | 'FREELANCE'
 
 const YEAR_BUCKETS = ['1~2년', '3~5년', '6~9년', '10년+']
 const REGION_REMOTE = '원격'
+// 금액 칸(만원) 상한 — 서버 SalaryService.MAX_AMOUNT 와 같은 값(10억). 이보다 큰 수는 입력 자체를 받지 않는다.
+const MAX_AMOUNT = 100_000
+const withinMax = (v: string) => v === '' || Number(v) <= MAX_AMOUNT
 const EMPLOYMENT_SUBTYPES = ['정규직', '계약직']
 const COMPANY_SIZES = ['10인 미만', '10~49명', '50~299명', '300~999명', '1,000명 이상']
 const COMPANY_TYPES = ['스타트업', '중소기업', '중견기업', '대기업']
@@ -92,6 +95,8 @@ function toCalcInputPayload(m: SubmissionMeResponse) {
   }
 }
 
+type CalcInputPayload = ReturnType<typeof toCalcInputPayload>
+
 // 단일 선택 칩 — 연봉 화면 공용(연봉계산기·연봉순위표에서 재사용)
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -144,11 +149,12 @@ function ProgressRing({ value, max }: { value: number; max: number }) {
 export default function SalaryCalculatorForm() {
   const router = useRouter()
   const { isLoggedIn, userSq } = useUserStore()
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [forms, setForms] = useState<FormsData | null>(null)
 
   // 로그인 상태로 이 화면에 들어왔고, 이전에 계산해 둔 이력이 있으면
   // "바로 리포트를 볼지 / 새로 계산할지" 먼저 물어본다.
-  const [historyPayload, setHistoryPayload] = useState<Record<string, unknown> | null>(null)
+  const [historyPayload, setHistoryPayload] = useState<CalcInputPayload | null>(null)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   useEffect(() => {
@@ -160,6 +166,8 @@ export default function SalaryCalculatorForm() {
 
   useEffect(() => {
     if (!isLoggedIn() || !userSq) return
+    // 제출 실패 복귀(?restore=1)는 방금 입력을 고치러 온 것 — 이력 모달의 [새로 계산하기]가 그 입력을 덮지 않게 띄우지 않는다.
+    if (new URLSearchParams(window.location.search).has('restore')) return
     api
       .get<{ output: SubmissionMeResponse }>('/salary/submissions/me')
       .then(({ data }) => {
@@ -214,6 +222,45 @@ export default function SalaryCalculatorForm() {
 
   const [error, setError] = useState('')
 
+  // [새로 계산하기]·제출 실패 후 복귀 시 이전 입력으로 폼을 채운다(빈 폼에서 다시 입력하지 않도록).
+  function fillForm(p: CalcInputPayload) {
+    setEmployment(p.employment)
+    setJob(p.job ?? '')
+    setYears(p.years ?? '')
+    setRegion(p.region ?? '')
+    setStack(p.stack ?? [])
+    setSalary(p.salary ? String(p.salary) : '')
+    setAge(p.age ?? '')
+    setEdu(p.edu ?? '')
+    setCompanySize(p.companySize ?? '')
+    setCompanyType(p.companyType ?? '')
+    setPosition(p.position ?? '')
+    setTeamSize(p.teamSize ?? '')
+    setSubtype(p.subtype ?? '')
+    setRemote(p.remote ?? '')
+    setBonusYesNo(p.bonus != null ? '있음' : '')
+    setBonusAmount(p.bonus ? String(p.bonus) : '')
+    setStock(p.stock ?? '')
+    setJobChangeCount(p.jobChangeCount ?? '')
+    setCompanyNm(p.companyNm ?? '')
+    setPrevAnnualSalary(p.prevAnnualSalary ? String(p.prevAnnualSalary) : '')
+    setJobChangedYm(p.jobChangedYm ?? '')
+    setOptionalOpen([p.age, p.edu, p.companySize, p.companyType, p.position, p.teamSize, p.subtype, p.remote,
+      p.bonus, p.stock, p.jobChangeCount, p.companyNm, p.prevAnnualSalary, p.jobChangedYm].some((v) => v != null))
+  }
+
+  // 분석(D) 화면에서 제출이 실패하면 ?restore=1 로 돌아온다 — 이 탭에 남긴 입력값으로 복원.
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('restore')) return
+    try {
+      const raw = sessionStorage.getItem('salaryCalcInput')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) fillForm(JSON.parse(raw))
+    } catch {
+      // 복원은 편의 기능 — 실패하면 빈 폼
+    }
+  }, [])
+
   const isFreelance = employment === 'FREELANCE'
 
   const filledCount = [
@@ -266,6 +313,12 @@ export default function SalaryCalculatorForm() {
     // 실제 저장(POST /salary/submissions)은 D(분석 중) 화면에서 로그인 확인 후 수행한다 —
     // 여기서는 비로그인 사용자도 일단 입력을 마칠 수 있게 세션에만 담아 넘긴다.
     sessionStorage.setItem('salaryCalcInput', JSON.stringify(payload))
+    // 비로그인이면 바로 로그인 화면으로 넘기지 않고 먼저 묻는다 — 개인/기업 로그인을 여기서 고르게 해
+    // 기업 회원이 로그인 화면에서 헤더 [기업 로그인]을 찾아 헤매지 않게 한다.
+    if (!isLoggedIn()) {
+      setShowLoginModal(true)
+      return
+    }
     router.push('/salary/analyzing')
   }
 
@@ -412,7 +465,7 @@ export default function SalaryCalculatorForm() {
                 step={10}
                 inputMode="numeric"
                 value={salary}
-                onChange={(e) => setSalary(e.target.value)}
+                onChange={(e) => { if (withinMax(e.target.value)) setSalary(e.target.value) }}
                 placeholder={isFreelance ? '700' : '5200'}
                 className="w-full bg-transparent py-2 font-mono text-2xl font-bold text-foreground outline-none placeholder:text-muted-foreground/50"
               />
@@ -539,7 +592,7 @@ export default function SalaryCalculatorForm() {
                           type="number"
                           min={0}
                           value={bonusAmount}
-                          onChange={(e) => setBonusAmount(e.target.value)}
+                          onChange={(e) => { if (withinMax(e.target.value)) setBonusAmount(e.target.value) }}
                           placeholder="500"
                           className="w-16 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                         />
@@ -593,7 +646,7 @@ export default function SalaryCalculatorForm() {
                       type="number"
                       min={0}
                       value={prevAnnualSalary}
-                      onChange={(e) => setPrevAnnualSalary(e.target.value)}
+                      onChange={(e) => { if (withinMax(e.target.value)) setPrevAnnualSalary(e.target.value) }}
                       placeholder="4500"
                       className="w-28 rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                     />
@@ -649,10 +702,30 @@ export default function SalaryCalculatorForm() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowHistoryModal(false)}>
+            <Button variant="outline" onClick={() => { if (historyPayload) fillForm(historyPayload); setShowHistoryModal(false) }}>
               새로 계산하기
             </Button>
             <Button onClick={goToPreviousReport}>이전 리포트 보기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>로그인이 필요한 기능이에요</DialogTitle>
+            <DialogDescription>
+              로그인하면 지금 입력하신 정보로 바로 분석해 드려요. 입력값은 그대로 남아 있어요.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLoginModal(false)}>
+              아니오
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/login?loginType=COMPANY&redirect=/salary/analyzing')}>
+              기업 회원 로그인
+            </Button>
+            <Button onClick={() => router.push('/login?redirect=/salary/analyzing')}>개인 회원 로그인</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

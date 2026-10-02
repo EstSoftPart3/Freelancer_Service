@@ -8,6 +8,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -69,6 +70,17 @@ public class GlobalExceptionHandler {
         log.warn("입력값 검증 실패: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST, message));
+    }
+
+    /**
+     * 요청 본문을 읽지 못함(숫자 칸에 Integer 범위를 넘는 값, 깨진 JSON 등).
+     * 이 핸들러가 없으면 handleGeneralException 이 잡아 사용자 입력 실수가 500 "서버 내부 오류"로 보인다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        log.warn("요청 본문 해석 실패: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "입력값의 형식이나 범위가 올바르지 않습니다."));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -118,7 +118,7 @@ export default function SalaryAnalyzingScreen() {
       .catch((err) => {
         if (cancelled) return
         alertStore.show(getApiErrorMessage(err, '연봉 정보 제출에 실패했습니다.'), 'danger')
-        router.replace('/salary/calculator')
+        router.replace('/salary/calculator?restore=1')
       })
 
     return () => {
