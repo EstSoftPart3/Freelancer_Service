@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -109,9 +110,24 @@ public class ProjectApplicationService {
 	}
 
 	@Transactional
-	public void updateApplicantResult(ApplicationStatusRequest request, Long applicationSq) {
+	public void updateApplicantResult(ApplicationStatusRequest request, Long applicationSq, Long userSq) {
 		Long statusCd = commonCodeMapper.findCommonCodeSqByName(request.getStatus(),
 				ParentCodeEnum.PRO_APPLICATION.getCode());
+		if (statusCd == null) {
+			throw new IllegalArgumentException("알 수 없는 지원 상태입니다.");
+		}
+		// 예전엔 요청자를 보지 않아 로그인한 누구나 아무 지원의 상태를 바꿀 수 있었다(§10 A13).
+		// 지원취소는 지원 당사자(이력서 주인·대리지원한 회사), 그 외(합격·불합격·인터뷰 요청 등)는 공고를 올린 회사만.
+		if (statusCd.equals(806L)) {
+			requireApplicant(applicationSq, userSq);
+			// 지원중(801)만 취소 — 예전엔 불합격·인터뷰 확정·이미 취소된 지원도 취소돼 지원자 수가 거듭 줄었다.
+			if (!Long.valueOf(801L).equals(asLong(requireParties(applicationSq).get("statusCd")))) {
+				throw new IllegalArgumentException("지원중인 지원만 취소할 수 있습니다.");
+			}
+		} else if (!Objects.equals(companyMapper.findCompanySqByUserSq(userSq),
+				asLong(requireParties(applicationSq).get("projectCompanySq")))) {
+			throw new IllegalArgumentException("이 지원의 상태를 변경할 권한이 없습니다.");
+		}
 
 		applicationMapper.updateApplicationStatus(statusCd, applicationSq);
 
@@ -170,7 +186,9 @@ public class ProjectApplicationService {
 	}
 
 	@Transactional
-	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request, Long userTypeCd) {
+	public void updateInterviewTimeSelected(Long interviewTimeSq, ApplicationSqRequest request, Long userTypeCd,
+			Long userSq) {
+		requireApplicant(request.getApplicationSq(), userSq);
 		Long projectSq = applicationMapper.findProjectBySq(request.getApplicationSq());
 		Project project = projectMapper.findBySq(projectSq);
 
@@ -411,4 +429,69 @@ public class ProjectApplicationService {
 		return applicationMapper.hasAppliedProject(userSq, projectSq);
 	}
 
+	private Map<String, Object> requireParties(Long applicationSq) {
+		Map<String, Object> parties = applicationMapper.findApplicationParties(applicationSq);
+		if (parties == null) {
+			throw new IllegalArgumentException("지원 정보를 찾을 수 없습니다.");
+		}
+		return parties;
+	}
+
+	/** 지원 당사자: 이력서 주인 본인 또는 대리지원한 회사의 기업 계정 */
+	private void requireApplicant(Long applicationSq, Long userSq) {
+		Map<String, Object> parties = requireParties(applicationSq);
+		if (Objects.equals(userSq, asLong(parties.get("ownerSq")))) {
+			return;
+		}
+		Long applyCompanySq = asLong(parties.get("applyCompanySq"));
+		if (applyCompanySq == null || !applyCompanySq.equals(companyMapper.findCompanySqByUserSq(userSq))) {
+			throw new IllegalArgumentException("본인의 지원만 처리할 수 있습니다.");
+		}
+	}
+
+	private static Long asLong(Object v) {
+		return v == null ? null : ((Number) v).longValue();
+	}
+
+	/**
+	 * 기업 회원 탈퇴 시(§10 A20) 그 회사 공고에 들어온 진행 중 지원을 지원취소(806)하고 지원자(대리지원이면 대리지원한
+	 * 회사도)에게 알린 뒤, 회사 공고를 전부 소프트삭제한다. 처리할 담당자가 없는데 지원이 계속 들어오면 안 된다.
+	 */
+	@Transactional
+	public void closeCompanyProjectsOnWithdraw(Long companySq) {
+		for (Map<String, Object> app : applicationMapper.findActiveApplicationsOnCompanyProjects(companySq)) {
+			applicationMapper.updateApplicationStatus(806L, asLong(app.get("appSq")));
+			String message = "[" + app.get("projectTtl") + "] 프로젝트의 기업이 탈퇴하여 지원이 취소되었습니다.";
+			notificationService.send(asLong(app.get("applicantUserSq")), null, 2602L, message, "/mypage/appliedProjects");
+			Long applyCompanyUserSq = asLong(app.get("applyCompanyUserSq"));
+			if (applyCompanyUserSq != null) {
+				notificationService.send(applyCompanyUserSq, null, 2602L, message, "/mypage/appliedProjects");
+			}
+		}
+		projectMapper.softDeleteProjectsByCompany(companySq);
+	}
+
+	/**
+	 * 소속에서 빠질 때(기업의 퇴사 처리·개인 탈퇴·회원 탈퇴·관리자 소속 해제) 그 회사가 이 사람으로 낸 진행 중
+	 * 대리지원을 지원취소(806)한다(§10 A12). 더는 그 회사 인력이 아니므로 공고 기업이 계속 심사하면 안 된다.
+	 */
+	@Transactional
+	public void cancelCorporateApplicationsOnLeave(Long userSq, Long companySq) {
+		if (userSq == null || companySq == null) {
+			return;
+		}
+		for (Long appSq : applicationMapper.findActiveCorporateApplicationSqs(userSq, companySq)) {
+			applicationMapper.updateApplicationStatus(806L, appSq);
+			projectMapper.decreaseApplication(applicationMapper.findProjectBySq(appSq));
+
+			Map<String, Object> info = applicationMapper.findCancelNotificationInfo(appSq);
+			if (info != null) {
+				String message = "[" + info.get("projectTtl") + "] 프로젝트의 기업 지원(" + info.get("applicantNm")
+						+ "님)이 소속 퇴사로 취소되었습니다.";
+				notificationService.send(asLong(info.get("companyUserSq")), null, 2602L, message,
+						"/mypage/affiliationProjectList?projectSq=" + info.get("projectSq") + "&appTyp=corporate");
+				notificationService.send(userSq, null, 2602L, message, "/mypage/appliedProjects");
+			}
+		}
+	}
 }

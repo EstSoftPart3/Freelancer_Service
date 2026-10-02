@@ -15,9 +15,12 @@
 		appliedDt, a.selected_interview_dtm AS interviewDt, r.resume_sq AS resumeSq, r.resume_ttl AS
 		resumeTitle, p.project_candidate_cnt AS applicantCnt, a.read_application_dtm AS
 		readApplicationDt, cc.common_code_nm AS applicantType, CASE WHEN p.project_recruit_end_dt
-		&lt; CURDATE() THEN TRUE ELSE FALSE END AS isRecruitEnded FROM TBL_RESUME_M r JOIN
+		&lt; CURDATE() THEN TRUE ELSE FALSE END AS isRecruitEnded,
+		CASE WHEN a.project_application_member_type_cd = 302 THEN ac.company_nm END AS applyCompanyNm
+		FROM TBL_RESUME_M r JOIN
 		TBL_PROJECT_APPLICATION_H a ON r.resume_sq = a.resume_sq JOIN TBL_PROJECT_M p ON
-		a.project_sq = p.project_sq JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq JOIN
+		a.project_sq = p.project_sq JOIN TBL_COMPANY_S c ON p.company_sq = c.company_sq
+		LEFT JOIN TBL_COMPANY_S ac ON a.company_sq = ac.company_sq JOIN
 		TBL_COMMON_CODE_C cc ON a.project_application_status_cd = cc.common_code_sq WHERE r.user_sq
 		= #{userSq} <if test="keyword != null and keyword != ''">
 			<choose>
@@ -421,6 +424,31 @@
 		JOIN tbl_resume_m r ON h.resume_sq = r.resume_sq JOIN tbl_project_m p ON h.project_sq =
 		p.project_sq LEFT JOIN tbl_company_s cs ON h.company_sq = cs.company_sq
 		WHERE h.project_application_sq = #{applicationSq} </select>
+
+	<!-- 퇴사로 취소할 대리지원: 그 회사가 이 사람 이력서로 낸 진행 중(지원중·인터뷰 요청·인터뷰 확정) 지원 -->
+	<select id="findActiveCorporateApplicationSqs" resultType="Long"> SELECT a.project_application_sq
+		FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq
+		WHERE a.company_sq = #{companySq} AND r.user_sq = #{userSq}
+		AND a.project_application_member_type_cd = 302
+		AND a.project_application_status_cd IN (801, 804, 805) </select>
+
+	<!-- 상태 변경 권한 판단용: 이력서 주인, 대리지원한 회사, 공고를 올린 회사 -->
+	<select id="findApplicationParties" resultType="map"> SELECT r.user_sq AS "ownerSq",
+		a.company_sq AS "applyCompanySq", p.company_sq AS "projectCompanySq",
+		a.project_application_status_cd AS "statusCd"
+		FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq
+		JOIN TBL_PROJECT_M p ON a.project_sq = p.project_sq
+		WHERE a.project_application_sq = #{applicationSq} </select>
+
+	<!-- 기업 탈퇴 정리용. 대리지원(302)이면 대리지원한 회사 담당자에게도 알린다 -->
+	<select id="findActiveApplicationsOnCompanyProjects" resultType="map"> SELECT
+		a.project_application_sq AS "appSq", p.project_ttl AS "projectTtl",
+		r.user_sq AS "applicantUserSq", ac.user_sq AS "applyCompanyUserSq"
+		FROM TBL_PROJECT_APPLICATION_H a JOIN TBL_PROJECT_M p ON a.project_sq = p.project_sq
+		JOIN TBL_RESUME_M r ON a.resume_sq = r.resume_sq
+		LEFT JOIN TBL_COMPANY_S ac ON a.company_sq = ac.company_sq AND a.project_application_member_type_cd = 302
+		WHERE p.company_sq = #{companySq} AND p.project_is_deleted_yn = 'N'
+		AND a.project_application_status_cd IN (801, 804, 805) </select>
 
 	<select id="findCancelNotificationInfo" resultType="map"> SELECT c.user_sq as "companyUserSq",
 		u.user_nm as "applicantNm", p.project_ttl as "projectTtl", p.project_sq as "projectSq",

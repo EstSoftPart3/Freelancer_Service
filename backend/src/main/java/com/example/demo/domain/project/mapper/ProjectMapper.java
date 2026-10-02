@@ -76,6 +76,8 @@ public interface ProjectMapper {
 
 	boolean existsActiveApplication(@Param("projectSq") long projectSq, @Param("resumeSq") Long resumeSq);
 
+	String findRecruitState(@Param("projectSq") long projectSq);
+
 	void insertContracts(@Param("projectSq") Long projectSq,
 			@Param("contractTypes") List<ContractInsertRequest> contractTypes);
 
@@ -128,6 +130,9 @@ public interface ProjectMapper {
 	void updateAddress(@Param("projectSq") Long projectSq, @Param("newAddressSq") Long newAddressSq);
 
 	void softDeleteProject(@Param("projectSq") Long projectSq);
+
+	// 기업 탈퇴 시 그 회사 공고 전부 소프트삭제
+	void softDeleteProjectsByCompany(@Param("companySq") Long companySq);
 
 	List<Project> selectMainPopularProjects(
 			@Param("sortType") String sortType,

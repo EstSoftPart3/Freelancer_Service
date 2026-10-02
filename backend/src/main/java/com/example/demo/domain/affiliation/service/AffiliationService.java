@@ -31,7 +31,9 @@ import com.example.demo.domain.affiliation.entity.CompanyApplication;
 import com.example.demo.domain.affiliation.entity.ResumeSkillTag;
 import com.example.demo.domain.affiliation.entity.Scrap;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.repository.ApplicationRepository;
+import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.user.service.NotificationService;
 
 import jakarta.transaction.Transactional;
@@ -46,6 +48,8 @@ public class AffiliationService {
 	private final ApplicationRepository affiliationRepository;
 	private final NotificationService notificationService;
 	private final CommonCodeMapper commonCodeMapper;
+	private final ResumeMapper resumeMapper;
+	private final ProjectApplicationService projectApplicationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -165,6 +169,11 @@ public class AffiliationService {
 			throw new IllegalArgumentException("사용자 정보가 없습니다.");
 		}
 
+		// 본인의 삭제 안 된 이력서만. 검사가 없으면 남의 resumeSq 로 신청해 그 회사 계정이 남의 이력서를 열 수 있었다(§10 A8).
+		if (!Objects.equals(resumeMapper.findUserByResumeSq(companyApplication.getResumeSq()), companyApplication.getUserSq())) {
+			throw new IllegalArgumentException("본인의 이력서로만 신청할 수 있습니다.");
+		}
+
 		Long isApply = affiliationMapper.findIsApply(companyApplication.getUserSq(), companyApplication.getCompanySq());
 		if (isApply > 0) {
 			throw new IllegalArgumentException("이미 신청한 공고입니다.");
@@ -219,6 +228,7 @@ public class AffiliationService {
 
 		// 3. 멤버 상태를 퇴사로 변경
 		affiliationMapper.updateMemberToResigned(companySq, userSq, resignedStatusCd, LocalDate.now());
+		projectApplicationService.cancelCorporateApplicationsOnLeave(userSq, companySq);
 
 		// 4. 기업 담당자에게 알림 발송
 		Long companyOwnerSq = affiliationMapper.findCompanyOwnerUserSq(companySq);
@@ -329,13 +339,13 @@ public class AffiliationService {
 				// 합격 시 이미 다른 기업에 소속 중이면 상태 변경 롤백 + 알림 차단
 				boolean isWorkingNow = affiliationRepository.isUserAlreadyAffiliated(receiverSq);
 				if (isWorkingNow) {
-					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+					throw new IllegalArgumentException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
 				}
 
 				// 3. 합격 시 소속 멤버 등록 (같은 트랜잭션 내에서 처리)
 				ApplicationPassDTO passDTO = affiliationRepository.findApplicationDetail(companyApplicationSq);
 				if (passDTO == null) {
-					throw new IllegalStateException("지원 정보를 찾을 수 없습니다.");
+					throw new IllegalArgumentException("지원 정보를 찾을 수 없습니다.");
 				}
 				// 바로 위 isUserAlreadyAffiliated 확인과 이 INSERT 사이엔 잠금이 없어, 서로 다른
 				// 두 회사가 같은 지원자를 거의 동시에 승인하면 둘 다 확인을 통과할 수 있었다.
@@ -345,7 +355,7 @@ public class AffiliationService {
 				try {
 					affiliationRepository.insertCompanyMember(passDTO);
 				} catch (DuplicateKeyException e) {
-					throw new IllegalStateException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
+					throw new IllegalArgumentException("해당 지원자는 현재 다른 기업에 재직 중입니다.");
 				}
 
 				message = "축하합니다! [" + companyNm + "] 소속 가입 신청이 승인되었습니다.";

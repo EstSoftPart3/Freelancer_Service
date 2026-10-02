@@ -17,6 +17,7 @@ import com.example.demo.domain.company.mapper.CompanyMapper;
 import com.example.demo.domain.mypage.mapper.ResumeCareerMapper;
 import com.example.demo.domain.mypage.mapper.ResumeMapper;
 import com.example.demo.domain.mypage.mapper.ResumeSkillMapper;
+import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.project.vo.ResumeSummaryVo;
 import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.user.util.JwtAuthenticationToken;
@@ -30,6 +31,7 @@ public class CompanyService {
 	private final CompanyMapper companyMapper;
 	private final CommonCodeMapper commonCodeMapper;
 	private final NotificationService notificationService;
+	private final ProjectApplicationService projectApplicationService;
 
 	// @Value("${cloud.aws.s3.bucket}")
 	// private String bucket;
@@ -127,6 +129,7 @@ public class CompanyService {
 		if ("퇴사".equals(request.getNewStatus())) {
 			// 3. 검증된 realCompanySq를 사용하여 해당 기업의 멤버만 퇴사 처리합니다.
 			companyMapper.updateMemberToResigned(realCompanySq, request.getUserSq(), memberStatusCd, LocalDate.now());
+			projectApplicationService.cancelCorporateApplicationsOnLeave(request.getUserSq(), realCompanySq);
 
 			// 4. [알림] 퇴사 처리된 개인에게 알림 발송
 			String companyNm = companyMapper.findCompanyNmByCompanySq(realCompanySq);

@@ -118,7 +118,8 @@ public class ProjectApplicationController {
 			Authentication authentication,
 			@PathVariable("applicationSq") Long applicationSq,
 			@RequestBody ApplicationStatusRequest request) {
-		projectApplicationService.updateApplicantResult(request, applicationSq);
+		JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
+		projectApplicationService.updateApplicantResult(request, applicationSq, jwtToken.getUserSq());
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "프로젝트 지원 상태 변경 성공", null));
 	}
 
@@ -127,7 +128,8 @@ public class ProjectApplicationController {
 			Authentication authentication,
 			@PathVariable("interviewTimeSq") Long interviewTimeSq, @RequestBody ApplicationSqRequest request) {
 		JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
-		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request, jwtToken.getUserTypeCd());
+		projectApplicationService.updateInterviewTimeSelected(interviewTimeSq, request, jwtToken.getUserTypeCd(),
+				jwtToken.getUserSq());
 		return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK, "인터뷰 시간 선택 성공", null));
 	}
 

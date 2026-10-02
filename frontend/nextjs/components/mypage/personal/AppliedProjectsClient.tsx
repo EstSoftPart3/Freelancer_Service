@@ -170,6 +170,9 @@ export default function AppliedProjectsClient() {
                 {item.projectTitle} / {item.companyTitle}
               </button>
               <div className="flex gap-2 items-center">
+                {userType !== 'COMPANY' && item.applyCompanyNm && (
+                  <Badge variant="outline">기업 지원 · {item.applyCompanyNm}</Badge>
+                )}
                 {item.applicantType === '지원중' && (
                   <>
                     <Badge>지원중</Badge>

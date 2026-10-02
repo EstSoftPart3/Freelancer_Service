@@ -119,6 +119,13 @@ public interface ProjectApplicationMapper {
 	Map<String, Object> findApplicationNotificationInfo(@Param("applicationSq") Long applicationSq);
 
 	// 취소 정보 조회 (수신자: 회사 담당자)
+	List<Long> findActiveCorporateApplicationSqs(@Param("userSq") Long userSq, @Param("companySq") Long companySq);
+
+	Map<String, Object> findApplicationParties(@Param("applicationSq") Long applicationSq);
+
+	// 기업 탈퇴 정리용: 이 회사 공고에 들어온 진행 중(801·804·805) 지원과 알림 받을 사람
+	List<Map<String, Object>> findActiveApplicationsOnCompanyProjects(@Param("companySq") Long companySq);
+
 	Map<String, Object> findCancelNotificationInfo(@Param("applicationSq") Long applicationSq);
 
 	Map<String, Object> findInterviewConfirmationInfo(@Param("applicationSq") Long applicationSq,

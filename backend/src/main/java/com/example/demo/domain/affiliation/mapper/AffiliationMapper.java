@@ -128,6 +128,15 @@ public interface AffiliationMapper {
 	void updateMemberToResigned(@Param("companySq") Long companySq, @Param("userSq") Long userSq,
 			@Param("memberStatusCd") Long memberStatusCd, @Param("leaveDt") LocalDate leaveDt);
 
+	// 기업 탈퇴 정리용: 재직 중 소속원, 대기(501) 소속 신청자, 대기 신청 불합격 처리, 모집 중지
+	List<Long> findActiveMemberUserSqs(@Param("companySq") Long companySq);
+
+	List<Long> findPendingApplicantUserSqs(@Param("companySq") Long companySq);
+
+	void rejectPendingApplications(@Param("companySq") Long companySq);
+
+	void stopRecruiting(@Param("companySq") Long companySq);
+
 	// userSq 기반 개인 이름 조회
 	String findUserNmByUserSq(@Param("userSq") Long userSq);
 

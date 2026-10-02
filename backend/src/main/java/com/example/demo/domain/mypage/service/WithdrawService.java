@@ -9,9 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.common.ParentCodeEnum;
 import com.example.demo.common.mapper.CommonCodeMapper;
 import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.company.mapper.CompanyMapper;
+import com.example.demo.domain.user.service.NotificationService;
 import com.example.demo.domain.mypage.dto.UserInfoDTO;
 import com.example.demo.domain.mypage.dto.request.UserWithdrawRequestDTO;
 import com.example.demo.domain.mypage.repository.WithdrawRepository;
+import com.example.demo.domain.project.service.ProjectApplicationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +24,9 @@ public class WithdrawService {
     private final WithdrawRepository withdrawRepository;
     private final AffiliationMapper affiliationMapper;
     private final CommonCodeMapper commonCodeMapper;
+    private final ProjectApplicationService projectApplicationService;
+    private final CompanyMapper companyMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public void withdraw(Long userSq, UserWithdrawRequestDTO dto) {
@@ -49,6 +55,37 @@ public class WithdrawService {
                 throw new IllegalStateException("퇴사 상태 코드를 찾을 수 없습니다.");
             }
             affiliationMapper.updateMemberToResigned(companySq, userSq, resignedStatusCd, LocalDate.now());
+            projectApplicationService.cancelCorporateApplicationsOnLeave(userSq, companySq);
         }
+
+        // 기업 회원이면 회사를 닫는다(§10 A20) — 회사는 담당자 계정 하나에 묶여 있어, 남겨 두면 처리할 사람 없이
+        // 공고·파트너 목록에 계속 보이며 지원·소속 신청을 받는다. 행은 지우지 않고 상태만 바꿔 기록은 남긴다.
+        Long ownCompanySq = companyMapper.findCompanySqByUserSq(userSq);
+        if (ownCompanySq != null) {
+            closeCompany(ownCompanySq);
+        }
+    }
+
+    private void closeCompany(Long companySq) {
+        projectApplicationService.closeCompanyProjectsOnWithdraw(companySq);
+
+        Long resignedStatusCd = commonCodeMapper.findCommonCodeSqByName("퇴사", ParentCodeEnum.EMPLOYMENT.getCode());
+        if (resignedStatusCd == null) {
+            throw new IllegalStateException("퇴사 상태 코드를 찾을 수 없습니다.");
+        }
+        String companyNm = companyMapper.findCompanyNmByCompanySq(companySq);
+        for (Long memberSq : affiliationMapper.findActiveMemberUserSqs(companySq)) {
+            affiliationMapper.updateMemberToResigned(companySq, memberSq, resignedStatusCd, LocalDate.now());
+            projectApplicationService.cancelCorporateApplicationsOnLeave(memberSq, companySq);
+            notificationService.send(memberSq, null, 2603L,
+                    "[" + companyNm + "] 기업이 탈퇴하여 소속이 종료되었습니다.", "/mypage/affiliated-info");
+        }
+
+        for (Long applicantSq : affiliationMapper.findPendingApplicantUserSqs(companySq)) {
+            notificationService.send(applicantSq, null, 2603L,
+                    "[" + companyNm + "] 기업이 탈퇴하여 소속 신청이 종료되었습니다.", "/mypage/affiliated-info");
+        }
+        affiliationMapper.rejectPendingApplications(companySq);
+        affiliationMapper.stopRecruiting(companySq);
     }
 }

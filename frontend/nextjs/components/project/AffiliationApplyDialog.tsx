@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -217,9 +218,17 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
                     <span className="text-muted-foreground">/</span>
                     <span className="text-muted-foreground">{member.resumeTtl || '이력서를 선택하세요'}</span>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    경력 | {member.careerYr}년차 · 사용 기술 | {member.skillTagNms.join(', ') || '-'}
-                  </p>
+                  {/* 사용 기술은 소속원 관리 화면과 같게 뱃지 6개 + 나머지 +N */}
+                  <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                    <span>경력 | {member.careerYr}년차 · 사용 기술 |</span>
+                    {member.skillTagNms.length === 0 && <span>-</span>}
+                    {member.skillTagNms.slice(0, 6).map((s) => (
+                      <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                    ))}
+                    {member.skillTagNms.length > 6 && (
+                      <Badge variant="outline" className="text-xs">+{member.skillTagNms.length - 6}</Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <Button

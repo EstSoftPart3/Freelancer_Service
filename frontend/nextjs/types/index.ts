@@ -414,6 +414,7 @@ export interface ApplicationItem {
   resumeSq: number
   projectSq: number
   isRecruitEnded: boolean
+  applyCompanyNm?: string | null // 기업이 대리지원한 건이면 그 회사명
   interviewDt?: string
 }
 

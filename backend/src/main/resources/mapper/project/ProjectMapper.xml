@@ -606,6 +606,13 @@
 		TBL_PROJECT_APPLICATION_H WHERE project_sq = #{projectSq} AND resume_sq = #{resumeSq} AND
 		project_application_status_cd NOT IN (802, 806) ) </select>
 
+	<!-- 지원 가능 여부. 목록의 모집중 판정(recruitingCondition)과 같은 기준 — CURDATE(), 시작·종료일 당일 포함.
+		공고가 없거나 삭제됐으면 NULL. -->
+	<select id="findRecruitState" resultType="string"><![CDATA[ SELECT CASE
+		WHEN CURDATE() < DATE(project_recruit_start_dt) THEN 'SCHEDULED'
+		WHEN CURDATE() > DATE(project_recruit_end_dt) THEN 'CLOSED'
+		ELSE 'OPEN' END FROM TBL_PROJECT_M WHERE project_sq = #{projectSq} AND project_is_deleted_yn = 'N' ]]></select>
+
 	<update id="increaseApplication" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_candidate_cnt = project_candidate_cnt + 1 WHERE project_sq = #{projectSq} </update>
 
@@ -745,6 +752,10 @@
 
 	<update id="softDeleteProject" parameterType="long"> UPDATE TBL_PROJECT_M SET
 		project_is_deleted_yn = 'Y', project_modified_at_dtm = NOW() WHERE project_sq = #{projectSq} </update>
+
+	<update id="softDeleteProjectsByCompany" parameterType="long"> UPDATE TBL_PROJECT_M SET
+		project_is_deleted_yn = 'Y', project_modified_at_dtm = NOW()
+		WHERE company_sq = #{companySq} AND project_is_deleted_yn = 'N' </update>
 
 	<!-- 메인 페이지용 -->
 	<select id="selectMainPopularProjects" resultMap="projectMap"> SELECT project_sq, company_sq,

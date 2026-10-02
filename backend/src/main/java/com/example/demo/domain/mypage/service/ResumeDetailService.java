@@ -35,10 +35,12 @@ public class ResumeDetailService {
     }
 
     public ResumeDetailResponseDTO getResumeDetailAndMarkViewed(Long userSq, ResumeDetailViewRequestDTO dto) {
-        resumeService.requireResumeReadable(dto.getResumeSq(), userSq, true);
+        Long ownerSq = resumeService.requireResumeReadable(dto.getResumeSq(), userSq, true);
 
-        // 열람일자 업데이트
-        repository.updateReadApplicationDtmIfNull(dto.getResumeSq(), dto.getProjectSq(), dto.getApplicationSq());
+        // 열람일자 업데이트 — 본인(지원 내역에서 자기 이력서 확인)·관리자가 연 건 기업 열람이 아니다
+        if (ownerSq != null && !ownerSq.equals(userSq)) {
+            repository.updateReadApplicationDtmIfNull(dto.getResumeSq(), dto.getProjectSq(), dto.getApplicationSq());
+        }
 
         // 이력서 상세 조회
         return buildResumeDetail(dto.getResumeSq());

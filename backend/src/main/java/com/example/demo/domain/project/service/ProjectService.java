@@ -631,6 +631,18 @@ public class ProjectService {
 		if (projectMapper.isUserWithdrawn(userSq)) {
 			throw new IllegalArgumentException("탈퇴한 회원은 프로젝트에 지원할 수 없습니다.");
 		}
+		// 화면은 채용예정·마감 공고의 지원 버튼을 막지만 API 는 검사하지 않아, 직접 호출하면
+		// 모집기간 밖이나 삭제된 공고에도 지원이 들어갔다.
+		String recruitState = projectMapper.findRecruitState(projectSq);
+		if (recruitState == null) {
+			throw new IllegalArgumentException("존재하지 않거나 삭제된 공고입니다.");
+		}
+		if ("SCHEDULED".equals(recruitState)) {
+			throw new IllegalArgumentException("아직 모집이 시작되지 않은 공고입니다.");
+		}
+		if ("CLOSED".equals(recruitState)) {
+			throw new IllegalArgumentException("모집이 마감된 공고입니다.");
+		}
 
 		Optional<Long> userCompanySq = Optional.ofNullable(companyService.fetchCompanySq(userSq));
 

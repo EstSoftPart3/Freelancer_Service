@@ -181,16 +181,16 @@
   <select id="findRepResumeNmTtlByUserSq"
     resultType="com.example.demo.domain.project.vo.ResumeSummaryVo"> SELECT RESUME_SQ AS resumeSq,
     RESUME_NM AS resumeNM, RESUME_TTL as resumeTtl FROM TBL_RESUME_M WHERE USER_SQ = #{userSq} AND
-    resume_is_representative_yn = 'Y' </select>
+    resume_is_representative_yn = 'Y' AND resume_is_deleted_yn = 'N' </select>
 
   <select id="findResumesByUserSq" resultType="Long"> SELECT RESUME_SQ FROM TBL_RESUME_M WHERE
     USER_SQ = #{userSq} </select>
 
   <select id="findRepResumeByUserSq" resultType="Long"> SELECT RESUME_SQ FROM TBL_RESUME_M WHERE
-    USER_SQ = #{userSq} AND resume_is_representative_yn = 'Y' </select>
+    USER_SQ = #{userSq} AND resume_is_representative_yn = 'Y' AND resume_is_deleted_yn = 'N' </select>
 
   <select id="findLatestResumeSqByUserSq" resultType="Long"> SELECT resume_sq FROM TBL_RESUME_M
-    WHERE user_sq = #{userSq} ORDER BY resume_created_at_dtm DESC LIMIT 1 </select>
+    WHERE user_sq = #{userSq} AND resume_is_deleted_yn = 'N' ORDER BY resume_created_at_dtm DESC LIMIT 1 </select>
 
   <select id="findLatestResumeBySq" resultType="com.example.demo.domain.project.vo.ResumeSummaryVo">
     SELECT RESUME_NM AS resumeNm, null as resumeTtl, null as resumeSq FROM TBL_RESUME_M WHERE
@@ -240,8 +240,30 @@
   <select id="findUserByResumeSq" resultType="Long"> SELECT user_sq FROM TBL_RESUME_M WHERE
     resume_sq = #{resumeSq} AND resume_is_deleted_yn = 'N' </select>
 
-  <select id="existsApplicationByCompanyAndResume" resultType="boolean"> SELECT EXISTS(SELECT 1 FROM
-    TBL_PROJECT_APPLICATION_H WHERE company_sq = #{companySq} AND resume_sq = #{resumeSq}) </select>
+  <!-- 기업이 이력서를 열 근거: ① 이 회사 공고에 이 이력서로 지원 ② 이 회사에 이 이력서로 소속 신청.
+    대리지원한 회사(company_sq)는 근거가 아니다 — 소속 중엔 소속 회사로 열리고, 퇴사하면 못 열어야 한다(§10 A12). -->
+  <select id="existsApplicationByCompanyAndResume" resultType="boolean"> SELECT
+    EXISTS(SELECT 1 FROM TBL_PROJECT_APPLICATION_H ah JOIN TBL_PROJECT_M p ON ah.project_sq = p.project_sq
+      WHERE p.company_sq = #{companySq} AND ah.resume_sq = #{resumeSq})
+    OR EXISTS(SELECT 1 FROM TBL_COMPANY_APPLICATION_H WHERE company_sq = #{companySq} AND resume_sq = #{resumeSq}) </select>
+
+  <!-- 기업 계정(302)은 TBL_COMPANY_MEMBER_R 이 아니라 TBL_COMPANY_S.user_sq 로 회사와 이어진다 -->
+  <!-- 진행 중: 공고 지원중(801)·인터뷰 요청(804)·인터뷰 확정(805)(삭제 안 된 공고), 소속 신청 대기(501) -->
+  <select id="existsActiveApplicationByResume" resultType="boolean"> SELECT
+    EXISTS(SELECT 1 FROM TBL_PROJECT_APPLICATION_H ah JOIN TBL_PROJECT_M p ON ah.project_sq = p.project_sq
+      WHERE ah.resume_sq = #{resumeSq} AND ah.project_application_status_cd IN (801, 804, 805)
+        AND p.project_is_deleted_yn = 'N')
+    OR EXISTS(SELECT 1 FROM TBL_COMPANY_APPLICATION_H WHERE resume_sq = #{resumeSq}
+      AND company_application_status_cd = 501 AND company_application_is_deleted_yn = 'N') </select>
+
+  <!-- MariaDB 는 UPDATE 대상 테이블을 서브쿼리에서 바로 못 읽어 파생 테이블로 한 번 감싼다 -->
+  <update id="promoteLatestIfNoRepresentative"> UPDATE TBL_RESUME_M SET resume_is_representative_yn = 'Y'
+    WHERE resume_sq = (SELECT resume_sq FROM (SELECT resume_sq FROM TBL_RESUME_M
+      WHERE user_sq = #{userSq} AND resume_is_deleted_yn = 'N' ORDER BY resume_created_at_dtm DESC, resume_sq DESC LIMIT 1) t)
+    AND NOT EXISTS(SELECT 1 FROM (SELECT 1 FROM TBL_RESUME_M WHERE user_sq = #{userSq}
+      AND resume_is_deleted_yn = 'N' AND resume_is_representative_yn = 'Y') r) </update>
+
+  <select id="findOwnedCompanySq" resultType="Long"> SELECT company_sq FROM TBL_COMPANY_S WHERE user_sq = #{userSq} LIMIT 1 </select>
 
 
   <!--대표이력서
@@ -392,8 +414,9 @@
 
   <!--이력서
   삭제(softDelete)-->
+  <!-- 대표 표시도 함께 푼다. 남겨 두면 대표가 2개가 되어 소속원 목록의 대표 조회가 500(§10 A9) -->
   <update id="updateDeleteYn" parameterType="long"> UPDATE TBL_RESUME_M SET resume_is_deleted_yn =
-    'Y' WHERE resume_sq = #{resumeSq} </update>
+    'Y', resume_is_representative_yn = 'N' WHERE resume_sq = #{resumeSq} </update>
 
   <!-- 이력서 전체 조회 (userSq 기준) -->
   <select id="selectAllResumes" parameterType="long"

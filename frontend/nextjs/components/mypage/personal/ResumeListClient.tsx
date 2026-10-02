@@ -13,6 +13,7 @@ import CommonPagination from '@/components/community/CommonPagination'
 import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/errors'
 import type { ResumeItem } from '@/types'
 
 const PAGE_SIZE = 5
@@ -50,8 +51,8 @@ export default function ResumeListClient() {
       await api.patch(`/mypage/resume/${deleteTarget}/delete`)
       toast.success('삭제되었습니다.')
       fetchResumes(currentPage)
-    } catch {
-      toast.error('삭제에 실패했습니다.')
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, '삭제에 실패했습니다.'))
     } finally {
       setDeleteTarget(null)
     }
@@ -165,7 +166,9 @@ export default function ResumeListClient() {
       <ConfirmDialog
         open={deleteTarget !== null}
         title="이력서 삭제"
-        message="정말 삭제하시겠습니까?"
+        message={resumes.find((r) => r.resumeSq === deleteTarget)?.resumeIsRepresentativeYn === 'Y'
+          ? '대표 이력서입니다. 삭제하면 남은 이력서 중 가장 최근 것이 대표가 됩니다. 삭제하시겠습니까?'
+          : '정말 삭제하시겠습니까?'}
         onConfirm={handleDelete}
         onClose={() => setDeleteTarget(null)}
       />

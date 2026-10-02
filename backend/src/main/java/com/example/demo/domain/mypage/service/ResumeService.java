@@ -733,47 +733,58 @@ public class ResumeService {
 	}
 
 	/**
-	 * 이력서 열람 인가. 다음 넷 중 하나만 만족하면 통과한다.
-	 * 1. 본인 2. 지원 기록(요청자 소속회사로 이 이력서가 지원한 적이 있다, allowApplicationBased=true 일 때만)
-	 * 3. 소속회사가 이력서 주인과 같다 4. 관리자
+	 * 이력서 열람 인가. 다음 넷 중 하나만 만족하면 통과한다(요청자 회사 = 소속 회사 또는 기업 계정의 보유 회사).
+	 * 1. 본인 2. 지원 기록(요청자 회사 공고 지원·소속 신청 등, allowApplicationBased=true 일 때만)
+	 * 3. 요청자 회사가 이력서 주인의 소속 회사다 4. 관리자
 	 *
 	 * <p>수정·삭제처럼 "변경"에는 쓰지 않는다 — 그 경로는 여전히 {@link #requireResumeOwner} 전용이다.
+	 *
+	 * @return 이력서 주인 sq (관리자면 null)
 	 */
-	public void requireResumeReadable(Long resumeSq, Long userSq, boolean allowApplicationBased) {
+	public Long requireResumeReadable(Long resumeSq, Long userSq, boolean allowApplicationBased) {
 		if (CurrentUser.isAdmin()) {
-			return;
+			return null;
 		}
 		Long ownerSq = resumeMapper.findUserByResumeSq(resumeSq);
 		if (ownerSq == null) {
 			throw new IllegalArgumentException("이력서를 찾을 수 없습니다.");
 		}
 		if (ownerSq.equals(userSq)) {
-			return;
+			return ownerSq;
 		}
 		if (sameCompany(userSq, ownerSq)) {
-			return;
+			return ownerSq;
 		}
 		if (allowApplicationBased) {
-			Long requesterCompanySq = affiliationMapper.findMemberCompanySq(userSq);
+			Long requesterCompanySq = companyOf(userSq);
 			if (requesterCompanySq != null
 					&& resumeMapper.existsApplicationByCompanyAndResume(requesterCompanySq, resumeSq)) {
-				return;
+				return ownerSq;
 			}
 		}
 		throw new IllegalArgumentException("이력서를 열람할 권한이 없습니다.");
 	}
 
 	/**
-	 * 두 회원이 같은 회사에 소속돼 있는지. 둘 다 소속이 없으면(companySq 둘 다 null) 같은 회사로 치지 않는다 —
+	 * 요청자의 회사 — 소속(개인 소속원) 또는 보유(기업 계정 302, TBL_COMPANY_S.user_sq).
+	 * 기업 계정은 TBL_COMPANY_MEMBER_R 에 없어서, 소속만 보던 예전엔 자기 소속원·지원자·소속신청자의
+	 * 이력서를 하나도 열거나 바꿀 수 없었다.
+	 */
+	private Long companyOf(Long userSq) {
+		Long companySq = affiliationMapper.findMemberCompanySq(userSq);
+		return companySq != null ? companySq : resumeMapper.findOwnedCompanySq(userSq);
+	}
+
+	/**
+	 * 요청자의 회사가 이력서 주인의 소속 회사와 같은지. 요청자에게 회사가 없으면 같은 회사로 치지 않는다 —
 	 * 그렇게 하지 않으면 무소속 사용자 두 명이 서로의 이력서를 열람할 수 있게 된다.
 	 */
-	private boolean sameCompany(Long userSqA, Long userSqB) {
-		Long companyA = affiliationMapper.findMemberCompanySq(userSqA);
-		if (companyA == null) {
+	private boolean sameCompany(Long requesterSq, Long ownerSq) {
+		Long requesterCompany = companyOf(requesterSq);
+		if (requesterCompany == null) {
 			return false;
 		}
-		Long companyB = affiliationMapper.findMemberCompanySq(userSqB);
-		return companyA.equals(companyB);
+		return requesterCompany.equals(affiliationMapper.findMemberCompanySq(ownerSq));
 	}
 
 	/**
@@ -817,7 +828,13 @@ public class ResumeService {
 	public void softDeleteResume(Long resumeSq, Long userSq) {
 		// 소유자 확인 없이 삭제하면 남의 이력서와 그 물리 파일까지 지울 수 있다.
 		requireResumeOwner(resumeSq, userSq);
+		// 지원 기록은 이력서 번호만 들고 있어서, 진행 중인 지원·소속 신청의 이력서를 지우면 기업이 열 수 없게 된다.
+		if (resumeMapper.existsActiveApplicationByResume(resumeSq)) {
+			throw new IllegalArgumentException("진행 중인 지원이나 소속 신청에 쓰인 이력서는 삭제할 수 없습니다.");
+		}
 		resumeMapper.updateDeleteYn(resumeSq);
+		// 대표를 지우면 남은 이력서 중 가장 최근 것을 대표로 (없으면 대표 없음)
+		resumeMapper.promoteLatestIfNoRepresentative(userSq);
 
 		// 프로필 이미지 정리
 		ResumeRequestDTO.ResumeFileDTO profileImage = resumeRepository.selectProfileImageForUpdateByResumeSq(resumeSq);

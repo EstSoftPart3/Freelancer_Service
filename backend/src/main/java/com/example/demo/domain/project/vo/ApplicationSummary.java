@@ -26,4 +26,6 @@ public class ApplicationSummary {
 	private LocalDateTime readApplicationDt;
 	private LocalDateTime interviewDt;
 	private boolean isRecruitEnded;
+	// 기업이 대리지원한 건이면 그 회사명(개인 지원이면 null)
+	private String applyCompanyNm;
 }

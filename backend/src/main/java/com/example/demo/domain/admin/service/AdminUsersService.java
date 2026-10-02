@@ -20,6 +20,8 @@ import com.example.demo.domain.admin.dto.AdminUsersListDTO;
 import com.example.demo.domain.admin.dto.request.AdminUsersUpdateRequestDTO;
 import com.example.demo.domain.admin.dto.response.AdminUsersListResponseDTO;
 import com.example.demo.domain.admin.mapper.AdminUsersMapper;
+import com.example.demo.domain.affiliation.mapper.AffiliationMapper;
+import com.example.demo.domain.project.service.ProjectApplicationService;
 import com.example.demo.domain.user.constant.NicknamePolicy;
 import com.example.demo.domain.user.repository.UserRepository;
 
@@ -30,6 +32,8 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class AdminUsersService {
 	private final AdminUsersMapper adminUsersMapper;
+	private final AffiliationMapper affiliationMapper;
+	private final ProjectApplicationService projectApplicationService;
 	private final PasswordEncoder passwordEncoder;
 	private final FileStorageService fileStorageService;
 	private final UserRepository userRepository;
@@ -123,11 +127,13 @@ public class AdminUsersService {
 
             case "LEAVE":
                 // 시나리오 2a: 일반 소속 있음 → 소속 삭제(LEAVE)
+                projectApplicationService.cancelCorporateApplicationsOnLeave(userSq, affiliationMapper.findMemberCompanySq(userSq));
                 adminUsersMapper.updateCompanyMemberLeave(userSq);
                 break;
 
             case "CHANGE":
                 // 시나리오 2b: 일반 소속 있음 → 다른 소속으로 변경
+                projectApplicationService.cancelCorporateApplicationsOnLeave(userSq, affiliationMapper.findMemberCompanySq(userSq));
                 adminUsersMapper.updateCompanyMemberLeave(userSq);
                 if (dto.getCompanySq() != null) {
                     adminUsersMapper.insertCompanyMember(userSq, dto.getCompanySq());

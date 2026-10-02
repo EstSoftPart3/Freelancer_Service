@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import CommonPagination from '@/components/community/CommonPagination'
+import ResumeDetailModal from '@/components/mypage/personal/ResumeDetailModal'
 import api from '@/lib/api'
 import type { CompanyMember } from '@/types'
 
@@ -23,6 +24,7 @@ export default function AffiliatedMembersClient() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [fireTarget, setFireTarget] = useState<number | null>(null)
+  const [detailSq, setDetailSq] = useState<number | null>(null)
 
   const fetchMembers = useCallback(async (page = 1, sType = searchType, kw = appliedSearchText) => {
     try {
@@ -96,7 +98,9 @@ export default function AffiliatedMembersClient() {
               <div className="flex items-center gap-2">
                 <span className="font-medium">{member.userNm}</span>
                 <span className="text-muted-foreground">/</span>
-                <span className="text-sm text-muted-foreground">{member.resumeTtl}</span>
+                {member.resumeSq
+                  ? <button type="button" onClick={() => setDetailSq(member.resumeSq)} className="text-sm text-primary hover:underline cursor-pointer">{member.resumeTtl}</button>
+                  : <span className="text-sm text-muted-foreground">이력서 없음</span>}
               </div>
               {member.leavedYn === 401
                 ? <Button size="sm" variant="outline" onClick={() => setFireTarget(member.userSq)}>퇴사 처리</Button>
@@ -128,6 +132,8 @@ export default function AffiliatedMembersClient() {
       </ul>
 
       <CommonPagination currentPage={currentPage} totalPages={totalPages} onPageChange={(p) => setCurrentPage(p)} />
+
+      <ResumeDetailModal resumeSq={detailSq} onClose={() => setDetailSq(null)} />
 
       <ConfirmDialog
         open={fireTarget !== null}
