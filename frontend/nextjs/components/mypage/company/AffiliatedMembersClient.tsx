@@ -81,7 +81,7 @@ export default function AffiliatedMembersClient() {
             ))}
           </SelectContent>
         </Select>
-        <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedSearchText(searchText); fetchMembers(1, searchType, searchText) } }} placeholder="검색어 입력" className="w-40" />
+        <Input value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setAppliedSearchText(searchText); fetchMembers(1, searchType, searchText) } }} placeholder="검색어 입력" className="min-w-0 flex-1 sm:w-40 sm:flex-none" />
         <Button size="sm" onClick={() => { setAppliedSearchText(searchText); setCurrentPage(1); fetchMembers(1, searchType, searchText) }}>검색</Button>
       </div>
 

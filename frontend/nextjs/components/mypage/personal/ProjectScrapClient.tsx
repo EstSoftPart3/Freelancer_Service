@@ -92,7 +92,7 @@ export default function ProjectScrapClient() {
             ))}
           </SelectContent>
         </Select>
-        <Input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="검색어 입력" className="w-40" />
+        <Input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="검색어 입력" className="min-w-0 flex-1 sm:w-40 sm:flex-none" />
         <Button size="sm" onClick={handleSearch}>검색</Button>
       </div>
 

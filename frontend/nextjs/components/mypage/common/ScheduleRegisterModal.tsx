@@ -178,7 +178,7 @@ export default function ScheduleRegisterModal({ open, initialMode, event, onClos
               />
               <label htmlFor="allDay" className="text-sm cursor-pointer">종일</label>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-sm font-semibold">시작 일시</label>
                 <Input {...fieldProps('scheduleStartDtm')} type={isAllDay ? 'date' : 'datetime-local'} value={form.scheduleStartDtm} onChange={(e) => set('scheduleStartDtm', e.target.value)} />

@@ -45,9 +45,9 @@ function EmailVerifyRow({
         이메일 주소 {valid && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
       </label>
       <InvalidFrame ref={blockRef} invalid={!!error} className="flex flex-wrap gap-1">
-        <Input className="w-24 min-w-0 flex-1" value={emailId} onChange={(e) => { setEmailId(e.target.value); onEmailChanged?.() }} onBlur={onBlur} placeholder="아이디" />
+        <Input className="w-24 min-w-0 flex-1 max-sm:basis-24" value={emailId} onChange={(e) => { setEmailId(e.target.value); onEmailChanged?.() }} onBlur={onBlur} placeholder="아이디" />
         <span className="flex items-center px-1 text-sm">@</span>
-        <Input className="w-24 min-w-0 flex-1" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => { setCustomDomain(e.target.value); onEmailChanged?.() }} placeholder="도메인" />
+        <Input className="w-24 min-w-0 flex-1 max-sm:basis-24" value={isCustom ? customDomain : domain} readOnly={!isCustom} onChange={(e) => { setCustomDomain(e.target.value); onEmailChanged?.() }} placeholder="도메인" />
         <select value={isCustom ? 'custom' : domain} onChange={(e) => handleDomain(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
           <option value="" disabled>선택</option>
           {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}

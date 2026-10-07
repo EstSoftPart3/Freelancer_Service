@@ -442,10 +442,10 @@ export default function PersonalSignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="이메일 주소" valid={emailIdField.valid} />
           <div className="flex flex-wrap gap-1">
-            <Input {...emailIdField.props} className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
+            <Input {...emailIdField.props} className="w-28 min-w-0 flex-1 max-sm:basis-24" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
             <Input
-              className="w-28 min-w-0 flex-1"
+              className="w-28 min-w-0 flex-1 max-sm:basis-24"
               value={isCustomDomain ? customDomain : emailDomain}
               readOnly={!isCustomDomain}
               onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value, e.target.value); resetEmailVerification() }}

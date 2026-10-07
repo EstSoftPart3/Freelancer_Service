@@ -701,7 +701,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
       </div>
 
       {/* 기간 — Vue 원본처럼 듀얼월 캘린더에서 한 번에 범위 선택, 입력창은 읽기전용 표시 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold">프로젝트 기간</label>

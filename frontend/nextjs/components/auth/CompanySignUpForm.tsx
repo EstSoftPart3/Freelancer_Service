@@ -348,9 +348,9 @@ export default function CompanySignUpForm({ onSubmit }: Props) {
         <div>
           <FieldLabel label="이메일 주소" valid={emailIdField.valid} />
           <div className="flex flex-wrap gap-1">
-            <Input {...emailIdField.props} className="w-28 min-w-0 flex-1" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
+            <Input {...emailIdField.props} className="w-28 min-w-0 flex-1 max-sm:basis-24" value={emailIdField.value} onChange={(e) => { emailIdField.setValue(e.target.value); validateEmail(e.target.value); resetEmailVerification() }} placeholder="아이디" />
             <span className="flex items-center px-1 text-sm">@</span>
-            <Input className="w-28 min-w-0 flex-1" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value, e.target.value); resetEmailVerification() }} placeholder="도메인" />
+            <Input className="w-28 min-w-0 flex-1 max-sm:basis-24" value={isCustomDomain ? customDomain : emailDomain} readOnly={!isCustomDomain} onChange={(e) => { setCustomDomain(e.target.value); if (emailIdField.value) validateEmail(emailIdField.value, e.target.value); resetEmailVerification() }} placeholder="도메인" />
             <select value={isCustomDomain ? 'custom' : emailDomain} onChange={(e) => handleDomainChange(e.target.value)} className="h-8 cursor-pointer rounded-lg border border-border bg-background px-2 text-sm">
               <option value="" disabled>선택</option>
               {EMAIL_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}

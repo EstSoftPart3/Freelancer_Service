@@ -83,7 +83,7 @@ export default function AffiliatedScrapClient() {
             ))}
           </SelectContent>
         </Select>
-        <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setCurrentPage(1); fetchScraps(1, searchType, keyword) } }} placeholder="검색어 입력" className="w-40" />
+        <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setCurrentPage(1); fetchScraps(1, searchType, keyword) } }} placeholder="검색어 입력" className="min-w-0 flex-1 sm:w-40 sm:flex-none" />
         <Button size="sm" onClick={() => { setCurrentPage(1); fetchScraps(1, searchType, keyword) }}>검색</Button>
       </div>
 

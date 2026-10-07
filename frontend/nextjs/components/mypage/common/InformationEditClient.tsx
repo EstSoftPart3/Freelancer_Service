@@ -504,7 +504,7 @@ export default function InformationEditClient() {
                     value={editEmail.emailId}
                     onChange={(e) => setEditEmail((p) => ({ ...p, emailId: e.target.value }))}
                     placeholder="이메일 아이디"
-                    className="w-32 flex-1"
+                    className="w-32 flex-1 max-sm:basis-24"
                   />
                   <span className="text-muted-foreground">@</span>
                   <Input
@@ -512,7 +512,7 @@ export default function InformationEditClient() {
                     onChange={(e) => setEditEmail((p) => ({ ...p, emailDomain: e.target.value }))}
                     placeholder="도메인"
                     list="domain-list"
-                    className="w-36 flex-1"
+                    className="w-36 flex-1 max-sm:basis-24"
                   />
                   <datalist id="domain-list">
                     {['naver.com', 'gmail.com', 'daum.net', 'nate.com'].map((d) => (
