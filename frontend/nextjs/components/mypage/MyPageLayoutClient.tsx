@@ -17,7 +17,7 @@ export default function MyPageLayoutClient({ children }: { children: React.React
             <Menu className="h-4 w-4" />
             마이페이지 메뉴
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 pt-10">
+          <SheetContent side="left" className="w-72 px-4 pt-10 pb-4">
             <MyPageSidebar onNavigate={() => setMenuOpen(false)} />
           </SheetContent>
         </Sheet>

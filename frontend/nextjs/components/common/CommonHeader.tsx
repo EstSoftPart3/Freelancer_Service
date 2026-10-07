@@ -254,7 +254,8 @@ export default function CommonHeader() {
 
   // 알림 팝오버 내용 (로그인 시 공용)
   const NotificationPanel = (
-    <PopoverContent className="w-80 p-0" align="end">
+    // 640 미만은 다른 모달·시트처럼 좌우 16px 여백으로 화면 폭을 채운다
+    <PopoverContent className="w-80 p-0 max-sm:w-[calc(100vw-2rem)]" align="end" collisionPadding={16}>
       <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-3">
         <h6 className="font-semibold">알림</h6>
         <div className="flex items-center gap-2">
@@ -322,8 +323,8 @@ export default function CommonHeader() {
         scrolled ? 'shadow-md border-b' : 'border-b',
       )}
     >
-      {/* 1단 — 로고만 */}
-      <div className="border-b">
+      {/* 1단 — 로고만. 모바일은 2단(벨·햄버거)을 이 줄 오른쪽에 겹쳐 한 줄 헤더로 만든다 */}
+      <div className="lg:border-b">
         <div className="container mx-auto flex h-12 items-center px-4">
           <Link href="/" className="flex shrink-0 items-center" aria-label="Ctrl + F 홈">
             <img
@@ -331,14 +332,14 @@ export default function CommonHeader() {
               alt="Ctrl + F"
               width={167}
               height={28}
-              className="h-6 w-auto"
+              className="h-5 w-auto lg:h-6"
             />
           </Link>
         </div>
       </div>
 
       {/* 2단 — 전체 네비 한 줄 (좌: 메뉴, 우: 검색·로그인·기업서비스) */}
-      <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-4 lg:gap-4">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-4 max-lg:absolute max-lg:right-0 max-lg:top-0 max-lg:h-12 max-lg:w-auto lg:gap-4">
         <nav className="hidden min-w-0 items-center gap-1 lg:flex lg:gap-2">
           {/* 연봉계산기·연봉순위표 — 클릭을 유도하는 강조 버튼. 나머지 메뉴와 확실히 구분되도록
               색을 넣고, hover 시 살짝 떠오르며 아이콘이 반응한다.
@@ -536,7 +537,7 @@ export default function CommonHeader() {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="flex w-80 flex-col overflow-y-auto pt-10"
+              className="flex w-80 flex-col overflow-y-auto px-4 pt-10 pb-4"
               // pathname 변화로만 닫으면 같은 경로의 쿼리만 바뀌는 링크(/career → /career?category=…)에서
               // 시트가 안 닫힌다 — 링크 클릭이면 무조건 닫는다.
               onClick={(e) => {
