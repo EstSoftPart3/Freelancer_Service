@@ -425,7 +425,7 @@ export interface ScrapProjectItem {
   dday: number | null
   createdAt: string
   candidateCnt: number
-  address: { parentSigungu: string; sigungu: string }
+  address: { parentSigungu: string; sigungu: string } | null
   /** 대표 등급(최저). 등급 목록이 없는 옛 공고의 폴백 */
   developerGrade: string
   recruitHeadcounts?: RecruitHeadcount[]

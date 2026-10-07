@@ -131,7 +131,12 @@ export default function ProjectScrapClient() {
             <div className="flex justify-between text-sm text-muted-foreground flex-wrap gap-2">
               <div>
                 <span className="font-semibold text-foreground">지원 자격</span>
-                {' '}| {item.address.parentSigungu} {item.address.sigungu} / {formatGradeNames(item.recruitHeadcounts, item.developerGrade)} / {item.requiredEducation}
+                {/* 지하철역만 입력한 공고는 address 가 null 이라 지역 칸을 뺀다 */}
+                {' '}| {[
+                  item.address && `${item.address.parentSigungu} ${item.address.sigungu}`,
+                  formatGradeNames(item.recruitHeadcounts, item.developerGrade),
+                  item.requiredEducation,
+                ].filter(Boolean).join(' / ')}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {item.skillTags.map((s) => (
                     <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
