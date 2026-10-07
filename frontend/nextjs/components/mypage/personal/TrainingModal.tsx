@@ -54,9 +54,9 @@ export default function TrainingModal({ open, onClose, onComplete }: Props) {
           <div className="space-y-1">
             <label className="text-sm font-medium">교육 기간</label>
             <div className="flex flex-wrap items-center gap-2">
-              <Input {...fieldProps('trainingStartDt')} type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.trainingStartDt} onChange={(e) => set('trainingStartDt', e.target.value)} />
-              <span>~</span>
-              <Input {...fieldProps('trainingEndDt')} type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.trainingEndDt} onChange={(e) => set('trainingEndDt', e.target.value)} />
+              <Input {...fieldProps('trainingStartDt')} type="month" max={todayMonth()} className="min-w-0 flex-1 max-sm:basis-full" value={form.trainingStartDt} onChange={(e) => set('trainingStartDt', e.target.value)} />
+              <span className="max-sm:hidden">~</span>
+              <Input {...fieldProps('trainingEndDt')} type="month" max={todayMonth()} className="min-w-0 flex-1 max-sm:basis-full" value={form.trainingEndDt} onChange={(e) => set('trainingEndDt', e.target.value)} />
             </div>
           </div>
         </div>

@@ -56,9 +56,9 @@ export default function CareerModal({ open, onClose, onComplete }: Props) {
           <div className="space-y-1">
             <label className="text-sm font-medium">근무 기간</label>
             <div className="flex flex-wrap items-center gap-2">
-              <Input {...fieldProps('careerStartDt')} type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.careerStartDt} onChange={(e) => set('careerStartDt', e.target.value)} />
-              <span>~</span>
-              <Input type="month" max={todayMonth()} className="min-w-0 flex-1" value={form.careerEndDt} onChange={(e) => set('careerEndDt', e.target.value)} />
+              <Input {...fieldProps('careerStartDt')} type="month" max={todayMonth()} className="min-w-0 flex-1 max-sm:basis-full" value={form.careerStartDt} onChange={(e) => set('careerStartDt', e.target.value)} />
+              <span className="max-sm:hidden">~</span>
+              <Input type="month" max={todayMonth()} className="min-w-0 flex-1 max-sm:basis-full" value={form.careerEndDt} onChange={(e) => set('careerEndDt', e.target.value)} />
             </div>
           </div>
         </div>
