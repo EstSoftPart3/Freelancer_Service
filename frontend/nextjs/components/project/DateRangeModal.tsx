@@ -143,7 +143,8 @@ export default function DateRangeModal({ open, onClose, onConfirm, allowUndecide
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent>
+      {/* PC 기본 384px 에 두 달을 놓으면 날짜 칸(36px×7)이 겹친다 */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>기간 선택</DialogTitle>
         </DialogHeader>

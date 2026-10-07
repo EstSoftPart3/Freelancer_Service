@@ -63,7 +63,8 @@ export default function SkillTagModal({ open, selected, onClose, onConfirm }: Pr
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent>
+      {/* PC 기본 384px 은 3열 이름이 잘린다 — 다른 기술 모달(SkillSelectModal)과 같은 폭으로 */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>기술 선택</DialogTitle>
         </DialogHeader>
