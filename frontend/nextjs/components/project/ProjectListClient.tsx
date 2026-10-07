@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, List, Map as MapIcon, Heart, Building2, MapPin, Train } from 'lucide-react'
 import { toast } from 'sonner'
@@ -90,7 +90,10 @@ export default function ProjectListClient({ initialData }: Props = {}) {
   // 나중에 시작된 요청만 결과를 반영하도록 순번을 매긴다.
   const fetchSeqRef = useRef(0)
 
-  const isCompany = getUserType() === 'COMPANY'
+  // 목록은 page.tsx 의 Suspense 안이라 Providers 의 /me 가 끝난 뒤 하이드레이트될 수 있다 —
+  // 스토어 값을 바로 쓰면 서버(비로그인) HTML 과 첫 렌더가 갈리므로 하이드레이션이 끝난 뒤에만 반영한다.
+  const hydrated = useSyncExternalStore(() => () => {}, () => true, () => false)
+  const isCompany = hydrated && getUserType() === 'COMPANY'
 
   const getProjectPath = useCallback(
     (sq: number) => (userTypeCd === 302 ? `/projects/company/${sq}` : `/projects/user/${sq}`),
