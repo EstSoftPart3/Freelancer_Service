@@ -158,7 +158,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>소속 인원 선택</DialogTitle>
         </DialogHeader>
