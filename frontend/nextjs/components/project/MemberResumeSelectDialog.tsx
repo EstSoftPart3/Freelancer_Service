@@ -80,7 +80,7 @@ export default function MemberResumeSelectDialog({ open, userSq, onClose, onChan
           <p className="py-8 text-center text-sm text-muted-foreground">등록된 이력서가 없습니다.</p>
         ) : (
           <InvalidFrame ref={bindRef('resume')} invalid={isInvalid('resume')}>
-          <ul className="divide-y">
+          <ul className="max-h-80 divide-y overflow-y-auto">
             {resumes.map((resume) => (
               <li key={resume.resumeSq} className="flex items-center justify-between gap-2 py-3">
                 <div className="min-w-0">

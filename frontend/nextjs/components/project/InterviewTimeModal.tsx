@@ -129,8 +129,8 @@ export default function InterviewTimeModal({ open, minDate, maxDate, entries, on
           {/* 왼쪽 — 날짜 목록 */}
           <div className="space-y-2">
             <p className="text-sm font-semibold">날짜</p>
-            {/* 640 미만은 시간 그리드가 아래에 쌓여 날짜가 늘면 모달이 화면 밖으로 넘친다 — 목록만 스크롤 */}
-            <div className="space-y-1 max-sm:max-h-40 max-sm:overflow-y-auto">
+            {/* 날짜가 늘면 모달이 화면 밖으로 넘친다(PC 도 14개쯤) — 목록만 스크롤. 640 미만은 시간 그리드가 아래에 쌓여 더 낮게 */}
+            <div className="max-h-40 space-y-1 overflow-y-auto sm:max-h-80">
               {local.map((e) => (
                 <div
                   key={e.date}
