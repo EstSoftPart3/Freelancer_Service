@@ -115,7 +115,7 @@ export default function ResumeListClient() {
               )}
             </div>
 
-            <div className="flex items-center justify-between mt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
               <span className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">등록일자</span>{' '}
                 | {resume.resumeCreatedAtDtm?.substring(0, 10).replaceAll('-', '.')}

@@ -21,6 +21,7 @@ import api from '@/lib/api'
 import type { CalendarEvent } from '@/types'
 import type { EventClickArg, PluginDef } from '@fullcalendar/core'
 import type { DateClickArg } from '@fullcalendar/interaction'
+import koLocale from '@fullcalendar/core/locales/ko'
 
 // FullCalendar은 SSR 불가
 const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false })
@@ -197,6 +198,17 @@ function FullCalendarWrapper({
 }) {
   // Plugins loaded dynamically to avoid SSR issues
   const [plugins, setPlugins] = useState<PluginDef[]>([])
+  // 모바일(640 미만)은 기본 aspectRatio 로는 달력 높이가 250px 남짓이라 월 뷰는 3주만, 주 뷰는 두 시간만 보이고
+  // 나머지는 안쪽 스크롤로 숨는다 — 높이를 내용에 맞춘다(주 뷰는 24시간이 다 펼쳐진다. 제목 줄바꿈은 globals.css).
+  // views 로 뷰별 height 를 주면 월 뷰 본문 높이가 0 이 되어 쓰지 않는다. PC는 기존 aspectRatio 그대로.
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const sync = () => setNarrow(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
   useEffect(() => {
     Promise.all([
       import('@fullcalendar/daygrid').then((m) => m.default),
@@ -214,7 +226,9 @@ function FullCalendarWrapper({
       plugins={plugins}
       headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' }}
       initialView="dayGridMonth"
-      locale="ko"
+      // 문자열 'ko' 만 주면 날짜(Intl)만 한글이고 버튼·"+N more" 는 영문으로 남는다 — 로케일 객체를 넘긴다.
+      locale={koLocale}
+      height={narrow ? 'auto' : undefined}
       dayMaxEvents={2}
       // 시간이 있는 일정(직접 일정·면접)은 월 뷰에서도 "14:00" 처럼 시작 시각을 제목 앞에 붙인다.
       // 예전엔 "오전 3시" 한글 표기가 칸을 넘쳐 월 뷰에서 시간을 숨겼는데, 그러면 면접이 몇 시인지

@@ -1,5 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import CommunitySearchForm from '@/components/community/hub/CommunitySearchForm'
 import { BOARD_TYPE_LABEL, type BoardType } from '@/components/community/boardMeta'
@@ -15,6 +17,8 @@ const BOARDS: readonly Exclude<BoardType, 'all'>[] = ['career', 'tech', 'company
 
 export default function CommunitySearchSidebar({ tags }: Props) {
   const router = useRouter()
+  // 모바일은 태그 40여 개가 본문 아래로 쌓여 페이지가 2배로 길어진다 — 접어 두고, PC는 늘 펼친다.
+  const [tagsOpen, setTagsOpen] = useState(false)
 
   return (
     <div className="space-y-4">
@@ -24,8 +28,9 @@ export default function CommunitySearchSidebar({ tags }: Props) {
       </div>
 
       {/* 게시판 — Q&A 기술 태그보다 위. 태그는 한 게시판의 하위 축이고
-          게시판 종류는 커뮤니티 전체를 가르는 축이라 더 큰 단위가 먼저 온다. */}
-      <div className="rounded-lg border p-3">
+          게시판 종류는 커뮤니티 전체를 가르는 축이라 더 큰 단위가 먼저 온다.
+         모바일은 페이지 맨 위 CategoryTabs가 같은 게시판을 다 보여 주므로 숨긴다. */}
+      <div className="hidden rounded-lg border p-3 lg:block">
         <h3 className="mb-2 text-sm font-semibold">게시판</h3>
         <ul className="space-y-1">
           {BOARDS.map((b) => (
@@ -44,8 +49,19 @@ export default function CommunitySearchSidebar({ tags }: Props) {
 
       {tags.length > 0 && (
         <div className="rounded-lg border p-3">
-          <h3 className="mb-2 text-sm font-semibold">기술 태그</h3>
-          <ul className="space-y-1">
+          <h3 className="text-sm font-semibold lg:mb-2">
+            <span className="hidden lg:inline">기술 태그</span>
+            <button
+              type="button"
+              onClick={() => setTagsOpen((o) => !o)}
+              aria-expanded={tagsOpen}
+              className="flex w-full cursor-pointer items-center justify-between lg:hidden"
+            >
+              기술 태그 ({tags.length})
+              <ChevronDown className={`h-4 w-4 transition-transform ${tagsOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </h3>
+          <ul className={`space-y-1 max-lg:mt-2 ${tagsOpen ? '' : 'max-lg:hidden'}`}>
             {tags.map((t) => (
               <li key={t.skillTagSq}>
                 <button

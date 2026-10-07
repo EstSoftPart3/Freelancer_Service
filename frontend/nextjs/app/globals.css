@@ -302,3 +302,27 @@
     font-size: 0.8rem;
   }
 }
+
+/* 모바일 날짜 칸은 폭이 50px 남짓이라 말줄임하면 "[관…" 만 남는다 — 작은 글씨로 줄바꿈해 제목 전체를 보인다.
+   (달력 높이는 CalendarClient 에서 모바일만 auto) */
+@media (max-width: 639px) {
+  .fc .fc-daygrid-event,
+  .fc .fc-event-title,
+  .fc .fc-event-title-container {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .fc .fc-event-main,
+  .fc .fc-daygrid-event,
+  .fc .fc-daygrid-more-link {
+    font-size: 10px;
+    line-height: 1.25;
+  }
+  /* 시간이 있는 일정은 시각·제목이 한 줄 flex 라 "19:36" 이 한 글자씩 쪼개졌다 — 시각을 윗줄로 */
+  .fc .fc-event-main-frame {
+    flex-wrap: wrap;
+  }
+  .fc .fc-event-time {
+    white-space: nowrap;
+  }
+}

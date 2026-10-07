@@ -43,7 +43,8 @@ export default function CategoryTabs({ rightSlot }: Props) {
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 pb-1">
-      <div className="flex gap-2 overflow-x-auto">
+      {/* 가로 스크롤은 숨은 탭이 보이지 않아 좁은 화면에서는 줄을 바꾼다(PC는 한 줄에 다 들어간다) */}
+      <div className="flex flex-wrap gap-2">
         {visibleTabs.map((t) => {
           const active = pathname === t.href
           return (

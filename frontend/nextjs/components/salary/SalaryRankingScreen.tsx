@@ -11,6 +11,8 @@ import { YEAR_BUCKETS, type PlatformRankingBoard, type RankingDimension } from '
 import type { RequiredSkillGroup } from '@/types'
 
 const REGION_REMOTE = '원격'
+const META_ITEM =
+  "relative whitespace-nowrap before:absolute before:right-full before:mr-[0.3515625em] before:content-['·']"
 
 interface FormsData {
   cities: { areaSq: number; areaName: string }[]
@@ -128,7 +130,7 @@ export default function SalaryRankingScreen() {
         </div>
 
         {/* 보기 기준 */}
-        <section className="mb-6 rounded-2xl border border-border bg-white p-6 shadow-sm md:p-8">
+        <section className="mb-6 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 md:p-8">
           <label className="mb-2 block text-sm font-semibold text-foreground">보기 기준</label>
           <div className="mb-5 inline-flex flex-wrap rounded-full bg-muted p-1 text-xs font-semibold">
             {(Object.keys(DIMENSION_LABEL) as RankingDimension[]).map((d) => (
@@ -208,7 +210,7 @@ export default function SalaryRankingScreen() {
         </section>
 
         {/* 순위표 */}
-        <section className="rounded-2xl border border-border bg-white p-6 shadow-sm md:p-8">
+        <section className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 md:p-8">
           <h2 className="mb-1 flex items-center gap-1.5 text-lg font-bold text-foreground">
             <ListOrdered className="h-4 w-4 text-indigo-600" />
             {conditionLabel} 랭킹
@@ -229,7 +231,7 @@ export default function SalaryRankingScreen() {
 
           <div className="flex flex-col gap-2">
             {board.rows.map((row) => (
-              <div key={`${row.rank}-${row.maskedNickname}`} className="flex items-center gap-3 rounded-xl border border-border p-3.5">
+              <div key={`${row.rank}-${row.maskedNickname}`} className="flex items-center gap-2 rounded-xl border border-border p-3 sm:gap-3 sm:p-3.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                   {row.rank}
                 </span>
@@ -238,8 +240,13 @@ export default function SalaryRankingScreen() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{formatMan(row.salary)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {row.job} · {row.years} · {row.region}
+                  {/* 직무 · 연차 · 지역 — 항목 단위로만 줄바꿈. 구분자는 각 항목 왼쪽의 ::before라
+                      줄 첫 항목의 것은 overflow-hidden 밖으로 나가 잘린다.
+                      gap = 「 · 」 글자 폭(공백+가운뎃점+공백), mr = 공백 폭 → 한 줄일 땐 예전 인라인과 같은 위치 */}
+                  <p className="flex flex-wrap gap-x-[0.921875em] overflow-hidden text-xs text-muted-foreground">
+                    {[row.job, row.years, row.region].map((v, i) => (
+                      <span key={i} className={META_ITEM}>{v}</span>
+                    ))}
                   </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-1">
