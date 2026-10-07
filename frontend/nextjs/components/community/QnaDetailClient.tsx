@@ -172,7 +172,7 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
 
       {/* 답변 작성 다이얼로그 */}
       <Dialog open={answerOpen} onOpenChange={setAnswerOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[95vw] sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>답변 작성</DialogTitle>
           </DialogHeader>
@@ -188,7 +188,7 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
 
       {/* 답변 수정 다이얼로그 */}
       <Dialog open={editAnswer != null} onOpenChange={(o) => { if (!o) setEditAnswer(null) }}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[95vw] sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>답변 수정</DialogTitle>
           </DialogHeader>
@@ -205,7 +205,7 @@ export default function QnaDetailClient({ boardSq, boardType, initialData }: Pro
 
       {/* 답변 상세 다이얼로그 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl sm:max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[95vw] sm:max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>답변 상세</DialogTitle>
           </DialogHeader>
