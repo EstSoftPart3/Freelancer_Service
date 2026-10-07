@@ -9,6 +9,7 @@ import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import type { Comment } from '@/types'
 import { useFormErrors } from '@/hooks/useFormErrors'
+import FallbackImg from '@/components/common/FallbackImg'
 
 function fmtTime(iso: string) {
   const d = new Date(iso)
@@ -96,9 +97,12 @@ function CommentItem({ comment, boardSq, answerSq, isAnswer, viewerSq, onRefresh
     <li className="mb-4">
       <div className="flex gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          {comment.userProfileImgUrl
-            ? <img src={comment.userProfileImgUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
-            : <User className="h-5 w-5 text-muted-foreground" />}
+          <FallbackImg
+            src={comment.userProfileImgUrl}
+            alt=""
+            className="h-10 w-10 rounded-full object-cover"
+            fallback={<User className="h-5 w-5 text-muted-foreground" />}
+          />
         </div>
         <div className="flex-1 rounded-lg border bg-card p-3">
           {!editMode ? (

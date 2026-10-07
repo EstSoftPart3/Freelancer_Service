@@ -17,6 +17,7 @@ import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { isRecruitEnded } from '@/lib/recruit'
 import { formatHeadcountDetail } from '@/lib/headcount'
 import type { ProjectDetail, RequiredSkillGroup } from '@/types'
+import FallbackImg from '@/components/common/FallbackImg'
 
 interface Props {
   projectSq: string
@@ -201,10 +202,11 @@ export default function ProjectSpec({ projectSq, variant, initialData }: Props) 
             </div>
             <CardHeader>
               <div className="flex items-center gap-4">
-                <img
-                  src={project.companyImageUrl || '/img/logos/Company_logo.png'}
+                <FallbackImg
+                  src={project.companyImageUrl}
                   alt={`${project.companyNm} 로고`}
                   className="h-[70px] w-[70px] shrink-0 rounded-full bg-muted object-contain"
+                  fallback={<img src="/img/logos/Company_logo.png" alt={`${project.companyNm} 로고`} className="h-[70px] w-[70px] shrink-0 rounded-full bg-muted object-contain" />}
                 />
                 <div className="min-w-0 flex-1">
                   {/* 페이지 대표 헤딩 — 프로젝트 상세엔 h1이 없어 SEO상 제목 계층이 비어 있었다 */}

@@ -13,6 +13,7 @@ import { useUserStore } from '@/stores/userStore'
 import { alertStore } from '@/stores/alertStore'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
+import FallbackImg from '@/components/common/FallbackImg'
 
 interface AreaCode {
   areaCodeSq: number
@@ -316,12 +317,11 @@ export default function AffiliationListPage({ initialData }: Props = {}) {
             >
               {/* 이미지 영역 */}
               <div className="relative flex h-40 items-center justify-center border-b bg-gray-50 p-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.profileImg || '/img/logos/Company_logo.png'}
+                <FallbackImg
+                  src={item.profileImg}
                   alt={`${item.companyNm} 로고`}
                   className="max-h-full max-w-full object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/img/logos/Company_logo.png' }}
+                  fallback={<img src="/img/logos/Company_logo.png" alt={`${item.companyNm} 로고`} className="max-h-full max-w-full object-contain" />}
                 />
                 <div className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-xs text-white">
                   <Eye className="h-3 w-3" />

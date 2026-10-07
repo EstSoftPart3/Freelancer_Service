@@ -18,6 +18,7 @@ import { loadDaumPostcode } from '@/lib/daum'
 import type { AffiliationEditInfo } from '@/types'
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
+import FallbackImg from '@/components/common/FallbackImg'
 
 type EditKey = 'companyUrl' | 'userPhoneNum' | 'address' | 'companyGreetingTxt' | 'tagNm'
 
@@ -271,10 +272,12 @@ export default function AffiliationEditClient() {
       {/* 프로필 이미지 */}
       <div className="flex justify-center">
         <div className="relative group">
-          {profileImageUrl
-            ? <img src={profileImageUrl} alt="프로필" className="w-24 h-24 rounded-full object-cover" />
-            : <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Building2 className="w-10 h-10" /></div>
-          }
+          <FallbackImg
+            src={profileImageUrl}
+            alt="프로필"
+            className="w-24 h-24 rounded-full object-cover"
+            fallback={<div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Building2 className="w-10 h-10" /></div>}
+          />
           {profileImageUrl && (
             <button onClick={removeProfileImage} className="absolute top-0 right-0 bg-background rounded-full w-5 h-5 text-xs flex items-center justify-center border">×</button>
           )}

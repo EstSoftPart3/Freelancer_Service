@@ -11,6 +11,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
 import type { AffiliationInfo } from '@/types'
+import FallbackImg from '@/components/common/FallbackImg'
 
 export default function AffiliatedInfoClient() {
   const router = useRouter()
@@ -80,12 +81,12 @@ export default function AffiliatedInfoClient() {
       <hr />
 
       <div className="flex justify-center">
-        {info.profileImageUrl
-          ? <img src={info.profileImageUrl} alt="프로필" className="w-24 h-24 rounded-full object-cover" />
-          : <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-              <Building2 className="w-10 h-10" />
-            </div>
-        }
+        <FallbackImg
+          src={info.profileImageUrl}
+          alt="프로필"
+          className="w-24 h-24 rounded-full object-cover"
+          fallback={<div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground"><Building2 className="w-10 h-10" /></div>}
+        />
       </div>
 
       <div className="space-y-3">

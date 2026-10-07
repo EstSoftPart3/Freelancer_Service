@@ -16,6 +16,7 @@ import type { UserInfo, DaumPostcodeResult, UserApiResponse } from '@/types'
 import { checkNicknameAvailable, NICKNAME_HINT } from '@/lib/nickname'
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { InvalidFrame } from '@/components/ui/invalid-frame'
+import FallbackImg from '@/components/common/FallbackImg'
 
 type EditKey = 'userPw' | 'userEmail' | 'userPhoneNum' | 'address' | 'userNm' | 'userNickname'
 
@@ -354,27 +355,26 @@ export default function InformationEditClient() {
       {/* 프로필 이미지 */}
       <div className="flex flex-col items-center gap-2">
         <div className="relative group w-24 h-24">
-          {profileImageUrl ? (
-            <>
-              <img
-                src={profileImageUrl}
-                alt="프로필"
-                className="w-24 h-24 rounded-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={removeProfileImage}
-                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </>
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-3xl text-muted-foreground">
-                {isPersonal ? '👤' : '🏢'}
-              </span>
-            </div>
+          <FallbackImg
+            src={profileImageUrl}
+            alt="프로필"
+            className="w-24 h-24 rounded-full object-cover"
+            fallback={
+              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-3xl text-muted-foreground">
+                  {isPersonal ? '👤' : '🏢'}
+                </span>
+              </div>
+            }
+          />
+          {profileImageUrl && (
+            <button
+              type="button"
+              onClick={removeProfileImage}
+              className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-3 w-3" />
+            </button>
           )}
           <button
             type="button"

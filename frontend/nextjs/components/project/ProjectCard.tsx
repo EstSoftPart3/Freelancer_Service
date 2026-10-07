@@ -6,12 +6,16 @@ import { cn } from '@/lib/utils'
 import { getSkillIconUrl } from '@/lib/skillIconMap'
 import { getRecruitStatus } from '@/lib/recruit'
 import { formatHeadcountShort } from '@/lib/headcount'
+import FallbackImg from '@/components/common/FallbackImg'
 
 interface Props {
   project: ProjectItem
   onClick: (sq: number) => void
   onScrap: (sq: number, current: 'Y' | 'N') => void
 }
+
+// 메타 줄 항목 왼쪽 8px 에 붙는 구분자 '|'
+const META_SEP = "relative before:absolute before:right-full before:mr-2 before:text-muted-foreground/40 before:content-['|']"
 
 export default function ProjectCard({ project, onClick, onScrap }: Props) {
   const { status, dDay } = getRecruitStatus(project.recruitStartDt, project.recruitEndDt)
@@ -45,11 +49,11 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
 
       {/* 좌측 — 회사 썸네일 (70px 원형) */}
       <div className="shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={project.companyImageUrl || '/img/logos/Company_logo.png'}
+        <FallbackImg
+          src={project.companyImageUrl}
           alt={project.companyNm}
           className="h-[70px] w-[70px] rounded-full bg-gray-50 object-contain"
+          fallback={<img src="/img/logos/Company_logo.png" alt={project.companyNm} className="h-[70px] w-[70px] rounded-full bg-gray-50 object-contain" />}
         />
       </div>
 
@@ -81,25 +85,23 @@ export default function ProjectCard({ project, onClick, onScrap }: Props) {
           {project.companyNm}
         </p>
 
-        {/* 주소 | 경력 | 학력 */}
-        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+        {/* 주소 | 경력 | 학력 — 구분자는 각 항목 왼쪽의 ::before. 줄 첫 항목의 구분자는
+            overflow-hidden 밖으로 나가 잘리므로 줄 끝·시작에 | 가 혼자 남지 않는다.
+            gap = 좌우 여백 8px*2 + '|' 글자 폭(text-sm 기준 3.359375px) */}
+        <div className="mb-2 flex flex-wrap items-center gap-x-[calc(1rem+3.359375px)] gap-y-0.5 overflow-hidden text-sm text-muted-foreground">
           {address && (
-            <>
-              <span className="flex items-center gap-1">
-                {project.addressTypeCd === 2702 ? (
-                  <Train className="h-3.5 w-3.5 text-primary" />
-                ) : (
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                )}
-                {address}
-              </span>
-              <span className="text-muted-foreground/40">|</span>
-            </>
+            <span className={cn('flex items-center gap-1', META_SEP)}>
+              {project.addressTypeCd === 2702 ? (
+                <Train className="h-3.5 w-3.5 text-primary" />
+              ) : (
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+              )}
+              {address}
+            </span>
           )}
           {/* 등급별 모집이면 등급을 전부 보여준다. 인원 정보가 없는 옛 공고는 devGradeNm 으로 폴백 */}
-          <span>{formatHeadcountShort(project.recruitHeadcounts, project.devGradeNm)}</span>
-          <span className="text-muted-foreground/40">|</span>
-          <span>{project.requiredEduLvl}</span>
+          <span className={META_SEP}>{formatHeadcountShort(project.recruitHeadcounts, project.devGradeNm)}</span>
+          <span className={META_SEP}>{project.requiredEduLvl}</span>
         </div>
 
         {/* 단가 — 협의 여부까지 포함된 문자열을 백엔드 formatSalary 가 만들어 준다
