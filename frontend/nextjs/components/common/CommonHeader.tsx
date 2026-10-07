@@ -281,7 +281,8 @@ export default function CommonHeader() {
                 <div className="flex items-start justify-between gap-2">
                   <p
                     className={cn(
-                      'break-all text-xs leading-relaxed',
+                      // 한글은 기본이 음절 단위 줄바꿈이라 break-keep 으로 어절 단위로, 띄어쓰기 없는 긴 제목만 넘칠 때 끊는다
+                      'break-keep wrap-anywhere text-xs leading-relaxed',
                       noti.notificationReadYn === 'N'
                         ? 'font-semibold text-foreground'
                         : 'text-muted-foreground',
