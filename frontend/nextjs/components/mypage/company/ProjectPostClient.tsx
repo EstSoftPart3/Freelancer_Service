@@ -693,7 +693,7 @@ export default function ProjectPostClient({ projectSq }: Props) {
           aria-invalid={isInvalid('educationLvl') || undefined}
           value={form.educationLvl}
           onChange={(e) => setF({ educationLvl: e.target.value })}
-          className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-2 text-sm aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+          className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm sm:max-w-xs aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
         >
           <option value="">선택</option>
           {options.educationLevels.map((e) => <option key={e} value={e}>{e}</option>)}
