@@ -134,7 +134,7 @@ export default function SubwaySearchModal({ open, onClose, onSelect }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>지하철역 검색</DialogTitle>
         </DialogHeader>

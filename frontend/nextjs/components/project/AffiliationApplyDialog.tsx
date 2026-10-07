@@ -158,7 +158,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>소속 인원 선택</DialogTitle>
         </DialogHeader>
@@ -179,7 +179,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
             onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
             placeholder="검색어 입력"
-            className="w-40"
+            className="min-w-0 flex-1 sm:w-40 sm:flex-none"
           />
           <Button size="sm" onClick={submitSearch}>검색</Button>
         </div>
@@ -204,7 +204,7 @@ export default function AffiliationApplyDialog({ open, projectSq, onClose, onApp
           <InvalidFrame ref={bindRef('members')} invalid={isInvalid('members')}>
           <ul className="max-h-80 divide-y overflow-y-auto">
             {members.map((member) => (
-              <li key={member.userSq} className="flex items-center justify-between gap-2 py-3">
+              <li key={member.userSq} className="flex items-center justify-between gap-2 py-3 max-sm:flex-wrap">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm">
                     <button

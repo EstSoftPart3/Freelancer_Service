@@ -63,7 +63,7 @@ export default function SkillTagModal({ open, selected, onClose, onConfirm }: Pr
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>기술 선택</DialogTitle>
         </DialogHeader>
@@ -72,7 +72,7 @@ export default function SkillTagModal({ open, selected, onClose, onConfirm }: Pr
           {groups.map((group) => (
             <div key={group.skillTagSq} className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">{group.skillTagNm}</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {group.children.map((skill) => (
                   <button
                     key={skill.skillTagSq}

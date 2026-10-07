@@ -188,8 +188,9 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
     const status = a.appStatusVo?.appStatus
     return (
       <li key={a.applicationSq} className="space-y-2 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <button className="min-w-0 text-left hover:underline cursor-pointer" onClick={() => setDetail({ resumeSq: a.resumeSq, applicationSq: a.applicationSq })}>
+        {/* 이름+버튼이 한 줄에 안 들어가면 버튼을 다음 줄로 — 이름이 좁은 칸에서 글자 단위로 쪼개지지 않게 */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button className="min-w-0 break-keep wrap-anywhere text-left hover:underline cursor-pointer" onClick={() => setDetail({ resumeSq: a.resumeSq, applicationSq: a.applicationSq })}>
             <span className="text-sm font-medium">{a.resumeNmTtlVo?.resumeNm}</span>
             <span className="text-sm text-muted-foreground"> / {a.resumeNmTtlVo?.resumeTtl}</span>
           </button>
@@ -253,8 +254,8 @@ export default function ApplyStatusModal({ open, projectSq, projectTtl, onClose 
           <Button size="sm" onClick={doSearch}>검색</Button>
         </div>
 
-        {/* 필터 탭 — 한 줄 */}
-        <div className="flex flex-nowrap gap-1.5 overflow-x-auto">
+        {/* 필터 탭 — PC는 한 줄, 좁은 화면은 줄바꿈(가로 스크롤은 숨은 탭이 안 보였다) */}
+        <div className="flex flex-wrap gap-1.5">
           {TABS.map((t) => (
             <Button key={t.type} size="sm" variant={filter === t.type ? 'default' : 'outline'} className="shrink-0" onClick={() => applyFilter(t.type)}>
               {t.label}<Badge variant="secondary" className="ml-1">{counts[t.type] ?? 0}</Badge>

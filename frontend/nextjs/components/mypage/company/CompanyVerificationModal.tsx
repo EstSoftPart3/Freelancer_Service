@@ -84,7 +84,7 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-lg sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5">
             기업 인증
@@ -150,13 +150,15 @@ export default function CompanyVerificationModal({ open, onClose, onSuccess }: P
 
       {/* 이용약관 */}
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>기업정보 수집 및 이용 동의서</DialogTitle>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
-            {companyAgreementText}
-          </div>
+          {/* 약관은 HTML 문자열 상수(lib/terms) — 가입 폼과 같이 HTML 로 렌더한다 */}
+          <div
+            className="max-h-[60vh] overflow-y-auto text-sm leading-relaxed text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: companyAgreementText }}
+          />
           <DialogFooter>
             <Button onClick={() => { setTermsAgreed(true); setTermsOpen(false) }}>동의</Button>
           </DialogFooter>

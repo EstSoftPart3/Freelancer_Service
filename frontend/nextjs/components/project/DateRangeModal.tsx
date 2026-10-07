@@ -114,14 +114,15 @@ export default function DateRangeModal({ open, onClose, onConfirm, allowUndecide
 
   const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-  function MonthGrid({ m, showPrev, showNext }: { m: MonthRef; showPrev?: boolean; showNext?: boolean }) {
+  // 모바일(640 미만)은 두 달을 나란히 놓으면 날짜 칸이 겹쳐서 한 달만 보여준다 — 왼쪽 달에도 › 를 띄운다.
+  function MonthGrid({ m, showPrev, showNext, className }: { m: MonthRef; showPrev?: boolean; showNext?: boolean | 'mobile'; className?: string }) {
     const weeks = generateCalendar(m.month, m.year)
     return (
-      <div className="flex-1">
+      <div className={cn('flex-1', className)}>
         <div className="mb-2 flex items-center justify-between">
           <button onClick={prevMonth} className={cn('px-2 text-sm', !showPrev && 'invisible')}>‹</button>
           <span className="text-sm font-semibold">{m.year}년 {m.month + 1}월</span>
-          <button onClick={nextMonth} className={cn('px-2 text-sm', !showNext && 'invisible')}>›</button>
+          <button onClick={nextMonth} className={cn('px-2 text-sm', showNext === 'mobile' ? 'sm:invisible' : !showNext && 'invisible')}>›</button>
         </div>
         <div className="grid grid-cols-7 gap-y-1 text-center">
           {WEEKDAYS.map((w) => <span key={w} className="text-xs text-muted-foreground">{w}</span>)}
@@ -142,17 +143,17 @@ export default function DateRangeModal({ open, onClose, onConfirm, allowUndecide
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>기간 선택</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-6">
-          <MonthGrid m={leftMonth} showPrev />
-          <MonthGrid m={rightMonth} showNext />
+          <MonthGrid m={leftMonth} showPrev showNext="mobile" />
+          <MonthGrid m={rightMonth} showNext className="max-sm:hidden" />
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t pt-3 text-sm">
+        <div className="flex items-center justify-between gap-x-4 gap-y-2 border-t pt-3 text-sm max-sm:flex-wrap">
           <span className="font-medium">
             {selectedText
               ? `선택 일자: ${selectedText}`
