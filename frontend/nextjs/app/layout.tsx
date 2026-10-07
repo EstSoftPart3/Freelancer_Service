@@ -44,8 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-full flex-col">
         <Providers>
           <CommonHeader />
-          {/* Phase2: 헤더가 1단(48px)+2단(56px) 두 줄로 늘어나 104px 보정으로 조정. 모바일은 한 줄(48px) */}
-          <main className="flex-1 pt-12 lg:pt-[104px]">{children}</main>
+          {/* Phase2: 헤더가 1단(48px)+2단(56px) 두 줄로 늘어나 104px 보정으로 조정. 모바일은 한 줄(48px)
+              min-h-screen: Suspense 목록이 늦게 스트리밍될 때 푸터가 첫 화면에 그려졌다 밀려나는 CLS 방지 */}
+          <main className="min-h-screen flex-1 pt-12 lg:pt-[104px]">{children}</main>
           <CommonFooter />
         </Providers>
         {/* Kakao Maps SDK — 주소 지오코딩 (회원가입, 프로젝트 등록 등) */}
