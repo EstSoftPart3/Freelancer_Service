@@ -6,7 +6,6 @@ import Script from 'next/script'
 import './globals.css'
 import CommonHeader from '@/components/common/CommonHeader'
 import CommonFooter from '@/components/common/CommonFooter'
-import CommonModalContainer from '@/components/common/CommonModalContainer'
 import Providers from '@/components/common/Providers'
 import { Toaster } from '@/components/ui/sonner'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo'
@@ -47,7 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CommonHeader />
           {/* Phase2: 헤더가 1단(48px)+2단(56px) 두 줄로 늘어나 104px 보정으로 조정. 모바일은 한 줄(48px) */}
           <main className="flex-1 pt-12 lg:pt-[104px]">{children}</main>
-          <CommonModalContainer />
           <CommonFooter />
         </Providers>
         {/* Kakao Maps SDK — 주소 지오코딩 (회원가입, 프로젝트 등록 등) */}

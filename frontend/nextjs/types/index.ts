@@ -26,11 +26,6 @@ export interface AlertState {
   type: 'success' | 'danger' | 'info'
 }
 
-export interface ModalConfig {
-  component: React.ComponentType<Record<string, unknown>>
-  props?: Record<string, unknown>
-}
-
 export interface PaginationMeta {
   page: number
   size: number
