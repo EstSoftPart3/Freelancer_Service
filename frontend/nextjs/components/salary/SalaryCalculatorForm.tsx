@@ -326,7 +326,7 @@ export default function SalaryCalculatorForm() {
     !isFreelance && salary && Number(salary) > 0 ? Math.round(Number(salary) / 12) : null
 
   return (
-    <div className="min-h-[calc(100vh-104px)] bg-white">
+    <div className="min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] bg-white">
       <div className="mx-auto max-w-2xl px-4 py-10 md:py-14">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>

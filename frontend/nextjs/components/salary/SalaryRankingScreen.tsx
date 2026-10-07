@@ -84,7 +84,7 @@ export default function SalaryRankingScreen() {
 
   if (!board) {
     return (
-      <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-3 bg-white px-4 text-center">
+      <div className="flex min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-3 bg-white px-4 text-center">
         {loadError && (
           <>
             <p className="text-sm text-muted-foreground">{loadError}</p>
@@ -111,7 +111,7 @@ export default function SalaryRankingScreen() {
           : region
 
   return (
-    <div className="min-h-[calc(100vh-104px)] bg-white">
+    <div className="min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] bg-white">
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
         {/* 헤더 */}
         <div className="mb-8">

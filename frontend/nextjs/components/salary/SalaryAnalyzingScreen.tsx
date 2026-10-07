@@ -128,7 +128,7 @@ export default function SalaryAnalyzingScreen() {
   }, [authChecked, input, isLoggedIn, router])
 
   return (
-    <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center bg-white px-4 py-16 text-center">
+    <div className="flex min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] flex-col items-center justify-center bg-white px-4 py-16 text-center">
       <p className="mb-8 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
         <Sparkles className="h-3.5 w-3.5" />
         컨트롤에프AI

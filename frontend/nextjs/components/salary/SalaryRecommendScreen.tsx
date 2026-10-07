@@ -113,12 +113,12 @@ export default function SalaryRecommendScreen() {
   }
 
   if (input === undefined) {
-    return <div className="min-h-[calc(100vh-104px)] bg-white" />
+    return <div className="min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] bg-white" />
   }
 
   if (input === null) {
     return (
-      <div className="flex min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-4 bg-white px-4 text-center">
+      <div className="flex min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] flex-col items-center justify-center gap-4 bg-white px-4 text-center">
         <p className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
           <Sparkles className="h-3.5 w-3.5" />
           추천 프로젝트
@@ -136,7 +136,7 @@ export default function SalaryRecommendScreen() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-104px)] bg-white">
+    <div className="min-h-[calc(100vh-48px)] lg:min-h-[calc(100vh-104px)] bg-white">
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
         <div className="mb-8">
           <Link
