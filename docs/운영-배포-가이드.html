@@ -1,0 +1,347 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>운영 배포 가이드</title><style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Malgun Gothic", sans-serif; font-size: 9.6pt; line-height: 1.55; color: #1f2328; margin: 0; }
+h1 { font-size: 22pt; margin: 0 0 4mm; } h2 { font-size: 14pt; margin: 0 0 3mm; padding-bottom: 1.5mm; border-bottom: 2px solid #1f2328; }
+h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+.page { page-break-after: always; } .page:last-child { page-break-after: auto; }
+.sub { color: #57606a; margin-bottom: 8mm; }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9pt; }
+th, td { border: 1px solid #d0d7de; padding: 1.2mm 2.4mm; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; white-space: nowrap; }
+code { font-family: "Cascadia Mono", "D2Coding", Consolas, "Malgun Gothic", monospace; font-size: 8.8pt; background: #f2f4f7; padding: 0 1mm; border-radius: 2px; }
+.term { margin: 3mm 0 4mm; border-radius: 6px; overflow: hidden; border: 1px solid #0b0e14; page-break-inside: avoid; }
+.term .bar { background: #2b2f3a; padding: 1.6mm 3mm; color: #c9d1d9; font-size: 8pt; display: flex; align-items: center; gap: 1.4mm; }
+.term .bar i { width: 2.6mm; height: 2.6mm; border-radius: 50%; background: #ff5f56; display: inline-block; }
+.term .bar i:nth-child(2) { background: #ffbd2e; } .term .bar i:nth-child(3) { background: #27c93f; }
+.term .bar span { margin-left: 2mm; }
+.term pre { margin: 0; background: #0c0c0c; color: #cccccc; padding: 3mm 3.5mm; font-family: "Cascadia Mono", "D2Coding", Consolas, "Malgun Gothic", monospace;
+  font-size: 7.4pt; line-height: 1.38; white-space: pre-wrap; word-break: break-all; }
+.term .p { color: #6a9fb5; } .term .c { color: #f5f5f5; font-weight: bold; } .term .ok { color: #3fb950; } .term .warn { color: #e3b341; } .term .dim { color: #6e7681; }
+.term .mark { background: #fff8c5; color: #6b5300; font-size: 8pt; padding: 1.4mm 3mm; border-top: 1px solid #0b0e14; }
+.box { border-left: 4px solid #0969da; background: #f0f6ff; padding: 2.5mm 4mm; margin: 3mm 0; }
+.box.red { border-color: #cf222e; background: #fff0f0; }
+.step { display: inline-block; background: #1f2328; color: #fff; border-radius: 3px; padding: 0 2mm; font-size: 9pt; margin-right: 2mm; }
+ol, ul { margin: 1mm 0 3mm; padding-left: 6mm; } li { margin: .6mm 0; }
+.cp { float: right; margin-left: 2mm; font: 8pt "Malgun Gothic", sans-serif; background: #2f81f7; color: #fff; border: 0; border-radius: 3px; padding: .2mm 2.2mm; cursor: pointer; }
+.cp:hover { background: #1f6feb; } .cp.done { background: #238636; }
+@media print { .cp, .tip { display: none; } }
+@media screen {
+  body { background: #eef1f4; padding: 24px 16px; }
+  .page { max-width: 820px; margin: 0 auto 24px; background: #fff; padding: 36px 40px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .term pre { font-size: 9pt; }
+}
+@media screen and (max-width: 600px) { .page { padding: 20px 16px; } }
+.tip { max-width: 820px; margin: 0 auto 16px; background: #ddf4ff; border: 1px solid #54aeff; border-radius: 8px; padding: 10px 16px; }
+td code { overflow-wrap: anywhere; }</style></head><body><div class="tip">명령 줄 오른쪽 <b>「복사」</b> 버튼을 누르면 <code>$</code> 를 뺀 명령만 복사된다. Git Bash 창에서 <b>Shift+Insert</b>(또는 마우스 오른쪽 클릭 → Paste)로 붙여 넣는다. 인쇄하면 PDF 와 같은 모양이 된다.</div>
+<section class="page">
+<h1>운영 배포 가이드</h1>
+<div class="sub">Git Bash 하나로 백엔드·FO·BO 를 운영 서버에 배포한다 · 2026-10-08 실제 배포 실측</div>
+
+<h2>한눈에 보기</h2>
+<table>
+<tr><th>무엇을</th><td>백엔드(Spring jar) · FO(Next.js) · BO(React) 세 가지를 한 번에</td></tr>
+<tr><th>어디로</th><td>운영 서버 <code>192.168.2.104</code>(CasaOS) → <code>job.estsw.co.kr</code> · <code>admin-job.estsw.co.kr</code></td></tr>
+<tr><th>기준 브랜치</th><td><code>NextJs</code> (= <code>origin/NextJs</code>). 배포는 <b>로컬에서 빌드한 산출물을 올리는</b> 방식이라 소스가 있는 PC 에서 한다</td></tr>
+<tr><th>핵심 도구</th><td>서버의 <code>~/freelancer/deploy/deploy-20260826.sh</code> — 7단계를 차례로 하며 <b>단계마다 검증하고 실패하면 즉시 멈춘다</b></td></tr>
+<tr><th>소요 시간</th><td>빌드 약 3분 + 업로드 수십 초 + 서버 배포 약 2~3분</td></tr>
+<tr><th>서비스 영향</th><td>백엔드 재기동·FO 컨테이너 교체 동안 <b>1~2분 응답 지연·오류</b>가 날 수 있다. 사용자가 적은 시간에 한다</td></tr>
+</table>
+
+<h2>준비물 (PC 당 한 번)</h2>
+<table>
+<tr><th>항목</th><th>확인 방법 · 비고</th></tr>
+<tr><td>사내망</td><td>서버 SSH 는 <b>내부망 전용</b>이다. 외부에서는 접속되지 않는다</td></tr>
+<tr><td>SSH 키</td><td><code>~/.ssh/id_ed25519_casaos</code> 파일(담당자에게 받는다). 명령마다 <code>-i</code> 로 <b>반드시 지정</b>해야 붙는다</td></tr>
+<tr><td>Git Bash · JDK 21 · Node.js</td><td><code>java -version</code> · <code>node -v</code> 가 나오면 된다</td></tr>
+<tr><td>Python · DB 비밀번호</td><td>「교육용 DB 복사 가이드」 0단계와 같다(<code>FREELANCER_DB_PW</code> 환경변수). 등록 후 Git Bash 를 새로 열면 자동으로 읽힌다</td></tr>
+</table>
+
+<h2>전체 흐름</h2>
+<table>
+<tr><th style="width:20%">단계</th><th>어디서</th><th>무엇을</th><th style="width:26%">운영 영향</th></tr>
+<tr><td><span class="step">1</span>최신화·DB 확인</td><td>로컬</td><td><code>git pull</code> · 운영 DB 구조 차이 확인</td><td>없음 (읽기만)</td></tr>
+<tr><td><span class="step">2</span>빌드</td><td>로컬</td><td>백엔드 jar · BO dist 빌드, 운영 주소 확인</td><td>없음</td></tr>
+<tr><td><span class="step">3</span>압축·업로드</td><td>로컬 → 서버</td><td>tar 로 묶어 scp</td><td>없음 (파일만 올림)</td></tr>
+<tr><td><span class="step">4</span>배포 스크립트</td><td>서버</td><td>교체 · 재기동 · 서버 내부 검증</td><td><b>여기서 서비스가 바뀐다</b></td></tr>
+<tr><td><span class="step">5</span>외부 검증</td><td>로컬</td><td>curl · 브라우저 확인</td><td>없음</td></tr>
+<tr><td>롤백</td><td>서버</td><td>직전 버전으로 되돌리기</td><td>필요할 때만</td></tr>
+</table>
+<div class="box">명령은 전부 <b>Git Bash</b> 기준이다(PowerShell 아님). 저장소 폴더 <code>/c/dev/Freelancer_Service</code> 에서 시작한다.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">1</span>최신화 · 운영 DB 구조 확인</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">cd /c/dev/Freelancer_Service</span><button class="cp" data-cmd="cd /c/dev/Freelancer_Service">복사</button>
+<span class="p">$</span> <span class="c">git checkout NextJs &amp;&amp; git pull</span><button class="cp" data-cmd="git checkout NextJs &amp;&amp; git pull">복사</button>
+Already up to date.
+
+<span class="p">$</span> <span class="c">python docs/도구/db-diff-schema.py --sql</span><button class="cp" data-cmd="python docs/도구/db-diff-schema.py --sql">복사</button>
+개발 freelancer_develop  ↔  운영 freelancer_project
+
+<span class="ok">✓ 구조 차이 없음. DB 변경 없이 배포해도 된다.</span></pre></figure>
+<table>
+<tr><th style="width:32%">보이는 줄</th><th>의미 · 확인할 것</th></tr>
+<tr><td><code>Already up to date.</code></td><td>이미 최신. 새 커밋을 받으면 바뀐 파일 목록이 나온다</td></tr>
+<tr><td><code>개발 … ↔ 운영 …</code></td><td>개발 DB(<code>freelancer_develop</code>)와 운영 DB(<code>freelancer_project</code>)의 테이블·컬럼 구조를 비교했다. <b>데이터는 보지 않는다</b></td></tr>
+<tr><td><code>✓ 구조 차이 없음</code></td><td>바로 2단계로 간다</td></tr>
+</table>
+<div class="box red"><b>차이가 나오면 배포하지 않는다.</b> 운영 DB 에 아직 반영되지 않은 컬럼·테이블이 있다는 뜻이고,
+그대로 배포하면 해당 기능이 <b>500 오류(컬럼 없음)</b>로 죽는다. 백업(<code>docs/도구/db-backup.py</code>) → 해당 마이그레이션 스크립트를
+<code>--prod --apply</code> 로 적용 → 다시 이 명령이 「구조 차이 없음」을 낼 때까지 반복한다(<code>docs/배포-환경-인계.md</code> 10-2).</div>
+
+<h2 style="margin-top:6mm"><span class="step">2</span>빌드 ① 백엔드</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">cd backend &amp;&amp; ./gradlew clean bootJar -x test &amp;&amp; cd ..</span><button class="cp" data-cmd="cd backend &amp;&amp; ./gradlew clean bootJar -x test &amp;&amp; cd ..">복사</button>
+Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
+&gt; Task :clean
+&gt; Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+&gt; Task :processResources
+&gt; Task :classes
+&gt; Task :resolveMainClassName
+&gt; Task :bootJar
+
+[Incubating] Problems report is available at: file:///C:/dev/Freelancer_Service/backend/build/reports/problems/problems-report.html
+
+<span class="ok">BUILD SUCCESSFUL in 1m 48s</span>
+5 actionable tasks: 5 executed</pre><div class="mark">첫 빌드는 의존성 내려받기로 더 오래 걸린다. Note: 로 시작하는 줄과 [Incubating] 줄은 경고·안내일 뿐이다.</div></figure>
+<p><code>BUILD SUCCESSFUL</code> 이면 <code>backend/build/libs/backend-0.0.1-SNAPSHOT.jar</code> 가 만들어진 것이다. 테스트는 건너뛴다(<code>-x test</code>).</p>
+</section>
+
+<section class="page">
+<h2><span class="step">2</span>빌드 ② BO(관리자) · 운영 주소 확인</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">cd frontend/react_js &amp;&amp; VITE_API_BASE_URL=https://job.estsw.co.kr/api npm run build &amp;&amp; cd ../..</span><button class="cp" data-cmd="cd frontend/react_js &amp;&amp; VITE_API_BASE_URL=https://job.estsw.co.kr/api npm run build &amp;&amp; cd ../..">복사</button>
+
+&gt; shadcn-admin@2.2.1 build
+&gt; tsc -b &amp;&amp; vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+<span class="ok">✓ 4808 modules transformed.</span>
+rendering chunks...
+<span class="dim">  ... (중략: 106줄) ...</span>
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+<span class="ok">✓ built in 45.67s</span>
+
+<span class="p">$</span> <span class="c">grep -rl &quot;job.estsw.co.kr/api&quot; frontend/react_js/dist/assets/</span><button class="cp" data-cmd="grep -rl &quot;job.estsw.co.kr/api&quot; frontend/react_js/dist/assets/">복사</button>
+frontend/react_js/dist/assets/api-DiLO8p0u.js
+<span class="p">$</span> <span class="c">grep -rl &quot;localhost:8080&quot; frontend/react_js/dist/assets/</span><button class="cp" data-cmd="grep -rl &quot;localhost:8080&quot; frontend/react_js/dist/assets/">복사</button></pre><div class="mark">두 번째 grep 은 <b>아무것도 출력하지 않아야</b> 정상이다. 「Some chunks are larger than 500 kB」 는 경고일 뿐이다.</div></figure>
+<table>
+<tr><th style="width:32%">보이는 줄</th><th>의미</th></tr>
+<tr><td><code>VITE_API_BASE_URL=…</code></td><td><b>API 주소가 빌드할 때 파일에 박힌다.</b> 빼먹으면 BO 가 <code>localhost</code> 로 요청해 화면만 뜨고 데이터가 안 나온다</td></tr>
+<tr><td><code>✓ built in …</code></td><td>빌드 성공. 결과는 <code>frontend/react_js/dist/</code></td></tr>
+<tr><td>첫 grep → 파일 1개 이상</td><td>운영 주소가 실제로 들어갔다</td></tr>
+<tr><td>둘째 grep → 출력 없음</td><td>개발 주소(<code>localhost:8080</code>)가 남아 있지 않다. <b>파일이 나오면 배포 중단</b>하고 다시 빌드</td></tr>
+</table>
+<div class="box">FO(Next.js)는 여기서 빌드하지 않는다. <b>소스를 올리면 서버가 Docker 로 빌드</b>한다(4단계의 4번).</div>
+</section>
+
+<section class="page">
+<h2><span class="step">3</span>압축 · 업로드</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">(cd frontend/nextjs &amp;&amp; tar czf /tmp/fo.tgz --exclude=node_modules --exclude=.next .)</span><button class="cp" data-cmd="(cd frontend/nextjs &amp;&amp; tar czf /tmp/fo.tgz --exclude=node_modules --exclude=.next .)">복사</button>
+<span class="p">$</span> <span class="c">(cd frontend/react_js &amp;&amp; tar czf /tmp/bo.tgz -C dist .)</span><button class="cp" data-cmd="(cd frontend/react_js &amp;&amp; tar czf /tmp/bo.tgz -C dist .)">복사</button>
+<span class="p">$</span> <span class="c">ls -la /tmp/fo.tgz /tmp/bo.tgz</span><button class="cp" data-cmd="ls -la /tmp/fo.tgz /tmp/bo.tgz">복사</button>
+-rw-r--r-- 1 ESTSOFT 197121 1808523 Oct  8 14:51 /tmp/bo.tgz
+-rw-r--r-- 1 ESTSOFT 197121 4493599 Oct  8 14:51 /tmp/fo.tgz
+
+<span class="p">$</span> <span class="c">KEY=~/.ssh/id_ed25519_casaos</span><button class="cp" data-cmd="KEY=~/.ssh/id_ed25519_casaos">복사</button>
+<span class="p">$</span> <span class="c">SRV=estsoft@192.168.2.104</span><button class="cp" data-cmd="SRV=estsoft@192.168.2.104">복사</button>
+<span class="p">$</span> <span class="c">scp -i $KEY backend/build/libs/backend-0.0.1-SNAPSHOT.jar $SRV:~/freelancer/backend/backend-0.0.1-SNAPSHOT.jar.new</span><button class="cp" data-cmd="scp -i $KEY backend/build/libs/backend-0.0.1-SNAPSHOT.jar $SRV:~/freelancer/backend/backend-0.0.1-SNAPSHOT.jar.new">복사</button>
+<span class="p">$</span> <span class="c">scp -i $KEY /tmp/fo.tgz /tmp/bo.tgz $SRV:/tmp/</span><button class="cp" data-cmd="scp -i $KEY /tmp/fo.tgz /tmp/bo.tgz $SRV:/tmp/">복사</button></pre><div class="mark">scp 는 성공하면 아무것도 출력하지 않는다(창 크기에 따라 진행률이 잠깐 보일 수 있다).</div></figure>
+<table>
+<tr><th style="width:32%">명령</th><th>의미</th></tr>
+<tr><td><code>fo.tgz</code></td><td>FO <b>소스</b>(약 4.5MB). <code>node_modules</code>·<code>.next</code> 는 빼고 묶는다</td></tr>
+<tr><td><code>bo.tgz</code></td><td>BO <b>빌드 결과</b>(dist, 약 1.8MB)</td></tr>
+<tr><td><code>KEY=</code> · <code>SRV=</code></td><td>이 창에서만 쓰는 변수. 창을 새로 열면 다시 적는다</td></tr>
+<tr><td><code>….jar.new</code></td><td>jar 는 반드시 <b><code>.new</code> 이름으로</b> 올린다. 실행 중인 서버가 쓰고 있는 파일을 덮어쓰면 안 되기 때문이다. 바꿔 끼우는 건 배포 스크립트가 한다</td></tr>
+<tr><td><code>/tmp/</code></td><td>FO·BO 압축 파일은 서버의 <code>/tmp</code> 에 둔다. 스크립트가 거기서 읽는다</td></tr>
+</table>
+<div class="box red">이 단계까지는 운영에 아무 영향이 없다. <b>다음 4단계부터 실제 서비스가 바뀐다.</b></div>
+</section>
+
+<section class="page">
+<h2><span class="step">4</span>서버에서 배포 스크립트 실행</h2>
+<p>로컬 Git Bash 에서 한 줄로 실행한다. 서버에 로그인해 스크립트를 돌리고, 끝나면 로컬로 돌아온다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">ssh -i ~/.ssh/id_ed25519_casaos estsoft@192.168.2.104 &#x27;bash ~/freelancer/deploy/deploy-20260826.sh&#x27;</span><button class="cp" data-cmd="ssh -i ~/.ssh/id_ed25519_casaos estsoft@192.168.2.104 &#x27;bash ~/freelancer/deploy/deploy-20260826.sh&#x27;">복사</button>
+<span class="warn">======== 0. 사전 확인 ========</span>
+<span class="ok">OK</span>
+
+<span class="warn">======== 1. FO 소스 교체 ========</span>
+apple-icon.png
+favicon.ico
+icon.png
+opengraph-image.jpg
+<span class="ok">OK — 브랜딩·광고 자산 포함 확인</span>
+
+<span class="warn">======== 2. 백엔드 jar 교체 ========</span>
+-rw-r--r-- 1 estsoft estsoft 88986440 10월  8 14:52 backend-0.0.1-SNAPSHOT.jar
+-rw-r--r-- 1 estsoft estsoft 88986440 10월  2 15:06 backend-0.0.1-SNAPSHOT.jar.bak-20260826
+-rw-r--r-- 1 estsoft estsoft 88827500  9월  7 18:24 backend-0.0.1-SNAPSHOT.jar.bak-20260916
+-rw-r--r-- 1 estsoft estsoft 88980056  9월 28 09:40 backend-0.0.1-SNAPSHOT.jar.bak-20260928
+
+<span class="warn">======== 3. 백엔드 재기동 ========</span>
+time=&quot;2026-10-08T14:52:24+09:00&quot; level=warning msg=&quot;No services to build&quot;
+ Container freelancer-api Recreate 
+ Container freelancer-api Recreated 
+ Container freelancer-api Starting 
+ Container freelancer-api Started 
+<span class="ok">{&quot;status&quot;:&quot;UP&quot;}</span>
+                com.example.demo.DemoApplication - The following 1 profile is active: &quot;prod&quot;
+</pre></figure>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>(이어서) 같은 창 — 배포 스크립트 출력 계속</span></div>
+<pre><span class="warn">======== 4. FO 이미지 빌드 (몇 분 걸린다) ========</span>
+ Image freelancer/frontend-next:latest Building 
+ Image freelancer/frontend-next:latest Building 
+Sending build context to Docker daemon  524.4kB
+<span class="dim">  ... (중략: 265줄) ...</span>
+Successfully tagged freelancer/frontend-next:latest
+ Image freelancer/frontend-next:latest Built 
+ Image freelancer/frontend-next:latest Built 
+
+<span class="warn">======== 5. BO 정적파일 교체 ========</span>
+total 24
+drwxr-xr-x 5 estsoft estsoft 4096 10월  8 14:51 .
+drwxrwxr-x 7 estsoft estsoft 4096  8월  4 12:31 ..
+drwxr-xr-x 2 estsoft estsoft 4096 10월  8 14:51 assets
+drwxr-xr-x 2 estsoft estsoft 4096 10월  8 14:51 images
+-rw-r--r-- 1 estsoft estsoft 2549 10월  8 14:51 index.html
+drwxrwxr-x 2 estsoft estsoft 4096  8월  4 09:59 uploads
+
+<span class="warn">======== 6. 전체 기동 ========</span>
+time=&quot;2026-10-08T14:54:05+09:00&quot; level=warning msg=&quot;No services to build&quot;
+ Container freelancer-api Running 
+ Container freelancer-bo Running 
+ Container freelancer-next Recreate 
+ Container freelancer-next Recreated 
+ Container freelancer-api Waiting 
+ Container freelancer-api Healthy 
+ Container freelancer-next Starting 
+ Container freelancer-next Started 
+NAME              IMAGE                             COMMAND                  SERVICE         CREATED          STATUS                    PORTS
+<span class="ok">freelancer-api    eclipse-temurin:21-jdk            &quot;/__cacert_entrypoin…&quot;   backend         2 minutes ago    Up 2 minutes (healthy)    0.0.0.0:8081-&gt;8081/tcp, [::]:8081-&gt;8081/tcp</span>
+<span class="ok">freelancer-bo     nginx:stable-alpine               &quot;/docker-entrypoint.…&quot;   bo              2 months ago     Up 5 weeks (healthy)      0.0.0.0:8083-&gt;80/tcp, [::]:8083-&gt;80/tcp</span>
+<span class="ok">freelancer-next   freelancer/frontend-next:latest   &quot;docker-entrypoint.s…&quot;   frontend-next   36 seconds ago   Up 30 seconds (healthy)   0.0.0.0:8082-&gt;3000/tcp, [::]:8082-&gt;3000/tcp</span>
+
+<span class="warn">======== 7. 검증 ========</span>
+<span class="ok">backend health : {&quot;status&quot;:&quot;UP&quot;}</span>
+FO(8082)  : 200
+BO(8083)  : 200
+FO 런타임 env  : http://freelancer-api:8081/api
+sitemap &lt;loc&gt;  : 548  (8이면 실패, 100+ 면 정상)
+
+<span class="ok">======== 완료 ========</span>
+외부 검증은 로컬에서 이어서 한다.</pre><div class="mark">4단계(FO 이미지 빌드)는 Docker 빌드 로그가 200줄 넘게 나온다. 마지막 Successfully tagged 가 보이면 성공이다.</div></figure>
+</section>
+
+<section class="page">
+<h2><span class="step">4</span>배포 스크립트 — 단계별 의미</h2>
+<table>
+<tr><th style="width:24%">단계</th><th>하는 일</th><th style="width:34%">확인할 것 · 실패하면</th></tr>
+<tr><td>0. 사전 확인</td><td>업로드한 파일 3개와 <code>.env</code> 가 있는지</td><td><code>OK</code>. 없으면 <code>🔴 FAIL: …가 없다</code> → 3단계 업로드 다시</td></tr>
+<tr><td>1. FO 소스 교체</td><td>기존 FO 소스를 <code>nextjs.old</code> 로 옮기고 새 소스를 푼다</td><td>아이콘 파일 4개 + <code>OK — 브랜딩·광고 자산 포함 확인</code></td></tr>
+<tr><td>2. 백엔드 jar 교체</td><td>기존 jar → <code>.bak-20260826</code>, <code>.new</code> → 실행 파일</td><td>목록 맨 위 jar 의 날짜가 <b>오늘</b>인지. <code>.bak-2026xxxx</code> 는 예전 배포 보관본</td></tr>
+<tr><td>3. 백엔드 재기동</td><td>백엔드 컨테이너 재생성 → 헬스체크 대기</td><td><code>{"status":"UP"}</code> 와 <code>profile is active: "prod"</code>. <b>prod 가 아니면 중단</b>(보안 설정이 꺼진 상태라서)</td></tr>
+<tr><td>4. FO 이미지 빌드</td><td>서버에서 Next.js Docker 이미지 빌드(1~2분)</td><td><code>Successfully tagged freelancer/frontend-next:latest</code></td></tr>
+<tr><td>5. BO 정적파일 교체</td><td><code>uploads</code> 를 뺀 BO 파일을 새것으로</td><td>오늘 날짜의 <code>assets</code>·<code>index.html</code>. <code>uploads</code> 는 예전 날짜 그대로가 정상</td></tr>
+<tr><td>6. 전체 기동</td><td>바뀐 컨테이너만 다시 띄운다</td><td>3개 모두 <code>(healthy)</code>. BO 는 파일만 바뀌어 <code>Up 5 weeks</code> 처럼 재시작 안 된 게 정상</td></tr>
+<tr><td>7. 검증</td><td>서버 안에서 상태 확인</td><td>아래 표</td></tr>
+</table>
+<h3>7. 검증 줄 읽는 법</h3>
+<table>
+<tr><th style="width:32%">줄</th><th>정상 값</th></tr>
+<tr><td><code>backend health</code></td><td><code>{"status":"UP"}</code></td></tr>
+<tr><td><code>FO(8082)</code> · <code>BO(8083)</code></td><td><code>200</code></td></tr>
+<tr><td><code>FO 런타임 env</code></td><td><code>http://freelancer-api:8081/api</code>. <code>undefined</code> 면 compose 설정 누락 → FO 가 조용히 빈 화면이 된다</td></tr>
+<tr><td><code>sitemap &lt;loc&gt;</code></td><td><b>100 이상</b>(이번 548). <code>8</code> 이면 FO 가 백엔드에 못 닿는 것 → 실패</td></tr>
+</table>
+<div class="box red">중간에 <code>🔴 FAIL:</code> 이 찍히고 멈추면, 그 단계 이전까지만 바뀐 상태다. 메시지를 읽고 원인을 고친 뒤
+<b>3단계(업로드)부터 다시</b> 하거나, 서비스가 이상하면 「롤백」을 한다.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">5</span>외부 검증 (로컬에서)</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">curl -s -o /dev/null -w &#x27;FO=%{http_code}\n&#x27;  https://job.estsw.co.kr/</span><button class="cp" data-cmd="curl -s -o /dev/null -w &#x27;FO=%{http_code}\n&#x27;  https://job.estsw.co.kr/">복사</button>
+<span class="p">$</span> <span class="c">curl -s -o /dev/null -w &#x27;BO=%{http_code}\n&#x27;  https://admin-job.estsw.co.kr/</span><button class="cp" data-cmd="curl -s -o /dev/null -w &#x27;BO=%{http_code}\n&#x27;  https://admin-job.estsw.co.kr/">복사</button>
+<span class="p">$</span> <span class="c">curl -s -o /dev/null -w &#x27;API=%{http_code}\n&#x27; https://job.estsw.co.kr/api/actuator/health</span><button class="cp" data-cmd="curl -s -o /dev/null -w &#x27;API=%{http_code}\n&#x27; https://job.estsw.co.kr/api/actuator/health">복사</button>
+<span class="p">$</span> <span class="c">curl -s https://job.estsw.co.kr/sitemap.xml | grep -c &#x27;&lt;loc&gt;&#x27;</span><button class="cp" data-cmd="curl -s https://job.estsw.co.kr/sitemap.xml | grep -c &#x27;&lt;loc&gt;&#x27;">복사</button>
+FO=200
+BO=200
+API=200
+548</pre></figure>
+<table>
+<tr><th style="width:32%">줄</th><th>정상 값</th></tr>
+<tr><td><code>FO</code> · <code>BO</code> · <code>API</code></td><td>모두 <code>200</code>. 530 · 502 면 터널·프록시 문제(문제 해결 표)</td></tr>
+<tr><td>마지막 숫자</td><td>sitemap 의 URL 수. <b>100 이상</b>이면 정상, <code>8</code> 이면 실패</td></tr>
+</table>
+<h3>브라우저 확인 (시크릿 창)</h3>
+<ul>
+<li><code>https://job.estsw.co.kr</code> — 로고 · 파비콘 · 메인 광고 배너가 보이는가</li>
+<li>로그인 → 글쓰기 → <b>파일 업로드 후 이미지가 보이는가</b></li>
+<li><code>https://admin-job.estsw.co.kr</code> — 관리자 로그인 → 목록에 데이터가 나오는가</li>
+<li>개발자도구(F12) 콘솔에 <b>CORS 오류</b>가 없는가</li>
+</ul>
+<p>Cloudflare 캐시 비우기는 대개 필요 없다. 화면이 예전 그대로면 Cloudflare 대시보드 → Caching → Purge Everything.</p>
+
+<h2 style="margin-top:6mm">롤백 — 방금 한 배포 되돌리기</h2>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Git Bash → 서버(ssh)</span></div>
+<pre><span class="p">$</span> <span class="c">ssh -i ~/.ssh/id_ed25519_casaos estsoft@192.168.2.104</span><button class="cp" data-cmd="ssh -i ~/.ssh/id_ed25519_casaos estsoft@192.168.2.104">복사</button>
+<span class="dim"># ↓ 여기부터 서버 안에서</span>
+<span class="p">$</span> <span class="c">cd ~/freelancer/backend &amp;&amp; mv -f backend-0.0.1-SNAPSHOT.jar.bak-20260826 backend-0.0.1-SNAPSHOT.jar</span><button class="cp" data-cmd="cd ~/freelancer/backend &amp;&amp; mv -f backend-0.0.1-SNAPSHOT.jar.bak-20260826 backend-0.0.1-SNAPSHOT.jar">복사</button>
+<span class="p">$</span> <span class="c">rm -rf ~/freelancer/frontend/nextjs &amp;&amp; mv ~/freelancer/frontend/nextjs.old ~/freelancer/frontend/nextjs</span><button class="cp" data-cmd="rm -rf ~/freelancer/frontend/nextjs &amp;&amp; mv ~/freelancer/frontend/nextjs.old ~/freelancer/frontend/nextjs">복사</button>
+<span class="p">$</span> <span class="c">cd ~/freelancer/deploy</span><button class="cp" data-cmd="cd ~/freelancer/deploy">복사</button>
+<span class="p">$</span> <span class="c">docker compose up -d --force-recreate backend</span><button class="cp" data-cmd="docker compose up -d --force-recreate backend">복사</button>
+<span class="p">$</span> <span class="c">DOCKER_BUILDKIT=0 docker compose build frontend-next</span><button class="cp" data-cmd="DOCKER_BUILDKIT=0 docker compose build frontend-next">복사</button>
+<span class="p">$</span> <span class="c">docker compose up -d</span><button class="cp" data-cmd="docker compose up -d">복사</button></pre><div class="mark">롤백은 이 가이드 작성 때 실행하지 않았다(명령만). 실행 뒤 5단계 검증을 똑같이 한다.</div></figure>
+<ul>
+<li>되돌릴 수 있는 것은 <b>직전 1회분</b>뿐이다. jar 는 <code>.bak-20260826</code>, FO 소스는 <code>nextjs.old</code> 에 남는다(이름의 날짜는 스크립트 이름에서 온 고정값이다).</li>
+<li>BO 는 보관본이 없다. 되돌리려면 이전 커밋으로 2단계 BO 빌드 → 3단계 업로드 → 서버에서 <code>~/freelancer/admin</code> 에 풀기.</li>
+<li>DB 는 배포로 바뀌지 않으므로 되돌릴 필요가 없다(1단계에서 구조 차이가 없었다면).</li>
+</ul>
+</section>
+
+<section class="page">
+<h2>문제 해결</h2>
+<table>
+<tr><th style="width:34%">증상</th><th style="width:28%">원인</th><th>조치</th></tr>
+<tr><td><code>Permission denied (publickey)</code></td><td>SSH 키 미지정·없음</td><td><code>-i ~/.ssh/id_ed25519_casaos</code> 를 붙였는지, 키 파일이 있는지</td></tr>
+<tr><td><code>Connection timed out</code> (ssh/scp)</td><td>사내망 밖</td><td>사내망에서 다시</td></tr>
+<tr><td><code>구조 차이</code> 가 나온다 (1단계)</td><td>운영 DB 미반영 변경</td><td>배포 중단. 1단계 빨간 상자 절차</td></tr>
+<tr><td><code>KeyError: 'FREELANCER_DB_PW'</code></td><td>환경변수 없음</td><td>교육용 DB 가이드 0단계 후 <b>Git Bash 새로 열기</b></td></tr>
+<tr><td>BO 화면은 뜨는데 데이터 없음</td><td><code>VITE_API_BASE_URL</code> 없이 빌드</td><td>2단계 ② 다시 → 3·4단계</td></tr>
+<tr><td><code>🔴 FAIL: … 가 없다</code> (0단계)</td><td>업로드 누락·경로 오타</td><td>3단계 다시. jar 는 <code>.jar.new</code> 이름인지</td></tr>
+<tr><td><code>🔴 FAIL: prod 프로파일이 아니다</code></td><td>서버 <code>.env</code>·compose 설정</td><td>배포 중단, 롤백 후 담당자 확인</td></tr>
+<tr><td>sitemap 이 <code>8</code></td><td>FO 가 백엔드에 못 닿음</td><td><code>FO 런타임 env</code> 값 확인. <code>undefined</code> 면 compose 의 <code>API_INTERNAL_BASE_URL</code></td></tr>
+<tr><td><code>network mode … not supported by buildkit</code></td><td>BuildKit 사용</td><td>스크립트는 이미 <code>DOCKER_BUILDKIT=0</code>. 수동으로 빌드할 때 붙인다</td></tr>
+<tr><td>BO 기동 실패 <code>read-only file system</code></td><td><code>~/freelancer/admin/uploads</code> 없음</td><td>서버에서 <code>mkdir -p ~/freelancer/admin/uploads</code> 후 <code>docker compose up -d</code></td></tr>
+<tr><td>기동 실패 <code>Could not resolve placeholder</code></td><td>서버 <code>.env</code> 값 누락</td><td>오류에 나온 변수명을 <code>~/freelancer/deploy/.env</code> 에 채운다</td></tr>
+<tr><td>전 도메인 530 / <code>1033</code></td><td>터널 다운 <b>또는 회선 장애</b></td><td>서버에서 <code>ping -c2 192.168.2.1</code> 먼저. 실패면 랜선·공유기 문제</td></tr>
+<tr><td>첨부 이미지 전부 깨짐</td><td>업로드 경로·암호화 키 변경</td><td><code>.env</code> 의 <code>FILE_ENCRYPT_KEY</code> 는 <b>절대 바꾸지 않는다</b></td></tr>
+<tr><td>시간이 9시간 어긋남</td><td>컨테이너 시간대</td><td>compose 의 <code>TZ: Asia/Seoul</code> 확인</td></tr>
+</table>
+<h3>로그 보기</h3>
+<p>서버에서 <code>docker logs --tail 200 freelancer-api</code>(백엔드) · <code>freelancer-next</code>(FO) · <code>cloudflared-tunnel</code>(터널). 웹으로는 <code>log.estsw.co.kr</code>(Dozzle).</p>
+<p>더 자세한 계정·URL·장애 대응은 <code>docs/배포-환경-인계.md</code>.</p>
+</section>
+<script>
+document.addEventListener('click', e => {
+  const b = e.target.closest('.cp'); if (!b) return;
+  const t = b.dataset.cmd;
+  const done = () => { b.textContent = '복사됨'; b.classList.add('done'); setTimeout(() => { b.textContent = '복사'; b.classList.remove('done'); }, 1500); };
+  const fallback = () => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); done(); };
+  navigator.clipboard ? navigator.clipboard.writeText(t).then(done, fallback) : fallback();
+});
+</script></body></html>
