@@ -2,7 +2,6 @@
 import type { ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useCommunityStore } from '@/stores/communityStore'
-import { useUserStore } from '@/stores/userStore'
 import { supportsAnswer, type BoardType } from '@/components/community/boardMeta'
 
 // Phase2 게시판 전면 재설계(2026-09) — 일반게시판/QnA는 데이터를 전부 이관하고 비활성화됐다.
@@ -15,9 +14,9 @@ const TABS = [
   { label: '프로젝트', href: '/teamup' },
   { label: '라운지', href: '/lounge' },
   { label: '투표', href: '/vote' },
-  // 고객의 소리는 목록부터 로그인이 필요하다(비공개 글이 섞여 있어 공개 목록이 성립하지 않는다).
-  // 비로그인에게 탭을 보여주면 누르는 순간 로그인 화면으로 튕기므로 아예 숨긴다.
-  { label: '고객의 소리', href: '/voc', authOnly: true },
+  // 고객의 소리는 목록부터 로그인이 필요하지만(비로그인은 누르면 로그인 화면으로 간다) 탭은 늘 보인다 —
+  // 로그인 확인(/me) 뒤에 끼워 넣으면 탭 줄이 늘어나 아래 내용이 42px 밀린다(CLS).
+  { label: '고객의 소리', href: '/voc' },
 ]
 
 interface Props {
@@ -29,9 +28,6 @@ export default function CategoryTabs({ rightSlot }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const { sort, searchType, keyword, status } = useCommunityStore()
-  // authChecked 전에는 로그인 여부를 단정하지 않는다 — SSR과 첫 렌더가 갈리면 hydration이 깨진다.
-  const { isLoggedIn, authChecked } = useUserStore()
-  const visibleTabs = TABS.filter((t) => !t.authOnly || (authChecked && isLoggedIn()))
 
   const go = (href: string) => {
     const qs = new URLSearchParams({ sort, searchType })
@@ -45,7 +41,7 @@ export default function CategoryTabs({ rightSlot }: Props) {
     <div className="mb-4 flex flex-wrap items-center gap-2 pb-1">
       {/* 가로 스크롤은 숨은 탭이 보이지 않아 좁은 화면에서는 줄을 바꾼다(PC는 한 줄에 다 들어간다) */}
       <div className="flex flex-wrap gap-2">
-        {visibleTabs.map((t) => {
+        {TABS.map((t) => {
           const active = pathname === t.href
           return (
             <button
