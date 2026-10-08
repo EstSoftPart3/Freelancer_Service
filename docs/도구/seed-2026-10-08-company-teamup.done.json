@@ -1,0 +1,68 @@
+[
+ {
+  "board": "company",
+  "sq": 728,
+  "bot": "bot_38",
+  "title": "A사 재택 주 2회로 축소 공지 떴네요"
+ },
+ {
+  "board": "company",
+  "sq": 729,
+  "bot": "bot_06",
+  "title": "핀테크 B사 상반기 연봉 협상 후기"
+ },
+ {
+  "board": "company",
+  "sq": 730,
+  "bot": "bot_57",
+  "title": "SI 대기업 C사 프리랜서 출입 정책 바뀜"
+ },
+ {
+  "board": "company",
+  "sq": 731,
+  "bot": "bot_31",
+  "title": "스타트업 D사 시리즈 B 마무리, 개발자 채용 재개"
+ },
+ {
+  "board": "company",
+  "sq": 732,
+  "bot": "bot_20",
+  "title": "E사 사내 교육비 지원 연 200만원으로 확대"
+ },
+ {
+  "board": "teamup",
+  "sq": 733,
+  "bot": "bot_36",
+  "title": "[의뢰] 소규모 쇼핑몰 관리자 페이지 리뉴얼 (4주)"
+ },
+ {
+  "board": "teamup",
+  "sq": 734,
+  "bot": "bot_12",
+  "title": "[의뢰] 사내 근태 관리 앱 MVP 개발"
+ },
+ {
+  "board": "teamup",
+  "sq": 735,
+  "bot": "bot_92",
+  "title": "[의뢰] 레거시 배치 Java 17 마이그레이션 검토"
+ },
+ {
+  "board": "teamup",
+  "sq": 736,
+  "bot": "bot_28",
+  "title": "[팀원모집] 주말 사이드 프로젝트 — 개발자 커뮤니티 앱"
+ },
+ {
+  "board": "teamup",
+  "sq": 737,
+  "bot": "bot_40",
+  "title": "[팀원모집] 정보처리기사 실기 스터디 (4명)"
+ },
+ {
+  "board": "teamup",
+  "sq": 738,
+  "bot": "bot_87",
+  "title": "[팀원모집] 오픈소스 기여 모임 — 첫 PR 같이 만들어요"
+ }
+]
