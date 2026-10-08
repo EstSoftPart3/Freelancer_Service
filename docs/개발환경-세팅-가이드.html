@@ -58,21 +58,75 @@ td code { overflow-wrap: anywhere; }
 <tr><td><code>application.yml</code></td><td><b>담당자에게 파일로 받는다.</b> 백엔드 설정(DB·Redis·메일·JWT 등 비밀값)이 들어 있어 저장소에 없다. 절대 커밋하지 않는다</td></tr>
 <tr><td>Redis 비밀번호</td><td>받은 <code>application.yml</code> 의 <code>spring.data.redis.password</code> 값. PC 의 Redis 에 같은 비밀번호를 건다(1-3)</td></tr>
 <tr><td>BO 관리자 계정</td><td>BO 로그인용 아이디·비밀번호. 담당자에게 받는다</td></tr>
-<tr><td>네트워크</td><td>인터넷만 되면 된다. 회사 DB 서버(<code>db.estsw.co.kr:3306</code>)는 사내망이 아니어도 접속된다</td></tr>
+<tr><td>네트워크</td><td>인터넷만 되면 된다. 회사 DB 서버(<code>db.estsw.co.kr:3306</code>)는 사내망이 아니어도 접속된다. 사무실에서는 숨김 와이파이 <code>est_server</code>(0단계, 비밀번호는 담당자)</td></tr>
 <tr><td>디스크</td><td>C: 여유 5GB 이상 권장(도구 설치 + <code>node_modules</code> 2개 + Gradle 캐시)</td></tr>
 </table>
 
 <h2>전체 흐름</h2>
 <table>
 <tr><th style="width:22%">단계</th><th>내용</th><th style="width:20%">소요(실측)</th></tr>
+<tr><td><span class="step">0</span>와이파이</td><td>사무실 와이파이 <code>est_server</code> 등록·연결(숨김 와이파이)</td><td>2~3분</td></tr>
 <tr><td><span class="step">1</span>도구 설치</td><td>winget 으로 Git · JDK 21 · Node.js 22 · Redis, Redis 비밀번호</td><td>10~20분</td></tr>
 <tr><td><span class="step">2</span>저장소·설정</td><td><code>git clone</code>(NextJs 브랜치), <code>application.yml</code> 넣기</td><td>1~2분</td></tr>
 <tr><td><span class="step">3</span>백엔드</td><td><code>gradlew bootRun</code></td><td>첫 실행 수 분 · 이후 약 25초</td></tr>
 <tr><td><span class="step">4</span>FO</td><td><code>npm ci</code> → <code>npm run dev</code></td><td>설치 약 2분 · 기동 약 10초</td></tr>
 <tr><td><span class="step">5</span>BO</td><td><code>npm ci</code> → <code>npm run dev</code></td><td>설치 1~2분 · 기동 약 16초</td></tr>
 </table>
-<div class="box">캡처는 <code>C:\dev\setup-test</code> 에 새로 clone 해서 실제로 실행한 화면이다. 문서에서는 폴더 이름만 <code>Freelancer_Service</code> 로 바꿔 표시했다.
-도구 설치(1단계)는 이미 설치된 PC 라 <b>설치 확인 화면</b>으로 대신했다.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">0</span>사무실 와이파이 est_server 연결</h2>
+<p>사무실 개발 PC 는 <code>est_server</code> 와이파이에 연결해 둔다. 연결하면 PC 가 <code>192.168.2.x</code> 주소를 받아 <b>운영 서버(<code>192.168.2.104</code>)와 같은 망</b>이 된다.
+개발 자체(코드 받기 · DB 접속)는 다른 인터넷에서도 되지만, <b>운영 서버 접속 · 배포는 이 와이파이에서만</b> 된다(「운영 배포 가이드」 0단계와 같은 절차).</p>
+<div class="box red"><b><code>est_server</code> 는 숨김 와이파이다.</b> 와이파이 목록에 나타나지 않으므로 <b>처음 한 번은 직접 등록</b>해야 한다.
+비슷한 이름(<code>est_5G</code> · <code>est_2.4G</code> 등)은 <b>다른 망</b>이다. 비밀번호는 담당자에게 받는다(문서·저장소에는 적지 않는다).</div>
+
+<h3>0-1. 등록 방법 ① — Windows 설정 화면</h3>
+<ol>
+<li><code>Win + I</code> → <b>네트워크 및 인터넷</b> → <b>Wi-Fi</b> → <b>알려진 네트워크 관리</b></li>
+<li><b>네트워크 추가</b>(Windows 10 은 「새 네트워크 추가」)</li>
+<li>입력:
+  <table>
+  <tr><th style="width:38%">칸</th><th>값</th></tr>
+  <tr><td>네트워크 이름</td><td><code>est_server</code> (밑줄 포함, 대소문자 그대로)</td></tr>
+  <tr><td>보안 유형</td><td><b>WPA2-개인 AES</b> (공유기가 WPA2/WPA3 겸용이라 WPA3-개인 도 된다)</td></tr>
+  <tr><td>보안 키</td><td>담당자에게 받은 비밀번호</td></tr>
+  <tr><td>☑ 자동으로 연결</td><td>체크</td></tr>
+  <tr><td>☑ 네트워크가 브로드캐스팅하지 않는 경우에도 연결</td><td><b>반드시 체크</b> — 숨김 와이파이라 이게 없으면 못 붙는다</td></tr>
+  </table></li>
+<li><b>저장</b> → 잠시 뒤 자동 연결된다. 안 되면 작업 표시줄 와이파이 목록 맨 아래 「숨겨진 네트워크」에서 연결</li>
+</ol>
+<p class="sub" style="margin:0">이 화면 절차는 캡처 없이 글로만 적었다.</p>
+</section>
+
+<section class="page">
+<h3>0-1. 등록 방법 ② — 터미널(PowerShell) 한 번에</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 등록·연결 명령 (PC 당 한 번)</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;auto&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;</span><button class="cp" data-cmd="$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;auto&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Remove-Item &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="Remove-Item &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan connect name=est_server</span><button class="cp" data-cmd="netsh wlan connect name=est_server">복사</button></pre><div class="mark">첫 줄의 <b>비밀번호</b> 를 실제 비밀번호로 바꾼 뒤 실행한다(나머지는 그대로). 넷째 줄은 비밀번호가 든 임시 파일을 지운다.</div></figure>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 실측(시험용 이름)</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server_test&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;manual&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;</span><button class="cp" data-cmd="$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server_test&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;manual&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;">복사</button>
+Profile est_server_test is added on interface Wi-Fi.
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Remove-Item &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="Remove-Item &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan show profile name=est_server_test | Select-String &quot;SSID name|broadcast|Authentication&quot;</span><button class="cp" data-cmd="netsh wlan show profile name=est_server_test | Select-String &quot;SSID name|broadcast|Authentication&quot;">복사</button>
+
+        Network broadcast  : Connect even if this network is not broadcasting
+    SSID name              : &quot;est_server&quot;
+    Authentication         : WPA2-Personal
+    Authentication         : WPA2-Personal
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan delete profile name=est_server_test</span><button class="cp" data-cmd="netsh wlan delete profile name=est_server_test">복사</button>
+Profile &quot;est_server_test&quot; is deleted from interface &quot;Wi-Fi&quot;.</pre><div class="mark">실측은 지금 연결을 끊지 않으려고 이름만 <code>est_server_test</code> · 수동 연결로 바꿔 등록 → 확인 → 삭제했다. 비밀번호는 가렸다.</div></figure>
+<h3>0-2. 확인</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan show interfaces | Select-String &quot; SSID&quot;</span><button class="cp" data-cmd="netsh wlan show interfaces | Select-String &quot; SSID&quot;">복사</button>
+    SSID                   : est_server
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">(Get-NetIPAddress -InterfaceAlias Wi-Fi -AddressFamily IPv4).IPAddress</span><button class="cp" data-cmd="(Get-NetIPAddress -InterfaceAlias Wi-Fi -AddressFamily IPv4).IPAddress">복사</button>
+192.168.2.105</pre><div class="mark">SSID 가 est_server 이고 IP 가 192.168.2.x 면 연결된 것이다. 다음부터는 와이파이 목록에서 고르거나 <code>netsh wlan connect name=est_server</code>.</div></figure>
 </section>
 
 <section class="page">
@@ -157,6 +211,8 @@ Status   Name               DisplayName
 
 <section class="page">
 <h2><span class="step">2</span>저장소 받기 · 설정 파일 넣기</h2>
+<div class="box">캡처는 <code>C:\dev\setup-test</code> 에 새로 clone 해서 실제로 실행한 화면이다. 문서에서는 폴더 이름만 <code>Freelancer_Service</code> 로 바꿔 표시했다.
+도구 설치(1단계)는 이미 설치된 PC 라 <b>설치 확인 화면</b>으로 대신했다.</div>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
 <pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">cd C:\dev</span><button class="cp" data-cmd="cd C:\dev">복사</button>
 <span class="p">PS C:\dev&gt;</span> <span class="c">git clone -b NextJs https://github.com/EstSoftPart3/Freelancer_Service.git</span><button class="cp" data-cmd="git clone -b NextJs https://github.com/EstSoftPart3/Freelancer_Service.git">복사</button>
