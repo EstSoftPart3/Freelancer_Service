@@ -47,7 +47,7 @@ ol, ul { margin: 1mm 0 3mm; padding-left: 6mm; } li { margin: .6mm 0; }
 <tr><th>도구</th><td><code>docs/도구/db-clone-develop.py</code> — 저장소에 들어 있는 Python 스크립트. mysql/mysqldump 설치 불필요</td></tr>
 <tr><th>방식</th><td>복사는 <b>DB 서버 안에서</b> 일어난다(<code>SHOW CREATE TABLE</code> → <code>INSERT … SELECT</code>). 파일을 내려받지 않는다</td></tr>
 <tr><th>소요 시간</th><td>준비 5분 + 실행 약 20~40초</td></tr>
-<tr><th>필요한 것</th><td>Python 3 · pymysql · DB 비밀번호 · 사내망(또는 DB 서버 3306 포트에 닿는 네트워크)</td></tr>
+<tr><th>필요한 것</th><td>Python 3 · pymysql · DB 비밀번호 · 인터넷 연결(사내망이 아니어도 DB 서버에 닿는다)</td></tr>
 </table>
 
 <h2>전체 흐름</h2>
@@ -246,7 +246,7 @@ CREATE DATABASE freelancer_education_phase5_261012 · utf8mb4/utf8mb4_general_ci
 <tr><th style="width:38%">증상</th><th>해결</th></tr>
 <tr><td><code>KeyError: 'FREELANCER_DB_PW'</code></td><td>환경변수가 없다. 0-2 를 하고 <b>PowerShell 창을 새로 연다</b></td></tr>
 <tr><td><code>Access denied for user 'admin'</code></td><td>비밀번호가 틀렸다. 0-2 를 올바른 값으로 다시 실행 후 새 창</td></tr>
-<tr><td><code>Can't connect to MySQL server</code> / 시간 초과</td><td>사내망이 아니거나 3306 포트가 막혔다. 사내망·VPN 에서 다시 시도</td></tr>
+<tr><td><code>Can't connect to MySQL server</code> / 시간 초과</td><td>인터넷 연결을 확인한다. 외부 공용 와이파이 등에서 3306 포트를 막는 경우가 있으니 다른 네트워크에서 다시 시도</td></tr>
 <tr><td><code>ModuleNotFoundError: No module named 'pymysql'</code></td><td><code>pip install pymysql</code></td></tr>
 <tr><td><code>can't open file … db-clone-develop.py</code></td><td>저장소 폴더가 아니다. <code>cd C:\dev\Freelancer_Service</code> 후 실행(또는 저장소를 <code>git pull</code> 로 최신화)</td></tr>
 <tr><td>원본이 <code>freelancer_project</code>, 대상이 <code>freelancer_develop</code> 로 나온다</td><td><code>--src</code>/<code>--dst</code> 를 빠뜨렸다(예전 기본 동작). <code>--apply</code> 없이 조사만 했다면 바뀐 것은 없으니 옵션을 넣어 다시 실행</td></tr>
