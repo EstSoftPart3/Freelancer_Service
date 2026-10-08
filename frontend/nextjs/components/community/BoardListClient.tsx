@@ -48,7 +48,7 @@ function parseCategory(raw: string | null): number | null {
 export default function BoardListClient({ boardCategory, initialData, titleAction }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { isLoggedIn, authChecked, userSq } = useUserStore()
+  const { userSq } = useUserStore()
   const setCommunityFilters = useCommunityStore((s) => s.setFilters)
 
   const [boardList, setBoardList] = useState<BoardItem[]>(initialData?.boards ?? [])
@@ -93,7 +93,7 @@ export default function BoardListClient({ boardCategory, initialData, titleActio
   // 카테고리가 달려 있는 기존 글을 그 카테고리로 걸러보는 조회 기능 자체는 여전히 유효하다
   // (BoardTypeCode.NORMAL도 hasCategory=true로 선언돼 있다) — 'board'는 명시적으로 포함한다.
   const hasCategoryTabs = boardCategory === 'board' || hasCategory(boardCategory)
-  // authChecked 전까지 로그인 상태를 단정하지 않아 SSR/클라 hydration 불일치 방지
+  // 로그인 여부와 무관하게 노출한다 — /me 뒤에 나타나면 페이지 번호가 44px 밀린다. 비로그인은 proxy 가 로그인으로 보낸다.
   // 전체보기 탭은 등록 버튼을 숨기고(허브 QuickPostCard가 담당) 게시판 탭에서만 노출한다.
   // 'board'·'qna'(레거시 일반게시판·QnA)는 Phase2 재설계로 데이터를 전부 이관하고 비활성화한
   // 빈 껍데기다(BoardTypeCode.java 참고) — 신규 글은 career/tech 등 새 종류로만 들어가야 하므로
@@ -101,7 +101,7 @@ export default function BoardListClient({ boardCategory, initialData, titleActio
   // 선택지에서 뺐다 — 한쪽만 막으면 그 경로로 빈 껍데기에 새 글이 계속 쌓인다.
   // 기존 글 수정(BoardPost.tsx의 handleEdit)은 같은 라우트를 쓰지만 별도 진입점이라 영향 없다.
   const canRegister =
-    authChecked && !isNotice && !isAll && boardCategory !== 'board' && boardCategory !== 'qna' && isLoggedIn()
+    !isNotice && !isAll && boardCategory !== 'board' && boardCategory !== 'qna'
 
   const basePath = isAll ? '/community/list' : `/${boardCategory}`
 
