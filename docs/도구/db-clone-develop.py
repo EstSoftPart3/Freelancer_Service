@@ -17,8 +17,11 @@
   !python "C:/dev/Freelancer_Service/docs/도구/db-clone-develop.py" --apply --drop
                                                                              # 기존 개발 DB 를 버리고 다시 복제
 
-🔴 --drop 은 freelancer_develop 만 지운다. SRC(freelancer_project) 는 어떤 경우에도 읽기만 한다.
-   안전장치로 SRC 이름이 DST 와 같으면 즉시 중단한다.
+  # 다른 스키마끼리 복제 (예: 교육용 DB 사본 만들기)
+  !python ".../db-clone-develop.py" --src freelancer_education --dst freelancer_education_copy --apply
+
+🔴 --drop 은 DST 만 지운다. SRC 는 어떤 경우에도 읽기만 한다.
+   안전장치로 SRC 이름이 DST 와 같거나, DST 가 운영·교육용 원본이면 즉시 중단한다.
 """
 import os
 import re
@@ -41,8 +44,14 @@ dbconfig = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(dbconfig)
 
 DB = dbconfig.SERVER          # database 를 지정하지 않고 붙는다 — 두 스키마를 함께 다뤄야 해서.
-SRC = dbconfig.PROD           # 운영 = 원본. 절대 쓰지 않는다.
-DST = dbconfig.DEVELOP        # 개발 = 사본.
+
+
+def arg(name: str, default: str) -> str:
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+
+
+SRC = arg('--src', dbconfig.PROD)       # 원본. 절대 쓰지 않는다.
+DST = arg('--dst', dbconfig.DEVELOP)    # 사본.
 
 APPLY = '--apply' in sys.argv
 DROP = '--drop' in sys.argv
@@ -63,6 +72,8 @@ def fetch(cur, sql, args=None):
 def main():
     if SRC == DST:
         sys.exit('SRC 와 DST 가 같다. 중단한다.')
+    if DST in (dbconfig.PROD, dbconfig.LEGACY):
+        sys.exit(f'DST 가 원본 스키마({DST})다. 덮어쓸 수 없다. 중단한다.')
 
     conn = pymysql.connect(**DB)
     cur = conn.cursor()
@@ -188,8 +199,9 @@ def main():
 
     took = (datetime.now() - t0).total_seconds()
     print(f'\n완료 · {took:.1f}초')
-    print(f'\n다음 단계: backend/src/main/resources/application.yml 의 datasource.url 을')
-    print(f'  .../{DST}?useUnicode=true&characterEncoding=UTF-8  로 바꾼다.')
+    if DST == dbconfig.DEVELOP:
+        print(f'\n다음 단계: backend/src/main/resources/application.yml 의 datasource.url 을')
+        print(f'  .../{DST}?useUnicode=true&characterEncoding=UTF-8  로 바꾼다.')
     conn.close()
 
 

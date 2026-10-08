@@ -1,0 +1,267 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>교육용 DB 복사 가이드</title><style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+* { box-sizing: border-box; }
+body { font-family: "Malgun Gothic", sans-serif; font-size: 9.6pt; line-height: 1.55; color: #1f2328; margin: 0; }
+h1 { font-size: 22pt; margin: 0 0 4mm; } h2 { font-size: 14pt; margin: 0 0 3mm; padding-bottom: 1.5mm; border-bottom: 2px solid #1f2328; }
+h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+.page { page-break-after: always; } .page:last-child { page-break-after: auto; }
+.sub { color: #57606a; margin-bottom: 8mm; }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9pt; }
+th, td { border: 1px solid #d0d7de; padding: 1.2mm 2.4mm; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; white-space: nowrap; }
+code { font-family: "Cascadia Mono", "D2Coding", Consolas, "Malgun Gothic", monospace; font-size: 8.8pt; background: #f2f4f7; padding: 0 1mm; border-radius: 2px; }
+.term { margin: 3mm 0 4mm; border-radius: 6px; overflow: hidden; border: 1px solid #0b0e14; page-break-inside: avoid; }
+.term .bar { background: #2b2f3a; padding: 1.6mm 3mm; color: #c9d1d9; font-size: 8pt; display: flex; align-items: center; gap: 1.4mm; }
+.term .bar i { width: 2.6mm; height: 2.6mm; border-radius: 50%; background: #ff5f56; display: inline-block; }
+.term .bar i:nth-child(2) { background: #ffbd2e; } .term .bar i:nth-child(3) { background: #27c93f; }
+.term .bar span { margin-left: 2mm; }
+.term pre { margin: 0; background: #0c0c0c; color: #cccccc; padding: 3mm 3.5mm; font-family: "Cascadia Mono", "D2Coding", Consolas, "Malgun Gothic", monospace;
+  font-size: 7.4pt; line-height: 1.38; white-space: pre-wrap; word-break: break-all; }
+.term .p { color: #6a9fb5; } .term .c { color: #f5f5f5; font-weight: bold; } .term .ok { color: #3fb950; } .term .warn { color: #e3b341; } .term .dim { color: #6e7681; }
+.term .mark { background: #fff8c5; color: #6b5300; font-size: 8pt; padding: 1.4mm 3mm; border-top: 1px solid #0b0e14; }
+.box { border-left: 4px solid #0969da; background: #f0f6ff; padding: 2.5mm 4mm; margin: 3mm 0; }
+.box.red { border-color: #cf222e; background: #fff0f0; }
+.step { display: inline-block; background: #1f2328; color: #fff; border-radius: 3px; padding: 0 2mm; font-size: 9pt; margin-right: 2mm; }
+ol, ul { margin: 1mm 0 3mm; padding-left: 6mm; } li { margin: .6mm 0; }
+.cp { float: right; margin-left: 2mm; font: 8pt "Malgun Gothic", sans-serif; background: #2f81f7; color: #fff; border: 0; border-radius: 3px; padding: .2mm 2.2mm; cursor: pointer; }
+.cp:hover { background: #1f6feb; } .cp.done { background: #238636; }
+@media print { .cp, .tip { display: none; } }
+@media screen {
+  body { background: #eef1f4; padding: 24px 16px; }
+  .page { max-width: 820px; margin: 0 auto 24px; background: #fff; padding: 36px 40px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .term pre { font-size: 9pt; }
+}
+@media screen and (max-width: 600px) { .page { padding: 20px 16px; } }
+.tip { max-width: 820px; margin: 0 auto 16px; background: #ddf4ff; border: 1px solid #54aeff; border-radius: 8px; padding: 10px 16px; }
+</style></head><body><div class="tip">명령 줄 오른쪽 <b>「복사」</b> 버튼을 누르면 프롬프트(<code>PS …&gt;</code>)를 뺀 명령만 복사된다. PowerShell 창에 마우스 오른쪽 클릭(또는 Ctrl+V)으로 붙여 넣는다. 인쇄하면 PDF 와 같은 모양이 된다.</div>
+<section class="page">
+<h1>교육용 DB 복사 가이드</h1>
+<div class="sub">터미널(PowerShell) 하나로 <code>freelancer_education</code> 의 사본 스키마를 만든다 · 2026-10-08 실측 기준</div>
+
+<h2>한눈에 보기</h2>
+<table>
+<tr><th>무엇을</th><td>교육용 DB <code>freelancer_education</code> (테이블 58개 · 약 6,400행 · 1.5MB)</td></tr>
+<tr><th>어디로</th><td>같은 DB 서버(<code>db.estsw.co.kr:3306</code>)의 새 스키마 <code>freelancer_education_phase5_<b>YYMMDD</b></code><br>
+<b>YYMMDD = 교육 시작일</b>(연·월·일 6자리). 이 문서의 예시는 2026-10-12 시작 기수 → <code>freelancer_education_phase5_261012</code><br>
+같은 규칙의 이전 기수 사본: <code>…_phase5_260824</code>, <code>…_phase5_260914</code> (덮어쓰지 않도록 날짜를 꼭 확인)</td></tr>
+<tr><th>도구</th><td><code>docs/도구/db-clone-develop.py</code> — 저장소에 들어 있는 Python 스크립트. mysql/mysqldump 설치 불필요</td></tr>
+<tr><th>방식</th><td>복사는 <b>DB 서버 안에서</b> 일어난다(<code>SHOW CREATE TABLE</code> → <code>INSERT … SELECT</code>). 파일을 내려받지 않는다</td></tr>
+<tr><th>소요 시간</th><td>준비 5분 + 실행 약 20~40초</td></tr>
+<tr><th>필요한 것</th><td>Python 3 · pymysql · DB 비밀번호 · 사내망(또는 DB 서버 3306 포트에 닿는 네트워크)</td></tr>
+</table>
+
+<h2>전체 흐름</h2>
+<table>
+<tr><th style="width:18%">단계</th><th>명령</th><th style="width:30%">DB 변경</th></tr>
+<tr><td><span class="step">0</span>준비</td><td>Python·pymysql 확인, 비밀번호 환경변수 등록</td><td>없음</td></tr>
+<tr><td><span class="step">1</span>조사</td><td><code>… --src … --dst …</code></td><td>없음 (읽기만)</td></tr>
+<tr><td><span class="step">2</span>실행</td><td><code>… --apply</code></td><td>새 스키마 생성 + 복사</td></tr>
+<tr><td><span class="step">3</span>확인</td><td>2단계 출력의 「행 수 대조」 줄</td><td>없음</td></tr>
+<tr><td><span class="step">4</span>다시 만들기</td><td><code>… --apply --drop</code></td><td>사본만 지우고 재복사</td></tr>
+</table>
+
+<div class="box red"><b>안전장치</b> — 원본(<code>--src</code>)은 어떤 옵션으로도 <b>읽기만</b> 한다. <code>--drop</code> 은 대상(<code>--dst</code>)만 지운다.
+대상이 운영(<code>freelancer_project</code>)·교육용 원본(<code>freelancer_education</code>)이거나 원본과 같으면 아무것도 하지 않고 중단한다(「안전장치가 막는 경우」 참고).</div>
+
+<div class="box"><b>옵션 요약</b><br>
+<code>--src 이름</code> 복사할 원본 스키마 · <code>--dst 이름</code> 만들 사본 스키마 · <code>--apply</code> 실제 실행(없으면 조사만) · <code>--drop</code> 사본이 이미 있으면 지우고 다시 만듦<br>
+<code>--src</code>/<code>--dst</code> 를 생략하면 예전 동작(운영 → 개발 DB 복제)이 된다. 교육용 복사에서는 <b>반드시 둘 다 적는다.</b></div>
+</section>
+
+<section class="page">
+<h2><span class="step">0</span>준비</h2>
+<p>시작 메뉴 → 「PowerShell」(또는 「터미널」)을 연다. 관리자 권한은 필요 없다.</p>
+
+<h3>0-1. Python 과 pymysql 확인</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python --version</span><button class="cp" data-cmd="python --version">복사</button>
+Python 3.13.3
+
+<span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">pip install pymysql</span><button class="cp" data-cmd="pip install pymysql">복사</button>
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: pymysql in C:\Users\ESTSOFT\AppData\Roaming\Python\Python313\site-packages (1.2.0)</pre></figure>
+<table>
+<tr><th>보이는 줄</th><th>의미</th></tr>
+<tr><td><code>Python 3.13.3</code></td><td>Python 3.x 이면 된다. 「명령을 찾을 수 없음」이 나오면 python.org 에서 설치(설치 화면의 <b>Add python.exe to PATH</b> 체크)</td></tr>
+<tr><td><code>Defaulting to user installation…</code></td><td>관리자 권한 없이 사용자 폴더에 설치한다는 안내. 정상</td></tr>
+<tr><td><code>Requirement already satisfied</code></td><td>이미 설치됨. 처음이면 <code>Successfully installed pymysql-…</code> 이 나온다</td></tr>
+</table>
+
+<h3>0-2. DB 비밀번호를 환경변수로 등록 (PC 당 한 번)</h3>
+<p>스크립트는 비밀번호를 코드에 적지 않고 <code>FREELANCER_DB_PW</code> 환경변수에서 읽는다. 비밀번호 실제 값은 <code>docs/시크릿.md</code>(저장소에 올라가지 않는 파일) 또는 담당자에게 받는다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">[Environment]::SetEnvironmentVariable(&#x27;FREELANCER_DB_PW&#x27;, &#x27;********&#x27;, &#x27;User&#x27;)</span><button class="cp" data-cmd="[Environment]::SetEnvironmentVariable(&#x27;FREELANCER_DB_PW&#x27;, &#x27;여기에_DB_비밀번호&#x27;, &#x27;User&#x27;)">복사</button>
+
+<span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">[Environment]::GetEnvironmentVariable(&#x27;FREELANCER_DB_PW&#x27;,&#x27;User&#x27;) -ne $null</span><button class="cp" data-cmd="[Environment]::GetEnvironmentVariable(&#x27;FREELANCER_DB_PW&#x27;,&#x27;User&#x27;) -ne $null">복사</button>
+True</pre><div class="mark">비밀번호는 실제 값 대신 ******** 로 가렸다(HTML 의 「복사」는 여기에_DB_비밀번호 로 복사되니 그 자리에 실제 값을 넣는다). 첫 줄은 성공해도 아무것도 출력하지 않는다.</div></figure>
+<table>
+<tr><th>칸</th><th>넣을 값</th></tr>
+<tr><td>첫 번째 <code>'FREELANCER_DB_PW'</code></td><td>변수 이름. 그대로 둔다</td></tr>
+<tr><td>두 번째 <code>'********'</code></td><td>실제 DB 비밀번호. 작은따옴표는 남긴다</td></tr>
+<tr><td>세 번째 <code>'User'</code></td><td>저장 범위(현재 Windows 사용자에게 영구 저장). 그대로 둔다</td></tr>
+</table>
+<div class="box red"><b>등록 후 PowerShell 창을 닫고 새로 연다.</b> 이미 열려 있던 창은 새 환경변수를 모른다.
+두 번째 명령이 <code>True</code> 면 등록된 것이다. 이 명령은 Git Bash 가 아니라 <b>PowerShell</b> 에서만 동작한다.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">1</span>조사 — 아무것도 바꾸지 않는다</h2>
+<p>저장소 폴더로 이동한 뒤 <code>--apply</code> <b>없이</b> 실행한다. 접속·원본·대상을 확인만 하고 끝난다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">cd C:\dev\Freelancer_Service</span><button class="cp" data-cmd="cd C:\dev\Freelancer_Service">복사</button>
+
+<span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012</span><button class="cp" data-cmd="python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012">복사</button>
+서버   : db.estsw.co.kr:3306  (MariaDB 11.4.8-MariaDB-log)
+원본   : freelancer_education  (읽기 전용)
+대상   : freelancer_education_phase5_261012
+모드   : 조사만 (--apply 없음)
+
+원본 구성: 테이블 58개 · 뷰 0개 · 트리거 0개 · 약 1.5MB
+문자셋   : utf8mb4 / utf8mb4_general_ci
+
+[조사만] 실제로 만들려면 --apply 를 붙인다.</pre></figure>
+<table>
+<tr><th style="width:28%">보이는 줄</th><th>의미 · 확인할 것</th></tr>
+<tr><td><code>서버</code></td><td>접속한 DB 서버와 버전. 여기까지 나오면 비밀번호·네트워크는 정상</td></tr>
+<tr><td><code>원본 … (읽기 전용)</code></td><td>복사할 스키마. <code>freelancer_education</code> 인지 확인</td></tr>
+<tr><td><code>대상</code></td><td>만들어질 사본 이름. 끝 6자리가 <b>이번 교육 시작일</b>인지, 이전 기수 이름과 겹치지 않는지 확인</td></tr>
+<tr><td><code>모드 : 조사만</code></td><td><code>--apply</code> 가 없으므로 DB 를 바꾸지 않는다</td></tr>
+<tr><td><code>원본 구성</code></td><td>테이블·뷰·트리거 수와 용량. 교육용은 테이블 58개 · 뷰/트리거 0개</td></tr>
+<tr><td><code>문자셋</code></td><td>사본도 같은 문자셋(utf8mb4)으로 만들어진다</td></tr>
+</table>
+<div class="box">대상 스키마가 이미 있으면 이 단계에서 <code>⚠ 대상 … 가 이미 있다</code> 가 함께 나온다 → 4단계 참고.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">2</span>실행 — 사본 만들기</h2>
+<p>1단계 명령 끝에 <code>--apply</code> 만 붙인다. 20~40초 걸리고, 테이블마다 한 줄씩 진행 상황이 찍힌다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply</span><button class="cp" data-cmd="python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply">복사</button>
+서버   : db.estsw.co.kr:3306  (MariaDB 11.4.8-MariaDB-log)
+원본   : freelancer_education  (읽기 전용)
+대상   : freelancer_education_phase5_261012
+모드   : 실행
+
+원본 구성: 테이블 58개 · 뷰 0개 · 트리거 0개 · 약 1.5MB
+문자셋   : utf8mb4 / utf8mb4_general_ci
+CREATE DATABASE freelancer_education_phase5_261012 · utf8mb4/utf8mb4_general_ci
+
+테이블 58개 복사
+  [ 1/58] address                                        0 행
+  [ 2/58] answer                                         0 행
+  [ 3/58] areacd                                         0 행
+  [ 4/58] board                                          0 행
+  [ 5/58] boardattachment                                0 행
+<span class="dim">  ... (중략: 50개 테이블) ...</span>
+  [56/58] tbl_user_m                                    60 행
+  [57/58] tbl_user_online_s                          2,141 행
+  [58/58] tbl_user_profile_image_s                      12 행
+
+행 수 대조
+<span class="ok">  ✓ 전체 58개 테이블 일치 (합계 6,446 행)</span>
+
+완료 · 23.2초</pre><div class="mark">실제 출력은 58줄 전부 나온다. 지면상 가운데를 줄였다.</div></figure>
+<table>
+<tr><th style="width:28%">보이는 줄</th><th>의미</th></tr>
+<tr><td><code>CREATE DATABASE …</code></td><td>사본 스키마를 원본과 같은 문자셋으로 만들었다</td></tr>
+<tr><td><code>[ n/58] 테이블명 … 행</code></td><td>테이블 구조(키·기본값·코멘트·외래키 포함)를 만들고 데이터를 복사했다. <code>0 행</code> 은 원래 비어 있는 테이블(정상)</td></tr>
+<tr><td><code>행 수 대조 ✓</code></td><td>원본과 사본의 테이블별 행 수를 다시 세어 비교했다. <b>이 줄이 성공의 기준</b>이다</td></tr>
+<tr><td><code>완료 · n초</code></td><td>총 소요 시간</td></tr>
+</table>
+
+<h2 style="margin-top:6mm"><span class="step">3</span>확인</h2>
+<ul>
+<li><b>성공</b>: 마지막에 <code>✓ 전체 58개 테이블 일치 (합계 6,446 행)</code> 와 <code>완료</code> 가 보인다. 행 수는 교육용 데이터가 바뀌면 달라질 수 있다.</li>
+<li><b>실패</b>: <code>✗ 테이블명: 원본 N vs 사본 M</code> 줄과 「행 수가 어긋난다. 복제 실패로 간주한다.」가 나온다 → 4단계 <code>--drop</code> 으로 다시 만든다.</li>
+<li>중간에 빨간 Python 오류(Traceback)로 끝났다면 사본이 반쯤 만들어진 상태다 → 원인(「문제 해결」 표)을 해결하고 <code>--apply --drop</code> 으로 다시 만든다.</li>
+</ul>
+</section>
+
+<section class="page">
+<h2><span class="step">4</span>다시 만들기 — 사본이 이미 있을 때</h2>
+<h3>4-1. <code>--apply</code> 만 주면: 건드리지 않고 멈춘다</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply</span><button class="cp" data-cmd="python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply">복사</button>
+서버   : db.estsw.co.kr:3306  (MariaDB 11.4.8-MariaDB-log)
+원본   : freelancer_education  (읽기 전용)
+대상   : freelancer_education_phase5_261012
+모드   : 실행
+
+원본 구성: 테이블 58개 · 뷰 0개 · 트리거 0개 · 약 1.5MB
+문자셋   : utf8mb4 / utf8mb4_general_ci
+
+<span class="warn">⚠ 대상 freelancer_education_phase5_261012 가 이미 있다 (객체 58개).</span>
+  --drop 없이는 건드리지 않는다. 다시 만들려면 --apply --drop 을 준다.</pre></figure>
+<p>기존 사본을 실수로 덮어쓰지 않도록 <code>--drop</code> 이 없으면 여기서 끝난다. DB 는 바뀌지 않았다.</p>
+
+<h3>4-2. <code>--apply --drop</code>: 사본을 지우고 처음부터 다시 복사</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply --drop</span><button class="cp" data-cmd="python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_education_phase5_261012 --apply --drop">복사</button>
+서버   : db.estsw.co.kr:3306  (MariaDB 11.4.8-MariaDB-log)
+원본   : freelancer_education  (읽기 전용)
+대상   : freelancer_education_phase5_261012
+<span class="warn">모드   : 실행  + 기존 대상 DROP</span>
+
+원본 구성: 테이블 58개 · 뷰 0개 · 트리거 0개 · 약 1.5MB
+문자셋   : utf8mb4 / utf8mb4_general_ci
+
+<span class="warn">⚠ 대상 freelancer_education_phase5_261012 가 이미 있다 (객체 58개).</span>
+
+<span class="warn">DROP DATABASE freelancer_education_phase5_261012 ...</span>
+CREATE DATABASE freelancer_education_phase5_261012 · utf8mb4/utf8mb4_general_ci
+
+테이블 58개 복사
+  [ 1/58] address                                        0 행
+  [ 2/58] answer                                         0 행
+<span class="dim">  ... (중략: 55개 테이블) ...</span>
+  [58/58] tbl_user_profile_image_s                      12 행
+
+행 수 대조
+<span class="ok">  ✓ 전체 58개 테이블 일치 (합계 6,446 행)</span>
+
+완료 · 27.3초</pre></figure>
+<table>
+<tr><th style="width:28%">보이는 줄</th><th>의미</th></tr>
+<tr><td><code>+ 기존 대상 DROP</code></td><td>이번 실행은 사본을 지운 뒤 만든다는 표시</td></tr>
+<tr><td><code>DROP DATABASE …_261012</code></td><td><b>사본만</b> 삭제. 그 사본에서 바꾼 내용은 모두 사라진다. 이후는 2단계와 같다</td></tr>
+</table>
+<div class="box red">사본을 교육 중에 수정해 썼다면 <code>--drop</code> 전에 그 내용이 필요 없는지 확인한다. <b>이전 기수 사본(다른 날짜)에 <code>--drop</code> 을 주지 않도록</b> <code>--dst</code> 의 날짜를 다시 확인한다. 다른 이름이 필요하면 <code>--dst</code> 만 바꿔 새 사본을 하나 더 만들면 된다.</div>
+</section>
+
+<section class="page">
+<h2>안전장치가 막는 경우</h2>
+<p>대상에 운영 DB 나 교육용 원본 이름을 넣으면 DB 에 접속하기도 전에 중단한다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">python docs\도구\db-clone-develop.py --src freelancer_education --dst freelancer_project --apply</span>
+<span class="warn">DST 가 원본 스키마(freelancer_project)다. 덮어쓸 수 없다. 중단한다.</span></pre></figure>
+<table>
+<tr><th>중단 메시지</th><th>원인</th></tr>
+<tr><td><code>DST 가 원본 스키마(…)다. 덮어쓸 수 없다.</code></td><td><code>--dst</code> 에 <code>freelancer_project</code>(운영) 또는 <code>freelancer_education</code>(교육용 원본)을 넣었다</td></tr>
+<tr><td><code>SRC 와 DST 가 같다.</code></td><td><code>--src</code> 와 <code>--dst</code> 가 같은 이름이다</td></tr>
+<tr><td><code>원본 스키마 … 가 없다.</code></td><td><code>--src</code> 이름 오타</td></tr>
+</table>
+
+<h2 style="margin-top:6mm">문제 해결</h2>
+<table>
+<tr><th style="width:38%">증상</th><th>해결</th></tr>
+<tr><td><code>KeyError: 'FREELANCER_DB_PW'</code></td><td>환경변수가 없다. 0-2 를 하고 <b>PowerShell 창을 새로 연다</b></td></tr>
+<tr><td><code>Access denied for user 'admin'</code></td><td>비밀번호가 틀렸다. 0-2 를 올바른 값으로 다시 실행 후 새 창</td></tr>
+<tr><td><code>Can't connect to MySQL server</code> / 시간 초과</td><td>사내망이 아니거나 3306 포트가 막혔다. 사내망·VPN 에서 다시 시도</td></tr>
+<tr><td><code>ModuleNotFoundError: No module named 'pymysql'</code></td><td><code>pip install pymysql</code></td></tr>
+<tr><td><code>can't open file … db-clone-develop.py</code></td><td>저장소 폴더가 아니다. <code>cd C:\dev\Freelancer_Service</code> 후 실행(또는 저장소를 <code>git pull</code> 로 최신화)</td></tr>
+<tr><td>원본이 <code>freelancer_project</code>, 대상이 <code>freelancer_develop</code> 로 나온다</td><td><code>--src</code>/<code>--dst</code> 를 빠뜨렸다(예전 기본 동작). <code>--apply</code> 없이 조사만 했다면 바뀐 것은 없으니 옵션을 넣어 다시 실행</td></tr>
+<tr><td>한글이 깨져 보인다</td><td>출력만의 문제, 데이터는 정상. Windows Terminal 사용 권장</td></tr>
+</table>
+
+<h3>사본에 연결해 쓰려면</h3>
+<p>DB 클라이언트(DBeaver 등) 또는 애플리케이션 접속 주소의 스키마 이름만 <code>freelancer_education_phase5_261012</code> 로 바꾼다. 서버·계정은 원본과 같다.</p>
+</section>
+<script>
+document.addEventListener('click', e => {
+  const b = e.target.closest('.cp'); if (!b) return;
+  const t = b.dataset.cmd;
+  const done = () => { b.textContent = '복사됨'; b.classList.add('done'); setTimeout(() => { b.textContent = '복사'; b.classList.remove('done'); }, 1500); };
+  const fallback = () => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); done(); };
+  navigator.clipboard ? navigator.clipboard.writeText(t).then(done, fallback) : fallback();
+});
+</script></body></html>
