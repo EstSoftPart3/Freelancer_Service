@@ -4,6 +4,7 @@ import MainPage, { type PopularProject } from '@/components/main/MainPage'
 import JsonLd from '@/components/seo/JsonLd'
 import { organizationJsonLd, webSiteJsonLd } from '@/lib/jsonld'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo'
+import { fetchCommunityBest } from '@/lib/community'
 
 const HOME_DESCRIPTION =
   'IT 프리랜서와 기업을 연결하는 프로젝트 매칭 플랫폼. 프리랜서 프로젝트 공고, 개발자 커뮤니티, 소속 모집까지 한 곳에서.'
@@ -42,14 +43,18 @@ async function fetchInitialPopularProjects(): Promise<PopularProject[]> {
 }
 
 export default async function Page() {
-  // 인기 프로젝트를 서버에서 조회해 초기 HTML에 포함 — 홈에서 상세로 이어지는 크롤링 경로
-  const initialProjects = await fetchInitialPopularProjects()
+  // 인기 프로젝트·추천 게시글을 서버에서 함께 조회해 초기 HTML에 포함 — 홈에서 상세로 이어지는 크롤링 경로.
+  // 게시글을 브라우저에서 늦게 채우면 1280 에서 첫 화면의 FAQ 가 밀려났다(CLS 0.18).
+  const [initialProjects, initialPosts] = await Promise.all([
+    fetchInitialPopularProjects(),
+    fetchCommunityBest('monthly', 20),
+  ])
   return (
     <>
       {/* 사이트 전역 구조화 데이터 — 홈에 1회만 삽입 */}
       <JsonLd data={webSiteJsonLd()} />
       <JsonLd data={organizationJsonLd()} />
-      <MainPage initialProjects={initialProjects} />
+      <MainPage initialProjects={initialProjects} initialPosts={initialPosts} />
     </>
   )
 }

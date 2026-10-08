@@ -116,6 +116,8 @@ const DUMMY_PROJECTS: PopularProject[] = buildDummyProjects(50)
 interface Props {
   // 서버에서 미리 조회한 인기 프로젝트(조회순) — SEO용으로 초기 HTML에 포함시킨다.
   initialProjects?: PopularProject[]
+  // 서버에서 미리 조회한 추천 게시글(월간 인기) — 비어 있으면 브라우저에서 다시 부른다.
+  initialPosts?: CommunityBestItem[]
 }
 
 // 프로젝트·게시글 카드는 서로 다른 그리드(좌/우 컬럼)에 있어 그리드 자동 늘어남으로는
@@ -214,7 +216,7 @@ function PostMiniCard({ item }: { item: CommunityBestItem }) {
   )
 }
 
-export default function MainPage({ initialProjects }: Props = {}) {
+export default function MainPage({ initialProjects, initialPosts }: Props = {}) {
   const router = useRouter()
   const { userTypeCd } = useUserStore()
 
@@ -224,8 +226,8 @@ export default function MainPage({ initialProjects }: Props = {}) {
   const [loading, setLoading] = useState(!initialProjects?.length)
   // 조회 실패는 "공고 없음"과 다르다 — 실패했는데 예시(더미) 카드를 실제 추천처럼 보여주지 않도록 구분한다
   const [projectsFailed, setProjectsFailed] = useState(false)
-  const [posts, setPosts] = useState<CommunityBestItem[]>([])
-  const [postsLoading, setPostsLoading] = useState(true)
+  const [posts, setPosts] = useState<CommunityBestItem[]>(initialPosts ?? [])
+  const [postsLoading, setPostsLoading] = useState(!initialPosts?.length)
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
   // 정렬 버튼 연타 시 늦게 보낸 요청이 먼저 응답한 요청 결과를 덮어써
@@ -289,6 +291,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
   // 기준은 월간 인기(최근 30일, 조회×1+댓글×2+추천×3)로 고정 — 탭 없이 안내 아이콘으로만 알려준다.
   // 노출량이 많아야 해서(서버 상한 20건) 주간보다 표본이 넉넉한 월간으로 잡았다.
   useEffect(() => {
+    if (initialPosts?.length) return
     let cancelled = false
     setPostsLoading(true)
     api
@@ -297,7 +300,7 @@ export default function MainPage({ initialProjects }: Props = {}) {
       .catch(() => { if (!cancelled) setPosts([]) })
       .finally(() => { if (!cancelled) setPostsLoading(false) })
     return () => { cancelled = true }
-  }, [])
+  }, [initialPosts])
 
   const goToProject = (project: PopularProject) => {
     // userTypeCd 302 = COMPANY → company spec, else user spec
