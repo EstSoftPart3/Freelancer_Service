@@ -61,7 +61,8 @@ export default function VoteListClient({ initialData }: Props) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      {/* 버튼(h-9)이 /me 뒤에 나타나도 줄 높이가 그대로이게 미리 36px 를 잡아 둔다 */}
+      <div className="mb-4 flex min-h-9 items-center justify-between">
         <h1 className="text-2xl font-bold">투표</h1>
         {authChecked && isLoggedIn() && (
           <Link
