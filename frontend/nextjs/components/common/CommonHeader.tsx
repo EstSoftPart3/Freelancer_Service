@@ -320,13 +320,14 @@ export default function CommonHeader() {
   return (
     <header
       className={cn(
-        'fixed top-0 z-50 w-full bg-background transition-shadow duration-300',
-        scrolled ? 'shadow-md border-b' : 'border-b',
+        'fixed top-0 z-50 w-full bg-background transition-shadow duration-300 lg:border-b',
+        scrolled && 'shadow-md',
       )}
     >
+      {/* 테두리를 줄 높이 안에 넣어 헤더 전체가 정확히 48px(모바일)·104px(lg)이 되게 한다 — main 위 여백(pt-12 lg:pt-[104px])과 맞춤 */}
       {/* 1단 — 로고만. 모바일은 2단(벨·햄버거)을 이 줄 오른쪽에 겹쳐 한 줄 헤더로 만든다 */}
-      <div className="lg:border-b">
-        <div className="container mx-auto flex h-12 items-center px-4">
+      <div className="h-12 border-b">
+        <div className="container mx-auto flex h-full items-center px-4">
           <Link href="/" className="flex shrink-0 items-center" aria-label="Ctrl + F 홈">
             <img
               src="/img/brand/logo-horizontal.png"
@@ -339,8 +340,8 @@ export default function CommonHeader() {
         </div>
       </div>
 
-      {/* 2단 — 전체 네비 한 줄 (좌: 메뉴, 우: 검색·로그인·기업서비스) */}
-      <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-4 max-lg:absolute max-lg:right-0 max-lg:top-0 max-lg:h-12 max-lg:w-auto lg:gap-4">
+      {/* 2단 — 전체 네비 한 줄 (좌: 메뉴, 우: 검색·로그인·기업서비스). 55px + header 아래 테두리 1px = 56px */}
+      <div className="container mx-auto flex h-[55px] items-center justify-between gap-2 px-4 max-lg:absolute max-lg:right-0 max-lg:top-0 max-lg:h-12 max-lg:w-auto lg:gap-4">
         <nav className="hidden min-w-0 items-center gap-1 lg:flex lg:gap-2">
           {/* 연봉계산기·연봉순위표 — 클릭을 유도하는 강조 버튼. 나머지 메뉴와 확실히 구분되도록
               색을 넣고, hover 시 살짝 떠오르며 아이콘이 반응한다.
