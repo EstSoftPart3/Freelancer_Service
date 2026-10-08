@@ -36,7 +36,7 @@ ol, ul { margin: 1mm 0 3mm; padding-left: 6mm; } li { margin: .6mm 0; }
 td code { overflow-wrap: anywhere; }</style></head><body><div class="tip">명령 줄 오른쪽 <b>「복사」</b> 버튼을 누르면 <code>$</code> 를 뺀 명령만 복사된다. Git Bash 창에서 <b>Shift+Insert</b>(또는 마우스 오른쪽 클릭 → Paste)로 붙여 넣는다. 인쇄하면 PDF 와 같은 모양이 된다.</div>
 <section class="page">
 <h1>운영 배포 가이드</h1>
-<div class="sub">Git Bash 하나로 백엔드·FO·BO 를 운영 서버에 배포한다 · 2026-10-08 실제 배포 실측</div>
+<div class="sub">Git Bash(PowerShell 아님)로 백엔드·FO·BO 를 운영 서버에 배포한다 · 2026-10-08 실제 배포 실측</div>
 
 <h2>한눈에 보기</h2>
 <table>
@@ -51,7 +51,7 @@ td code { overflow-wrap: anywhere; }</style></head><body><div class="tip">명령
 <h2>준비물 (PC 당 한 번)</h2>
 <table>
 <tr><th>항목</th><th>확인 방법 · 비고</th></tr>
-<tr><td>사내망</td><td>서버 SSH 는 <b>내부망 전용</b>이다. 외부에서는 접속되지 않는다</td></tr>
+<tr><td><b>est_server 와이파이</b></td><td>서버 SSH 는 <b>est_server 와이파이에서만</b> 닿는다(0단계). 비밀번호는 <code>docs/시크릿.md</code>(저장소에 올라가지 않는 파일) 또는 담당자에게</td></tr>
 <tr><td>SSH 키</td><td><code>~/.ssh/id_ed25519_casaos</code> 파일(담당자에게 받는다). 명령마다 <code>-i</code> 로 <b>반드시 지정</b>해야 붙는다</td></tr>
 <tr><td>Git Bash · JDK 21 · Node.js</td><td><code>java -version</code> · <code>node -v</code> 가 나오면 된다</td></tr>
 <tr><td>Python · DB 비밀번호</td><td>「교육용 DB 복사 가이드」 0단계와 같다(<code>FREELANCER_DB_PW</code> 환경변수). 등록 후 Git Bash 를 새로 열면 자동으로 읽힌다</td></tr>
@@ -60,6 +60,7 @@ td code { overflow-wrap: anywhere; }</style></head><body><div class="tip">명령
 <h2>전체 흐름</h2>
 <table>
 <tr><th style="width:20%">단계</th><th>어디서</th><th>무엇을</th><th style="width:26%">운영 영향</th></tr>
+<tr><td><span class="step">0</span>와이파이</td><td>PC</td><td><code>est_server</code> 연결 · SSH 확인</td><td>없음</td></tr>
 <tr><td><span class="step">1</span>최신화·DB 확인</td><td>로컬</td><td><code>git pull</code> · 운영 DB 구조 차이 확인</td><td>없음 (읽기만)</td></tr>
 <tr><td><span class="step">2</span>빌드</td><td>로컬</td><td>백엔드 jar · BO dist 빌드, 운영 주소 확인</td><td>없음</td></tr>
 <tr><td><span class="step">3</span>압축·업로드</td><td>로컬 → 서버</td><td>tar 로 묶어 scp</td><td>없음 (파일만 올림)</td></tr>
@@ -67,7 +68,84 @@ td code { overflow-wrap: anywhere; }</style></head><body><div class="tip">명령
 <tr><td><span class="step">5</span>외부 검증</td><td>로컬</td><td>curl · 브라우저 확인</td><td>없음</td></tr>
 <tr><td>롤백</td><td>서버</td><td>직전 버전으로 되돌리기</td><td>필요할 때만</td></tr>
 </table>
-<div class="box">명령은 전부 <b>Git Bash</b> 기준이다(PowerShell 아님). 저장소 폴더 <code>/c/dev/Freelancer_Service</code> 에서 시작한다.</div>
+</section>
+
+<section class="page">
+<h2><span class="step">0</span>est_server 와이파이 연결</h2>
+<p>운영 서버(<code>192.168.2.104</code>)는 <b><code>est_server</code> 와이파이 안에서만</b> SSH 로 접속된다. 이 와이파이에 붙으면 PC 가
+<code>192.168.2.x</code> 주소(실측 때 <code>192.168.2.105</code>)를 받아 서버와 같은 망이 된다. 다른 와이파이·유선에서는 3·4단계가 <code>Connection timed out</code> 으로 실패한다.</p>
+<div class="box red"><b><code>est_server</code> 는 숨김 와이파이다.</b> 와이파이 목록에 나타나지 않으므로 <b>처음 한 번은 직접 등록</b>해야 한다.
+비슷한 이름(<code>est_5G</code> · <code>est_2.4G</code> 등)은 <b>다른 망</b>이다. 비밀번호는 <code>docs/시크릿.md</code> 의 「est_server 와이파이」 항목(없으면 담당자에게).</div>
+
+<h3>0-1. 등록 방법 ① — Windows 설정 화면</h3>
+<ol>
+<li><code>Win + I</code> → <b>네트워크 및 인터넷</b> → <b>Wi-Fi</b> → <b>알려진 네트워크 관리</b></li>
+<li><b>네트워크 추가</b>(Windows 10 은 「새 네트워크 추가」)</li>
+<li>입력:
+  <table>
+  <tr><th style="width:38%">칸</th><th>값</th></tr>
+  <tr><td>네트워크 이름</td><td><code>est_server</code> (밑줄 포함, 대소문자 그대로)</td></tr>
+  <tr><td>보안 유형</td><td><b>WPA2-개인 AES</b> (공유기가 WPA2/WPA3 겸용이라 WPA3-개인 도 된다)</td></tr>
+  <tr><td>보안 키</td><td>시크릿.md 의 비밀번호</td></tr>
+  <tr><td>☑ 자동으로 연결</td><td>체크</td></tr>
+  <tr><td>☑ 네트워크가 브로드캐스팅하지 않는 경우에도 연결</td><td><b>반드시 체크</b> — 숨김 와이파이라 이게 없으면 못 붙는다</td></tr>
+  </table></li>
+<li><b>저장</b> → 잠시 뒤 자동 연결된다. 안 되면 작업 표시줄 와이파이 목록 맨 아래 「숨겨진 네트워크」에서 연결</li>
+</ol>
+<p class="sub" style="margin:0">이 화면 절차는 캡처 없이 글로만 적었다.</p>
+</section>
+
+<section class="page">
+<h3>0-1. 등록 방법 ② — 터미널(PowerShell) 한 번에</h3>
+<p>와이파이 명령(<code>netsh</code>)은 한글 출력이 Git Bash 에서 깨지므로 <b>이 단계만 PowerShell</b> 에서 한다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 등록·연결 명령 (PC 당 한 번)</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;auto&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;</span><button class="cp" data-cmd="$xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;auto&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Remove-Item &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="Remove-Item &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan connect name=est_server</span><button class="cp" data-cmd="netsh wlan connect name=est_server">복사</button></pre><div class="mark">첫 줄의 <b>비밀번호</b> 를 실제 비밀번호로 바꾼 뒤 실행한다(나머지는 그대로). 넷째 줄은 비밀번호가 든 임시 파일을 지운다.</div></figure>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 실측(시험용 이름)</span></div>
+<pre>﻿PS C:\Users\ESTSOFT&gt; $xml = &#x27;&lt;WLANProfile xmlns=&quot;http://www.microsoft.com/networking/WLAN/profile/v1&quot;&gt;&lt;name&gt;est_server_test&lt;/name&gt;&lt;SSIDConfig&gt;&lt;SSID&gt;&lt;name&gt;est_server&lt;/name&gt;&lt;/SSID&gt;&lt;nonBroadcast&gt;true&lt;/nonBroadcast&gt;&lt;/SSIDConfig&gt;&lt;connectionType&gt;ESS&lt;/connectionType&gt;&lt;connectionMode&gt;manual&lt;/connectionMode&gt;&lt;MSM&gt;&lt;security&gt;&lt;authEncryption&gt;&lt;authentication&gt;WPA2PSK&lt;/authentication&gt;&lt;encryption&gt;AES&lt;/encryption&gt;&lt;useOneX&gt;false&lt;/useOneX&gt;&lt;/authEncryption&gt;&lt;sharedKey&gt;&lt;keyType&gt;passPhrase&lt;/keyType&gt;&lt;protected&gt;false&lt;/protected&gt;&lt;keyMaterial&gt;비밀번호&lt;/keyMaterial&gt;&lt;/sharedKey&gt;&lt;/security&gt;&lt;/MSM&gt;&lt;/WLANProfile&gt;&#x27;
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="$xml | Out-File -Encoding utf8 &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="netsh wlan add profile filename=&quot;$env:TEMP\est_server.xml&quot;">복사</button>
+Profile est_server_test is added on interface Wi-Fi.
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Remove-Item &quot;$env:TEMP\est_server.xml&quot;</span><button class="cp" data-cmd="Remove-Item &quot;$env:TEMP\est_server.xml&quot;">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan show profile name=est_server_test | Select-String &quot;SSID name|broadcast|Authentication&quot;</span><button class="cp" data-cmd="netsh wlan show profile name=est_server_test | Select-String &quot;SSID name|broadcast|Authentication&quot;">복사</button>
+
+        Network broadcast  : Connect even if this network is not broadcasting
+    SSID name              : &quot;est_server&quot;
+    Authentication         : WPA2-Personal
+    Authentication         : WPA2-Personal
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan delete profile name=est_server_test</span><button class="cp" data-cmd="netsh wlan delete profile name=est_server_test">복사</button>
+Profile &quot;est_server_test&quot; is deleted from interface &quot;Wi-Fi&quot;.</pre><div class="mark">실측은 지금 연결을 끊지 않으려고 이름만 <code>est_server_test</code> · 수동 연결로 바꿔 등록 → 확인 → 삭제했다. 비밀번호는 가렸다.</div></figure>
+<table>
+<tr><th style="width:36%">보이는 줄</th><th>의미</th></tr>
+<tr><td><code>Profile … is added on interface Wi-Fi.</code></td><td>등록됐다</td></tr>
+<tr><td><code>Connect even if this network is not broadcasting</code></td><td>숨김 와이파이 설정이 들어갔다</td></tr>
+<tr><td><code>WPA2-Personal</code></td><td>보안 유형</td></tr>
+</table>
+</section>
+
+<section class="page">
+<h3>그다음부터 다시 붙을 때</h3>
+<p>작업 표시줄 와이파이 목록에서 <code>est_server</code>(등록 뒤에는 목록에 보인다)를 고르거나:</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">netsh wlan connect name=est_server</span><button class="cp" data-cmd="netsh wlan connect name=est_server">복사</button></pre><div class="mark">등록이 끝난 PC 에서 다시 붙을 때. 성공하면 <code>Connection request was completed successfully.</code> 가 나온다(이 줄은 실측하지 않았다 — 캡처 때 이미 연결돼 있었다).</div></figure>
+<div class="box">와이파이를 바꾸는 순간 인터넷이 잠깐 끊긴다. 화상 회의·다운로드 중이면 끝난 뒤에 바꾼다. est_server 에서도 인터넷은 된다.</div>
+<h3>0-2. 확인 (Git Bash)</h3>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>MINGW64:/c/dev/Freelancer_Service  (Git Bash)</span></div>
+<pre><span class="p">$</span> <span class="c">netsh wlan show interfaces | grep &quot; SSID&quot;</span><button class="cp" data-cmd="netsh wlan show interfaces | grep &quot; SSID&quot;">복사</button>
+    SSID                   : est_server
+<span class="p">$</span> <span class="c">ssh -i ~/.ssh/id_ed25519_casaos -o ConnectTimeout=5 estsoft@192.168.2.104 &quot;hostname; uptime -p&quot;</span><button class="cp" data-cmd="ssh -i ~/.ssh/id_ed25519_casaos -o ConnectTimeout=5 estsoft@192.168.2.104 &quot;hostname; uptime -p&quot;">복사</button>
+estsoft
+up 34 weeks, 3 days, 29 minutes</pre><div class="mark">연결된 와이파이 이름(SSID)이 est_server 이고, ssh 가 서버 이름·가동 시간을 돌려주면 배포 준비 끝이다.</div></figure>
+<table>
+<tr><th style="width:32%">보이는 줄</th><th>의미</th></tr>
+<tr><td><code>SSID : est_server</code></td><td>지금 연결된 와이파이. 다른 이름이면 위 연결 명령으로 다시</td></tr>
+<tr><td><code>estsoft</code> · <code>up …</code></td><td>운영 서버의 이름과 켜져 있던 시간. 여기까지 나오면 SSH 키·망 모두 정상</td></tr>
+<tr><td><code>Connection timed out</code></td><td>est_server 가 아니거나 서버가 꺼짐</td></tr>
+<tr><td><code>Permission denied (publickey)</code></td><td>망은 맞고 SSH 키 문제(준비물 표)</td></tr>
+</table>
 </section>
 
 <section class="page">
@@ -318,7 +396,7 @@ API=200
 <table>
 <tr><th style="width:34%">증상</th><th style="width:28%">원인</th><th>조치</th></tr>
 <tr><td><code>Permission denied (publickey)</code></td><td>SSH 키 미지정·없음</td><td><code>-i ~/.ssh/id_ed25519_casaos</code> 를 붙였는지, 키 파일이 있는지</td></tr>
-<tr><td><code>Connection timed out</code> (ssh/scp)</td><td>사내망 밖</td><td>사내망에서 다시</td></tr>
+<tr><td><code>Connection timed out</code> (ssh/scp)</td><td>est_server 와이파이가 아님</td><td>0단계로 est_server 연결 후 다시</td></tr>
 <tr><td><code>구조 차이</code> 가 나온다 (1단계)</td><td>운영 DB 미반영 변경</td><td>배포 중단. 1단계 빨간 상자 절차</td></tr>
 <tr><td><code>KeyError: 'FREELANCER_DB_PW'</code></td><td>환경변수 없음</td><td>교육용 DB 가이드 0단계 후 <b>Git Bash 새로 열기</b></td></tr>
 <tr><td>BO 화면은 뜨는데 데이터 없음</td><td><code>VITE_API_BASE_URL</code> 없이 빌드</td><td>2단계 ② 다시 → 3·4단계</td></tr>
