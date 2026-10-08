@@ -1,6 +1,6 @@
 // Mirrors vue_js/src/App.vue — Root layout: Header, Footer, Modal container, Providers
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import Script from 'next/script'
 import './globals.css'
@@ -11,6 +11,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
+// 연봉 화면 font-mono 몇 곳만 쓰므로 모든 페이지 preload 는 끈다
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', preload: false })
 
 // SEO placeholder — 각 page.tsx에서 generateMetadata()로 오버라이드
 export const metadata: Metadata = {
@@ -40,7 +42,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${geist.variable} h-full antialiased`}>
+    <html lang="ko" className={`${geist.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <Providers>
           <CommonHeader />
