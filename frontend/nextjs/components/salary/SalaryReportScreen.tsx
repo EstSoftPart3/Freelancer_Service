@@ -239,12 +239,6 @@ export default function SalaryReportScreen() {
               <> ({report.relaxedConditions.join('·')} 조건은 표본이 부족해 넓혀서 비교했어요)</>
             )}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            표본 {report.sampleCount.toLocaleString()}명(실제 제출 {report.realSampleCount.toLocaleString()}명) 기준
-            {report.includesSeed && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">예시 데이터 포함</span>
-            )}
-          </p>
         </section>
 
         {/* 연봉 분포 히스토그램 */}
