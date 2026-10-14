@@ -1,7 +1,7 @@
 'use client'
 // F. 연봉순위표 — 개인 연봉 계산 결과와 무관한, 플랫폼 전체 랭킹 조회 화면.
 // 보기 기준(전체/직무별/연차별/지역별)을 고르면 그 기준으로 상위 랭킹을 보여준다.
-// GET /salary/ranking(비로그인 공개) 호출 — 실표본이 부족하면 시드가 섞이고 includesSeed로 알려준다.
+// GET /salary/ranking(비로그인 공개) 호출 — 실표본이 부족하면 시드가 섞인다(includesSeed는 화면에 표기하지 않음).
 import { useEffect, useMemo, useState } from 'react'
 import { ListOrdered, Trophy } from 'lucide-react'
 import api from '@/lib/api'
@@ -121,8 +121,7 @@ export default function SalaryRankingScreen() {
           </p>
           <h1 className="mb-1 text-2xl font-bold text-foreground md:text-3xl">플랫폼 연봉 랭킹</h1>
           <p className="text-sm text-muted-foreground">
-            전체 · 직무별 · 연차별 · 지역별로 랭킹을 나눠 볼 수 있어요. 실제 회원 제출 데이터
-            기준이며, 표본이 부족한 조건은 예시 데이터가 섞여요.
+            전체 · 직무별 · 연차별 · 지역별로 랭킹을 나눠 볼 수 있어요.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             연봉계산기에서 고용형태를 「정규직·계약직」으로 입력한 분들의 연봉 랭킹이에요. 프리랜서는 월 단가로 입력하기 때문에 연봉 랭킹에 포함되지 않아요.
@@ -222,11 +221,6 @@ export default function SalaryRankingScreen() {
           {loadError && <p className="mb-2 text-xs text-red-600">{loadError}</p>}
           <p className="mb-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             총 {board.totalCount.toLocaleString()}명(정규직·계약직 기준) 중 상위 {board.rows.length}명 · 닉네임은 마스킹돼요.
-            {board.includesSeed && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                예시 데이터 포함
-              </span>
-            )}
           </p>
 
           <div className="flex flex-col gap-2">
