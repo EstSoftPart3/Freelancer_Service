@@ -51,6 +51,17 @@ function nowHhMm(): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+/** 'YYYY-MM-DD' → 로컬 Date. new Date('YYYY-MM-DD') 는 UTC 로 파싱돼 요일이 어긋날 수 있다. */
+function parseDateStr(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function isWeekend(s: string): boolean {
+  const day = parseDateStr(s).getDay()
+  return day === 0 || day === 6
+}
+
 export default function InterviewTimeModal({ open, minDate, maxDate, entries, onClose, onConfirm }: Props) {
   const [local, setLocal] = useState<InterviewTimeEntry[]>(entries)
   const [activeDate, setActiveDate] = useState('')
@@ -76,6 +87,11 @@ export default function InterviewTimeModal({ open, minDate, maxDate, entries, on
 
   function addDate(date: string) {
     if (!date) return
+    if (isWeekend(date)) {
+      toast.error('주말은 선택할 수 없습니다.')
+      setNewDate('')
+      return
+    }
     setLocal((prev) => (prev.some((e) => e.date === date)
       ? prev
       : [...prev, { date, times: [] }].sort((a, b) => a.date.localeCompare(b.date))))
@@ -92,6 +108,21 @@ export default function InterviewTimeModal({ open, minDate, maxDate, entries, on
         : [...e.times, t].sort()
       return { ...e, times }
     }))
+  }
+
+  /** 지금 날짜의 시간을 모집기간 내 평일 전체에 덮어쓴다. 오늘은 지난 시각을 빼고, 남는 게 없으면 건너뛴다. */
+  function applyToAllWeekdays() {
+    if (!maxDate || activeTimes.length === 0) return
+    const next: InterviewTimeEntry[] = []
+    for (const d = parseDateStr(pickerMin); toDateStr(d) <= maxDate; d.setDate(d.getDate() + 1)) {
+      const date = toDateStr(d)
+      if (isWeekend(date)) continue
+      const times = date === openedAt.today ? activeTimes.filter((t) => t > openedAt.now) : activeTimes
+      if (times.length > 0) next.push({ date, times })
+    }
+    setLocal(next)
+    if (!next.some((e) => e.date === activeDate)) setActiveDate(next[0]?.date ?? '')
+    toast.success(`평일 ${next.length}일에 같은 시간을 적용했습니다.`)
   }
 
   function removeDate(date: string) {
@@ -222,6 +253,21 @@ export default function InterviewTimeModal({ open, minDate, maxDate, entries, on
                     ))}
                   </div>
                 )}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={activeTimes.length === 0}
+                    onClick={applyToAllWeekdays}
+                    className="h-auto whitespace-normal py-1.5 text-left text-xs"
+                  >
+                    해당 날짜와 동일하게 모집기간 내 다른 날짜에도 인터뷰 시간 적용
+                  </Button>
+                  <p className="text-xs text-destructive">
+                    ※ 모집기간 내 평일(주말 제외)에 같은 시간이 적용되며, 다른 날짜에 선택한 시간은 덮어써집니다.
+                  </p>
+                </div>
               </>
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
