@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Star, Trash2 } from 'lucide-react'
+import { Eye, Star, Trash2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
@@ -85,7 +85,10 @@ export default function InterviewDetailClient({ interviewReviewSq, initialData }
           {review.jobNm} · {review.careerLevel}
           {review.interviewDt && ` · ${review.interviewDt} 면접`}
         </div>
-        <div className="mt-1 text-sm text-muted-foreground">{review.userNickname ?? '익명'}</div>
+        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+          <User className="h-4 w-4" />
+          {review.userNickname ?? '익명'}
+        </div>
       </div>
 
       {review.interviewStages.length > 0 && (

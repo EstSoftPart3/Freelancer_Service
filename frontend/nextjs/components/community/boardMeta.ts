@@ -140,3 +140,5 @@ export const BOARD_INTRO_TIPS: Partial<Record<BoardType, string>> = {
 }
 export const INTERVIEW_INTRO_TIP =
   '면접후기, 면접질문, 코딩테스트, 면접결과 등 면접 경험을 나누는 곳입니다.'
+/** 면접후기 목록·작성 화면 제목 아래에 항상 보이는 면책 문구. */
+export const INTERVIEW_DISCLAIMER = '면접후기 작성에 따른 책임은 플랫폼이 책임지지 않습니다.'

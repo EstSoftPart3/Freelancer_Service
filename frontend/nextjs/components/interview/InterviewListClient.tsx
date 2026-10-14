@@ -4,7 +4,8 @@ import Link from 'next/link'
 import CommonPagination from '@/components/community/CommonPagination'
 import InterviewCard from '@/components/interview/InterviewCard'
 import { InfoTooltip } from '@/components/ui/tooltip'
-import { INTERVIEW_INTRO_TIP } from '@/components/community/boardMeta'
+import { Info } from 'lucide-react'
+import { INTERVIEW_DISCLAIMER, INTERVIEW_INTRO_TIP } from '@/components/community/boardMeta'
 import { alertStore } from '@/stores/alertStore'
 import { useUserStore } from '@/stores/userStore'
 import api from '@/lib/api'
@@ -56,7 +57,7 @@ export default function InterviewListClient({ initialData }: Props) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-1 flex items-center justify-between">
         <h1 className="flex items-center gap-1.5 text-2xl font-bold">
           면접후기
           <InfoTooltip label="면접후기 안내">{INTERVIEW_INTRO_TIP}</InfoTooltip>
@@ -70,6 +71,10 @@ export default function InterviewListClient({ initialData }: Props) {
           </Link>
         )}
       </div>
+      <p className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5 shrink-0" />
+        {INTERVIEW_DISCLAIMER}
+      </p>
 
       {isLoading ? (
         <div className="py-16 text-center text-sm text-muted-foreground">불러오는 중...</div>
