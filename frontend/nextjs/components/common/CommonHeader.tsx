@@ -498,21 +498,26 @@ export default function CommonHeader() {
               기업서비스
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 p-2">
-              <DropdownMenuItem
-                className="flex-col items-start gap-0.5 py-2"
-                onClick={() => router.push(companyLoginHref())}
-              >
-                <span className="font-medium">기업 로그인</span>
-                <span className="text-xs text-muted-foreground">기업 회원으로 로그인합니다</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex-col items-start gap-0.5 py-2"
-                onClick={() => router.push('/sign-up?loginType=COMPANY')}
-              >
-                <span className="font-medium">기업 회원가입</span>
-                <span className="text-xs text-muted-foreground">기업 담당자 계정을 만듭니다</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {/* 이미 로그인했으면(개인·기업 모두) 기업 로그인·회원가입은 의미가 없어 숨긴다. */}
+              {!loggedIn && (
+                <>
+                  <DropdownMenuItem
+                    className="flex-col items-start gap-0.5 py-2"
+                    onClick={() => router.push(companyLoginHref())}
+                  >
+                    <span className="font-medium">기업 로그인</span>
+                    <span className="text-xs text-muted-foreground">기업 회원으로 로그인합니다</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex-col items-start gap-0.5 py-2"
+                    onClick={() => router.push('/sign-up?loginType=COMPANY')}
+                  >
+                    <span className="font-medium">기업 회원가입</span>
+                    <span className="text-xs text-muted-foreground">기업 담당자 계정을 만듭니다</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem
                 className="flex-col items-start gap-0.5 py-2"
                 onClick={() => router.push('/mypage/project-post')}
@@ -654,8 +659,12 @@ export default function CommonHeader() {
               <div className="mt-4 border-t pt-4">
                 <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">기업서비스</p>
                 <div className="flex flex-col gap-1">
-                  <Link href={companyLoginHref()} className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 로그인</Link>
-                  <Link href="/sign-up?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 회원가입</Link>
+                  {!loggedIn && (
+                    <>
+                      <Link href={companyLoginHref()} className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 로그인</Link>
+                      <Link href="/sign-up?loginType=COMPANY" className="rounded-md px-3 py-2 text-sm hover:bg-muted">기업 회원가입</Link>
+                    </>
+                  )}
                   <Link href="/mypage/project-post" className="rounded-md px-3 py-2 text-sm hover:bg-muted">프로젝트 공고 관리</Link>
                   <Link href="/mypage/affiliation-edit" className="rounded-md px-3 py-2 text-sm hover:bg-muted">파트너 모집 관리</Link>
                 </div>
