@@ -417,6 +417,7 @@ CLAUDE.md
 # docs/ — 저장소가 PUBLIC 이다. 문서·스크립트의 비밀값은 자리표시/환경변수로 가렸고
 # 실값은 docs/시크릿.md 에만 둔다 (2026-09-22 정리, 그 전엔 폴더째 미추적이었다).
 docs/시크릿.md
+docs/시크릿-*
 # 운영 DB 덤프 — 회원 개인정보가 들어 있다.
 docs/Phase1_DB/
 docs/Phase2_DB/
