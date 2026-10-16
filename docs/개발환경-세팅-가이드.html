@@ -41,7 +41,7 @@ td code { overflow-wrap: anywhere; }
 </style></head><body><div class="tip">명령 줄 오른쪽 <b>「복사」</b> 버튼을 누르면 프롬프트(<code>PS …&gt;</code>)를 뺀 명령만 복사된다. PowerShell 창에 마우스 오른쪽 클릭(또는 Ctrl+V)으로 붙여 넣는다. 인쇄하면 PDF 와 같은 모양이 된다.</div>
 <section class="page">
 <h1>개발환경 세팅 가이드</h1>
-<div class="sub">새 Windows PC 에서 PowerShell 로 도구 설치 → 저장소 받기 → 백엔드·FO·BO 를 브라우저로 띄우기까지 · 2026-10-08 실측</div>
+<div class="sub">새 Windows PC 에서 PowerShell 로 도구 설치 → 저장소 받기 → 백엔드·FO·BO 를 브라우저로 띄우기까지 · 2026-10-08 실측 · 2026-10-16 새 노트북(Windows 10)에서 처음부터 재검증</div>
 
 <h2>끝나면 이렇게 된다</h2>
 <table>
@@ -66,7 +66,7 @@ td code { overflow-wrap: anywhere; }
 <table>
 <tr><th style="width:22%">단계</th><th>내용</th><th style="width:20%">소요(실측)</th></tr>
 <tr><td><span class="step">0</span>와이파이</td><td>사무실 와이파이 <code>est_server</code> 등록·연결(숨김 와이파이)</td><td>2~3분</td></tr>
-<tr><td><span class="step">1</span>도구 설치</td><td>winget 으로 Git · JDK 21 · Node.js 22 · Redis, Redis 비밀번호</td><td>10~20분</td></tr>
+<tr><td><span class="step">1</span>도구 설치</td><td>실행 정책 · winget 확인(없으면 설치), winget 으로 Git · JDK 21 · Node.js 22 · Redis, Redis 비밀번호</td><td>10~20분 · winget 설치 시 +5분</td></tr>
 <tr><td><span class="step">2</span>저장소·설정</td><td><code>git clone</code>(NextJs 브랜치), <code>application.yml</code> 넣기</td><td>1~2분</td></tr>
 <tr><td><span class="step">3</span>백엔드</td><td><code>gradlew bootRun</code></td><td>첫 실행 수 분 · 이후 약 25초</td></tr>
 <tr><td><span class="step">4</span>FO</td><td><code>npm ci</code> → <code>npm run dev</code></td><td>설치 약 2분 · 기동 약 10초</td></tr>
@@ -131,64 +131,92 @@ Profile &quot;est_server_test&quot; is deleted from interface &quot;Wi-Fi&quot;.
 
 <section class="page">
 <h2><span class="step">1</span>도구 설치</h2>
+<h3>1-0. PowerShell 준비 — 실행 정책 · winget</h3>
+<p>시작 메뉴 → 「PowerShell」. 새 PC 는 <b>스크립트 실행이 막혀 있어</b>(실행 정책 Restricted) 이대로면 Node 설치 뒤 <code>npm</code> 이 「스크립트를 실행할 수 없으므로…」로 실패한다. 먼저 한 번 푼다(관리자 권한 불필요).</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 실행 정책 (PC 당 한 번)</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force</span><button class="cp" data-cmd="Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Get-ExecutionPolicy</span><button class="cp" data-cmd="Get-ExecutionPolicy">복사</button>
+RemoteSigned</pre><div class="mark"><b>RemoteSigned</b> 가 나오면 된다. 안 하고 넘어가면 1-2 의 <code>npm -v</code> 에서 <code>npm.ps1 cannot be loaded because running scripts is disabled on this system</code> 이 난다(2026-10-16 새 노트북에서 실제로 났다).</div></figure>
+<p>다음으로 <code>winget --version</code> 을 친다. 버전(<code>v1.x</code>)이 나오면 1-1 로 넘어간다.
+<b>Windows 11 · 업데이트된 Windows 10 에는 들어 있지만, 오래 업데이트 안 된 Windows 10 에는 없다</b>(「'winget' 용어가 … 인식되지 않습니다」). 그때만 아래를 한다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>winget 이 없을 때 — ① 관리자: Windows PowerShell</span></div>
+<pre><span class="p">PS C:\WINDOWS\system32&gt;</span> <span class="c">Install-PackageProvider -Name NuGet -Force</span><button class="cp" data-cmd="Install-PackageProvider -Name NuGet -Force">복사</button>
+<span class="p">PS C:\WINDOWS\system32&gt;</span> <span class="c">Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery</span><button class="cp" data-cmd="Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery">복사</button></pre><div class="mark">관리자 권한 창(시작 메뉴 → PowerShell 마우스 오른쪽 → 관리자 권한으로 실행)에서 두 줄. winget 설치 도구(PowerShell 모듈)를 받는다.</div></figure>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>winget 이 없을 때 — ② 일반 Windows PowerShell</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Repair-WinGetPackageManager -Latest</span><button class="cp" data-cmd="Repair-WinGetPackageManager -Latest">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget --version</span><button class="cp" data-cmd="winget --version">복사</button>
+<span class="ok">v1.29.380</span></pre><div class="mark"><b>일반 창</b>에서 실행한다(약 300MB 를 받아 2~5분). 관리자 창에서 <code>-AllUsers</code> 를 붙이면 「액세스가 거부되었습니다」로 실패했다 — 붙이지 않는다. 2026-10-16 새 노트북(Windows 10 22H2, 앱 설치 관리자 1.0.30251 → 1.29.380) 실측.</div></figure>
+</section>
+
+<section class="page">
 <h3>1-1. 설치 명령</h3>
-<p>시작 메뉴 → 「PowerShell」. Windows 10/11 에는 <code>winget</code> 이 기본으로 들어 있다(<code>winget --version</code> 으로 확인).</p>
+<p>winget 이 되면 아래 네 줄을 차례로 실행한다.</p>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell — 설치 명령</span></div>
 <pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Git.Git -e</span><button class="cp" data-cmd="winget install --id Git.Git -e">복사</button>
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Oracle.JDK.21 -e</span><button class="cp" data-cmd="winget install --id Oracle.JDK.21 -e">복사</button>
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id OpenJS.NodeJS.22 -e</span><button class="cp" data-cmd="winget install --id OpenJS.NodeJS.22 -e">복사</button>
-<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Redis.Redis -e</span><button class="cp" data-cmd="winget install --id Redis.Redis -e">복사</button></pre><div class="mark">이 네 줄이 설치 명령이다. 패키지마다 사용권 동의를 물으면 Y. 끝나면 <b>PowerShell 창을 닫고 새로 연다</b>(PATH 반영).</div></figure>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Redis.Redis -e</span><button class="cp" data-cmd="winget install --id Redis.Redis -e">복사</button></pre><div class="mark">이 네 줄이 설치 명령이다. 처음 한 번 원본 약관 동의(Y), 패키지마다 사용권 동의를 물으면 Y. Git · JDK · Redis 는 <b>「이 앱이 디바이스를 변경하도록 허용」 창에서 「예」</b>. 끝나면 <b>PowerShell 창을 닫고 새로 연다</b>(PATH 반영).</div></figure>
 <table>
 <tr><th style="width:28%">패키지</th><th>용도</th></tr>
 <tr><td><code>Git.Git</code></td><td>저장소 받기 · 커밋</td></tr>
 <tr><td><code>Oracle.JDK.21</code></td><td>백엔드 빌드·실행. <b>반드시 21</b>(프로젝트가 Java 21 로 고정돼 있다)</td></tr>
-<tr><td><code>OpenJS.NodeJS.22</code></td><td>FO · BO 실행. npm 도 같이 설치된다</td></tr>
+<tr><td><code>OpenJS.NodeJS.22</code></td><td>FO · BO 실행. npm 도 같이 설치된다. 지금은 압축본으로 설치돼 <code>%LOCALAPPDATA%\Microsoft\WinGet\Packages\…</code> 아래에 들어간다(정상)</td></tr>
 <tr><td><code>Redis.Redis</code></td><td>로그인 토큰 저장소. Windows 서비스로 설치돼 PC 를 켜면 자동으로 돈다</td></tr>
 </table>
+<h3>1-1b. (선택) Python · Chrome — <code>docs/도구</code> 스크립트를 쓸 때</h3>
+<p>DB 확인·백업·배포 보조 스크립트(<code>docs/도구/*.py</code>)를 돌릴 사람만 설치한다. 개발 서버 띄우기에는 필요 없다.</p>
+<figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Python.Python.3.12 -e</span><button class="cp" data-cmd="winget install --id Python.Python.3.12 -e">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget install --id Microsoft.VCRedist.2015+.x64 -e</span><button class="cp" data-cmd="winget install --id Microsoft.VCRedist.2015+.x64 -e">복사</button>
+<span class="dim"># 새 창에서</span>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">python --version</span><button class="cp" data-cmd="python --version">복사</button>
+Python 3.12.10</pre><div class="mark">설치 전에는 <code>python</code> 이 Microsoft Store 바로가기라 실행하면 Store 가 열린다. 둘째 줄(Visual C++ 런타임)이 없으면 <code>pymupdf</code> 가 <code>ImportError: DLL load failed</code> 로 실패한다(새 PC 에는 없다 — 2026-10-16 실측).</div></figure>
+<p>Chrome(Playwright 스크립트가 <code>channel='chrome'</code> 으로 씀)은 보통 이미 깔려 있다. 없으면 브라우저로 <code>google.com/chrome</code> 에서 받는다 — <code>winget install Google.Chrome</code> 은 「설치 관리자 해시가 일치하지 않습니다」로 자주 실패한다(2026-10-16 실측).</p>
+</section>
 
+<section class="page">
 <h3>1-2. 설치 확인</h3>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
 <pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget list --id Git.Git -e</span><button class="cp" data-cmd="winget list --id Git.Git -e">복사</button>
-이름 장치 ID 버전   사용 가능 원본
-------------------------------------
-Git  Git.Git 2.49.0 2.55.0.5  winget
+이름 장치 ID 버전     원본
+-----------------------------
+Git  Git.Git 2.55.0.5 winget
 
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget list --id Oracle.JDK.21 -e</span><button class="cp" data-cmd="winget list --id Oracle.JDK.21 -e">복사</button>
-이름                                        장치 ID       버전     사용 가능 원본
------------------------------------------------------------------------------------
-Java(TM) SE Development Kit 21.0.7 (64-bit) Oracle.JDK.21 21.0.7.0 21.0.12.0 winget
+이름                                         장치 ID       버전      원본
+----------------------------------------------------------------------------
+Java(TM) SE Development Kit 21.0.12 (64-bit) Oracle.JDK.21 21.0.12.0 winget
 
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget list --id OpenJS.NodeJS.22 -e</span><button class="cp" data-cmd="winget list --id OpenJS.NodeJS.22 -e">복사</button>
-이름    장치 ID          버전    사용 가능 원본
--------------------------------------------------
-Node.js OpenJS.NodeJS.22 22.15.0 22.23.2   winget
+이름       장치 ID          버전    원본
+-------------------------------------------
+Node.js 22 OpenJS.NodeJS.22 22.23.2 winget
 
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">winget list --id Redis.Redis -e</span><button class="cp" data-cmd="winget list --id Redis.Redis -e">복사</button>
 이름             장치 ID     버전    원본
 --------------------------------------------
-Redis on Windows Redis.Redis 3.0.504 winget</pre><div class="mark">이 화면은 이미 설치된 PC 에서 찍었다. 「버전」 칸에 값이 있으면 설치된 것이다(「사용 가능」 칸은 더 새 버전이 있다는 안내일 뿐, 올리지 않아도 된다).</div></figure>
-</section>
-
-<section class="page">
+Redis on Windows Redis.Redis 3.0.504 winget</pre><div class="mark">2026-10-16 새 노트북에서 설치 직후 찍었다. 「버전」 칸에 값이 있으면 설치된 것이다(나중에 「사용 가능」 칸이 생기면 더 새 버전이 있다는 안내일 뿐, 올리지 않아도 된다).</div></figure>
 <h3>1-2. (이어서) 버전 확인 — 새 창에서</h3>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
 <pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">git --version</span><button class="cp" data-cmd="git --version">복사</button>
-git version 2.49.0.windows.1
+git version 2.55.0.windows.5
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">java -version</span><button class="cp" data-cmd="java -version">복사</button>
-java version &quot;21.0.7&quot; 2025-04-15 LTS
-Java(TM) SE Runtime Environment (build 21.0.7+8-LTS-245)
-Java HotSpot(TM) 64-Bit Server VM (build 21.0.7+8-LTS-245, mixed mode, sharing)
+java version &quot;21.0.12&quot; 2026-07-21 LTS
+Java(TM) SE Runtime Environment (build 21.0.12+7-LTS-205)
+Java HotSpot(TM) 64-Bit Server VM (build 21.0.12+7-LTS-205, mixed mode, sharing)
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">node -v</span><button class="cp" data-cmd="node -v">복사</button>
-v22.15.0
+v22.23.2
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">npm -v</span><button class="cp" data-cmd="npm -v">복사</button>
-10.9.2</pre></figure>
-<p>Java 는 <b>21.x</b>, Node.js 는 <b>v22.x</b> 면 된다. 「명령을 찾을 수 없음」이면 창을 새로 열었는지 확인한다.</p>
+10.9.8</pre></figure>
+<p>Java 는 <b>21.x</b>, Node.js 는 <b>v22.x</b> 면 된다. 「명령을 찾을 수 없음」이면 창을 새로 열었는지 확인한다. <code>npm -v</code> 만 「스크립트를 실행할 수 없으므로」면 1-0 의 실행 정책을 안 한 것이다.</p>
+</section>
 
+<section class="page">
 <h3>1-3. Redis 비밀번호 맞추기</h3>
 <p>받은 <code>application.yml</code> 에 Redis 비밀번호가 있다. PC 의 Redis 에 같은 비밀번호를 건다(한 번만).</p>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>관리자: Windows PowerShell</span></div>
 <pre><span class="p">PS C:\WINDOWS\system32&gt;</span> <span class="c">Add-Content &quot;C:\Program Files\Redis\redis.windows-service.conf&quot; &quot;requirepass 비밀번호&quot;</span><button class="cp" data-cmd="Add-Content &quot;C:\Program Files\Redis\redis.windows-service.conf&quot; &quot;requirepass 비밀번호&quot;">복사</button>
-<span class="p">PS C:\WINDOWS\system32&gt;</span> <span class="c">Restart-Service Redis</span><button class="cp" data-cmd="Restart-Service Redis">복사</button></pre><div class="mark"><b>관리자 권한</b> PowerShell 에서 실행한다(시작 메뉴 → PowerShell 마우스 오른쪽 → 관리자 권한으로 실행). 이 두 줄은 실측 캡처가 아니다 — 이 PC 는 이미 같은 방식으로 설정돼 있다.</div></figure>
+<span class="p">PS C:\WINDOWS\system32&gt;</span> <span class="c">Restart-Service Redis</span><button class="cp" data-cmd="Restart-Service Redis">복사</button></pre><div class="mark"><b>관리자 권한</b> PowerShell 에서 실행한다(시작 메뉴 → PowerShell 마우스 오른쪽 → 관리자 권한으로 실행). 성공하면 아무것도 출력하지 않는다. 「비밀번호」 자리에 <code>application.yml</code> 의 <code>spring.data.redis.password</code> 값을 넣는다.</div></figure>
 <p>확인 — 일반 PowerShell 에서:</p>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
 <pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">Get-Service Redis</span><button class="cp" data-cmd="Get-Service Redis">복사</button>
@@ -200,7 +228,7 @@ Status   Name               DisplayName
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">&amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; ping</span><button class="cp" data-cmd="&amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; ping">복사</button>
 <span class="warn">NOAUTH Authentication required.</span>
 <span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">&amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; -a 비밀번호 ping</span><button class="cp" data-cmd="&amp; &quot;C:\Program Files\Redis\redis-cli.exe&quot; -a 비밀번호 ping">복사</button>
-<span class="ok">PONG</span></pre><div class="mark">비밀번호를 걸어 둔 Redis 는 그냥 ping 하면 NOAUTH, 비밀번호를 주면 PONG 이다. 실제 비밀번호 대신 「비밀번호」 로 적었다.</div></figure>
+<span class="ok">PONG</span></pre><div class="mark">비밀번호를 걸어 둔 Redis 는 그냥 ping 하면 NOAUTH, 비밀번호를 주면 PONG 이다. 실제 비밀번호 대신 「비밀번호」 로 적었다. 2026-10-16 새 노트북에서 위 두 줄을 실행한 뒤 확인한 결과다.</div></figure>
 <table>
 <tr><th style="width:32%">보이는 줄</th><th>의미</th></tr>
 <tr><td><code>Running  Redis</code></td><td>Redis 서비스가 돌고 있다</td></tr>
@@ -211,14 +239,14 @@ Status   Name               DisplayName
 
 <section class="page">
 <h2><span class="step">2</span>저장소 받기 · 설정 파일 넣기</h2>
-<div class="box">캡처는 <code>C:\dev\setup-test</code> 에 새로 clone 해서 실제로 실행한 화면이다. 문서에서는 폴더 이름만 <code>Freelancer_Service</code> 로 바꿔 표시했다.
-도구 설치(1단계)는 이미 설치된 PC 라 <b>설치 확인 화면</b>으로 대신했다.</div>
+<div class="box">2026-10-16 새 노트북에서 1단계부터 이 순서대로 다시 실행해 확인했다. 새 PC 에는 <code>C:\dev</code> 폴더가 없으므로 <b>첫 줄로 만든다</b>(없이 <code>cd C:\dev</code> 하면 「경로가 존재하지 않으므로 찾을 수 없습니다」).</div>
 <figure class="term"><div class="bar"><i></i><i></i><i></i><span>Windows PowerShell</span></div>
-<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">cd C:\dev</span><button class="cp" data-cmd="cd C:\dev">복사</button>
+<pre><span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">mkdir C:\dev</span><button class="cp" data-cmd="mkdir C:\dev">복사</button>
+<span class="p">PS C:\Users\ESTSOFT&gt;</span> <span class="c">cd C:\dev</span><button class="cp" data-cmd="cd C:\dev">복사</button>
 <span class="p">PS C:\dev&gt;</span> <span class="c">git clone -b NextJs https://github.com/EstSoftPart3/Freelancer_Service.git</span><button class="cp" data-cmd="git clone -b NextJs https://github.com/EstSoftPart3/Freelancer_Service.git">복사</button>
 Cloning into &#x27;Freelancer_Service&#x27;...
  
-<span class="ok">Updating files: 100% (8047/8047), done.</span>
+<span class="ok">Updating files: 100% (8053/8053), done.</span>
 
 <span class="p">PS C:\dev&gt;</span> <span class="c">cd Freelancer_Service</span><button class="cp" data-cmd="cd Freelancer_Service">복사</button>
 <span class="p">PS C:\dev\Freelancer_Service&gt;</span> <span class="c">Copy-Item &quot;$HOME\Downloads\application.yml&quot; backend\src\main\resources\application.yml</span><button class="cp" data-cmd="Copy-Item &quot;$HOME\Downloads\application.yml&quot; backend\src\main\resources\application.yml">복사</button>
@@ -401,15 +429,17 @@ LocalPort OwningProcess
 <h2>문제 해결</h2>
 <table>
 <tr><th style="width:34%">증상</th><th style="width:28%">원인</th><th>조치</th></tr>
-<tr><td><code>winget</code> 을 찾을 수 없음</td><td>App Installer 없음</td><td>Microsoft Store 에서 「앱 설치 관리자」 설치 후 새 창</td></tr>
+<tr><td><code>winget</code> 을 찾을 수 없음</td><td>앱 설치 관리자가 옛 버전(업데이트 안 된 Windows 10)</td><td>1-0 의 「winget 이 없을 때」 ①② 후 새 창</td></tr>
+<tr><td><code>npm.ps1 cannot be loaded</code> · 「스크립트를 실행할 수 없으므로」</td><td>실행 정책 Restricted</td><td><code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force</code> 후 새 창(1-0)</td></tr>
+<tr><td><code>cd C:\dev</code> 가 「경로가 존재하지 않으므로」</td><td>새 PC 라 폴더 없음</td><td><code>mkdir C:\dev</code> 먼저(2단계 첫 줄)</td></tr>
+<tr><td>Chrome 설치가 「설치 관리자 해시가 일치하지 않습니다」</td><td>winget 목록이 Google 새 설치 파일보다 늦음</td><td>브라우저로 <code>google.com/chrome</code> 에서 받는다</td></tr>
+<tr><td>Python 스크립트가 <code>DLL load failed</code>(pymupdf 등)</td><td>Visual C++ 런타임 없음</td><td><code>winget install --id Microsoft.VCRedist.2015+.x64 -e</code>(1-1b)</td></tr>
 <tr><td><code>java</code>·<code>node</code> 를 찾을 수 없음</td><td>설치 직후 같은 창</td><td>PowerShell 창을 닫고 새로 연다</td></tr>
 <tr><td><code>java -version</code> 이 1.8 · 17 등</td><td>다른 JDK 가 먼저 잡힘</td><td>JDK 21 을 설치하고 PATH 에서 21 이 앞에 오게 한다. 확인: <code>where.exe java</code></td></tr>
 <tr><td>bootRun 이 <code>Could not resolve placeholder</code></td><td><code>application.yml</code> 이 없거나 위치가 틀림</td><td>2단계의 경로·파일 이름 확인</td></tr>
 <tr><td>bootRun 이 <code>NOAUTH</code> · <code>RedisConnectionFailure</code></td><td>Redis 꺼짐 또는 비밀번호 불일치</td><td>1-3 확인. <code>Get-Service Redis</code> 가 Running 인지, PONG 이 나오는지</td></tr>
 <tr><td>bootRun 이 DB <code>Communications link failure</code></td><td>DB 서버에 못 닿음</td><td>인터넷 연결 확인. 공용 와이파이 등 3306 포트를 막는 네트워크면 다른 네트워크에서 다시</td></tr>
-<tr><td><code>Port 8080 was already in use</code></td><td>백엔드가 이미 떠 있음</td><td>기존 창을 Ctrl+C 로 끄거나, <code>Get-NetTCPConnection -LocalPort 8080</code> 으로 점유 프로세스 확인</td></tr>
-<tr><td><code>.\gradlew.bat</code> 실행 불가 · 스크립트 정책 오류</td><td>PowerShell 실행 정책</td><td><code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> 후 새 창</td></tr>
-<tr><td>FO 일부 페이지만 404 · 이상한 화면</td><td>오래된 <code>.next</code> 캐시</td><td>FO 창에서 Ctrl+C → <code>npm run dev:clean</code></td></tr>
+<tr><td><code>Port 8080 was already in use</code></td><td>백엔드가 이미 떠 있음</td><td>기존 창을 Ctrl+C 로 끄거나, <code>Get-NetTCPConnection -LocalPort 8080</code> 으로 점유 프로세스 확인</td></tr><tr><td>FO 일부 페이지만 404 · 이상한 화면</td><td>오래된 <code>.next</code> 캐시</td><td>FO 창에서 Ctrl+C → <code>npm run dev:clean</code></td></tr>
 <tr><td>FO 는 뜨는데 목록이 비어 있음</td><td>백엔드가 꺼져 있음</td><td>백엔드 창 확인, health 가 UP 인지</td></tr>
 <tr><td>BO 로그인 시 네트워크 오류 · CORS</td><td>BO 가 5173 이 아닌 포트로 뜸</td><td>5173 을 쓰는 다른 프로그램을 끄고 BO 를 다시 띄운다</td></tr>
 <tr><td><code>npm ci</code> 실패 <code>EBUSY</code>·<code>EPERM</code></td><td>개발 서버·편집기가 파일을 잡고 있음</td><td>해당 dev 서버를 끄고 다시 <code>npm ci</code></td></tr>
