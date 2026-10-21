@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -44,7 +43,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
-@CrossOrigin(value = "http://localhost:8504")
 public class ProjectController {
 	private final ProjectService projectService;
 	private final ViewCountDedupService viewCountDedupService;
