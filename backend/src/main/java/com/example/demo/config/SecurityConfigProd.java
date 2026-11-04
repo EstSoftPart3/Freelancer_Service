@@ -3,6 +3,8 @@ package com.example.demo.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,16 +27,44 @@ public class SecurityConfigProd {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors()
-                .and()
-                .csrf().disable()
-                .formLogin().disable()
-                .httpBasic().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // requestMatchers 는 context-path(/api)를 뺀 경로로 비교한다.
+                // 공개 경로는 JwtAuthenticationFilter.EXCLUDE_URLS 에도 있어야 실제로 열린다.
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/login", "/api/refresh-token").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+
+                        // 비로그인 계정 흐름
+                        .requestMatchers(HttpMethod.POST, "/login", "/refresh-token", "/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/check-id").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/email/send-code", "/email/find/send-code", "/email/verify-code",
+                                "/find-id", "/reset-password", "/reset-password/verify").permitAll()
+                        .requestMatchers("/company/verify").permitAll()
+
+                        // 관리자
+                        .requestMatchers("/admin/login", "/admin/refresh-token").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+
+                        // 인증이 필요한 프로젝트 경로를 공개 GET 보다 먼저 둔다
+                        .requestMatchers(HttpMethod.GET, "/projects/applications/interviews/*").permitAll()
+                        .requestMatchers("/projects/applications/**").authenticated()
+
+                        // 공개 조회
+                        .requestMatchers(HttpMethod.GET,
+                                "/projects/**", "/board/**", "/qna/**", "/answer/**", "/notice/**",
+                                "/affiliation/**", "/file/**", "/files/**", "/uploads/**", "/download/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/board/*/increment-view", "/qna/*/increment-view", "/answer/*/increment-view",
+                                "/notice/*/increment-view", "/affiliation/*/increment-view").permitAll()
+
                         .anyRequest().authenticated())
+                // 기본 LogoutFilter 가 LoginController.logout() 을 가로채지 않게 끈다
+                .logout(logout -> logout.disable())
                 // 인증 실패(로그인 안된 상태) 시 처리
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

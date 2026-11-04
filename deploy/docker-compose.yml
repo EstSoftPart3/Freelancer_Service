@@ -13,8 +13,7 @@ services:
     env_file: .env
     environment:
       TZ: Asia/Seoul
-      # shortcut: SecurityConfigProd 가 context-path 를 중복해 로그인까지 막으므로 dev 를 쓴다, 고치면 prod 로 바꾸고 그 전에는 외부에 공개하지 않는다
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
       SERVER_SERVLET_CONTEXTPATH: /api
       SERVER_TOMCAT_MAXHTTPFORMPOSTSIZE: 10MB
