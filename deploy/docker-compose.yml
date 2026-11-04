@@ -17,7 +17,8 @@ services:
       SERVER_PORT: 8080
       SERVER_SERVLET_CONTEXTPATH: /api
       SERVER_TOMCAT_MAXHTTPFORMPOSTSIZE: 10MB
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/freelancer_develop?useUnicode=true&characterEncoding=UTF-8
+      # main 의 게시판 코드(1401~1403)에 맞는 데이터를 복사한 전용 DB
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/freelancer_service?useUnicode=true&characterEncoding=UTF-8
       SPRING_DATASOURCE_DRIVERCLASSNAME: org.mariadb.jdbc.Driver
       # DB 구조를 앱이 바꾸지 못하게 고정한다
       SPRING_JPA_HIBERNATE_DDLAUTO: none
